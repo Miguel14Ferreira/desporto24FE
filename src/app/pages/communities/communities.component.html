@@ -1451,6 +1451,93 @@
                                         {{ incident.decisionReference }} · {{ incident.decidedBy }}</small>
                                     }
                                   </div>
+                                  @if (bracket.format === 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+                                        && incident.status === 'OFFICIAL_SERIES_AWARDED'
+                                        && sprintIsBo3Award(incident)) {
+                                    <button type="button" class="btn btn-secondary"
+                                      [disabled]="sprintReviewLoading || sprintReviewSaving"
+                                      (click)="openSprintReview(bracket.id, incident.id)">
+                                      {{ 'communities.trackCycling.reviewHistory' | t }}
+                                    </button>
+                                    @if (sprintReviewBracketId === bracket.id && sprintReviewIncidentId === incident.id) {
+                                      <div class="round-meta-form">
+                                        <strong>{{ 'communities.trackCycling.reviewTitle' | t }}</strong>
+                                        <p>{{ 'communities.trackCycling.reviewNotSignature' | t }}</p>
+                                        @if (sprintReviewLoading) {
+                                          <small>{{ 'communities.trackCycling.reviewLoading' | t }}</small>
+                                        }
+                                        @for (review of sprintReviewHistory; track review.id) {
+                                          <div class="round-sport-guidance" role="note">
+                                            <strong>{{ ('communities.trackCycling.review.' + review.action) | t }}</strong>
+                                            <p>{{ review.reason }}</p>
+                                            <small>{{ review.officialName }} · {{ review.officialReference }}</small>
+                                            @if (review.panelReference) {
+                                              <small>{{ 'communities.trackCycling.reviewPanel' | t }}: {{ review.panelReference }}</small>
+                                            }
+                                            <small>{{ 'communities.trackCycling.incidentReportedBy' | t }}:
+                                              {{ review.recordedBy }} · {{ review.recordedAt }}</small>
+                                          </div>
+                                        }
+                                        @if (sprintReviewLastAction === 'OVERTURNED') {
+                                          <p class="text-danger">{{ 'communities.trackCycling.reviewOverturnedBlock' | t }}</p>
+                                        } @else if (sprintReviewLastAction === 'REQUESTED') {
+                                          <p>{{ 'communities.trackCycling.reviewPendingBlock' | t }}</p>
+                                        }
+                                        @if (canManage() && selectedSeasonId === activeSeason()?.id
+                                            && !sprintReviewLoading && sprintReviewLastAction !== 'OVERTURNED') {
+                                          <label>
+                                            <span>{{ 'communities.trackCycling.reviewPresident' | t }}</span>
+                                            <input [(ngModel)]="sprintReviewPresident" maxlength="120">
+                                          </label>
+                                          @if (sprintReviewMode === 'REQUEST' && sprintReviewLastAction !== 'REQUESTED') {
+                                            <label>
+                                              <span>{{ 'communities.trackCycling.reviewRequestRef' | t }}</span>
+                                              <input [(ngModel)]="sprintReviewReference" maxlength="255">
+                                            </label>
+                                            <label>
+                                              <input type="checkbox" [(ngModel)]="sprintReviewJudgeRefereeConfirmed">
+                                              {{ 'communities.trackCycling.reviewJudgeReferee' | t }}
+                                            </label>
+                                          } @else if (sprintReviewMode === 'DECIDE') {
+                                            <label>
+                                              <span>{{ 'communities.trackCycling.reviewDecision' | t }}</span>
+                                              <select [(ngModel)]="sprintReviewOutcome">
+                                                <option value="">{{ 'communities.trackCycling.reviewSelectDecision' | t }}</option>
+                                                <option value="UPHELD">{{ 'communities.trackCycling.review.UPHELD' | t }}</option>
+                                                <option value="OVERTURNED">{{ 'communities.trackCycling.review.OVERTURNED' | t }}</option>
+                                              </select>
+                                            </label>
+                                            <label>
+                                              <span>{{ 'communities.trackCycling.reviewPanel' | t }}</span>
+                                              <input [(ngModel)]="sprintReviewPanelReference" maxlength="255">
+                                            </label>
+                                            <label>
+                                              <span>{{ 'communities.trackCycling.reviewPresidentRef' | t }}</span>
+                                              <input [(ngModel)]="sprintReviewReference" maxlength="255">
+                                            </label>
+                                          }
+                                          <label>
+                                            <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
+                                            <textarea [(ngModel)]="sprintReviewReason" maxlength="500"></textarea>
+                                          </label>
+                                          <button class="btn btn-primary" type="button" (click)="saveSprintReview()"
+                                            [disabled]="sprintReviewSaving || sprintReviewPresident.trim().length < 3
+                                              || sprintReviewReference.trim().length < 12
+                                              || sprintReviewReason.trim().length < 12
+                                              || (sprintReviewMode === 'REQUEST' && !sprintReviewJudgeRefereeConfirmed)
+                                              || (sprintReviewMode === 'DECIDE'
+                                                && (!sprintReviewOutcome || sprintReviewPanelReference.trim().length < 12))">
+                                            {{ (sprintReviewMode === 'REQUEST'
+                                              ? 'communities.trackCycling.reviewSubmit'
+                                              : 'communities.trackCycling.reviewConfirm') | t }}
+                                          </button>
+                                        }
+                                        @if (sprintReviewError) {
+                                          <p role="alert" class="text-danger">{{ sprintReviewError }}</p>
+                                        }
+                                      </div>
+                                    }
+                                  }
                                   @if (canManage() && selectedSeasonId === activeSeason()?.id
                                         && (sprintCanConfirmOfficialAward(bracket, incident)
                                           || sprintCanConfirmSeriesVerdict(bracket, incident))) {
