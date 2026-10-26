@@ -98,8 +98,7 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],
       page:0,hasMore:true};
-    http.get.and.callFake((url: string) =>
-      url.endsWith('/venue-quality') ? of(quality) : of(queue));
+    http.get.and.returnValues(of(quality), of(queue), of(queue), of(queue));
     component.toggleVenueQuality();
     expect(http.get).toHaveBeenCalledTimes(1);
     component.toggleGpsReview();
