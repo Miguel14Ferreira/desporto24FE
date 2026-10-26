@@ -65,6 +65,23 @@ describe('Events2Component', () => {
     expect(component).toBeTruthy();
   });
 
+  it('separates the creation header, community banner and form without global card margins', () => {
+    component.communityId = 7;
+    component.communityName = 'Futebol das Quintas';
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const header = root.querySelector<HTMLElement>('.create-shell > .page-header');
+    const banner = root.querySelector<HTMLElement>('.create-shell > .community-context');
+    const form = root.querySelector<HTMLElement>('.create-shell > form.create-card');
+    expect(header).not.toBeNull();
+    expect(banner).not.toBeNull();
+    expect(form).not.toBeNull();
+    const expected = matchMedia('(max-width: 760px)').matches ? '20px' : '24px';
+    expect(getComputedStyle(header!).marginBottom).toBe(expected);
+    expect(getComputedStyle(banner!).marginBottom).toBe(expected);
+  });
+
   it('styles the community recurrence selector like the other session inputs', () => {
     component.communityId = 7;
     fixture.detectChanges();

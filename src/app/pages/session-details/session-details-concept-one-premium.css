@@ -84,3 +84,18 @@
 @media(prefers-reduced-motion:reduce){
   .jynlo-session-detail-premium a,.jynlo-session-detail-premium button{transition:none}
 }
+
+/* Session detail hierarchy: back navigation, title, membership and next action group.
+   Only direct children are targeted; panels, roster rows and grids remain untouched. */
+.jynlo-session-detail-premium .detail-shell > .back-link {margin-bottom:24px}
+.jynlo-session-detail-premium .detail-content > .session-created-share {margin-bottom:24px}
+.jynlo-session-detail-premium .detail-content > .title-row + :is(.membership-status,.session-top-actions) {margin-top:24px}
+.jynlo-session-detail-premium .detail-content > .membership-status + .session-top-actions {margin-top:24px}
+.jynlo-session-detail-premium .detail-content > .session-top-actions + :is(.organizer-preparation,.detail-grid,.session-player-search) {margin-top:24px}
+@media(max-width:760px){
+  .jynlo-session-detail-premium .detail-shell > .back-link {margin-bottom:20px}
+  .jynlo-session-detail-premium .detail-content > .session-created-share {margin-bottom:20px}
+  .jynlo-session-detail-premium .detail-content > .title-row + :is(.membership-status,.session-top-actions) {margin-top:20px}
+  .jynlo-session-detail-premium .detail-content > .membership-status + .session-top-actions {margin-top:20px}
+  .jynlo-session-detail-premium .detail-content > .session-top-actions + :is(.organizer-preparation,.detail-grid,.session-player-search) {margin-top:20px}
+}
