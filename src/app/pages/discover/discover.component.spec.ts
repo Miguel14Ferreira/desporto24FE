@@ -888,7 +888,7 @@ describe('DiscoverComponent', () => {
     expect(count.textContent?.replace(/\s/g, '')).toBe('2');
   });
 
-  it('ranks exact localities and available venue metadata only within the returned page', () => {
+  it('preserves relevance order from the paginated API, even when first-page metadata differs', () => {
     const venues = [
       { id: 1, name: 'A', city: 'Grande Lisboa', sports: 'Padel',
         latitude: 38.7, longitude: -9.1, address: 'Rua A', venueType: 'Campo' },
@@ -897,10 +897,12 @@ describe('DiscoverComponent', () => {
       { id: 3, name: 'C', city: 'Lisboa', sports: 'Padel',
         latitude: 38.7, longitude: -9.1, address: '', venueType: 'Campo' }
     ] as any[];
-    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: false }));
+    // Only the server can rank records beyond the currently loaded page.
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: true }));
     component.search();
-    expect(component.venues.map(venue => venue.id)).toEqual([3, 2, 1]);
-    expect(venues.map(venue => venue.id)).toEqual([1, 2, 3]);
+    expect(component.venues.map(venue => venue.id)).toEqual([1, 2, 3]);
+    expect(component.topVenues.map(venue => venue.id)).toEqual([1, 2, 3]);
+    expect(component.venuesHasMore).toBeTrue();
   });
 
   it('never rearranges the distance-ordered nearby venues', () => {
