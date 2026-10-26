@@ -118,6 +118,20 @@ describe('NotificationsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('preserves notification selection and the preferences control in Premium layout', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.notifications-page.jynlo-c1.jynlo-secondary')).not.toBeNull();
+    expect(root.querySelector('.notifications-grid .notification-card')).not.toBeNull();
+    expect(root.querySelector('.notifications-grid .notification-detail')).not.toBeNull();
+    const preferences = root.querySelector<HTMLButtonElement>('.header-actions button[aria-expanded]');
+    expect(preferences?.getAttribute('aria-expanded')).toBe('false');
+    preferences!.click();
+    fixture.detectChanges();
+    expect(preferences?.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelector('.notification-preferences__table input[type="checkbox"]')).not.toBeNull();
+    expect(service.delete).not.toHaveBeenCalled();
+  });
+
   it('labels a post-game reminder and links to its session', () => {
     const reminder = {
       ...notificationFixture(),
