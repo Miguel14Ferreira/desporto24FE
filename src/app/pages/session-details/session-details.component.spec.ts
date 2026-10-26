@@ -2248,7 +2248,7 @@ describe('SessionDetailsComponent', () => {
 
     component.generateTeams();
 
-    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7);
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7, 'FORM');
     expect(component.teamSuggestion?.teamA[0].username).toBe('creator-user');
     expect(component.teamSuggestion?.playersWithStats).toBe(2);
     expect(component.teamSuggestionPendingConfirmation).toBeTrue();
@@ -2297,11 +2297,55 @@ describe('SessionDetailsComponent', () => {
 
     component.confirmTeams();
 
-    expect(sessionService.confirmTeams).toHaveBeenCalledWith(7);
+    expect(sessionService.confirmTeams).toHaveBeenCalledWith(7, 'FORM');
     expect(component.teamsSuccess).toContain('confirmadas');
     expect(component.teamSuggestionPendingConfirmation).toBeFalse();
     expect(component.hasConfirmedTeams()).toBeTrue();
     expect(component.teamParticipants('A')[0].username).toBe('creator-user');
+  });
+
+  it('offers Excel balancing as a separate, non-persisting organiser preview', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, joined: true, creatorUsername: 'creator-user',
+      communityId: 9, participantCount: 10, maxParticipants: 10, status: 'FULL'
+    };
+    const preview = {
+      teamA: [{ username: 'creator-user', strengthScore: 20, statsAvailable: true,
+        games: 0, wins: 0, goals: 0, assists: 0 }],
+      teamB: [{ username: 'player-one', strengthScore: 19, statsAvailable: false,
+        games: 0, wins: 0, goals: 0, assists: 0 }],
+      teamAScore: 20, teamBScore: 19, playersWithStats: 1, totalPlayers: 2
+    };
+    sessionService.teamSuggestion.and.returnValue(of(preview));
+    component.generateTeams('EXCEL_POINTS');
+    fixture.detectChanges();
+
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7, 'EXCEL_POINTS');
+    expect(sessionService.confirmTeams).not.toHaveBeenCalled();
+    expect(component.teamsScoreSource).toBe('EXCEL_POINTS');
+    expect(component.teamSuggestionPendingConfirmation).toBeTrue();
+    const shell: HTMLElement = fixture.nativeElement;
+    expect(shell.querySelector('.team-generator-excel-action')).toBeTruthy();
+    expect(shell.querySelector('.team-suggestion')?.textContent).toContain('20');
+    expect(shell.querySelector('.team-suggestion')?.textContent).toContain('Sem pontuação associada');
+  });
+
+  it('confirms the same selected Excel ranking source and can switch back to form', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, joined: true, creatorUsername: 'creator-user',
+      communityId: 9, participantCount: 10, maxParticipants: 10, status: 'FULL'
+    };
+    component.generateTeams('EXCEL_POINTS');
+    component.confirmTeams();
+    expect(sessionService.confirmTeams).toHaveBeenCalledWith(7, 'EXCEL_POINTS');
+    expect(component.teamSuggestionPendingConfirmation).toBeFalse();
+
+    component.generateTeams('FORM');
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7, 'FORM');
+    expect(component.teamsScoreSource).toBe('FORM');
+    expect(component.teamSuggestionPendingConfirmation).toBeTrue();
   });
 
   it('should not confirm the same team suggestion twice', () => {

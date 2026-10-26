@@ -1,0 +1,47 @@
+name: Jynlo LIVE community and tournament roles (read-only, manual)
+
+# Explicit opt-in only. No PR/push events or access to real account data
+# in CI. Uses pre-authorized disposable QA users, both verified by name.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-community-roles-live-readonly
+  cancel-in-progress: false
+
+jobs:
+  read-only-community-roles:
+    name: Compare QA community roles and authorized tournament reads
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
+      JYNLO_QA_USERNAME_1: ${{ secrets.JYNLO_QA1_USERNAME }}
+      JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm authorized disposable account secrets before LIVE login
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$JYNLO_QA_PASSWORD_1" || -z "$JYNLO_QA_PASSWORD_2" ]]; then
+            echo 'QA secrets absent: no LIVE requests made.' >&2
+            exit 1
+          fi
+          if [[ "$JYNLO_QA_USERNAME_1" != 'jynloteste01' || "$JYNLO_QA_USERNAME_2" != 'jynloteste02' ]]; then
+            echo 'QA account identities not authorized: no LIVE requests made.' >&2
+            exit 1
+          fi
+      - name: Verify endpoint allowlist, negative probes and credential privacy (mock only)
+        run: |
+          node --check scripts/qa/jynlo-community-roles-live-readonly.cjs
+          node --test scripts/qa/jynlo-community-roles-live-readonly.test.cjs
+      - name: Probe LIVE community memberships and tournaments (GET only after login)
+        run: node scripts/qa/jynlo-community-roles-live-readonly.cjs

@@ -613,19 +613,24 @@
                     <strong>{{ 'sessionDetail.teamsTitle' | t }}</strong>
                     <p>{{ 'sessionDetail.teamsText' | t }}</p>
                   </div>
-                  <button
-                    type="button"
-                    class="secondary-action jynlo-action jynlo-action--neutral"
-                    [disabled]="teamsLoading"
-                    (click)="generateTeams()">
-                    {{
-                      teamsLoading
-                        ? ('sessionDetail.generatingTeams' | t)
-                        : hasConfirmedTeams()
-                          ? ('sessionDetail.regenerateTeams' | t)
-                          : ('sessionDetail.generateTeams' | t)
-                    }}
-                  </button>
+                  <div class="team-generator-actions">
+                    <button
+                      type="button"
+                      class="secondary-action jynlo-action jynlo-action--neutral"
+                      [disabled]="teamsLoading || teamsConfirming"
+                      [attr.aria-pressed]="teamsScoreSource === 'FORM'"
+                      (click)="generateTeams('FORM')">
+                      {{ 'sessionDetail.teamsFromForm' | t }}
+                    </button>
+                    <button
+                      type="button"
+                      class="secondary-action jynlo-action jynlo-action--neutral team-generator-excel-action"
+                      [disabled]="teamsLoading || teamsConfirming"
+                      [attr.aria-pressed]="teamsScoreSource === 'EXCEL_POINTS'"
+                      (click)="generateTeams('EXCEL_POINTS')">
+                      {{ 'sessionDetail.teamsFromExcel' | t }}
+                    </button>
+                  </div>
                 </div>
 
                 @if (teamsError) {
@@ -639,7 +644,11 @@
                       @for (player of teamSuggestion.teamA; track player.username) {
                         <div class="team-player">
                           <span>{{ '@' + player.username }}</span>
-                          @if (player.statsAvailable) {
+                          @if (teamsScoreSource === 'EXCEL_POINTS') {
+                            <small>{{ player.statsAvailable
+                              ? ('sessionDetail.excelPlayerPoints' | t:{ points: player.strengthScore })
+                              : ('sessionDetail.excelPlayerUnranked' | t:{ points: player.strengthScore }) }}</small>
+                          } @else if (player.statsAvailable) {
                             <small>{{ 'sessionDetail.playerStats' | t:{ games: player.games, goals: player.goals, wins: player.wins } }}</small>
                           } @else {
                             <small>{{ 'sessionDetail.noStats' | t }}</small>
@@ -653,7 +662,11 @@
                       @for (player of teamSuggestion.teamB; track player.username) {
                         <div class="team-player">
                           <span>{{ '@' + player.username }}</span>
-                          @if (player.statsAvailable) {
+                          @if (teamsScoreSource === 'EXCEL_POINTS') {
+                            <small>{{ player.statsAvailable
+                              ? ('sessionDetail.excelPlayerPoints' | t:{ points: player.strengthScore })
+                              : ('sessionDetail.excelPlayerUnranked' | t:{ points: player.strengthScore }) }}</small>
+                          } @else if (player.statsAvailable) {
                             <small>{{ 'sessionDetail.playerStats' | t:{ games: player.games, goals: player.goals, wins: player.wins } }}</small>
                           } @else {
                             <small>{{ 'sessionDetail.noStats' | t }}</small>
@@ -663,8 +676,16 @@
                     </div>
                   </div>
                   <p class="team-stats-note">
-                    {{ 'sessionDetail.teamsStatsUsed' | t:{ known: teamSuggestion.playersWithStats, total: teamSuggestion.totalPlayers } }}
+                    {{ (teamsScoreSource === 'EXCEL_POINTS'
+                      ? 'sessionDetail.teamsExcelUsed'
+                      : 'sessionDetail.teamsStatsUsed') | t:{
+                        known: teamSuggestion.playersWithStats,
+                        total: teamSuggestion.totalPlayers
+                      } }}
                   </p>
+                  @if (teamsScoreSource === 'EXCEL_POINTS') {
+                    <p class="team-stats-note">{{ 'sessionDetail.teamsExcelPrivacy' | t }}</p>
+                  }
                   <button
                     type="button"
                     class="primary-action jynlo-action jynlo-action--primary"
