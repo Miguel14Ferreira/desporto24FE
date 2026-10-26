@@ -82,6 +82,8 @@ let reactionPickerSequence = 0;
       width:max-content;max-width:min(330px,calc(100vw - 50px));
       background:#193847;border:1px solid #5b9e91;border-radius:999px;
       box-shadow:0 12px 36px rgba(0,7,16,.5);z-index:50; }
+    :host-context(.is-mine) .reaction-picker,
+    :host-context(.own-message) .reaction-picker {left:auto;right:0;}
     .reaction-picker button { border:0;background:transparent;border-radius:999px;
       padding:5px;font-size:1.16rem;min-width:34px;min-height:34px;line-height:1; }
     .reaction-picker button[aria-pressed="true"] { background:#276a5d; }
