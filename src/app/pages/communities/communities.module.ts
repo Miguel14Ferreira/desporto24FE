@@ -9,6 +9,7 @@ import { CommunityInviteStepComponent } from '../community-create/community-invi
 import { CommunitiesComponent } from './communities.component';
 import { CommunityDiscoveryPitchComponent } from './community-discovery-pitch.component';
 import { CommunityPerformanceInsightsComponent } from './community-performance-insights.component';
+import { CommunityTabsComponent } from './community-tabs.component';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 import { KartingPodiumComponent } from './karting-podium.component';
@@ -32,7 +33,7 @@ const routes: Routes = [
     CommunityTournamentsComponent
   ],
   imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe, ChatReactionsComponent, KartingPodiumComponent, KartingPalmaresComponent, KartingRaceTableComponent,
-    CompetitionGuideComponent, CompetitionFormatChooserComponent, CommunityDiscoveryPitchComponent, CommunityPerformanceInsightsComponent,
+    CompetitionGuideComponent, CompetitionFormatChooserComponent, CommunityDiscoveryPitchComponent, CommunityPerformanceInsightsComponent, CommunityTabsComponent,
     TournamentClassificationNoteComponent, RaceStandingsCardComponent]
 })
 export class CommunitiesModule {}

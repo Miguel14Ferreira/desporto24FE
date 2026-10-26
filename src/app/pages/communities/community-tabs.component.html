@@ -1,0 +1,36 @@
+            <nav class="community-tabs" [attr.aria-label]="'communities.tabsLabel' | t">
+              <button type="button" [class.active]="activeTab === 'home'"
+                [attr.aria-current]="activeTab === 'home' ? 'true' : null"
+                (click)="tabRequested.emit('home')">
+                {{ 'communities.tab.home' | t }}
+              </button>
+              <button type="button" [class.active]="activeTab === 'feed'"
+                [attr.aria-current]="activeTab === 'feed' ? 'true' : null"
+                (click)="tabRequested.emit('feed')">{{ 'communities.tab.feed' | t }}</button>
+              <button type="button" [class.active]="activeTab === 'sessions'"
+                [attr.aria-current]="activeTab === 'sessions' ? 'true' : null"
+                (click)="tabRequested.emit('sessions')">
+                {{ 'communities.tab.sessions' | t }}
+              </button>
+              @if (hasCompetitions) {
+                <button type="button" [class.active]="activeTab === 'tournaments'"
+                  [attr.aria-current]="activeTab === 'tournaments' ? 'true' : null"
+                  (click)="tabRequested.emit('tournaments')">{{ 'communities.features.competitionsTab' | t }}</button>
+              }
+              @if (canBrowseHistoricalArchives) {
+                <button type="button" [class.active]="activeTab === 'ranking'"
+                  [attr.aria-current]="activeTab === 'ranking' ? 'true' : null"
+                  (click)="tabRequested.emit('ranking')">{{ rankingsEnabled
+                    ? ('communities.tab.ranking' | t) : ('communities.archive.tabTitle' | t) }}</button>
+              }
+              @if (rankingsEnabled) {
+                <button type="button" [class.active]="activeTab === 'stats'"
+                  [attr.aria-current]="activeTab === 'stats' ? 'true' : null"
+                  (click)="tabRequested.emit('stats')">{{ 'communities.tab.stats' | t }}</button>
+              }
+              <button type="button" [class.active]="activeTab === 'members'"
+                [attr.aria-current]="activeTab === 'members' ? 'true' : null"
+                (click)="tabRequested.emit('members')">
+                {{ 'communities.tab.members' | t }}
+              </button>
+            </nav>
