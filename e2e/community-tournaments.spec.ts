@@ -3394,3 +3394,151 @@ test('Premium populated tournament QA: team rosters and schedule confirmation st
   expect(fixture.unmocked.filter(path => /^(POST|PUT|DELETE|PATCH) /.test(path)
     && !/^(POST \/api\/pilot\/events\/access|POST \/api\/presence\/heartbeat)$/.test(path))).toEqual([]);
 });
+
+
+/*
+ * Extended Concept One Premium stress QA: never submit a tournament mutation.
+ * Mocked 32-player roster and 48 matches deliberately cover real pagination,
+ * internal table scrolling, form validation and source-labelled knockout history.
+ */
+test('Premium populated tournament QA: 32-player standings and 48 fixtures paginate without mobile clipping', async ({ page }, testInfo) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'visual-large-league');
+  for (const width of [390, 768, 1366]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    for (const language of ['pt', 'en']) {
+      await page.goto('/menu/communities/7?tab=tournaments');
+      await page.evaluate(value => localStorage.setItem('d24-language', value), language);
+      await page.reload();
+      await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+
+      const table = page.getByRole('table', {
+        name: language === 'pt' ? 'Classificação do torneio' : 'Tournament standings'
+      });
+      await expect(table.locator('tbody tr')).toHaveCount(32);
+      await expect(table.locator('tbody')).toContainText('Jogador 32');
+
+      // The roster and fixtures are paginated separately. Neither should
+      // require horizontal scrolling of the whole document.
+      await expect(page.locator('.player-item')).toHaveCount(20);
+      await page.locator('.players-list + button').click();
+      await expect(page.locator('.player-item')).toHaveCount(32);
+      await expect(page.locator('.match-card')).toHaveCount(20);
+      await page.locator('.match-list + button').click();
+      await expect(page.locator('.match-card')).toHaveCount(40);
+      await page.locator('.match-list + button').click();
+      await expect(page.locator('.match-card')).toHaveCount(48);
+      await expect(page.locator('.match-list + button')).toHaveCount(0);
+
+      const first = page.locator('.match-card').first();
+      const home = first.getByRole('spinbutton', {
+        name: language === 'pt' ? 'Golos de organizador' : 'Goals for organizador'
+      });
+      const away = first.getByRole('spinbutton', {
+        name: language === 'pt' ? 'Golos de player17' : 'Goals for player17'
+      });
+      const save = first.getByRole('button', {
+        name: language === 'pt' ? /Guardar/ : /Save/
+      });
+      await home.fill('-1');
+      await away.fill('1');
+      await expect(home).toHaveAttribute('aria-invalid', 'true');
+      await expect(save).toBeDisabled();
+      await home.fill('2');
+      await expect(home).not.toHaveAttribute('aria-invalid', 'true');
+      await expect(save).toBeEnabled();
+      // No save click: draft score remains entirely in the browser.
+
+      const geometry = await page.evaluate(() => {
+        const root = document.querySelector('.tournaments')!;
+        const tableScroll = document.querySelector('.standings-scroll')!;
+        const match = document.querySelector('.match-card')!;
+        const score = document.querySelector('.score-edit')!;
+        const rects = [root, match, score].map(element => {
+          const r = element.getBoundingClientRect();
+          return { left: r.left, right: r.right };
+        });
+        return {
+          viewport: innerWidth, documentWidth: document.documentElement.scrollWidth,
+          rects, tableScroll: tableScroll.scrollWidth - tableScroll.clientWidth
+        };
+      });
+      expect(geometry.documentWidth, JSON.stringify(geometry))
+        .toBeLessThanOrEqual(width + 2);
+      for (const rect of geometry.rects) {
+        expect(rect.left).toBeGreaterThanOrEqual(-2);
+        expect(rect.right).toBeLessThanOrEqual(width + 2);
+      }
+      if (width === 390) {
+        expect(geometry.tableScroll, 'wide standings must scroll inside table').toBeGreaterThan(0);
+      }
+      await testInfo.attach('large-32-roster-48-fixtures-' + width + '-' + language, {
+        body: await first.screenshot(), contentType: 'image/png'
+      });
+    }
+  }
+  expect(fixture.scheduleAttempts).toBe(0);
+  expect(fixture.organizerMutations).toEqual([]);
+  expect(fixture.unmocked.filter(path => /^(POST|PUT|PATCH|DELETE) \/api\/communities\//.test(path)))
+    .toEqual([]);
+});
+
+test('Premium populated tournament QA: historical 57-row knockout phases navigate within mobile viewport', async ({ page }, testInfo) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'historical-knockout');
+  for (const width of [390, 1366]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    for (const language of ['pt', 'en']) {
+      await page.goto('/menu/communities/7?tab=tournaments');
+      await page.evaluate(value => localStorage.setItem('d24-language', value), language);
+      await page.reload();
+
+      const phases = page.locator('.historical-phase-card');
+      await expect(phases).toHaveCount(3);
+      await phases.nth(2).getByRole('button').first().click();
+      const final = page.locator('[data-historical-source-row="257"]');
+      await expect(final).toBeVisible();
+      await expect(final).toContainText('Águias');
+      await expect(final).toContainText('Leões');
+      await expect(final).toBeInViewport({ ratio: 0.5 });
+      await expect(page.locator('.historical-tournament-pages'))
+        .toContainText('51–57 / 57');
+
+      const geometry = await page.evaluate(() => {
+        const root = document.querySelector('.tournaments')!.getBoundingClientRect();
+        const phases = [...document.querySelectorAll('.historical-phase-card')]
+          .map(node => node.getBoundingClientRect())
+          .map(r => ({ left: r.left, right: r.right }));
+        return {
+          viewport: innerWidth, documentWidth: document.documentElement.scrollWidth,
+          root: { left: root.left, right: root.right }, phases
+        };
+      });
+      expect(geometry.documentWidth, JSON.stringify(geometry))
+        .toBeLessThanOrEqual(width + 2);
+      for (const rect of [geometry.root, ...geometry.phases]) {
+        expect(rect.left).toBeGreaterThanOrEqual(-2);
+        expect(rect.right).toBeLessThanOrEqual(width + 2);
+      }
+      await testInfo.attach('history-57-final-' + width + '-' + language, {
+        body: await final.screenshot(), contentType: 'image/png'
+      });
+    }
+  }
+  expect(fixture.unmocked.filter(path => /^(POST|PUT|PATCH|DELETE) \/api\/communities\//.test(path)))
+    .toEqual([]);
+});
+
+test('Premium populated tournament QA: 33 participants display the 32-player safety cap at 390px', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'schedule-roster-oversize');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.player-item')).toHaveCount(20);
+  await page.locator('.players-list + button').click();
+  await expect(page.locator('.player-item')).toHaveCount(33);
+  await expect(page.getByRole('button', { name: 'Gerar jornadas' })).toBeDisabled();
+  await expect(page.getByText('Esta versão permite no máximo 32 jogadores confirmados.'))
+    .toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(392);
+  expect(fixture.scheduleAttempts).toBe(0);
+  expect(fixture.organizerMutations).toEqual([]);
+});
