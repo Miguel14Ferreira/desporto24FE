@@ -338,4 +338,34 @@ describe('MySessionsComponent', () => {
     expect(component.attendanceError).toBeTruthy();
   });
 
+
+  it('uses the premium sessions shell without changing navigation or cancellation controls', () => {
+    const shell: HTMLElement = fixture.nativeElement.querySelector('.my-sessions-page');
+    expect(shell.classList.contains('jynlo-sessions-premium')).toBeTrue();
+    expect(shell.classList.contains('jynlo-games')).toBeTrue();
+    expect(shell.querySelector('.page-header a[href="/menu/createEvent"]')).toBeTruthy();
+    expect(shell.querySelector('.page-header a[href="/menu/events"]')).toBeTruthy();
+    const ownSession = shell.querySelector('.session-card') as HTMLElement;
+    expect(ownSession.querySelector('a[href="/menu/events/11"]')).toBeTruthy();
+    expect(ownSession.querySelector('button.danger-action')).toBeTruthy();
+    expect(shell.querySelector('.attendance-card a[href="/menu/events/12"]')).toBeTruthy();
+  });
+
+  it('keeps the confirmed-session and waitlist membership routes inside the premium layout', () => {
+    const upcoming = new Date(Date.now() + 86_400_000).toISOString();
+    component.data = {
+      created: [createdSession],
+      joined: [{ ...createdSession, id: 51, gameDate: upcoming, status: 'OPEN' }],
+      waitlisted: [{ ...createdSession, id: 52, gameDate: upcoming, status: 'FULL' }]
+    };
+    fixture.detectChanges();
+
+    const shell: HTMLElement = fixture.nativeElement.querySelector('.jynlo-sessions-premium');
+    expect(shell.querySelector('.next-session-highlight a[href="/menu/events/51?membership=1"]')).toBeTruthy();
+    expect(shell.querySelector('a[href="/menu/events/52?membership=1"]')).toBeTruthy();
+    const waitlist = shell.querySelector('.waitlist-badge')?.closest('.session-card') as HTMLElement;
+    expect(waitlist.querySelector('button.danger-action')).toBeTruthy();
+    expect(waitlist.querySelector('.waitlist-badge')).toBeTruthy();
+  });
+
 });

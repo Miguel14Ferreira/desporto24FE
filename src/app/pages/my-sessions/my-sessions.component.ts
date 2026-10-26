@@ -12,7 +12,7 @@ import { SessionService } from '../../services/session.service';
 @Component({
   selector: 'app-my-sessions',
   templateUrl: './my-sessions.component.html',
-  styleUrls: ['./my-sessions.component.css'],
+  styleUrls: ['./my-sessions.component.css', './my-sessions-concept-one-premium.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })

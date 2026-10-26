@@ -1,0 +1,85 @@
+/* Concept One Premium — My Sessions. Presentation-only, page-scoped. */
+:host { --sessions-accent:#28debf;--sessions-stroke:rgba(97,184,185,.27); }
+.my-sessions-page.jynlo-sessions-premium {
+  background:radial-gradient(ellipse at 82% 5%,rgba(29,151,145,.17),transparent 43%),
+    linear-gradient(165deg,#061b29,#092a3a 63%,#071e2e);
+  color:#f0fbfe;
+}
+.jynlo-sessions-premium .page-shell {width:min(1280px,100%);}
+.jynlo-sessions-premium .page-header {
+  position:relative;gap:1.5rem;padding:clamp(1.4rem,3vw,2.25rem);
+  border:1px solid var(--sessions-stroke);border-radius:21px;
+  background:linear-gradient(115deg,rgba(17,74,81,.91),rgba(11,44,61,.95) 75%);
+  box-shadow:0 16px 38px rgba(0,15,27,.2);
+}
+.jynlo-sessions-premium .page-header::before {
+  content:'';position:absolute;top:0;left:2rem;right:2rem;height:2px;
+  background:linear-gradient(90deg,transparent,var(--sessions-accent),transparent);
+}
+.jynlo-sessions-premium .page-header h1 {letter-spacing:-.04em;line-height:1.09;}
+.jynlo-sessions-premium .eyebrow,
+.jynlo-sessions-premium .section-kicker,
+.jynlo-sessions-premium .sport {color:#70f0d7;}
+.jynlo-sessions-premium .subtitle {color:#c1dce2;}
+.jynlo-sessions-premium .session-section {margin-top:2.4rem;}
+.jynlo-sessions-premium .section-heading {margin-bottom:1rem;}
+.jynlo-sessions-premium .section-heading h2 {color:#f2ffff;letter-spacing:-.025em;}
+.jynlo-sessions-premium .count-badge {
+  min-width:2rem;text-align:center;background:rgba(40,222,191,.14);
+  border:1px solid rgba(40,222,191,.25);color:#9bf8e4;
+}
+.jynlo-sessions-premium .next-session-highlight {
+  border:1px solid rgba(40,222,191,.5);border-radius:19px;
+  background:linear-gradient(110deg,rgba(17,94,92,.83),rgba(11,49,63,.94));
+  box-shadow:0 15px 38px rgba(0,28,31,.2);
+}
+.jynlo-sessions-premium .next-session-highlight h2 {color:#f2fffc;letter-spacing:-.02em;}
+.jynlo-sessions-premium .next-session-highlight p {color:#c0e0df;}
+.jynlo-sessions-premium .session-grid {grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:1rem;}
+.jynlo-sessions-premium .session-card,
+.jynlo-sessions-premium .attendance-card,
+.jynlo-sessions-premium .empty-card,
+.jynlo-sessions-premium .state-card,
+.jynlo-sessions-premium .feedback,
+.jynlo-sessions-premium .confirm-modal {
+  border:1px solid var(--sessions-stroke);border-radius:18px;
+  background:linear-gradient(150deg,rgba(17,54,70,.97),rgba(8,38,53,.97));
+  box-shadow:0 14px 34px rgba(0,16,27,.2);
+}
+.jynlo-sessions-premium .session-card,
+.jynlo-sessions-premium .attendance-card {min-width:0;padding:1.25rem;}
+.jynlo-sessions-premium .session-card {border-top:2px solid rgba(40,222,191,.6);}
+.jynlo-sessions-premium .session-card h3,
+.jynlo-sessions-premium .attendance-card h3 {color:#f4ffff;letter-spacing:-.015em;}
+.jynlo-sessions-premium .meta-grid div {
+  min-width:0;border:1px solid rgba(92,169,179,.19);
+  border-radius:12px;background:rgba(8,39,54,.7);
+}
+.jynlo-sessions-premium .meta-grid strong,
+.jynlo-sessions-premium .compact-meta {overflow-wrap:anywhere;color:#e6f6f7;}
+.jynlo-sessions-premium .meta-grid span,
+.jynlo-sessions-premium .compact-meta span,
+.jynlo-sessions-premium .attendance-date {color:#aacbd4;}
+.jynlo-sessions-premium .status {background:rgba(40,222,191,.12);color:#a4f6e2;}
+.jynlo-sessions-premium .waitlist-badge {background:rgba(251,191,36,.12);color:#fde68a;}
+.jynlo-sessions-premium .attendance-actions {border-color:rgba(98,174,180,.2);}
+.jynlo-sessions-premium .jynlo-action--primary {
+  --jynlo-action-border:rgba(40,222,191,.65);
+  --jynlo-action-bg:rgba(40,222,191,.17);
+  --jynlo-action-hover:rgba(40,222,191,.28);
+  --jynlo-action-text:#95f8e2;
+}
+.jynlo-sessions-premium a:focus-visible,
+.jynlo-sessions-premium button:focus-visible,
+.jynlo-sessions-premium textarea:focus-visible {
+  outline:2px solid #a0f9e5;outline-offset:3px;
+}
+@media(max-width:720px){
+  .jynlo-sessions-premium .page-header {padding:1.1rem;}
+  .jynlo-sessions-premium .header-actions {width:100%;}
+  .jynlo-sessions-premium .header-actions a {flex:1 1 160px;text-align:center;}
+  .jynlo-sessions-premium .next-session-highlight a {width:100%;text-align:center;}
+}
+@media(prefers-reduced-motion:reduce){
+  .jynlo-sessions-premium a,.jynlo-sessions-premium button {transition:none;}
+}
