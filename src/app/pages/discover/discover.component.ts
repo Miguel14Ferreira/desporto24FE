@@ -305,13 +305,11 @@ export class DiscoverComponent implements OnInit {
       }))
       .subscribe(({ venues, sessions, people }) => {
         if (requestId !== this.searchRequestId) return;
-        // Keep the GPS API's distance order. Normal previews favour exact city and
-        // informative entries within the first server-paginated page only.
-        const venueResults = this.nearbyVenuePosition
-          ? venues.venues : this.rankVenuePreview(venues.venues, location);
-        this.venues = venueResults;
+        // The API now ranks the entire paginated catalogue before slicing;
+        // do not re-rank within page 0 or disturb GPS distance ordering.
+        this.venues = venues.venues;
         this.venuesHasMore = venues.hasMore;
-        this.topVenueResults = venueResults.slice(0, 4);
+        this.topVenueResults = venues.venues.slice(0, 4);
         this.sessions = sessions;
         this.topSessionResults = sessions.slice(0, 4);
         if (peopleRequestId === this.peopleRequestId) {
@@ -321,23 +319,6 @@ export class DiscoverComponent implements OnInit {
       });
   }
 
-
-  /** Stable ranking within the first bounded page; the full directory keeps server order. */
-  private rankVenuePreview(venues: Venue[], city: string): Venue[] {
-    const clean = (text: string): string => text.trim().toLocaleLowerCase('pt')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const expectedCity = clean(city);
-    const score = (venue: Venue): number => {
-      let relevance = expectedCity && clean(venue.city || '') === expectedCity ? 100 : 0;
-      if (venue.sports?.trim()) relevance += 8;
-      if ((venue.address || '').trim()) relevance += 4;
-      if (venue.latitude != null && venue.longitude != null
-          && Number.isFinite(venue.latitude) && Number.isFinite(venue.longitude)) relevance += 4;
-      if (venue.venueType?.trim()) relevance += 1;
-      return relevance;
-    };
-    return [...venues].sort((left, right) => score(right) - score(left));
-  }
 
   /** Offer controlled, explicit filter relaxation only after a genuine empty search. */
   broadenVenueSearch(filter: 'sport' | 'city' | 'all'): void {
