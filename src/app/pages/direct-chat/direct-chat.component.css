@@ -460,7 +460,7 @@ h1 {
 
 /* Keep reactions below the bubble, never on top of the message or the timestamp. */
 .message-list .message {position:relative;margin-bottom:14px;}
-.message-list .message:has(.reaction-picker) {z-index:20;}
+ .message-list .message:has(app-chat-reactions:focus-within) {z-index:20;}
 .message-list .message app-chat-reactions {position:absolute;bottom:-15px;left:12px;z-index:3;}
 .message-list .message.own-message app-chat-reactions {left:auto;right:12px;}
-.message-list .message.own-message app-chat-reactions .reaction-picker {left:auto;right:0;}
+
