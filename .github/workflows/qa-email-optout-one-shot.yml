@@ -41,8 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA_PASSWORD_1 }}
-      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA_PASSWORD_2 }}
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
       JYNLO_QA_EMAIL_SEND_CONSENT: QA_ONLY_SEND_AND_CLEAN
     steps:
       - uses: actions/checkout@v4
