@@ -177,6 +177,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintNeutralReason = '';
   sprintNeutralNoFaultConfirmed = false;
   sprintNeutralOrderConfirmed = false;
+  sprintPositionsBracketId: number | null = null;
+  sprintPositionsIncidentId: number | null = null;
+  sprintPositionsFirstRider = '';
+  sprintPositionsSecondRider = '';
+  sprintPositionsReference = '';
+  sprintPositionsReason = '';
+  sprintPositionsPanelConfirmed = false;
   sprintAwardBracketId: number | null = null;
   sprintAwardIncidentId: number | null = null;
   sprintAwardWinner = '';
@@ -2710,6 +2717,60 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       },
       error: e => this.sprintReviewError = e.error?.message
         || t('communities.trackCycling.reviewSaveError')
+    });
+  }
+
+  sprintCanRatifyPositions(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): boolean {
+    const match=bracket.matches.find(m=>m.seriesKey===incident.seriesKey);
+    return bracket.format==='OLYMPIC_TWENTY_FOUR_REPECHAGE' && !bracket.interruption
+      && incident.status==='POSITIONS_PENDING'
+      && incident.decisionType==='OFFICIAL_RESULT_TO_RECORD'
+      && ['FALL','PUNCTURE','BICYCLE_DEFECT'].includes(incident.incidentType)
+      && /^SP[1-9][0-9]*-(A(?:[1-9]|1[0-2])|C[1-8]|E[1-6]|Q[1-4]|S[1-2]|B|G)$/.test(incident.seriesKey)
+      && this.sprintNeutralEligibleRiders(bracket,incident).length===2
+      && !!match && (match.status==='READY'||match.status==='IN_PROGRESS')
+      && match.winner==null;
+  }
+
+  editSprintOfficialPositions(bracketId: number,incidentId: number): void {
+    this.sprintPositionsBracketId=bracketId;
+    this.sprintPositionsIncidentId=incidentId;
+    this.sprintPositionsFirstRider='';
+    this.sprintPositionsSecondRider='';
+    this.sprintPositionsReference='';
+    this.sprintPositionsReason='';
+    this.sprintPositionsPanelConfirmed=false;
+    this.sprintIncidentError='';
+  }
+
+  saveSprintOfficialPositions(): void {
+    const bracket=this.sprintBrackets.find(b=>b.id===this.sprintPositionsBracketId);
+    const incident=(bracket?.incidents||[]).find(i=>i.id===this.sprintPositionsIncidentId);
+    if(!this.selected||!this.canManage()||this.sprintIncidentSaving
+        ||this.selectedSeasonId==null||this.selectedSeasonId!==this.activeSeason()?.id
+        ||!bracket||!incident||!this.sprintCanRatifyPositions(bracket,incident)
+        ||!this.sprintPositionsPanelConfirmed
+        ||this.sprintPositionsReference.trim().length<12
+        ||this.sprintPositionsReason.trim().length<12
+        ||this.sprintPositionsReference.trim()===incident.decisionReference?.trim())return;
+    const eligible=this.sprintNeutralEligibleRiders(bracket,incident);
+    const ordered=[this.sprintPositionsFirstRider,this.sprintPositionsSecondRider];
+    if(ordered[0]===ordered[1]||!ordered.every(n=>eligible.includes(n)))return;
+    const group=this.selected.id,season=this.selectedSeasonId;
+    this.sprintIncidentSaving=true;
+    this.sprintIncidentError='';
+    this.communityService.ratifySprintIncidentPositions(group,season,bracket.id,incident.id,{
+      orderedRiders:ordered,panelPositionsConfirmed:true,
+      reference:this.sprintPositionsReference.trim(),reason:this.sprintPositionsReason.trim()
+    }).pipe(timeout(10_000),finalize(()=>this.sprintIncidentSaving=false)).subscribe({
+      next:()=>{
+        this.sprintPositionsBracketId=null;
+        this.sprintPositionsIncidentId=null;
+        this.loadSprintBrackets(group,season);
+      },
+      error:e=>this.sprintIncidentError=e.error?.message
+        ||t('communities.trackCycling.incidentError')
     });
   }
 
