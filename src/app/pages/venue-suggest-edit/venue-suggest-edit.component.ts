@@ -145,9 +145,11 @@ export class VenueSuggestEditComponent implements OnInit {
   }
 
   get validContactSource(): boolean {
-    if (!this.contactEvidenceRequired) return true;
     const value = this.sourceUrl.trim();
-    if (!value || value.length > 500) return false;
+    // Source is optional for non-contact edits, but any submitted URL must be
+    // syntactically safe. A new public contact still requires a source.
+    if (!value) return !this.contactEvidenceRequired;
+    if (value.length > 500) return false;
     try {
       const parsed = new URL(value);
       return parsed.protocol === 'https:' && parsed.hostname.includes('.')
@@ -182,8 +184,9 @@ export class VenueSuggestEditComponent implements OnInit {
       return;
     }
     this.submitting = true;
-    const request = this.contactEvidenceRequired
-      ? this.suggestions.submit(this.venue.id, changes, this.reason.trim(), this.sourceUrl.trim())
+    const evidence = this.sourceUrl.trim();
+    const request = evidence
+      ? this.suggestions.submit(this.venue.id, changes, this.reason.trim(), evidence)
       : this.suggestions.submit(this.venue.id, changes, this.reason.trim());
     request
       .pipe(timeout(12000))
