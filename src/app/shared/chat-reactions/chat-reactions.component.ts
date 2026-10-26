@@ -20,6 +20,7 @@ let reactionPickerSequence = 0;
             [class.mine]="summary?.myEmoji === entry.emoji"
             [disabled]="disabled || store.isBusy(kind, conversationId, messageId)"
             [attr.aria-label]="('chat.changeReaction' | t) + ': ' + entry.emoji + ' · ' + entry.count"
+            [attr.aria-expanded]="expanded" [attr.aria-controls]="pickerId"
             [attr.aria-pressed]="summary?.myEmoji === entry.emoji"
             (click)="togglePicker()">
           {{ entry.emoji }} <span>{{ entry.count }}</span>
