@@ -3,7 +3,7 @@
 .community-tabs {
   display: flex;
   gap: .35rem;
-  margin: 1rem 0 0;
+  margin: 0; /* The detail-page parent owns spacing around navigation. */
   padding-bottom: .8rem;
   overflow-x: auto;
   border-bottom: 1px solid rgba(255,255,255,.08);

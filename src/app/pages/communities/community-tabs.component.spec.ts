@@ -26,6 +26,13 @@ describe('CommunityTabsComponent', () => {
     expect(buttons.map(button => button.textContent?.trim()).every(Boolean)).toBeTrue();
   });
 
+  it('keeps navigation spacing owned by the detail shell, without nested top margin', () => {
+    const root = render().nativeElement as HTMLElement;
+    const nav = root.querySelector<HTMLElement>('nav.community-tabs');
+    expect(nav).not.toBeNull();
+    expect(getComputedStyle(nav!).marginTop).toBe('0px');
+  });
+
   it('exposes tournament, archive and statistics tabs only when enabled', () => {
     const root = render({ competitions: true, archives: true, rankings: true, active: 'ranking' })
       .nativeElement as HTMLElement;

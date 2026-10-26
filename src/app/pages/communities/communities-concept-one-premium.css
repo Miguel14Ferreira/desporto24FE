@@ -85,10 +85,37 @@
 .jynlo-community-main-premium textarea:focus-visible{
   outline:2px solid #a1fae4;outline-offset:3px
 }
+/* Detail-only section rhythm: keep toolbar, hero, tabs and content distinct.
+   Avoid generic card margins, which break grids and nested tournament tables. */
+.jynlo-community-main-premium.community-detail-page .detail-page-toolbar {
+  margin-bottom:24px;
+}
+.jynlo-community-main-premium.community-detail-page .detail-header + app-community-tabs {
+  display:block;
+  margin-top:24px;
+}
+.jynlo-community-main-premium.community-detail-page .community-tab-panel {
+  margin-top:24px;
+}
+.jynlo-community-main-premium.community-detail-page app-community-tabs +
+:is(app-community-feature-settings,app-community-whatsapp-share) {
+  display:block;
+  margin-top:24px;
+}
 @media(max-width:800px){
   .jynlo-community-main-premium .page-header{padding:1.1rem}
   .jynlo-community-main-premium.community-detail-page .community-detail{padding:1rem}
   .jynlo-community-main-premium .detail-header{flex-wrap:wrap}
+  .jynlo-community-main-premium.community-detail-page .detail-page-toolbar {
+    margin-bottom:20px;
+  }
+  .jynlo-community-main-premium.community-detail-page .community-tab-panel,
+  .jynlo-community-main-premium.community-detail-page .detail-header + app-community-tabs,
+  .jynlo-community-main-premium.community-detail-page app-community-tabs +
+  :is(app-community-feature-settings,app-community-whatsapp-share) {
+    margin-top:20px;
+  }
+
 }
 @media(prefers-reduced-motion:reduce){
   .jynlo-community-main-premium .community-card{transition:none}
