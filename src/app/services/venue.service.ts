@@ -15,6 +15,15 @@ export interface VenueSuggestionPage {
   hasMore: boolean;
 }
 
+export interface NearbyCityVenuePage {
+  referenceCity: string;
+  radiusKm: number;
+  referenceAvailable: boolean;
+  venues: { venue: Venue; distanceKm: number }[];
+  page: number;
+  hasMore: boolean;
+}
+
 /** No public count or average is exposed until three different people rate. */
 export interface VenueRatingSummary {
   venueId: number;
@@ -87,6 +96,14 @@ export class VenueService {
     if (sport?.trim()) params = params.set('sport', sport.trim());
     if (district?.trim()) params = params.set('district', district.trim());
     return this.http.get<VenueSuggestionPage>(this.baseUrl + '/suggest', { params });
+  }
+
+  /** Distances from approximate saved venue-GPS reference, not official city centre. */
+  nearbyCity(city: string, sport?: string, page = 0, radiusKm = 25): Observable<NearbyCityVenuePage> {
+    let params = new HttpParams().set('city', city.trim()).set('page', String(page))
+      .set('radiusKm', String(radiusKm));
+    if (sport?.trim()) params = params.set('sport', sport.trim());
+    return this.http.get<NearbyCityVenuePage>(this.baseUrl + '/nearby-city', { params });
   }
 
   getRatingSummary(id: number): Observable<VenueRatingSummary> {

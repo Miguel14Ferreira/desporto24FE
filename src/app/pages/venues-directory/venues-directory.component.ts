@@ -27,6 +27,10 @@ export class VenuesDirectoryComponent implements OnInit, OnDestroy {
   district = '';
   sport = '';
   venues: Venue[] = [];
+  nearbyMode = false;
+  nearbyReferenceAvailable = true;
+  nearbyRadiusKm = 25;
+  nearbyDistanceById: Record<number, number> = {};
   page = 0;
   hasMore = false;
   loading = false;
@@ -47,13 +51,21 @@ export class VenuesDirectoryComponent implements OnInit, OnDestroy {
     this.district = params.get('district') || '';
     this.sport = params.get('sport') || '';
     const requestedPage = Number(params.get('page') ?? '0');
-    this.search(Number.isSafeInteger(requestedPage) && requestedPage >= 0 && requestedPage <= 1000
-      ? requestedPage : 0);
+    const safePage = Number.isSafeInteger(requestedPage) && requestedPage >= 0 && requestedPage <= 1000
+      ? requestedPage : 0;
+    const restoredRadius = Number(params.get('radiusKm') ?? '25');
+    if ([10, 25, 50].includes(restoredRadius)) this.nearbyRadiusKm = restoredRadius;
+    if (params.get('nearby') === '1' && this.city.trim().length >= 2
+        && !this.name.trim() && !this.district.trim()) this.searchNearby(safePage);
+    else this.search(safePage);
   }
 
   search(page = 0): void {
     if (!Number.isInteger(page) || page < 0) return;
     const request = ++this.requestVersion;
+    this.nearbyMode = false;
+    this.nearbyReferenceAvailable = true;
+    this.nearbyDistanceById = {};
     this.page = page;
     this.loading = true;
     this.loadError = false;
@@ -76,6 +88,59 @@ export class VenuesDirectoryComponent implements OnInit, OnDestroy {
           this.changeDetector.markForCheck();
         }
       });
+  }
+
+  get canSearchNearby(): boolean {
+    // Never discard name/district filters; the user chooses the fallback.
+    return !this.loading && !this.loadError && !this.nearbyMode && this.page === 0
+      && !this.hasMore && this.venues.length < 4 && this.city.trim().length >= 2
+      && !this.name.trim() && !this.district.trim();
+  }
+
+  searchNearby(page = 0): void {
+    if (!Number.isInteger(page) || page < 0 || page > 1000
+        || this.city.trim().length < 2 || this.name.trim() || this.district.trim()) return;
+    const request = ++this.requestVersion;
+    this.nearbyMode = true;
+    this.nearbyReferenceAvailable = true;
+    this.nearbyDistanceById = {};
+    this.page = page;
+    this.loading = true;
+    this.loadError = false;
+    this.venuesApi.nearbyCity(this.city, this.sport, page, this.nearbyRadiusKm)
+      .pipe(timeout({ first: 12000 }), takeUntil(this.destroyed))
+      .subscribe({
+        next: response => {
+          if (request !== this.requestVersion) return;
+          this.nearbyReferenceAvailable = response.referenceAvailable === true;
+          this.venues = (response.venues || []).map(entry => entry.venue);
+          this.nearbyDistanceById = Object.fromEntries(
+            (response.venues || []).map(entry => [entry.venue.id, entry.distanceKm]));
+          this.hasMore = response.hasMore === true;
+          this.loading = false;
+          this.changeDetector.markForCheck();
+        },
+        error: () => {
+          if (request !== this.requestVersion) return;
+          this.loading = false;
+          this.loadError = true;
+          this.venues = [];
+          this.hasMore = false;
+          this.nearbyDistanceById = {};
+          this.changeDetector.markForCheck();
+        }
+      });
+  }
+
+  setNearbyRadius(radiusKm: number): void {
+    if (![10, 25, 50].includes(radiusKm) || this.loading) return;
+    this.nearbyRadiusKm = radiusKm;
+    if (this.nearbyMode) this.searchNearby(0);
+  }
+
+  browsePage(page: number): void {
+    if (this.nearbyMode) this.searchNearby(page);
+    else this.search(page);
   }
 
   reset(): void {

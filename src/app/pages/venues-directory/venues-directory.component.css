@@ -47,3 +47,10 @@
   .venue-directory-page .venue-directory-result-heading { margin: 20px 0 14px; }
   .venue-directory-page .venue-directory-pagination { margin: 20px 0; flex-wrap: wrap; }
 }
+
+/* Opt-in locality discovery; reuse directory controls and card grids. */
+.venue-directory-nearby{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:15px 18px;margin:14px 0;border-radius:14px;border:1px solid rgba(155,203,218,.23);background:rgba(19,49,63,.65);color:#d0e4ec}
+.venue-directory-nearby p{margin:3px 0 0;color:#a5bdcd;font-size:.82rem;line-height:1.5}
+.venue-directory-nearby label{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.venue-directory-nearby select{padding:9px;border-radius:10px;background:#091d2c;border:1px solid rgba(166,209,221,.28);color:#f8fcff}
+.venue-directory-distance{margin:0;font-size:.81rem;color:#74ebc6;font-weight:750}
