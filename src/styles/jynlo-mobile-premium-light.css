@@ -1,3 +1,6 @@
+/* These mobile-only hero elements must be hidden on desktop. */
+.jynlo-mobile-feed-title, .jynlo-mobile-explore { display: none; }
+
 /*
  * Jynlo Concept One Mobile Premium — light, spacious PHONE-only experience.
  * Everything is scoped to authenticated routes AND <=767px. Desktop stays dark.
