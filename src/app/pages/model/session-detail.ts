@@ -13,6 +13,8 @@ export interface SessionDetail extends SessionSummary {
   problemType?: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | null;
   problemDetails?: string | null;
   communityId?: number | null;
+  /** Server-controlled eligibility: never infer from participant count alone. */
+  teamBalanceSupported?: boolean;
   canSharePublicly?: boolean;
   registrationOpeningMode?: 'IMMEDIATE' | 'SCHEDULED' | 'MANUAL' | null;
   registrationOpensAt?: string | null;
