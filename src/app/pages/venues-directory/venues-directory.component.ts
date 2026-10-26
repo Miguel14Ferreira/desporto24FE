@@ -46,7 +46,9 @@ export class VenuesDirectoryComponent implements OnInit, OnDestroy {
     this.city = params.get('city') || '';
     this.district = params.get('district') || '';
     this.sport = params.get('sport') || '';
-    this.search();
+    const requestedPage = Number(params.get('page') ?? '0');
+    this.search(Number.isSafeInteger(requestedPage) && requestedPage >= 0 && requestedPage <= 1000
+      ? requestedPage : 0);
   }
 
   search(page = 0): void {

@@ -524,3 +524,20 @@
 @media(max-width:800px){.venue-visit-grid{grid-template-columns:1fr}}
 @media(max-width:480px){.venue-visit-card{padding:14px}.venue-map-iframe{height:265px}
   .venue-contact-other-actions{flex-direction:column}.venue-contact-other-actions .venue-visit-action{width:100%}}
+
+/* Keep the return action inside the visible hero, below sticky app navigation. */
+.venue-detail-page .venue-header .venue-hero-back{
+  display:inline-flex;align-items:center;margin:0 0 22px;
+  color:#abf9df;background:rgba(17,65,67,.78);
+  border:1px solid rgba(99,209,175,.48);
+  border-radius:999px;padding:10px 16px;
+  text-decoration:none;font-weight:750;line-height:1.3;
+}
+.venue-detail-page .venue-header .venue-hero-back:hover{background:#15564f}
+.venue-detail-page .venue-address-map-link{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:9px 12px;margin-top:11px;
+  border:1px solid rgba(88,200,175,.42);border-radius:10px;
+  color:#a9f4dc;background:#113c40;text-decoration:none;font-weight:750;
+}
+.venue-detail-page .venue-address-map-link:hover{background:#15564f}

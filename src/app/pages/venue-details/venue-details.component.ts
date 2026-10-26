@@ -51,6 +51,20 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
     @Optional() private readonly sanitizer: DomSanitizer | null = null
   ) {}
 
+  /** Only whitelisted public filters survive the round-trip back to the directory. */
+  get backToDirectoryQueryParams(): Record<string, string | number> {
+    const params = this.route.snapshot?.queryParamMap;
+    if (!params) return {};
+    const query: Record<string, string | number> = {};
+    for (const key of ['name', 'city', 'district', 'sport']) {
+      const value = params.get(key);
+      if (value) query[key] = value;
+    }
+    const page = Number(params.get('page') ?? '0');
+    if (Number.isSafeInteger(page) && page > 0 && page <= 1000) query['page'] = page;
+    return query;
+  }
+
   private updateView(): void {
     this.changeDetector?.markForCheck();
   }

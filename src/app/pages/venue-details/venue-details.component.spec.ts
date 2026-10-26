@@ -1,4 +1,4 @@
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 
@@ -622,4 +622,23 @@ describe('VenueDetailsComponent', () => {
     expect(component.sportConditionsLoading).toBeFalse();
     expect(component.loadError).toBeTrue();
   });
+  it('keeps directory filters and page in the visible return link', () => {
+    const route = { snapshot: {
+      queryParamMap: convertToParamMap({ page: '3', district: 'Lisboa',
+        name: 'Campo', sport: 'Futebol' })
+    } } as unknown as ActivatedRoute;
+    const component = new VenueDetailsComponent(route, {} as VenueService);
+    expect(component.backToDirectoryQueryParams).toEqual({
+      name: 'Campo', district: 'Lisboa', sport: 'Futebol', page: 3
+    });
+  });
+
+  it('does not accept out-of-range catalogue pages when returning', () => {
+    const route = { snapshot: {
+      queryParamMap: convertToParamMap({page: '-1', city: 'Lisboa'})
+    } } as unknown as ActivatedRoute;
+    const component = new VenueDetailsComponent(route, {} as VenueService);
+    expect(component.backToDirectoryQueryParams).toEqual({ city: 'Lisboa' });
+  });
+
 });

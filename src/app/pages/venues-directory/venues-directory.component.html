@@ -68,7 +68,8 @@
     } @else {
       <div class="venue-directory-grid">
         @for (venue of venues; track venue.id) {
-          <a class="venue-directory-card" [routerLink]="['/menu/venues', venue.id]">
+          <a class="venue-directory-card" [routerLink]="['/menu/venues', venue.id]"
+             [queryParams]="{ page: page, name: name, city: city, district: district, sport: sport }">
             <div class="venue-directory-card-top">
               <span class="venue-directory-icon" aria-hidden="true">⌖</span>
               <span class="venue-directory-origin">{{ (venue.informationSource === 'OPENSTREETMAP'
@@ -77,7 +78,13 @@
             </div>
             <h3>{{ venue.name }}</h3>
             <p class="venue-directory-location">📍 {{ venue.city }}@if (venue.district && venue.district !== venue.city) {, {{ venue.district }}}</p>
-            @if (venueAddress(venue)) { <p class="venue-directory-address">{{ venueAddress(venue) }}</p> }
+            @if (venueAddress(venue)) {
+              <p class="venue-directory-address">{{ venueAddress(venue) }}</p>
+            } @else {
+              <p class="venue-directory-address venue-directory-address-unconfirmed">
+                {{ 'venue.detail.postalAddressUnknown' | t }}
+              </p>
+            }
             <div class="venue-directory-tags">
               @for (item of sports(venue); track item) { <span>{{ item }}</span> }
               @if (!venue.sports) { <span>{{ 'venue.catalog.sportUnknown' | t }}</span> }
