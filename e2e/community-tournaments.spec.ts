@@ -121,7 +121,7 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule' | 'history' | 'historical-knockout' | 'historical-import-flow' | 'historical-import-review' | 'karting' | 'inline-speed-qa';
+  | 'teams-schedule' | 'history' | 'historical-knockout' | 'historical-import-flow' | 'historical-import-review' | 'karting' | 'inline-speed-qa' | 'visual-large-league';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
@@ -159,6 +159,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     name: 'Taça antiga QA', sport: 'Futebol', format: 'KNOCKOUT',
     historicalArchiveId: 91, entryType: 'TEAM', status: 'COMPLETED'
   });
+  if (mode === 'visual-large-league') tournaments[0].status = 'IN_PROGRESS';
   if (mode === 'paged' && sport === 'Xadrez') {
     tournaments[0].scoringMode = 'CHESS_HALF_POINTS';
   }
@@ -205,8 +206,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
         joinedAt: '2026-10-16T12:02:00Z', status: 'PENDING' }
     );
   }
-  if (mode === 'schedule-roster-paged' || mode === 'schedule-roster-oversize') {
-    const max = mode === 'schedule-roster-oversize' ? 33 : 21;
+  if (mode === 'schedule-roster-paged' || mode === 'schedule-roster-oversize'
+    || mode === 'visual-large-league') {
+    const max = mode === 'schedule-roster-oversize' ? 33
+      : mode === 'visual-large-league' ? 32 : 21;
     for (let id = 3; id <= max; id++) {
       participants.push({
         profileId: id, username: 'player' + id, displayName: 'Jogador ' + id,
@@ -230,6 +233,23 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       awayProfileId: 2, awayUsername: 'participante', status: 'SCHEDULED',
       homeScore: null, awayScore: null }
   ] : [];
+  if (mode === 'visual-large-league') {
+    // Three synthetic rounds, 16 fixtures each; all 32 registered competitors
+    // appear in standings, and fixture pagination crosses 20 + 20 + 8.
+    for (let round = 1; round <= 3; round++) {
+      for (let slot = 0; slot < 16; slot++) {
+        const homeProfileId = slot + 1;
+        const awayProfileId = 17 + ((slot + round - 1) % 16);
+        matches.push({
+          id: 1000 + (round - 1) * 16 + slot, roundNumber: round,
+          homeProfileId, homeUsername: homeProfileId === 1 ? 'organizador'
+            : homeProfileId === 2 ? 'participante' : 'player' + homeProfileId,
+          awayProfileId, awayUsername: 'player' + awayProfileId,
+          status: 'SCHEDULED', homeScore: null, awayScore: null
+        });
+      }
+    }
+  }
   if (mode === 'trial') {
     matches.push({ id: 40, roundNumber: 1, homeProfileId: 1, homeUsername: 'organizador',
       awayProfileId: 2, awayUsername: 'participante', status: 'SCHEDULED',
@@ -880,7 +900,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
             page: requestedPage, hasMore: requestedPage < participants.length - 1
           });
         }
-        if (mode === 'schedule-roster-paged' || mode === 'schedule-roster-oversize') {
+        if (mode === 'schedule-roster-paged' || mode === 'schedule-roster-oversize'
+          || mode === 'visual-large-league') {
           const offset = requestedPage * 20;
           return send({
             participants: participants.slice(offset, offset + 20),
@@ -954,6 +975,11 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     if (/^\/api\/communities\/7\/tournaments\/(9|11)\/matches$/.test(path) && method === 'GET') {
       const pageNumber = Number(url.searchParams.get('page') || 0);
       requestedMatchPages.push(pageNumber);
+      if (mode === 'visual-large-league') {
+        const offset = pageNumber * 20;
+        return send({ matches: matches.slice(offset, offset + 20),
+          page: pageNumber, hasMore: offset + 20 < matches.length });
+      }
       if (mode === 'paged') {
         return send({ matches: matches.slice(pageNumber, pageNumber + 1),
           page: pageNumber, hasMore: pageNumber < matches.length - 1 });
