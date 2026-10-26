@@ -220,7 +220,8 @@
 .inbox-message-log .inbox-bubble:has(app-chat-reactions.has-reactions) {
   margin-bottom:36px;
 }
-.inbox-message-log .inbox-bubble:has(app-chat-reactions:focus-within) { z-index:20; }
+.inbox-message-log .inbox-bubble:has(app-chat-reactions:focus-within),
+.inbox-message-log .inbox-bubble:has(app-chat-reactions.is-picker-open) { z-index:20; }
 .inbox-message-log .inbox-bubble app-chat-reactions {
   position:absolute; bottom:-14px; left:14px; z-index:3;
   max-width:calc(100% - 28px);
