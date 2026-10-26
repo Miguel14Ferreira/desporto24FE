@@ -28,10 +28,10 @@ export interface TrackSprintIncident {
   heatNumber: number;
   incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER';
   details: string;
-  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'RESTART_PENDING' | 'POSITIONS_PENDING' | 'NEUTRAL_RESTART_OK' | 'OFFICIAL_POSITIONS' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
+  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'RESTART_PENDING' | 'POSITIONS_PENDING' | 'FAULT_START_PENDING' | 'FAULT_START_OK' | 'NEUTRAL_RESTART_OK' | 'OFFICIAL_POSITIONS' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
   reportedBy: string;
   reportedAt: string;
-  decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | null;
+  decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | 'UNINTENTIONAL_FALL' | null;
   sanctionType?: 'WARNING' | 'RELEGATION' | 'DISQUALIFICATION' | null;
   sanctionedUsername?: string | null;
   decisionReference: string | null;
@@ -49,6 +49,9 @@ export interface TrackSprintIncident {
   awardConfirmedBy?: string | null;
   awardConfirmedAt?: string | null;
   officialPositions?: string[];
+  fallFaultRider?: string | null;
+  fallNonFaultRider?: string | null;
+  fallChosenStartPosition?: 'INSIDE' | 'OUTSIDE' | null;
 }
 
 /** Immutable signed-decision transcription; platform does not validate external signatures. */
@@ -602,6 +605,21 @@ export class CommunityGroupsService {
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
       + '/official-positions', payload);
+  }
+
+  confirmUnintentionalFallStart(communityId: number, seasonId: number,
+    bracketId: number, incidentId: number, payload: {
+      faultRider: string;
+      nonFaultRider: string;
+      nonFaultStartPosition: 'INSIDE' | 'OUTSIDE';
+      nonFaultChoiceConfirmed: boolean;
+      reference: string;
+      reason: string;
+    }): Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/unintentional-fall-start', payload);
   }
 
   authorizeNeutralSprintRestart(communityId: number, seasonId: number, bracketId: number,
