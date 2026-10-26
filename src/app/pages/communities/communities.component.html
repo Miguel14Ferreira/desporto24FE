@@ -1290,9 +1290,13 @@
                                     <small>{{ 'communities.trackCycling.incidentReportedBy' | t }}:
                                       {{ incident.reportedBy }} · {{ incident.reportedAt }}</small>
                                     @if (incident.status !== 'PENDING') {
-                                      <p>{{ incident.decisionType === 'RESTART_REQUIRED'
-                                        ? ('communities.trackCycling.incidentRestart' | t)
-                                        : ('communities.trackCycling.incidentRecord' | t) }}</p>
+                                      <p>{{ incident.status === 'RESTART_PENDING'
+                                        ? ('communities.trackCycling.neutralPending' | t)
+                                        : incident.status === 'POSITIONS_PENDING'
+                                          ? ('communities.trackCycling.neutralPositionsNotice' | t)
+                                          : incident.decisionType === 'RESTART_REQUIRED'
+                                            ? ('communities.trackCycling.incidentRestart' | t)
+                                            : ('communities.trackCycling.incidentRecord' | t) }}</p>
                                       @if (incident.decisionType === 'DISCIPLINARY_RULING') {
                                         <p>
                                           {{ 'communities.trackCycling.disciplineRider' | t }}:
