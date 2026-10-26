@@ -132,6 +132,58 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+  it('requires explicit chair request, signed panel review and manual outcome with PT/EN', () => {
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintReviewBracketId=53;
+    component.sprintReviewIncidentId=7;
+    component.sprintReviewMode='REQUEST';
+    component.sprintReviewPresident='Fictional Panel President';
+    component.sprintReviewReference='Fictional chair request 2026/100';
+    component.sprintReviewReason='Formal review requested after viewing the available evidence';
+    component.sprintReviewJudgeRefereeConfirmed=false;
+    const ask=jasmine.createSpy('requestOfficialReview').and.returnValue(of({action:'REQUESTED'}));
+    const decide=jasmine.createSpy('resolveOfficialReview').and.returnValue(of({action:'OVERTURNED'}));
+    (component as any).communityService={
+      requestSprintOfficialReview:ask,resolveSprintOfficialReview:decide
+    };
+    spyOn<any>(component,'loadSprintReviewHistory').and.stub();
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintReview();
+    expect(ask).not.toHaveBeenCalled();
+    component.sprintReviewJudgeRefereeConfirmed=true;
+    component.saveSprintReview();
+    expect(ask).toHaveBeenCalledWith(12,44,53,7,jasmine.objectContaining({
+      originalJudgeRefereeDecision:true,
+      presidentName:'Fictional Panel President'
+    }));
+    component.sprintReviewMode='DECIDE';
+    component.sprintReviewOutcome='';
+    component.sprintReviewReference='Fictional final record 2026/102';
+    component.sprintReviewPanelReference='Fictional full panel review 2026/101';
+    component.sprintReviewReason='Panel reviewed evidence and president explicitly overturned original ruling';
+    component.saveSprintReview();
+    expect(decide).not.toHaveBeenCalled();
+    component.sprintReviewOutcome='OVERTURNED';
+    component.saveSprintReview();
+    expect(decide).toHaveBeenCalledWith(12,44,53,7,jasmine.objectContaining({
+      outcome:'OVERTURNED',
+      panelReviewReference:'Fictional full panel review 2026/101',
+      presidentDecisionReference:'Fictional final record 2026/102'
+    }));
+    const prev=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.reviewOverturnedBlock')).toContain('não é criado');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.reviewOverturnedBlock')).toContain('No replacement winner');
+    } finally {
+      if(prev===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prev);
+    }
+  });
+
   it('requires a documented full-series decision for BO3 disqualification', () => {
     const bracket={format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
       matches:[{seriesKey:'SP53-Q1',status:'IN_PROGRESS',
