@@ -1,0 +1,272 @@
+/*
+ * Concept One Premium — tournaments, people/profiles and venues.
+ * Opt-in to actual page roots and community-tournament host. Never change
+ * templates' conditional rendering, tab state, access rules or handlers.
+ * Loaded after all previous Concept One layers.
+ */
+
+/* Community tournaments: creation, selection and results remain functional. */
+body .communities-page.jynlo-c1 app-community-tournaments .tournament-hero {
+  border: 1px solid rgba(95, 207, 193, .32);
+  border-radius: 21px;
+  padding: clamp(20px, 3vw, 32px);
+  background:
+    radial-gradient(ellipse at 94% 8%, rgba(50, 228, 196, .18), transparent 57%),
+    linear-gradient(118deg, #123d49, #0a293a 77%);
+  box-shadow: 0 18px 40px rgba(0, 10, 22, .20);
+}
+body .communities-page.jynlo-c1 app-community-tournaments .tournament-hero h3 {
+  color: #f4fffd;
+  font-size: clamp(1.65rem, 2.5vw, 2.3rem);
+  font-weight: 850;
+  line-height: 1.13;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+body .communities-page.jynlo-c1 app-community-tournaments .tournament-hero p:not(.t-sport-note) {
+  color: #c1dce3;
+  line-height: 1.65;
+}
+body .communities-page.jynlo-c1 app-community-tournaments .tournament-eyebrow {
+  color: #83f4db !important;
+}
+body .communities-page.jynlo-c1 app-community-tournaments :is(.create-tournament,.tournament-sidebar,.tournament-detail,.t-section,.complete-action) {
+  border-color: rgba(110, 196, 199, .24);
+  border-radius: 17px;
+  background: linear-gradient(155deg, rgba(17, 52, 69, .96), rgba(9, 36, 52, .97));
+  box-shadow: 0 13px 30px rgba(0, 10, 22, .17);
+}
+body .communities-page.jynlo-c1 app-community-tournaments :is(.create-step,.match-card,.team-roster-card,.team-fixture,.historical-phase-card) {
+  border-color: rgba(108, 193, 197, .25);
+  border-radius: 14px;
+  background-color: rgba(8, 36, 51, .65);
+}
+body .communities-page.jynlo-c1 app-community-tournaments .tournament-option {
+  border: 1px solid rgba(116, 190, 197, .22);
+  border-radius: 12px;
+  background: #123647;
+  color: #f0fbfc;
+}
+body .communities-page.jynlo-c1 app-community-tournaments .tournament-option:is(:hover,:focus-visible) {
+  border-color: #68ead1;
+  background: #194d56;
+}
+body .communities-page.jynlo-c1 app-community-tournaments .t-btn-primary {
+  background: #32e4c4;
+  color: #05342e;
+  border-radius: 11px;
+}
+body .communities-page.jynlo-c1 app-community-tournaments .t-btn-primary:hover:not(:disabled) {
+  background: #77f8d9;
+}
+body .communities-page.jynlo-c1 app-community-tournaments .t-btn-secondary {
+  border-color: rgba(116, 191, 195, .34);
+  border-radius: 11px;
+  color: #eefaf9;
+  background: #113a48;
+}
+body .communities-page.jynlo-c1 app-community-tournaments :is(.t-btn,.tournament-option,input,select,textarea):focus-visible {
+  outline: 2px solid #81f8de;
+  outline-offset: 3px;
+}
+body .communities-page.jynlo-c1 app-community-tournaments :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {
+  border-color: rgba(133, 195, 207, .32);
+  background: #092838;
+  color: #f4fbfc;
+}
+body .communities-page.jynlo-c1 app-community-tournaments .standings-scroll {
+  border-radius: 12px;
+  scrollbar-color: #477e85 rgba(5, 25, 36, .7);
+  scrollbar-width: thin;
+}
+body .communities-page.jynlo-c1 app-community-tournaments .points-cell {
+  color: #8cf8de;
+}
+/* Never recolor error or destructive actions here. */
+
+/* People discovery, public profiles, personal profile and edit profile. */
+body .jynlo-c1:is(.profile-page,.community-page,.edit-page) {
+  background:
+    radial-gradient(ellipse 48% 440px at 94% 5%, rgba(35, 155, 147, .15), transparent 76%),
+    linear-gradient(155deg, #061b29 3%, #082737 64%, #061b2a 100%);
+  color: #f5feff;
+}
+body .jynlo-c1:is(.profile-page,.community-page,.edit-page) :is(.profile-shell,.community-shell,.edit-shell) {
+  width: min(1240px, 100%);
+}
+body .profile-page.jynlo-c1 .profile-shell { max-width: 1070px; }
+body .edit-page.jynlo-c1 .edit-shell { max-width: 1080px; }
+body .jynlo-c1:is(.profile-page,.community-page,.edit-page) .page-header h1 {
+  font-weight: 850;
+  line-height: 1.08;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+body .jynlo-c1:is(.profile-page,.community-page,.edit-page) .page-header .subtitle {
+  color: #bfd8df;
+  line-height: 1.65;
+}
+body .jynlo-c1:is(.profile-page,.community-page,.edit-page) .page-header .eyebrow {
+  color: #32e4c4;
+}
+body .jynlo-c1:is(.profile-page,.community-page,.edit-page) .jynlo-action--primary {
+  --jynlo-action-bg: #32e4c4;
+  --jynlo-action-border: #32e4c4;
+  --jynlo-action-text: #05342e;
+  --jynlo-action-hover: #77f8d9;
+}
+body .jynlo-c1:is(.profile-page,.community-page,.edit-page) .jynlo-action--neutral {
+  --jynlo-action-bg: #113a48;
+  --jynlo-action-border: rgba(116, 191, 195, .34);
+  --jynlo-action-text: #ebfbfa;
+  --jynlo-action-hover: #205465;
+}
+body .profile-page.jynlo-c1 :is(.profile-card,.bio-card,.profile-completion-card,.reliability-card,.activity-section,.account-section,.state-card),
+body .community-page.jynlo-c1 :is(.partner-search,.profile-card,.profile-detail,.state-card,.public-activity,.public-achievements,.report-panel),
+body .edit-page.jynlo-c1 :is(.edit-card,.profile-completion-card,.mfa-setting,.mfa-setup-card,.device-sessions) {
+  border: 1px solid rgba(105, 193, 193, .24);
+  border-radius: 18px;
+  background: linear-gradient(150deg, rgba(17, 52, 69, .96), rgba(8, 37, 53, .96));
+  box-shadow: 0 16px 38px rgba(0, 10, 22, .20);
+}
+body .profile-page.jynlo-c1 .profile-card,
+body .community-page.jynlo-c1 .profile-detail,
+body .edit-page.jynlo-c1 .edit-card { padding: clamp(20px, 3vw, 35px); }
+body .community-page.jynlo-c1 .profile-grid .profile-card:is(:hover,:focus-visible) {
+  border-color: rgba(52, 230, 199, .6);
+  background: linear-gradient(150deg, #174454, #0e3243);
+}
+body .profile-page.jynlo-c1 :is(.activity-grid > div,.details-grid > div,.reliability-grid > div),
+body .community-page.jynlo-c1 :is(.profile-meta > div,.public-activity-grid > div) {
+  border-color: rgba(105, 193, 193, .20);
+  background: rgba(5, 29, 44, .58);
+}
+body .jynlo-c1:is(.profile-page,.community-page,.edit-page) :is(input,select,textarea):focus-visible {
+  outline: 2px solid #81f8de;
+  outline-offset: 3px;
+}
+/* Reporting, safety and account deletion states keep their warning colors. */
+
+/* Venue catalogue, genuine venue details and user-submitted venues. */
+body .venue-directory-page.jynlo-c1,
+body .venue-detail-page,
+body .venue-create-page {
+  background:
+    radial-gradient(ellipse 52% 460px at 90% 3%, rgba(33, 158, 148, .14), transparent 75%),
+    linear-gradient(154deg, #061b29 3%, #082737 67%, #061b2a);
+  color: #f4fcff;
+}
+body .venue-directory-page.jynlo-c1 { padding-top: 6.4rem; }
+body .venue-directory-page.jynlo-c1 .venue-directory-shell { width: min(1320px, 100%); max-width: 1320px; }
+body .venue-directory-page.jynlo-c1 .venue-directory-hero h1 {
+  font-size: clamp(2.4rem, 4.4vw, 3.8rem);
+  font-weight: 850;
+  line-height: 1.1;
+  letter-spacing: -.045em;
+}
+body .venue-directory-page.jynlo-c1 :is(.venue-directory-filters,.venue-directory-card,.venue-directory-state) {
+  border-color: rgba(105, 193, 193, .25);
+  border-radius: 18px;
+  background: linear-gradient(150deg, #113445, #0b283b);
+  box-shadow: 0 16px 35px rgba(0, 10, 22, .19);
+}
+body .venue-directory-page.jynlo-c1 .venue-directory-card:is(:hover,:focus-visible) {
+  border-color: #59e9cb;
+  background: linear-gradient(150deg, #174454, #0d3144);
+}
+body .venue-directory-page.jynlo-c1 :is(.venue-directory-add,.venue-directory-search) {
+  background: #32e4c4;
+  color: #05342e;
+  border-radius: 11px;
+}
+body .venue-directory-page.jynlo-c1 :is(.venue-directory-add,.venue-directory-search):hover:not(:disabled) {
+  background: #77f8d9;
+}
+body .venue-directory-page.jynlo-c1 :is(.venue-directory-eyebrow,.venue-directory-card-link) { color: #8cf8de; }
+body .venue-directory-page.jynlo-c1 :is(input,select,button,a):focus-visible {
+  outline: 2px solid #81f8de;
+  outline-offset: 3px;
+}
+body .venue-detail-page { padding-top: clamp(42px, 5vw, 64px); }
+body .venue-detail-page .venue-detail-shell { width: min(1190px, 100%); }
+body .venue-detail-page .venue-header {
+  border-color: rgba(104, 205, 194, .3);
+  background:
+    radial-gradient(ellipse at 93% 0%, rgba(50, 228, 196, .18), transparent 58%),
+    linear-gradient(120deg, #123d49, #0b293b 78%);
+  box-shadow: 0 18px 44px rgba(0, 10, 22, .2);
+}
+body .venue-detail-page :is(.venue-visit-card,.venue-rating-summary,.venue-photos-state,.venue-sport-condition-card,.venue-sport-condition-form,.venue-sport-conditions-state),
+body .venue-detail-page .venue-basic-info > div,
+body .venue-detail-page .venue-information-grid > div {
+  border-color: rgba(110, 196, 199, .27);
+  border-radius: 16px;
+  background: linear-gradient(148deg, #123445, #0b2a3b);
+}
+body .venue-detail-page .venue-visit-card { box-shadow: 0 13px 30px rgba(0, 10, 22, .15); }
+body .venue-detail-page :is(.venue-map-link,.venue-photo-upload,.venue-sport-condition-submit) {
+  border-color: rgba(52, 228, 196, .44);
+  background: #12483f;
+  color: #ccfff2;
+}
+body .venue-detail-page :is(a,button,input,textarea):focus-visible {
+  outline: 2px solid #81f8de;
+  outline-offset: 3px;
+}
+body .venue-create-page { padding-top: clamp(42px, 5vw, 64px); }
+body .venue-create-page .venue-create-shell { width: min(1040px, 100%); }
+body .venue-create-page .venue-kicker,
+body .venue-create-page .back-link { color: #8cf8de; }
+body .venue-create-page .venue-create-shell > h1 {
+  font-size: clamp(2rem, 3.7vw, 3.15rem);
+  font-weight: 850;
+  letter-spacing: -.04em;
+  text-wrap: balance;
+}
+body .venue-create-page .venue-create-form {
+  border: 1px solid rgba(105, 193, 193, .25);
+  border-radius: 20px;
+  padding: clamp(18px, 3vw, 32px);
+  background: linear-gradient(150deg, #113445, #0b283b);
+  box-shadow: 0 16px 38px rgba(0, 10, 22, .2);
+}
+body .venue-create-page .venue-create-form :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {
+  border: 1px solid rgba(139, 197, 208, .3);
+  border-radius: 11px;
+  background: #092738;
+  color: #f4fcff;
+}
+body .venue-create-page .venue-create-form :is(input,select,textarea,button):focus-visible,
+body .venue-create-page a:focus-visible {
+  outline: 2px solid #81f8de;
+  outline-offset: 3px;
+}
+body .venue-create-page :is(.venue-create-options,.venue-create-similar,.venue-create-location) {
+  border-color: rgba(105, 193, 193, .23);
+  border-radius: 14px;
+}
+body .venue-create-page .venue-create-form label { color: #deeff0; }
+body .venue-create-page .venue-create-form :is(.venue-create-section-title,.venue-create-sports-label) {
+  color: #f3fdfc;
+}
+@media (max-width: 850px) {
+  body .communities-page.jynlo-c1 app-community-tournaments .tournament-hero {
+    padding: 20px;
+  }
+  body .venue-directory-page.jynlo-c1 .venue-directory-shell,
+  body .venue-detail-page .venue-detail-shell,
+  body .venue-create-page .venue-create-shell { width: 100%; }
+}
+@media (max-width: 620px) {
+  body .venue-directory-page.jynlo-c1 { padding-top: 5.9rem; }
+  body .venue-create-page .venue-create-form { padding: 16px; }
+  body .venue-create-page .venue-create-actions { flex-wrap: wrap; }
+  body .communities-page.jynlo-c1 app-community-tournaments .tournament-hero h3 { font-size: 1.65rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .venue-directory-page.jynlo-c1 .venue-directory-card,
+  body .community-page.jynlo-c1 .profile-card {
+    transform: none;
+    transition: none;
+  }
+}

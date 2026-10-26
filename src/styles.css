@@ -8,6 +8,7 @@
 @import './styles/jynlo-secondary-concept-one.css';
 @import './styles/jynlo-entry-premium.css';
 @import './styles/jynlo-communities-sessions-premium.css';
+@import './styles/jynlo-tournaments-profiles-venues-premium.css';
 
 :root {
   --d24-bg: #07111f;
