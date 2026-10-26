@@ -686,31 +686,6 @@ input,textarea,select {
   border-top: 1px solid rgba(255,255,255,.08);
 }
 
-.season-create-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, .75fr) auto;
-  align-items: end;
-  gap: .7rem;
-  margin-top: .8rem;
-}
-
-.season-filter {
-  display: grid;
-  gap: .25rem;
-  min-width: 190px;
-}
-
-.season-filter > span {
-  color: #94a3b8;
-  font-size: .7rem;
-  font-weight: 800;
-}
-
-.season-filter select {
-  height: 40px;
-  padding: 0 .65rem;
-}
-
 .section-heading-actions,
 .stats-filter-row {
   display: flex;
@@ -738,19 +713,11 @@ input,textarea,select {
 }
 
 @media (max-width: 900px) {
-  .season-create-form {
-    grid-template-columns: 1fr;
-  }
-
   .section-heading-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .season-filter {
-    width: 100%;
-    min-width: 0;
-  }
 }
 
 

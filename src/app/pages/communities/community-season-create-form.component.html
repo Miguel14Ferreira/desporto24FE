@@ -1,0 +1,15 @@
+<div class="season-create-form">
+  <label>
+    <span>{{ 'communities.seasonName' | t }}</span>
+    <input [ngModel]="name" (ngModelChange)="nameChange.emit($event)"
+      [placeholder]="'communities.seasonNamePlaceholder' | t">
+  </label>
+  <label>
+    <span>{{ 'communities.seasonStart' | t }}</span>
+    <input type="datetime-local" [ngModel]="startsAt" (ngModelChange)="startsAtChange.emit($event)">
+  </label>
+  <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+    [disabled]="saving" (click)="createRequested.emit()">
+    {{ (saving ? 'communities.creatingSeason' : 'communities.createSeason') | t }}
+  </button>
+</div>
