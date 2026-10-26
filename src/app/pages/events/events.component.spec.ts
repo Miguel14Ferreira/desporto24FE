@@ -31,7 +31,7 @@ describe('EventsComponent', () => {
   });
 
 
-  it('restores Discover sport and locality before the first full session search', () => {
+  it('restores Discover sport and locality before the first full session search', async () => {
     const route = TestBed.inject(ActivatedRoute);
     const previous = route.snapshot.queryParamMap;
     Object.defineProperty(route.snapshot, 'queryParamMap', {
@@ -40,6 +40,9 @@ describe('EventsComponent', () => {
     });
     try {
       const deepLinked = TestBed.createComponent(EventsComponent);
+      deepLinked.detectChanges();
+      // ngModel writes to the input after the initial change-detection microtask.
+      await deepLinked.whenStable();
       deepLinked.detectChanges();
 
       expect(deepLinked.componentInstance.sport).toBe('Ténis');
