@@ -584,7 +584,7 @@ export class CommunityGroupsService {
 
   decideTrackSprintIncident(communityId: number, seasonId: number, bracketId: number,
     incidentId: number,
-    payload: {decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING';
+    payload: {decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | 'UNINTENTIONAL_FALL';
       reference: string; reason: string;
       sanctionType?: 'WARNING' | 'RELEGATION' | 'DISQUALIFICATION';
       sanctionedUsername?: string}):
