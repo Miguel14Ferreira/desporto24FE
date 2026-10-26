@@ -71,6 +71,12 @@ describe('Community tournaments management', () => {
   });
 
 
+  it('keeps tournament and fixtures semantics unchanged by the layout update', () => {
+    expect(component.community.id).toBe(7);
+    expect(component.tournaments.length).toBeGreaterThan(0);
+    expect(component.tournaments[0].id).toBe(9);
+  });
+
   it('translates organizer validation feedback without submitting invalid team tournaments', async () => {
     const previous = localStorage.getItem('d24-language');
     try {

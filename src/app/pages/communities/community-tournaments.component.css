@@ -485,3 +485,28 @@
   border: 1px solid var(--border-color, rgba(128,128,128,.3));
   resize: vertical;
 }
+
+/* Concept One layout rhythm: outer tournament sections only.
+   Tables, match rows and score inputs preserve their compact layout. */
+.tournaments {
+  gap: 24px;
+}
+.tournaments > .create-tournament,
+.tournaments .create-tournament > .create-controls,
+.tournaments .tournament-detail {
+  gap: 24px;
+}
+.tournaments .tournament-detail > .t-section {
+  gap: 16px;
+}
+.tournaments .tournament-detail > :is(.team-fixtures-section, .team-standings-section) {
+  margin-top: 0; /* The parent grid already separates these sections. */
+}
+@media (max-width: 800px) {
+  .tournaments,
+  .tournaments > .create-tournament,
+  .tournaments .create-tournament > .create-controls,
+  .tournaments .tournament-detail {
+    gap: 20px;
+  }
+}

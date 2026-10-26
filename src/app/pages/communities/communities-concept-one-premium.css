@@ -120,3 +120,22 @@
 @media(prefers-reduced-motion:reduce){
   .jynlo-community-main-premium .community-card{transition:none}
 }
+
+
+/* Top-level season and match-day layout; keep internal tables compact. */
+.jynlo-community-main-premium.community-detail-page .community-tab-panel > .season-dashboard {
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.jynlo-community-main-premium.community-detail-page .season-dashboard > .round-history {
+  margin-top: 24px;
+}
+@media (max-width:800px) {
+  .jynlo-community-main-premium.community-detail-page .community-tab-panel > .season-dashboard {
+    margin-top: 20px;
+    padding-top: 20px;
+  }
+  .jynlo-community-main-premium.community-detail-page .season-dashboard > .round-history {
+    margin-top: 20px;
+  }
+}
