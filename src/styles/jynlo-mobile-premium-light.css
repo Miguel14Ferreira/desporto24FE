@@ -658,3 +658,39 @@
     text-decoration: underline;
   }
 }
+
+
+/* Keep sensitive profile details legible on the light canvas; avoid legacy dark panels. */
+@media (max-width: 767px) {
+  body:has(.mobile-tabbar) .profile-page :is(
+    .account-section,.activity-section,.reliability-card,.bio-card
+  ) {
+    background: #fff !important;
+    background-image: none !important;
+    color: #183035 !important;
+    border-color: #e0eae6 !important;
+    box-shadow: none !important;
+  }
+  body:has(.mobile-tabbar) .profile-page :is(
+    .account-section,.activity-section,.reliability-card,.bio-card
+  ) :is(h2,h3,strong) {
+    color: #183035 !important;
+  }
+  body:has(.mobile-tabbar) .profile-page :is(
+    .account-section,.activity-section,.reliability-card,.bio-card
+  ) :is(p,small,.section-kicker,span) {
+    color: #516a6f !important;
+  }
+  body:has(.mobile-tabbar) .profile-page .details-grid {
+    grid-template-columns: 1fr;
+  }
+  body:has(.mobile-tabbar) .profile-page .details-grid > div {
+    padding: 12px;
+    border-color: #e2eee8 !important;
+    background: #f7faf8 !important;
+  }
+  body:has(.mobile-tabbar) .profile-page .details-grid strong {
+    color: #123035 !important;
+    overflow-wrap: anywhere;
+  }
+}
