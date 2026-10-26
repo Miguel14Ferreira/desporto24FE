@@ -48,7 +48,10 @@ const venues = [
 ];
 
 async function main() {
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  const browser = await chromium.launch({
+    headless: true, args: ['--no-sandbox'],
+    ...(process.env.JYNLO_USE_SYSTEM_CHROME === '1' ? { channel: 'chrome' } : {})
+  });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'pt-PT' });
   const pageErrors = [];
   const unexpectedCalls = [];

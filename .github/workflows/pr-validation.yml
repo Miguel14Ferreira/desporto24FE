@@ -123,9 +123,12 @@ jobs:
           printf '%s\n' '{"private":true,"dependencies":{"playwright":"1.56.1"}}' > "$QA_DEPS/package.json"
           npm install --prefix "$QA_DEPS" --no-audit --no-fund
           ln -s "$QA_DEPS/node_modules/playwright" node_modules/playwright
-          "$QA_DEPS/node_modules/.bin/playwright" install --with-deps chromium
+          # ChromeHeadless was already used by Angular tests on this runner.
+          # Reuse that system browser to avoid a second large Chromium download.
       - name: Audit desktop and 390px Jynlo public and synthetic authenticated views
         if: ${{ startsWith(github.head_ref, 'qa/concept-one-mobile-chromium-390-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
         shell: bash
         run: |
           set -euo pipefail
