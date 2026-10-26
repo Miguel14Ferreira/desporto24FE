@@ -385,6 +385,90 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+
+  it('guards UCI 3.2.048(4) rulings and requires a separate non-fault start choice', () => {
+    const incident={
+      id:10,seriesKey:'SP53-A1',heatNumber:1,
+      incidentType:'FLAGRANT_BEFORE_BELL',status:'PENDING',decisionType:null,
+      decisionReference:null
+    };
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',
+        riderC:null,riderD:null,status:'READY',winner:null}],
+      incidents:[incident]
+    } as any;
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.editSprintDecision(53,10);
+    expect(component.sprintFlagrantOffender).toBe('');
+    expect(component.sprintFlagrantSanction).toBe('');
+    expect(component.sprintFlagrantCutoffConfirmed).toBeFalse();
+    expect(component.sprintFlagrantStarterConfirmed).toBeFalse();
+    component.sprintDecisionReference='Fictional first panel ruling 2026/801';
+    component.sprintDecisionReason='Starter stopped a flagrant infringement before the bell';
+    const first=jasmine.createSpy('ruleFlagrantSprintIncident')
+      .and.returnValue(of({...incident,status:'FLAGRANT_START_PENDING'}));
+    const second=jasmine.createSpy('confirmFlagrantNoSanctionStart')
+      .and.returnValue(of({...incident,status:'FLAGRANT_START_OK'}));
+    (component as any).communityService={
+      ruleFlagrantSprintIncident:first,confirmFlagrantNoSanctionStart:second
+    };
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintDecision();
+    expect(first).not.toHaveBeenCalled();
+    component.sprintFlagrantOffender='r1';
+    component.sprintFlagrantSanction='NONE';
+    component.saveSprintDecision();
+    expect(first).not.toHaveBeenCalled();
+    component.sprintFlagrantCutoffConfirmed=true;
+    component.saveSprintDecision();
+    expect(first).not.toHaveBeenCalled();
+    component.sprintFlagrantStarterConfirmed=true;
+    component.saveSprintDecision();
+    expect(first).toHaveBeenCalledWith(12,44,53,10,jasmine.objectContaining({
+      offendingRider:'r1',sanction:'NONE',
+      beforeBellOrSprintConfirmed:true,starterStoppedConfirmed:true
+    }));
+    const pending={...incident,status:'FLAGRANT_START_PENDING',
+      decisionType:'FLAGRANT_RULING',decisionReference:'Fictional first panel ruling 2026/801',
+      flagrantOffendingRider:'r1',flagrantBeforeCutoffConfirmed:true,
+      flagrantStarterStoppedConfirmed:true};
+    bracket.incidents=[pending];
+    expect(component.sprintCanConfirmFlagrantStart(bracket,pending as any)).toBeTrue();
+    expect(component.sprintCanConfirmFlagrantStart({...bracket,
+      matches:[{...bracket.matches[0],riderC:'r3'}]},pending as any)).toBeFalse();
+    expect(component.sprintCanConfirmFlagrantStart(bracket,{
+      ...pending,status:'ADJUDICATION_REQUIRED',sanctionType:'RELEGATION'
+    } as any)).toBeFalse();
+    component.editSprintFlagrantStart(53,10);
+    expect(component.sprintFlagrantStartPosition).toBe('');
+    expect(component.sprintFlagrantStartChoiceConfirmed).toBeFalse();
+    component.sprintFlagrantStartPosition='OUTSIDE';
+    component.sprintFlagrantStartChoiceConfirmed=true;
+    component.sprintFlagrantStartReference=pending.decisionReference;
+    component.sprintFlagrantStartReason='The rider not at fault chooses the outer starting position';
+    component.saveSprintFlagrantStart();
+    expect(second).not.toHaveBeenCalled();
+    component.sprintFlagrantStartReference='Distinct second panel record 2026/802';
+    component.saveSprintFlagrantStart();
+    expect(second).toHaveBeenCalledWith(12,44,53,10,jasmine.objectContaining({
+      nonFaultRider:'r24',nonFaultStartPosition:'OUTSIDE',nonFaultChoiceConfirmed:true
+    }));
+    const prior=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.flagrantPending')).toContain('ciclista');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.flagrantPending')).toContain('opponent');
+    } finally {
+      if(prior===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prior);
+    }
+  });
+
   it('requires a separate neutral-mishap restart and cannot invent a Sprint winner', () => {
     const bracket={
       id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
