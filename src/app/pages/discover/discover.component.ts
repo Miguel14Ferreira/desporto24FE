@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, catchError, finalize, forkJoin, of, retry, timeout } from 'rxjs';
+import { Observable, catchError, finalize, forkJoin, map, of, retry, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityService } from '../../services/community.service';
@@ -271,7 +271,10 @@ export class DiscoverComponent implements OnInit {
               undefined, sport || undefined,
               this.nearbyVenuePosition.latitude, this.nearbyVenuePosition.longitude,
               this.nearbyVenueRadiusKm)
-          : this.venueService.search(location || undefined, sport || undefined),
+          // Discover only shows a preview; use the bounded national catalogue query.
+          // The full result set remains available via the paginated directory link.
+          : this.venueService.suggest(undefined, location || undefined, sport || undefined, 0)
+              .pipe(map(page => page.venues)),
         [] as Venue[], 'venues', requestId
       ),
       sessions: this.withRecovery(

@@ -17,7 +17,7 @@ describe('DiscoverComponent', () => {
   let communityService: jasmine.SpyObj<CommunityService>;
 
   beforeEach(async () => {
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest']);
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['discover']);
     communityService = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
@@ -25,6 +25,7 @@ describe('DiscoverComponent', () => {
     );
 
     venueService.search.and.returnValue(of([]));
+    venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     sessionService.discover.and.returnValue(of([]));
     communityService.publicProfile.and.returnValue(of({
       username: 'miguel',
@@ -96,7 +97,7 @@ describe('DiscoverComponent', () => {
   it('prefills sport and locality from the profile and uses both when searching', () => {
     expect(component.sport).toBe('Padel');
     expect(component.location).toBe('Lisboa');
-    expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
     expect(sessionService.discover).toHaveBeenCalledWith(
       jasmine.objectContaining({
         sport: 'Padel',
@@ -134,7 +135,7 @@ describe('DiscoverComponent', () => {
       expect(page.componentInstance.location).toBe('Sintra');
       expect(page.componentInstance.playerName).toBe('Ana');
       expect(page.componentInstance.appliedPlayerName).toBe('Ana');
-      expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
+      expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Sintra', 'Ténis', 0);
       expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
       const link: HTMLAnchorElement = page.nativeElement.querySelector('.person-card');
       expect(link.getAttribute('href'))
@@ -160,7 +161,7 @@ describe('DiscoverComponent', () => {
       expect(page.componentInstance.sport).toBe('');
       expect(page.componentInstance.location).toBe('');
       expect(page.componentInstance.playerName).toBe('');
-      expect(venueService.search).toHaveBeenCalledWith(undefined, undefined);
+      expect(venueService.suggest).toHaveBeenCalledWith(undefined, undefined, undefined, 0);
       page.destroy();
     } finally {
       Object.defineProperty(route.snapshot, 'queryParamMap', {
@@ -192,7 +193,7 @@ describe('DiscoverComponent', () => {
 
     expect(page.componentInstance.sport).toBe('Ténis');
     expect(page.componentInstance.location).toBe('Sintra');
-    expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Sintra', 'Ténis', 0);
     page.destroy();
   });
 
@@ -208,7 +209,7 @@ describe('DiscoverComponent', () => {
 
     expect(page.componentInstance.sport).toBe('Padel');
     expect(page.componentInstance.location).toBe('Porto');
-    expect(venueService.search).toHaveBeenCalledWith('Porto', 'Padel');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Porto', 'Padel', 0);
     page.destroy();
   });
 
@@ -224,7 +225,7 @@ describe('DiscoverComponent', () => {
 
     expect(page.componentInstance.sport).toBe('');
     expect(page.componentInstance.location).toBe('');
-    expect(venueService.search).toHaveBeenCalledWith(undefined, undefined);
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, undefined, undefined, 0);
     page.destroy();
   });
 
@@ -264,7 +265,7 @@ describe('DiscoverComponent', () => {
     component.onLocationChange('Sintra');
     component.search();
     expect(component.nearbyVenuePosition).toBeNull();
-    expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Padel');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Sintra', 'Padel', 0);
   });
 
   it('keeps the normal venue search when location permission is denied', () => {
@@ -282,7 +283,7 @@ describe('DiscoverComponent', () => {
       expect(component.nearbyVenuePosition).toBeNull();
       expect(component.nearbyVenueError).toBe('unavailable');
       expect(fixture.nativeElement.querySelector('.discover-nearby--venues [role="alert"]')).not.toBeNull();
-      expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+      expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
     } finally {
       if (original) {
         Object.defineProperty(navigator, 'geolocation', original);
@@ -331,7 +332,7 @@ describe('DiscoverComponent', () => {
         sport: 'Padel', city: undefined, latitude: 38.72, longitude: -9.14,
         radiusKm: 25, sort: 'distance'
       }));
-      expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+      expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
       expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ sport: 'Padel', location: 'Lisboa' }));
     } finally {
       if (original) {
@@ -463,7 +464,7 @@ describe('DiscoverComponent', () => {
       profilePicUrl: null, joinDateDisplay: null
     };
     communityService.findProfiles.and.returnValue(of([teammate]));
-    const venueCalls = venueService.search.calls.count();
+    const venueCalls = venueService.suggest.calls.count();
     const sessionCalls = sessionService.discover.calls.count();
 
     component.playerName = '  Ana  ';
@@ -473,7 +474,7 @@ describe('DiscoverComponent', () => {
     expect(component.people).toEqual([teammate]);
     expect(component.topPeople).toEqual([teammate]);
     expect(component.appliedPlayerName).toBe('Ana');
-    expect(venueService.search.calls.count()).toBe(venueCalls);
+    expect(venueService.suggest.calls.count()).toBe(venueCalls);
     expect(sessionService.discover.calls.count()).toBe(sessionCalls);
   });
 
@@ -867,11 +868,55 @@ describe('DiscoverComponent', () => {
     expect(component.showAllVenues).toBeFalse();
   });
 
+
+  it('uses bounded venue suggestions for the preview, keeping filters on the full-catalogue link', () => {
+    const venues = Array.from({ length: 36 }, (_, index) => ({
+      id: index + 1, name: 'Recinto ' + index, city: 'Lisboa'
+    } as any));
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: true }));
+
+    component.search();
+    fixture.detectChanges();
+
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
+    expect(venueService.search).not.toHaveBeenCalled();
+    expect(component.topVenues.length).toBe(4);
+    const directory: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href^="/menu/venues?"]');
+    expect(directory.getAttribute('href')).toBe('/menu/venues?sport=Padel&city=Lisboa');
+  });
+
+  it('keeps GPS-based nearby searches on the geo endpoint', () => {
+    const pagedCalls = venueService.suggest.calls.count();
+    component.nearbyVenuePosition = { latitude: 38.72, longitude: -9.14 };
+    component.search();
+
+    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel', 38.72, -9.14, 25);
+    expect(venueService.suggest.calls.count()).toBe(pagedCalls);
+  });
+
+  it('ignores late paginated venue results after switching filters', () => {
+    const delayed = new Subject<{ venues: any[]; page: number; hasMore: boolean }>();
+    venueService.suggest.and.returnValues(
+      delayed.asObservable(),
+      of({ venues: [{ id: 101, name: 'Recinto novo', city: 'Sintra' } as any], page: 0, hasMore: false })
+    );
+
+    component.onLocationChange('Porto');
+    component.search();
+    component.onLocationChange('Sintra');
+    component.search();
+    delayed.next({ venues: [{ id: 100, name: 'Recinto antigo', city: 'Porto' } as any], page: 0, hasMore: false });
+    delayed.complete();
+
+    expect(component.venues.map(venue => venue.id)).toEqual([101]);
+    expect(component.topVenues.map(venue => venue.id)).toEqual([101]);
+  });
+
   it('expands and collapses venue results', () => {
     const venues = Array.from({ length: 6 }, (_, index) => ({
       id: index + 1
     } as any));
-    venueService.search.and.returnValue(of(venues));
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: false }));
     component.search();
 
     expect(component.venues).toEqual(venues);
@@ -885,25 +930,25 @@ describe('DiscoverComponent', () => {
   });
 
   it('should show an availability error when a discover request still fails after retry', () => {
-    venueService.search.and.returnValue(
+    venueService.suggest.and.returnValue(
       throwError(() => new Error('API unavailable'))
     );
 
     component.search();
 
-    expect(venueService.search).toHaveBeenCalled();
+    expect(venueService.suggest).toHaveBeenCalled();
     expect(component.venuesLoadError).toBeTrue();
     expect(component.initialized).toBeTrue();
   });
 
   it('should clear the availability error when a retry search succeeds', () => {
-    venueService.search.and.returnValue(
+    venueService.suggest.and.returnValue(
       throwError(() => new Error('API unavailable'))
     );
     component.search();
     expect(component.venuesLoadError).toBeTrue();
 
-    venueService.search.and.returnValue(of([]));
+    venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     component.search();
 
     expect(component.venuesLoadError).toBeFalse();
