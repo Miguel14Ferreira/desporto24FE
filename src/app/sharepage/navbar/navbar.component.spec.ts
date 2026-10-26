@@ -292,7 +292,8 @@ describe('NavbarComponent', () => {
     component.authenticated = true;
     fixture.detectChanges();
 
-    const tabs = Array.from(fixture.nativeElement.querySelectorAll<HTMLAnchorElement>(
+    const root: HTMLElement = fixture.nativeElement;
+    const tabs = Array.from(root.querySelectorAll<HTMLAnchorElement>(
       '.mobile-tabbar__link'
     ));
     expect(tabs.map(tab => tab.getAttribute('href'))).toEqual([
