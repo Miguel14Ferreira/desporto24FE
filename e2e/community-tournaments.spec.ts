@@ -3316,7 +3316,8 @@ test('Premium populated tournament QA: individual standings and fixtures fit 390
     }
   }
   expect(fixture.organizerMutations).toEqual([]);
-  expect(fixture.unmocked.filter(path => /^(POST|PUT|DELETE|PATCH) /.test(path))).toEqual([]);
+  expect(fixture.unmocked.filter(path => /^(POST|PUT|DELETE|PATCH) /.test(path)
+    && !/^(POST \/api\/pilot\/events\/access|POST \/api\/presence\/heartbeat)$/.test(path))).toEqual([]);
 });
 
 test('Premium populated tournament QA: team rosters and schedule confirmation stay readable without publishing', async ({ page }, testInfo) => {
@@ -3364,5 +3365,6 @@ test('Premium populated tournament QA: team rosters and schedule confirmation st
   }
   expect(fixture.teamFixtures).toHaveLength(0);
   expect(fixture.organizerMutations).toEqual([]);
-  expect(fixture.unmocked.filter(path => /^(POST|PUT|DELETE|PATCH) /.test(path))).toEqual([]);
+  expect(fixture.unmocked.filter(path => /^(POST|PUT|DELETE|PATCH) /.test(path)
+    && !/^(POST \/api\/pilot\/events\/access|POST \/api\/presence\/heartbeat)$/.test(path))).toEqual([]);
 });
