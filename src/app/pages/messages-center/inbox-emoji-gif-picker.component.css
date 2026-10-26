@@ -1,0 +1,73 @@
+/* Original Concept One emoji/GIF dialog styles. Host is the original section. */
+:host {
+  position:absolute;bottom:calc(100% + 12px);right:0;z-index:30;
+  width:min(480px,calc(100vw - 36px));max-height:min(520px,65vh);
+  display:flex;flex-direction:column;gap:0;
+  border:1px solid #477d79;border-radius:19px;background:#172e38;
+  box-shadow:0 22px 55px #000b;overflow:hidden;color:#e9f9f5;
+}
+.inbox-picker-tabs { display:flex;align-items:center;gap:5px;flex:none;padding:10px 13px 6px;
+  border-bottom:1px solid #365960;background:#142934; }
+.inbox-picker-tabs button { border:0;background:transparent;color:#aed1d1;
+  font:inherit;font-size:.83rem;font-weight:780;padding:9px 14px;
+  border-bottom:3px solid transparent;cursor:pointer; }
+.inbox-picker-tabs button.active { border-bottom-color:#46e1a9;color:#f2fff9; }
+.inbox-picker-tabs button:hover { color:#fff; }
+.inbox-picker-tabs .inbox-picker-close { margin-left:auto;font-size:1.35rem;padding:3px 12px; }
+.inbox-picker-emoji-grid { min-height:120px;overflow-y:auto;display:grid;
+  grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;padding:14px; }
+.inbox-picker-emoji-grid button { display:grid;place-items:center;aspect-ratio:1;
+  padding:3px;border:0;border-radius:9px;background:transparent;color:inherit;
+  font-size:1.4rem;cursor:pointer; }
+.inbox-picker-emoji-grid button:hover { background:#2b5a61; }
+.inbox-picker-gif-search { display:flex;align-items:center;gap:7px;flex:none;
+  margin:13px 14px 10px;padding:0 13px;min-height:43px;
+  border:2px solid #34d4a2;border-radius:25px;background:#0b1c24; }
+.inbox-picker-gif-search span { font-size:1.6rem;color:#aec9c8; }
+.inbox-picker-gif-search input { min-width:0;flex:1;outline:none;border:0;background:transparent;
+  color:#f2fffa;font:inherit;font-size:.84rem;padding:8px 0; }
+.inbox-picker-gif-search input::placeholder { color:#a2bfbd; }
+.inbox-picker-gif-search input:disabled { opacity:.65; }
+.inbox-picker-categories { display:flex;justify-content:space-around;gap:5px;
+  flex:none;padding:0 14px 10px; }
+.inbox-picker-categories button { border:1px solid #335e61;background:#1e3b45;
+  border-radius:9px;color:inherit;font:inherit;font-size:1.15rem;
+  padding:5px 13px;cursor:pointer; }
+.inbox-picker-categories button:hover:not(:disabled) { background:#285c5a; }
+.inbox-picker-categories button.active { background:#245e59;border-color:#6ae4c4;
+  box-shadow:inset 0 -2px 0 #6ae4c4; }
+.inbox-picker-categories button:focus-visible { outline:2px solid #85efd1;outline-offset:2px; }
+.inbox-picker-categories button:disabled { opacity:.5; }
+.inbox-picker-gif-grid { overflow-y:auto;min-height:0;flex:1;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-auto-rows:112px;gap:7px;padding:6px 14px 10px; }
+.inbox-gif-tile { position:relative;min-width:0;overflow:hidden;
+  border:1px solid #355d64;background:#0d2732;border-radius:9px; }
+.inbox-gif-tile app-giphy-embed { display:block;width:100%;height:100%; }
+.inbox-gif-tile:hover { border-color:#83efd6; }
+.inbox-gif-tile-select { position:absolute;inset:0;width:100%;height:100%;
+  cursor:pointer;border:0;background:transparent;padding:0; }
+.inbox-gif-tile-select:focus-visible { outline:2px solid #83efd6;outline-offset:-3px; }
+.inbox-gif-tile-select:disabled { cursor:wait; }
+.inbox-picker-gif-grid img { display:block;width:100%;height:100%;object-fit:cover; }
+.inbox-picker-selecting { position:absolute;inset:0;display:grid;place-items:center;
+  background:#102d37c9;color:white;font-size:.76rem;font-weight:800; }
+.inbox-picker-feedback { color:#c7dfe1;margin:8px 16px 15px;
+  line-height:1.5;font-size:.82rem; }
+.inbox-picker-error { color:#ffd4b6; }
+.inbox-picker-more { margin:4px 14px 10px;border:1px solid #397e74;border-radius:9px;
+  padding:8px;background:#234e50;color:#f0fcf7;font:inherit;cursor:pointer; }
+.inbox-picker-footer { display:flex;align-items:center;justify-content:space-between;
+  flex:none;gap:12px;border-top:1px solid #365960;padding:10px 14px;background:#142934; }
+.inbox-picker-footer button { border:1px solid #4d8986;border-radius:9px;padding:7px 10px;
+  background:#215450;color:#ecfffa;font:inherit;font-size:.75rem;cursor:pointer; }
+.inbox-picker-footer button:disabled { opacity:.5;cursor:not-allowed; }
+.inbox-picker-footer a { color:#91dcca;text-decoration:none;font-size:.74rem; }
+
+:host button:focus-visible,:host input:focus-visible { outline:2px solid #79f5d5;outline-offset:2px; }
+@media (max-width:600px) {
+  :host { right:-6px;width:min(420px,calc(100vw - 24px));max-height:55vh; }
+  .inbox-picker-gif-grid { grid-auto-rows:90px;gap:5px; }
+  .inbox-picker-emoji-grid { grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .inbox-picker-categories button { padding:4px 9px; }
+}
