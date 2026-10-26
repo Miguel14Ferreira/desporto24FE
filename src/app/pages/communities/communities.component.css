@@ -22,14 +22,14 @@ h1,h2,h3 { margin:0; }
 h1 { font-size:clamp(2.2rem,5vw,3.8rem); }
 .subtitle { color:#cbd5e1; }
 
-.create-card,.invites-card,.community-card,.community-detail,.state-card,.feedback {
+.create-card,.community-card,.community-detail,.state-card,.feedback {
   border:1px solid rgba(255,255,255,.12);
   border-radius:1rem;
   background:rgba(15,23,42,.84);
 }
 
-.create-card,.invites-card,.community-detail,.state-card,.feedback { padding:1rem; }
-.create-card,.invites-card { margin-bottom:1rem; }
+.create-card,.community-detail,.state-card,.feedback { padding:1rem; }
+.create-card { margin-bottom:1rem; }
 
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:1rem 0; }
 .full-width { grid-column:1/-1; }
@@ -156,7 +156,7 @@ input,textarea,select {
   color: #86efac !important;
 }
 
-.member-row,.invite-row {
+.member-row {
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -164,8 +164,8 @@ input,textarea,select {
   padding:.8rem 0;
   border-bottom:1px solid rgba(255,255,255,.07);
 }
-.member-row > div:first-child,.invite-row > div:first-child { display:grid; gap:.2rem; }
-.member-row span,.invite-row span { color:#94a3b8; font-size:.85rem; }
+.member-row > div:first-child { display:grid; gap:.2rem; }
+.member-row span { color:#94a3b8; font-size:.85rem; }
 
 .row-actions { display:flex; flex-wrap:wrap; gap:.45rem; }
 .primary-action,.secondary-action,.danger-action {
@@ -185,7 +185,7 @@ input,textarea,select {
   .page-header { align-items:flex-start; flex-direction:column; }
   .communities-layout,.form-grid { grid-template-columns:1fr; }
   .full-width { grid-column:auto; }
-  .member-row,.invite-row,.inline-form { align-items:stretch; flex-direction:column; }
+  .member-row,.inline-form { align-items:stretch; flex-direction:column; }
 }
 
 
@@ -1114,12 +1114,6 @@ input,textarea,select {
 }
 
 /* The invitation from an email is identified only in the signed-in recipient's inbox. */
-.invite-row--targeted {
-  border: 1px solid rgba(52, 211, 153, .7);
-  border-radius: .75rem;
-  background: rgba(16, 185, 129, .09);
-}
-
 /* Community photos share a bounded frame, regardless of the source image
    dimensions (including very large GIFs). Keep hero content prominent. */
 .community-detail-page .community-photo-block {
