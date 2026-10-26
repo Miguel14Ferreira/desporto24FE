@@ -195,6 +195,66 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+  it('requires an explicitly ranked panel record for incident-time placings, PT/EN', () => {
+    const incident={
+      id:8,seriesKey:'SP53-A1',heatNumber:1,incidentType:'PUNCTURE',
+      status:'POSITIONS_PENDING',decisionType:'OFFICIAL_RESULT_TO_RECORD',
+      decisionReference:'Synthetic first commissaires decision 2026/401'
+    };
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',
+        riderC:null,riderD:null,status:'READY',winner:null}],
+      incidents:[incident]
+    } as any;
+    expect(component.sprintCanRatifyPositions(bracket,incident as any)).toBeTrue();
+    expect(component.sprintCanRatifyPositions(bracket,{
+      ...incident,status:'RESTART_PENDING'
+    } as any)).toBeFalse();
+    expect(component.sprintCanRatifyPositions({...bracket,matches:[
+      {...bracket.matches[0],riderC:'r9'}]},incident as any)).toBeFalse();
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.editSprintOfficialPositions(53,8);
+    expect(component.sprintPositionsFirstRider).toBe('');
+    expect(component.sprintPositionsSecondRider).toBe('');
+    expect(component.sprintPositionsPanelConfirmed).toBeFalse();
+    component.sprintPositionsReference='Synthetic second panel positions record 2026/402';
+    component.sprintPositionsReason='Commissaires officially place rider 24 ahead at the incident';
+    const save=jasmine.createSpy('ratifySprintIncidentPositions')
+      .and.returnValue(of({...incident,status:'OFFICIAL_POSITIONS'}));
+    (component as any).communityService={ratifySprintIncidentPositions:save};
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintOfficialPositions();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintPositionsFirstRider='r24';
+    component.sprintPositionsSecondRider='r24';
+    component.sprintPositionsPanelConfirmed=true;
+    component.saveSprintOfficialPositions();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintPositionsSecondRider='r1';
+    component.sprintPositionsReference=incident.decisionReference;
+    component.saveSprintOfficialPositions();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintPositionsReference='Synthetic second panel positions record 2026/402';
+    component.saveSprintOfficialPositions();
+    expect(save).toHaveBeenCalledWith(12,44,53,8,jasmine.objectContaining({
+      orderedRiders:['r24','r1'],panelPositionsConfirmed:true
+    }));
+    const prev=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.positionsNoRace')).toContain('não foi disputada');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.positionsNoRace')).toContain('no additional heat');
+    } finally {
+      if(prev===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prev);
+    }
+  });
+
   it('requires a separate neutral-mishap restart and cannot invent a Sprint winner', () => {
     const bracket={
       id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,

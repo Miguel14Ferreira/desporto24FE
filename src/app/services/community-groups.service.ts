@@ -28,7 +28,7 @@ export interface TrackSprintIncident {
   heatNumber: number;
   incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER';
   details: string;
-  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'RESTART_PENDING' | 'POSITIONS_PENDING' | 'NEUTRAL_RESTART_OK' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
+  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'RESTART_PENDING' | 'POSITIONS_PENDING' | 'NEUTRAL_RESTART_OK' | 'OFFICIAL_POSITIONS' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
   reportedBy: string;
   reportedAt: string;
   decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | null;
@@ -48,6 +48,7 @@ export interface TrackSprintIncident {
   awardReason?: string | null;
   awardConfirmedBy?: string | null;
   awardConfirmedAt?: string | null;
+  officialPositions?: string[];
 }
 
 /** Immutable signed-decision transcription; platform does not validate external signatures. */
@@ -588,6 +589,19 @@ export class CommunityGroupsService {
     return this.http.put<TrackSprintIncident>(
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/decision', payload);
+  }
+
+  ratifySprintIncidentPositions(communityId: number, seasonId: number, bracketId: number,
+    incidentId: number, payload: {
+      orderedRiders: string[];
+      panelPositionsConfirmed: boolean;
+      reference: string;
+      reason: string;
+    }): Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/official-positions', payload);
   }
 
   authorizeNeutralSprintRestart(communityId: number, seasonId: number, bracketId: number,
