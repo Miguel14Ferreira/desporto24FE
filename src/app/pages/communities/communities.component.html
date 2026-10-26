@@ -754,32 +754,12 @@
 
             @if (!competitionLoading && activeTab === 'home') {
               <section class="community-tab-panel">
-                <div class="overview-grid">
-                  <article class="overview-card">
-                    <span>{{ 'communities.members' | t }}</span>
-                    <strong>{{ selected.memberCount }}</strong>
-                  </article>
-                  <article class="overview-card">
-                    <span>{{ 'communities.sportLabel' | t }}</span>
-                    <strong>{{ communitySports(selected).join(', ') || 'Sem modalidade definida' }}</strong>
-                  </article>
-                  <article class="overview-card">
-                    <span>{{ 'communities.visibilityLabel' | t }}</span>
-                    <strong>
-                      {{ selected.visibility === 'PRIVATE'
-                        ? ('communities.private' | t)
-                        : ('communities.public' | t) }}
-                    </strong>
-                  </article>
-                  <article class="overview-card">
-                    <span>{{ 'communities.competition' | t }}</span>
-                    <strong>
-                      {{ competition?.settings?.rankingsEnabled
-                        ? ('communities.enabled' | t)
-                        : ('communities.disabled' | t) }}
-                    </strong>
-                  </article>
-                </div>
+                <app-community-overview-stats
+                  [memberCount]="selected.memberCount"
+                  [sports]="communitySports(selected)"
+                  [visibility]="selected.visibility"
+                  [rankingsEnabled]="!!competition?.settings?.rankingsEnabled"
+                ></app-community-overview-stats>
 
                 <section class="management-block sport-management" aria-label="Modalidades da comunidade">
                   <div class="section-heading">
@@ -835,14 +815,7 @@
                 </section>
 
                 @if (competition?.settings?.rankingsEnabled && leader()) {
-                  <section class="leader-highlight">
-                    <div>
-                      <span class="section-kicker">{{ 'communities.currentLeader' | t }}</span>
-                      <h3>{{ leader()?.fullName || leader()?.username }}</h3>
-                      <p>@{{ leader()?.username }} · {{ leader()?.points }} {{ 'communities.pointsShort' | t }}</p>
-                    </div>
-                    <div class="leader-score">{{ leader()?.points }}</div>
-                  </section>
+                  <app-community-leader-highlight [standing]="leader()"></app-community-leader-highlight>
                 }
 
                 @if (canManage()) {
