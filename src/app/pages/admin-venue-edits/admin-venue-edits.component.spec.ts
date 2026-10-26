@@ -138,6 +138,21 @@ describe('AdminVenueEditsComponent', () => {
   });
 
 
+  it('exposes trusted-syntax HTTPS evidence for name corrections without contact attestation', () => {
+    const nameSuggestion: VenueEditSuggestion = {
+      ...pending, sourceUrl:
+        'https://www.estadio.ulisboa.pt/sites/default/files/documents/document/2026-04/a3-mapa-reservas.pdf'
+    };
+    component.open(nameSuggestion);
+    expect(component.hasProposedContact(nameSuggestion)).toBeFalse();
+    expect(component.sourceLink(nameSuggestion)).toContain('estadio.ulisboa.pt');
+    expect(component.canApproveSelected()).toBeTrue();
+    component.action = 'approve';
+    api.decide.and.returnValue(of({ ...nameSuggestion, status: 'APPROVED' }));
+    component.decide();
+    expect(api.decide).toHaveBeenCalledOnceWith(31, 'approve', '');
+  });
+
   it('requires source verification before approving a contact and then sends one decision', () => {
     const contactSuggestion: VenueEditSuggestion = {
       ...pending, before: {contact: null}, proposed: {contact: '225073300'},
