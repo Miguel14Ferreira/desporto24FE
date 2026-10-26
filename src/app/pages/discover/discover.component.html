@@ -86,7 +86,9 @@
               <p>{{ 'discover.where.kicker' | t }}</p>
               <h2>{{ 'discover.where.title' | t }}</h2>
             </div>
-            <span class="result-count">{{ venues.length }}</span>
+            <span class="result-count" [attr.title]="venuesHasMore ? ('discover.where.moreResults' | t) : null">
+              {{ venues.length }}{{ venuesHasMore ? '+' : '' }}
+            </span>
           </header>
 
           <div class="discover-nearby discover-nearby--venues">
@@ -116,12 +118,31 @@
             }
           </div>
 
-          @if (topVenues.length === 0) {
+          @if (!venuesLoadError && topVenues.length === 0) {
             <div class="pillar-empty">
               <strong>{{ 'discover.where.emptyTitle' | t }}</strong>
-              <span>{{ 'discover.where.emptyText' | t }}</span>
+              @if (nearbyVenuePosition) {
+                <span>{{ 'discover.where.nearbyEmptyText' | t }}</span>
+                @if (nearbyVenueRadiusKm < 50) {
+                  <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--radius"
+                    (click)="changeNearbyVenueRadius(50)">{{ 'discover.where.widenRadius' | t }}</button>
+                }
+              } @else if (sport.trim() || location.trim()) {
+                <span>{{ 'discover.where.filteredEmptyText' | t }}</span>
+                @if (sport.trim() && location.trim()) {
+                  <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--sport"
+                    (click)="broadenVenueSearch('sport')">{{ 'discover.where.removeSport' | t }}</button>
+                  <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--city"
+                    (click)="broadenVenueSearch('city')">{{ 'discover.where.removeCity' | t }}</button>
+                } @else {
+                  <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--all"
+                    (click)="broadenVenueSearch('all')">{{ 'discover.where.removeFilters' | t }}</button>
+                }
+              } @else {
+                <span>{{ 'discover.where.emptyText' | t }}</span>
+              }
             </div>
-          } @else {
+          } @else if (!venuesLoadError) {
             <div class="result-list">
               @for (venue of topVenues; track venue.id) {
                 <a class="result-card venue-card" [routerLink]="['/menu/venues', venue.id]">

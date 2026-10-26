@@ -869,6 +869,95 @@ describe('DiscoverComponent', () => {
   });
 
 
+
+  it('shows a lower-bound count when the paginated response has more venues', () => {
+    const venues = Array.from({ length: 36 }, (_, i) => ({
+      id: i + 1, name: 'Venue ' + i, city: 'Lisboa'
+    } as any));
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: true }));
+    component.search();
+    fixture.detectChanges();
+    const count: HTMLElement = fixture.nativeElement.querySelector('.pillar-panel .result-count');
+    expect(component.venuesHasMore).toBeTrue();
+    expect(count.textContent?.replace(/\s/g, '')).toBe('36+');
+    expect(count.title).toContain('Existem mais recintos');
+
+    venueService.suggest.and.returnValue(of({ venues: venues.slice(0, 2), page: 0, hasMore: false }));
+    component.search();
+    fixture.detectChanges();
+    expect(count.textContent?.replace(/\s/g, '')).toBe('2');
+  });
+
+  it('ranks exact localities and available venue metadata only within the returned page', () => {
+    const venues = [
+      { id: 1, name: 'A', city: 'Grande Lisboa', sports: 'Padel',
+        latitude: 38.7, longitude: -9.1, address: 'Rua A', venueType: 'Campo' },
+      { id: 2, name: 'B', city: 'Lisboa', sports: null, latitude: null,
+        longitude: null, address: '', venueType: null },
+      { id: 3, name: 'C', city: 'Lisboa', sports: 'Padel',
+        latitude: 38.7, longitude: -9.1, address: '', venueType: 'Campo' }
+    ] as any[];
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: false }));
+    component.search();
+    expect(component.venues.map(venue => venue.id)).toEqual([3, 2, 1]);
+    expect(venues.map(venue => venue.id)).toEqual([1, 2, 3]);
+  });
+
+  it('never rearranges the distance-ordered nearby venues', () => {
+    venueService.search.and.returnValue(of([
+      { id: 1, name: 'A', city: 'Lisboa', sports: null } as any,
+      { id: 2, name: 'B', city: 'Lisboa', sports: 'Padel' } as any
+    ]));
+    component.nearbyVenuePosition = { latitude: 38.72, longitude: -9.14 };
+    component.search();
+    expect(component.venues.map(venue => venue.id)).toEqual([1, 2]);
+    expect(component.venuesHasMore).toBeFalse();
+  });
+
+  it('offers explicit alternatives for a genuine empty combined-filter search', () => {
+    component.search();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.venue-broaden--sport')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.venue-broaden--city')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Experimenta alargar um filtro');
+
+    const before = venueService.suggest.calls.count();
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.venue-broaden--sport');
+    button.click();
+    expect(component.sport).toBe('');
+    expect(component.location).toBe('Lisboa');
+    expect(venueService.suggest.calls.count()).toBe(before + 1);
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', undefined, 0);
+  });
+
+  it('does not call extra fallback searches or claim no venues when API is unavailable', () => {
+    venueService.suggest.and.returnValue(throwError(() => new Error('offline')));
+    const before = venueService.suggest.calls.count();
+    component.search();
+    fixture.detectChanges();
+    expect(component.venuesLoadError).toBeTrue();
+    expect(venueService.suggest.calls.count()).toBe(before + 1);
+    expect(fixture.nativeElement.querySelector('.venue-broaden--sport')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.discovery-grid > .pillar-panel:first-child .pillar-empty')).toBeNull();
+  });
+
+  it('suggests increasing the GPS radius without dropping other filters', () => {
+    component.nearbyVenuePosition = { latitude: 38.72, longitude: -9.14 };
+    component.nearbyVenueRadiusKm = 25;
+    component.search();
+    fixture.detectChanges();
+
+    const radius: HTMLButtonElement = fixture.nativeElement.querySelector('.venue-broaden--radius');
+    expect(radius).not.toBeNull();
+    radius.click();
+    expect(component.nearbyVenueRadiusKm).toBe(50);
+    expect(component.sport).toBe('Padel');
+    expect(component.location).toBe('Lisboa');
+    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel', 38.72, -9.14, 50);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.venue-broaden--radius')).toBeNull();
+  });
+
   it('uses bounded venue suggestions for the preview, keeping filters on the full-catalogue link', () => {
     const venues = Array.from({ length: 36 }, (_, index) => ({
       id: index + 1, name: 'Recinto ' + index, city: 'Lisboa'
