@@ -3028,7 +3028,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const group = this.selected.id, season = this.selectedSeasonId,
       bracket = this.sprintDecisionBracketId, id = this.sprintDecisionIncidentId;
     const selectedBracket=this.sprintBrackets.find(b=>b.id===bracket);
-    const incident=selectedBracket?.incidents.find(i=>i.id===id);
+    const incident=selectedBracket?.incidents?.find(i=>i.id===id);
     if(incident?.incidentType==='FLAGRANT_BEFORE_BELL') {
       if(!this.sprintFlagrantOffender
           ||!this.sprintDecisionEligibleRiders.includes(this.sprintFlagrantOffender)
@@ -3103,7 +3103,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   saveSprintFlagrantStart(): void {
     const bracket=this.sprintBrackets.find(b=>b.id===this.sprintFlagrantStartBracketId);
-    const incident=bracket?.incidents.find(i=>i.id===this.sprintFlagrantStartIncidentId);
+    const incident=bracket?.incidents?.find(i=>i.id===this.sprintFlagrantStartIncidentId);
     if(!this.selected||!this.canManage()||this.sprintIncidentSaving
         ||this.selectedSeasonId==null||this.selectedSeasonId!==this.activeSeason()?.id
         ||!bracket||!incident||!this.sprintCanConfirmFlagrantStart(bracket,incident)
