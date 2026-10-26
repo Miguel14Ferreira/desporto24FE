@@ -3333,11 +3333,11 @@ test('Premium populated tournament QA: team rosters and schedule confirmation st
       await page.getByRole('button', {
         name: language === 'pt' ? 'Gerar jornadas entre equipas' : 'Generate team fixtures'
       }).click();
-      const confirm = page.locator('.team-fixtures-section .confirm-actions');
+      const confirm = page.locator('.team-schedule-action .confirm-actions');
       await expect(confirm).toBeVisible();
       const geometry = await page.evaluate(() => {
         const root = document.querySelector('.tournaments')!;
-        const confirmation = document.querySelector('.team-fixtures-section .confirm-actions')!;
+        const confirmation = document.querySelector('.team-schedule-action .confirm-actions')!;
         const bounds = root.getBoundingClientRect();
         const actions = confirmation.getBoundingClientRect();
         return {
@@ -3358,7 +3358,7 @@ test('Premium populated tournament QA: team rosters and schedule confirmation st
         contentType: 'image/png'
       });
       // Read-only interaction: close the confirmation, never publish fixtures.
-      await page.locator('.team-fixtures-section .confirm-actions button').last().click();
+      await page.locator('.team-schedule-action .confirm-actions button').last().click();
       await expect(confirm).toHaveCount(0);
     }
   }
