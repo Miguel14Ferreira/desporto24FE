@@ -15,13 +15,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA_PASSWORD_1 }}
-      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA_PASSWORD_2 }}
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
+      JYNLO_QA_USERNAME_1: ${{ secrets.JYNLO_QA1_USERNAME }}
+      JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Confirm protected QA secrets belong to allowed disposable identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$JYNLO_QA_PASSWORD_1" || -z "$JYNLO_QA_PASSWORD_2" ]]; then
+            echo 'Protected QA password secrets unavailable; no LIVE login attempted.' >&2
+            exit 1
+          fi
+          if [[ "$JYNLO_QA_USERNAME_1" != 'jynloteste01' || "$JYNLO_QA_USERNAME_2" != 'jynloteste02' ]]; then
+            echo 'QA secret usernames differ from strictly allowed disposable test accounts; no LIVE login attempted.' >&2
+            exit 1
+          fi
       - name: Verify that the QA runner cannot perform writes
         run: node --test scripts/qa/jynlo-notifications-live-readonly.test.cjs
       - name: Probe two disposable QA accounts without modifying notifications
