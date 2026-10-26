@@ -13,6 +13,11 @@ let reactionPickerSequence = 0;
   selector: 'app-chat-reactions',
   standalone: true,
   imports: [CommonModule, TranslatePipe],
+  // The bubble can reserve room only when reaction badges exist.
+  host: {
+    '[class.has-reactions]': 'entries.length > 0',
+    '[class.is-picker-open]': 'expanded'
+  },
   template: `
     <div class="chat-reactions" (keydown.escape)="dismissPicker($event)" (focusout)="onFocusOut($event)">
       @for (entry of entries; track entry.emoji) {
@@ -22,18 +27,18 @@ let reactionPickerSequence = 0;
             [attr.aria-label]="('chat.changeReaction' | t) + ': ' + entry.emoji + ' · ' + entry.count"
             [attr.aria-expanded]="expanded" [attr.aria-controls]="pickerId"
             [attr.aria-pressed]="summary?.myEmoji === entry.emoji"
-            (click)="togglePicker()">
+            (click)="togglePicker($event)">
           {{ entry.emoji }} <span>{{ entry.count }}</span>
         </button>
       }
-      @if (!disabled) {
+      @if (!disabled && entries.length === 0) {
         <button #reactionToggle type="button" class="reaction-open"
             [class.reaction-open--with-counts]="entries.length > 0"
             [attr.aria-expanded]="expanded" [attr.aria-controls]="pickerId"
             [attr.aria-label]="'chat.react' | t"
             [disabled]="store.isBusy(kind, conversationId, messageId)"
-            (click)="togglePicker()">
-          <span aria-hidden="true">😊</span><span class="sr-only">{{ 'chat.react' | t }}</span>
+            (click)="togglePicker($event)">
+          <span aria-hidden="true">☺</span><span class="sr-only">{{ 'chat.react' | t }}</span>
         </button>
       }
       @if (expanded && !disabled) {
@@ -77,7 +82,8 @@ let reactionPickerSequence = 0;
     .reaction-open { width:27px;height:27px;border:1px solid #467b77;
       border-radius:50%;background:#173c46;color:#daf9ed;font-size:.86rem;
       display:grid;place-items:center;box-shadow:0 2px 10px rgba(0,12,19,.3); }
-    .reaction-open--with-counts:not(:focus-visible) { opacity:.75; }
+    /* A selected emoji is already the picker trigger: never show a second badge. */
+    .reaction-open--with-counts { display:none; }
     .reaction-picker { position:absolute;bottom:calc(100% + 8px);left:0;
       display:flex;flex-wrap:wrap;gap:3px;padding:6px;align-items:center;
       width:max-content;max-width:min(330px,calc(100vw - 50px));
@@ -118,6 +124,7 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   expanded = false;
   error = false;
   private watching?: { kind: ChatReactionKind; id: string | number; messageId: number };
+  private pickerTrigger?: HTMLElement;
 
   constructor(public readonly store: ChatReactionStoreService) {}
 
@@ -139,7 +146,7 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     this.expanded = false;
-    this.reactionToggle?.nativeElement.focus({ preventScroll: true });
+    (this.pickerTrigger ?? this.reactionToggle?.nativeElement)?.focus({ preventScroll: true });
   }
 
   /** Tab or click outside leaves no lingering open picker in another chat. */
@@ -150,8 +157,12 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
     if (!wrapper || !next || !wrapper.contains(next)) this.expanded = false;
   }
 
-  togglePicker(): void {
+  togglePicker(event?: Event): void {
     this.expanded = !this.expanded;
+    if (this.expanded) {
+      this.pickerTrigger = (event?.currentTarget as HTMLElement | null)
+        ?? this.reactionToggle?.nativeElement;
+    }
     if (this.expanded && this.store.hasFailed(this.kind, this.conversationId, this.messageId)) {
       this.retry();
     }
@@ -193,6 +204,7 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
     this.watching = { kind: this.kind, id: this.conversationId, messageId: this.messageId };
     this.store.watch(this.kind, this.conversationId, this.messageId);
     this.expanded = false;
+    this.pickerTrigger = undefined;
     this.error = false;
   }
 
