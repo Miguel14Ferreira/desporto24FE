@@ -41,12 +41,12 @@ describe('InboxEmojiGifPickerComponent', () => {
   it('retains disabled GIF search controls while provider status is unknown',async()=>{
     const f=await render({pickerTab:'gif',attachmentControlsReady:true,gifAvailable:null});
     const root=f.nativeElement as HTMLElement;
-    expect(root.querySelector<HTMLInputElement('input[name=gifSearch]')?.disabled).toBeTrue();
+    expect(root.querySelector<HTMLInputElement>('input[name=gifSearch]')?.disabled).toBeTrue();
     expect(root.querySelector<HTMLButtonElement>('.inbox-picker-categories button')?.disabled).toBeTrue();
     expect(root.querySelector('[role=group][aria-label]')).not.toBeNull();
   });
   it('forwards GIF search, category selection, result identity and pagination',async()=>{
-    const gif:GifChoice={id:'gif-7',title:'Golo!',previewUrl:'https://example.org/gif.gif',url:'https://example.org/gif.gif'};
+    const gif:GifChoice={id:'gif-7',title:'Golo!',previewUrl:'https://media.giphy.com/media/gif-7/giphy.gif',downloadUrl:'https://media.giphy.com/media/gif-7/giphy.gif',size:1000,pageUrl:'https://giphy.com/gifs/gif-7',creator:'GIPHY'};
     const f=await render({pickerTab:'gif',attachmentControlsReady:true,gifAvailable:true,
       gifResults:[gif],gifHasMore:true});
     const q=jasmine.createSpy('query'),cat=jasmine.createSpy('category'),
