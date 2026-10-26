@@ -101,8 +101,12 @@ describe('SocialStoriesComponent', () => {
     expect(publishButton.classList.contains('jynlo-action')).toBeTrue();
     expect(publishButton.classList.contains('jynlo-action--primary')).toBeTrue();
     expect(publishButton.disabled).toBeTrue();
-    component.file = new File(['image'], 'story.jpg', { type: 'image/jpeg' });
+    const mediaInput = fixture.nativeElement.querySelector('.story-file input[type="file"]') as HTMLInputElement;
+    const photo = new File(['image'], 'story.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(mediaInput, 'files', { configurable: true, value: [photo] });
+    mediaInput.dispatchEvent(new Event('change'));
     fixture.detectChanges();
+    expect(component.file).toBe(photo);
     expect(publishButton.disabled).toBeFalse();
   }));
 
