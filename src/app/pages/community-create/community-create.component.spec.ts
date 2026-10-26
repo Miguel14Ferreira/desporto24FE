@@ -141,6 +141,13 @@ describe('Community creation onboarding', () => {
       fixture.componentInstance.sportSearch = 'bas';
       fixture.detectChanges();
       const host: HTMLElement = fixture.nativeElement;
+      expect(host.querySelector('.create-community-page.jynlo-community-create-premium')).toBeTruthy();
+      expect(host.querySelector('input[name="name"]')).toBeTruthy();
+      expect(host.querySelector('input[type="file"]')).toBeTruthy();
+      expect(host.querySelector('#community-sport-search')).toBeTruthy();
+      expect(host.querySelector('#community-visibility')).toBeTruthy();
+      expect(host.querySelector('.form-actions button[type="submit"]')).toBeTruthy();
+      expect(host.querySelector('.creation-note[role="status"]')).toBeTruthy();
       const label = () => host.querySelector('label[for="community-sport-search"]')?.textContent?.trim();
       const hint = () => host.querySelector('.sport-selection .field-help')?.textContent?.trim();
       const selected = () => host.querySelector('.sport-tags')?.getAttribute('aria-label');
