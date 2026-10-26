@@ -20,37 +20,9 @@
 .inbox-filters button:hover, .inbox-filters button.active { background:#2ed4ba; color:#062b32; border-color:#2ed4ba; }
 .inbox-filter-count { margin-left:3px; font-weight:900; }
 /* The conversation list scrolls independently; keep its scrollbar within Concept One's dark rail. */
-.inbox-entries {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #527b87 #122c3b;
-}
-.inbox-entries::-webkit-scrollbar { width: 8px; }
-.inbox-entries::-webkit-scrollbar-track { background: #122c3b; }
-.inbox-entries::-webkit-scrollbar-thumb {
-  border: 2px solid #122c3b;
-  border-radius: 999px;
-  background: #527b87;
-}
-.inbox-entries::-webkit-scrollbar-thumb:hover { background: #6c9ca2; }
-.inbox-entry { display:flex; align-items:center; gap:12px; width:100%; border:0; border-bottom:1px solid #284657; color:inherit; text-align:left; background: transparent; padding:16px; font:inherit; cursor:pointer; }
-.inbox-entry:hover { background:#1c3c4b; }
-.inbox-entry:focus-visible { outline: 2px solid #5ee6d0; outline-offset: -3px; background: #1c3c4b; }
-.inbox-entry.is-selected { background:linear-gradient(90deg,#15535b,#163d4a); border-left:3px solid #45e1c9; padding-left:13px; }
 .inbox-avatar { display:grid; place-items:center; flex:0 0 46px; width:46px; height:46px; border-radius:16px; background:#294b65; font-size:1.35rem; }
 .inbox-avatar--community { background:#245a5e; }
 .inbox-avatar--session { background:#42623e; }
-.inbox-entry-content { min-width:0; flex:1; display:flex; flex-direction:column; gap:5px; }
-.inbox-entry-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
-.inbox-entry-top strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.93rem; }
-.inbox-entry-top small { color:#a1b9c5; white-space:nowrap; font-size:.69rem; }
-.inbox-entry-kind,.inbox-entry-snippet { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.inbox-entry-kind { color:#62cbbb; font-size:.72rem; }
-.inbox-entry-snippet { font-size:.78rem; color:#bacdd5; }
-.inbox-unread { display:grid; place-items:center; align-self:start; flex:0 0 auto; min-width:24px; height:24px; padding:0 5px; color:#063a35; background:#62e6c4; border-radius:30px; font-size:.75rem; font-weight:900; }
 .inbox-side-footer { padding:14px 16px; display:flex; flex-wrap:wrap; gap:16px; border-top:1px solid #345666; background:#122c3b; box-shadow:0 -8px 20px #061e2b33; flex-shrink:0; }
 .inbox-side-footer a, .inbox-empty-side a { color:#65dfcd; font-size:.81rem; font-weight:700; }
 .inbox-loading, .inbox-empty-side, .inbox-notice { margin:18px; padding:19px; border-radius:12px; background:#1c3745; font-size:.85rem; color:#cce3ea; }
@@ -78,7 +50,6 @@
   .inbox-heading { align-items:flex-start; flex-direction:column; }
   .inbox-layout { grid-template-columns:1fr; height:auto; min-height:0; }
   .inbox-sidebar { max-height:430px; border-right:0; border-bottom:1px solid #345465; }
-  .inbox-entries { min-height:100px; }
   .inbox-detail { min-height:530px; }
   .inbox-message-log { min-height:360px; max-height:520px; }
   .inbox-detail-heading { flex-wrap:wrap; }
