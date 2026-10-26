@@ -267,10 +267,10 @@ async function main() {
                 .then(text => text.includes('@mobile-fixture')), true,
                 'participant names are visible for a confirmed member');
               if (caseId === 903) {
-                assert.equal(await shell.locator('.session-top-actions a[href="/menu/messages"]').count(), 1,
+                assert.equal(await shell.locator('.session-top-actions a[href^="/menu/messages"]').count(), 1,
                   'future participant may open session chat');
               } else {
-                assert.equal(await shell.locator('.session-top-actions a[href="/menu/messages"]').count(), 0,
+                assert.equal(await shell.locator('.session-top-actions a[href^="/menu/messages"]').count(), 0,
                   'past session cannot reopen chat');
               }
             }
