@@ -123,6 +123,83 @@
         </div>
       </ng-container>
 
+
+      <section class="venue-quality" [attr.aria-label]="'adminVenueQuality.title' | t">
+        <div class="overview-heading">
+          <div>
+            <h3>{{ 'adminVenueQuality.title' | t }}</h3>
+            <p>{{ 'adminVenueQuality.intro' | t }}</p>
+          </div>
+          <button class="jynlo-action jynlo-action--neutral" type="button"
+            [attr.aria-expanded]="qualityOpen" (click)="toggleVenueQuality()">
+            {{ (qualityOpen ? 'adminVenueQuality.hide' : 'adminVenueQuality.show') | t }}
+          </button>
+        </div>
+        <ng-container *ngIf="qualityOpen">
+          <p *ngIf="qualityLoading && !quality" role="status" class="overview-status">
+            {{ 'adminVenueQuality.loading' | t }}
+          </p>
+          <div *ngIf="qualityError" class="overview-error" role="alert">
+            <p>{{ qualityError }}</p>
+            <button type="button" class="jynlo-action jynlo-action--neutral"
+              [disabled]="qualityLoading" (click)="loadVenueQuality()">{{ 'common.retry' | t }}</button>
+          </div>
+          <ng-container *ngIf="quality as report">
+            <p class="overview-updated">{{ 'adminVenueQuality.updated' | t }}:
+              {{ report.generatedAt | date:'dd/MM/yyyy HH:mm' }}</p>
+            <div class="overview-grid">
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.total' | t }}</span>
+                <strong>{{ report.venues | number }}</strong>
+              </article>
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.noSport' | t }}</span>
+                <strong>{{ report.withoutSport | number }}</strong>
+              </article>
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.noGps' | t }}</span>
+                <strong>{{ report.withoutCoordinates | number }}</strong>
+              </article>
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.noAddress' | t }}</span>
+                <strong>{{ report.withoutAddress | number }}</strong>
+              </article>
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.noLocation' | t }}</span>
+                <strong>{{ report.withoutAddressAndCoordinates | number }}</strong>
+                <small>{{ 'adminVenueQuality.noLocationHint' | t }}</small>
+              </article>
+            </div>
+            <h3>{{ 'adminVenueQuality.byDistrict' | t }}</h3>
+            <div class="venue-quality-table-wrap">
+              <table class="venue-quality-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ 'adminVenueQuality.district' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.total' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.noSport' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.noGps' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.noAddress' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.noLocation' | t }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let district of report.districts">
+                    <th scope="row">{{ district.district === 'Sem distrito' ? ('adminVenueQuality.unknownDistrict' | t) : district.district }}</th>
+                    <td>{{ district.venues | number }}</td>
+                    <td>{{ district.withoutSport | number }}</td>
+                    <td>{{ district.withoutCoordinates | number }}</td>
+                    <td>{{ district.withoutAddress | number }}</td>
+                    <td>{{ district.withoutAddressAndCoordinates | number }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="overview-updated">{{ 'adminVenueQuality.caution' | t }}</p>
+          </ng-container>
+        </ng-container>
+      </section>
+
       <div class="growth-trends" aria-label="Evolução semanal da Jynlo">
         <div class="growth-trends-heading">
           <div>

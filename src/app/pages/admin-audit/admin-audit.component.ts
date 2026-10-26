@@ -36,6 +36,25 @@ export interface AdminGrowthTrends {
   weeks: AdminGrowthWeek[];
 }
 
+export interface AdminVenueQualityDistrict {
+  district: string;
+  venues: number;
+  withoutSport: number;
+  withoutCoordinates: number;
+  withoutAddress: number;
+  withoutAddressAndCoordinates: number;
+}
+
+export interface AdminVenueQuality {
+  venues: number;
+  withoutSport: number;
+  withoutCoordinates: number;
+  withoutAddress: number;
+  withoutAddressAndCoordinates: number;
+  districts: AdminVenueQualityDistrict[];
+  generatedAt: string;
+}
+
 interface GrowthChart {
   key: 'users' | 'sessions' | 'communities';
   title: string;
@@ -56,14 +75,20 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   overviewError = '';
   private overviewRequest?: Subscription;
   private growthRequest?: Subscription;
+  private qualityRequest?: Subscription;
   private overviewRequestVersion = 0;
   private growthRequestVersion = 0;
+  private qualityRequestVersion = 0;
   private readonly requestTimeoutMs = 12_000;
   private destroyed = false;
   private viewUpdateScheduled = false;
   growth: AdminGrowthTrends | null = null;
   growthLoading = false;
   growthError = '';
+  qualityOpen = false;
+  quality: AdminVenueQuality | null = null;
+  qualityLoading = false;
+  qualityError = '';
 
   ngOnInit(): void {
     this.refreshIndicators();
@@ -73,13 +98,52 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     this.destroyed = true;
     ++this.overviewRequestVersion;
     ++this.growthRequestVersion;
+    ++this.qualityRequestVersion;
     this.overviewRequest?.unsubscribe();
     this.growthRequest?.unsubscribe();
+    this.qualityRequest?.unsubscribe();
   }
 
   refreshIndicators(): void {
     this.loadOverview();
     this.loadGrowth();
+    if (this.qualityOpen) this.loadVenueQuality();
+  }
+
+  toggleVenueQuality(): void {
+    this.qualityOpen = !this.qualityOpen;
+    if (this.qualityOpen && !this.quality && !this.qualityLoading) {
+      this.loadVenueQuality();
+    }
+  }
+
+  /** Data-quality numbers are opt-in to avoid extra queries on every admin visit. */
+  loadVenueQuality(): void {
+    const version = ++this.qualityRequestVersion;
+    this.qualityRequest?.unsubscribe();
+    this.qualityLoading = true;
+    this.qualityError = '';
+    this.qualityRequest = this.http.get<AdminVenueQuality>(
+      environment.apiUrl + '/api/admin/overview/venue-quality'
+    ).pipe(
+      timeout(this.requestTimeoutMs),
+      finalize(() => {
+        if (version !== this.qualityRequestVersion) return;
+        this.qualityLoading = false;
+        this.refreshView();
+      })
+    ).subscribe({
+      next: report => {
+        if (version !== this.qualityRequestVersion) return;
+        this.quality = report;
+        this.refreshView();
+      },
+      error: error => {
+        if (version !== this.qualityRequestVersion) return;
+        this.qualityError = this.requestError(error, 'dados de recintos');
+        this.refreshView();
+      }
+    });
   }
 
   get growthCharts(): GrowthChart[] {
@@ -176,7 +240,7 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     });
   }
 
-  private requestError(error: unknown, subject: 'indicadores' | 'gráficos'): string {
+  private requestError(error: unknown, subject: 'indicadores' | 'gráficos' | 'dados de recintos'): string {
     if (error instanceof TimeoutError) {
       return `O pedido de ${subject} demorou demasiado tempo (12 segundos). Tenta novamente.`;
     }

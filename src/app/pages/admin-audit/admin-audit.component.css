@@ -108,3 +108,13 @@ h1 {
 @media (max-width: 900px) { .growth-charts { grid-template-columns: 1fr; } }
 @media (max-width: 450px) { .growth-chart { padding: .8rem; }
   .growth-plot { gap: .18rem; } .growth-week, .growth-value { font-size: .6rem; } }
+
+/* Optional admin-only venue quality diagnostics; overflow stays within the panel. */
+.venue-quality { margin-top: 1.9rem; padding-top: 1.3rem; border-top: 1px solid rgba(255,255,255,.12); }
+.venue-quality .overview-heading h3 { margin: 0; }
+.venue-quality .overview-grid { margin-top: 1rem; }
+.venue-quality-table-wrap { width: 100%; overflow-x: auto; }
+.venue-quality-table { width: 100%; border-collapse: collapse; min-width: 650px; font-variant-numeric: tabular-nums; }
+.venue-quality-table th, .venue-quality-table td { text-align: left; padding: .7rem .8rem; border-bottom: 1px solid rgba(255,255,255,.1); }
+.venue-quality-table th { font-size: .8rem; color: #e2e8f0; }
+.venue-quality-table td { font-size: .86rem; color: #cbd5e1; }
