@@ -30,6 +30,7 @@ import { RecoverableSend, restorePendingSends, savePendingSends } from './pendin
 import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
 import { ShareChoice, ShareKind, encodeShareMessage, readSharedMessage } from './share-message';
 import { GiphyEmbedComponent } from './giphy-embed.component';
+import { InboxConversationListComponent, InboxListFormatters } from './inbox-conversation-list.component';
 import { findCuratedGifs } from './curated-gifs';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
@@ -38,12 +39,20 @@ const VOICE_NOTE_AUDIO_BITRATE = 48_000;
 @Component({
   selector: 'app-messages-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent, InboxConversationListComponent],
   templateUrl: './messages-center.component.html',
   styleUrls: ['./messages-center.component.css', './messages-center-premium.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChecked {
+  /** Stable wrappers preserve the existing date, preview and unread formatting rules. */
+  readonly conversationListFormatters: InboxListFormatters = {
+    date: value => this.formatDate(value),
+    time: value => this.formatInboxListTime(value),
+    kind: kind => this.kindLabel(kind),
+    preview: value => this.displayMessagePreview(value),
+    unread: conversation => this.unreadBadgeText(conversation)
+  };
   @ViewChild('previewLog') previewLog?: ElementRef<HTMLElement>;
   @ViewChild('composerTextarea') composerTextarea?: ElementRef<HTMLTextAreaElement>;
 
