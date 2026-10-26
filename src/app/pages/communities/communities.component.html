@@ -1197,6 +1197,10 @@
                                                 : 'communities.trackCycling.faultPending') | t)
                                             : incident.status === 'FAULT_START_OK'
                                               ? ('communities.trackCycling.faultAuthorized' | t)
+                                            : incident.status === 'FLAGRANT_START_PENDING'
+                                              ? ('communities.trackCycling.flagrantPending' | t)
+                                            : incident.status === 'FLAGRANT_START_OK'
+                                              ? ('communities.trackCycling.flagrantAuthorized' | t)
                                             : incident.status === 'RESTART_PENDING'
                                               ? ('communities.trackCycling.neutralPending' | t)
                                             : incident.status === 'POSITIONS_PENDING'
@@ -1226,6 +1230,10 @@
                                           ? ((incident.decisionType === 'PRE_SPRINT_RESTART'
                                               ? 'communities.trackCycling.preSprintAuthorized'
                                               : 'communities.trackCycling.faultAuthorizedNotice') | t)
+                                        : incident.status === 'FLAGRANT_START_PENDING'
+                                          ? ('communities.trackCycling.flagrantPending' | t)
+                                        : incident.status === 'FLAGRANT_START_OK'
+                                          ? ('communities.trackCycling.flagrantAuthorized' | t)
                                         : incident.status === 'POSITIONS_PENDING'
                                           ? ('communities.trackCycling.neutralPositionsNotice' | t)
                                         : incident.status === 'OFFICIAL_POSITIONS'
@@ -1562,6 +1570,70 @@
                                     <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
                                       {{ incident.rerunReference }}</small>
                                   }
+                                  @if (incident.incidentType === 'FLAGRANT_BEFORE_BELL'
+                                      && incident.status === 'ADJUDICATION_REQUIRED') {
+                                    <p role="note">{{ 'communities.trackCycling.flagrantSanctionBlocked' | t }}</p>
+                                    <p>{{ 'communities.trackCycling.flagrantOffender' | t }}:
+                                      <strong>{{ incident.flagrantOffendingRider }}</strong>
+                                      · {{ ('communities.trackCycling.sanction.' + incident.sanctionType) | t }}</p>
+                                  }
+                                  @if (incident.status === 'FLAGRANT_START_OK') {
+                                    <p role="note">{{ 'communities.trackCycling.flagrantAuthorized' | t }}</p>
+                                    <p>{{ 'communities.trackCycling.flagrantOffender' | t }}:
+                                      <strong>{{ incident.flagrantOffendingRider }}</strong></p>
+                                    <p>{{ 'communities.trackCycling.faultNonFaultRider' | t }}:
+                                      <strong>{{ incident.flagrantNonFaultRider }}</strong> ·
+                                      {{ ('communities.trackCycling.faultSide.' + incident.flagrantChosenStartPosition) | t }}</p>
+                                    <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
+                                      {{ incident.rerunReference }}</small>
+                                  }
+                                  @if (canManage() && selectedSeasonId === activeSeason()?.id
+                                      && sprintCanConfirmFlagrantStart(bracket,incident)) {
+                                    <button type="button" class="btn btn-secondary"
+                                      [disabled]="sprintIncidentSaving"
+                                      (click)="editSprintFlagrantStart(bracket.id,incident.id)">
+                                      {{ 'communities.trackCycling.flagrantChooseStart' | t }}
+                                    </button>
+                                    @if (sprintFlagrantStartBracketId === bracket.id
+                                        && sprintFlagrantStartIncidentId === incident.id) {
+                                      <div class="round-meta-form">
+                                        <strong>{{ 'communities.trackCycling.flagrantStartTitle' | t }}</strong>
+                                        <p>{{ 'communities.trackCycling.flagrantStartNotice' | t }}</p>
+                                        <p>{{ 'communities.trackCycling.faultNonFaultRider' | t }}:
+                                          <strong>{{ sprintFlagrantInnocent(bracket,incident) }}</strong></p>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.faultChosenSide' | t }}</span>
+                                          <select [(ngModel)]="sprintFlagrantStartPosition">
+                                            <option value="">{{ 'communities.trackCycling.faultNoDefault' | t }}</option>
+                                            <option value="INSIDE">{{ 'communities.trackCycling.faultSide.INSIDE' | t }}</option>
+                                            <option value="OUTSIDE">{{ 'communities.trackCycling.faultSide.OUTSIDE' | t }}</option>
+                                          </select>
+                                        </label>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentOfficialReference' | t }}</span>
+                                          <input [(ngModel)]="sprintFlagrantStartReference" maxlength="255">
+                                        </label>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
+                                          <textarea [(ngModel)]="sprintFlagrantStartReason" maxlength="500"></textarea>
+                                        </label>
+                                        <label>
+                                          <input type="checkbox" [(ngModel)]="sprintFlagrantStartChoiceConfirmed">
+                                          {{ 'communities.trackCycling.flagrantChoiceConfirm' | t }}
+                                        </label>
+                                        <p>{{ 'communities.trackCycling.neutralNoWinner' | t }}</p>
+                                        <button type="button" class="btn btn-primary"
+                                          (click)="saveSprintFlagrantStart()"
+                                          [disabled]="sprintIncidentSaving || !sprintFlagrantStartPosition
+                                            || !sprintFlagrantStartChoiceConfirmed
+                                            || sprintFlagrantStartReference.trim().length < 12
+                                            || sprintFlagrantStartReference.trim() === incident.decisionReference
+                                            || sprintFlagrantStartReason.trim().length < 12">
+                                          {{ 'communities.trackCycling.flagrantChooseStart' | t }}
+                                        </button>
+                                      </div>
+                                    }
+                                  }
                                   @if (canManage() && selectedSeasonId === activeSeason()?.id
                                       && sprintCanConfirmFaultStart(bracket, incident)) {
                                     <button type="button" class="btn btn-secondary"
@@ -1737,6 +1809,35 @@
                                     @if (sprintDecisionIncidentId === incident.id
                                           && sprintDecisionBracketId === bracket.id) {
                                       <div class="round-meta-form">
+                                        @if (incident.incidentType === 'FLAGRANT_BEFORE_BELL') {
+                                          <p>{{ 'communities.trackCycling.flagrantRulingNotice' | t }}</p>
+                                          <label>
+                                            <span>{{ 'communities.trackCycling.flagrantOffender' | t }}</span>
+                                            <select [(ngModel)]="sprintFlagrantOffender">
+                                              <option value="">{{ 'communities.trackCycling.tieSelectRider' | t }}</option>
+                                              @for (rider of sprintDecisionEligibleRiders; track rider) {
+                                                <option [value]="rider">{{ rider }}</option>
+                                              }
+                                            </select>
+                                          </label>
+                                          <label>
+                                            <span>{{ 'communities.trackCycling.flagrantSanction' | t }}</span>
+                                            <select [(ngModel)]="sprintFlagrantSanction">
+                                              <option value="">{{ 'communities.trackCycling.flagrantSelectSanction' | t }}</option>
+                                              <option value="NONE">{{ 'communities.trackCycling.flagrantNoSanction' | t }}</option>
+                                              <option value="RELEGATION">{{ 'communities.trackCycling.sanction.RELEGATION' | t }}</option>
+                                              <option value="DISQUALIFICATION">{{ 'communities.trackCycling.sanction.DISQUALIFICATION' | t }}</option>
+                                            </select>
+                                          </label>
+                                          <label>
+                                            <input type="checkbox" [(ngModel)]="sprintFlagrantCutoffConfirmed">
+                                            {{ 'communities.trackCycling.flagrantCutoffConfirm' | t }}
+                                          </label>
+                                          <label>
+                                            <input type="checkbox" [(ngModel)]="sprintFlagrantStarterConfirmed">
+                                            {{ 'communities.trackCycling.flagrantStarterConfirm' | t }}
+                                          </label>
+                                        } @else {
                                         <label>
                                           <span>{{ 'communities.trackCycling.incidentDecisionType' | t }}</span>
                                           <select [(ngModel)]="sprintDecisionType">
@@ -1775,6 +1876,7 @@
                                           </label>
                                           <small>{{ 'communities.trackCycling.disciplineNoAutoResult' | t }}</small>
                                         }
+                                        }
                                         <label>
                                           <span>{{ 'communities.trackCycling.incidentOfficialReference' | t }}</span>
                                           <input [(ngModel)]="sprintDecisionReference" maxlength="255">
@@ -1788,6 +1890,10 @@
                                           [disabled]="sprintIncidentSaving
                                             || sprintDecisionReference.trim().length < 12
                                             || sprintDecisionReason.trim().length < 12
+                                            || (incident.incidentType === 'FLAGRANT_BEFORE_BELL'
+                                              && (!sprintFlagrantOffender || !sprintFlagrantSanction
+                                                || !sprintFlagrantCutoffConfirmed
+                                                || !sprintFlagrantStarterConfirmed))
                                             || (sprintDecisionType === 'DISCIPLINARY_RULING'
                                               && (!sprintDecisionSanctionedUsername
                                                 || !sprintDecisionEligibleRiders.includes(sprintDecisionSanctionedUsername)))">
@@ -1823,6 +1929,7 @@
                                             <option value="PRE_SPRINT_BALANCE">{{ 'communities.trackCycling.preSprintCause.PRE_SPRINT_BALANCE' | t }}</option>
                                             <option value="PRE_SPRINT_OPPONENT_CONTACT">{{ 'communities.trackCycling.preSprintCause.PRE_SPRINT_OPPONENT_CONTACT' | t }}</option>
                                             <option value="PRE_SPRINT_BARRIER_CONTACT">{{ 'communities.trackCycling.preSprintCause.PRE_SPRINT_BARRIER_CONTACT' | t }}</option>
+                                            <option value="FLAGRANT_BEFORE_BELL">{{ 'communities.trackCycling.flagrantType' | t }}</option>
                                           }
                                         </select>
                                       </label>
