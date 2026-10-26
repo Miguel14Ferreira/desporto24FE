@@ -65,9 +65,9 @@
           <strong>{{ 'discover.error.title' | t }}</strong>
           <span>{{ 'discover.error.text' | t }}</span>
           <span>
-            @if (venuesLoadError) { Recintos indisponíveis. }
-            @if (sessionsLoadError) { Sessões indisponíveis. }
-            @if (peopleLoadError) { Jogadores indisponíveis. }
+            @if (venuesLoadError) { {{ 'discover.error.venuesUnavailable' | t }} }
+            @if (sessionsLoadError) { {{ 'discover.error.sessionsUnavailable' | t }} }
+            @if (peopleLoadError) { {{ 'discover.error.peopleUnavailable' | t }} }
           </span>
         </div>
         <button class="jynlo-action jynlo-action--neutral" type="button" (click)="search()">
@@ -258,11 +258,12 @@
             <button type="button" class="jynlo-action jynlo-action--neutral"
               [attr.aria-expanded]="showAllSessions"
               (click)="toggleAllSessions()">
-              {{ showAllSessions ? 'Ver menos sessões' : 'Ver todas as ' + sessions.length + ' sessões' }}
+              {{ showAllSessions ? ('discover.when.showLess' | t) : ('discover.when.showAllCount' | t:{ count: sessions.length }) }}
             </button>
           }
 
-          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/events"
+             [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
             {{ 'discover.when.action' | t }} <span>→</span>
           </a>
         </section>

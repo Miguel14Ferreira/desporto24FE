@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { finalize, retry, Subscription, timeout } from 'rxjs';
 
 import { SessionSummary } from '../model/session-summary';
@@ -45,9 +46,16 @@ export class EventsComponent implements OnInit, OnDestroy {
   private currentSearch?: Subscription;
   private destroyed = false;
 
-  constructor(private sessionService: SessionService) {}
+  constructor(
+    private sessionService: SessionService,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
+    // Reuse Discover's explicit filters without changing the default Sessions entry.
+    const params = this.route.snapshot.queryParamMap;
+    this.sport = (params.get('sport') || '').trim();
+    this.city = (params.get('city') || '').trim();
     this.loadSessions();
   }
 
