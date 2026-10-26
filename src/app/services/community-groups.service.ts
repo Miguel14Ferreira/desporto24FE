@@ -26,12 +26,12 @@ export interface TrackSprintIncident {
   id: number;
   seriesKey: string;
   heatNumber: number;
-  incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER' | 'PRE_SPRINT_BALANCE' | 'PRE_SPRINT_OPPONENT_CONTACT' | 'PRE_SPRINT_BARRIER_CONTACT';
+  incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER' | 'PRE_SPRINT_BALANCE' | 'PRE_SPRINT_OPPONENT_CONTACT' | 'PRE_SPRINT_BARRIER_CONTACT' | 'FLAGRANT_BEFORE_BELL';
   details: string;
-  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'RESTART_PENDING' | 'POSITIONS_PENDING' | 'FAULT_START_PENDING' | 'FAULT_START_OK' | 'NEUTRAL_RESTART_OK' | 'OFFICIAL_POSITIONS' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
+  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'RESTART_PENDING' | 'POSITIONS_PENDING' | 'FAULT_START_PENDING' | 'FAULT_START_OK' | 'FLAGRANT_START_PENDING' | 'FLAGRANT_START_OK' | 'NEUTRAL_RESTART_OK' | 'OFFICIAL_POSITIONS' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
   reportedBy: string;
   reportedAt: string;
-  decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | 'UNINTENTIONAL_FALL' | 'PRE_SPRINT_RESTART' | null;
+  decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | 'UNINTENTIONAL_FALL' | 'PRE_SPRINT_RESTART' | 'FLAGRANT_RULING' | null;
   sanctionType?: 'WARNING' | 'RELEGATION' | 'DISQUALIFICATION' | null;
   sanctionedUsername?: string | null;
   decisionReference: string | null;
@@ -57,6 +57,11 @@ export interface TrackSprintIncident {
   preSprintStartPosition?: 'INSIDE' | 'OUTSIDE' | null;
   preSprintBeforeStartConfirmed?: boolean | null;
   preSprintStarterStoppedConfirmed?: boolean | null;
+  flagrantOffendingRider?: string | null;
+  flagrantNonFaultRider?: string | null;
+  flagrantChosenStartPosition?: 'INSIDE' | 'OUTSIDE' | null;
+  flagrantBeforeCutoffConfirmed?: boolean | null;
+  flagrantStarterStoppedConfirmed?: boolean | null;
 }
 
 /** Immutable signed-decision transcription; platform does not validate external signatures. */
@@ -642,6 +647,35 @@ export class CommunityGroupsService {
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
       + '/pre-sprint-start', payload);
+  }
+
+  ruleFlagrantSprintIncident(communityId: number, seasonId: number,
+    bracketId: number, incidentId: number, payload: {
+      offendingRider: string;
+      sanction: 'NONE' | 'RELEGATION' | 'DISQUALIFICATION';
+      beforeBellOrSprintConfirmed: boolean;
+      starterStoppedConfirmed: boolean;
+      reference: string;
+      reason: string;
+    }): Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/flagrant-ruling', payload);
+  }
+
+  confirmFlagrantNoSanctionStart(communityId: number, seasonId: number,
+    bracketId: number, incidentId: number, payload: {
+      nonFaultRider: string;
+      nonFaultStartPosition: 'INSIDE' | 'OUTSIDE';
+      nonFaultChoiceConfirmed: boolean;
+      reference: string;
+      reason: string;
+    }): Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/flagrant-no-sanction-start', payload);
   }
 
   authorizeNeutralSprintRestart(communityId: number, seasonId: number, bracketId: number,
