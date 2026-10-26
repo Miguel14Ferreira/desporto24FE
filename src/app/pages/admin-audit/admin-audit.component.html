@@ -196,6 +196,73 @@
               </table>
             </div>
             <p class="overview-updated">{{ 'adminVenueQuality.caution' | t }}</p>
+            <section class="venue-gps-review" [attr.aria-label]="'adminVenueGps.title' | t">
+              <div class="overview-heading">
+                <div>
+                  <h3>{{ 'adminVenueGps.title' | t }}</h3>
+                  <p>{{ 'adminVenueGps.intro' | t }}</p>
+                </div>
+                <button type="button" class="jynlo-action jynlo-action--neutral"
+                  (click)="toggleGpsReview()" [attr.aria-expanded]="gpsOpen">
+                  {{ (gpsOpen ? 'adminVenueGps.hide' : 'adminVenueGps.show') | t }}
+                </button>
+              </div>
+              <ng-container *ngIf="gpsOpen">
+                <div class="venue-gps-review-filter">
+                  <label for="admin-gps-district">{{ 'adminVenueQuality.district' | t }}</label>
+                  <select id="admin-gps-district" [value]="gpsDistrict"
+                    [disabled]="gpsLoading" (change)="selectGpsDistrict($any($event.target).value)">
+                    <option value="">{{ 'adminVenueGps.all' | t }}</option>
+                    <option *ngFor="let row of report.districts" [value]="row.district"
+                      [disabled]="!row.withoutCoordinates || row.district === 'Sem distrito'">
+                      {{ row.district === 'Sem distrito' ? ('adminVenueQuality.unknownDistrict' | t) : row.district }}
+                    </option>
+                  </select>
+                </div>
+                <p *ngIf="gpsLoading" role="status" class="overview-status">{{ 'adminVenueGps.loading' | t }}</p>
+                <div *ngIf="gpsError" role="alert" class="overview-error">
+                  <p>{{ gpsError }}</p>
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="gpsLoading" (click)="loadGpsReview()">{{ 'common.retry' | t }}</button>
+                </div>
+                <ng-container *ngIf="gpsPage as review">
+                  <p *ngIf="!review.venues.length" class="overview-updated">{{ 'adminVenueGps.empty' | t }}</p>
+                  <div *ngIf="review.venues.length" class="venue-quality-table-wrap">
+                    <table class="venue-quality-table venue-gps-review-table">
+                      <thead><tr>
+                        <th scope="col">{{ 'adminVenueGps.venue' | t }}</th>
+                        <th scope="col">{{ 'adminVenueGps.source' | t }}</th>
+                        <th scope="col">{{ 'adminVenueGps.action' | t }}</th>
+                      </tr></thead>
+                      <tbody><tr *ngFor="let item of review.venues">
+                        <td>
+                          <strong>{{ item.name }}</strong>
+                          <small>{{ item.city }} · {{ item.district || ('adminVenueQuality.unknownDistrict' | t) }}</small>
+                          <small>{{ item.address || ('adminVenueGps.noAddress' | t) }}</small>
+                        </td>
+                        <td>
+                          <small>{{ item.informationSource || '—' }}</small>
+                          <small>{{ item.sourceReference || ('adminVenueGps.noReference' | t) }}</small>
+                        </td>
+                        <td><a class="jynlo-action jynlo-action--neutral"
+                          [routerLink]="['/menu/venues', item.id, 'suggest-edit']">
+                          {{ 'adminVenueGps.review' | t }}</a></td>
+                      </tr></tbody>
+                    </table>
+                  </div>
+                  <div class="venue-gps-review-pages">
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [disabled]="gpsLoading || review.page === 0"
+                      (click)="loadGpsReview(review.page - 1)">{{ 'venue.catalog.previous' | t }}</button>
+                    <span>{{ 'venue.catalog.page' | t }} {{ review.page + 1 }}</span>
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [disabled]="gpsLoading || !review.hasMore"
+                      (click)="loadGpsReview(review.page + 1)">{{ 'venue.catalog.next' | t }}</button>
+                  </div>
+                  <p class="overview-updated">{{ 'adminVenueGps.warning' | t }}</p>
+                </ng-container>
+              </ng-container>
+            </section>
           </ng-container>
         </ng-container>
       </section>
