@@ -56,6 +56,37 @@ describe('SocialStoriesComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.story-bubble').length).toBe(1);
   }));
 
+  it('hides the audience selector when personal profile is the only publication target', fakeAsync(() => {
+    communities.mine.and.returnValue(of([
+      { id: 4, name: 'Comunidade privada', visibility: 'PRIVATE', myRole: 'OWNER' },
+      { id: 5, name: 'Comunidade pública', visibility: 'PUBLIC', myRole: 'MEMBER' }
+    ] as any));
+    fixture.detectChanges();
+    tick();
+    (fixture.nativeElement.querySelector('.story-add-action') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.groups).toHaveSize(0);
+    expect(fixture.nativeElement.querySelector('#storyAudience')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Publicar como');
+    const media = fixture.nativeElement.querySelector('.story-file');
+    expect(media).toBeTruthy();
+    expect(media.querySelector('input[type="file"]')).toBeTruthy();
+  }));
+
+  it('preserves choosing a community when the member can publish community Stories', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    (fixture.nativeElement.querySelector('.story-add-action') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const audience = fixture.nativeElement.querySelector('#storyAudience') as HTMLSelectElement;
+    expect(audience).not.toBeNull();
+    expect(Array.from(audience.options).map(option => option.value)).toEqual(['', '3']);
+    audience.value = '3';
+    audience.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.communityId).toBe('3');
+  }));
+
   it('keeps personal Stories available without displaying the redundant 24-hour counter', fakeAsync(() => {
     fixture.detectChanges();
     tick();
