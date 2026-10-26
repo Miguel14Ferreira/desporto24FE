@@ -8,6 +8,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 import { VenueService } from '../../services/venue.service';
 import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { PORTUGAL_VENUE_REGIONS } from '../../shared/portugal-districts';
 import { Venue } from '../model/venue';
 
 @Component({
@@ -19,11 +20,7 @@ import { Venue } from '../model/venue';
 })
 export class VenuesDirectoryComponent implements OnInit, OnDestroy {
   readonly sportsCatalog = SPORTS_CATALOG;
-  readonly districts = [
-    'Aveiro', 'Beja', 'Braga', 'Bragança', 'Castelo Branco', 'Coimbra',
-    'Évora', 'Faro', 'Guarda', 'Leiria', 'Lisboa', 'Portalegre', 'Porto',
-    'Santarém', 'Setúbal', 'Viana do Castelo', 'Vila Real', 'Viseu'
-  ];
+  readonly districts = PORTUGAL_VENUE_REGIONS;
 
   name = '';
   city = '';
