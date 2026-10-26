@@ -454,51 +454,19 @@
 
             <div class="detail-header">
               <div class="community-detail-identity">
-                <div class="community-photo-block">
-                  <div class="community-avatar community-avatar--large"
-                    [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)">
-                    @if (selected.photoUrl) {
-                      @if (communityCoverIsShowAll(selected)) {
-                        <img class="community-cover-backdrop" [src]="selected.photoUrl"
-                          alt="" aria-hidden="true" loading="lazy">
-                      }
-                      <img class="community-cover-foreground" [src]="selected.photoUrl" [alt]="selected.name"
-                        [style.object-fit]="communityCoverFit(selected)"
-                        [style.object-position]="communityCoverPosition(selected)"
-                        [style.transform-origin]="communityCoverOrigin(selected)"
-                        [style.transform]="communityCoverZoom(selected)">
-                    } @else {
-                      <span>{{ communityInitials(selected) }}</span>
-                    }
-                  </div>
-
-                  @if (canManage()) {
-                    <div class="community-photo-actions">
-                      <label class="community-photo-action jynlo-action jynlo-action--neutral" [class.disabled]="photoUpdating">
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,image/gif,.gif"
-                          [disabled]="photoUpdating"
-                          (change)="onCommunityPhotoChange($event)">
-                        <span>{{ 'communities.changePhoto' | t }}</span>
-                      </label>
-                      @if (selected.photoUrl) {
-                        <button type="button"
-                          class="community-photo-action jynlo-action jynlo-action--neutral"
-                          [disabled]="photoUpdating"
-                          (click)="openExistingCommunityAvatarCrop()">
-                          {{ 'communities.adjustPhoto' | t }}
-                        </button>
-                        <button
-                          type="button"
-                          class="community-photo-action community-photo-remove jynlo-action jynlo-action--danger"
-                          [disabled]="photoUpdating"
-                          (click)="removeCommunityPhoto()">
-                          {{ 'communities.removePhoto' | t }}
-                        </button>
-                      }
-                    </div>
-                  }
+                <div app-community-photo-cover class="community-photo-block"
+                  [photoUrl]="selected.photoUrl" [name]="selected.name"
+                  [initials]="communityInitials(selected)"
+                  [animated]="isAnimatedCommunityAvatar(selected.photoUrl)"
+                  [showAll]="communityCoverIsShowAll(selected)"
+                  [fit]="communityCoverFit(selected)"
+                  [position]="communityCoverPosition(selected)"
+                  [origin]="communityCoverOrigin(selected)"
+                  [zoom]="communityCoverZoom(selected)"
+                  [canManage]="canManage()" [updating]="photoUpdating"
+                  (photoSelected)="onCommunityPhotoChange($event)"
+                  (adjustRequested)="openExistingCommunityAvatarCrop()"
+                  (removeRequested)="removeCommunityPhoto()">
                 </div>
 
                 <div class="community-detail-copy">
