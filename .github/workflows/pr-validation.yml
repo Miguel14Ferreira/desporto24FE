@@ -204,6 +204,34 @@ jobs:
           retention-days: 3
           if-no-files-found: ignore
 
+      # Real browser verification of populated community tournaments at
+      # 390px/768px/desktop in PT/EN; all API fixtures are synthetic.
+      - name: Install isolated Playwright for populated tournament layout QA
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-populated-tournaments-') }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-premium-tournament-playwright"
+          mkdir -p "$QA_DEPS" node_modules/@playwright
+          printf '%s\n' '{"private":true,"dependencies":{"@playwright/test":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/@playwright/test" node_modules/@playwright/test
+          "$QA_DEPS/node_modules/.bin/playwright" install chromium
+      - name: Inspect populated tournaments, rosters, standings and confirmations at 390px
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-populated-tournaments-') }}
+        env:
+          CI: 'true'
+        run: |
+          "$RUNNER_TEMP/jynlo-premium-tournament-playwright/node_modules/.bin/playwright" test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --workers=1 --grep "Premium populated tournament QA"
+      - name: Save populated tournament Chromium artifacts
+        if: ${{ always() && startsWith(github.head_ref, 'qa/concept-one-populated-tournaments-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-premium-populated-tournaments
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 3
+          if-no-files-found: ignore
+
       # Opt-in real Chromium QA for the source-labelled historical tournament
       # navigation. The endpoint is fully mocked in Playwright, with 57 synthetic
       # matches and no QA credentials or production traffic. One CI job only.
