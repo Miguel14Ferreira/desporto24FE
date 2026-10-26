@@ -16,6 +16,8 @@ on:
       - 'scripts/qa/jynlo-karting-live-readonly.cjs'
       - 'scripts/qa/jynlo-karting-live-readonly.test.cjs'
       - 'scripts/ci-browser/public_api_contract_READONLY.cjs'
+      - 'scripts/ci-browser/desktop_candidate_smoke.cjs'
+      - 'scripts/ci-browser/authenticated_candidate_smoke.cjs'
       - 'package.json'
       - 'package-lock.json'
       - 'angular.json'
@@ -365,15 +367,16 @@ jobs:
             exit 1
           fi
           node scripts/ci-browser/desktop_auth_smoke.cjs
-      # Candidate-only browser verification. No additional job, second npm ci,
+      # Candidate-only browser verification. Premium QA adds mobile checks.
+      # No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
-        if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' }}
+        if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' || startsWith(github.head_ref, 'qa/premium-responsive-browser-') }}
         run: |
           npm install --no-save --package-lock=false playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Exercise built Angular candidate in desktop Chromium
-        if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' }}
+      - name: Exercise built Angular candidate in desktop and mobile Chromium
+        if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' || startsWith(github.head_ref, 'qa/premium-responsive-browser-') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -393,17 +396,21 @@ jobs:
             exit 1
           fi
           node scripts/ci-browser/desktop_candidate_smoke.cjs
-          node scripts/ci-browser/desktop_auth_smoke.cjs
+          if [[ "$GITHUB_HEAD_REF" == qa/premium-responsive-browser-* ]]; then
+            node scripts/ci-browser/authenticated_candidate_smoke.cjs
+          else
+            node scripts/ci-browser/desktop_auth_smoke.cjs
+          fi
       - name: Check live public API response contracts (GET only)
         if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' }}
         # No credentials, POST, writes, production E2E actions or database access.
         # This checks only the existing public API, with bounded responses.
         run: node scripts/ci-browser/public_api_contract_READONLY.cjs
       - name: Save isolated candidate screenshots
-        if: ${{ always() && github.head_ref == 'integration/desktop-pestana-20261020' }}
+        if: ${{ always() && (github.head_ref == 'integration/desktop-pestana-20261020' || startsWith(github.head_ref, 'qa/premium-responsive-browser-')) }}
         uses: actions/upload-artifact@v4
         with:
-          name: jynlo-desktop-candidate-screenshots
+          name: jynlo-responsive-candidate-screenshots
           path: artifacts/desktop-candidate/*.png
           retention-days: 3
           if-no-files-found: warn
