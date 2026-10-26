@@ -175,7 +175,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     const prev=localStorage.getItem('d24-language');
     try {
       localStorage.setItem('d24-language','pt');
-      expect(t('communities.trackCycling.reviewOverturnedBlock')).toContain('não é criado');
+      expect(t('communities.trackCycling.reviewOverturnedBlock')).toContain('Não é criado');
       localStorage.setItem('d24-language','en');
       expect(t('communities.trackCycling.reviewOverturnedBlock')).toContain('No replacement winner');
     } finally {
