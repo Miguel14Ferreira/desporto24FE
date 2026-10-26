@@ -203,6 +203,33 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('keeps session detail navigation and participation information inside the Premium shell', () => {
+    const shell: HTMLElement = fixture.nativeElement.querySelector('.detail-page');
+    expect(shell.classList.contains('jynlo-session-detail-premium')).toBeTrue();
+    expect(shell.classList.contains('jynlo-games')).toBeTrue();
+    expect(shell.querySelector('a.back-link[href="/menu/events"]')).toBeTruthy();
+    expect(shell.querySelector('.detail-card .title-row h1')?.textContent).toContain('Lisboa');
+    expect(shell.querySelector('.detail-card .detail-grid')).toBeTruthy();
+    expect(shell.querySelector('.session-top-actions')).toBeTruthy();
+    expect(shell.querySelector('.detail-grid')?.textContent).toContain('2/4');
+  });
+
+  it('retains confirmed and waitlisted membership badges with Premium styling', () => {
+    component.session = { ...session, joined: true, waitlisted: false };
+    fixture.detectChanges();
+    let membership: HTMLElement = fixture.nativeElement.querySelector('.jynlo-session-detail-premium .membership-status');
+    expect(membership).toBeTruthy();
+    expect(membership.classList.contains('waitlisted')).toBeFalse();
+    expect(membership.querySelector('.participants-shortcut')).toBeTruthy();
+
+    component.session = { ...session, joined: false, waitlisted: true, waitlistPosition: 3 };
+    fixture.detectChanges();
+    membership = fixture.nativeElement.querySelector('.jynlo-session-detail-premium .membership-status');
+    expect(membership.classList.contains('waitlisted')).toBeTrue();
+    expect(membership.textContent).toContain('3');
+    expect(membership.querySelector('.participants-shortcut')).toBeNull();
+  });
+
   it('offers a jump to new session messages without moving the scroll until chosen', () => {
     component.session = { ...session, joined: true };
     const log = { scrollHeight: 900, scrollTop: 60, clientHeight: 260 };
