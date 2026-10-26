@@ -305,7 +305,8 @@
   }
 
   .site-nav--mobile .site-nav__links > a:not(.notification-link) {
-    display: none;
+    /* Explicit action styles use !important; keep the signed-in header compact. */
+    display: none !important;
   }
 
   .site-nav--mobile .notification-link {
