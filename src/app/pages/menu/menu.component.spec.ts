@@ -94,6 +94,16 @@ describe('MenuComponent', () => {
     fixture.detectChanges();
   });
 
+  it('preserves account, session, community and admin links in the Premium account hub', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.dashboard-page.jynlo-c1.jynlo-secondary')).not.toBeNull();
+    for (const route of ['/menu/events', '/menu/createEvent', '/menu/communities',
+      '/menu/dadosPerfil', '/menu/alterardados', '/menu/alterarPassword', '/menu/admin']) {
+      expect(root.querySelector('a[href="' + route + '"]')).withContext(route).not.toBeNull();
+    }
+    expect(root.querySelectorAll('a.hero-action').length).toBe(2);
+  });
+
   it('should create and load dashboard data', () => {
     expect(component).toBeTruthy();
     expect(profileService.get).toHaveBeenCalled();
