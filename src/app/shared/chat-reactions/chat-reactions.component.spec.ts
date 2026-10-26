@@ -54,6 +54,48 @@ describe('Keyboard-accessible chat reaction picker', () => {
     fixture.destroy();
   });
 
+  it('does not remove an existing reaction when the displayed chip is tapped twice', () => {
+    store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
+    const {fixture,component,element}=mount();
+    const chip=element.querySelector<HTMLButtonElement>('.reaction-count')!;
+    expect(chip).toBeTruthy();
+    chip.click();
+    fixture.detectChanges();
+    expect(component.expanded).toBeTrue();
+    expect(store.toggle).not.toHaveBeenCalled();
+    chip.click();
+    fixture.detectChanges();
+    expect(component.expanded).toBeFalse();
+    expect(store.toggle).not.toHaveBeenCalled();
+    expect(element.querySelector('.reaction-count')).not.toBeNull();
+    fixture.destroy();
+  });
+
+  it('only removes a selected emoji using the explicit remove button', () => {
+    store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
+    const {fixture,component,element}=mount();
+    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    fixture.detectChanges();
+    element.querySelector<HTMLButtonElement>('.reaction-picker button[aria-label="👍"]')!.click();
+    fixture.detectChanges();
+    expect(store.toggle).not.toHaveBeenCalled();
+    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    fixture.detectChanges();
+    element.querySelector<HTMLButtonElement>('.reaction-remove')!.click();
+    expect(store.toggle).toHaveBeenCalledOnceWith('direct','bea',51,'👍',jasmine.any(Function));
+    fixture.destroy();
+  });
+
+  it('can change an existing reaction with one choice from the picker', () => {
+    store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
+    const {fixture,element}=mount();
+    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    fixture.detectChanges();
+    element.querySelector<HTMLButtonElement>('.reaction-picker button[aria-label="❤️"]')!.click();
+    expect(store.toggle).toHaveBeenCalledOnceWith('direct','bea',51,'❤️',jasmine.any(Function));
+    fixture.destroy();
+  });
+
   it('opens by keyboard, closes with Escape, returns focus without toggling an emoji', () => {
     const {fixture,component,element}=mount();
     const toggle=element.querySelector<HTMLButtonElement>('.reaction-open')!;

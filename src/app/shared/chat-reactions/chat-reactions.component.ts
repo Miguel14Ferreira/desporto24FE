@@ -19,19 +19,21 @@ let reactionPickerSequence = 0;
         <button type="button" class="reaction-count"
             [class.mine]="summary?.myEmoji === entry.emoji"
             [disabled]="disabled || store.isBusy(kind, conversationId, messageId)"
-            [attr.aria-label]="entry.emoji + ' · ' + entry.count"
+            [attr.aria-label]="('chat.changeReaction' | t) + ': ' + entry.emoji + ' · ' + entry.count"
+            [attr.aria-expanded]="expanded" [attr.aria-controls]="pickerId"
             [attr.aria-pressed]="summary?.myEmoji === entry.emoji"
-            (click)="pick(entry.emoji)">
+            (click)="togglePicker()">
           {{ entry.emoji }} <span>{{ entry.count }}</span>
         </button>
       }
       @if (!disabled) {
         <button #reactionToggle type="button" class="reaction-open"
+            [class.reaction-open--with-counts]="entries.length > 0"
             [attr.aria-expanded]="expanded" [attr.aria-controls]="pickerId"
             [attr.aria-label]="'chat.react' | t"
             [disabled]="store.isBusy(kind, conversationId, messageId)"
             (click)="togglePicker()">
-          <span aria-hidden="true">☺</span><span class="sr-only">{{ 'chat.react' | t }}</span>
+          <span aria-hidden="true">😊</span><span class="sr-only">{{ 'chat.react' | t }}</span>
         </button>
       }
       @if (expanded && !disabled) {
@@ -42,6 +44,11 @@ let reactionPickerSequence = 0;
                 [attr.aria-pressed]="state.myEmoji === emoji"
                 [disabled]="store.isBusy(kind, conversationId, messageId)"
                 (click)="pick(emoji)">{{ emoji }}</button>
+            }
+            @if (state.myEmoji) {
+              <button type="button" class="reaction-remove"
+                [disabled]="store.isBusy(kind, conversationId, messageId)"
+                (click)="remove()">{{ 'chat.removeReaction' | t }}</button>
             }
           } @else if (store.hasFailed(kind, conversationId, messageId)) {
             <span class="reaction-load-error" role="alert">{{ 'chat.reactionError' | t }}</span>
@@ -58,24 +65,40 @@ let reactionPickerSequence = 0;
   `,
   styles: [`
     :host { display: block; min-width: 0; }
-    .chat-reactions { display: flex; flex-wrap: wrap; position: relative; align-items: center;
-      gap: 5px; margin-top: 7px; font: inherit; }
-    button { font: inherit; cursor: pointer; }
-    .reaction-count { background: rgba(8,34,45,.45); color: #e3faf6;
-      border: 1px solid rgba(143,217,208,.24); border-radius: 999px;
-      padding: 3px 8px; font-size: .76rem; white-space: nowrap; }
-    .reaction-count.mine { background: rgba(49,211,172,.19); border-color: #4ee6be; }
-    .reaction-open { width: 26px; height: 26px; border: 1px solid rgba(143,217,208,.25);
-      border-radius: 50%; background: rgba(12,42,53,.45); color: #aff0dc; font-size: 1rem; }
-    .reaction-picker { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px;
-      background: #193847; border: 1px solid #48777c; border-radius: 12px; z-index: 2; }
-    .reaction-picker button { border: 0; background: transparent; border-radius: 7px;
-      padding: 4px; font-size: 1.08rem; }
-    .reaction-picker button:hover { background: rgba(82,217,187,.16); }
-    .reaction-picker button:focus-visible { background: rgba(82,217,187,.20); }
-    .reaction-loading,.reaction-load-error { color:#d6f8ee; font-size:.76rem; padding:4px; }
-    .reaction-retry { color:#b8f8e4; border:1px solid #48777c; background:#204b52;
-      padding:5px 8px; font-size:.76rem; }
+    .chat-reactions { display: flex; position:relative; align-items:center; gap:5px;
+      max-width:100%; font:inherit; }
+    button { font: inherit; cursor:pointer; }
+    .reaction-count { background:#1b424a;color:#f1fffc;
+      border:1px solid #5fa99a;border-radius:999px;
+      padding:3px 9px;min-width:40px;min-height:26px;font-size:.76rem;
+      display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+      box-shadow:0 2px 10px rgba(0,12,19,.35); }
+    .reaction-count.mine { background:#245d55;border-color:#69eac5; }
+    .reaction-open { width:27px;height:27px;border:1px solid #467b77;
+      border-radius:50%;background:#173c46;color:#daf9ed;font-size:.86rem;
+      display:grid;place-items:center;box-shadow:0 2px 10px rgba(0,12,19,.3); }
+    .reaction-open--with-counts:not(:focus-visible) { opacity:.75; }
+    .reaction-picker { position:absolute;bottom:calc(100% + 8px);left:0;
+      display:flex;flex-wrap:wrap;gap:3px;padding:6px;align-items:center;
+      width:max-content;max-width:min(330px,calc(100vw - 50px));
+      background:#193847;border:1px solid #5b9e91;border-radius:999px;
+      box-shadow:0 12px 36px rgba(0,7,16,.5);z-index:50; }
+    :host-context(.is-mine) .reaction-picker,
+    :host-context(.own-message) .reaction-picker {left:auto;right:0;}
+    .reaction-picker button { border:0;background:transparent;border-radius:999px;
+      padding:5px;font-size:1.16rem;min-width:34px;min-height:34px;line-height:1; }
+    .reaction-picker button[aria-pressed="true"] { background:#276a5d; }
+    .reaction-picker button:hover {background:#316b65;transform:translateY(-1px);}
+    .reaction-picker button:focus-visible {background:#316b65;}
+    .reaction-picker .reaction-remove,.reaction-picker .reaction-retry {
+      border:1px solid #628e8a;padding:6px 10px;min-width:0;min-height:32px;
+      font-size:.72rem;line-height:1.2;color:#e5f7f4;
+      background:#25505a;white-space:nowrap; }
+    .reaction-loading,.reaction-load-error {color:#d6f8ee;font-size:.75rem;padding:5px;}
+    @media(max-width:500px) {
+      .reaction-picker {border-radius:16px;max-width:min(275px,calc(100vw - 28px));}
+      .reaction-picker button {min-height:37px;min-width:37px;}
+    }
     button:focus-visible { outline: 2px solid #61edce; outline-offset: 2px; }
     button:disabled { opacity: .45; cursor: not-allowed; }
     .reaction-error { color: #ffd2cd; font-size: .75rem; width: 100%; }
@@ -140,9 +163,24 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
 
   pick(emoji: string): void {
     if (this.disabled || !this.summary) return;
+    // Re-selecting an existing emoji must never silently erase it.
+    // Removal is a separately labelled action in the picker.
+    if (this.summary.myEmoji === emoji) {
+      this.expanded = false;
+      return;
+    }
     this.error = false;
     this.expanded = false;
     this.store.toggle(this.kind, this.conversationId, this.messageId, emoji,
+      () => { this.error = true; });
+  }
+
+  remove(): void {
+    const selected = this.summary?.myEmoji;
+    if (this.disabled || !selected) return;
+    this.error = false;
+    this.expanded = false;
+    this.store.toggle(this.kind, this.conversationId, this.messageId, selected,
       () => { this.error = true; });
   }
 
