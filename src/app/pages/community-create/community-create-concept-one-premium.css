@@ -47,6 +47,11 @@
   border:1px solid rgba(40,222,191,.22);border-radius:14px;
   background:rgba(40,222,191,.07);
 }
+/* The quota banner and the setup form are independent panels.
+   Give them breathing room, without affecting notes inside the form. */
+.jynlo-community-create-premium .creation-note[role="status"] + .create-panel {
+  margin-block-start:24px;
+}
 .jynlo-community-create-premium .note-icon {background:rgba(40,222,191,.15);color:#9bf7e1;}
 .jynlo-community-create-premium .sport-tag {
   border-color:rgba(40,222,191,.45);background:rgba(40,222,191,.12);color:#a6fbe7;
@@ -73,6 +78,7 @@
   .jynlo-community-create-premium .create-header {padding:1.1rem;}
   .jynlo-community-create-premium .create-header>button {width:100%;}
   .jynlo-community-create-premium .create-panel {padding:1.1rem;}
+  .jynlo-community-create-premium .creation-note[role="status"] + .create-panel {margin-block-start:20px;}
 }
 @media(prefers-reduced-motion:reduce){
   .jynlo-community-create-premium button,

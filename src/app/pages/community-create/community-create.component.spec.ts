@@ -148,6 +148,13 @@ describe('Community creation onboarding', () => {
       expect(host.querySelector('#community-visibility')).toBeTruthy();
       expect(host.querySelector('.form-actions button[type="submit"]')).toBeTruthy();
       expect(host.querySelector('.creation-note[role="status"]')).toBeTruthy();
+      const quotaBanner = host.querySelector<HTMLElement>('.creation-note[role="status"]');
+      const setupPanel = host.querySelector<HTMLElement>('form.create-panel');
+      expect(quotaBanner?.nextElementSibling).toBe(setupPanel || null);
+      // Scoped margin prevents the panels from touching on desktop or mobile.
+      const expectedGap = window.matchMedia('(max-width: 720px)').matches ? '20px' : '24px';
+      expect(setupPanel).toBeTruthy();
+      expect(window.getComputedStyle(setupPanel!).marginTop).toBe(expectedGap);
       const label = () => host.querySelector('label[for="community-sport-search"]')?.textContent?.trim();
       const hint = () => host.querySelector('.sport-selection .field-help')?.textContent?.trim();
       const selected = () => host.querySelector('.sport-tags')?.getAttribute('aria-label');
