@@ -24,7 +24,17 @@
 .story-field { display: grid; gap: .45rem; }
 .story-composer label { font-size: .85rem; font-weight: 650; }
 .story-composer select, .story-composer textarea { width: 100%; border: 1px solid #57778b; border-radius: .65rem; padding: .65rem; background: #0c2031; color: #fff; }
-.story-file { width: fit-content; display: inline-block; padding: .65rem 1rem; cursor: pointer; border: 1px dashed #8cb1c5; border-radius: .7rem; }
+.story-file {
+  position: relative; width: fit-content; max-width: 100%; display: inline-flex;
+  align-items: center; gap: .6rem; min-height: 44px; padding: .65rem 1rem;
+  border: 1px solid #567b91; border-radius: .8rem;
+  background: rgba(125, 211, 252, .06); color: #e1f3fc;
+  cursor: pointer; transition: background .16s ease, border-color .16s ease;
+}
+.story-file:hover { background: rgba(125, 211, 252, .13); border-color: #8cb1c5; }
+.story-file:focus-within { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+.story-file.story-file-disabled { opacity: .5; cursor: not-allowed; }
+.story-file svg { width: 18px; height: 18px; flex: 0 0 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .story-file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .story-preview img, .story-preview video { width: min(240px,100%); max-height: 300px; object-fit: contain; display: block; }
 .story-preview button, .story-dialog-footer button { border-radius: .6rem; padding: .5rem .7rem; color: #fff; background: #203e55; border: 1px solid #52758a; cursor: pointer; }
