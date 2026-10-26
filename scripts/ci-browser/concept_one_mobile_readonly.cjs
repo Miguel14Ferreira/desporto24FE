@@ -80,6 +80,9 @@ async function main() {
           localStorage.setItem('d24-language', lang);
         }, { token: jwt, lang: language });
 
+        // Route API WebSockets too: HTTP routing does not intercept WS handshakes.
+        await context.routeWebSocket('**/*', socket => socket.close());
+
         await context.route('**/*', async route => {
           const request = route.request();
           const url = new URL(request.url());
