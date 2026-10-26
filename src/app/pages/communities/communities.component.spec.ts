@@ -460,7 +460,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     const prior=localStorage.getItem('d24-language');
     try {
       localStorage.setItem('d24-language','pt');
-      expect(t('communities.trackCycling.flagrantPending')).toContain('ciclista');
+      expect(t('communities.trackCycling.flagrantPending')).toContain('adversário');
       localStorage.setItem('d24-language','en');
       expect(t('communities.trackCycling.flagrantPending')).toContain('opponent');
     } finally {
