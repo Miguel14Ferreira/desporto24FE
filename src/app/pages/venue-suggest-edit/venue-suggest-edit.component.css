@@ -32,3 +32,20 @@
 
 .venue-edit-source{display:flex;flex-direction:column;gap:8px;margin-top:16px}
 .venue-edit-source input{width:100%;box-sizing:border-box}
+
+
+/* Place the reviewed venue, moderation state and correction form on distinct rows. */
+.venue-edit-page .venue-edit-shell > :is(.venue-edit-venue, .venue-edit-status, .venue-edit-state, .venue-edit-success, .venue-edit-form) {
+  margin-top: 24px;
+}
+.venue-edit-page .venue-edit-form > .venue-edit-reason {
+  margin-top: 24px;
+}
+@media (max-width: 640px) {
+  .venue-edit-page .venue-edit-shell > :is(.venue-edit-venue, .venue-edit-status, .venue-edit-state, .venue-edit-success, .venue-edit-form) {
+    margin-top: 20px;
+  }
+  .venue-edit-page .venue-edit-form > .venue-edit-reason {
+    margin-top: 20px;
+  }
+}

@@ -33,3 +33,17 @@
 
 /* Unconfirmed OSM locations are not postal addresses; keep card rows aligned. */
 .venue-directory-address-unconfirmed{color:#b6c9d3;font-style:italic}
+
+
+/* Keep catalogue introduction, filters and results separate without changing card grids. */
+.venue-directory-page .venue-directory-hero { margin-bottom: 24px; }
+.venue-directory-page .venue-directory-filters { gap: 16px; }
+.venue-directory-page .venue-directory-actions { gap: 10px; flex-wrap: wrap; }
+.venue-directory-page .venue-directory-result-heading { margin: 24px 0 16px; }
+.venue-directory-page .venue-directory-pagination { margin: 24px 0; }
+@media (max-width: 620px) {
+  .venue-directory-page .venue-directory-hero { margin-bottom: 20px; }
+  .venue-directory-page .venue-directory-filters { gap: 14px; }
+  .venue-directory-page .venue-directory-result-heading { margin: 20px 0 14px; }
+  .venue-directory-page .venue-directory-pagination { margin: 20px 0; flex-wrap: wrap; }
+}

@@ -541,3 +541,20 @@
   color:#a9f4dc;background:#113c40;text-decoration:none;font-weight:750;
 }
 .venue-detail-page .venue-address-map-link:hover{background:#15564f}
+
+
+/* Outer venue profile sections share one rhythm; contact and map cards stay intact. */
+.venue-detail-page .venue-header { margin-bottom: 24px; }
+.venue-detail-page .venue-rating-summary { margin: 24px 0; }
+.venue-detail-page .venue-visit-section { margin: 24px 0; }
+.venue-detail-page :is(.venue-photos-section, .venue-information-section, .venue-amenities-section, .venue-sport-conditions-section) {
+  margin-top: 24px;
+}
+@media (max-width: 640px) {
+  .venue-detail-page .venue-header { margin-bottom: 20px; }
+  .venue-detail-page .venue-rating-summary { margin: 20px 0; }
+  .venue-detail-page .venue-visit-section { margin: 20px 0; }
+  .venue-detail-page :is(.venue-photos-section, .venue-information-section, .venue-amenities-section, .venue-sport-conditions-section) {
+    margin-top: 20px;
+  }
+}
