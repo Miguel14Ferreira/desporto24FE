@@ -42,7 +42,16 @@ const authenticatedPages = [
   ['/menu/notifications', '.notifications-page'],
   ['/menu/my-sessions', '.my-sessions-page'],
   ['/menu/venues', '.venue-directory-page'],
-  ['/menu/dadosPerfil', '.profile-page']
+  ['/menu/venues/new', '.venue-create-page'],
+  ['/menu/dadosPerfil', '.profile-page'],
+  ['/menu/alterardados', '.edit-page'],
+  ['/menu/communities', '.communities-page'],
+  ['/menu/discover', '.discover-page'],
+  ['/menu/events', '.sessions-page'],
+  ['/menu/createEvent', '.create-page'],
+  ['/menu/perfis', '.community-page'],
+  ['/menu/messages', '.inbox-page'],
+  ['/menu/feed', '.feed-page']
 ];
 const unexpectedWrites = [];
 const browserErrors = [];
