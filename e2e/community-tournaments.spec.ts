@@ -3498,7 +3498,21 @@ test('Premium populated tournament QA: historical 57-row knockout phases navigat
       await expect(final).toBeVisible();
       await expect(final).toContainText('Águias');
       await expect(final).toContainText('Leões');
-      await expect(final).toBeInViewport({ ratio: 0.5 });
+      // On mobile the source-labelled table is intentionally horizontally
+      // scrollable: an intersection *area* ratio counts the off-screen columns
+      // and cannot establish whether the final is vertically in view.
+      await expect.poll(async () => final.evaluate(row => {
+        const rect = row.getBoundingClientRect();
+        const visible = Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0));
+        return visible / Math.max(1, Math.min(rect.height, innerHeight));
+      }), { timeout: 10000 }).toBeGreaterThan(0.5);
+      if (width === 390) {
+        const horizontalTableScroll = await page.locator('.historical-archive-fixtures .standings-scroll')
+          .evaluate(element => element.scrollWidth - element.clientWidth);
+        expect(horizontalTableScroll,
+          'historical table is wider than mobile and must scroll inside its section')
+          .toBeGreaterThan(0);
+      }
       await expect(page.locator('.historical-tournament-pages'))
         .toContainText('51–57 / 57');
 
