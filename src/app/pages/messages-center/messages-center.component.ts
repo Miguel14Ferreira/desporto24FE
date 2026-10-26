@@ -722,18 +722,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.sessionKickoffs.delete(Number(conversation.id));
   }
 
-  backToMobileInbox(): void {
-    // Preserve unfinished text; leaving a conversation never sends it.
-    if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
-    this.cancelVoiceRecording();
-    this.typing.stop();
-    this.closeEmojiPicker();
-    this.closeSharePicker();
-    this.closeAttachmentMenu();
-    this.selectedKey = null;
-    this.scrollRequested = false;
-  }
-
   selectConversation(conversation: InboxConversation): void {
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) {

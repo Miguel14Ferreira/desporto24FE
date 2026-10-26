@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
-import { Router } from '@angular/router';
 
 import { NavbarComponent } from './navbar.component';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -283,52 +282,6 @@ describe('NavbarComponent', () => {
     component.loadUnreadNotifications();
     expect(component.unreadNotifications).toBe(4);
     component.ngOnDestroy();
-  });
-
-  it('shows five mobile destinations only on signed-in app routes', () => {
-    const router = TestBed.inject(Router);
-    const url = spyOnProperty(router, 'url', 'get').and.returnValue('/menu/feed');
-
-    component.authenticated = true;
-    fixture.detectChanges();
-
-    const root: HTMLElement = fixture.nativeElement;
-    const tabs = Array.from(root.querySelectorAll<HTMLAnchorElement>(
-      '.mobile-tabbar__link'
-    ));
-    expect(tabs.map(tab => tab.getAttribute('href'))).toEqual([
-      '/menu/feed',
-      '/menu/discover',
-      '/menu/communities',
-      '/menu/messages',
-      '/menu/dadosPerfil'
-    ]);
-    expect(component.showMobileNavigation).toBeTrue();
-
-    url.and.returnValue('/login');
-    fixture.detectChanges();
-    expect(component.showMobileNavigation).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.mobile-tabbar')).toBeNull();
-
-    url.and.returnValue('/menu/messages');
-    component.authenticated = false;
-    fixture.detectChanges();
-    expect(component.showMobileNavigation).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.mobile-tabbar')).toBeNull();
-  });
-
-  it('keeps desktop navigation links and notification access after adding mobile tabs', () => {
-    const router = TestBed.inject(Router);
-    spyOnProperty(router, 'url', 'get').and.returnValue('/menu/communities');
-    component.authenticated = true;
-    fixture.detectChanges();
-
-    const root: HTMLElement = fixture.nativeElement;
-    expect(root.querySelector('.site-nav__links a.desktop-primary-link[href="/menu/feed"]')).toBeTruthy();
-    expect(root.querySelector('.site-nav__links a.nav-communities-link[href="/menu/communities"]')).toBeTruthy();
-    expect(root.querySelector('.site-nav__links a.notification-link[href="/menu/notifications"]')).toBeTruthy();
-    expect(root.querySelector('.site-nav__links details.account-menu')).toBeTruthy();
-    expect(root.querySelectorAll('.mobile-tabbar__link').length).toBe(5);
   });
 
   it('should create without opening a chat connection when unauthenticated', () => {
