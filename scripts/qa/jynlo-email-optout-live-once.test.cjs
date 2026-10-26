@@ -38,7 +38,7 @@ function fakeApi({badEmail=false,inviteFailure=false,insufficientQuota=false}={}
       if(method==='PUT')state.prefs=structuredClone(body);
       response=structuredClone(state.prefs);
     } else if(route==='/api/communities' && method==='POST') {
-      state.created={id:3515,name:body.name,ownerUsername:QA[0],memberCount:1,
+      state.created={id:3515,name:body.name,visibility:'PRIVATE',ownerUsername:QA[0],memberCount:1,
         members:[{username:QA[0]}]};response=state.created;
     } else if(route==='/api/communities/3515') {
       response=state.created;
@@ -57,7 +57,7 @@ function fakeApi({badEmail=false,inviteFailure=false,insufficientQuota=false}={}
       assert.equal(body.name,state.created.name);
       assert.equal(state.prefs.inAppEnabled,true);
       assert.equal(state.prefs.emailEnabled,false);
-      state.deleted=true;status=204;response=null;
+      state.deleted=true;state.invites=[];status=204;response=null;
     } else throw Error('Unexpected test route '+method+' '+route);
     return {ok:status<300,status,json:async()=>response};
   }
