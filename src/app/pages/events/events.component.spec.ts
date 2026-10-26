@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
 import { EventsComponent } from './events.component';
@@ -27,6 +28,50 @@ describe('EventsComponent', () => {
     fixture = TestBed.createComponent(EventsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+
+  it('restores Discover sport and locality before the first full session search', async () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ sport: '  Ténis  ', city: '  Sintra  ', unrelated: 'ignored' })
+    });
+    try {
+      const deepLinked = TestBed.createComponent(EventsComponent);
+      deepLinked.detectChanges();
+      // ngModel writes to the input after the initial change-detection microtask.
+      await deepLinked.whenStable();
+      deepLinked.detectChanges();
+
+      expect(deepLinked.componentInstance.sport).toBe('Ténis');
+      expect(deepLinked.componentInstance.city).toBe('Sintra');
+      expect(sessionService.discover).toHaveBeenCalledWith(
+        jasmine.objectContaining({ sport: 'Ténis', city: 'Sintra' })
+      );
+      const form = deepLinked.nativeElement.querySelector('.filters') as HTMLFormElement;
+      expect((form.querySelector('input[name="sport"]') as HTMLInputElement).value).toBe('Ténis');
+      expect((form.querySelector('input[name="city"]') as HTMLInputElement).value).toBe('Sintra');
+
+      deepLinked.componentInstance.clearFilters();
+      expect(sessionService.discover.calls.mostRecent().args[0]).toEqual(
+        jasmine.objectContaining({ sport: '', city: '' })
+      );
+      deepLinked.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('keeps the normal Sessions entry unfiltered without Discover parameters', () => {
+    expect(component.sport).toBe('');
+    expect(component.city).toBe('');
+    expect(sessionService.discover.calls.first().args[0]).toEqual(
+      jasmine.objectContaining({ sport: '', city: '' })
+    );
   });
 
   it('should create', () => {

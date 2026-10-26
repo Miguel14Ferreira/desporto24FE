@@ -59,6 +59,36 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
   });
 
+
+  it('keeps sport and locality when opening all activities, including clearing them', () => {
+    const fullList = (): HTMLAnchorElement =>
+      fixture.nativeElement.querySelector('a.pillar-action[href^="/menu/events"]');
+
+    expect(fullList().getAttribute('href')).toBe('/menu/events?sport=Padel&city=Lisboa');
+
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.search();
+    fixture.detectChanges();
+    expect(fullList().getAttribute('href')).toBe('/menu/events?sport=T%C3%A9nis&city=Sintra');
+
+    component.clear();
+    fixture.detectChanges();
+    expect(fullList().getAttribute('href')).toBe('/menu/events');
+  });
+
+  it('shows only unavailable result categories in the shared error panel', () => {
+    component.venuesLoadError = true;
+    component.sessionsLoadError = false;
+    component.peopleLoadError = true;
+    fixture.detectChanges();
+
+    const error = fixture.nativeElement.querySelector('.discover-error') as HTMLElement;
+    expect(error.textContent).toContain('Recintos indisponíveis.');
+    expect(error.textContent).toContain('Jogadores indisponíveis.');
+    expect(error.textContent).not.toContain('Sessões indisponíveis.');
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
