@@ -1,0 +1,68 @@
+/* Reusable, encapsulated Concept One switch shared by two community views. */
+:host{display:inline-flex;max-width:100%;}
+.community-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: .7rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: .6rem .85rem;
+  border: 1px solid rgba(148, 178, 199, .2);
+  border-radius: .8rem;
+  background: rgba(125, 211, 252, .035);
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.community-switch:hover {
+  border-color: rgba(125, 211, 252, .4);
+  background: rgba(125, 211, 252, .07);
+}
+.community-switch input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 22px;
+  margin: 0;
+  border: 1px solid rgba(148, 178, 199, .48);
+  border-radius: 999px;
+  background: #24384a;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.community-switch input[type='checkbox']::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d4e3eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+  transition: transform .18s ease;
+}
+.community-switch input[type='checkbox']:checked {
+  border-color: #5bdfbf;
+  background: #1a806e;
+}
+.community-switch input[type='checkbox']:checked::before {
+  transform: translateX(18px);
+  background: #fff;
+}
+.community-switch input[type='checkbox']:focus-visible {
+  outline: 2px solid #74edd2;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community-switch input[type='checkbox'],
+  .community-switch input[type='checkbox']::before {
+    transition: none;
+  }
+}

@@ -1,0 +1,9 @@
+/* Show-all toggle in community rankings; standings calculation remains in parent. */
+:host{display:block;}
+.ranking-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin: .8rem 0 .95rem;
+}

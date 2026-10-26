@@ -745,47 +745,18 @@
                 }
 
                 @if (canManage()) {
-                  <section class="management-block competition-settings">
-                    <div class="section-heading">
-                      <div>
-                        <span class="section-kicker">{{ 'communities.competitionSettings' | t }}</span>
-                        <h3>{{ 'communities.rankingsModule' | t }}</h3>
-                      </div>
-                      <label class="community-switch competition-settings-switch">
-                        <input type="checkbox" [(ngModel)]="rankingsEnabledDraft">
-                        <span>{{ rankingsEnabledDraft
-                          ? ('communities.enabled' | t)
-                          : ('communities.disabled' | t) }}</span>
-                      </label>
-                    </div>
-
-                    <p>{{ 'communities.rankingsOptionalHint' | t }}</p>
-
-                    <div class="points-settings">
-                      <label>
-                        <span>{{ 'communities.winPoints' | t }}</span>
-                        <input type="number" min="0" [(ngModel)]="winPointsDraft">
-                      </label>
-                      <label>
-                        <span>{{ 'communities.drawPoints' | t }}</span>
-                        <input type="number" min="0" [(ngModel)]="drawPointsDraft">
-                      </label>
-                      <label>
-                        <span>{{ 'communities.lossPoints' | t }}</span>
-                        <input type="number" min="0" [(ngModel)]="lossPointsDraft">
-                      </label>
-                    </div>
-
-                    <button
-                      type="button"
-                      class="primary-action jynlo-action jynlo-action--primary"
-                      [disabled]="competitionSaving"
-                      (click)="saveCompetitionSettings()">
-                      {{ competitionSaving
-                        ? ('communities.savingCompetition' | t)
-                        : ('communities.saveCompetition' | t) }}
-                    </button>
-                  </section>
+                  <app-community-competition-settings
+                    [enabled]="rankingsEnabledDraft"
+                    [winPoints]="winPointsDraft"
+                    [drawPoints]="drawPointsDraft"
+                    [lossPoints]="lossPointsDraft"
+                    [saving]="competitionSaving"
+                    (enabledChange)="rankingsEnabledDraft = $event"
+                    (winPointsChange)="winPointsDraft = $event"
+                    (drawPointsChange)="drawPointsDraft = $event"
+                    (lossPointsChange)="lossPointsDraft = $event"
+                    (saveRequested)="saveCompetitionSettings()"
+                  ></app-community-competition-settings>
                 }
 
                 @if (competition?.settings?.rankingsEnabled || canRecordInlineSpeedWithoutRankings) {
@@ -4293,12 +4264,10 @@
                     </div>
                   </div>
 
-                  <div class="ranking-controls">
-                    <label class="community-switch ranking-members-toggle">
-                      <input type="checkbox" [(ngModel)]="showAllStandings">
-                      <span>{{ 'communities.identity.showAll' | t }}</span>
-                    </label>
-                  </div>
+                  <app-community-ranking-visibility
+                    [showAll]="showAllStandings"
+                    (showAllChange)="showAllStandings = $event"
+                  ></app-community-ranking-visibility>
                   <app-community-ranking-table [rows]="displayedRankings"></app-community-ranking-table>
                 }
               </section>
