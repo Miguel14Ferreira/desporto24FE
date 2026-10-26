@@ -27,6 +27,17 @@ describe('CommunitiesComponent public session eligibility', () => {
 
 
 
+  it('retains community detail routing and hides the mine selector in detail mode', () => {
+    (component as any).isDetailMode = true;
+    expect(component.detailMode()).toBeTrue();
+    expect(component.showMineView()).toBeFalse();
+
+    const navigate = jasmine.createSpy('navigate');
+    (component as any).router = { navigate };
+    component.backToCommunities();
+    expect(navigate).toHaveBeenCalledOnceWith(['/menu/communities']);
+  });
+
   it('keeps regular standings and tournament history explanations and column abbreviations translated PT/EN', () => {
     const previous = localStorage.getItem('d24-language');
     try {

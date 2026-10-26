@@ -109,7 +109,7 @@ type CommunityTab = 'home' | 'feed' | 'chat' | 'sessions' | 'tournaments' | 'ran
 @Component({
   selector: 'app-communities',
   templateUrl: './communities.component.html',
-  styleUrls: ['./communities.component.css'],
+  styleUrls: ['./communities.component.css', './communities-concept-one-premium.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
