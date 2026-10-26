@@ -54,13 +54,16 @@ export interface TrackSprintIncident {
 export interface TrackSprintOfficialReview {
   id: number;
   incidentId: number;
-  action: 'REQUESTED' | 'UPHELD' | 'OVERTURNED';
+  action: 'REQUESTED' | 'UPHELD' | 'OVERTURNED' | 'RECTIFIED';
   officialName: string;
   officialReference: string;
   panelReference: string | null;
   reason: string;
   recordedBy: string;
   recordedAt: string;
+  remedyKind?: 'RESUME_SAME_RIDERS' | null;
+  orderedRiders?: string[];
+  nextHeatNumber?: number | null;
 }
 
 export interface TrackSprintInterruption {
@@ -641,6 +644,22 @@ export class CommunityGroupsService {
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
       + '/reviews/decision', payload);
+  }
+
+  rectifySprintOfficialReview(communityId: number, seasonId: number,
+    bracketId: number, incidentId: number, payload: {
+      presidentName: string;
+      instructionReference: string;
+      overturnedDecisionReference: string;
+      reason: string;
+      sanctionAnnulledByPresident: boolean;
+      orderedRiders: string[];
+      nextHeatNumber: number;
+    }): Observable<TrackSprintOfficialReview> {
+    return this.http.put<TrackSprintOfficialReview>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/reviews/rectification', payload);
   }
 
   endTrackSprintCompetition(communityId: number, seasonId: number, bracketId: number,

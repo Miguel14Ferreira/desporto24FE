@@ -1396,6 +1396,13 @@
                                           <div class="round-sport-guidance" role="note">
                                             <strong>{{ ('communities.trackCycling.review.' + review.action) | t }}</strong>
                                             <p>{{ review.reason }}</p>
+                                            @if (review.action === 'RECTIFIED') {
+                                              <p>{{ 'communities.trackCycling.rectifyNoFake' | t }}</p>
+                                              <small>{{ 'communities.trackCycling.rectifyOrder' | t }}:
+                                                {{ (review.orderedRiders || []).join(' → ') }}</small>
+                                              <small>{{ 'communities.trackCycling.rectifyNextHeat' | t }}:
+                                                {{ review.nextHeatNumber }}</small>
+                                            }
                                             <small>{{ review.officialName }} · {{ review.officialReference }}</small>
                                             @if (review.panelReference) {
                                               <small>{{ 'communities.trackCycling.reviewPanel' | t }}: {{ review.panelReference }}</small>
@@ -1408,9 +1415,11 @@
                                           <p class="text-danger">{{ 'communities.trackCycling.reviewOverturnedBlock' | t }}</p>
                                         } @else if (sprintReviewLastAction === 'REQUESTED') {
                                           <p>{{ 'communities.trackCycling.reviewPendingBlock' | t }}</p>
+                                        } @else if (sprintReviewLastAction === 'RECTIFIED') {
+                                          <p>{{ 'communities.trackCycling.rectifySaved' | t }}</p>
                                         }
                                         @if (canManage() && selectedSeasonId === activeSeason()?.id
-                                            && !sprintReviewLoading && sprintReviewLastAction !== 'OVERTURNED') {
+                                            && !sprintReviewLoading && sprintReviewLastAction !== 'RECTIFIED') {
                                           <label>
                                             <span>{{ 'communities.trackCycling.reviewPresident' | t }}</span>
                                             <input [(ngModel)]="sprintReviewPresident" maxlength="120">
@@ -1442,6 +1451,30 @@
                                               <input [(ngModel)]="sprintReviewReference" maxlength="255">
                                             </label>
                                           }
+                                          @if (sprintReviewMode === 'RECTIFY') {
+                                            <p>{{ 'communities.trackCycling.rectifyExplain' | t }}</p>
+                                            <small>{{ 'communities.trackCycling.rectifyPriorRef' | t }}:
+                                              {{ sprintReviewLastOverturn?.officialReference }}</small>
+                                            <label>
+                                              <span>{{ 'communities.trackCycling.rectifyInstructionRef' | t }}</span>
+                                              <input [(ngModel)]="sprintReviewReference" maxlength="255">
+                                            </label>
+                                            <p>{{ 'communities.trackCycling.rectifyOrder' | t }}:
+                                              <strong>{{ sprintReviewRiderOrder.join(' → ') }}</strong></p>
+                                            <label>
+                                              <span>{{ 'communities.trackCycling.rectifyNextHeat' | t }}</span>
+                                              <input type="number" min="1" max="3" step="1"
+                                                [(ngModel)]="sprintReviewNextHeatNumber">
+                                            </label>
+                                            <label>
+                                              <input type="checkbox" [(ngModel)]="sprintReviewSanctionAnnulledConfirmed">
+                                              {{ 'communities.trackCycling.rectifyDisqualification' | t }}
+                                            </label>
+                                            <label>
+                                              <input type="checkbox" [(ngModel)]="sprintReviewRiderOrderConfirmed">
+                                              {{ 'communities.trackCycling.rectifySameRiders' | t }}
+                                            </label>
+                                          }
                                           <label>
                                             <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
                                             <textarea [(ngModel)]="sprintReviewReason" maxlength="500"></textarea>
@@ -1452,10 +1485,20 @@
                                               || sprintReviewReason.trim().length < 12
                                               || (sprintReviewMode === 'REQUEST' && !sprintReviewJudgeRefereeConfirmed)
                                               || (sprintReviewMode === 'DECIDE'
-                                                && (!sprintReviewOutcome || sprintReviewPanelReference.trim().length < 12))">
+                                                && (!sprintReviewOutcome || sprintReviewPanelReference.trim().length < 12))
+                                              || (sprintReviewMode === 'RECTIFY'
+                                                && (!sprintReviewSanctionAnnulledConfirmed
+                                                  || !sprintReviewRiderOrderConfirmed
+                                                  || sprintReviewRiderOrder.length !== 2
+                                                  || !sprintReviewLastOverturn
+                                                  || sprintReviewNextHeatNumber === null
+                                                  || sprintReviewNextHeatNumber < 1
+                                                  || sprintReviewNextHeatNumber > 3))">
                                             {{ (sprintReviewMode === 'REQUEST'
                                               ? 'communities.trackCycling.reviewSubmit'
-                                              : 'communities.trackCycling.reviewConfirm') | t }}
+                                              : sprintReviewMode === 'RECTIFY'
+                                                ? 'communities.trackCycling.rectifySubmit'
+                                                : 'communities.trackCycling.reviewConfirm') | t }}
                                           </button>
                                         }
                                         @if (sprintReviewError) {

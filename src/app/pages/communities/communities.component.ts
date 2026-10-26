@@ -184,13 +184,16 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintReviewLoading = false;
   sprintReviewSaving = false;
   sprintReviewError = '';
-  sprintReviewMode: 'REQUEST' | 'DECIDE' = 'REQUEST';
+  sprintReviewMode: 'REQUEST' | 'DECIDE' | 'RECTIFY' = 'REQUEST';
   sprintReviewPresident = '';
   sprintReviewReference = '';
   sprintReviewPanelReference = '';
   sprintReviewReason = '';
   sprintReviewJudgeRefereeConfirmed = false;
   sprintReviewOutcome: '' | 'UPHELD' | 'OVERTURNED' = '';
+  sprintReviewSanctionAnnulledConfirmed = false;
+  sprintReviewRiderOrderConfirmed = false;
+  sprintReviewNextHeatNumber: number | null = null;
   sprintInterruptionBracketId: number | null = null;
   sprintInterruptionReference = '';
   sprintInterruptionReason = '';
@@ -2581,6 +2584,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       ? this.sprintReviewHistory[this.sprintReviewHistory.length - 1].action : null;
   }
 
+  get sprintReviewLastOverturn(): TrackSprintOfficialReview | undefined {
+    return [...this.sprintReviewHistory].reverse().find(event => event.action === 'OVERTURNED');
+  }
+
+  get sprintReviewRiderOrder(): string[] {
+    const bracket=this.sprintBrackets.find(b=>b.id===this.sprintReviewBracketId);
+    const incident=(bracket?.incidents||[]).find(i=>i.id===this.sprintReviewIncidentId);
+    const match=bracket?.matches.find(m=>m.seriesKey===incident?.seriesKey);
+    return [match?.riderA,match?.riderB]
+      .filter((value):value is string=>typeof value==='string' && !!value.trim());
+  }
+
   openSprintReview(bracketId: number, incidentId: number): void {
     if (this.sprintReviewBracketId === bracketId && this.sprintReviewIncidentId === incidentId) {
       this.sprintReviewBracketId = null;
@@ -2599,6 +2614,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.sprintReviewReason = '';
     this.sprintReviewJudgeRefereeConfirmed = false;
     this.sprintReviewOutcome = '';
+    this.sprintReviewSanctionAnnulledConfirmed = false;
+    this.sprintReviewRiderOrderConfirmed = false;
+    this.sprintReviewNextHeatNumber = null;
     this.sprintReviewHistory = [];
     this.sprintReviewError = '';
     this.loadSprintReviewHistory();
@@ -2616,7 +2634,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           if (this.selected?.id !== group || this.selectedSeasonId !== season ||
               this.sprintReviewBracketId !== bracket || this.sprintReviewIncidentId !== incident) return;
           this.sprintReviewHistory = history;
-          this.sprintReviewMode = this.sprintReviewLastAction === 'REQUESTED' ? 'DECIDE' : 'REQUEST';
+          this.sprintReviewMode = this.sprintReviewLastAction === 'OVERTURNED'
+            ? 'RECTIFY' : this.sprintReviewLastAction === 'REQUESTED' ? 'DECIDE' : 'REQUEST';
           this.sprintReviewError = '';
         },
         error: e => this.sprintReviewError = e.error?.message
@@ -2633,7 +2652,25 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.sprintReviewReason.trim().length < 12) return;
     const group = this.selected.id, season = this.selectedSeasonId,
       bracket = this.sprintReviewBracketId, incident = this.sprintReviewIncidentId;
-    const write$ = this.sprintReviewMode === 'REQUEST'
+    const write$ = this.sprintReviewMode === 'RECTIFY'
+      ? (this.sprintReviewLastAction === 'OVERTURNED'
+          && this.sprintReviewSanctionAnnulledConfirmed
+          && this.sprintReviewRiderOrderConfirmed
+          && this.sprintReviewLastOverturn
+          && this.sprintReviewRiderOrder.length === 2
+          && Number.isInteger(this.sprintReviewNextHeatNumber)
+          && this.sprintReviewNextHeatNumber! >= 1
+          && this.sprintReviewNextHeatNumber! <= 3
+          ? this.communityService.rectifySprintOfficialReview(group, season, bracket, incident, {
+              presidentName: this.sprintReviewPresident.trim(),
+              instructionReference: this.sprintReviewReference.trim(),
+              overturnedDecisionReference: this.sprintReviewLastOverturn.officialReference,
+              reason: this.sprintReviewReason.trim(),
+              sanctionAnnulledByPresident: true,
+              orderedRiders: this.sprintReviewRiderOrder,
+              nextHeatNumber: this.sprintReviewNextHeatNumber!
+            }) : null)
+      : this.sprintReviewMode === 'REQUEST'
       ? (this.sprintReviewJudgeRefereeConfirmed
         ? this.communityService.requestSprintOfficialReview(group, season, bracket, incident, {
             presidentName: this.sprintReviewPresident.trim(),
@@ -2659,6 +2696,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.sprintReviewReason = '';
         this.sprintReviewOutcome = '';
         this.sprintReviewJudgeRefereeConfirmed = false;
+        this.sprintReviewSanctionAnnulledConfirmed = false;
+        this.sprintReviewRiderOrderConfirmed = false;
+        this.sprintReviewNextHeatNumber = null;
         this.loadSprintReviewHistory();
         this.loadSprintBrackets(group, season);
       },
