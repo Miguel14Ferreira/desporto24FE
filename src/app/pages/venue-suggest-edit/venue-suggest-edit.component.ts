@@ -29,7 +29,9 @@ export class VenueSuggestEditComponent implements OnInit {
     { key: 'address', label: 'common.address', limit: 255 },
     { key: 'openingHours', label: 'venue.openingHours', limit: 1000 },
     { key: 'website', label: 'venue.website', limit: 255 },
-    { key: 'contact', label: 'venue.contact', limit: 255 }
+    { key: 'contact', label: 'venue.contact', limit: 255 },
+    { key: 'latitude', label: 'venue.edit.field.latitude', limit: 16 },
+    { key: 'longitude', label: 'venue.edit.field.longitude', limit: 16 }
   ];
   readonly districts = [
     'Aveiro', 'Beja', 'Braga', 'Bragança', 'Castelo Branco', 'Coimbra',
@@ -82,7 +84,9 @@ export class VenueSuggestEditComponent implements OnInit {
           sports: venue.sports || '',
           openingHours: venue.openingHours || '',
           website: venue.website || '',
-          contact: venue.contact || ''
+          contact: venue.contact || '',
+          latitude: venue.latitude?.toString() || '',
+          longitude: venue.longitude?.toString() || ''
         };
         this.selectedSports = (venue.sports || '').split(/[;,]/).map(s => s.trim()).filter(Boolean);
         this.loading = false;
@@ -124,8 +128,16 @@ export class VenueSuggestEditComponent implements OnInit {
     if (!this.venue) return {};
     const result: Partial<Record<VenueEditField, string>> = {};
     for (const field of this.fields) {
+      if (field.key === 'latitude' || field.key === 'longitude') continue;
       const value = (this.draft[field.key] || '').trim();
       if (value !== this.original(field.key)) result[field.key] = value;
+    }
+    // A coordinate correction is always sent as a pair for atomic review.
+    const lat = (this.draft.latitude || '').trim();
+    const lon = (this.draft.longitude || '').trim();
+    if (lat !== this.original('latitude') || lon !== this.original('longitude')) {
+      result.latitude = lat;
+      result.longitude = lon;
     }
     if (this.draft.district.trim() !== this.original('district')) {
       result.district = this.draft.district.trim();
@@ -139,6 +151,24 @@ export class VenueSuggestEditComponent implements OnInit {
     return result;
   }
 
+  /** GPS is always source-backed and reviewed as a complete pair. */
+  get gpsEvidenceRequired(): boolean {
+    return this.changes.latitude !== undefined || this.changes.longitude !== undefined;
+  }
+
+  get gpsInvalid(): boolean {
+    if (!this.gpsEvidenceRequired) return false;
+    const test = (value: string, min: number, max: number) =>
+      /^-?(?:0|[1-9][0-9]{0,2})(?:\.[0-9]{1,7})?$/.test(value)
+      && Number.isFinite(Number(value)) && Number(value) >= min && Number(value) <= max;
+    return !test(this.draft.latitude.trim(), 32, 43)
+      || !test(this.draft.longitude.trim(), -32, -6);
+  }
+
+  get evidenceRequired(): boolean {
+    return this.contactEvidenceRequired || this.gpsEvidenceRequired;
+  }
+
   /** Only a newly submitted nonempty contact needs a source; removals stay possible. */
   get contactEvidenceRequired(): boolean {
     return typeof this.changes.contact === 'string' && !!this.changes.contact.trim();
@@ -148,7 +178,7 @@ export class VenueSuggestEditComponent implements OnInit {
     const value = this.sourceUrl.trim();
     // Source is optional for non-contact edits, but any submitted URL must be
     // syntactically safe. A new public contact still requires a source.
-    if (!value) return !this.contactEvidenceRequired;
+    if (!value) return !this.evidenceRequired;
     if (value.length > 500) return false;
     try {
       const parsed = new URL(value);
@@ -175,7 +205,8 @@ export class VenueSuggestEditComponent implements OnInit {
     if (this.reason.trim().length < 10
         || (changes.sports !== undefined && !this.selectedSports.length)
         || !this.draft.name.trim() || !this.draft.city.trim()
-        || (changes.address !== undefined && !changes.address.trim())) {
+        || (changes.address !== undefined && !changes.address.trim())
+        || this.gpsInvalid) {
       this.submitError = true;
       return;
     }

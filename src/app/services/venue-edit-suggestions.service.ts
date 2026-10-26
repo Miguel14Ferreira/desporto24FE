@@ -5,7 +5,7 @@ import { environment } from 'src/environment/environment';
 
 export type VenueEditField =
   | 'name' | 'city' | 'district' | 'address' | 'sports'
-  | 'openingHours' | 'website' | 'contact';
+  | 'openingHours' | 'website' | 'contact' | 'latitude' | 'longitude';
 export type VenueEditStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface VenueEditSuggestion {

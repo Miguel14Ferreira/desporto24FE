@@ -86,6 +86,11 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
     return typeof item.proposed.contact === 'string' && !!item.proposed.contact.trim();
   }
 
+  needsEvidenceReview(item: VenueEditSuggestion): boolean {
+    return this.hasProposedContact(item)
+      || item.proposed.latitude !== undefined || item.proposed.longitude !== undefined;
+  }
+
   /** A source is user supplied; this validation is about safe links, not authenticity. */
   sourceLink(item: VenueEditSuggestion): string | null {
     if (typeof item.sourceUrl !== 'string' || item.sourceUrl.length > 500) return null;
@@ -100,7 +105,7 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
   }
 
   canApproveSelected(): boolean {
-    return !this.selected || !this.hasProposedContact(this.selected)
+    return !this.selected || !this.needsEvidenceReview(this.selected)
       || (!!this.sourceLink(this.selected) && this.sourceReviewed);
   }
 
@@ -135,7 +140,7 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
     this.actionError = false;
     // The server must receive the moderator's explicit attestation; the UI-only
     // checkbox must never be mistaken for an authorization check.
-    const decisionRequest = decision === 'approve' && this.hasProposedContact(this.selected)
+    const decisionRequest = decision === 'approve' && this.needsEvidenceReview(this.selected)
       ? this.api.decide(id, decision, this.note.trim(), this.sourceReviewed)
       : this.api.decide(id, decision, this.note.trim());
     decisionRequest
