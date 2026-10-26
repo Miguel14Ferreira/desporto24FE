@@ -60,6 +60,57 @@ describe('VenueSuggestEditComponent', () => {
   });
 
 
+  it('attaches official HTTPS evidence to a name-only correction without changing the live venue', () => {
+    component.draft.name = 'Estádio Universitário de Lisboa — Campo 3';
+    component.reason = 'Planta oficial do EUL confirma o Campo 3, etiqueta 2.2.';
+    component.sourceUrl = 'https://www.estadio.ulisboa.pt/sites/default/files/documents/document/2026-04/a3-mapa-reservas.pdf';
+    expect(component.contactEvidenceRequired).toBeFalse();
+    expect(component.validContactSource).toBeTrue();
+    api.submit.and.returnValue(of({
+      id: 51, venueId: 7, venueName: venue.name, status: 'PENDING',
+      before: { name: venue.name }, proposed: { name: component.draft.name },
+      sourceUrl: component.sourceUrl, reason: component.reason,
+      submittedByUsername: 'member', submittedAt: '2026-10-26T14:00:00Z',
+      reviewedByUsername: null, reviewedAt: null, decisionNote: null
+    }));
+    component.submit();
+    expect(api.submit).toHaveBeenCalledOnceWith(7,
+      { name: 'Estádio Universitário de Lisboa — Campo 3' },
+      component.reason, component.sourceUrl);
+    expect(component.last?.status).toBe('PENDING');
+    expect(component.venue?.name).toBe('Pavilhão Antigo');
+  });
+
+  it('rejects invalid or unsafe optional evidence links on name-only corrections', () => {
+    component.draft.name = 'Nome proposto';
+    component.reason = 'Foi confirmado pela entidade oficial';
+    for (const invalid of ['javascript:alert(1)', 'http://www.estadio.ulisboa.pt/',
+      'https://user:pass@www.estadio.ulisboa.pt/', 'https://127.0.0.1/a']) {
+      component.sourceUrl = invalid;
+      expect(component.validContactSource).toBeFalse();
+      component.submit();
+      expect(component.sourceUrlInvalid).toBeTrue();
+      expect(api.submit).not.toHaveBeenCalled();
+    }
+  });
+
+  it('preserves the existing optional no-source flow for ordinary name changes', () => {
+    component.draft.name = 'Nome proposto';
+    component.reason = 'Confirmado presencialmente com a entidade';
+    expect(component.contactEvidenceRequired).toBeFalse();
+    expect(component.validContactSource).toBeTrue();
+    api.submit.and.returnValue(of({
+      id: 52, venueId: 7, venueName: venue.name, status: 'PENDING',
+      before: { name: venue.name }, proposed: { name: 'Nome proposto' },
+      reason: component.reason, submittedByUsername: 'member',
+      submittedAt: '2026-10-26T14:00:00Z', reviewedByUsername: null,
+      reviewedAt: null, decisionNote: null
+    }));
+    component.submit();
+    expect(api.submit).toHaveBeenCalledOnceWith(7,
+      { name: 'Nome proposto' }, component.reason);
+  });
+
   it('requires a valid official HTTPS source when adding a contact', () => {
     component.draft.contact = '225 073 300';
     component.reason = 'Confirmado na página oficial da piscina';
