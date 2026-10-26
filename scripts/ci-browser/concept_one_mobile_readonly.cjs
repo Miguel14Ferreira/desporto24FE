@@ -78,6 +78,19 @@ const sessionDetailFixtures = {
     creatorUsername: 'qa-organizer', address: null, canSeeExactAddress: false,
     joined: true, waitlisted: false, waitlistPosition: null, gamePhoto: null }
 };
+const fictionalVenues = [
+  { id: 201, name: 'Campo Fictício 3', city: 'Lisboa', district: 'Lisboa',
+    address: null, locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN',
+    latitude: 38.75, longitude: -9.16, sports: 'Futebol',
+    informationSource: 'OPENSTREETMAP', createdAt: '2026-10-20T12:00:00Z' },
+  { id: 202, name: 'Pavilhão Fictício', city: 'Porto', district: 'Porto',
+    address: 'Rua de Exemplo 12', sports: 'Futsal',
+    informationSource: 'COMMUNITY', createdAt: '2026-10-20T12:00:00Z' },
+  { id: 203, name: 'Campo Fictício 5', city: 'Lisboa', district: 'Lisboa',
+    address: null, locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN',
+    latitude: 38.755, longitude: -9.164, sports: 'Futebol',
+    informationSource: 'OPENSTREETMAP', createdAt: '2026-10-20T12:00:00Z' }
+];
 const fictionalParticipants = [
   { id: 51, username: 'mobile-fixture', attendanceStatus: 'PENDING',
     joinedAt: futureGameDate, teamCode: null },
@@ -173,8 +186,12 @@ async function main() {
           }
           if (endpoint === '/api/communities/mine') return respond(route, 200, []);
           if (endpoint === '/api/venues/suggest') {
-            return respond(route, 200, { venues: [], page: 0, hasMore: false });
+            return respond(route, 200, { venues: fictionalVenues, page: 0, hasMore: false });
           }
+          if (endpoint === '/api/venues/201') return respond(route, 200, fictionalVenues[0]);
+          if (endpoint === '/api/venues/201/photos'
+              || endpoint === '/api/venues/201/sport-conditions') return respond(route, 200, []);
+          if (endpoint === '/api/venues/201/ratings/summary') return respond(route, 200, null);
           if (endpoint === '/api/sessions') return respond(route, 200, []);
           return respond(route, 404, { message: 'No fixture for read-only visual audit' });
         });
@@ -193,6 +210,9 @@ async function main() {
         // English also gets the session detail smoke even though its general
         // route sweep is deliberately kept small to reduce CI costs.
         scenarios.push(
+          ['/menu/venues', '.venue-directory-grid .venue-directory-card'],
+          ['/menu/venues/201', '.venue-detail-page .venue-header'],
+          ['/menu/venues/new', '.venue-create-form'],
           ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/903', '.jynlo-session-detail-premium .detail-card'],
@@ -236,6 +256,47 @@ async function main() {
           assert.ok(overflow <= 2,
             route + ' (' + width + 'px ' + language + ') horizontal overflow: '
             + JSON.stringify(measure));
+          if (route === '/menu/venues') {
+            const shell = page.locator('.venue-directory-page');
+            assert.equal(await shell.locator('.venue-directory-card').count(), 3,
+              'Populated synthetic catalogue shows exactly three unique venues');
+            const gap = await shell.locator('.venue-directory-filters').evaluate(
+              el => getComputedStyle(el).gap);
+            const margin = await shell.locator('.venue-directory-result-heading').evaluate(
+              el => getComputedStyle(el).marginTop);
+            assert.equal(gap, width === 390 ? '14px' : '16px',
+              'Catalogue filters retain readable responsive spacing');
+            assert.equal(margin, width === 390 ? '20px' : '24px',
+              'Catalogue results are separated from filter form');
+          }
+          if (route === '/menu/venues/201') {
+            const shell = page.locator('.venue-detail-page');
+            assert.equal(await shell.locator('.venue-hero-back').count(), 1,
+              'Venue detail must offer visible return navigation');
+            const back = shell.locator('.venue-hero-back');
+            const backBox = await back.boundingBox();
+            assert.ok(backBox && backBox.width > 80 && backBox.x >= -3
+              && backBox.x + backBox.width <= width + 3,
+              'Venue return control must remain visible without horizontal clipping');
+            assert.equal(await shell.locator('.venue-address-map-link').count(), 1,
+              'GPS-only venue has a navigation link without a fabricated street');
+            assert.match(await shell.locator('.venue-address-map-link').getAttribute('href'),
+              /^https:\/\/www\.google\.com\/maps\?q=38\.75,-9\.16$/,
+              'Map action must use the supplied synthetic coordinates');
+            const margin = await shell.locator('.venue-header').evaluate(
+              el => getComputedStyle(el).marginBottom);
+            assert.equal(margin, width === 390 ? '20px' : '24px',
+              'Venue summary must not collide with the header');
+          }
+          if (route === '/menu/venues/new') {
+            assert.equal(await page.locator('.venue-create-form').count(), 1,
+              'New venue form must render safely');
+            const form = page.locator('.venue-create-form');
+            const formBox = await form.boundingBox();
+            assert.ok(formBox && formBox.width > 150 && formBox.x >= -3
+              && formBox.x + formBox.width <= width + 3,
+              'New venue form must fit inside the viewport');
+          }
           if (/^\/menu\/events\/90[1-4]$/.test(route)) {
             const caseId = Number(route.slice(-3));
             const shell = page.locator('.jynlo-session-detail-premium');
