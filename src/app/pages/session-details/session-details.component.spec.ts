@@ -2236,7 +2236,7 @@ describe('SessionDetailsComponent', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session, creatorUsername: 'creator-user', joined: false, waitlisted: false,
-      communityId: 9, participantCount: 10, maxParticipants: 10,
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true, participantCount: 10, maxParticipants: 10,
       status: 'FULL', gameDate: new Date(Date.now() + 86_400_000).toISOString()
     };
     fixture.detectChanges();
@@ -2251,7 +2251,7 @@ describe('SessionDetailsComponent', () => {
 
   it('does not offer Excel team generation to non-organisers or before the roster is full', () => {
     component.session = {
-      ...session, communityId: 9, participantCount: 10, maxParticipants: 10,
+      ...session, communityId: 9, sport: 'Futebol', teamBalanceSupported: true, participantCount: 10, maxParticipants: 10,
       status: 'FULL', gameDate: new Date(Date.now() + 86_400_000).toISOString()
     };
     fixture.detectChanges();
@@ -2268,7 +2268,7 @@ describe('SessionDetailsComponent', () => {
       ...session,
       creatorUsername: 'creator-user',
       joined: true,
-      communityId: 9,
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true,
       participantCount: 4,
       maxParticipants: 4,
       status: 'FULL'
@@ -2290,7 +2290,7 @@ describe('SessionDetailsComponent', () => {
       ...session,
       creatorUsername: 'creator-user',
       joined: true,
-      communityId: 9,
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true,
       participantCount: 4,
       maxParticipants: 4,
       status: 'FULL'
@@ -2338,7 +2338,7 @@ describe('SessionDetailsComponent', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session, joined: true, creatorUsername: 'creator-user',
-      communityId: 9, participantCount: 10, maxParticipants: 10, status: 'FULL'
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true, participantCount: 10, maxParticipants: 10, status: 'FULL'
     };
     const preview = {
       teamA: [{ username: 'creator-user', strengthScore: 20, statsAvailable: true,
@@ -2365,7 +2365,7 @@ describe('SessionDetailsComponent', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session, joined: true, creatorUsername: 'creator-user',
-      communityId: 9, participantCount: 10, maxParticipants: 10, status: 'FULL'
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true, participantCount: 10, maxParticipants: 10, status: 'FULL'
     };
     component.generateTeams('EXCEL_POINTS');
     component.confirmTeams();
@@ -2384,7 +2384,7 @@ describe('SessionDetailsComponent', () => {
       ...session,
       creatorUsername: 'creator-user',
       joined: true,
-      communityId: 9,
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true,
       participantCount: 4,
       maxParticipants: 4,
       status: 'FULL'
@@ -2421,6 +2421,38 @@ describe('SessionDetailsComponent', () => {
     component.generateTeams();
 
     expect(sessionService.teamSuggestion).not.toHaveBeenCalled();
+  });
+
+
+  it('hides the team generator for individual and undecided singles/doubles sports', () => {
+    (component as any).currentUsername = 'creator-user';
+    for (const sport of ['Atletismo', 'Ciclismo', 'Padel', 'Ténis']) {
+      component.session = {
+        ...session, creatorUsername: 'creator-user', sport,
+        teamBalanceSupported: false, communityId: 9,
+        participantCount: 10, maxParticipants: 10, status: 'FULL'
+      };
+      fixture.detectChanges();
+      expect(component.canGenerateTeams()).withContext(sport).toBeFalse();
+      expect(fixture.nativeElement.querySelector('.team-generator')).toBeNull();
+    }
+    expect(sessionService.teamSuggestion).not.toHaveBeenCalled();
+  });
+
+  it('supports different confirmed team rosters only when the API declares eligibility', () => {
+    (component as any).currentUsername = 'creator-user';
+    for (const size of [4, 6, 8, 10, 12, 14]) {
+      component.session = {
+        ...session, creatorUsername: 'creator-user', sport: 'Futebol',
+        teamBalanceSupported: true, communityId: 9,
+        participantCount: size, maxParticipants: size, status: 'FULL'
+      };
+      expect(component.canGenerateTeams()).withContext(String(size)).toBeTrue();
+    }
+    component.session = { ...component.session!, participantCount: 9, maxParticipants: 10 };
+    expect(component.canGenerateTeams()).toBeFalse();
+    component.session = { ...component.session!, participantCount: 10, maxParticipants: 10, teamBalanceSupported: false };
+    expect(component.canGenerateTeams()).toBeFalse();
   });
 
   it('distinguishes cancelling removal from the destructive confirm action', () => {

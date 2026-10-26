@@ -1701,6 +1701,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.session
       && this.isCreator()
       && this.session.communityId
+      && this.session.teamBalanceSupported === true
       && this.isFull()
       && this.session.status !== 'CANCELLED'
       && this.session.status !== 'COMPLETED'
