@@ -161,7 +161,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintIncidentDetails = '';
   sprintDecisionIncidentId: number | null = null;
   sprintDecisionBracketId: number | null = null;
-  sprintDecisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | 'UNINTENTIONAL_FALL' = 'RESTART_REQUIRED';
+  sprintDecisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | 'UNINTENTIONAL_FALL' | 'PRE_SPRINT_RESTART' = 'RESTART_REQUIRED';
   sprintDecisionSanction: 'WARNING' | 'RELEGATION' | 'DISQUALIFICATION' = 'WARNING';
   sprintDecisionSanctionedUsername = '';
   sprintDecisionReference = '';
@@ -184,6 +184,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintFaultReference = '';
   sprintFaultReason = '';
   sprintFaultChoiceConfirmed = false;
+  sprintPreSprintBeforeConfirmed = false;
+  sprintPreSprintStoppedConfirmed = false;
   sprintPositionsBracketId: number | null = null;
   sprintPositionsIncidentId: number | null = null;
   sprintPositionsFirstRider = '';
@@ -2781,13 +2783,19 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     });
   }
 
+  sprintIsPreSprintIncident(incident: TrackSprintIncident): boolean {
+    return ['PRE_SPRINT_BALANCE','PRE_SPRINT_OPPONENT_CONTACT',
+      'PRE_SPRINT_BARRIER_CONTACT'].includes(incident.incidentType);
+  }
+
   sprintCanConfirmFaultStart(bracket: TrackSprintBracketOverview,
     incident: TrackSprintIncident): boolean {
     const match=bracket.matches.find(m=>m.seriesKey===incident.seriesKey);
     return bracket.format==='OLYMPIC_TWENTY_FOUR_REPECHAGE' && !bracket.interruption
-      && incident.incidentType==='FALL'
       && incident.status==='FAULT_START_PENDING'
-      && incident.decisionType==='UNINTENTIONAL_FALL'
+      && ((incident.incidentType==='FALL' && incident.decisionType==='UNINTENTIONAL_FALL')
+        || (this.sprintIsPreSprintIncident(incident)
+          && incident.decisionType==='PRE_SPRINT_RESTART'))
       && /^SP[1-9][0-9]*-(A(?:[1-9]|1[0-2])|C[1-8]|E[1-6]|Q[1-4]|S[1-2]|B|G)$/.test(incident.seriesKey)
       && this.sprintNeutralEligibleRiders(bracket,incident).length===2
       && !!match && (match.status==='READY'||match.status==='IN_PROGRESS')
@@ -2808,6 +2816,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.sprintFaultReference='';
     this.sprintFaultReason='';
     this.sprintFaultChoiceConfirmed=false;
+    this.sprintPreSprintBeforeConfirmed=false;
+    this.sprintPreSprintStoppedConfirmed=false;
     this.sprintIncidentError='';
   }
 
@@ -2818,6 +2828,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         ||this.selectedSeasonId==null||this.selectedSeasonId!==this.activeSeason()?.id
         ||!bracket||!incident||!this.sprintCanConfirmFaultStart(bracket,incident)
         ||!this.sprintFaultChoiceConfirmed||!this.sprintFaultStartPosition
+        ||(this.sprintIsPreSprintIncident(incident)
+          && (!this.sprintPreSprintBeforeConfirmed || !this.sprintPreSprintStoppedConfirmed))
         ||this.sprintFaultReference.trim().length<12
         ||this.sprintFaultReason.trim().length<12
         ||this.sprintFaultReference.trim()===incident.decisionReference?.trim())return;
@@ -2828,12 +2840,20 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const group=this.selected.id,season=this.selectedSeasonId;
     this.sprintIncidentSaving=true;
     this.sprintIncidentError='';
-    this.communityService.confirmUnintentionalFallStart(group,season,bracket.id,incident.id,{
-      faultRider:this.sprintFaultRider,nonFaultRider:innocent,
-      nonFaultStartPosition:this.sprintFaultStartPosition,
-      nonFaultChoiceConfirmed:true,
-      reference:this.sprintFaultReference.trim(),reason:this.sprintFaultReason.trim()
-    }).pipe(timeout(10_000),finalize(()=>this.sprintIncidentSaving=false)).subscribe({
+    const apiRequest=this.sprintIsPreSprintIncident(incident)
+      ? this.communityService.confirmPreSprintStart(group,season,bracket.id,incident.id,{
+          incidentRider:this.sprintFaultRider,nonFaultRider:innocent,
+          nonFaultStartPosition:this.sprintFaultStartPosition,
+          nonFaultChoiceConfirmed:true,beforeSprintConfirmed:true,starterStoppedConfirmed:true,
+          reference:this.sprintFaultReference.trim(),reason:this.sprintFaultReason.trim()
+        })
+      : this.communityService.confirmUnintentionalFallStart(group,season,bracket.id,incident.id,{
+          faultRider:this.sprintFaultRider,nonFaultRider:innocent,
+          nonFaultStartPosition:this.sprintFaultStartPosition,
+          nonFaultChoiceConfirmed:true,
+          reference:this.sprintFaultReference.trim(),reason:this.sprintFaultReason.trim()
+        });
+    apiRequest.pipe(timeout(10_000),finalize(()=>this.sprintIncidentSaving=false)).subscribe({
       next:()=>{
         this.sprintFaultBracketId=null;
         this.sprintFaultIncidentId=null;
@@ -2970,7 +2990,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   editSprintDecision(bracketId: number, incidentId: number): void {
     this.sprintDecisionBracketId = bracketId;
     this.sprintDecisionIncidentId = incidentId;
-    this.sprintDecisionType = 'RESTART_REQUIRED';
+    const bracket=this.sprintBrackets.find(b=>b.id===bracketId);
+    const incident=(bracket?.incidents||[]).find(i=>i.id===incidentId);
+    this.sprintDecisionType = incident && this.sprintIsPreSprintIncident(incident)
+      ? 'PRE_SPRINT_RESTART' : 'RESTART_REQUIRED';
     this.sprintDecisionSanction = 'WARNING';
     this.sprintDecisionSanctionedUsername = '';
     this.sprintDecisionReference = '';
