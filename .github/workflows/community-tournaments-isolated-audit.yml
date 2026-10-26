@@ -1,0 +1,55 @@
+name: Jynlo community tournaments isolated browser QA
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [preview/render-fullstack]
+    paths:
+      - '.github/workflows/community-tournaments-isolated-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-tournament-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  independent-tournament-browser:
+    name: Mocked API real Chromium tournament journeys
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install pinned E2E runner without modifying project lockfile
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Test individual and team competitions using fictional members
+        run: >
+          npx playwright test e2e/community-tournaments.spec.ts
+          --project=desktop-chromium
+          --grep
+          'Premium populated tournament QA: 32-player standings|organizador publica jornada, regista resultado e encerra a liga|organizador publica jornadas apenas com duas equipas completas|Team E2E: PT/EN shows real league standings and translated champion|criação por equipas apresenta formatos comparáveis'
+      - name: Print test context if failing
+        if: failure()
+        run: find test-results -name error-context.md -type f -print -exec sed -n '1,130p' {} \; || true
+      - name: Upload visual proof and traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: community-tournaments-audit-browser-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14
