@@ -12,7 +12,7 @@
       <div class="feedback success-feedback">{{ successMessage }}</div>
     }
 
-    <form (ngSubmit)="sendResetEmail()">
+    <form method="post" (ngSubmit)="sendResetEmail()">
       <label>
         <span>{{ 'common.email' | t }}</span>
         <input

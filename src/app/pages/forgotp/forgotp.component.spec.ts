@@ -36,4 +36,11 @@ describe('ForgotpComponent', () => {
     expect(auth.initiatePasswordReset).toHaveBeenCalledWith('miguel@example.com');
     expect(component.successMessage).toBe('Foi enviado um email com instruções para redefinir a palavra-passe.');
   });
+
+  it('uses POST for the native password-reset request form', () => {
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+    expect(form.getAttribute('method')).toBe('post');
+    expect(form.querySelector('input[name="email"]')).not.toBeNull();
+  });
+
 });

@@ -42,4 +42,12 @@ describe('Forgotp2Component', () => {
     expect(auth.confirmPasswordReset).toHaveBeenCalledWith('reset-token', 'new-password-123');
     expect(component.successMessage).toBe('Palavra-passe alterada com sucesso.');
   });
+
+  it('uses POST so password fields cannot be submitted in a GET URL', () => {
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+    expect(form.getAttribute('method')).toBe('post');
+    expect(form.querySelector('input[name="newPassword"]')).not.toBeNull();
+    expect(form.querySelector('input[name="confirmPassword"]')).not.toBeNull();
+  });
+
 });
