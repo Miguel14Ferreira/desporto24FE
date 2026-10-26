@@ -44,7 +44,9 @@
                 <span>{{ field.label | t }}</span>
                 <input [type]="field.key === 'website' ? 'url' : 'text'"
                   [name]="field.key" [(ngModel)]="draft[field.key]"
-                  [maxlength]="field.limit" autocomplete="off" />
+                  [maxlength]="field.limit"
+                  [attr.inputmode]="field.key === 'latitude' || field.key === 'longitude' ? 'decimal' : null"
+                  autocomplete="off" />
                 @if (field.key === 'contact') {
                   <small class="venue-edit-contact-hint">{{ 'venue.visit.editContactHint' | t }}</small>
                 }
@@ -83,16 +85,18 @@
             </div>
           </div>
 
+          <p class="venue-edit-contact-hint">{{ 'venue.edit.gpsHint' | t }}</p>
+
           <label class="venue-edit-source">
-            <span>{{ 'venue.edit.sourceUrl' | t }}@if (contactEvidenceRequired) { *}</span>
+            <span>{{ 'venue.edit.sourceUrl' | t }}@if (evidenceRequired) { *}</span>
             <input type="url" name="sourceUrl" [(ngModel)]="sourceUrl"
-              [required]="contactEvidenceRequired" maxlength="500" autocomplete="off"
+              [required]="evidenceRequired" maxlength="500" autocomplete="off"
               inputmode="url" placeholder="https://…"
               [attr.aria-invalid]="sourceUrlInvalid || (sourceUrl.trim().length > 0 && !validContactSource)" />
             <small class="venue-edit-contact-hint">{{ 'venue.edit.sourceHint' | t }}</small>
           </label>
           @if (sourceUrlInvalid) {
-            <p class="venue-edit-error" role="alert">{{ (contactEvidenceRequired
+            <p class="venue-edit-error" role="alert">{{ (evidenceRequired
               ? 'venue.edit.sourceRequired' : 'venue.edit.sourceInvalid') | t }}</p>
           }
 

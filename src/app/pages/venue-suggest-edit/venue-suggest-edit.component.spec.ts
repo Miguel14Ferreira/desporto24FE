@@ -162,6 +162,49 @@ describe('VenueSuggestEditComponent', () => {
     expect(api.submit).toHaveBeenCalledOnceWith(7, { contact: '' }, component.reason);
   });
 
+
+  it('submits GPS only as a paired correction with public HTTPS evidence', () => {
+    component.draft.latitude = '38.72';
+    component.draft.longitude = '-9.14';
+    component.reason = 'Localização exata confirmada pela autarquia';
+    expect(component.gpsEvidenceRequired).toBeTrue();
+    expect(component.gpsInvalid).toBeFalse();
+    expect(component.changes.latitude).toBe('38.72');
+    expect(component.changes.longitude).toBe('-9.14');
+    expect(component.validContactSource).toBeFalse();
+    component.submit();
+    expect(component.sourceUrlInvalid).toBeTrue();
+    expect(api.submit).not.toHaveBeenCalled();
+    component.sourceUrl = 'https://example.org/municipio/recinto';
+    api.submit.and.returnValue(of({
+      id: 70, venueId: 7, venueName: venue.name, status: 'PENDING',
+      before: { latitude: null, longitude: null },
+      proposed: { latitude: '38.72', longitude: '-9.14' },
+      sourceUrl: component.sourceUrl, reason: component.reason,
+      submittedByUsername: 'member', submittedAt: '2026-10-26T14:00:00Z',
+      reviewedByUsername: null, reviewedAt: null, decisionNote: null
+    }));
+    component.submit();
+    expect(api.submit).toHaveBeenCalledOnceWith(7, { latitude: '38.72', longitude: '-9.14' },
+      component.reason, component.sourceUrl);
+    expect(venue.latitude).toBeUndefined();
+    expect(component.last?.status).toBe('PENDING');
+  });
+
+  it('rejects incomplete or geographically impossible GPS edits before sending', () => {
+    component.draft.latitude = '38.72';
+    component.draft.longitude = '';
+    component.reason = 'Localização indicada pela fonte oficial';
+    component.sourceUrl = 'https://example.org/municipio/recinto';
+    expect(component.gpsInvalid).toBeTrue();
+    component.submit();
+    expect(api.submit).not.toHaveBeenCalled();
+    component.draft.longitude = '0';
+    expect(component.gpsInvalid).toBeTrue();
+    component.draft.longitude = '-9.14';
+    expect(component.gpsInvalid).toBeFalse();
+  });
+
   it('does not send unchanged data', () => {
     component.reason = 'Confirmado no site oficial';
     component.submit();

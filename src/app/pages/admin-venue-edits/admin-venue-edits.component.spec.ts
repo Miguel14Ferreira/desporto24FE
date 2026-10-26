@@ -153,6 +153,25 @@ describe('AdminVenueEditsComponent', () => {
     expect(api.decide).toHaveBeenCalledOnceWith(31, 'approve', '');
   });
 
+
+  it('requires verified HTTPS evidence before approving a GPS change', () => {
+    const gps = { ...pending,
+      proposed: { latitude: '38.72', longitude: '-9.14' },
+      before: { latitude: null, longitude: null },
+      sourceUrl: 'https://example.org/municipio/recinto'
+    };
+    component.open(gps);
+    component.action = 'approve';
+    expect(component.needsEvidenceReview(gps)).toBeTrue();
+    expect(component.canApproveSelected()).toBeFalse();
+    component.decide();
+    expect(api.decide).not.toHaveBeenCalled();
+    component.sourceReviewed = true;
+    api.decide.and.returnValue(of({ ...gps, status: 'APPROVED' }));
+    component.decide();
+    expect(api.decide).toHaveBeenCalledWith(gps.id, 'approve', '', true);
+  });
+
   it('requires source verification before approving a contact and then sends one decision', () => {
     const contactSuggestion: VenueEditSuggestion = {
       ...pending, before: {contact: null}, proposed: {contact: '225073300'},

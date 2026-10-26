@@ -112,7 +112,7 @@
             <strong>{{ 'venue.edit.reason' | t }}</strong>
             <p>{{ item.reason }}</p>
           </div>
-          @if (hasProposedContact(item) || sourceLink(item)) {
+          @if (needsEvidenceReview(item) || sourceLink(item)) {
             <div class="admin-edit-source">
               <strong>{{ (hasProposedContact(item)
                 ? 'venue.edit.admin.sourceHeading' : 'venue.edit.admin.evidenceHeading') | t }}</strong>
@@ -125,7 +125,7 @@
               }
               <small>{{ (hasProposedContact(item)
                 ? 'venue.edit.admin.sourceWarning' : 'venue.edit.admin.evidenceWarning') | t }}</small>
-              @if (hasProposedContact(item) && mode === 'pending' && sourceLink(item)) {
+              @if (needsEvidenceReview(item) && mode === 'pending' && sourceLink(item)) {
                 <label class="admin-edit-source-check">
                   <input type="checkbox" name="sourceReviewed" [(ngModel)]="sourceReviewed">
                   <span>{{ 'venue.edit.admin.sourceReviewed' | t }}</span>
@@ -160,7 +160,7 @@
               <button type="button" class="admin-edit-reject"
                 (click)="action='reject'">{{ 'venue.admin.reject' | t }}</button>
               <button type="button" class="admin-edit-accept"
-                (click)="action='approve'" [disabled]="!sourceLink(item) && hasProposedContact(item)">{{ 'venue.admin.approve' | t }}</button>
+                (click)="action='approve'" [disabled]="!sourceLink(item) && needsEvidenceReview(item)">{{ 'venue.admin.approve' | t }}</button>
             }
           </div>
           }
