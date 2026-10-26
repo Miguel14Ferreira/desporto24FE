@@ -1223,6 +1223,10 @@
                                           ? ('communities.trackCycling.incidentPending' | t)
                                           : incident.status === 'ADJUDICATION_REQUIRED'
                                             ? ('communities.trackCycling.disciplineBlocked' | t)
+                                            : incident.status === 'FAULT_START_PENDING'
+                                              ? ('communities.trackCycling.faultPending' | t)
+                                            : incident.status === 'FAULT_START_OK'
+                                              ? ('communities.trackCycling.faultAuthorized' | t)
                                             : incident.status === 'RESTART_PENDING'
                                               ? ('communities.trackCycling.neutralPending' | t)
                                             : incident.status === 'POSITIONS_PENDING'
@@ -1244,6 +1248,10 @@
                                     @if (incident.status !== 'PENDING') {
                                       <p>{{ incident.status === 'RESTART_PENDING'
                                         ? ('communities.trackCycling.neutralPending' | t)
+                                        : incident.status === 'FAULT_START_PENDING'
+                                          ? ('communities.trackCycling.faultPendingNotice' | t)
+                                        : incident.status === 'FAULT_START_OK'
+                                          ? ('communities.trackCycling.faultAuthorizedNotice' | t)
                                         : incident.status === 'POSITIONS_PENDING'
                                           ? ('communities.trackCycling.neutralPositionsNotice' | t)
                                         : incident.status === 'OFFICIAL_POSITIONS'
@@ -1560,6 +1568,74 @@
                                     <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
                                       {{ incident.rerunReference }}</small>
                                   }
+                                  @if (incident.status === 'FAULT_START_OK') {
+                                    <p role="note">{{ 'communities.trackCycling.faultAuthorizedNotice' | t }}</p>
+                                    <p>{{ 'communities.trackCycling.faultRider' | t }}:
+                                      <strong>{{ incident.fallFaultRider }}</strong></p>
+                                    <p>{{ 'communities.trackCycling.faultNonFaultRider' | t }}:
+                                      <strong>{{ incident.fallNonFaultRider }}</strong> ·
+                                      {{ ('communities.trackCycling.faultSide.' + incident.fallChosenStartPosition) | t }}</p>
+                                    <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
+                                      {{ incident.rerunReference }}</small>
+                                  }
+                                  @if (canManage() && selectedSeasonId === activeSeason()?.id
+                                      && sprintCanConfirmFaultStart(bracket, incident)) {
+                                    <button type="button" class="btn btn-secondary"
+                                      [disabled]="sprintIncidentSaving"
+                                      (click)="editSprintFaultStart(bracket.id,incident.id)">
+                                      {{ 'communities.trackCycling.faultApprove' | t }}
+                                    </button>
+                                    @if (sprintFaultBracketId === bracket.id
+                                        && sprintFaultIncidentId === incident.id) {
+                                      <div class="round-meta-form">
+                                        <strong>{{ 'communities.trackCycling.faultTitle' | t }}</strong>
+                                        <p>{{ 'communities.trackCycling.faultNotice' | t }}</p>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.faultRider' | t }}</span>
+                                          <select [(ngModel)]="sprintFaultRider">
+                                            <option value="">{{ 'communities.trackCycling.tieSelectRider' | t }}</option>
+                                            @for (rider of sprintNeutralEligibleRiders(bracket,incident); track rider) {
+                                              <option [value]="rider">{{ rider }}</option>
+                                            }
+                                          </select>
+                                        </label>
+                                        @if (sprintFaultRider) {
+                                          <p>{{ 'communities.trackCycling.faultNonFaultRider' | t }}:
+                                            <strong>{{ sprintNonFaultRider(bracket,incident) }}</strong></p>
+                                        }
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.faultChosenSide' | t }}</span>
+                                          <select [(ngModel)]="sprintFaultStartPosition">
+                                            <option value="">{{ 'communities.trackCycling.faultNoDefault' | t }}</option>
+                                            <option value="INSIDE">{{ 'communities.trackCycling.faultSide.INSIDE' | t }}</option>
+                                            <option value="OUTSIDE">{{ 'communities.trackCycling.faultSide.OUTSIDE' | t }}</option>
+                                          </select>
+                                        </label>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentOfficialReference' | t }}</span>
+                                          <input [(ngModel)]="sprintFaultReference" maxlength="255">
+                                        </label>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
+                                          <textarea [(ngModel)]="sprintFaultReason" maxlength="500"></textarea>
+                                        </label>
+                                        <label>
+                                          <input type="checkbox" [(ngModel)]="sprintFaultChoiceConfirmed">
+                                          {{ 'communities.trackCycling.faultChoiceConfirm' | t }}
+                                        </label>
+                                        <p>{{ 'communities.trackCycling.neutralNoWinner' | t }}</p>
+                                        <button type="button" class="btn btn-primary"
+                                          (click)="saveSprintFaultStart()"
+                                          [disabled]="sprintIncidentSaving || !sprintFaultChoiceConfirmed
+                                            || !sprintFaultRider || !sprintFaultStartPosition
+                                            || sprintFaultReference.trim().length < 12
+                                            || sprintFaultReference.trim() === incident.decisionReference
+                                            || sprintFaultReason.trim().length < 12">
+                                          {{ 'communities.trackCycling.faultSubmit' | t }}
+                                        </button>
+                                      </div>
+                                    }
+                                  }
                                   @if (canManage() && selectedSeasonId === activeSeason()?.id
                                       && sprintCanAuthorizeNeutralRestart(bracket, incident)) {
                                     <button type="button" class="btn btn-secondary"
@@ -1663,6 +1739,10 @@
                                           <select [(ngModel)]="sprintDecisionType">
                                             <option value="RESTART_REQUIRED">{{ 'communities.trackCycling.incidentRestart' | t }}</option>
                                             <option value="OFFICIAL_RESULT_TO_RECORD">{{ 'communities.trackCycling.incidentRecord' | t }}</option>
+                                          @if (incident.incidentType === 'FALL'
+                                              && bracket.format === 'OLYMPIC_TWENTY_FOUR_REPECHAGE') {
+                                            <option value="UNINTENTIONAL_FALL">{{ 'communities.trackCycling.faultDecision' | t }}</option>
+                                          }
                                           @if (sprintDecisionIsDisciplinaryAllowed) {
                                             <option value="DISCIPLINARY_RULING">{{ 'communities.trackCycling.disciplineOfficial' | t }}</option>
                                           }
