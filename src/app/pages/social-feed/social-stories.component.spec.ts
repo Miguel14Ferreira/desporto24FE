@@ -63,7 +63,7 @@ describe('SocialStoriesComponent', () => {
     ] as any));
     fixture.detectChanges();
     tick();
-    component.composerOpen = true;
+    (fixture.nativeElement.querySelector('.story-add-action') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(component.groups).toHaveSize(0);
     expect(fixture.nativeElement.querySelector('#storyAudience')).toBeNull();
@@ -76,7 +76,7 @@ describe('SocialStoriesComponent', () => {
   it('preserves choosing a community when the member can publish community Stories', fakeAsync(() => {
     fixture.detectChanges();
     tick();
-    component.composerOpen = true;
+    (fixture.nativeElement.querySelector('.story-add-action') as HTMLButtonElement).click();
     fixture.detectChanges();
     const audience = fixture.nativeElement.querySelector('#storyAudience') as HTMLSelectElement;
     expect(audience).not.toBeNull();
