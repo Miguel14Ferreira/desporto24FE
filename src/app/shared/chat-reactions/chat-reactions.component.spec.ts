@@ -71,6 +71,32 @@ describe('Keyboard-accessible chat reaction picker', () => {
     fixture.destroy();
   });
 
+  it('shows exactly one reaction badge with no permanent second smiley trigger', () => {
+    store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
+    const {fixture,element}=mount();
+    expect(element.querySelectorAll('.reaction-count').length).toBe(1);
+    expect(element.querySelector('.reaction-open')).toBeNull();
+    expect(fixture.nativeElement.classList.contains('has-reactions')).toBeTrue();
+    expect(element.querySelector('.reaction-picker')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('returns keyboard focus to the selected reaction badge when closing the picker', () => {
+    store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
+    const {fixture,element}=mount();
+    const chip=element.querySelector<HTMLButtonElement>('.reaction-count')!;
+    chip.focus();
+    chip.click();
+    fixture.detectChanges();
+    const first=element.querySelector<HTMLButtonElement>('.reaction-picker button')!;
+    first.focus();
+    first.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(chip);
+    expect(store.toggle).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
   it('only removes a selected emoji using the explicit remove button', () => {
     store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
     const {fixture,component,element}=mount();
