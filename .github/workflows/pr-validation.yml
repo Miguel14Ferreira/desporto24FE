@@ -18,6 +18,9 @@ on:
       - 'scripts/ci-browser/public_api_contract_READONLY.cjs'
       - 'scripts/qa/jynlo-sessions-live-readonly.cjs'
       - 'scripts/qa/jynlo-sessions-live-readonly.test.cjs'
+      - 'scripts/qa/jynlo-community-roles-live-readonly.cjs'
+      - 'scripts/qa/jynlo-community-roles-live-readonly.test.cjs'
+      - '.github/workflows/community-role-live-readonly.yml'
       - '.github/workflows/notification-live-readonly.yml'
       - 'scripts/ci-browser/concept_one_mobile_readonly.cjs'
       - 'scripts/ci-browser/concept_one_populated_admin_readonly.cjs'
@@ -110,6 +113,11 @@ jobs:
       - name: Verify LIVE sessions auditor guardrails using synthetic fixtures only
         if: ${{ startsWith(github.head_ref, 'qa/live-auth-session-readonly-') }}
         run: node --test scripts/qa/jynlo-sessions-live-readonly.test.cjs
+      - name: Audit LIVE community role runner guardrails with synthetic responses
+        if: ${{ startsWith(github.head_ref, 'qa/community-tournament-live-roles-readonly-') }}
+        run: |
+          node --check scripts/qa/jynlo-community-roles-live-readonly.cjs
+          node --test scripts/qa/jynlo-community-roles-live-readonly.test.cjs
       - name: Run all Angular unit and regression tests
         run: npm test -- --watch=false --browsers=ChromeHeadless
       - name: Validate nginx security policy
