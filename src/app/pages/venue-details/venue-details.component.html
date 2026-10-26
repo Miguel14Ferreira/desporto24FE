@@ -1,7 +1,5 @@
 <section class="venue-detail-page">
   <div class="venue-detail-shell">
-    <a class="back-link" routerLink="/menu/venues">← {{ 'venue.catalog.backToList' | t }}</a>
-
     @if (loading) {
       <div class="venue-state">{{ 'venue.detail.loading' | t }}</div>
     } @else if (loadError || !venue) {
@@ -10,11 +8,16 @@
         <p>{{ 'venue.catalog.loadFailedHelp' | t }}</p>
         <div class="venue-error-actions">
           <button class="jynlo-action jynlo-action--primary" type="button" (click)="retryVenue()">{{ 'common.retry' | t }}</button>
-          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/venues">{{ 'venue.catalog.backToList' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/venues"
+             [queryParams]="backToDirectoryQueryParams">{{ 'venue.catalog.backToList' | t }}</a>
         </div>
       </div>
     } @else {
       <header class="venue-header">
+        <a class="back-link venue-hero-back" routerLink="/menu/venues"
+           [queryParams]="backToDirectoryQueryParams">
+          ← {{ 'venue.catalog.backToList' | t }}
+        </a>
         <span class="venue-kicker">{{ 'venue.detail.kicker' | t }}</span>
         <h1>{{ venue.name }}</h1>
         <p class="venue-hero-location">📍 {{ venue.city }}@if (venue.district && venue.district !== venue.city) {, {{ venue.district }}}</p>
@@ -64,6 +67,11 @@
           <strong>{{ postalAddress || ('venue.detail.postalAddressUnknown' | t) }}</strong>
           @if (isGpsOnly) {
             <small class="venue-map-approximate-hint">{{ 'venue.detail.gpsOnlyHint' | t }}</small>
+            @if (hasConfirmedMapCoordinates && mapUrl) {
+              <a class="venue-address-map-link" [href]="mapUrl" target="_blank" rel="noopener noreferrer">
+                ↗ {{ 'venue.visit.openGoogleMap' | t }}
+              </a>
+            }
           }
         </div>
       </div>
