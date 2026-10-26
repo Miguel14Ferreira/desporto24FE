@@ -26,6 +26,7 @@ export class ChatReactionStoreService {
   private readonly watchers = new Map<string, number>();
   private readonly pending = new Map<string, Set<number>>();
   private readonly busy = new Set<string>();
+  private readonly failed = new Set<string>();
   // Per-message generations invalidate an HTTP snapshot whenever a newer
   // server event, write or reconnect supersedes it. Use a global sequence so
   // unwatch/re-watch cannot accidentally reuse a generation.
@@ -51,6 +52,7 @@ export class ChatReactionStoreService {
       if (this.wasConnected) return; // Duplicate AUTH is not a reconnect.
       this.wasConnected = true;
       this.cache.clear();
+      this.failed.clear();
       for (const key of this.watchers.keys()) {
         this.touch(key); // Invalidate any GET from before the outage.
         const [kind, id, rawMessage] = key.split(':');
@@ -82,6 +84,19 @@ export class ChatReactionStoreService {
     return this.busy.has(this.key(kind, id, messageId));
   }
 
+  hasFailed(kind: ChatReactionKind, id: string | number, messageId: number): boolean {
+    return this.failed.has(this.key(kind, id, messageId));
+  }
+
+  /** A failed read never hides the button permanently. Retry is user initiated. */
+  retry(kind: ChatReactionKind, id: string | number, messageId: number): void {
+    const key = this.key(kind, id, messageId);
+    if (!this.watchers.has(key) || this.busy.has(key)) return;
+    this.failed.delete(key);
+    this.queue(kind, String(id).toLowerCase(), messageId);
+    this.changed.next(this.changed.value + 1);
+  }
+
   watch(kind: ChatReactionKind, id: string | number, messageId: number): void {
     if (!Number.isSafeInteger(messageId) || messageId <= 0) return;
     const key = this.key(kind, id, messageId);
@@ -96,6 +111,7 @@ export class ChatReactionStoreService {
       this.watchers.delete(key);
       // Removed/unmounted conversations cannot keep old reaction counts.
       this.cache.delete(key);
+      this.failed.delete(key);
       this.revisions.delete(key);
     } else this.watchers.set(key, count - 1);
   }
@@ -137,12 +153,19 @@ export class ChatReactionStoreService {
                   && this.revisions.get(key) === revisions.get(key)) {
                 this.cache.set(key, byId.get(msgId)
                   || { messageId: msgId, counts: {}, myEmoji: null });
+                this.failed.delete(key);
               }
             }
             this.changed.next(this.changed.value + 1);
           },
           error: () => {
-            // Do not fabricate an empty aggregate on failed authorization/network.
+            // No fictitious aggregate or blind mutation. Surface a retry to the user.
+            for (const msgId of page) {
+              const key = this.key(kind, id, msgId);
+              if (this.watchers.has(key) && this.revisions.get(key) === revisions.get(key)) {
+                this.failed.add(key);
+              }
+            }
             this.changed.next(this.changed.value + 1);
           }
         });
@@ -214,6 +237,7 @@ export class ChatReactionStoreService {
       if (this.watchers.has(key)) this.queue(event.kind, event.conversationId, event.messageId);
       return;
     }
+    this.failed.delete(key);
     this.cache.set(key, {
       messageId: event.messageId,
       counts: event.counts || {},

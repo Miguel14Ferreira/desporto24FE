@@ -189,6 +189,24 @@ describe('Chat reaction batch store', () => {
     store.unwatch('community',9,24);
   }));
 
+  it('makes a failed batch retryable without pretending the empty reaction count was loaded', fakeAsync(() => {
+    store.watch('direct','bea',44);
+    flushMicrotasks();
+    http.expectOne(r => r.url.endsWith('/api/messages/reactions/direct/bea'))
+      .flush({message:'Forbidden'},{status:403,statusText:'Forbidden'});
+    expect(store.get('direct','bea',44)).toBeUndefined();
+    expect(store.hasFailed('direct','bea',44)).toBeTrue();
+
+    store.retry('direct','bea',44);
+    flushMicrotasks();
+    const retry=http.expectOne(r => r.url.endsWith('/api/messages/reactions/direct/bea'));
+    expect(store.hasFailed('direct','bea',44)).toBeFalse();
+    retry.flush([{messageId:44,counts:{},myEmoji:null}]);
+    expect(store.get('direct','bea',44)).toEqual({messageId:44,counts:{},myEmoji:null});
+    expect(store.hasFailed('direct','bea',44)).toBeFalse();
+    store.unwatch('direct','bea',44);
+  }));
+
   it('does not fabricate empty counts if the authorized batch fails', fakeAsync(() => {
     store.watch('community', 9, 22);
     flushMicrotasks();

@@ -17,13 +17,41 @@ describe('Keyboard-accessible chat reaction picker', () => {
 
   beforeEach(() => {
     store = jasmine.createSpyObj<ChatReactionStoreService>(
-      'ChatReactionStoreService', ['watch','unwatch','get','toggle','isBusy']);
+      'ChatReactionStoreService', ['watch','unwatch','get','toggle','isBusy','hasFailed','retry']);
     store.get.and.returnValue({messageId:51,counts:{},myEmoji:null});
     store.isBusy.and.returnValue(false);
+    store.hasFailed.and.returnValue(false);
     TestBed.configureTestingModule({
       imports:[ChatReactionsComponent],
       providers:[{provide:ChatReactionStoreService,useValue:store}]
     });
+  });
+
+  it('keeps a react action visible without a summary and allows retry after a failed read', () => {
+    store.get.and.returnValue(undefined);
+    store.hasFailed.and.returnValue(true);
+    const {fixture,element}=mount();
+    const toggle=element.querySelector<HTMLButtonElement>('.reaction-open');
+    expect(toggle).not.toBeNull();
+    toggle!.click();
+    fixture.detectChanges();
+    expect(store.retry).toHaveBeenCalledWith('direct','bea',51);
+    expect(element.querySelectorAll('.reaction-picker button').length).toBe(1);
+    expect(store.toggle).not.toHaveBeenCalled();
+    element.querySelector<HTMLButtonElement>('.reaction-retry')!.click();
+    expect(store.retry).toHaveBeenCalledTimes(2);
+    fixture.destroy();
+  });
+
+  it('shows loading state instead of losing the react button before the batch response', () => {
+    store.get.and.returnValue(undefined);
+    const {fixture,element}=mount();
+    element.querySelector<HTMLButtonElement>('.reaction-open')!.click();
+    fixture.detectChanges();
+    expect(element.querySelector('.reaction-loading')).not.toBeNull();
+    expect(element.querySelector('.reaction-retry')).toBeNull();
+    expect(store.toggle).not.toHaveBeenCalled();
+    fixture.destroy();
   });
 
   it('opens by keyboard, closes with Escape, returns focus without toggling an emoji', () => {

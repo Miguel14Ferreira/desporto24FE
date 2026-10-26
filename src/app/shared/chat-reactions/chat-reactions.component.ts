@@ -14,42 +14,47 @@ let reactionPickerSequence = 0;
   standalone: true,
   imports: [CommonModule, TranslatePipe],
   template: `
-    @if (summary; as state) {
-      <div class="chat-reactions" (keydown.escape)="dismissPicker($event)" (focusout)="onFocusOut($event)">
-        @for (entry of entries; track entry.emoji) {
-          <button type="button" class="reaction-count"
-              [class.mine]="state.myEmoji === entry.emoji"
-              [disabled]="disabled || store.isBusy(kind, conversationId, messageId)"
-              [attr.aria-label]="entry.emoji + ' · ' + entry.count"
-              [attr.aria-pressed]="state.myEmoji === entry.emoji"
-              (click)="pick(entry.emoji)">
-            {{ entry.emoji }} <span>{{ entry.count }}</span>
-          </button>
-        }
-        @if (!disabled) {
-          <button #reactionToggle type="button" class="reaction-open"
-              [attr.aria-expanded]="expanded" [attr.aria-controls]="pickerId"
-              [attr.aria-label]="'chat.react' | t"
-              [disabled]="store.isBusy(kind, conversationId, messageId)"
-              (click)="expanded = !expanded">
-            <span aria-hidden="true">☺</span><span class="sr-only">{{ 'chat.react' | t }}</span>
-          </button>
-        }
-        @if (expanded && !disabled) {
-          <div [id]="pickerId" class="reaction-picker" role="group" [attr.aria-label]="'chat.react' | t">
+    <div class="chat-reactions" (keydown.escape)="dismissPicker($event)" (focusout)="onFocusOut($event)">
+      @for (entry of entries; track entry.emoji) {
+        <button type="button" class="reaction-count"
+            [class.mine]="summary?.myEmoji === entry.emoji"
+            [disabled]="disabled || store.isBusy(kind, conversationId, messageId)"
+            [attr.aria-label]="entry.emoji + ' · ' + entry.count"
+            [attr.aria-pressed]="summary?.myEmoji === entry.emoji"
+            (click)="pick(entry.emoji)">
+          {{ entry.emoji }} <span>{{ entry.count }}</span>
+        </button>
+      }
+      @if (!disabled) {
+        <button #reactionToggle type="button" class="reaction-open"
+            [attr.aria-expanded]="expanded" [attr.aria-controls]="pickerId"
+            [attr.aria-label]="'chat.react' | t"
+            [disabled]="store.isBusy(kind, conversationId, messageId)"
+            (click)="togglePicker()">
+          <span aria-hidden="true">☺</span><span class="sr-only">{{ 'chat.react' | t }}</span>
+        </button>
+      }
+      @if (expanded && !disabled) {
+        <div [id]="pickerId" class="reaction-picker" role="group" [attr.aria-label]="'chat.react' | t">
+          @if (summary; as state) {
             @for (emoji of emojis; track emoji) {
               <button type="button" [attr.aria-label]="emoji"
                 [attr.aria-pressed]="state.myEmoji === emoji"
                 [disabled]="store.isBusy(kind, conversationId, messageId)"
                 (click)="pick(emoji)">{{ emoji }}</button>
             }
-          </div>
-        }
-        @if (error) {
-          <small role="alert" class="reaction-error">{{ 'chat.reactionError' | t }}</small>
-        }
-      </div>
-    }
+          } @else if (store.hasFailed(kind, conversationId, messageId)) {
+            <span class="reaction-load-error" role="alert">{{ 'chat.reactionError' | t }}</span>
+            <button type="button" class="reaction-retry" (click)="retry()">{{ 'common.retry' | t }}</button>
+          } @else {
+            <span class="reaction-loading" role="status">{{ 'chat.shareLoading' | t }}</span>
+          }
+        </div>
+      }
+      @if (error) {
+        <small role="alert" class="reaction-error">{{ 'chat.reactionError' | t }}</small>
+      }
+    </div>
   `,
   styles: [`
     :host { display: block; min-width: 0; }
@@ -68,6 +73,9 @@ let reactionPickerSequence = 0;
       padding: 4px; font-size: 1.08rem; }
     .reaction-picker button:hover { background: rgba(82,217,187,.16); }
     .reaction-picker button:focus-visible { background: rgba(82,217,187,.20); }
+    .reaction-loading,.reaction-load-error { color:#d6f8ee; font-size:.76rem; padding:4px; }
+    .reaction-retry { color:#b8f8e4; border:1px solid #48777c; background:#204b52;
+      padding:5px 8px; font-size:.76rem; }
     button:focus-visible { outline: 2px solid #61edce; outline-offset: 2px; }
     button:disabled { opacity: .45; cursor: not-allowed; }
     .reaction-error { color: #ffd2cd; font-size: .75rem; width: 100%; }
@@ -117,6 +125,17 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
     const wrapper = event.currentTarget as HTMLElement | null;
     const next = event.relatedTarget as Node | null;
     if (!wrapper || !next || !wrapper.contains(next)) this.expanded = false;
+  }
+
+  togglePicker(): void {
+    this.expanded = !this.expanded;
+    if (this.expanded && this.store.hasFailed(this.kind, this.conversationId, this.messageId)) {
+      this.retry();
+    }
+  }
+
+  retry(): void {
+    this.store.retry(this.kind, this.conversationId, this.messageId);
   }
 
   pick(emoji: string): void {
