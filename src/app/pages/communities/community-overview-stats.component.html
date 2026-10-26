@@ -1,0 +1,26 @@
+                <div class="overview-grid">
+                  <article class="overview-card">
+                    <span>{{ 'communities.members' | t }}</span>
+                    <strong>{{ memberCount }}</strong>
+                  </article>
+                  <article class="overview-card">
+                    <span>{{ 'communities.sportLabel' | t }}</span>
+                    <strong>{{ sports.join(', ') || 'Sem modalidade definida' }}</strong>
+                  </article>
+                  <article class="overview-card">
+                    <span>{{ 'communities.visibilityLabel' | t }}</span>
+                    <strong>
+                      {{ visibility === 'PRIVATE'
+                        ? ('communities.private' | t)
+                        : ('communities.public' | t) }}
+                    </strong>
+                  </article>
+                  <article class="overview-card">
+                    <span>{{ 'communities.competition' | t }}</span>
+                    <strong>
+                      {{ rankingsEnabled
+                        ? ('communities.enabled' | t)
+                        : ('communities.disabled' | t) }}
+                    </strong>
+                  </article>
+                </div>
