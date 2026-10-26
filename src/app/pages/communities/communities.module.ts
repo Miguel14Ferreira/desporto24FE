@@ -18,6 +18,8 @@ import { CommunityWhatsAppShareComponent } from './community-whatsapp-share.comp
 import { CommunitySportManagementComponent } from './community-sport-management.component';
 import { CommunityActiveSeasonCardComponent } from './community-active-season-card.component';
 import { CommunitySeasonTrophiesComponent } from './community-season-trophies.component';
+import { CommunityStatLeadersComponent } from './community-stat-leaders.component';
+import { CommunityStatsTableComponent } from './community-stats-table.component';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 import { KartingPodiumComponent } from './karting-podium.component';
@@ -41,7 +43,7 @@ const routes: Routes = [
     CommunityTournamentsComponent
   ],
   imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe, ChatReactionsComponent, KartingPodiumComponent, KartingPalmaresComponent, KartingRaceTableComponent,
-    CompetitionGuideComponent, CompetitionFormatChooserComponent, CommunityDiscoveryPitchComponent, CommunityPerformanceInsightsComponent, CommunityTabsComponent, CommunitySessionCardComponent, CommunityOverviewStatsComponent, CommunityLeaderHighlightComponent, CommunityFeatureSettingsComponent, CommunityWhatsAppShareComponent, CommunitySportManagementComponent, CommunityActiveSeasonCardComponent, CommunitySeasonTrophiesComponent,
+    CompetitionGuideComponent, CompetitionFormatChooserComponent, CommunityDiscoveryPitchComponent, CommunityPerformanceInsightsComponent, CommunityTabsComponent, CommunitySessionCardComponent, CommunityOverviewStatsComponent, CommunityLeaderHighlightComponent, CommunityFeatureSettingsComponent, CommunityWhatsAppShareComponent, CommunitySportManagementComponent, CommunityActiveSeasonCardComponent, CommunitySeasonTrophiesComponent, CommunityStatLeadersComponent, CommunityStatsTableComponent,
     TournamentClassificationNoteComponent, RaceStandingsCardComponent]
 })
 export class CommunitiesModule {}

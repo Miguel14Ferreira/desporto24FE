@@ -1,0 +1,19 @@
+/* Read-only statistics leader snapshot. Parent computes every record. */
+:host {display:block;}
+.stats-grid {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:.7rem;
+}
+.stat-card {
+  border:1px solid rgba(96,176,182,.24);
+  border-radius:16px;
+  background:rgba(10,41,55,.65);
+  display:grid;
+  gap:.35rem;
+  padding:.9rem;
+}
+.stat-card span,.stat-card small {color:#94a3b8;font-size:.78rem;}
+.stat-card strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.95rem;}
+@media(max-width:1050px){.stats-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:800px){.stats-grid{grid-template-columns:1fr;}}

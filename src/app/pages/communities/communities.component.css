@@ -440,38 +440,12 @@ input,textarea,select {
   color: #94a3b8;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: .7rem;
-}
-
-.stat-card,
 .round-editor,
 .round-card,
 .module-empty {
   border: 1px solid rgba(255,255,255,.09);
   border-radius: .9rem;
   background: rgba(255,255,255,.035);
-}
-
-.stat-card {
-  display: grid;
-  gap: .35rem;
-  padding: .9rem;
-}
-
-.stat-card span,
-.stat-card small {
-  color: #94a3b8;
-  font-size: .78rem;
-}
-
-.stat-card strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: .95rem;
 }
 
 .section-heading {
@@ -666,37 +640,28 @@ input,textarea,select {
   color: #fecaca;
 }
 
-.ranking-table-wrap,
-.stats-table-wrap {
+.ranking-table-wrap {
   margin-top: .8rem;
   overflow-x: auto;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: .85rem;
 }
 
-.ranking-table,
-.stats-table {
+.ranking-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 620px;
 }
 
-.stats-table {
-  min-width: 820px;
-}
-
 .ranking-table th,
-.ranking-table td,
-.stats-table th,
-.stats-table td {
+.ranking-table td {
   padding: .72rem .7rem;
   border-bottom: 1px solid rgba(255,255,255,.06);
   text-align: center;
   white-space: nowrap;
 }
 
-.ranking-table th,
-.stats-table th {
+.ranking-table th {
   color: #94a3b8;
   font-size: .72rem;
   text-transform: uppercase;
@@ -704,9 +669,7 @@ input,textarea,select {
 }
 
 .ranking-table th:nth-child(2),
-.ranking-table td:nth-child(2),
-.stats-table th:first-child,
-.stats-table td:first-child {
+.ranking-table td:nth-child(2) {
   text-align: left;
 }
 
@@ -729,10 +692,6 @@ input,textarea,select {
   font-weight: 950;
 }
 
-.stats-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
 .first-block {
   margin-top: 0;
   padding-top: 0;
@@ -740,17 +699,12 @@ input,textarea,select {
 }
 
 @media (max-width: 1050px) {
-  .stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .round-player-fields {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 800px) {
-  .stats-grid,
   .points-settings,
   .round-meta-form,
   .round-player-fields {

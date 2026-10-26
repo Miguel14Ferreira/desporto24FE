@@ -1,0 +1,41 @@
+<div class="stats-table-wrap">
+                    <table class="stats-table">
+                      <thead>
+                        <tr>
+                          <th>{{ 'communities.player' | t }}</th>
+                          <th>J</th>
+                          <th>G</th>
+                          <th>A</th>
+                          <th>MVP</th>
+                          <th>CS</th>
+                          <th>{{ 'communities.winRate' | t }}</th>
+                          <th>{{ 'communities.streak' | t }}</th>
+                          <th>{{ 'communities.bestWinStreak' | t }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of rows; track $index) {
+                          <tr>
+                            <td>
+                              <div class="ranking-player">
+                                <strong>{{ row.fullName || row.username }}</strong>
+                                @if (row.username) {
+                                     <span>@{{ row.username }}</span>
+                                   } @else {
+                                     <span>{{ 'communities.identity.unlinked' | t }}</span>
+                                   }
+                              </div>
+                            </td>
+                            <td>{{ row.games }}</td>
+                            <td>{{ row.goals }}</td>
+                            <td>{{ row.assists }}</td>
+                            <td>{{ row.mvps }}</td>
+                            <td>{{ row.cleanSheets }}</td>
+                            <td>{{ row.winRate }}%</td>
+                            <td>{{ row.currentStreak }}</td>
+                            <td>{{ row.bestWinStreak }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
