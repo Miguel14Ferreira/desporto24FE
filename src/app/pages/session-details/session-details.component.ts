@@ -14,7 +14,7 @@ import { compactSessionShareMessage } from '../../shared/session-share-message';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion, SessionTeamScoreSource } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
@@ -78,6 +78,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   problemDetails = '';
   showAttendanceManager = false;
   teamSuggestion?: SessionTeamSuggestion;
+  teamsScoreSource: SessionTeamScoreSource = 'FORM';
   teamsLoading = false;
   teamsConfirming = false;
   teamSuggestionPendingConfirmation = false;
@@ -1706,16 +1707,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     );
   }
 
-  generateTeams(): void {
-    if (!this.sessionId || !this.canGenerateTeams() || this.teamsLoading) {
+  generateTeams(source: SessionTeamScoreSource = 'FORM'): void {
+    if (!this.sessionId || !this.canGenerateTeams() || this.teamsLoading || this.teamsConfirming) {
       return;
     }
 
     this.teamsLoading = true;
     this.teamsError = '';
     this.teamsSuccess = '';
+    this.teamsScoreSource = source;
+    this.teamSuggestion = undefined;
+    this.teamSuggestionPendingConfirmation = false;
 
-    this.sessionService.teamSuggestion(this.sessionId)
+    this.sessionService.teamSuggestion(this.sessionId, source)
       .pipe(
         timeout(10_000),
         finalize(() => this.teamsLoading = false)
@@ -1748,7 +1752,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.teamsError = '';
     this.teamsSuccess = '';
 
-    this.sessionService.confirmTeams(this.sessionId)
+    this.sessionService.confirmTeams(this.sessionId, this.teamsScoreSource)
       .pipe(
         timeout(10_000),
         finalize(() => this.teamsConfirming = false)
