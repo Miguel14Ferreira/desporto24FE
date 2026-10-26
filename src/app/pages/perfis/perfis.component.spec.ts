@@ -89,6 +89,13 @@ describe('PerfisComponent', () => {
     fixture.detectChanges();
   });
 
+  it('shows Jynlo branding while preserving player search and existing actions', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.page-header .eyebrow')?.textContent?.trim()).toBe('Jynlo');
+    expect(root.querySelector('.partner-search')).not.toBeNull();
+    expect(root.querySelector('a[href="/menu/friendList"]')).not.toBeNull();
+  });
+
   it('preserves successful player results and their profile links if a later search fails', () => {
     component.sportFilter = 'Padel';
     component.locationFilter = 'Lisboa';

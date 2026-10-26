@@ -75,6 +75,13 @@ describe('PerfilDataComponent', () => {
     fixture.detectChanges();
   });
 
+  it('uses the current Jynlo brand without changing the profile actions', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.page-header .eyebrow')?.textContent?.trim()).toBe('Jynlo');
+    expect(root.querySelector('.profile-card .identity')).not.toBeNull();
+    expect(root.querySelector('a[href="/menu/alterardados"]')).not.toBeNull();
+  });
+
   it('should create and load the authenticated profile', () => {
     expect(component).toBeTruthy();
     expect(profileService.get).toHaveBeenCalled();
