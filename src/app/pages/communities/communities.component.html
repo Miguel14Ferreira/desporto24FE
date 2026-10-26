@@ -723,58 +723,22 @@
                   [rankingsEnabled]="!!competition?.settings?.rankingsEnabled"
                 ></app-community-overview-stats>
 
-                <section class="management-block sport-management" aria-label="Modalidades da comunidade">
-                  <div class="section-heading">
-                    <div>
-                      <span class="section-kicker">Modalidades</span>
-                      <h3>Desportos desta comunidade</h3>
-                      <p>Uma comunidade pode praticar um ou vários desportos. Isto não altera torneios já iniciados.</p>
-                    </div>
-                    @if (canManage() && !editingSports) {
-                      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                        (click)="editSports()">Editar modalidades</button>
-                    }
-                  </div>
-                  <div class="sport-tags" aria-label="Modalidades da comunidade">
-                    @for (item of communitySports(selected); track item) {
-                      <span class="sport-tag">{{ item }}</span>
-                    } @empty {
-                      <span class="sport-blank">Ainda sem modalidades definidas</span>
-                    }
-                  </div>
-                  @if (sportsMessage) { <p class="sport-success" role="status">{{ sportsMessage }}</p> }
-                  @if (editingSports && canManage()) {
-                    <div class="sport-edit">
-                      <div class="sport-tags" aria-label="Modalidades a guardar">
-                        @for (item of sportsDraft; track item) {
-                          <span class="sport-tag">{{ item }}
-                            <button type="button" [disabled]="savingSports"
-                              [attr.aria-label]="'Remover ' + item"
-                              (click)="removeCommunitySport(item)">×</button>
-                          </span>
-                        }
-                      </div>
-                      <label for="edit-community-sports">Adicionar modalidades</label>
-                      <input id="edit-community-sports" name="editCommunitySports"
-                        [(ngModel)]="sportsSearch" [disabled]="savingSports || sportsDraft.length >= 128"
-                        autocomplete="off" placeholder="Pesquisar modalidade">
-                      @if (availableSportSuggestions.length) {
-                        <div class="sport-suggestions" role="group" aria-label="Sugestões de modalidades">
-                          @for (item of availableSportSuggestions; track item) {
-                            <button type="button" [disabled]="savingSports"
-                              (click)="addCommunitySport(item)">{{ item }} +</button>
-                          }
-                        </div>
-                      }
-                      <div class="sport-edit-actions">
-                        <button type="button" class="primary-action jynlo-action jynlo-action--primary"
-                          [disabled]="savingSports" (click)="saveCommunitySports()">Guardar modalidades</button>
-                        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                          [disabled]="savingSports" (click)="cancelSportsEdit()">Cancelar</button>
-                      </div>
-                    </div>
-                  }
-                </section>
+                <app-community-sport-management
+                  [sports]="communitySports(selected)"
+                  [canManage]="canManage()"
+                  [editing]="editingSports"
+                  [saving]="savingSports"
+                  [message]="sportsMessage"
+                  [draft]="sportsDraft"
+                  [search]="sportsSearch"
+                  [suggestions]="availableSportSuggestions"
+                  (editRequested)="editSports()"
+                  (removeRequested)="removeCommunitySport($event)"
+                  (addRequested)="addCommunitySport($event)"
+                  (searchChange)="sportsSearch = $event"
+                  (saveRequested)="saveCommunitySports()"
+                  (cancelRequested)="cancelSportsEdit()"
+                ></app-community-sport-management>
 
                 @if (competition?.settings?.rankingsEnabled && leader()) {
                   <app-community-leader-highlight [standing]="leader()"></app-community-leader-highlight>
