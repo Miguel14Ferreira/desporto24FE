@@ -22,6 +22,12 @@ const samePreferences = (a,b) => a.inAppEnabled === b.inAppEnabled &&
   a.emailEnabled === b.emailEnabled &&
   sameArray(a.disabledEmailTypes,b.disabledEmailTypes) &&
   sameArray(a.disabledInAppTypes,b.disabledInAppTypes);
+const isolated = (c, tag) => Number.isSafeInteger(c?.id) && c.id > 0 &&
+  c.name === tag && c.visibility === 'PRIVATE' &&
+  c.ownerUsername?.toLowerCase() === QA[0] &&
+  c.memberCount === 1 && Array.isArray(c.members) &&
+  c.members.length === 1 &&
+  c.members[0]?.username?.toLowerCase() === QA[0];
 const cleanPrefs = p => ({
   inAppEnabled:p.inAppEnabled, emailEnabled:p.emailEnabled,
   disabledInAppTypes:[...p.disabledInAppTypes],
@@ -96,7 +102,10 @@ function makeRunner({ fetchImpl = globalThis.fetch, output = console.log,
     const original=await preferences(tokens[1]);
     const tag='JYNLO QA EMAIL '+marker();
     invariant(tag.length<100 && /^JYNLO QA EMAIL [a-z0-9-]+$/.test(tag),'Unsafe QA test marker');
-    let created=null, restored=false, deleted=false, phase='preflight';
+    // A unique tag lets cleanup recover a POST that succeeded server-side but
+    // whose response was lost. Never target a pre-existing community.
+    const baselineIds=new Set(existing.map(c=>c.id));
+    let created=null, creationAttempted=false, restored=false, deleted=false, phase='preflight';
     let cleanupError=null;
     try {
       const blocked={
@@ -107,17 +116,16 @@ function makeRunner({ fetchImpl = globalThis.fetch, output = console.log,
       };
       await putPreferences(tokens[1],blocked);
       phase='muted';
+      creationAttempted=true; // Set BEFORE sending; a network failure may hide success.
       const community=await request('/api/communities',tokens[0],'POST',{
         name:tag, description:'Isolated QA-only email preference test. No real events.',
         sport:null,visibility:'PRIVATE',sports:[]
       });
-      invariant(community && Number.isSafeInteger(community.id) &&
-        community.ownerUsername?.toLowerCase()===QA[0] &&
-        community.memberCount===1 &&
-        Array.isArray(community.members) && community.members.length===1 &&
-        community.members[0]?.username?.toLowerCase()===QA[0],
-        'New QA group returned an unexpected owner or membership');
-      created={id:community.id,name:tag};
+      // Capture a plausible ID even if another returned field is malformed.
+      if (Number.isSafeInteger(community?.id) && community.id>0 &&
+          !baselineIds.has(community.id)) created={id:community.id,name:tag};
+      invariant(isolated(community,tag) && created,
+        'New QA group returned unexpected privacy, owner or membership');
       phase='created';
       const first=await request('/api/communities/'+created.id+'/invites',tokens[0],'POST',
         {username:QA[1]});
@@ -150,20 +158,36 @@ function makeRunner({ fetchImpl = globalThis.fetch, output = console.log,
         restored=true;
         output('[PASS] Original recipient notification preferences restored.');
       } catch (error) { cleanupError=error; output('[FAIL] Preference restoration requires attention.'); }
+      if (creationAttempted && !created) {
+        // Recovery is READ ONLY until exactly one fresh, private QA-only match exists.
+        // Zero matches after a lost response does NOT prove the POST did not commit.
+        try {
+          const groups=await request('/api/communities/mine',tokens[0]);
+          invariant(Array.isArray(groups),'Cannot reconcile uncertain community creation');
+          const matches=groups.filter(c=>c?.name===tag && !baselineIds.has(c.id));
+          invariant(matches.length===1 && isolated(matches[0],tag),
+            'Uncertain community creation; manual QA review required');
+          created={id:matches[0].id,name:tag};
+          output('[INFO] Recovered isolated QA community after ambiguous creation response.');
+        } catch (error) {
+          cleanupError=cleanupError||error;
+          output('[FAIL] Community creation outcome uncertain; inspect QA-only marker before rerun.');
+        }
+      }
       if (created) {
         try {
-          // Ensure it is STILL the QA-owned group with no other members.
+          // Ensure it is STILL the QA-owned private group with no other members.
           const detail=await request('/api/communities/'+created.id,tokens[0]);
-          invariant(detail?.id===created.id && detail.name===created.name &&
-            detail.ownerUsername?.toLowerCase()===QA[0] &&
-            detail.memberCount===1 && Array.isArray(detail.members) &&
-            detail.members.length===1 &&
-            detail.members[0]?.username?.toLowerCase()===QA[0],
-            'Refusing unsafe community deletion');
+          invariant(isolated(detail,created.name) && detail.id===created.id &&
+            !baselineIds.has(created.id), 'Refusing unsafe community deletion');
           await request('/api/communities/'+created.id+'/delete',tokens[0],'POST',
             {name:created.name});
           const groups=await request('/api/communities/mine',tokens[0]);
-          invariant(!groups.some(c=>c.id===created.id),'QA group still listed after deletion');
+          invariant(Array.isArray(groups) && !groups.some(c=>c.id===created.id),
+            'QA group still listed after deletion');
+          const invites=await request('/api/communities/invites/me',tokens[1]);
+          invariant(Array.isArray(invites) && !invites.some(i=>i.communityId===created.id),
+            'Recipient still has a QA test invitation after deletion');
           deleted=true;
           output('[PASS] Temporary private QA community and its invitations deleted.');
         } catch (error) {
