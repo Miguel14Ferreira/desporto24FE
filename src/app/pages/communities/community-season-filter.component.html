@@ -1,0 +1,11 @@
+<label class="season-filter">
+  <span>{{ 'communities.seasonFilter' | t }}</span>
+  <select [ngModel]="selectedSeasonId" (ngModelChange)="selectionChange.emit($event)">
+    <option [ngValue]="null">{{ 'communities.allTime' | t }}</option>
+    @for (season of seasons; track season.id) {
+      <option [ngValue]="season.id">
+        {{ season.name }}{{ season.active ? ' · ' + ('communities.activeShort' | t) : '' }}
+      </option>
+    }
+  </select>
+</label>
