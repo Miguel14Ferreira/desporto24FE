@@ -6,7 +6,7 @@ describe('CommunityFeatureSettingsComponent', () => {
     await TestBed.configureTestingModule({ imports: [CommunityFeatureSettingsComponent] }).compileComponents();
   });
 
-  function render(editing = false, saving = false) {
+  async function render(editing = false, saving = false) {
     const fixture = TestBed.createComponent(CommunityFeatureSettingsComponent);
     fixture.componentRef.setInput('editing', editing);
     fixture.componentRef.setInput('saving', saving);
@@ -16,11 +16,15 @@ describe('CommunityFeatureSettingsComponent', () => {
       teamTournamentsEnabled: false
     });
     fixture.detectChanges();
+    // Angular template-driven forms apply their initial value and disabled state
+    // on a microtask; observe the settled DOM rather than the initial placeholder.
+    await fixture.whenStable();
+    fixture.detectChanges();
     return fixture;
   }
 
-  it('shows the management action and existing PT/EN translation keys without editing by default', () => {
-    const fixture = render();
+  it('shows the management action and existing PT/EN translation keys without editing by default', async () => {
+    const fixture = await render();
     const root = fixture.nativeElement as HTMLElement;
     const buttons = root.querySelectorAll<HTMLButtonElement>('button');
     expect(buttons.length).toBe(1);
@@ -31,8 +35,8 @@ describe('CommunityFeatureSettingsComponent', () => {
     expect(edit).toHaveBeenCalledTimes(1);
   });
 
-  it('emits immutable feature draft changes without mutating the parent object', () => {
-    const fixture = render(true);
+  it('emits immutable feature draft changes without mutating the parent object', async () => {
+    const fixture = await render(true);
     const initial = fixture.componentInstance.draft;
     const captured: any[] = [];
     fixture.componentInstance.draftChange.subscribe(value => captured.push(value));
@@ -46,8 +50,8 @@ describe('CommunityFeatureSettingsComponent', () => {
     expect(initial.teamTournamentsEnabled).toBeFalse();
   });
 
-  it('keeps save/cancel events and disables all editing while saving', () => {
-    const fixture = render(true, true);
+  it('keeps save/cancel events and disables all editing while saving', async () => {
+    const fixture = await render(true, true);
     const root = fixture.nativeElement as HTMLElement;
     expect(Array.from(root.querySelectorAll<HTMLInputElement>('input')).every(input => input.disabled)).toBeTrue();
     const buttons = root.querySelectorAll<HTMLButtonElement>('button');
@@ -59,8 +63,8 @@ describe('CommunityFeatureSettingsComponent', () => {
     expect(events).not.toHaveBeenCalled();
   });
 
-  it('preserves save feedback and error accessibility', () => {
-    const fixture = render();
+  it('preserves save feedback and error accessibility', async () => {
+    const fixture = await render();
     fixture.componentRef.setInput('feedback', 'Guardado');
     fixture.componentRef.setInput('error', 'Erro');
     fixture.detectChanges();
