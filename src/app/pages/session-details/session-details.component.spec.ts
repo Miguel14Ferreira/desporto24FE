@@ -2232,6 +2232,36 @@ describe('SessionDetailsComponent', () => {
     expect(component.participants.length).toBe(1);
   });
 
+  it('offers the Excel team balancer to a community organiser who does not take a playing slot', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername: 'creator-user', joined: false, waitlisted: false,
+      communityId: 9, participantCount: 10, maxParticipants: 10,
+      status: 'FULL', gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    };
+    fixture.detectChanges();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.team-generator');
+    expect(panel).toBeTruthy();
+    const excel: HTMLButtonElement | null = panel.querySelector('.team-generator-excel-action');
+    expect(excel).toBeTruthy();
+    excel!.click();
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7, 'EXCEL_POINTS');
+    expect(component.teamSuggestionPendingConfirmation).toBeTrue();
+  });
+
+  it('does not offer Excel team generation to non-organisers or before the roster is full', () => {
+    component.session = {
+      ...session, communityId: 9, participantCount: 10, maxParticipants: 10,
+      status: 'FULL', gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.team-generator-excel-action')).toBeNull();
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...component.session, participantCount: 9, status: 'OPEN' };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.team-generator-excel-action')).toBeNull();
+  });
+
   it('should generate balanced teams for a full community session created by the viewer', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
