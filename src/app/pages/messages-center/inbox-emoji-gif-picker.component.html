@@ -1,0 +1,81 @@
+[attr.aria-label]="'chat.pickerTitle' | t">
+                      <div class="inbox-picker-tabs" role="tablist" [attr.aria-label]="'chat.pickerTitle' | t">
+                        <button type="button" role="tab" [attr.aria-selected]="pickerTab === 'emoji'"
+                          [class.active]="pickerTab === 'emoji'"
+                          (click)="tabSelected.emit('emoji')">☺ <span>{{ 'chat.pickerEmojis' | t }}</span></button>
+                        @if (attachmentControlsReady) {
+                          <button type="button" role="tab" [attr.aria-selected]="pickerTab === 'gif'"
+                            [class.active]="pickerTab === 'gif'"
+                            (click)="tabSelected.emit('gif')">GIF</button>
+                        }
+                        <button type="button" class="inbox-picker-close"
+                          [attr.aria-label]="'chat.pickerClose' | t"
+                          (click)="closeRequested.emit()">×</button>
+                      </div>
+                      @if (pickerTab === 'emoji') {
+                        <div class="inbox-picker-emoji-grid" role="group"
+                          [attr.aria-label]="'chat.emojiPicker' | t">
+                          @for (emoji of composerEmojis; track emoji) {
+                            <button type="button" [attr.aria-label]="emoji"
+                              (click)="emojiSelected.emit(emoji)">{{ emoji }}</button>
+                          }
+                        </div>
+                      } @else {
+                        <div class="inbox-picker-gif-search">
+                          <span aria-hidden="true">⌕</span>
+                          <input type="search" name="gifSearch"
+                            [ngModel]="gifQuery" [ngModelOptions]="{standalone:true}"
+                            (ngModelChange)="queryChanged.emit($event)" maxlength="50"
+                            [disabled]="gifAvailable === null || !!gifSelectingId"
+                            [placeholder]="(gifAvailable === false ? 'chat.gifSearchOffline' : 'chat.gifSearch') | t"
+                            [attr.aria-label]="'chat.gifSearch' | t">
+                        </div>
+                        <div class="inbox-picker-categories"
+                          [attr.aria-label]="'chat.gifCategories' | t">
+                          @for (category of gifCategories; track category.phrase) {
+                            <button type="button" [disabled]="gifAvailable === null || !!gifSelectingId"
+                              [attr.aria-pressed]="gifQuery === category.phrase"
+                              [class.active]="gifQuery === category.phrase"
+                              [attr.aria-label]="category.phrase"
+                              (click)="categorySelected.emit(category.phrase)">{{ category.icon }}</button>
+                          }
+                        </div>
+                        @if (gifAvailable === false) {
+                          <p class="inbox-picker-feedback" role="status">{{ 'chat.gifNotConfigured' | t }}</p>
+                        }
+                        @if (gifError) {
+                          <p class="inbox-picker-feedback inbox-picker-error" role="alert">{{ gifError }}</p>
+                        }
+                        @if (gifLoading && !gifResults.length) {
+                          <p class="inbox-picker-feedback" role="status">{{ 'chat.gifLoading' | t }}</p>
+                        }
+                        <div class="inbox-picker-gif-grid" role="group"
+                          [attr.aria-label]="'chat.gifResults' | t">
+                          @for (gif of gifResults; track gif.id) {
+                            <div class="inbox-gif-tile">
+                              <img [src]="gif.previewUrl" [alt]="" loading="lazy" referrerpolicy="no-referrer">
+                              <button type="button" class="inbox-gif-tile-select"
+                                [disabled]="!!gifSelectingId" [attr.title]="gif.title"
+                                [attr.aria-label]="gif.title || ('chat.gifSelect' | t)"
+                                (click)="gifSelected.emit(gif)"></button>
+                            </div>
+                          }
+                        </div>
+                        @if (!gifLoading && gifAvailable !== null && !gifError && !gifResults.length) {
+                          <p class="inbox-picker-feedback">{{ 'chat.gifNoResults' | t }}</p>
+                        }
+                        @if (gifHasMore && !gifLoading) {
+                          <button type="button" class="inbox-picker-more"
+                            [disabled]="!!gifSelectingId"
+                            (click)="moreRequested.emit(gifResults.length)">{{ 'chat.gifMore' | t }}</button>
+                        }
+                        <footer class="inbox-picker-footer">
+                          <button type="button" (click)="uploadRequested.emit()"
+                            [disabled]="!attachmentControlsReady || !!gifSelectingId">
+                            <span aria-hidden="true">↑</span> {{ 'chat.gifUpload' | t }}
+                          </button>
+                          @if (gifAvailable || gifResults.length) {
+                            <a href="https://giphy.com" target="_blank" rel="noopener noreferrer">Powered by GIPHY</a>
+                          }
+                        </footer>
+                      }
