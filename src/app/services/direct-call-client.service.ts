@@ -87,7 +87,10 @@ export class DirectCallClientService implements OnDestroy {
 
   ensureConnected(): void {
     const token = localStorage.getItem('t');
-    if (!token || !this.username() || this.jwt.isTokenExpired(token)) {
+    let valid = false;
+    try { valid = !!token && !!this.username() && !this.jwt.isTokenExpired(token); }
+    catch { valid = false; }
+    if (!valid) {
       this.identityToken = null;
       this.available$.next(false);
       this.dropCall();
@@ -96,6 +99,7 @@ export class DirectCallClientService implements OnDestroy {
     if (this.identityToken && token !== this.identityToken) this.dropCall();
     if (token !== this.identityToken) {
       this.identityToken = token;
+      this.available$.next(false);
       this.refreshAvailability();
     }
     this.realtime.connect();
