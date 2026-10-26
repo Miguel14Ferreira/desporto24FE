@@ -10,7 +10,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 @Component({
   selector: 'app-community-create',
   templateUrl: './community-create.component.html',
-  styleUrls: ['./community-create.component.css'],
+  styleUrls: ['./community-create.component.css', './community-create-concept-one-premium.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
