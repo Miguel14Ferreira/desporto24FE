@@ -633,6 +633,28 @@ describe('VenueDetailsComponent', () => {
     });
   });
 
+  it('preserves nearby-locality mode, safe radius and page on the return link', () => {
+    const route = { snapshot: {
+      queryParamMap: convertToParamMap({ page: '2', city: 'Cacém', sport: 'Padel',
+        nearby: '1', radiusKm: '50' })
+    } } as unknown as ActivatedRoute;
+    const component = new VenueDetailsComponent(route, {} as VenueService);
+    expect(component.backToDirectoryQueryParams).toEqual({
+      city: 'Cacém', sport: 'Padel', page: 2, nearby: 1, radiusKm: 50
+    });
+  });
+
+  it('does not preserve nearby mode when name/district make it incompatible', () => {
+    const route = { snapshot: {
+      queryParamMap: convertToParamMap({ city: 'Cacém', name: 'Campo',
+        nearby: '1', radiusKm: '99' })
+    } } as unknown as ActivatedRoute;
+    const component = new VenueDetailsComponent(route, {} as VenueService);
+    expect(component.backToDirectoryQueryParams).toEqual({
+      city: 'Cacém', name: 'Campo'
+    });
+  });
+
   it('does not accept out-of-range catalogue pages when returning', () => {
     const route = { snapshot: {
       queryParamMap: convertToParamMap({page: '-1', city: 'Lisboa'})

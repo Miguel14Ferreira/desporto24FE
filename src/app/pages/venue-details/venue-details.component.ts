@@ -62,6 +62,12 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
     }
     const page = Number(params.get('page') ?? '0');
     if (Number.isSafeInteger(page) && page > 0 && page <= 1000) query['page'] = page;
+    // Restore optional neighbouring-localities mode only for valid city-only searches.
+    if (params.get('nearby') === '1' && query['city'] && !query['name'] && !query['district']) {
+      query['nearby'] = 1;
+      const radius = Number(params.get('radiusKm') ?? '25');
+      if ([10, 25, 50].includes(radius)) query['radiusKm'] = radius;
+    }
     return query;
   }
 
