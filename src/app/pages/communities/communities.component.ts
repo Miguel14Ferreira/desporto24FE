@@ -89,7 +89,8 @@ import {
   HistoricalPlayerLink,
   TrackSprintBracketOverview,
   TrackSprintBracketMatch,
-  TrackSprintIncident
+  TrackSprintIncident,
+  TrackSprintOfficialReview
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
@@ -176,6 +177,20 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintAwardReference = '';
   sprintAwardReason = '';
   sprintIncidentError = '';
+  private sprintReviewContext = '';
+  sprintReviewBracketId: number | null = null;
+  sprintReviewIncidentId: number | null = null;
+  sprintReviewHistory: TrackSprintOfficialReview[] = [];
+  sprintReviewLoading = false;
+  sprintReviewSaving = false;
+  sprintReviewError = '';
+  sprintReviewMode: 'REQUEST' | 'DECIDE' = 'REQUEST';
+  sprintReviewPresident = '';
+  sprintReviewReference = '';
+  sprintReviewPanelReference = '';
+  sprintReviewReason = '';
+  sprintReviewJudgeRefereeConfirmed = false;
+  sprintReviewOutcome: '' | 'UPHELD' | 'OVERTURNED' = '';
   sprintInterruptionBracketId: number | null = null;
   sprintInterruptionReference = '';
   sprintInterruptionReason = '';
@@ -2439,6 +2454,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private loadSprintBrackets(communityId: number, seasonId: number | null): void {
     const requestVersion = ++this.sprintBracketRequestVersion;
     this.sprintBrackets = [];
+    if (this.sprintReviewContext !== communityId + '/' + seasonId) {
+      this.sprintReviewBracketId = null;
+      this.sprintReviewIncidentId = null;
+      this.sprintReviewHistory = [];
+      this.sprintReviewContext = '';
+    }
     this.sprintBracketError = '';
     if (seasonId == null || !this.communityRoundSports.includes('Ciclismo de Pista')) {
       this.sprintBracketLoading = false;
@@ -2553,6 +2574,97 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         error: error => this.sprintBracketError = error.error?.message
           || t('communities.trackCycling.bracketCreateError')
       });
+  }
+
+  get sprintReviewLastAction(): TrackSprintOfficialReview['action'] | null {
+    return this.sprintReviewHistory.length
+      ? this.sprintReviewHistory[this.sprintReviewHistory.length - 1].action : null;
+  }
+
+  openSprintReview(bracketId: number, incidentId: number): void {
+    if (this.sprintReviewBracketId === bracketId && this.sprintReviewIncidentId === incidentId) {
+      this.sprintReviewBracketId = null;
+      this.sprintReviewIncidentId = null;
+      this.sprintReviewHistory = [];
+      this.sprintReviewContext = '';
+      return;
+    }
+    this.sprintReviewBracketId = bracketId;
+    this.sprintReviewIncidentId = incidentId;
+    this.sprintReviewContext = this.selected?.id + '/' + this.selectedSeasonId;
+    this.sprintReviewMode = 'REQUEST';
+    this.sprintReviewPresident = '';
+    this.sprintReviewReference = '';
+    this.sprintReviewPanelReference = '';
+    this.sprintReviewReason = '';
+    this.sprintReviewJudgeRefereeConfirmed = false;
+    this.sprintReviewOutcome = '';
+    this.sprintReviewHistory = [];
+    this.sprintReviewError = '';
+    this.loadSprintReviewHistory();
+  }
+
+  private loadSprintReviewHistory(): void {
+    if (!this.selected || this.selectedSeasonId == null ||
+        this.sprintReviewBracketId == null || this.sprintReviewIncidentId == null) return;
+    const group = this.selected.id, season = this.selectedSeasonId,
+      bracket = this.sprintReviewBracketId, incident = this.sprintReviewIncidentId;
+    this.sprintReviewLoading = true;
+    this.communityService.sprintOfficialReviews(group, season, bracket, incident)
+      .pipe(timeout(10_000), finalize(() => this.sprintReviewLoading = false)).subscribe({
+        next: history => {
+          if (this.selected?.id !== group || this.selectedSeasonId !== season ||
+              this.sprintReviewBracketId !== bracket || this.sprintReviewIncidentId !== incident) return;
+          this.sprintReviewHistory = history;
+          this.sprintReviewMode = this.sprintReviewLastAction === 'REQUESTED' ? 'DECIDE' : 'REQUEST';
+          this.sprintReviewError = '';
+        },
+        error: e => this.sprintReviewError = e.error?.message
+          || t('communities.trackCycling.reviewLoadError')
+      });
+  }
+
+  saveSprintReview(): void {
+    if (!this.selected || !this.canManage() || this.sprintReviewSaving ||
+        this.selectedSeasonId == null || this.selectedSeasonId !== this.activeSeason()?.id ||
+        this.sprintReviewBracketId == null || this.sprintReviewIncidentId == null ||
+        this.sprintReviewPresident.trim().length < 3 ||
+        this.sprintReviewReference.trim().length < 12 ||
+        this.sprintReviewReason.trim().length < 12) return;
+    const group = this.selected.id, season = this.selectedSeasonId,
+      bracket = this.sprintReviewBracketId, incident = this.sprintReviewIncidentId;
+    const write$ = this.sprintReviewMode === 'REQUEST'
+      ? (this.sprintReviewJudgeRefereeConfirmed
+        ? this.communityService.requestSprintOfficialReview(group, season, bracket, incident, {
+            presidentName: this.sprintReviewPresident.trim(),
+            requestReference: this.sprintReviewReference.trim(),
+            reason: this.sprintReviewReason.trim(),
+            originalJudgeRefereeDecision: true
+          }) : null)
+      : (this.sprintReviewOutcome && this.sprintReviewPanelReference.trim().length >= 12
+        ? this.communityService.resolveSprintOfficialReview(group, season, bracket, incident, {
+            outcome: this.sprintReviewOutcome,
+            presidentName: this.sprintReviewPresident.trim(),
+            panelReviewReference: this.sprintReviewPanelReference.trim(),
+            presidentDecisionReference: this.sprintReviewReference.trim(),
+            reason: this.sprintReviewReason.trim()
+          }) : null);
+    if (!write$) return;
+    this.sprintReviewSaving = true;
+    this.sprintReviewError = '';
+    write$.pipe(timeout(10_000), finalize(() => this.sprintReviewSaving = false)).subscribe({
+      next: () => {
+        this.sprintReviewReference = '';
+        this.sprintReviewPanelReference = '';
+        this.sprintReviewReason = '';
+        this.sprintReviewOutcome = '';
+        this.sprintReviewJudgeRefereeConfirmed = false;
+        this.loadSprintReviewHistory();
+        this.loadSprintBrackets(group, season);
+      },
+      error: e => this.sprintReviewError = e.error?.message
+        || t('communities.trackCycling.reviewSaveError')
+    });
   }
 
   sprintIncidentsFor(bracket: TrackSprintBracketOverview, key: string): TrackSprintIncident[] {

@@ -50,6 +50,19 @@ export interface TrackSprintIncident {
   awardConfirmedAt?: string | null;
 }
 
+/** Immutable signed-decision transcription; platform does not validate external signatures. */
+export interface TrackSprintOfficialReview {
+  id: number;
+  incidentId: number;
+  action: 'REQUESTED' | 'UPHELD' | 'OVERTURNED';
+  officialName: string;
+  officialReference: string;
+  panelReference: string | null;
+  reason: string;
+  recordedBy: string;
+  recordedAt: string;
+}
+
 export interface TrackSprintInterruption {
   stage: 'BEFORE_QUARTERS' | 'AFTER_QUARTERS' | 'AFTER_SEMIS';
   reference: string;
@@ -600,6 +613,34 @@ export class CommunityGroupsService {
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
       + '/official-series-verdict', payload);
+  }
+
+  sprintOfficialReviews(communityId: number, seasonId: number,
+    bracketId: number, incidentId: number): Observable<TrackSprintOfficialReview[]> {
+    return this.http.get<TrackSprintOfficialReview[]>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/reviews');
+  }
+
+  requestSprintOfficialReview(communityId: number, seasonId: number,
+    bracketId: number, incidentId: number, payload: {
+      presidentName: string; requestReference: string; reason: string;
+      originalJudgeRefereeDecision: boolean;
+    }): Observable<TrackSprintOfficialReview> {
+    return this.http.post<TrackSprintOfficialReview>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/reviews', payload);
+  }
+
+  resolveSprintOfficialReview(communityId: number, seasonId: number,
+    bracketId: number, incidentId: number, payload: {
+      outcome: 'UPHELD' | 'OVERTURNED'; presidentName: string;
+      panelReviewReference: string; presidentDecisionReference: string; reason: string;
+    }): Observable<TrackSprintOfficialReview> {
+    return this.http.put<TrackSprintOfficialReview>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/reviews/decision', payload);
   }
 
   endTrackSprintCompetition(communityId: number, seasonId: number, bracketId: number,
