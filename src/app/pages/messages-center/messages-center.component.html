@@ -46,32 +46,12 @@
             }
           </div>
         } @else {
-          <div class="inbox-entries">
-            @for (conversation of filteredConversations; track conversation.key) {
-              <button type="button" class="inbox-entry"
-                [class.is-selected]="selectedKey === conversation.key"
-                [attr.aria-pressed]="selectedKey === conversation.key"
-                (click)="selectConversation(conversation)">
-                <span class="inbox-avatar" [class.inbox-avatar--community]="conversation.kind === 'community'"
-                  [class.inbox-avatar--session]="conversation.kind === 'session'" aria-hidden="true">
-                  {{ conversation.kind === 'direct' ? conversation.title.slice(0, 1).toUpperCase() : conversation.kind === 'community' ? '👥' : '⚽' }}
-                </span>
-                <span class="inbox-entry-content">
-                  <span class="inbox-entry-top">
-                    <strong>{{ conversation.title }}</strong>
-                    @if (conversation.latestAt) { <small [attr.title]="formatDate(conversation.latestAt)">{{ formatInboxListTime(conversation.latestAt) }}</small> }
-                  </span>
-                  <span class="inbox-entry-kind">{{ kindLabel(conversation.kind) | t }} · {{ conversation.subtitle }}</span>
-                  <span class="inbox-entry-snippet">{{ conversation.latestText ? displayMessagePreview(conversation.latestText) : ('inbox.openPreview' | t) }}</span>
-                </span>
-                @if ((conversation.unreadCount ?? conversation.newThisVisit) > 0) {
-                  <span class="inbox-unread" [attr.aria-label]="'inbox.newCount' | t:{count: (conversation.unreadCount ?? conversation.newThisVisit)}">
-                    {{ unreadBadgeText(conversation) }}
-                  </span>
-                }
-              </button>
-            }
-          </div>
+          <app-inbox-conversation-list
+            [conversations]="filteredConversations"
+            [selectedKey]="selectedKey"
+            [formatters]="conversationListFormatters"
+            (conversationSelected)="selectConversation($event)"
+          ></app-inbox-conversation-list>
         }
         <div class="inbox-side-footer">
           <a routerLink="/menu/friendList"><span aria-hidden="true">♙</span> {{ 'inbox.manageFriends' | t }}</a>
