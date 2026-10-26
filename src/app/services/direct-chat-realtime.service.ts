@@ -16,6 +16,16 @@ export interface ChatReactionEvent {
   emoji: string | null;
 }
 
+export interface DirectCallEvent {
+  callId: string;
+  caller: string;
+  peer: string;
+  media: 'voice' | 'video';
+  status: 'RINGING' | 'ACTIVE' | 'DECLINED' | 'ENDED';
+  actor: string;
+  expiresAt: string;
+}
+
 /** Emitted by the authenticated backend only after the read cursor commits. */
 export interface DirectChatReadReceiptEvent {
   peerUsername: string;
@@ -39,6 +49,7 @@ export interface ChatTypingEvent {
 interface ChatSocketEnvelope {
   typing?: ChatTypingEvent;
   reaction?: ChatReactionEvent;
+  call?: DirectCallEvent;
   receipt?: DirectChatReadReceiptEvent;
   read?: InboxOwnReadEvent;
   type?: string;
@@ -104,6 +115,7 @@ export class DirectChatRealtimeService {
   private readonly sessionMessageSubject = new Subject<SessionMessage>();
   private readonly communityMessageSubject = new Subject<CommunityTimelineEntry>();
   private readonly reactionSubject = new Subject<ChatReactionEvent>();
+  private readonly callSubject = new Subject<DirectCallEvent>();
   private readonly typingSubject = new Subject<ChatTypingEvent>();
   private readonly readReceiptSubject = new Subject<DirectChatReadReceiptEvent>();
   private readonly ownReadSubject = new Subject<InboxOwnReadEvent>();
@@ -113,6 +125,7 @@ export class DirectChatRealtimeService {
   readonly sessionMessages$ = this.sessionMessageSubject.asObservable();
   readonly communityMessages$ = this.communityMessageSubject.asObservable();
   readonly reactions$ = this.reactionSubject.asObservable();
+  readonly calls$ = this.callSubject.asObservable();
   readonly typing$ = this.typingSubject.asObservable();
   readonly readReceipts$ = this.readReceiptSubject.asObservable();
   readonly ownReads$ = this.ownReadSubject.asObservable();
@@ -195,6 +208,16 @@ export class DirectChatRealtimeService {
           return;
         }
 
+        if (envelope.type === 'DIRECT_CALL_EVENT' && envelope.call) {
+          const call = envelope.call;
+          if (typeof call.callId === 'string'
+              && typeof call.caller === 'string' && typeof call.peer === 'string'
+              && ['voice', 'video'].includes(call.media)
+              && ['RINGING', 'ACTIVE', 'DECLINED', 'ENDED'].includes(call.status)) {
+            this.callSubject.next(call);
+          }
+          return;
+        }
         if (envelope.type === 'CHAT_REACTION_CHANGED' && envelope.reaction) {
           this.reactionSubject.next(envelope.reaction);
           return;
