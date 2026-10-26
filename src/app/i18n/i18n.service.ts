@@ -302,6 +302,8 @@ const PT: Dictionary = {
   'stories.deleteConfirm': 'Queres eliminar esta Story?',
   'stories.copied': 'Ligação copiada!',
   'stories.shareFallback': 'Não foi possível copiar a ligação. Podes partilhar através do endereço da página.',
+  'mobile.heroTitle': 'O teu próximo jogo começa aqui',
+  'mobile.explore': 'Explorar sessões',
   'nav.home': 'Início',
   'nav.about': 'Sobre',
   'nav.contact': 'Contacto',

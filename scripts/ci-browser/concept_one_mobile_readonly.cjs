@@ -230,6 +230,36 @@ async function main() {
             path: path.join(OUT, width + '-' + language + '-' + name + '.png'),
             fullPage: false
           });
+          // The five core app screens must use the actual light premium phone UI.
+          // This is a computed-style contract, not just a screenshot presence check.
+          if (['/menu/feed', '/menu/discover', '/menu/communities',
+            '/menu/messages', '/menu/dadosPerfil'].includes(route)) {
+            const mobileSkin = await page.evaluate(selector => {
+              const main = document.querySelector(selector);
+              const nav = document.querySelector('.mobile-tabbar');
+              const bar = document.querySelector('.site-nav');
+              return {
+                background: main ? getComputedStyle(main).backgroundColor : '',
+                tabs: nav ? getComputedStyle(nav).display : 'none',
+                header: bar ? getComputedStyle(bar).backgroundColor : '',
+                firstTab: nav?.querySelector('a')?.getAttribute('href')
+              };
+            }, selector);
+            if (width === 390) {
+              assert.equal(mobileSkin.background, 'rgb(245, 248, 247)',
+                route + ': mobile main area must use light Concept One Premium background');
+              assert.equal(mobileSkin.tabs, 'grid',
+                route + ': five-tab navigation must be visible on phones');
+              assert.equal(mobileSkin.firstTab, '/menu/feed');
+              assert.match(mobileSkin.header, /^rgba?\(255,\s*255,\s*255(?:,|\))/,
+                route + ': authenticated phone header must use premium white skin');
+            } else {
+              assert.equal(mobileSkin.tabs, 'none',
+                route + ': desktop must not show mobile tab bar');
+              assert.notEqual(mobileSkin.background, 'rgb(245, 248, 247)',
+                route + ': desktop must retain the original dark presentation');
+            }
+          }
           const overflow = measure.documentWidth - measure.viewport;
           console.log('[responsive]', width, language, route,
             'documentWidth=' + measure.documentWidth, 'overflow=' + overflow);
