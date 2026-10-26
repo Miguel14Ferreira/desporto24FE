@@ -3718,6 +3718,8 @@ const PT: Dictionary = {
   'chat.sending': 'A enviar...',
   'chat.send': 'Enviar',
   'chat.replyToMessage': 'Responder',
+  'chat.changeReaction': 'Alterar reação',
+  'chat.removeReaction': 'Remover reação',
   'chat.react': 'Reagir à mensagem',
   'chat.reactionError': 'Não foi possível guardar a reação.',
   'chat.replyingTo': 'A responder a',
