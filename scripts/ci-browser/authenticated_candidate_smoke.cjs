@@ -104,6 +104,10 @@ async function main() {
       }
       if (endpoint === 'GET /api/notifications/me/unread-count') return json(route, 200, 0);
       if (endpoint === 'GET /api/communities/mine') return json(route, 200, createdCommunity ? [createdCommunity] : []);
+      // Current owned-community quota contract: five simultaneous groups, no daily cap.
+      if (endpoint === 'GET /api/communities/creation-quota') {
+        return json(route, 200, { owned: createdCommunity ? 1 : 0, limit: 5, canCreate: true });
+      }
       if (endpoint === 'GET /api/communities/invites/me') return json(route, 200, []);
       if (endpoint === 'GET /api/communities/search') {
         const query = (url.searchParams.get('name') || '').toLowerCase();
