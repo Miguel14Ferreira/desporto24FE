@@ -462,7 +462,8 @@ h1 {
    Never cover message text, date, or reply actions. */
 .message-list .message {position:relative;margin-bottom:4px;}
 .message-list .message:has(app-chat-reactions.has-reactions) {margin-bottom:36px;}
-.message-list .message:has(app-chat-reactions:focus-within) {z-index:20;}
+.message-list .message:has(app-chat-reactions:focus-within),
+.message-list .message:has(app-chat-reactions.is-picker-open) {z-index:20;}
 .message-list .message app-chat-reactions {
   position:absolute;bottom:-14px;left:12px;z-index:3;
   max-width:calc(100% - 24px);
