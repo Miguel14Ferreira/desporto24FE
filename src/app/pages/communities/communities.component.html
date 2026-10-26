@@ -680,64 +680,26 @@
             }
 
             @if (canManage() && activeTab === 'home') {
-              <section class="community-feature-settings" [attr.aria-label]="'communities.features.region' | t">
-                <div class="community-feature-settings-title">
-                  <div>
-                    <h3>{{ 'communities.features.title' | t }}</h3>
-                    <p>{{ 'communities.features.intro' | t }}</p>
-                  </div>
-                  @if (!featuresEditing) {
-                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                      (click)="editFeatures()">{{ 'communities.features.manage' | t }}</button>
-                  }
-                </div>
-                @if (featuresFeedback) { <p role="status" class="feature-settings-success">{{ featuresFeedback }}</p> }
-                @if (featuresError) { <p role="alert" class="feature-settings-error">{{ featuresError }}</p> }
-                @if (featuresEditing) {
-                  <div class="feature-settings-choices" role="group" [attr.aria-label]="'communities.features.group' | t">
-                    <label><input type="checkbox" [(ngModel)]="featuresDraft.individualTournamentsEnabled"
-                      [disabled]="featuresSaving"> {{ 'communities.features.individual' | t }}</label>
-                    <label><input type="checkbox" [(ngModel)]="featuresDraft.teamTournamentsEnabled"
-                      [disabled]="featuresSaving"> {{ 'communities.features.team' | t }}</label>
-                    <label><input type="checkbox" [(ngModel)]="featuresDraft.rankingsEnabled"
-                      [disabled]="featuresSaving"> {{ 'communities.features.rankings' | t }}</label>
-                  </div>
-                  <p class="feature-settings-caption">{{ 'communities.features.caption' | t }}</p>
-                  <div class="feature-settings-actions">
-                    <button type="button" class="primary-action jynlo-action jynlo-action--primary"
-                      [disabled]="featuresSaving" (click)="saveFeatures()">{{ 'communities.features.save' | t }}</button>
-                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                      [disabled]="featuresSaving" (click)="cancelFeaturesEdit()">{{ 'communities.features.cancel' | t }}</button>
-                  </div>
-                }
-              </section>
+              <app-community-feature-settings
+                [editing]="featuresEditing"
+                [saving]="featuresSaving"
+                [feedback]="featuresFeedback"
+                [error]="featuresError"
+                [draft]="featuresDraft"
+                (draftChange)="featuresDraft = $event"
+                (editRequested)="editFeatures()"
+                (saveRequested)="saveFeatures()"
+                (cancelRequested)="cancelFeaturesEdit()"
+              ></app-community-feature-settings>
             }
 
             @if (canManage() && (activeTab === 'home' || activeTab === 'members')) {
-              <section class="whatsapp-group-share" [attr.aria-label]="'communities.whatsappGroupTitle' | t">
-                <div>
-                  <h3>{{ 'communities.whatsappGroupTitle' | t }}</h3>
-                  <p>{{ 'communities.whatsappGroupHint' | t }}</p>
-                  @if (selected.visibility === 'PRIVATE') {
-                    <p class="whatsapp-group-share-note">{{ 'communities.whatsappPrivateHint' | t }}</p>
-                  }
-                </div>
-                <div class="row-actions">
-                  <button type="button"
-                    class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
-                    (click)="shareWhatsAppGroup()">
-                    {{ 'communities.whatsappShareButton' | t }}
-                  </button>
-                  <button type="button"
-                    class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
-                    (click)="copyWhatsAppGroupLink()">
-                    {{ 'communities.whatsappCopyButton' | t }}
-                  </button>
-                </div>
-                @if (groupInviteFeedback) {
-                  <p class="whatsapp-group-share-feedback" role="status">{{ groupInviteFeedback }}</p>
-                }
-              </section>
+              <app-community-whatsapp-share
+                [visibility]="selected.visibility"
+                [feedback]="groupInviteFeedback"
+                (shareRequested)="shareWhatsAppGroup()"
+                (copyRequested)="copyWhatsAppGroupLink()"
+              ></app-community-whatsapp-share>
             }
 
             @if (activeTab === 'tournaments') {
