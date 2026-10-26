@@ -197,25 +197,12 @@
     }
 
     @if (showMineView() && invites.length > 0) {
-      <section class="invites-card">
-        <h2>{{ 'communities.pendingInvites' | t }}</h2>
-        @for (invite of invites; track invite.id) {
-          <div class="invite-row" [class.invite-row--targeted]="isTargetedInvite(invite)">
-            <div>
-              <strong>{{ invite.communityName }}</strong>
-              <span>{{ 'communities.invitedBy' | t:{ username: invite.invitedByUsername } }}</span>
-            </div>
-            <div class="row-actions">
-              <button type="button" class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact" (click)="acceptInvite(invite)">
-                {{ 'communities.accept' | t }}
-              </button>
-              <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact" (click)="rejectInvite(invite)">
-                {{ 'communities.reject' | t }}
-              </button>
-            </div>
-          </div>
-        }
-      </section>
+      <app-community-pending-invites
+        [invites]="invites"
+        [targetedInviteId]="targetedInviteId"
+        (acceptRequested)="acceptInvite($event)"
+        (rejectRequested)="rejectInvite($event)"
+      ></app-community-pending-invites>
     }
 
     @if ((!detailMode() && loading) || (detailMode() && presentationLoading)) {
