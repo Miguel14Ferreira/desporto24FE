@@ -1,5 +1,7 @@
 export interface CreateSessionRequest {
   sport: string;
+  /** Optional for legacy API clients; server infers safe default. */
+  playFormat?: 'INDIVIDUAL' | 'PAIRS' | 'TEAMS';
   gameDate: string;
   city: string;
   address: string;

@@ -22,6 +22,7 @@ import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/
 })
 export class Events2Component implements OnInit, OnDestroy {
   sport = '';
+  playFormat: 'INDIVIDUAL' | 'PAIRS' = 'INDIVIDUAL';
   gameDate = '';
   city = '';
   address = '';
@@ -103,6 +104,19 @@ export class Events2Component implements OnInit, OnDestroy {
   registrationOpensAt = '';
 
   readonly sportsCatalog = SPORTS_CATALOG;
+  // Only sports explicitly supported for both singles and doubles offer this selector.
+  private readonly doublesSports = new Set([
+    'Padel', 'Ténis', 'Ténis de praia', 'Ténis de mesa', 'Badminton', 'Pickleball'
+  ]);
+
+  get canChoosePlayFormat(): boolean {
+    return this.doublesSports.has(this.sport.trim());
+  }
+
+  get selectedPlayFormat(): 'INDIVIDUAL' | 'PAIRS' | undefined {
+    return this.canChoosePlayFormat ? this.playFormat : undefined;
+  }
+
   readonly districts = MAINLAND_PORTUGAL_DISTRICTS;
   readonly allDistrictsOption = SEARCH_ALL_DISTRICTS;
   venueDistrict = '';
@@ -258,6 +272,7 @@ export class Events2Component implements OnInit, OnDestroy {
 
     const request: CreateSessionRequest = {
       sport: this.sport.trim(),
+      ...(this.selectedPlayFormat ? { playFormat: this.selectedPlayFormat } : {}),
       gameDate: new Date(this.gameDate).toISOString(),
       city: this.city.trim(),
       address: this.address.trim() || (this.hasCoordinates
@@ -471,6 +486,7 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     this.sport = selected;
+    this.playFormat = 'INDIVIDUAL';
     this.venueSearch = '';
     this.selectVenue(null);
     this.loadVenues();

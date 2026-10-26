@@ -61,6 +61,35 @@ describe('Events2Component', () => {
     fixture.detectChanges();
   });
 
+
+  it('selects singles or doubles only for sports that actually support both formats', () => {
+    component.sport = 'Padel';
+    fixture.detectChanges();
+    const selector = fixture.nativeElement.querySelector('select[name="playFormat"]') as HTMLSelectElement | null;
+    expect(selector).not.toBeNull();
+    expect(component.selectedPlayFormat).toBe('INDIVIDUAL');
+    component.playFormat = 'PAIRS';
+    expect(component.selectedPlayFormat).toBe('PAIRS');
+    component.sport = 'Futebol';
+    fixture.detectChanges();
+    expect(component.selectedPlayFormat).toBeUndefined();
+    expect(fixture.nativeElement.querySelector('select[name="playFormat"]')).toBeNull();
+    component.sport = 'Atletismo';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('select[name="playFormat"]')).toBeNull();
+  });
+
+  it('never forwards stale doubles format when the organiser changes sport', () => {
+    component.sport = 'Padel';
+    component.playFormat = 'PAIRS';
+    expect(component.selectedPlayFormat).toBe('PAIRS');
+    component.sport = 'Natação';
+    expect(component.selectedPlayFormat).toBeUndefined();
+    component.sport = 'Padel';
+    component.confirmSportSelection();
+    expect(component.playFormat).toBe('INDIVIDUAL');
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

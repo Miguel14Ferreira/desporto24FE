@@ -15,6 +15,7 @@ export interface SessionDetail extends SessionSummary {
   communityId?: number | null;
   /** Server-controlled eligibility: never infer from participant count alone. */
   teamBalanceSupported?: boolean;
+  playFormat?: 'INDIVIDUAL' | 'PAIRS' | 'TEAMS' | null;
   canSharePublicly?: boolean;
   registrationOpeningMode?: 'IMMEDIATE' | 'SCHEDULED' | 'MANUAL' | null;
   registrationOpensAt?: string | null;
