@@ -65,7 +65,9 @@ async function main() {
           hasTouch: width === 390
         });
         await context.addInitScript(({ token, lang }) => {
-          localStorage.setItem('t', token);
+          // Only authenticated paths receive a fake JWT. Guest routes stay guest.
+          if (location.pathname.startsWith('/menu/')) localStorage.setItem('t', token);
+          else localStorage.removeItem('t');
           localStorage.setItem('d24-language', lang);
         }, { token: jwt, lang: language });
 
@@ -130,14 +132,6 @@ async function main() {
           : [['/home', '.home-page'], ['/menu/notifications', '.notifications-page']];
 
         for (const [route, selector] of scenarios) {
-          // Guest-only registration intentionally redirects signed-in accounts.
-          if (route === '/login/registerNewUser' && jwt) {
-            await page.evaluate(() => localStorage.removeItem('t'));
-          }
-          if (route === '/login') await page.evaluate(() => localStorage.removeItem('t'));
-          if (authenticatedPages.some(([p]) => p === route)) {
-            await page.evaluate(token => localStorage.setItem('t', token), jwt);
-          }
           await page.goto(SITE + route, { waitUntil: 'domcontentloaded', timeout: 20_000 });
           await page.locator(selector).first().waitFor({ state: 'visible', timeout: 15_000 });
           await page.evaluate(() => document.fonts && document.fonts.ready);
