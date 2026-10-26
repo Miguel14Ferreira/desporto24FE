@@ -195,6 +195,68 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+  it('requires a separate neutral-mishap restart and cannot invent a Sprint winner', () => {
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',riderC:null,
+        riderD:null,status:'READY',winner:null}],
+      incidents:[{id:7,seriesKey:'SP53-A1',heatNumber:1,
+        incidentType:'PUNCTURE',decisionType:'RESTART_REQUIRED',
+        status:'RESTART_PENDING'}]
+    } as any;
+    const incident=bracket.incidents[0];
+    expect(component.sprintCanAuthorizeNeutralRestart(bracket,incident)).toBeTrue();
+    expect(component.sprintCanAuthorizeNeutralRestart(bracket,{
+      ...incident,status:'POSITIONS_PENDING'
+    })).toBeFalse();
+    expect(component.sprintCanAuthorizeNeutralRestart(bracket,{
+      ...incident,incidentType:'RULE_INFRINGEMENT'
+    })).toBeFalse();
+    expect(component.sprintCanAuthorizeNeutralRestart({...bracket,
+      matches:[{...bracket.matches[0],riderC:'r9'}]},incident)).toBeFalse();
+    expect(component.sprintNeutralCause(incident)).toBe('PUNCTURE');
+    expect(component.sprintNeutralCause({...incident,incidentType:'FALL'}))
+      .toBe('NO_FAULT_FALL');
+    expect(component.sprintNeutralCause({...incident,incidentType:'BICYCLE_DEFECT'}))
+      .toBe('ESSENTIAL_BICYCLE_BREAKAGE');
+
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.sprintNeutralBracketId=53;
+    component.sprintNeutralIncidentId=7;
+    component.sprintNeutralReference='Second documented panel ruling 2026/84';
+    component.sprintNeutralReason='Panel explicitly authorizes a neutral restart in original order';
+    component.sprintNeutralNoFaultConfirmed=false;
+    component.sprintNeutralOrderConfirmed=false;
+    component.sprintIncidentSaving=false;
+    const save=jasmine.createSpy('authorizeNeutralSprintRestart')
+      .and.returnValue(of({...incident,status:'NEUTRAL_RESTART_OK'}));
+    (component as any).communityService={authorizeNeutralSprintRestart:save};
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintNeutralRestart();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintNeutralNoFaultConfirmed=true;
+    component.saveSprintNeutralRestart();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintNeutralOrderConfirmed=true;
+    component.saveSprintNeutralRestart();
+    expect(save).toHaveBeenCalledWith(12,44,53,7,jasmine.objectContaining({
+      cause:'PUNCTURE',orderedRiders:['r1','r24'],noFaultConfirmed:true
+    }));
+    const original=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.neutralNoWinner')).toContain('Não atribui vencedor');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.neutralNoWinner')).toContain('Does not assign a winner');
+    } finally {
+      if(original===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',original);
+    }
+  });
+
   it('keeps overturned BO3 closed until explicit continuation with real riders and heat', () => {
     component.selected={id:12} as any;
     component.selectedSeasonId=44;

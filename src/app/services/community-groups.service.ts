@@ -28,7 +28,7 @@ export interface TrackSprintIncident {
   heatNumber: number;
   incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER';
   details: string;
-  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
+  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'RESTART_PENDING' | 'POSITIONS_PENDING' | 'NEUTRAL_RESTART_OK' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
   reportedBy: string;
   reportedAt: string;
   decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | null;
@@ -588,6 +588,20 @@ export class CommunityGroupsService {
     return this.http.put<TrackSprintIncident>(
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/decision', payload);
+  }
+
+  authorizeNeutralSprintRestart(communityId: number, seasonId: number, bracketId: number,
+    incidentId: number, payload: {
+      cause: 'NO_FAULT_FALL' | 'PUNCTURE' | 'ESSENTIAL_BICYCLE_BREAKAGE';
+      noFaultConfirmed: boolean;
+      orderedRiders: string[];
+      reference: string;
+      reason: string;
+    }): Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/neutral-restart', payload);
   }
 
   authorizeTrackSprintRerun(communityId: number, seasonId: number, bracketId: number,
