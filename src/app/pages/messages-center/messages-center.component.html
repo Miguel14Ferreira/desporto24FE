@@ -441,56 +441,22 @@
                       [attr.aria-expanded]="attachmentMenuOpen || sharePickerOpen"
                       (click)="toggleAttachmentMenu()" aria-haspopup="dialog">📎</button>
                     @if (attachmentMenuOpen) {
-                      <div class="inbox-share-menu" role="dialog" [attr.aria-label]="'chat.shareMenu' | t">
-                        <button type="button" [disabled]="!attachmentControlsReady"
-                          (click)="closeAttachmentMenu(); attachmentFile.click()">
-                          📄 {{ 'chat.shareFile' | t }}
-                        </button>
-                        <button type="button" (click)="openSharePicker()">
-                          ↗ {{ 'chat.shareJynlo' | t }}
-                        </button>
-                      </div>
+                      <div app-inbox-share-menu class="inbox-share-menu" role="dialog"
+                        [attr.aria-label]="'chat.shareMenu' | t"
+                        [attachmentControlsReady]="attachmentControlsReady"
+                        (fileRequested)="closeAttachmentMenu(); attachmentFile.click()"
+                        (shareRequested)="openSharePicker()"></div>
                     }
                     @if (sharePickerOpen) {
-                      <section class="inbox-share-picker" role="dialog" [attr.aria-label]="'chat.shareJynlo' | t">
-                        <div class="inbox-share-picker-head">
-                          <strong>{{ 'chat.shareJynlo' | t }}</strong>
-                          <button type="button" [attr.aria-label]="'chat.pickerClose' | t"
-                            (click)="closeSharePicker()">×</button>
-                        </div>
-                        <div class="inbox-share-tabs" role="tablist">
-                          <button type="button" role="tab" [class.active]="sharePickerTab === 'profile'"
-                            [attr.aria-selected]="sharePickerTab === 'profile'"
-                            (click)="sharePickerTab = 'profile'">{{ 'chat.shareType.profile' | t }}</button>
-                          <button type="button" role="tab" [class.active]="sharePickerTab === 'session'"
-                            [attr.aria-selected]="sharePickerTab === 'session'"
-                            (click)="sharePickerTab = 'session'">{{ 'chat.shareType.session' | t }}</button>
-                          <button type="button" role="tab" [class.active]="sharePickerTab === 'community'"
-                            [attr.aria-selected]="sharePickerTab === 'community'"
-                            (click)="sharePickerTab = 'community'">{{ 'chat.shareType.community' | t }}</button>
-                        </div>
-                        <input type="search" class="inbox-share-filter" [ngModel]="sharePickerSearch"
-                          [ngModelOptions]="{standalone:true}" (ngModelChange)="sharePickerSearch = $event"
-                          [attr.aria-label]="'chat.shareSearch' | t" [placeholder]="'chat.shareSearch' | t">
-                        <div class="inbox-share-results">
-                          @if (sharePickerLoading) {
-                            <p role="status">{{ 'chat.shareLoading' | t }}</p>
-                          } @else if (sharePickerError) {
-                            <p role="alert">{{ 'chat.shareError' | t }}</p>
-                          } @else if (!visibleShareChoices.length) {
-                            <p>{{ 'chat.shareEmpty' | t }}</p>
-                          } @else {
-                            @for (item of visibleShareChoices; track item.kind + ':' + item.id) {
-                              <button type="button" class="inbox-share-option"
-                                (click)="selectShareChoice(item)">
-                                <strong>{{ item.title }}</strong>
-                                <small>{{ item.subtitle }}</small>
-                              </button>
-                            }
-                          }
-                        </div>
-                        <small class="inbox-share-privacy">{{ 'chat.sharePrivacy' | t }}</small>
-                      </section>
+                      <section app-inbox-share-picker class="inbox-share-picker" role="dialog"
+                        [attr.aria-label]="'chat.shareJynlo' | t"
+                        [sharePickerTab]="sharePickerTab" [sharePickerSearch]="sharePickerSearch"
+                        [sharePickerLoading]="sharePickerLoading" [sharePickerError]="sharePickerError"
+                        [choices]="visibleShareChoices"
+                        (tabChanged)="sharePickerTab = $event"
+                        (searchChanged)="sharePickerSearch = $event"
+                        (choiceSelected)="selectShareChoice($event)"
+                        (closeRequested)="closeSharePicker()"></section>
                     }
                   </div>
                 <div class="inbox-emoji-controls" (keydown.escape)="closeEmojiPicker()">
