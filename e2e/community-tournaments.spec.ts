@@ -3269,3 +3269,100 @@ test('Community import HTTP 400 E2E: missing structured parameters do not leak p
   expect(fixture.matchConfirmCalls).toBe(0);
   expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
 });
+
+
+/*
+ * Concept One Premium regression with filled tournament content, not just
+ * empty states. These tests reuse the existing isolated community API fixtures:
+ * no traffic to production, no real users and no tournament writes.
+ */
+test('Premium populated tournament QA: individual standings and fixtures fit 390px, 768px and desktop in PT/EN', async ({ page }, testInfo) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'paged');
+  for (const width of [390, 768, 1366]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    for (const language of ['pt', 'en']) {
+      await page.goto('/menu/communities/7?tab=tournaments');
+      await page.evaluate(value => localStorage.setItem('d24-language', value), language);
+      await page.reload();
+      await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+      const table = page.getByRole('table', {
+        name: language === 'pt' ? 'Classificação do torneio' : 'Tournament standings'
+      });
+      await expect(table).toBeVisible();
+      await expect(page.locator('.match-card').first()).toBeVisible();
+      const geometry = await page.evaluate(() => {
+        const root = document.querySelector('.tournaments')!;
+        const scroll = document.querySelector('.standings-scroll')!;
+        const rect = root.getBoundingClientRect();
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          viewport: innerWidth,
+          tournamentLeft: rect.left, tournamentRight: rect.right,
+          availableTableScroll: scroll.scrollWidth - scroll.clientWidth
+        };
+      });
+      expect(geometry.documentWidth, 'document overflow ' + JSON.stringify(geometry))
+        .toBeLessThanOrEqual(width + 2);
+      expect(geometry.tournamentLeft).toBeGreaterThanOrEqual(-2);
+      expect(geometry.tournamentRight).toBeLessThanOrEqual(width + 2);
+      if (width === 390) {
+        expect(geometry.availableTableScroll,
+          'wide standings must scroll inside their own container').toBeGreaterThan(0);
+      }
+      await testInfo.attach('individual-' + width + '-' + language, {
+        body: await page.locator('.tournaments').screenshot(),
+        contentType: 'image/png'
+      });
+    }
+  }
+  expect(fixture.organizerMutations).toEqual([]);
+  expect(fixture.unmocked.filter(path => /^(POST|PUT|DELETE|PATCH) /.test(path))).toEqual([]);
+});
+
+test('Premium populated tournament QA: team rosters and schedule confirmation stay readable without publishing', async ({ page }, testInfo) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule');
+  for (const width of [390, 1366]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    for (const language of ['pt', 'en']) {
+      await page.goto('/menu/communities/7?tab=tournaments');
+      await page.evaluate(value => localStorage.setItem('d24-language', value), language);
+      await page.reload();
+      await expect(page.locator('.team-roster-card')).toHaveCount(2);
+      await expect(page.locator('.team-roster-card').first()).toContainText('Azuis');
+      await expect(page.locator('.team-roster-card').last()).toContainText('Verdes');
+      await page.getByRole('button', {
+        name: language === 'pt' ? 'Gerar jornadas entre equipas' : 'Generate team fixtures'
+      }).click();
+      const confirm = page.locator('.team-fixtures-section .confirm-actions');
+      await expect(confirm).toBeVisible();
+      const geometry = await page.evaluate(() => {
+        const root = document.querySelector('.tournaments')!;
+        const confirmation = document.querySelector('.team-fixtures-section .confirm-actions')!;
+        const bounds = root.getBoundingClientRect();
+        const actions = confirmation.getBoundingClientRect();
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          viewport: innerWidth,
+          componentLeft: bounds.left, componentRight: bounds.right,
+          actionsLeft: actions.left, actionsRight: actions.right
+        };
+      });
+      expect(geometry.documentWidth, 'document overflow ' + JSON.stringify(geometry))
+        .toBeLessThanOrEqual(width + 2);
+      expect(geometry.componentLeft).toBeGreaterThanOrEqual(-2);
+      expect(geometry.componentRight).toBeLessThanOrEqual(width + 2);
+      expect(geometry.actionsLeft).toBeGreaterThanOrEqual(-2);
+      expect(geometry.actionsRight).toBeLessThanOrEqual(width + 2);
+      await testInfo.attach('teams-confirmation-' + width + '-' + language, {
+        body: await page.locator('.tournaments').screenshot(),
+        contentType: 'image/png'
+      });
+      // Read-only interaction: close the confirmation, never publish fixtures.
+      await page.locator('.team-fixtures-section .confirm-actions button').last().click();
+      await expect(confirm).toHaveCount(0);
+    }
+  }
+  expect(fixture.teamFixtures).toHaveLength(0);
+  expect(fixture.organizerMutations).toEqual([]);
+  expect(fixture.unmocked.filter(path => /^(POST|PUT|DELETE|PATCH) /.test(path))).toEqual([]);
+});
