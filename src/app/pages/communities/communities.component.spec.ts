@@ -317,6 +317,74 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+
+  it('documents UCI pre-sprint contact before unlocking a two-up heat', () => {
+    const incident={
+      id:9,seriesKey:'SP53-A1',heatNumber:1,
+      incidentType:'PRE_SPRINT_OPPONENT_CONTACT',
+      status:'FAULT_START_PENDING',decisionType:'PRE_SPRINT_RESTART',
+      decisionReference:'First pre sprint official report 2026/701'
+    };
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',
+        riderC:null,riderD:null,status:'READY',winner:null}],
+      incidents:[incident]
+    } as any;
+    expect(component.sprintIsPreSprintIncident(incident as any)).toBeTrue();
+    expect(component.sprintCanConfirmFaultStart(bracket,incident as any)).toBeTrue();
+    expect(component.sprintCanConfirmFaultStart({...bracket,matches:[
+      {...bracket.matches[0],riderC:'r3'}]},incident as any)).toBeFalse();
+    expect(component.sprintCanConfirmFaultStart(bracket,{
+      ...incident,decisionType:'UNINTENTIONAL_FALL'
+    } as any)).toBeFalse();
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.editSprintDecision(53,9);
+    expect(component.sprintDecisionType).toBe('PRE_SPRINT_RESTART');
+    component.editSprintFaultStart(53,9);
+    expect(component.sprintFaultRider).toBe('');
+    expect(component.sprintFaultStartPosition).toBe('');
+    expect(component.sprintPreSprintBeforeConfirmed).toBeFalse();
+    expect(component.sprintPreSprintStoppedConfirmed).toBeFalse();
+    component.sprintFaultReference='Independent second pre sprint record 2026/702';
+    component.sprintFaultReason='The non-fault rider explicitly chooses inside after the starter stops';
+    component.sprintFaultRider='r1';
+    component.sprintFaultStartPosition='INSIDE';
+    component.sprintFaultChoiceConfirmed=true;
+    const choice=jasmine.createSpy('confirmPreSprintStart')
+      .and.returnValue(of({...incident,status:'FAULT_START_OK'}));
+    (component as any).communityService={confirmPreSprintStart:choice};
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintFaultStart();
+    expect(choice).not.toHaveBeenCalled();
+    component.sprintPreSprintBeforeConfirmed=true;
+    component.saveSprintFaultStart();
+    expect(choice).not.toHaveBeenCalled();
+    component.sprintPreSprintStoppedConfirmed=true;
+    component.sprintFaultReference=incident.decisionReference;
+    component.saveSprintFaultStart();
+    expect(choice).not.toHaveBeenCalled();
+    component.sprintFaultReference='Independent second pre sprint record 2026/702';
+    component.saveSprintFaultStart();
+    expect(choice).toHaveBeenCalledWith(12,44,53,9,jasmine.objectContaining({
+      incidentRider:'r1',nonFaultRider:'r24',nonFaultStartPosition:'INSIDE',
+      nonFaultChoiceConfirmed:true,beforeSprintConfirmed:true,starterStoppedConfirmed:true
+    }));
+    const prior=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.preSprintPending')).toContain('ciclista sem culpa');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.preSprintPending')).toContain('non-fault');
+    } finally {
+      if(prior===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prior);
+    }
+  });
+
   it('requires a separate neutral-mishap restart and cannot invent a Sprint winner', () => {
     const bracket={
       id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
