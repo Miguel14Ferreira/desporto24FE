@@ -1,4 +1,4 @@
-<section class="inbox-page jynlo-c1 jynlo-secondary">
+<section class="inbox-page jynlo-c1 jynlo-secondary" [class.inbox-page--chat-open]="!!selected">
   <div class="inbox-shell">
     <div class="inbox-layout">
       <aside class="inbox-sidebar" [attr.aria-label]="'inbox.listLabel' | t">
@@ -82,6 +82,11 @@
       <main class="inbox-detail">
         @if (selected; as conversation) {
           <header class="inbox-detail-heading">
+            <button type="button" class="inbox-mobile-back" (click)="backToMobileInbox()"
+              [attr.aria-label]="'inbox.backInbox' | t" [attr.title]="'inbox.backInbox' | t">
+              <span aria-hidden="true">←</span>
+              <span>{{ 'inbox.backInbox' | t }}</span>
+            </button>
             <div class="inbox-chat-identity">
               <span class="inbox-avatar inbox-detail-avatar"
                 [class.inbox-avatar--community]="conversation.kind === 'community'"

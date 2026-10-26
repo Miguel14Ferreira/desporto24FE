@@ -20,6 +20,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
   claro:string = "claro";
   unreadNotifications = 0;
   authenticated = false;
+
+  // Keep the public pages free of the signed-in mobile app shell.
+  get showMobileNavigation(): boolean {
+    return this.authenticated && /^\/menu(?:\/|$)/.test(this.router.url);
+  }
   admin = false;
   loggingOut = false;
   private notificationTimer?: ReturnType<typeof setInterval>;
