@@ -33,6 +33,7 @@ import { GiphyEmbedComponent } from './giphy-embed.component';
 import { InboxEmojiGifPickerComponent } from './inbox-emoji-gif-picker.component';
 import { InboxShareMenuComponent } from './inbox-share-menu.component';
 import { InboxSharePickerComponent } from './inbox-share-picker.component';
+import { InboxHistorySearchComponent } from './inbox-history-search.component';
 import { InboxConversationListComponent, InboxListFormatters } from './inbox-conversation-list.component';
 import { findCuratedGifs } from './curated-gifs';
 
@@ -42,7 +43,7 @@ const VOICE_NOTE_AUDIO_BITRATE = 48_000;
 @Component({
   selector: 'app-messages-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent, InboxConversationListComponent, InboxEmojiGifPickerComponent, InboxShareMenuComponent, InboxSharePickerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent, InboxConversationListComponent, InboxEmojiGifPickerComponent, InboxShareMenuComponent, InboxSharePickerComponent, InboxHistorySearchComponent],
   templateUrl: './messages-center.component.html',
   styleUrls: ['./messages-center.component.css', './messages-center-premium.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
