@@ -81,14 +81,14 @@
         </label>
 
         <div class="field-group sport-selection full-width">
-          <label for="community-sport-search">Modalidades da comunidade (opcional)</label>
-          <p class="field-help">Escolhe uma ou várias modalidades. Também podes começar sem nenhuma e adicionar mais tarde.</p>
+          <label for="community-sport-search">{{ 'communityCreate.sportsLabel' | t }}</label>
+          <p class="field-help">{{ 'communityCreate.sportsHint' | t }}</p>
           @if (sports.length) {
-            <div class="sport-tags" aria-label="Modalidades selecionadas">
+            <div class="sport-tags" [attr.aria-label]="'communityCreate.selectedSports' | t">
               @for (item of sports; track item) {
                 <span class="sport-tag">{{ item }}
                   <button type="button" [disabled]="saving"
-                    [attr.aria-label]="'Remover ' + item" (click)="removeSport(item)">×</button>
+                    [attr.aria-label]="'communityCreate.removeSport' | t:{ sport: item }" (click)="removeSport(item)">×</button>
                 </span>
               }
             </div>
@@ -96,9 +96,9 @@
           <input id="community-sport-search" name="sportSearch"
             [(ngModel)]="sportSearch" autocomplete="off"
             [disabled]="saving || sports.length >= 128"
-            placeholder="Pesquisar modalidade, ex.: padel">
+            [placeholder]="'communityCreate.sportSearchPlaceholder' | t">
           @if (sportSuggestions.length) {
-            <div class="sport-suggestions" role="group" aria-label="Sugestões de modalidades">
+            <div class="sport-suggestions" role="group" [attr.aria-label]="'communityCreate.sportSuggestions' | t">
               @for (item of sportSuggestions; track item) {
                 <button type="button" [disabled]="saving" (click)="addSport(item)">
                   <span>{{ item }}</span><span aria-hidden="true">+</span>
