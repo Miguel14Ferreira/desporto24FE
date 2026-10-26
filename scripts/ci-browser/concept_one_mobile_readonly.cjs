@@ -147,9 +147,9 @@ async function main() {
           const endpoint = url.pathname;
           if (endpoint === '/api/auth/google/config') return respond(route, 200, { clientId: '' });
           // Session details are read-only: each route receives an explicit fixture.
-          const detailId = /^\\/api\\/sessions\\/(901|902|903|904)$/.exec(endpoint);
+          const detailId = /^\/api\/sessions\/(901|902|903|904)$/.exec(endpoint);
           if (detailId) return respond(route, 200, sessionDetailFixtures[Number(detailId[1])]);
-          const rosterId = /^\\/api\\/sessions\\/(903|904)\\/participants$/.exec(endpoint);
+          const rosterId = /^\/api\/sessions\/(903|904)\/participants$/.exec(endpoint);
           if (rosterId) return respond(route, 200, fictionalParticipants);
           if (endpoint === '/api/profiles/qa-organizer/reliability') {
             return respond(route, 200, { attendanceRate: 100, completedSessions: 4,
@@ -233,7 +233,7 @@ async function main() {
           assert.ok(overflow <= 2,
             route + ' (' + width + 'px ' + language + ') horizontal overflow: '
             + JSON.stringify(measure));
-          if (/^\\/menu\\/events\\/90[1-4]$/.test(route)) {
+          if (/^\/menu\/events\/90[1-4]$/.test(route)) {
             const caseId = Number(route.slice(-3));
             const shell = page.locator('.jynlo-session-detail-premium');
             const card = shell.locator('.detail-card');
