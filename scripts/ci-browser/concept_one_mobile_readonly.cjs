@@ -53,6 +53,38 @@ const authenticatedPages = [
   ['/menu/messages', '.inbox-page'],
   ['/menu/feed', '.feed-page']
 ];
+// Four read-only authenticated session states. No fake backend mutations.
+const futureGameDate = new Date(Date.now() + 3 * 86_400_000).toISOString();
+const pastGameDate = new Date(Date.now() - 3 * 86_400_000).toISOString();
+const sessionDetailFixtures = {
+  901: { id: 901, sport: 'Padel', city: 'Lisboa', gameDate: futureGameDate,
+    participantCount: 2, maxParticipants: 4, priceAmount: 0, status: 'OPEN',
+    privateGame: false, audience: 'PUBLIC', distanceKm: null,
+    creatorUsername: 'qa-organizer', address: null, canSeeExactAddress: false,
+    joined: false, waitlisted: false, waitlistPosition: null, gamePhoto: null },
+  902: { id: 902, sport: 'Futsal', city: 'Porto', gameDate: futureGameDate,
+    participantCount: 4, maxParticipants: 4, priceAmount: 0, status: 'FULL',
+    privateGame: false, audience: 'PUBLIC', distanceKm: null,
+    creatorUsername: 'qa-organizer', address: null, canSeeExactAddress: false,
+    joined: false, waitlisted: false, waitlistPosition: null, gamePhoto: null },
+  903: { id: 903, sport: 'Voleibol', city: 'Cascais', gameDate: futureGameDate,
+    participantCount: 3, maxParticipants: 6, priceAmount: 0, status: 'OPEN',
+    privateGame: false, audience: 'PUBLIC', distanceKm: null,
+    creatorUsername: 'qa-organizer', address: null, canSeeExactAddress: false,
+    joined: true, waitlisted: false, waitlistPosition: null, gamePhoto: null },
+  904: { id: 904, sport: 'Basquetebol', city: 'Sintra', gameDate: pastGameDate,
+    participantCount: 4, maxParticipants: 4, priceAmount: 0, status: 'COMPLETED',
+    privateGame: false, audience: 'PUBLIC', distanceKm: null,
+    creatorUsername: 'qa-organizer', address: null, canSeeExactAddress: false,
+    joined: true, waitlisted: false, waitlistPosition: null, gamePhoto: null }
+};
+const fictionalParticipants = [
+  { id: 51, username: 'mobile-fixture', attendanceStatus: 'PENDING',
+    joinedAt: futureGameDate, teamCode: null },
+  { id: 52, username: 'qa-teammate', attendanceStatus: 'PENDING',
+    joinedAt: futureGameDate, teamCode: null }
+];
+
 const unexpectedWrites = [];
 const browserErrors = [];
 
@@ -114,6 +146,17 @@ async function main() {
 
           const endpoint = url.pathname;
           if (endpoint === '/api/auth/google/config') return respond(route, 200, { clientId: '' });
+          // Session details are read-only: each route receives an explicit fixture.
+          const detailId = /^\\/api\\/sessions\\/(901|902|903|904)$/.exec(endpoint);
+          if (detailId) return respond(route, 200, sessionDetailFixtures[Number(detailId[1])]);
+          const rosterId = /^\\/api\\/sessions\\/(903|904)\\/participants$/.exec(endpoint);
+          if (rosterId) return respond(route, 200, fictionalParticipants);
+          if (endpoint === '/api/profiles/qa-organizer/reliability') {
+            return respond(route, 200, { attendanceRate: 100, completedSessions: 4,
+              noShows: 0, lateCancellations: 0, penaltyScore: 0,
+              warning: false, reducedPriority: false, joinRestricted: false });
+          }
+
           if (endpoint === '/api/profile/me') return respond(route, 200, profile);
           if (endpoint === '/api/notifications/me') return respond(route, 200, []);
           if (endpoint === '/api/notifications/me/unread-count') return respond(route, 200, 0);
@@ -142,6 +185,16 @@ async function main() {
         const scenarios = language === 'pt'
           ? [...publicPages, ...authenticatedPages]
           : [['/home', '.home-page'], ['/menu/notifications', '.notifications-page']];
+
+        // High-value authenticated detail states omitted from previous 390px QA.
+        // English also gets the session detail smoke even though its general
+        // route sweep is deliberately kept small to reduce CI costs.
+        scenarios.push(
+          ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
+          ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
+          ['/menu/events/903', '.jynlo-session-detail-premium .detail-card'],
+          ['/menu/events/904', '.jynlo-session-detail-premium .detail-card']
+        );
 
         for (const [route, selector] of scenarios) {
           await page.goto(SITE + route, { waitUntil: 'domcontentloaded', timeout: 20_000 });
@@ -180,6 +233,45 @@ async function main() {
           assert.ok(overflow <= 2,
             route + ' (' + width + 'px ' + language + ') horizontal overflow: '
             + JSON.stringify(measure));
+          if (/^\\/menu\\/events\\/90[1-4]$/.test(route)) {
+            const caseId = Number(route.slice(-3));
+            const shell = page.locator('.jynlo-session-detail-premium');
+            const card = shell.locator('.detail-card');
+            await card.waitFor({ state: 'visible' });
+            const box = await card.boundingBox();
+            assert.ok(box && box.width > 50 && box.x >= -3
+              && box.x + box.width <= width + 3,
+              route + ': detail card extends outside viewport ' + JSON.stringify(box));
+            assert.equal(await shell.locator('a.back-link[href="/menu/events"]').count(), 1,
+              'session detail preserves return navigation');
+            assert.equal(await shell.locator('.detail-grid').count(), 1,
+              'session facts stay available');
+            if (caseId === 901 || caseId === 902) {
+              assert.equal(await shell.locator('#session-participation button.primary-action').count(), 1,
+                'open and full sessions must show join/waitlist CTA');
+              assert.equal(await shell.locator('.membership-status').count(), 0);
+              if (caseId === 902) {
+                assert.match(await shell.locator('#session-participation').innerText(),
+                  language === 'pt' ? /lista de espera/i : /waitlist|waiting list/i,
+                  'full session must explain the waiting list');
+              }
+            } else {
+              assert.equal(await shell.locator('#session-participation button.primary-action').count(), 0,
+                'already joined or finished sessions must not prompt another join');
+              assert.equal(await shell.locator('.membership-status').count(), 1);
+              await shell.locator('#session-participants .session-participant-list').first().waitFor();
+              assert.equal(await shell.locator('.session-participant-list').first().innerText()
+                .then(text => text.includes('@mobile-fixture')), true,
+                'participant names are visible for a confirmed member');
+              if (caseId === 903) {
+                assert.equal(await shell.locator('.session-top-actions a[href="/menu/messages"]').count(), 1,
+                  'future participant may open session chat');
+              } else {
+                assert.equal(await shell.locator('.session-top-actions a[href="/menu/messages"]').count(), 0,
+                  'past session cannot reopen chat');
+              }
+            }
+          }
           if (route === '/home') {
             assert.equal(await page.locator('.community-teaser').count(), 1,
               'Community teaser must remain in public homepage');
@@ -192,7 +284,7 @@ async function main() {
     }
     assert.deepEqual(unexpectedWrites, [], 'Visual audit may not trigger business mutations');
     assert.deepEqual(browserErrors, [], 'Angular must not throw while rendering audited routes');
-    console.log('PASS: 390px and desktop, public and synthetic authenticated screens');
+    console.log('PASS: 390px/1366px PT/EN including four synthetic authenticated session states');
   } finally {
     await browser.close();
   }
