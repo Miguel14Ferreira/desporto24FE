@@ -122,7 +122,9 @@ async function main() {
           hasTouch: width === 390
         });
         await context.addInitScript(({ token, lang }) => {
-          // Only authenticated paths receive a fake JWT. Guest routes stay guest.
+          // An embedded, cross-origin OSM iframe can block access to localStorage.
+          // Only the audited SPA main document ever needs the synthetic identity.
+          if (window.self !== window.top || location.origin !== 'http://127.0.0.1:4173') return;
           if (location.pathname.startsWith('/menu/')) localStorage.setItem('t', token);
           else localStorage.removeItem('t');
           localStorage.setItem('d24-language', lang);
