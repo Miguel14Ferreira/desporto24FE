@@ -214,12 +214,32 @@
   .inbox-composer-actions >button[type="submit"],.inbox-search input {transition:none;}
 }
 
-/* Whatsapp-style reaction badge floats at the bubble edge instead of consuming text space. */
-.inbox-message-log .inbox-bubble {margin-bottom:13px;}
- .inbox-message-log .inbox-bubble:has(app-chat-reactions:focus-within) {z-index:20;}
+/* Reactions must stay OUTSIDE the bubble: no overlap with time/read receipt.
+   The host gets .has-reactions after authoritative GET/PUT/WS updates. */
+.inbox-message-log .inbox-bubble { margin-bottom:4px; }
+.inbox-message-log .inbox-bubble:has(app-chat-reactions.has-reactions) {
+  margin-bottom:36px;
+}
+.inbox-message-log .inbox-bubble:has(app-chat-reactions:focus-within),
+.inbox-message-log .inbox-bubble:has(app-chat-reactions.is-picker-open) { z-index:20; }
 .inbox-message-log .inbox-bubble app-chat-reactions {
-  position:absolute;bottom:-15px;left:14px;z-index:3;max-width:calc(100% - 28px);
+  position:absolute; bottom:-14px; left:14px; z-index:3;
+  max-width:calc(100% - 28px);
+}
+.inbox-message-log .inbox-bubble:has(app-chat-reactions.has-reactions) app-chat-reactions {
+  bottom:-34px; /* 27px badge starts 7px BELOW bubble border. */
 }
 .inbox-message-log .inbox-bubble.is-mine app-chat-reactions {left:auto;right:14px;}
 
-.inbox-message-log {padding-bottom:42px;}
+/* For an unreacted message show the add action on hover/keyboard, not as a
+   permanent extra circular badge. Touchscreens cannot rely on hover. */
+@media (hover:hover) and (pointer:fine) {
+  .inbox-bubble app-chat-reactions:not(.has-reactions):not(.is-picker-open) {
+    opacity:0; pointer-events:none; transition:opacity .12s ease;
+  }
+  .inbox-bubble:hover app-chat-reactions:not(.has-reactions),
+  .inbox-bubble app-chat-reactions:focus-within {
+    opacity:1; pointer-events:auto;
+  }
+}
+.inbox-message-log {padding-bottom:48px;}
