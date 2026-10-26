@@ -3711,6 +3711,8 @@ export const EN: Record<string, string> = {
   'chat.sending': 'Sending...',
   'chat.send': 'Send',
   'chat.replyToMessage': 'Reply',
+  'chat.changeReaction': 'Change reaction',
+  'chat.removeReaction': 'Remove reaction',
   'chat.react': 'React to message',
   'chat.reactionError': 'Could not save reaction.',
   'chat.replyingTo': 'Replying to',
