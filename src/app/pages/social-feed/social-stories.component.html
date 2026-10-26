@@ -9,7 +9,7 @@
       <button type="button" class="story-retry" (click)="retry()" [disabled]="loading || mineLoading">
         {{ 'stories.retry' | t }}
       </button>
-    <button type="button" class="story-add-action" (click)="composerOpen = !composerOpen">
+    <button type="button" class="story-add-action jynlo-action jynlo-action--accent" (click)="composerOpen = !composerOpen">
       <span aria-hidden="true">+</span> {{ 'stories.create' | t }}
     </button>
     </div>
@@ -76,7 +76,7 @@
         [disabled]="uploading" [placeholder]="'stories.captionHint' | t"></textarea>
       <div class="story-composer-footer">
         <small>{{ caption.length }}/180 · {{ 'stories.expiry' | t }}</small>
-        <button type="button" class="story-primary" [disabled]="!file || uploading" (click)="publish()">
+        <button type="button" class="story-primary jynlo-action jynlo-action--primary" [disabled]="!file || uploading" (click)="publish()">
           {{ (uploading ? 'stories.publishing' : 'stories.publish') | t }}
         </button>
       </div>

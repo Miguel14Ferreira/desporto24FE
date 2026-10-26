@@ -87,6 +87,29 @@ describe('SocialStoriesComponent', () => {
     expect(component.communityId).toBe('3');
   }));
 
+
+  it('uses the shared Jynlo accent and primary styles for both Story actions', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    const createButton = fixture.nativeElement.querySelector('.story-add-action') as HTMLButtonElement;
+    expect(createButton.classList.contains('jynlo-action')).toBeTrue();
+    expect(createButton.classList.contains('jynlo-action--accent')).toBeTrue();
+    createButton.click();
+    fixture.detectChanges();
+    const publishButton = fixture.nativeElement.querySelector('.story-primary') as HTMLButtonElement;
+    expect(publishButton).toBeTruthy();
+    expect(publishButton.classList.contains('jynlo-action')).toBeTrue();
+    expect(publishButton.classList.contains('jynlo-action--primary')).toBeTrue();
+    expect(publishButton.disabled).toBeTrue();
+    const mediaInput = fixture.nativeElement.querySelector('.story-file input[type="file"]') as HTMLInputElement;
+    const photo = new File(['image'], 'story.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(mediaInput, 'files', { configurable: true, value: [photo] });
+    mediaInput.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.file).toBe(photo);
+    expect(publishButton.disabled).toBeFalse();
+  }));
+
   it('keeps personal Stories available without displaying the redundant 24-hour counter', fakeAsync(() => {
     fixture.detectChanges();
     tick();
