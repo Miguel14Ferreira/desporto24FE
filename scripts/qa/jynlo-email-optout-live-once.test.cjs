@@ -4,7 +4,8 @@ const assert = require('node:assert/strict');
 const {makeRunner} = require('./jynlo-email-optout-live-once.cjs');
 
 const QA=['jynloteste01','jynloteste02'];
-function fakeApi({badEmail=false,inviteFailure=false,insufficientQuota=false}={}) {
+function fakeApi({badEmail=false,inviteFailure=false,insufficientQuota=false,
+                  createFault=null,deleteFailure=false}={}) {
   const state={calls:[], prefs:{inAppEnabled:true,emailEnabled:false,
     disabledInAppTypes:['CHAT_MESSAGE'],disabledEmailTypes:['COMMUNITY_INVITE','FRIEND_REQUEST']},
     created:null,invites:[],next:1001,deleted:false,signals:[]};
@@ -38,8 +39,12 @@ function fakeApi({badEmail=false,inviteFailure=false,insufficientQuota=false}={}
       if(method==='PUT')state.prefs=structuredClone(body);
       response=structuredClone(state.prefs);
     } else if(route==='/api/communities' && method==='POST') {
+      if(createFault==='not-created') throw Error('creation unavailable');
       state.created={id:3515,name:body.name,visibility:'PRIVATE',ownerUsername:QA[0],memberCount:1,
         members:[{username:QA[0]}]};response=state.created;
+      if(createFault==='lost-response') throw Error('response lost');
+      if(createFault==='malformed-response') response={id:state.created.id,name:state.created.name};
+      if(createFault==='wrong-owner') response={...state.created,ownerUsername:'unexpected'};
     } else if(route==='/api/communities/3515') {
       response=state.created;
     } else if(route==='/api/communities/3515/invites' && method==='POST') {
@@ -57,6 +62,7 @@ function fakeApi({badEmail=false,inviteFailure=false,insufficientQuota=false}={}
       assert.equal(body.name,state.created.name);
       assert.equal(state.prefs.inAppEnabled,true);
       assert.equal(state.prefs.emailEnabled,false);
+      if(deleteFailure) return {ok:false,status:503,json:async()=>({})};
       state.deleted=true;state.invites=[];status=204;response=null;
     } else throw Error('Unexpected test route '+method+' '+route);
     return {ok:status<300,status,json:async()=>response};
@@ -109,4 +115,45 @@ test('allowed invitation error: never retry, restore prefs and delete QA group',
   assert.equal(f.state.deleted,true);
   assert.equal(f.state.prefs.emailEnabled,false);
   assert.equal(f.state.calls.filter(c=>c==='POST /api/communities/3515/invites').length,2);
+});
+
+test('creation committed but response lost: recover isolated group, delete once, restore',async()=>{
+  const f=fakeApi({createFault:'lost-response'});
+  await assert.rejects(()=>f.run(),/Network outcome unknown/);
+  assert.equal(f.state.deleted,true);
+  assert.deepEqual(f.state.signals,[]);
+  assert.equal(f.state.prefs.emailEnabled,false);
+  assert.equal(f.state.calls.filter(s=>s==='POST /api/communities').length,1);
+  assert.equal(f.state.calls.filter(s=>s.endsWith('/invites')).length,0);
+  assert.ok(f.logs.some(s=>s.includes('Recovered isolated QA community')));
+});
+test('malformed creation response: verify ownership from fresh detail before deleting',async()=>{
+  const f=fakeApi({createFault:'malformed-response'});
+  await assert.rejects(()=>f.run(),/unexpected privacy, owner or membership/);
+  assert.equal(f.state.deleted,true);
+  assert.deepEqual(f.state.signals,[]);
+  assert.equal(f.state.prefs.emailEnabled,false);
+});
+test('wrong owner returned: no invitation and no unsafe deletion',async()=>{
+  const f=fakeApi({createFault:'wrong-owner'});
+  await assert.rejects(()=>f.run(),/unexpected privacy, owner or membership/);
+  assert.equal(f.state.deleted,true);
+  assert.deepEqual(f.state.signals,[]);
+  assert.ok(f.state.calls.includes('GET /api/communities/3515'));
+});
+test('creation never committed: no blind retry, restore and report uncertain outcome',async()=>{
+  const f=fakeApi({createFault:'not-created'});
+  await assert.rejects(()=>f.run(),/Network outcome unknown/);
+  assert.equal(f.state.deleted,false);
+  assert.equal(f.state.prefs.emailEnabled,false);
+  assert.deepEqual(f.state.signals,[]);
+  assert.ok(f.logs.some(s=>s.includes('Community creation outcome uncertain')));
+});
+test('deletion failure is reported and no deletion or invitation is retried',async()=>{
+  const f=fakeApi({deleteFailure:true});
+  await assert.rejects(()=>f.run(),/QA cleanup failed/);
+  assert.equal(f.state.deleted,false);
+  assert.equal(f.state.prefs.emailEnabled,false);
+  assert.equal(f.state.calls.filter(s=>s==='POST /api/communities/3515/delete').length,1);
+  assert.equal(f.state.calls.filter(s=>s==='POST /api/communities/3515/invites').length,2);
 });
