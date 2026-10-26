@@ -255,6 +255,68 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+  it('requires explicit non-fault rider, inside/outside choice and second record', () => {
+    const incident={
+      id:8,seriesKey:'SP53-A1',heatNumber:1,incidentType:'FALL',
+      status:'FAULT_START_PENDING',decisionType:'UNINTENTIONAL_FALL',
+      decisionReference:'Synthetic first panel finding 2026/601'
+    };
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',
+        riderC:null,riderD:null,status:'READY',winner:null}],
+      incidents:[incident]
+    } as any;
+    expect(component.sprintCanConfirmFaultStart(bracket,incident as any)).toBeTrue();
+    expect(component.sprintCanConfirmFaultStart(bracket,{
+      ...incident,status:'RESTART_PENDING'
+    } as any)).toBeFalse();
+    expect(component.sprintCanConfirmFaultStart({...bracket,matches:[
+      {...bracket.matches[0],riderC:'r3'}]},incident as any)).toBeFalse();
+
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.editSprintFaultStart(53,8);
+    expect(component.sprintFaultRider).toBe('');
+    expect(component.sprintFaultStartPosition).toBe('');
+    expect(component.sprintFaultChoiceConfirmed).toBeFalse();
+    component.sprintFaultReference='Synthetic second panel record 2026/602';
+    component.sprintFaultReason='The rider not at fault expressly chooses the outside starting position';
+    const save=jasmine.createSpy('confirmUnintentionalFallStart')
+      .and.returnValue(of({...incident,status:'FAULT_START_OK'}));
+    (component as any).communityService={confirmUnintentionalFallStart:save};
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintFaultStart();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintFaultRider='r1';
+    component.sprintFaultStartPosition='OUTSIDE';
+    component.saveSprintFaultStart();
+    expect(save).not.toHaveBeenCalled();
+    expect(component.sprintNonFaultRider(bracket,incident as any)).toBe('r24');
+    component.sprintFaultChoiceConfirmed=true;
+    component.sprintFaultReference=incident.decisionReference;
+    component.saveSprintFaultStart();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintFaultReference='Synthetic second panel record 2026/602';
+    component.saveSprintFaultStart();
+    expect(save).toHaveBeenCalledWith(12,44,53,8,jasmine.objectContaining({
+      faultRider:'r1',nonFaultRider:'r24',nonFaultStartPosition:'OUTSIDE',
+      nonFaultChoiceConfirmed:true
+    }));
+    const prior=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.faultPendingNotice')).toContain('ciclista sem culpa');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.faultPendingNotice')).toContain('not at fault');
+    } finally {
+      if(prior===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prior);
+    }
+  });
+
   it('requires a separate neutral-mishap restart and cannot invent a Sprint winner', () => {
     const bracket={
       id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
