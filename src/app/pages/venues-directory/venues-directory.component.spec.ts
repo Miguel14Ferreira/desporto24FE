@@ -20,6 +20,18 @@ describe('VenuesDirectoryComponent', () => {
       { markForCheck: () => {} } as ChangeDetectorRef);
   });
 
+  it('includes both autonomous regions and queries them using the existing paginated endpoint', () => {
+    expect(component.districts).toContain('Açores');
+    expect(component.districts).toContain('Madeira');
+    expect(component.districts.length).toBe(20);
+    component.district = 'Madeira';
+    component.search();
+    expect(api.suggest).toHaveBeenCalledWith('', '', '', 0, 'Madeira');
+    component.district = 'Açores';
+    component.search();
+    expect(api.suggest).toHaveBeenCalledWith('', '', '', 0, 'Açores');
+  });
+
   it('loads the first page by district and displays real returned venues', () => {
     component.ngOnInit();
     expect(api.suggest).toHaveBeenCalledOnceWith('', '', '', 0, 'Lisboa');
