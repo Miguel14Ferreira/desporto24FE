@@ -166,6 +166,16 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintDecisionSanctionedUsername = '';
   sprintDecisionReference = '';
   sprintDecisionReason = '';
+  sprintFlagrantOffender = '';
+  sprintFlagrantSanction: '' | 'NONE' | 'RELEGATION' | 'DISQUALIFICATION' = '';
+  sprintFlagrantCutoffConfirmed = false;
+  sprintFlagrantStarterConfirmed = false;
+  sprintFlagrantStartBracketId: number | null = null;
+  sprintFlagrantStartIncidentId: number | null = null;
+  sprintFlagrantStartPosition: '' | 'INSIDE' | 'OUTSIDE' = '';
+  sprintFlagrantStartChoiceConfirmed = false;
+  sprintFlagrantStartReference = '';
+  sprintFlagrantStartReason = '';
   sprintRerunIncidentId: number | null = null;
   sprintRerunBracketId: number | null = null;
   sprintRerunOrder: string[] = ['', ''];
@@ -2939,7 +2949,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintIncidentPending(bracket: TrackSprintBracketOverview, key: string): boolean {
     return this.sprintIncidentsFor(bracket, key)
       .some(i => ['PENDING','ADJUDICATION_REQUIRED','RESTART_PENDING',
-                  'POSITIONS_PENDING','FAULT_START_PENDING'].includes(i.status));
+                  'POSITIONS_PENDING','FAULT_START_PENDING','FLAGRANT_START_PENDING']
+        .includes(i.status));
   }
 
   editSprintIncident(bracketId: number, key: string): void {
@@ -2996,6 +3007,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       ? 'PRE_SPRINT_RESTART' : 'RESTART_REQUIRED';
     this.sprintDecisionSanction = 'WARNING';
     this.sprintDecisionSanctionedUsername = '';
+    this.sprintFlagrantOffender = '';
+    this.sprintFlagrantSanction = '';
+    this.sprintFlagrantCutoffConfirmed = false;
+    this.sprintFlagrantStarterConfirmed = false;
     this.sprintDecisionReference = '';
     this.sprintDecisionReason = '';
     this.sprintIncidentError = '';
@@ -3012,6 +3027,28 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
              !this.sprintDecisionEligibleRiders.includes(this.sprintDecisionSanctionedUsername)))) return;
     const group = this.selected.id, season = this.selectedSeasonId,
       bracket = this.sprintDecisionBracketId, id = this.sprintDecisionIncidentId;
+    const selectedBracket=this.sprintBrackets.find(b=>b.id===bracket);
+    const incident=selectedBracket?.incidents.find(i=>i.id===id);
+    if(incident?.incidentType==='FLAGRANT_BEFORE_BELL') {
+      if(!this.sprintFlagrantOffender
+          ||!this.sprintDecisionEligibleRiders.includes(this.sprintFlagrantOffender)
+          ||!this.sprintFlagrantSanction ||!this.sprintFlagrantCutoffConfirmed
+          ||!this.sprintFlagrantStarterConfirmed
+          ||this.sprintDecisionReference.trim().length<12
+          ||this.sprintDecisionReason.trim().length<12)return;
+      this.sprintIncidentSaving=true; this.sprintIncidentError='';
+      this.communityService.ruleFlagrantSprintIncident(group,season,bracket,id,{
+        offendingRider:this.sprintFlagrantOffender,sanction:this.sprintFlagrantSanction,
+        beforeBellOrSprintConfirmed:true,starterStoppedConfirmed:true,
+        reference:this.sprintDecisionReference.trim(),reason:this.sprintDecisionReason.trim()
+      }).pipe(timeout(10_000),finalize(()=>this.sprintIncidentSaving=false)).subscribe({
+        next:()=>{this.sprintDecisionIncidentId=null;this.sprintDecisionBracketId=null;
+          this.loadSprintBrackets(group,season);},
+        error:e=>this.sprintIncidentError=e.error?.message
+          ||t('communities.trackCycling.incidentError')
+      });
+      return;
+    }
     this.sprintIncidentSaving = true; this.sprintIncidentError = '';
     this.communityService.decideTrackSprintIncident(group, season, bracket, id, {
       decisionType: this.sprintDecisionType,
@@ -3028,6 +3065,69 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       },
       error: error => this.sprintIncidentError = error.error?.message
         || t('communities.trackCycling.incidentError')
+    });
+  }
+
+
+  sprintCanConfirmFlagrantStart(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): boolean {
+    const m=bracket.matches.find(x=>x.seriesKey===incident.seriesKey);
+    return bracket.format==='OLYMPIC_TWENTY_FOUR_REPECHAGE' && !bracket.interruption
+      && incident.incidentType==='FLAGRANT_BEFORE_BELL'
+      && incident.decisionType==='FLAGRANT_RULING'
+      && incident.status==='FLAGRANT_START_PENDING'
+      && !incident.sanctionType && !incident.sanctionedUsername
+      && !!incident.flagrantBeforeCutoffConfirmed
+      && !!incident.flagrantStarterStoppedConfirmed
+      && /^SP[1-9][0-9]*-(A(?:[1-9]|1[0-2])|C[1-8]|E[1-6]|Q[1-4]|S[1-2]|B|G)$/.test(incident.seriesKey)
+      && !!m && !!m.riderA && !!m.riderB && !m.riderC && !m.riderD
+      && ['READY','IN_PROGRESS'].includes(m.status) && !m.winner
+      && [m.riderA,m.riderB].includes(incident.flagrantOffendingRider||'');
+  }
+
+  sprintFlagrantInnocent(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): string {
+    return this.sprintNeutralEligibleRiders(bracket,incident)
+      .find(r=>r!==incident.flagrantOffendingRider) || '';
+  }
+
+  editSprintFlagrantStart(bracketId: number,incidentId: number): void {
+    this.sprintFlagrantStartBracketId=bracketId;
+    this.sprintFlagrantStartIncidentId=incidentId;
+    this.sprintFlagrantStartPosition='';
+    this.sprintFlagrantStartChoiceConfirmed=false;
+    this.sprintFlagrantStartReference='';
+    this.sprintFlagrantStartReason='';
+    this.sprintIncidentError='';
+  }
+
+  saveSprintFlagrantStart(): void {
+    const bracket=this.sprintBrackets.find(b=>b.id===this.sprintFlagrantStartBracketId);
+    const incident=bracket?.incidents.find(i=>i.id===this.sprintFlagrantStartIncidentId);
+    if(!this.selected||!this.canManage()||this.sprintIncidentSaving
+        ||this.selectedSeasonId==null||this.selectedSeasonId!==this.activeSeason()?.id
+        ||!bracket||!incident||!this.sprintCanConfirmFlagrantStart(bracket,incident)
+        ||!this.sprintFlagrantStartChoiceConfirmed||!this.sprintFlagrantStartPosition
+        ||this.sprintFlagrantStartReference.trim().length<12
+        ||this.sprintFlagrantStartReason.trim().length<12
+        ||this.sprintFlagrantStartReference.trim()===incident.decisionReference?.trim())return;
+    const innocent=this.sprintFlagrantInnocent(bracket,incident);
+    if(!innocent)return;
+    const group=this.selected.id,season=this.selectedSeasonId;
+    this.sprintIncidentSaving=true;this.sprintIncidentError='';
+    this.communityService.confirmFlagrantNoSanctionStart(group,season,bracket.id,incident.id,{
+      nonFaultRider:innocent,nonFaultStartPosition:this.sprintFlagrantStartPosition,
+      nonFaultChoiceConfirmed:true,
+      reference:this.sprintFlagrantStartReference.trim(),
+      reason:this.sprintFlagrantStartReason.trim()
+    }).pipe(timeout(10_000),finalize(()=>this.sprintIncidentSaving=false)).subscribe({
+      next:()=>{
+        this.sprintFlagrantStartBracketId=null;
+        this.sprintFlagrantStartIncidentId=null;
+        this.loadSprintBrackets(group,season);
+      },
+      error:e=>this.sprintIncidentError=e.error?.message
+        ||t('communities.trackCycling.incidentError')
     });
   }
 
