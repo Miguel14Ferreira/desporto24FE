@@ -213,3 +213,13 @@
 @media(prefers-reduced-motion:reduce) {
   .inbox-composer-actions >button[type="submit"],.inbox-search input {transition:none;}
 }
+
+/* Whatsapp-style reaction badge floats at the bubble edge instead of consuming text space. */
+.inbox-message-log .inbox-bubble {margin-bottom:13px;}
+.inbox-message-log .inbox-bubble:has(.reaction-picker) {z-index:20;}
+.inbox-message-log .inbox-bubble app-chat-reactions {
+  position:absolute;bottom:-15px;left:14px;z-index:3;max-width:calc(100% - 28px);
+}
+.inbox-message-log .inbox-bubble.is-mine app-chat-reactions {left:auto;right:14px;}
+.inbox-message-log .inbox-bubble.is-mine app-chat-reactions .reaction-picker {left:auto;right:0;}
+.inbox-message-log {padding-bottom:42px;}
