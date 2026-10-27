@@ -3743,6 +3743,8 @@ export const EN: Record<string, string> = {
   'calls.unavailable': 'Could not start the call.',
   'calls.mediaError': 'Connection or microphone/camera permission failed.',
   'calls.audioBlocked': 'Your browser blocked audio playback.',
+  'profile.contactInfo': 'Contact info',
+  'profile.openFullProfile': 'View full profile',
   'chat.react': 'React to message',
   'chat.reactionError': 'Could not save reaction.',
   'chat.replyingTo': 'Replying to',
