@@ -164,8 +164,11 @@ async function main(){
     await heart.click();
     await a.locator('.reaction-remove').click();
     assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:👍','ana:DELETE']);
-    await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').first().waitFor();
+    await a.waitForFunction(() =>
+      document.querySelectorAll('app-chat-reactions.inbox-reaction-under-message .reaction-count').length === 1,
+      undefined, {timeout:7000});
     assert.equal(await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').count(),1);
+    await a.screenshot({path:path.join(OUT,'desktop-after-explicit-removal.png')});
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');
     process.stdout.write('PASS: two synthetic users, desktop+390px hitboxes, reactions below date, click, replace, explicit remove, persisted counts.\\n');
