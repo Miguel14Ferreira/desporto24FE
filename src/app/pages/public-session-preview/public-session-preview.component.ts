@@ -203,7 +203,21 @@ export class PublicSessionPreviewComponent implements OnInit {
     const token=this.route.snapshot.queryParamMap?.get('guest');
     if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) {
       this.guestToken=token;
-      this.loadGuestRoster();
+      if (!this.isAuthenticated) {
+        // Anonymous guests can choose a historical name. Known Jynlo members
+        // never see that impersonation-prone selector.
+        this.loadGuestRoster();
+      } else {
+        // After optional sign-up, only a prior private approval receipt
+        // authorizes transferring the guest seat to the real account.
+        try {
+          const receipt = localStorage.getItem(this.receiptKey());
+          if (receipt && /^[A-Za-z0-9_-]{43}$/.test(receipt)) {
+            this.guestReceipt=receipt;
+            this.checkGuestStatus();
+          }
+        } catch { /* storage is optional */ }
+      }
     }
     this.loadPreview();
   }
