@@ -107,12 +107,14 @@
                 (click)="replyTo(message)">
                 ↩ {{ 'chat.replyToMessage' | t }}
               </button>
-              @if (message.id) {
-                <app-chat-reactions kind="direct" [conversationId]="recipientUsername"
-                  [messageId]="message.id"
-                  [disabled]="chatInfo?.chatBlocked === true"></app-chat-reactions>
-              }
             </article>
+            @if (message.id) {
+              <app-chat-reactions class="direct-reaction-under-message"
+                [class.own-reaction]="isOwnMessage(message)"
+                kind="direct" [conversationId]="recipientUsername"
+                [messageId]="message.id"
+                [disabled]="chatInfo?.chatBlocked === true"></app-chat-reactions>
+            }
           }
         </div>
 
