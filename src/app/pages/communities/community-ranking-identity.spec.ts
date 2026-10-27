@@ -37,6 +37,23 @@ describe('Ranking historical player self-claim', () => {
     reloadLinks = spyOn(component, 'loadHistoricalLinks');
   });
 
+  it('does not fetch obsolete historical identity options when members open their tab', () => {
+    const requests = spyOn(component, 'loadPendingJoinRequests');
+    component.setTab('members');
+    expect(component.activeTab).toBe('members');
+    expect(reloadLinks).not.toHaveBeenCalled();
+    expect(service.historicalPlayerCandidates).not.toHaveBeenCalled();
+    expect(requests).not.toHaveBeenCalled();
+  });
+
+  it('keeps join-request management when an administrator opens the members tab', () => {
+    component.selected = { id: 9, myRole: 'ADMIN' } as any;
+    const requests = spyOn(component, 'loadPendingJoinRequests');
+    component.setTab('members');
+    expect(requests).toHaveBeenCalledOnceWith(9);
+    expect(reloadLinks).not.toHaveBeenCalled();
+  });
+
   it('loads current server candidates before asking to link an unlinked name', () => {
     component.openRankingHistoricalPlayer(historic);
     expect(service.historicalPlayerCandidates).toHaveBeenCalledOnceWith(9);
