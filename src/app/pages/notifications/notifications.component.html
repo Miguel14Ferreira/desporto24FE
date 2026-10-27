@@ -298,11 +298,11 @@
                 @if (pendingInviteFor(selected); as invite) {
                   <button type="button" class="primary-action jynlo-action jynlo-action--primary"
                     [disabled]="actionLoadingId !== null" (click)="respondToInvite(selected, true)">
-                    {{ actionLoadingId === selected.id ? 'A processar...' : 'Aceitar convite' }}
+                    {{ (actionLoadingId === selected.id ? 'inviteCenter.processing' : 'inviteCenter.going') | t }}
                   </button>
                   <button type="button" class="secondary-button jynlo-action jynlo-action--neutral"
                     [disabled]="actionLoadingId !== null" (click)="respondToInvite(selected, false)">
-                    Recusar convite
+                    {{ 'inviteCenter.notGoing' | t }}
                   </button>
                 }
 
