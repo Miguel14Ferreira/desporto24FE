@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityStanding } from '../model/community-group';
+import { communityComparisonKey } from './community-player-comparison';
 
 /** Read-only records, chart and player comparison for the existing community standings.
  * The parent retains ranking filters, tie rules, selected usernames and all persistence.
@@ -20,12 +21,17 @@ export class CommunityPerformanceInsightsComponent {
   @Input() bestWinRate?: CommunityStanding;
   @Input() bestWinStreak?: CommunityStanding;
   @Input() maxStandingPoints = 0;
-  @Input() compareUsernameA = '';
-  @Input() compareUsernameB = '';
+  @Input() compareSelectionA = '';
+  @Input() compareSelectionB = '';
   @Input() comparePlayerA?: CommunityStanding;
   @Input() comparePlayerB?: CommunityStanding;
   @Output() compareAChange = new EventEmitter<string>();
   @Output() compareBChange = new EventEmitter<string>();
+
+  /** Every visible ranking entry gets a distinct key, even without an account or username. */
+  selectionKey(index: number): string {
+    return communityComparisonKey(index);
+  }
 
   /** Same percentage calculation as CommunitiesComponent.pointsBarWidth. */
   pointsBarWidth(row: CommunityStanding): number {
