@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
-import { DirectChatRealtimeService, normalizeRealtimeChatInstant } from '../../services/direct-chat-realtime.service';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { PrivateGroup, PrivateGroupMessage, PrivateGroupService } from '../../services/private-group.service';
 import { FriendSummary } from '../model/friend-summary';
 import { TranslatePipe } from '../../i18n/translate.pipe';
