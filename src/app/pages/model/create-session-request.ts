@@ -13,6 +13,7 @@ export interface CreateSessionRequest {
   latitude: number | null;
   longitude: number | null;
   communityId?: number | null;
+  communityShareIds?: number[];
   venueId?: number | null;
   recurrence?: 'NONE' | 'WEEKLY' | 'BIWEEKLY';
   recurrenceOccurrences?: number | null;

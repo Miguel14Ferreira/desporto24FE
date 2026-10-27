@@ -3,8 +3,8 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Jynlo</p>
-        <h1>{{ (findPlayersMode ? 'createSession.findPlayersTitle' : 'createSession.title') | t }}</h1>
-        <p class="subtitle">{{ (findPlayersMode ? 'createSession.findPlayersSubtitle' : 'createSession.subtitle') | t }}</p>
+        <h1>{{ 'createSession.title' | t }}</h1>
+        <p class="subtitle">{{ 'createSession.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
@@ -32,14 +32,73 @@
       </div>
     }
 
-    @if (findPlayersMode) {
-      <div class="recruit-context" role="note">
-        <strong>{{ 'createSession.findPlayersNoteTitle' | t }}</strong>
-        <p>{{ 'createSession.findPlayersNote' | t }}</p>
-      </div>
-    }
-
     <form class="create-card" (ngSubmit)="createSession()">
+      <section class="create-mode-panel" aria-labelledby="create-mode-title">
+        <div class="create-mode-intro">
+          <span class="section-kicker">{{ 'createSession.modeKicker' | t }}</span>
+          <h2 id="create-mode-title">{{ 'createSession.modeTitle' | t }}</h2>
+          <p>{{ 'createSession.modeSubtitle' | t }}</p>
+        </div>
+        <div class="create-mode-grid" role="group" [attr.aria-label]="'createSession.modeTitle' | t">
+          <button type="button" class="create-mode-option"
+            [class.active]="creationMode === 'START'"
+            [attr.aria-pressed]="creationMode === 'START'"
+            [disabled]="loading" (click)="selectCreationMode('START')">
+            <span class="create-mode-option-icon" aria-hidden="true">◎</span>
+            <strong>{{ 'createSession.modeStart' | t }}</strong>
+            <small>{{ 'createSession.modeStartHelp' | t }}</small>
+          </button>
+          <button type="button" class="create-mode-option"
+            [class.active]="creationMode === 'COMPLETE'"
+            [attr.aria-pressed]="creationMode === 'COMPLETE'"
+            [disabled]="loading" (click)="selectCreationMode('COMPLETE')">
+            <span class="create-mode-option-icon" aria-hidden="true">♧</span>
+            <strong>{{ 'createSession.modeComplete' | t }}</strong>
+            <small>{{ 'createSession.modeCompleteHelp' | t }}</small>
+          </button>
+        </div>
+        @if (findPlayersMode) {
+          <div class="create-mode-feedback" role="note">
+            {{ 'createSession.modeCompleteNote' | t }}
+          </div>
+        }
+      </section>
+      @if (!communityId) {
+        <section class="create-share-panel" aria-labelledby="create-share-title">
+          <div>
+            <span class="section-kicker">{{ 'createSession.communityShareKicker' | t }}</span>
+            <h2 id="create-share-title">{{ 'createSession.communityShareTitle' | t }}</h2>
+            <p>{{ 'createSession.communityShareHelp' | t }}</p>
+          </div>
+          @if (communitiesLoading) {
+            <p role="status" class="create-share-status">{{ 'createSession.communityShareLoading' | t }}</p>
+          } @else if (communitiesLoadError) {
+            <p role="status" class="create-share-status">{{ 'createSession.communityShareUnavailable' | t }}</p>
+          } @else if (communities.length === 0) {
+            <p class="create-share-status">{{ 'createSession.communityShareNone' | t }}</p>
+          } @else {
+            <div class="create-share-grid">
+              @for (group of communities; track group.id) {
+                <label class="create-share-community" [class.selected]="shareCommunityIds.includes(group.id)">
+                  <input type="checkbox" [name]="'shareCommunity' + group.id"
+                    [ngModel]="shareCommunityIds.includes(group.id)"
+                    (ngModelChange)="toggleCommunityShare(group.id, $event)"
+                    [disabled]="loading || (!shareCommunityIds.includes(group.id) && shareCommunityIds.length >= 5)">
+                  <span>
+                    <strong>{{ group.name }}</strong>
+                    <small>{{ 'createSession.communityShareMember' | t }}</small>
+                  </span>
+                </label>
+              }
+            </div>
+            @if (shareCommunityIds.length > 0) {
+              <p class="create-share-selected" role="status">
+                {{ 'createSession.communityShareSelected' | t:{count: shareCommunityIds.length} }}
+              </p>
+            }
+          }
+        </section>
+      }
       <div class="form-grid">
         @if (communityId && communitySportLoaded && communitySports.length) {
           <div class="community-sport-choices">
@@ -787,7 +846,7 @@
       }
 
       <div class="options-grid">
-        @if (!findPlayersMode) {
+        @if (!findPlayersMode && shareCommunityIds.length === 0) {
         <section class="option-card">
           <label class="toggle-row">
             <input

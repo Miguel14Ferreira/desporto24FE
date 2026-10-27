@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, finalize, retry, Subject, timeout } from 'rxjs';
 
 import { CreateSessionRequest } from '../model/create-session-request';
+import { CommunityGroup } from '../model/community-group';
 import { SessionService } from '../../services/session.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { VenuePhoto, VenueService } from '../../services/venue.service';
@@ -16,7 +17,7 @@ import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/
 @Component({
   selector: 'app-events2',
   templateUrl: './events2.component.html',
-  styleUrls: ['./events2.component.css'],
+  styleUrls: ['./events2.component.css', './events2-create-flow.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
@@ -29,6 +30,31 @@ export class Events2Component implements OnInit, OnDestroy {
   maxParticipants = 4;
   // The organiser already has one reserved Jynlo place.
   confirmedPlayers: number | null = 1;
+  creationMode: 'START' | 'COMPLETE' = 'START';
+  communities: CommunityGroup[] = [];
+  shareCommunityIds: number[] = [];
+  communitiesLoading = false;
+  communitiesLoadError = false;
+
+  selectCreationMode(mode: 'START' | 'COMPLETE'): void {
+    if (this.loading) return;
+    this.creationMode = mode;
+    if (mode === 'COMPLETE') this.privateGame = false;
+    if (this.confirmedPlayers === null) this.confirmedPlayers = 1;
+  }
+
+  toggleCommunityShare(id: number, checked: boolean): void {
+    if (this.loading || this.communityId !== null
+        || !this.communities.some(group => group.id === id && group.myRole)) return;
+    if (checked && !this.shareCommunityIds.includes(id)) {
+      if (this.shareCommunityIds.length >= 5) return;
+      this.shareCommunityIds = [...this.shareCommunityIds, id];
+      this.privateGame = false;
+      this.password = '';
+    } else if (!checked) {
+      this.shareCommunityIds = this.shareCommunityIds.filter(groupId => groupId !== id);
+    }
+  }
 
   privateGame = false;
   password = '';
@@ -181,7 +207,7 @@ export class Events2Component implements OnInit, OnDestroy {
   ) {}
 
   get findPlayersMode(): boolean {
-    return this.route.snapshot.queryParamMap.get('intent') === 'findPlayers' && !this.communityId;
+    return this.creationMode === 'COMPLETE';
   }
 
   get availablePlaces(): number {
@@ -225,6 +251,22 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     if (this.sportSelected) this.loadVenues();
+
+    this.creationMode = params.get('intent') === 'findPlayers' ? 'COMPLETE' : 'START';
+
+    if (!(Number.isFinite(communityId) && communityId > 0)) {
+      this.communitiesLoading = true;
+      this.communityService.mine().pipe(
+        timeout(10_000),
+        finalize(() => this.communitiesLoading = false)
+      ).subscribe({
+        next: values => {
+          this.communities = values.filter(group => !!group.myRole);
+          this.communitiesLoadError = false;
+        },
+        error: () => { this.communitiesLoadError = true; }
+      });
+    }
 
     if (Number.isFinite(communityId) && communityId > 0) {
       this.communityId = communityId;
@@ -289,6 +331,7 @@ export class Events2Component implements OnInit, OnDestroy {
       ...(this.findPlayersMode
         ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
         : {}),
+      communityShareIds: this.communityId === null ? [...this.shareCommunityIds] : [],
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
       privateGame: this.findPlayersMode ? false : this.privateGame,
       password: this.findPlayersMode ? null : (this.privateGame ? this.password.trim() : null),
@@ -1095,6 +1138,13 @@ export class Events2Component implements OnInit, OnDestroy {
       return t('feedback.create.playersRange');
     }
 
+    if (this.shareCommunityIds.length && this.privateGame) {
+      return t('createSession.communitySharePublicOnly');
+    }
+    if (this.shareCommunityIds.length > 5
+        || this.shareCommunityIds.some(id => !this.communities.some(c => c.id === id && !!c.myRole))) {
+      return t('createSession.communityShareInvalid');
+    }
     if (this.findPlayersMode) {
       const confirmed = Number(this.confirmedPlayers);
       if (this.confirmedPlayers === null || !Number.isInteger(confirmed)
