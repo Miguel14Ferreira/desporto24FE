@@ -102,8 +102,8 @@ export class PublicSessionPreviewComponent implements OnInit {
     }
   }
 
-  selectGuestPlayer(id: number): void {
-    this.guestPlayerId = id;
+  selectGuestPlayer(id: number | null): void {
+    this.guestPlayerId = id === null ? null : Number(id);
     this.guestNewName = '';
   }
 
