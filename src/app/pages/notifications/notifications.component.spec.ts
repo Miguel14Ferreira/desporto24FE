@@ -4,6 +4,7 @@ import { of, Subject, throwError } from 'rxjs';
 
 import { NotificationsComponent } from './notifications.component';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { SessionService } from '../../services/session.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
@@ -580,6 +581,43 @@ describe('NotificationsComponent', () => {
     component.changeType('CHAT_MESSAGE', 'email', false);
     expect(component.preferences).toEqual(current);
     expect(component.preferencesError).toBeTruthy();
+  });
+
+
+  it('shows complete game invitations even when the notification list has no matching alert', () => {
+    component.notifications=[];
+    component.pendingInvites=[{
+      id:86,sessionId:42,inviterUsername:'rui',
+      createdAt:new Date().toISOString(),
+      sport:'Futebol',city:'Lisboa',gameDate:'2026-12-05T18:00:00Z',
+      maxParticipants:10,participantCount:8,status:'OPEN'
+    }];
+    fixture.detectChanges();
+    const page=fixture.nativeElement as HTMLElement;
+    const invitation=page.querySelector('.session-invite-card');
+    expect(invitation?.textContent).toContain('Futebol');
+    expect(invitation?.textContent).toContain('Lisboa');
+    expect(invitation?.textContent).toContain('2 vagas');
+    expect(page.querySelectorAll('.session-invite-actions button').length).toBe(2);
+    expect(page.querySelector('.notifications.emptyTitle')).toBeNull();
+  });
+
+  it('accepts an app invite through existing enrollment without impersonating a historical player', () => {
+    const sessions=TestBed.inject(SessionService);
+    const accept=spyOn(sessions,'acceptInvite').and.returnValue(of({
+      state:'PARTICIPANT',waitlistPosition:null
+    }));
+    const invitation={id:90,sessionId:42,inviterUsername:'rui',
+      createdAt:new Date().toISOString(),sport:'Futebol'};
+    component.pendingInvites=[invitation];
+    fixture.detectChanges();
+    const acceptButton=fixture.nativeElement.querySelector(
+      '.session-invite-actions .primary-action') as HTMLButtonElement;
+    expect(acceptButton).toBeTruthy();
+    acceptButton.click();
+    expect(accept).toHaveBeenCalledOnceWith(42,90);
+    expect(component.pendingInvites).toEqual([]);
+    expect(component.actionSuccess).toContain('inscrito');
   });
 
 });
