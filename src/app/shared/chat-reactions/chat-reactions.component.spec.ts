@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { BehaviorSubject } from 'rxjs';
 import { ChatReactionsComponent } from './chat-reactions.component';
 import { ChatReactionStoreService } from '../../services/chat-reaction-store.service';
 
@@ -20,6 +21,7 @@ describe('Keyboard-accessible chat reaction picker', () => {
       'ChatReactionStoreService', ['watch','unwatch','get','toggle','isBusy','hasFailed','retry']);
     store.get.and.returnValue({messageId:51,counts:{},myEmoji:null});
     store.isBusy.and.returnValue(false);
+    Object.defineProperty(store, 'changed', { value: new BehaviorSubject<number>(0) });
     store.hasFailed.and.returnValue(false);
     TestBed.configureTestingModule({
       imports:[ChatReactionsComponent],
@@ -68,6 +70,17 @@ describe('Keyboard-accessible chat reaction picker', () => {
     expect(component.expanded).toBeFalse();
     expect(store.toggle).not.toHaveBeenCalled();
     expect(element.querySelector('.reaction-count')).not.toBeNull();
+    fixture.destroy();
+  });
+
+  it('updates a loaded reaction when the store emits after the first render', async () => {
+    const {fixture,element}=mount();
+    expect(element.querySelector('.reaction-count')).toBeNull();
+    store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
+    store.changed.next(1);
+    await fixture.whenStable();
+    expect(element.querySelector('.reaction-count')?.textContent).toContain('👍');
+    expect(element.querySelector('.reaction-open')).toBeNull();
     fixture.destroy();
   });
 
