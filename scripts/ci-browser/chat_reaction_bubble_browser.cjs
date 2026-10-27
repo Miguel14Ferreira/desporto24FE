@@ -194,7 +194,7 @@ async function main(){
     assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️']);
     assert.equal((await mobile.locator('.reaction-count').textContent()).replace(/\s/g,''),'❤️2',
       'a reaction count appears only when there are two or more');
-    await mobile.locator('.reaction-count').click();
+    await mobile.locator('.reaction-details-trigger').click();
     await mobile.locator('.reaction-person').first().waitFor();
     assert.equal(await mobile.locator('.reaction-person').count(),2);
     await b.screenshot({path:path.join(OUT,'mobile-two-hearts-details.png')});
