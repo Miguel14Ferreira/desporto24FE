@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Subscription, timeout } from 'rxjs';
 import { environment } from 'src/environment/environment';
@@ -87,14 +87,17 @@ export class ProfileQuickViewComponent implements OnDestroy {
  private current=0;
  private subscription=new Subscription();
  private profileLoad?:Subscription;
- constructor(public quick:ProfileQuickViewService,private profiles:CommunityService){
+ constructor(public quick:ProfileQuickViewService,private profiles:CommunityService,
+   private readonly cdr:ChangeDetectorRef){
    this.subscription.add(quick.username$.subscribe(username=>{
      this.profileLoad?.unsubscribe();this.person=null;this.error=false;this.loading=!!username;
      const version=++this.current;
      if(!username)return;
      this.profileLoad=this.profiles.publicProfile(username).pipe(timeout(12000)).subscribe({
-       next:person=>{if(version===this.current){this.person=person;this.loading=false;}},
-       error:()=>{if(version===this.current){this.error=true;this.loading=false;}}
+       next:person=>{if(version===this.current){this.person=person;this.loading=false;
+         this.cdr.detectChanges();}},
+       error:()=>{if(version===this.current){this.error=true;this.loading=false;
+         this.cdr.detectChanges();}}
      });
      queueMicrotask(()=>this.closeControl?.nativeElement.focus({preventScroll:true}));
    }));
