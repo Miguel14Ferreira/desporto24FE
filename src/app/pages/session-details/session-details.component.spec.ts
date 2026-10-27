@@ -67,11 +67,12 @@ describe('SessionDetailsComponent', () => {
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.guestRequests.and.returnValue(of([]));
     sessionService.issueGuestLink.and.returnValue(of({token:'T'.repeat(43)}));
+    sessionService.cancelGuestRequest.and.returnValue(of({id:30,name:'Convidado',status:'CANCELLED',note:'',teamCode:null}));
     sessionService.join.and.returnValue(of({
       state: 'PARTICIPANT',
       waitlistPosition: null
@@ -2736,6 +2737,19 @@ describe('SessionDetailsComponent', () => {
     component.requestFutureExclusion(participant);
     expect(component.pendingFutureExclusionId).toBeNull();
     expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
+  });
+
+  it('shows confirmed guest team members by name without creating a profile link', () => {
+    component.guestRequests = [
+      {id: 501,name:'Afonso Salvador',status:'APPROVED',teamCode:'A',note:''},
+      {id: 502,name:'João Marques',status:'APPROVED',teamCode:'B',note:''},
+      {id: 503,name:'Outro',status:'CANCELLED',teamCode:'A',note:''}
+    ];
+    spyOn(component,'isCreator').and.returnValue(true);
+    expect(component.guestTeamParticipants('A').map(item=>item.name)).toEqual(['Afonso Salvador']);
+    expect(component.guestTeamParticipants('B').map(item=>item.name)).toEqual(['João Marques']);
+    component.confirmedTeams=false;
+    expect(component.hasConfirmedTeams()).toBeTrue();
   });
 
   it('lets the organizer restrict a present player for lack of fair play without changing attendance', () => {

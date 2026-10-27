@@ -46,7 +46,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   /** Guest invitations are scoped to a random organizer-issued link. */
   guestToken: string | null = null;
   guestPlayers: {id:number;name:string}[] = [];
-  guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' | 'linked' = 'choose';
+  guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' | 'linked' | 'cancelled' = 'choose';
   guestPlayerId: number | null = null;
   guestNewName = '';
   guestNote = '';
@@ -165,14 +165,15 @@ export class PublicSessionPreviewComponent implements OnInit {
     if (!this.sessionId || !this.guestReceipt || this.guestSending) return;
     this.guestSending=true;
     this.guestError='';
-    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'}>(
+    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'|'CANCELLED'}>(
       environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/status',
       {receipt:this.guestReceipt}
     ).pipe(timeout(10000),finalize(()=>this.guestSending=false)).subscribe({
       next: r => {
         this.guestStep=r.status==='LINKED'?'linked':
           r.status==='APPROVED'?'approved':
-          r.status==='REJECTED'?'rejected':'pending';
+          r.status==='REJECTED'?'rejected':
+          r.status==='CANCELLED'?'cancelled':'pending';
       },
       error:()=>{this.guestError='guestRsvp.statusError';}
     });
@@ -238,7 +239,9 @@ export class PublicSessionPreviewComponent implements OnInit {
 
   publicShareUrl(): string | null {
     return this.session && this.canRequestParticipation && this.sessionId !== null
-      ? new URL('/sessions/' + this.sessionId, window.location.origin).href
+      ? new URL('/sessions/' + this.sessionId
+          + (this.guestToken ? '?guest=' + encodeURIComponent(this.guestToken) : ''),
+          window.location.origin).href
       : null;
   }
 
@@ -313,9 +316,15 @@ export class PublicSessionPreviewComponent implements OnInit {
     this.errorMessageKey = '';
     this.canRetry = false;
 
-    this.http.get<SessionPublicPreview>(
-      environment.apiUrl + '/api/sessions/' + this.sessionId + '/public-preview'
-    ).pipe(
+    // The signed POST preview is the only safe way to open a members-only
+    // community game without publishing its details on the anonymous GET API.
+    const preview$ = this.guestToken
+      ? this.http.post<SessionPublicPreview>(
+          environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-preview',
+          {token:this.guestToken})
+      : this.http.get<SessionPublicPreview>(
+          environment.apiUrl + '/api/sessions/' + this.sessionId + '/public-preview');
+    preview$.pipe(
       timeout(10000),
       finalize(() => this.loading = false)
     ).subscribe({

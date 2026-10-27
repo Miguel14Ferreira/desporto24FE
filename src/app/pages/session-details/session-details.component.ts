@@ -1773,6 +1773,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.teamSuggestionPendingConfirmation = false;
           this.teamsSuccess = t('feedback.session.teamsConfirmed');
           this.loadSessionParticipants();
+          if (this.isCreator()) this.loadGuestRequests();
         },
         error: error => {
           this.teamsError = this.errorFrom(error, t('feedback.session.teamsConfirmError'));
@@ -1784,13 +1785,24 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return code === 'A' ? this.teamAParticipants : this.teamBParticipants;
   }
 
+  guestTeamParticipants(code: 'A' | 'B'): SessionGuestRequest[] {
+    return this.isCreator()
+      ? this.guestRequests.filter(guest => guest.status === 'APPROVED' && guest.teamCode === code)
+      : [];
+  }
+
   hasConfirmedTeams(): boolean {
-    return this.confirmedTeams;
+    return this.confirmedTeams
+      || this.guestTeamParticipants('A').length > 0
+      || this.guestTeamParticipants('B').length > 0;
   }
 
   canShareGuestInvites(): boolean {
     return !!this.session && this.isCreator() && !!this.session.communityId
-      && this.canPromoteSession() && this.session.audience === 'PUBLIC';
+      && (this.session.audience === 'PUBLIC' || this.session.audience === 'COMMUNITY_ONLY')
+      && !this.session.privateGame
+      && (this.session.status === 'OPEN' || this.session.status === 'FULL')
+      && Date.parse(this.session.gameDate) > Date.now();
   }
 
   openRegisteredInvitePicker(): void {
@@ -1866,6 +1878,27 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         this.loadSession(false);
       },
       error:()=>{this.guestPanelError=t('guestAdmin.decisionError');}
+    });
+  }
+
+  cancelApprovedGuest(request:SessionGuestRequest): void {
+    if(!this.sessionId || !this.isCreator() || this.guestRequestBusyId!==null
+      || request.status!=='APPROVED' || !this.canShareGuestInvites()) return;
+    this.guestRequestBusyId=request.id;
+    this.guestPanelError='';
+    this.guestPanelSuccess='';
+    this.sessionService.cancelGuestRequest(this.sessionId,request.id).pipe(
+      timeout(10000),finalize(()=>this.guestRequestBusyId=null)
+    ).subscribe({
+      next:updated=>{
+        this.guestRequests=this.guestRequests.map(g=>g.id===updated.id?updated:g);
+        this.guestPanelSuccess=t('guestAdmin.cancelled');
+        this.teamSuggestion=undefined;
+        this.teamSuggestionPendingConfirmation=false;
+        this.loadSession(false);
+        this.loadSessionParticipants();
+      },
+      error:()=>{this.guestPanelError=t('guestAdmin.cancelError');}
     });
   }
 
