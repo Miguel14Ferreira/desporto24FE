@@ -505,6 +505,7 @@ const PT: Dictionary = {
   'terms.changes.title': 'Alterações e contacto',
   'terms.changes.text': 'Estes termos podem ser atualizados durante o piloto. Alterações materiais devem ser comunicadas de forma clara. Para questões, utiliza o contacto indicado nesta página.',
 
+  'common.close': 'Fechar',
   'common.cancel': 'Cancelar',
   'common.menu': 'Menu',
   'common.hide': 'Ocultar',

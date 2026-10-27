@@ -500,6 +500,7 @@ export const EN: Record<string, string> = {
   'terms.changes.title': 'Changes and contact',
   'terms.changes.text': 'These terms may be updated during the pilot. Material changes should be communicated clearly. For questions, use the contact shown on this page.',
 
+  'common.close': 'Close',
   'common.cancel': 'Cancel',
   'common.menu': 'Menu',
   'common.hide': 'Hide',
