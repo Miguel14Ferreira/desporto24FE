@@ -15,6 +15,7 @@ const writes=[];
 const errors=[];
 const CHECK_CALLS=process.env.JYNLO_VERIFY_CALLS === '1';
 const CHECK_GROUPS=process.env.JYNLO_VERIFY_GROUPS === '1';
+const CHECK_CONTACT=process.env.JYNLO_VERIFY_CONTACT === '1';
 let group=null;
 const groupTexts=[];
 const groupWrites=[];
@@ -70,6 +71,12 @@ async function context(browser,username,width){
     if(method==='OPTIONS')return route.fulfill({status:204,headers:{
       'access-control-allow-origin':'*','access-control-allow-headers':'*',
       'access-control-allow-methods':'GET,POST,PUT,DELETE,OPTIONS'}});
+    if(CHECK_CONTACT && method==='GET' && p.startsWith('/api/profile/')) {
+      const who=decodeURIComponent(p.slice('/api/profile/'.length));
+      return reply(route,200,{username:who,nickname:who==='bea'?'Bea':'Ana',
+        fullName:null,profilePicUrl:null,location:'Lisboa',
+        favoriteSports:'Futebol',bio:'Jogar com amigos',country:'Portugal'});
+    }
     if(method==='GET'&&p==='/api/friends/me')return reply(route,200,[
       {username:peer,nickname:peer==='bea'?'Bea':'Ana',fullName:null,
        chatBlocked:false,blockedByMe:false,profilePicUrl:null},
@@ -230,21 +237,28 @@ async function main(){
     const a=await ana.newPage();
     a.on('pageerror',e=>errors.push('ana: '+e.message));
     await a.goto(SITE+'/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
-    if(process.env.JYNLO_VERIFY_CONTACT==='1'){
+    if(CHECK_CONTACT){
       await a.locator('.inbox-contact-opener').click();
-      const panel=a.locator('.inbox-contact-dialog');
+      const panel=a.locator('.contact-panel');
       await panel.waitFor();
-      assert.match(await panel.innerText(),/Bea/i);
+      await panel.locator('.contact-identity h2').filter({hasText:'Bea'}).waitFor();
+      assert.match(await panel.innerText(),/Lisboa/);
       assert.equal(await panel.locator('a[href*="/menu/perfis/bea"]').count(),1);
       const group=panel.locator('a[href*="/menu/groups"]');
       assert.equal(await group.count(),1);
       assert.match(await group.getAttribute('href'),/from=bea/);
+      assert.equal(await panel.locator('a[href*="/menu/messages"]').count(),1);
       await a.screenshot({path:path.join(OUT,'contact-preview-desktop.png')});
-      await panel.locator('.inbox-contact-close').click();
-      assert.equal(await a.locator('.inbox-contact-dialog').count(),0);
-      const sender=a.locator('.inbox-bubble-meta a.inbox-sender-profile').first();
+      await panel.locator('.contact-close').click();
+      await panel.waitFor({state:'detached'});
+      const sender=a.locator('.inbox-bubble-meta button.inbox-sender-profile').first();
       await sender.waitFor();
-      assert.match(await sender.getAttribute('href'),/\/menu\/perfis\//);
+      await sender.click();
+      await panel.waitFor();
+      await panel.locator('.contact-identity h2').filter({hasText:'Bea'}).waitFor();
+      await a.screenshot({path:path.join(OUT,'contact-preview-sender.png')});
+      await panel.locator('.contact-close').click();
+      await panel.waitFor({state:'detached'});
     }
 
     const shelf=await assertClickable(a,'inbox','desktop-reaction-before');

@@ -6,6 +6,8 @@ import {
   ChatReactionStoreService, ChatReactionSummary, ChatReactionParticipant
 } from '../../services/chat-reaction-store.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { ProfileQuickViewService } from '../../services/profile-quick-view.service';
+import { Optional } from '@angular/core';
 
 let reactionPickerSequence = 0;
 
@@ -143,6 +145,9 @@ let reactionPickerSequence = 0;
               } @else {
                 @for (person of filteredParticipants; track person.username) {
                   <div class="reaction-person">
+                    <button type="button" class="reaction-person-contact"
+                      (click)="openParticipantProfile(person.username)"
+                      [attr.aria-label]="('chat.viewProfile' | t) + ': ' + person.displayName">
                     <span class="reaction-avatar">
                       {{ person.displayName.slice(0,1).toUpperCase() }}
                       @if (person.profilePicUrl && !brokenAvatars.has(person.username)) {
@@ -154,6 +159,7 @@ let reactionPickerSequence = 0;
                       <strong>{{ person.mine ? ('chat.you' | t) : person.displayName }}</strong>
                       @if (person.mine) { <small>{{ person.displayName }}</small> }
                     </div>
+                    </button>
                     <span class="reaction-person-emoji">{{ person.emoji }}</span>
                   </div>
                 } @empty {
@@ -243,6 +249,10 @@ let reactionPickerSequence = 0;
     .reaction-person {display:flex;align-items:center;gap:12px;
       min-height:62px;padding:9px 5px;border-bottom:1px solid rgba(133,173,172,.11);}
     .reaction-person:last-child {border-bottom:0;}
+    .reaction-person-contact{display:flex;flex:1;min-width:0;align-items:center;gap:12px;
+      padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;}
+    .reaction-person-contact:hover strong{text-decoration:underline;}
+    .reaction-person-contact:focus-visible{outline:2px solid #9cffdb;outline-offset:3px;border-radius:8px}
     .reaction-avatar {position:relative;display:grid;place-items:center;flex:0 0 42px;
       width:42px;height:42px;border-radius:50%;background:#275852;
       color:#dbfff4;font-size:1.13rem;font-weight:700;overflow:hidden;}
@@ -303,8 +313,14 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     public readonly store: ChatReactionStoreService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    @Optional() private readonly profilePeek: ProfileQuickViewService | null = null
   ) {}
+
+  openParticipantProfile(username:string):void {
+    this.closeDetails(false);
+    this.profilePeek?.open(username);
+  }
 
   ngOnInit(): void {
     // The store uses ordinary mutable Maps, not Angular signals. Without a

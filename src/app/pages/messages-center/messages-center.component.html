@@ -67,8 +67,8 @@
             @if (conversation.kind === 'direct') {
               <button type="button" class="inbox-chat-identity inbox-contact-opener"
                   [attr.aria-label]="('chat.viewProfile' | t) + ': ' + conversation.title"
-                  [attr.aria-expanded]="contactPreviewOpen"
-                  (click)="contactPreviewOpen = true">
+                  
+                  (click)="openContact('' + conversation.id)">
                 <span class="inbox-avatar inbox-detail-avatar" aria-hidden="true">
                   {{ conversation.title.slice(0, 1).toUpperCase() }}
                 </span>
@@ -185,10 +185,10 @@
                 <div class="inbox-bubble-meta">
                   @if (!continuesGroupAt(i)) {
                     @if (message.sender && message.sender.toLowerCase() !== 'system') {
-                      <a class="inbox-sender-profile" [routerLink]="['/menu/perfis', message.sender]"
+                      <button type="button" class="inbox-sender-profile" (click)="openContact(message.sender)"
                         [attr.title]="('chat.viewProfile' | t) + ': ' + message.sender">
                         {{ isMine(message) ? ('chat.you' | t) : message.sender }}
-                      </a>
+                      </button>
                     } @else {
                       <strong>{{ message.sender }}</strong>
                     }
@@ -521,35 +521,4 @@
     </div>
     <p class="inbox-unread-note">{{ (serverSummariesAvailable ? 'inbox.unreadScope' : 'inbox.unreadOffline') | t }}</p>
   </div>
-  @if (contactPreviewOpen && selected?.kind === 'direct') {
-    @if (selected; as person) {
-      <div class="inbox-contact-backdrop" (click)="contactPreviewOpen = false"
-          (keydown.escape)="contactPreviewOpen = false">
-        <section class="inbox-contact-dialog" role="dialog" aria-modal="true"
-            [attr.aria-label]="('chat.viewProfile' | t) + ': ' + person.title"
-            (click)="$event.stopPropagation()" (keydown.escape)="contactPreviewOpen = false">
-          <header class="inbox-contact-dialog-top">
-            <h2>{{ 'chat.contactInfo' | t }}</h2>
-            <button type="button" class="inbox-contact-close"
-                [attr.aria-label]="'common.close' | t"
-                (click)="contactPreviewOpen = false">×</button>
-          </header>
-          <div class="inbox-contact-person">
-            <span class="inbox-contact-large-avatar" aria-hidden="true">{{ person.title.slice(0,1).toUpperCase() }}</span>
-            <h3>{{ person.title }}</h3>
-            <p>&#64;{{ person.id }}</p>
-          </div>
-          <div class="inbox-contact-dialog-actions">
-            <a [routerLink]="['/menu/perfis', person.id]" (click)="contactPreviewOpen = false">
-              <span aria-hidden="true">↗</span> {{ 'chat.viewProfile' | t }}
-            </a>
-            <a routerLink="/menu/groups" [queryParams]="{from:person.id}"
-                (click)="contactPreviewOpen = false">
-              <span aria-hidden="true">👥</span> {{ 'groups.addMembers' | t }}
-            </a>
-          </div>
-        </section>
-      </div>
-    }
-  }
 </section>

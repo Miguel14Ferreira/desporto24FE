@@ -228,7 +228,9 @@
             </div>
             <div>
               <span>{{ 'sessionDetail.creator' | t }}</span>
-              <strong>{{ session.creatorUsername || ('sessionDetail.user' | t) }}</strong>
+              @if (session.creatorUsername) {
+                <a class="session-profile-link" [routerLink]="['/menu/perfis',session.creatorUsername]">{{ session.creatorUsername }}</a>
+              } @else { <strong>{{ 'sessionDetail.user' | t }}</strong> }
             </div>
           </div>
 
@@ -400,7 +402,7 @@
                   <div class="player-compliments-list">
                     @for (participant of eligibleComplimentPlayers(); track participant.id) {
                       <article class="player-compliment-row">
-                        <strong>{{ '@' + participant.username }}</strong>
+                        <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
                         <div class="player-compliment-actions" role="group"
                              [attr.aria-label]="'sessionDetail.complimentsFor' | t:{ username: participant.username }">
                           @for (kind of complimentTypes; track kind) {
@@ -477,7 +479,9 @@
             <div class="creator-reliability__header">
               <div>
                 <h2>{{ 'sessionDetail.creatorReliability' | t }}</h2>
-                <p>{{ session.creatorUsername || 'Utilizador' }}</p>
+                @if (session.creatorUsername) {
+                  <p><a class="session-profile-link" [routerLink]="['/menu/perfis',session.creatorUsername]">{{ session.creatorUsername }}</a></p>
+                } @else { <p>Utilizador</p> }
               </div>
               @if (reliabilityLoading) {
                 <span class="reliability-loading">{{ 'common.loading' | t }}</span>
@@ -643,7 +647,7 @@
                       <h3>{{ 'sessionDetail.teamA' | t }} <span>{{ teamSuggestion.teamAScore }}</span></h3>
                       @for (player of teamSuggestion.teamA; track player.username) {
                         <div class="team-player">
-                          <span>{{ '@' + player.username }}</span>
+                          <a class="session-profile-link" [routerLink]="['/menu/perfis',player.username]">{{ '@' + player.username }}</a>
                           @if (teamsScoreSource === 'EXCEL_POINTS') {
                             <small>{{ player.statsAvailable
                               ? ('sessionDetail.excelPlayerPoints' | t:{ points: player.strengthScore })
@@ -661,7 +665,7 @@
                       <h3>{{ 'sessionDetail.teamB' | t }} <span>{{ teamSuggestion.teamBScore }}</span></h3>
                       @for (player of teamSuggestion.teamB; track player.username) {
                         <div class="team-player">
-                          <span>{{ '@' + player.username }}</span>
+                          <a class="session-profile-link" [routerLink]="['/menu/perfis',player.username]">{{ '@' + player.username }}</a>
                           @if (teamsScoreSource === 'EXCEL_POINTS') {
                             <small>{{ player.statsAvailable
                               ? ('sessionDetail.excelPlayerPoints' | t:{ points: player.strengthScore })
@@ -857,7 +861,7 @@
                       <strong>{{ 'sessionDetail.teamA' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('A'); track participant.id) {
-                          <span>{{ '@' + participant.username }}</span>
+                          <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
                         }
                       </div>
                     </div>
@@ -865,7 +869,7 @@
                       <strong>{{ 'sessionDetail.teamB' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('B'); track participant.id) {
-                          <span>{{ '@' + participant.username }}</span>
+                          <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
                         }
                       </div>
                     </div>
@@ -873,7 +877,7 @@
                 } @else {
                   <div class="session-participant-list">
                     @for (participant of sessionParticipants; track participant.id) {
-                      <span>{{ '@' + participant.username }}</span>
+                      <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
                     } @empty {
                       <span class="session-participants-empty">{{ 'sessionDetail.noVisibleParticipants' | t }}</span>
                     }
@@ -962,7 +966,7 @@
                   @for (participant of participants; track participant.id) {
                     <article class="participant-row">
                       <div class="participant-identity">
-                        <strong>{{ participant.username }}</strong>
+                        <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ participant.username }}</a>
                         <span>{{ 'sessionDetail.joinedAt' | t:{ date: (participant.joinedAt | date:'dd/MM/yyyy HH:mm')! } }}</span>
                       </div>
 

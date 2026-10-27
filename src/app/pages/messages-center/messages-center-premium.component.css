@@ -284,3 +284,7 @@
   text-decoration:none;border-bottom:1px solid transparent;}
 .inbox-bubble-meta .inbox-sender-profile:hover {color:#83eacf;border-bottom-color:currentColor;}
 .inbox-bubble-meta .inbox-sender-profile:focus-visible {outline:2px solid #7df4d9;outline-offset:3px;}
+
+.inbox-sender-profile{border:0;padding:0;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+.inbox-sender-profile:hover{text-decoration-color:currentColor}
+.inbox-sender-profile:focus-visible{outline:2px solid #75efd5;outline-offset:3px}
