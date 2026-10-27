@@ -216,7 +216,7 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
    */
   private normalizeFriendSearch(value:string):string{
     return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .trim().toLocaleLowerCase();
+      .trim().replace(/^@/, '').toLocaleLowerCase();
   }
 
   get filteredInviteFriends():FriendSummary[]{
