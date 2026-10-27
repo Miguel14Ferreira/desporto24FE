@@ -240,6 +240,8 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
         return 'adminVenueGps.contextMira';
       case 'SHARED_COMPLEX_NUMBERED_FIELDS_NO_POINT':
         return 'adminVenueGps.contextBraga';
+      case 'GROUPED_BASKETBALL_COURTS_NO_POINT':
+        return 'adminVenueGps.contextBragaBasketball';
       default:
         return null;
     }

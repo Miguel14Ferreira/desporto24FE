@@ -214,6 +214,26 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.gpsOfficialLink('http://www.cm-braga.pt/pt/')).toBeNull();
   });
 
+  it('keeps the Rodovia basketball pair as one source-only investigation without GPS', () => {
+    const football = {
+      issueCode: 'SHARED_COMPLEX_NUMBERED_FIELDS_NO_POINT',
+      officialSourceUrl: 'https://www.cm-braga.pt/pt/1201/viver/desporto/equipamentos-desportivas/item/item-1-6225',
+      relatedSourceUrl: 'https://www.cm-braga.pt/pt/1201/viver/desporto/equipamentos-desportivas/item/item-1-6226'
+    };
+    const basketball = {
+      issueCode: 'GROUPED_BASKETBALL_COURTS_NO_POINT',
+      officialSourceUrl: 'https://www.cm-braga.pt/pt/1201/viver/desporto/equipamentos-desportivas/item/item-1-6231',
+      relatedSourceUrl: 'https://www.cm-braga.pt/pt/1201/viver/ambiente/espacos-verdes/item/item-1-722'
+    };
+    expect(component.gpsFacilityContextKey(football)).toBe('adminVenueGps.contextBraga');
+    expect(component.gpsFacilityContextKey(basketball)).toBe('adminVenueGps.contextBragaBasketball');
+    expect(component.gpsOfficialLink(basketball.officialSourceUrl)).toBe(basketball.officialSourceUrl);
+    expect(component.gpsOfficialLink(basketball.relatedSourceUrl)).toBe(basketball.relatedSourceUrl);
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+    expect(component.gpsFacilityContextKey({...basketball, issueCode: 'GPS_VERIFIED'})).toBeNull();
+    expect(component.gpsOfficialLink('http://www.cm-braga.pt/pt/')).toBeNull();
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],
