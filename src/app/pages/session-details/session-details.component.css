@@ -1277,3 +1277,7 @@ h1 {
 .address-panel small { display: block; margin-top: .35rem; color: #94a3b8; }
 
 
+
+.session-profile-link{color:inherit;text-decoration:underline;text-decoration-color:#66d7c080;text-underline-offset:3px;overflow-wrap:anywhere}
+.session-profile-link:hover{color:#79efd6}
+.session-profile-link:focus-visible{outline:2px solid #79efd6;outline-offset:3px;border-radius:4px}
