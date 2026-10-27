@@ -2576,7 +2576,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
             .filter(p => p.attendanceStatus !== 'NO_SHOW' && p.attendanceStatus !== 'LATE_CANCELLED')
             .map(p => ({
               username: p.username,
-              included: p.attendanceStatus === 'ATTENDED' || p.attendanceStatus === 'PENDING',
+              included: p.attendanceStatus === 'ATTENDED',
               team: p.teamCode === 'A' || p.teamCode === 'B' ? p.teamCode : '' as const
             }));
         },
