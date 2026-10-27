@@ -1654,6 +1654,7 @@ export const EN: Record<string, string> = {
   'communities.import.pointsAcknowledgement': 'I understand that the original spreadsheet points will not be saved.',
   'communities.import.pointsAcknowledgementRequired': 'Confirm that you understand how points will be calculated before importing.',
   'communities.import.confirmError': 'We could not import these rounds.',
+  'communities.import.importAnother': 'Import another Excel file',
   'communities.import.success': 'History imported successfully',
   'communities.import.roundsCreated': 'rounds created',
   'communities.import.entriesCreated': 'entries created',
