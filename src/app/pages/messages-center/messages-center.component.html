@@ -63,16 +63,30 @@
         @if (selected; as conversation) {
           <header class="inbox-detail-heading">
             <div class="inbox-chat-identity">
-              <span class="inbox-avatar inbox-detail-avatar"
-                [class.inbox-avatar--community]="conversation.kind === 'community'"
-                [class.inbox-avatar--session]="conversation.kind === 'session'" aria-hidden="true">
-                {{ conversation.kind === 'direct' ? conversation.title.slice(0, 1).toUpperCase() : conversation.kind === 'community' ? '👥' : '⚽' }}
-              </span>
-              <div class="inbox-detail-info">
-                <h2>{{ conversation.title }}</h2>
-                <p><span class="inbox-detail-type">{{ kindLabel(conversation.kind) | t }}</span>
-                  @if (conversation.subtitle) { <span aria-hidden="true"> · </span>{{ conversation.subtitle }} }</p>
-              </div>
+              @if (conversation.kind === 'direct') {
+                <button type="button" class="inbox-avatar inbox-detail-avatar inbox-contact-avatar"
+                    [attr.aria-label]="'Ver informações de ' + conversation.title"
+                    (click)="showContactInfo(conversation)">
+                  {{ conversation.title.slice(0,1).toUpperCase() }}
+                </button>
+                <div class="inbox-detail-info">
+                  <h2><a class="inbox-profile-link"
+                    [routerLink]="['/menu/perfis', conversation.id]">{{ conversation.title }}</a></h2>
+                  <p><span class="inbox-detail-type">{{ kindLabel(conversation.kind) | t }}</span>
+                    @if (conversation.subtitle) { <span aria-hidden="true"> · </span>{{ conversation.subtitle }} }</p>
+                </div>
+              } @else {
+                <span class="inbox-avatar inbox-detail-avatar"
+                  [class.inbox-avatar--community]="conversation.kind === 'community'"
+                  [class.inbox-avatar--session]="conversation.kind === 'session'" aria-hidden="true">
+                  {{ conversation.kind === 'community' ? '👥' : '⚽' }}
+                </span>
+                <div class="inbox-detail-info">
+                  <h2>{{ conversation.title }}</h2>
+                  <p><span class="inbox-detail-type">{{ kindLabel(conversation.kind) | t }}</span>
+                    @if (conversation.subtitle) { <span aria-hidden="true"> · </span>{{ conversation.subtitle }} }</p>
+                </div>
+              }
             </div>
             <div class="inbox-heading-actions">
               @if (conversation.kind === 'direct' && composerAllowed && (calls?.available$ | async)) {
@@ -490,3 +504,43 @@
     <p class="inbox-unread-note">{{ (serverSummariesAvailable ? 'inbox.unreadScope' : 'inbox.unreadOffline') | t }}</p>
   </div>
 </section>
+
+
+  @if (contactInfoConversation; as contact) {
+    <div class="inbox-contact-scrim" (click)="closeContactInfo()">
+      <section class="inbox-contact-sheet" role="dialog" aria-modal="true"
+          aria-labelledby="inbox-contact-heading" tabindex="-1"
+          (click)="$event.stopPropagation()"
+          (keydown.escape)="closeContactInfo()">
+        <header class="inbox-contact-top">
+          <button type="button" class="inbox-contact-close"
+              aria-label="Fechar informações do contacto"
+              (click)="closeContactInfo()">×</button>
+          <strong>Informações do contacto</strong>
+        </header>
+        <div class="inbox-contact-main">
+          <div class="inbox-contact-photo" aria-hidden="true">{{ contact.title.slice(0,1).toUpperCase() }}</div>
+          <h2 id="inbox-contact-heading">{{ contact.title }}</h2>
+          <p>{{ contact.subtitle }}</p>
+          <div class="inbox-contact-actions">
+            @if ((calls?.available$ | async) && composerAllowed) {
+              <button type="button" (click)="closeContactInfo(); startCall(contact,'voice')">
+                <span aria-hidden="true">☎</span> Voz
+              </button>
+              <button type="button" (click)="closeContactInfo(); startCall(contact,'video')">
+                <span aria-hidden="true">📹</span> Vídeo
+              </button>
+            }
+            <a [routerLink]="['/menu/perfis',contact.id]" (click)="closeContactInfo()">
+              <span aria-hidden="true">↗</span> Ver perfil
+            </a>
+          </div>
+        </div>
+        <div class="inbox-contact-footer">
+          <a [routerLink]="['/menu/perfis',contact.id]" (click)="closeContactInfo()">
+            Abrir perfil completo de {{ contact.title }}
+          </a>
+        </div>
+      </section>
+    </div>
+  }
