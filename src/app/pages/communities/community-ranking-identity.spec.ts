@@ -2,6 +2,8 @@ import { of, Subject, throwError } from 'rxjs';
 import { CommunitiesComponent } from './communities.component';
 import { CommunityStanding } from '../model/community-group';
 import { HistoricalPlayerCandidate } from '../../services/community-groups.service';
+import { appTranslate } from '../../i18n/i18n.service';
+import { EN } from '../../i18n/translations-en';
 
 describe('Ranking historical player self-claim', () => {
   let component: CommunitiesComponent;
@@ -52,6 +54,18 @@ describe('Ranking historical player self-claim', () => {
     component.setTab('members');
     expect(requests).toHaveBeenCalledOnceWith(9);
     expect(reloadLinks).not.toHaveBeenCalled();
+  });
+
+  it('renders translated close actions for Portuguese and English instead of a raw key', () => {
+    const language=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(appTranslate('common.close')).toBe('Fechar');
+      expect(EN['common.close']).toBe('Close');
+    } finally {
+      if(language===null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',language);
+    }
   });
 
   it('opens a read-only historical profile without requesting identity data', () => {
