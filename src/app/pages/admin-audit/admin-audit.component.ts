@@ -237,7 +237,7 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
       && value.relatedVenueName === 'Campo Sintético do Viso';
   }
 
-  /** Only two documented facilities, never a GPS candidate, duplicate or approval. */
+  /** Bounded municipal identity notes only; never GPS candidates or merge approvals. */
   gpsFacilityContextKey(value: AdminVenueFacilityContextReview | null | undefined):
       string | null {
     switch (value?.issueCode) {
