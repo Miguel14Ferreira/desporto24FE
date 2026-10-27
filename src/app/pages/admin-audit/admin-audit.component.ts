@@ -222,12 +222,20 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
    * never changes venue GPS or claims a verified public entrance.
    */
   gpsResearchMapUrl(candidate: AdminGpsResearchCandidate | null | undefined): string | null {
-    if (!candidate || candidate.precision !== 'SITE_REFERENCE_NOT_VERIFIED_ENTRANCE') return null;
+    if (!candidate || (candidate.precision !== 'SITE_REFERENCE_NOT_VERIFIED_ENTRANCE'
+        && candidate.precision !== 'MUNICIPAL_MAP_LINK_SITE_NOT_VERIFIED_ENTRANCE')) return null;
     const { latitude, longitude } = candidate;
     if (typeof latitude !== 'number' || typeof longitude !== 'number'
         || !Number.isFinite(latitude) || !Number.isFinite(longitude)
         || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
     return 'https://www.google.com/maps/search/?api=1&query=' + latitude + '%2C' + longitude;
+  }
+
+  /** Do not confuse an official site map link with an actual entrance location. */
+  gpsResearchWarningKey(candidate: AdminGpsResearchCandidate | null | undefined): string {
+    return candidate?.precision === 'MUNICIPAL_MAP_LINK_SITE_NOT_VERIFIED_ENTRANCE'
+      ? 'adminVenueGps.researchMunicipalMapWarning'
+      : 'adminVenueGps.researchWarning';
   }
 
   /** Only display a known address investigation status; no automatic correction. */

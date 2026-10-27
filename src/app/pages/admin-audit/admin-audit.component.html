@@ -358,7 +358,7 @@
                           <div class="venue-gps-research" *ngIf="gpsResearchMapUrl(item.researchCandidate) as mapUrl">
                             <strong>{{ 'adminVenueGps.researchTitle' | t }}</strong>
                             <small>{{ item.researchCandidate?.latitude }}, {{ item.researchCandidate?.longitude }}</small>
-                            <small>{{ 'adminVenueGps.researchWarning' | t }}</small>
+                            <small>{{ gpsResearchWarningKey(item.researchCandidate) | t }}</small>
                             <a [href]="mapUrl" target="_blank" rel="noopener noreferrer"
                               class="jynlo-action jynlo-action--neutral">
                               {{ 'adminVenueGps.researchMap' | t }}

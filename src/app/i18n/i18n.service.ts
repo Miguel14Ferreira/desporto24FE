@@ -4103,6 +4103,7 @@ const PT: Dictionary = {
   'adminVenueGps.openOsm': "Abrir fonte no OpenStreetMap",
   'adminVenueGps.openOfficial': "Abrir página guardada (por verificar)",
   'adminVenueGps.researchTitle': "Ponto do recinto — candidato a rever",
+  'adminVenueGps.researchMunicipalMapWarning': "O ponto apresentado consta expressamente do link “ver no mapa” da página oficial das Piscinas Municipais de Évora. É uma referência municipal ao complexo, NÃO uma entrada ou portão verificado. Não gravar GPS automaticamente; confirmar o acesso e aprovar através do circuito de revisão.",
   'adminVenueGps.researchWarning': "Referência à área do complexo. Entrada não confirmada. Requer proposta com fonte HTTPS e aprovação.",
   'adminVenueGps.researchMap': "Ver ponto candidato no mapa",
   'adminVenueGps.researchOfficial': "Fonte municipal",
