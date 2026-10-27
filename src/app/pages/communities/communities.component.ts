@@ -4364,8 +4364,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   get importDestinationSeasonId(): number | null {
     const seasons = this.competition?.seasons ?? [];
-    if (this.importSeasonId !== null &&
-        seasons.some(season => season.id === this.importSeasonId)) return this.importSeasonId;
+    // Includes a season created moments ago, before the competition refresh finishes.
+    if (this.importSeasonId !== null) return this.importSeasonId;
     // Prefer the active season for every new Excel, without changing the ranking filter.
     if (this.competition?.activeSeasonId != null &&
         seasons.some(season => season.id === this.competition?.activeSeasonId)) {
