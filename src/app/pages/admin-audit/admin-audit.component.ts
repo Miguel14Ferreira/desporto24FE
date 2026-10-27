@@ -66,10 +66,17 @@ export interface AdminVenuePossibleDuplicateReview {
   issueCode:string; relatedVenueId:number; relatedVenueName:string;
   officialSourceUrl:string; mapSourceUrl:string;
 }
+export interface AdminRodoviaCartographyReview {
+  issueCode: string;
+  municipalGuideUrl: string;
+  parkAreaUrl: string;
+  sportsBuildingUrl: string;
+}
 export interface AdminVenueFacilityContextReview {
   issueCode: string;
   officialSourceUrl: string;
   relatedSourceUrl: string;
+  cartographyReview?: AdminRodoviaCartographyReview | null;
 }
 export interface AdminVenueGpsReviewPage {
   venues: {id:number; name:string; city:string; district:string|null; address:string|null;
@@ -245,6 +252,11 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
       default:
         return null;
     }
+  }
+
+  /** The historic official guide and OSM area/building geometries are not field GPS. */
+  gpsRodoviaCartographyVisible(value: AdminRodoviaCartographyReview | null | undefined): boolean {
+    return value?.issueCode === 'ADJACENT_PARK_AND_SPORTS_BUILDING_NOT_NUMBERED_PITCH';
   }
 
   /** Optional, bounded admin-only list. No GPS is inferred or modified here. */
