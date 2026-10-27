@@ -3965,6 +3965,7 @@ const PT: Dictionary = {
   'adminVenueGps.duplicateMap': "Área desportiva no OpenStreetMap",
   'adminVenueGps.contextTitle': "Identidade e implantação do recinto — rever",
   'adminVenueGps.contextMaia': "Maia: a Câmara distingue o Polidesportivo do Paço de outras instalações de Pedrouços. Confirmar a superfície e acesso próprios antes de propor GPS.",
+  'adminVenueGps.contextBraga': "Braga: a Câmara Municipal identifica este campo pelo número dentro da Rodovia e documenta outro campo numerado na mesma morada. Confirmar qual é a superfície antes de propor GPS; não os fundir nem reutilizar um ponto genérico.",
   'adminVenueGps.contextMira': "Mira: o campo de padel do Fojo é distinto do campo de futebol 11 no mesmo complexo. Não utilizar coordenadas do campo de futebol.",
   'adminVenueGps.contextWarning': "Fontes documentais sem coordenadas para este recinto. Não é candidato GPS nem autorização para alterar morada ou fundir fichas.",
   'adminVenueGps.contextPrimary': "Fonte oficial do recinto",
