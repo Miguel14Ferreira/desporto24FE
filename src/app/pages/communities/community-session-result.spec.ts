@@ -33,7 +33,7 @@ describe('Community sessions: quick competition results', () => {
       recordedSessionResults: jasmine.createSpy('recordedSessionResults').and.returnValue(of([])),
       sessionResultRoster: jasmine.createSpy('sessionResultRoster').and.returnValue(of([
         { id: 1, username: 'ana', teamCode: 'A', attendanceStatus: 'ATTENDED' },
-        { id: 2, username: 'bea', teamCode: 'B', attendanceStatus: 'PENDING' },
+        { id: 2, username: 'bea', teamCode: 'B', attendanceStatus: 'ATTENDED' },
         { id: 3, username: 'carlos', teamCode: 'A', attendanceStatus: 'NO_SHOW' }
       ]))
     };
