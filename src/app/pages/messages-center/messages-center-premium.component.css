@@ -233,3 +233,13 @@
 }
 .inbox-message-log app-chat-reactions.inbox-reaction-under-message.is-picker-open {z-index:30;}
 .inbox-message-log {padding-bottom:48px;}
+
+/* The chat contact name is keyboard-clickable and distinct from message actions. */
+.inbox-contact-name {all:unset;display:inline-block;max-width:100%;cursor:pointer;}
+.inbox-contact-name h2 {margin:0;}
+.inbox-contact-sender {all:unset;cursor:pointer;font:inherit;font-weight:750;
+  color:#82e8d1;text-decoration:underline;text-decoration-color:transparent;
+  text-underline-offset:3px;}
+.inbox-contact-name:hover h2,.inbox-contact-sender:hover {text-decoration:underline;}
+.inbox-contact-name:focus-visible,.inbox-contact-sender:focus-visible {
+  outline:2px solid #75efd5;outline-offset:3px;border-radius:4px;}
