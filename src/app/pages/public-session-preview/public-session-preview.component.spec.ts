@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
@@ -916,9 +916,57 @@ describe('PublicSessionPreviewComponent', () => {
       expect(http.post).toHaveBeenCalledTimes(1);
       expect((http.post as jasmine.Spy).calls.mostRecent().args[0]).toContain('/guest-preview');
       expect(page.querySelector('.guest-rsvp')).toBeNull();
-      const join=page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
-      expect(new URL(join.href).pathname).toBe('/menu/events/42');
+      const join=page.querySelector('.join-panel .primary-action') as HTMLButtonElement;
+      expect(join.tagName).toBe('BUTTON');
       expect(join.textContent).toContain('Participar com a minha conta');
+      expect(fixture.componentInstance.participationReturnUrl)
+        .toBe('/sessions/42?guest=' + token);
+    });
+
+    it('only navigates to restricted details after authenticated signed registration succeeds', () => {
+      authenticationService.isLoggedIn.and.returnValue(true);
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if(url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
+        throw new Error('Unexpected '+url);
+      });
+      const page=render();
+      const navigation=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      const button=page.querySelector('.join-panel button.primary-action') as HTMLButtonElement;
+      expect(button).not.toBeNull();
+      expect(navigation).not.toHaveBeenCalled();
+      button.click();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        args=>String(args[0]).endsWith('/guest-join-account') && args[1].token===token)).toBeTrue();
+      expect(navigation).toHaveBeenCalledOnceWith(['/menu/events',42]);
+    });
+
+    it('does not redirect into a forbidden community screen if registration fails', () => {
+      authenticationService.isLoggedIn.and.returnValue(true);
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string) =>
+        url.endsWith('/guest-preview')
+          ? of({id:42,sport:'Futebol',city:'Lisboa',
+              gameDate:new Date(Date.now()+3600_000).toISOString(),
+              maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null})
+          : throwError(()=>new HttpErrorResponse({status:403})));
+      const page=render();
+      const navigation=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      (page.querySelector('.join-panel button.primary-action') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(navigation).not.toHaveBeenCalled();
+      expect(page.querySelector('[role="alert"]')?.textContent)
+        .toContain('Não foi possível confirmar a presença');
+    });
+
+    it('keeps the guest token across sign-in even without a private approval receipt', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      renderGuest();
+      expect(fixture.componentInstance.participationReturnUrl)
+        .toBe('/sessions/42?guest='+token);
     });
 
     it('keeps an approved receipt available for explicit linking after optional signup', () => {
