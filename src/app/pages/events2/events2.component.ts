@@ -17,7 +17,7 @@ import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/
 @Component({
   selector: 'app-events2',
   templateUrl: './events2.component.html',
-  styleUrls: ['./events2.component.css'],
+  styleUrls: ['./events2.component.css', './events2-create-flow.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
