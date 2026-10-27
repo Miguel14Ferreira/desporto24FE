@@ -87,6 +87,7 @@ describe('Direct calls gated by authenticated realtime and backend availability'
       {status:409,statusText:'Conflict',key:'calls.busy'},
       {status:429,statusText:'Too Many Requests',key:'calls.rateLimited'},
       {status:503,statusText:'Unavailable',key:'calls.providerUnavailable'},
+      {status:500,statusText:'Server Error',key:'calls.serverError'},
       {status:401,statusText:'Unauthorized',key:'calls.sessionExpired'},
       {status:0,statusText:'Unknown Error',key:'calls.networkError'}
     ];
