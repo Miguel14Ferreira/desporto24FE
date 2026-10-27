@@ -16,6 +16,8 @@ const errors=[];
 const CHECK_CALLS=process.env.JYNLO_VERIFY_CALLS === '1';
 const CHECK_GROUPS=process.env.JYNLO_VERIFY_GROUPS === '1';
 const CHECK_CONTACT=process.env.JYNLO_VERIFY_CONTACT === '1';
+const CHECK_PROFILE_INVITES=process.env.JYNLO_VERIFY_PROFILE_INVITES === '1';
+const profileInvitePosts=[];
 let group=null;
 const groupTexts=[];
 const groupWrites=[];
@@ -77,6 +79,24 @@ async function context(browser,username,width){
         fullName:null,profilePicUrl:null,location:'Lisboa',
         favoriteSports:'Futebol',bio:'Jogar com amigos',country:'Portugal'});
     }
+    if(CHECK_PROFILE_INVITES && method==='GET' && p.startsWith('/api/profile/')) {
+      const who=decodeURIComponent(p.slice('/api/profile/'.length));
+      return reply(route,200,{username:who,nickname:who==='bea'?'Bea':'Ana',
+        fullName:who==='bea'?'Bea Silva':'Ana Silva',profilePicUrl:null,
+        location:'Lisboa',favoriteSports:null,bio:'Jogar com amigos',
+        skillLevel:null,availability:null,age:28,country:'Portugal',
+        joinDateDisplay:'22/10/2026'});
+    }
+    if(CHECK_PROFILE_INVITES && method==='GET') {
+      if(/^\/api\/friends\/status\//.test(p))return reply(route,200,{friends:true,pendingRequest:false});
+      if(/^\/api\/blocks\/users\/[^/]+\/status$/.test(p))return reply(route,200,{blocked:false});
+      if(/^\/api\/follows\/[^/]+\/status$/.test(p))
+        return reply(route,200,{followedByMe:false,followsMe:false,followers:1,following:2});
+      if(/^\/api\/profiles\/[^/]+\/activity$/.test(p))
+        return reply(route,200,{activitiesCompleted:3,peoplePlayedWith:8,
+          sportsPractised:2,eventsCreated:1,participantsMobilized:12,
+          communitiesJoined:1,achievements:[]});
+    }
     if(method==='GET'&&p==='/api/friends/me')return reply(route,200,[
       {username:peer,nickname:peer==='bea'?'Bea':'Ana',fullName:null,
        chatBlocked:false,blockedByMe:false,profilePicUrl:null},
@@ -122,6 +142,32 @@ async function context(browser,username,width){
         createdAt:'2026-10-27T11:05:00Z'};
       groupTexts.push(msg);groupWrites.push(username+':message');
       return reply(route,200,msg);
+    }
+    if(CHECK_PROFILE_INVITES && method==='GET' && p==='/api/communities/mine') {
+      if(username!=='ana')return reply(route,200,[]);
+      const base={name:'Futebol sábado',sport:'Futebol',members:[]};
+      return reply(route,200,[{...base,id:41,myRole:'OWNER'},
+        {...base,id:42,myRole:'MEMBER'},
+        {...base,id:43,myRole:'ADMIN',members:[{username:'bea'}]}]);
+    }
+    if(CHECK_PROFILE_INVITES && method==='GET' && p==='/api/sessions/mine') {
+      if(username!=='ana')return reply(route,200,{created:[],joined:[],waitlisted:[]});
+      const base={sport:'Futsal',city:'Lisboa',gameDate:new Date(Date.now()+86400_000).toISOString(),
+        status:'OPEN',audience:'PUBLIC',privateGame:false};
+      return reply(route,200,{created:[{...base,id:7},{...base,id:8,privateGame:true}],
+        joined:[],waitlisted:[]});
+    }
+    if(CHECK_PROFILE_INVITES && method==='POST' && p==='/api/communities/41/invites') {
+      assert.equal(username,'ana');
+      assert.deepEqual(req.postDataJSON(),{username:'bea'});
+      profileInvitePosts.push('community:41:bea');
+      return reply(route,200,{id:400,communityId:41});
+    }
+    if(CHECK_PROFILE_INVITES && method==='POST' && p==='/api/sessions/7/invites') {
+      assert.equal(username,'ana');
+      assert.deepEqual(req.postDataJSON(),{username:'bea'});
+      profileInvitePosts.push('session:7:bea');
+      return reply(route,201,{id:500});
     }
     if(method==='GET'&&p==='/api/communities/mine')return reply(route,200,[]);
     if(method==='GET'&&p==='/api/sessions/mine')return reply(route,200,{created:[],joined:[],waitlisted:[]});
@@ -410,6 +456,42 @@ async function main(){
       await b.locator('.group-welcome').waitFor();
       assert.ok(!group.members.some(m=>m.username==='bea'));
       assert.deepEqual(groupWrites,['created','renamed','ana:message','invited','removed:carla','removed:bea']);
+    }
+    if(CHECK_PROFILE_INVITES){
+      await a.goto(SITE+'/menu/perfis/bea',{waitUntil:'domcontentloaded'});
+      await a.locator('.profile-detail .profile-identity h1').filter({hasText:'bea'}).waitFor({timeout:8000});
+      assert.equal(await a.locator('.profile-meta > div').count(),3,
+        'only supplied country, age and member-since fields should render');
+      await a.locator('.profile-invite-trigger').click();
+      const panel=a.locator('.profile-invite-panel');
+      await panel.waitFor();
+      await panel.locator('.profile-invite-option').first().waitFor({timeout:8000});
+      assert.equal(await panel.locator('.profile-invite-option').count(),1,
+        'only one eligible managed community may be invited');
+      assert.match(await panel.innerText(),/Futebol sábado/);
+      assert.ok(!(await panel.innerText()).includes('Membro'), 'do not expose unmanaged groups');
+      await a.screenshot({path:path.join(OUT,'premium-profile-invite-community-desktop.png')});
+      await panel.locator('.profile-invite-option button').click();
+      await panel.locator('.profile-invite-option button:disabled').first().waitFor({timeout:8000});
+      assert.equal(await panel.locator('.profile-invite-option button:disabled').count(),1);
+      await panel.locator('.profile-invite-tabs button').nth(1).click();
+      assert.equal(await panel.locator('.profile-invite-option').count(),1,
+        'private sessions must not appear in invitation chooser');
+      await a.screenshot({path:path.join(OUT,'premium-profile-invite-session-desktop.png')});
+      await panel.locator('.profile-invite-option button').click();
+      await panel.locator('.profile-invite-option button:disabled').first().waitFor();
+      assert.deepEqual(profileInvitePosts,['community:41:bea','session:7:bea']);
+      await a.locator('.profile-invite-trigger').click();
+      await panel.waitFor({state:'detached'});
+      await b.goto(SITE+'/menu/perfis/ana',{waitUntil:'domcontentloaded'});
+      await b.locator('.profile-detail').waitFor();
+      await b.locator('.profile-invite-trigger').click();
+      await b.locator('.profile-invite-panel').waitFor();
+      const box=await b.locator('.profile-detail').boundingBox();
+      assert.ok(box && box.x>=0 && box.x+box.width<=391, 'profile must fit 390px mobile');
+      await b.screenshot({path:path.join(OUT,'premium-profile-invite-mobile.png')});
+      assert.deepEqual(profileInvitePosts,['community:41:bea','session:7:bea'],
+        'no sends should happen without explicit inviter action');
     }
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');

@@ -1,6 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { CommunityGroupsService } from '../../services/community-groups.service';
+import { SessionService } from '../../services/session.service';
+import { CommunityGroup } from '../model/community-group';
+import { SessionSummary } from '../model/session-summary';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, finalize, forkJoin, of, retry, Subscription, timeout } from 'rxjs';
 
@@ -133,13 +137,112 @@ export class PerfisComponent implements OnInit, OnDestroy {
   selectedFriendshipStatus: FriendshipStatus | null = null;
   friendshipLoading = false;
   friendshipError = false;
+  invitePanelOpen = false;
+  inviteTab: 'community' | 'session' = 'community';
+  inviteLoading = false;
+  inviteBusyKey: string | null = null;
+  inviteError = '';
+  inviteSuccess = '';
+  inviteCommunities: CommunityGroup[] = [];
+  inviteSessions: SessionSummary[] = [];
+  readonly sentInvites = new Set<string>();
+  private inviteSubscription?: Subscription;
+  private inviteSendSubscription?: Subscription;
+  private inviteVersion = 0;
+
+  get availableInviteCommunities(): CommunityGroup[] {
+    const username = this.selectedProfile?.username.toLowerCase();
+    return this.inviteCommunities.filter(group =>
+      (group.myRole === 'OWNER' || group.myRole === 'ADMIN')
+      && !group.members?.some(member => member.username.toLowerCase() === username));
+  }
+
+  get availableInviteSessions(): SessionSummary[] {
+    const now = Date.now();
+    return this.inviteSessions.filter(session =>
+      !session.privateGame && session.audience !== 'COMMUNITY_ONLY'
+      && !['CANCELLED', 'COMPLETED'].includes(session.status?.toUpperCase() || '')
+      && Number.isFinite(Date.parse(session.gameDate))
+      && Date.parse(session.gameDate) > now);
+  }
+
+  toggleInvitePanel(): void {
+    if (!this.selectedProfile || this.isOwnProfile(this.selectedProfile) || this.selectedBlocked) return;
+    if (this.invitePanelOpen) { this.closeInvitePanel(); return; }
+    this.invitePanelOpen = true;
+    this.inviteTab = 'community';
+    this.inviteError = '';
+    this.inviteSuccess = '';
+    this.inviteLoading = true;
+    this.inviteCommunities = [];
+    this.inviteSessions = [];
+    const version = ++this.inviteVersion;
+    this.inviteSubscription?.unsubscribe();
+    this.inviteSubscription = forkJoin({
+      communities: this.communityGroups.mine().pipe(timeout(12000),catchError(() => of(null))),
+      sessions: this.sessionService.mine().pipe(timeout(12000),catchError(() => of(null)))
+    }).subscribe(({ communities, sessions }) => {
+      if (version !== this.inviteVersion || !this.invitePanelOpen) return;
+      this.inviteLoading = false;
+      this.inviteCommunities = communities ?? [];
+      this.inviteSessions = sessions?.created ?? [];
+      if (!communities && !sessions) this.inviteError = t('profileInvite.loadError');
+    });
+  }
+
+  closeInvitePanel(): void {
+    ++this.inviteVersion;
+    this.inviteSubscription?.unsubscribe();
+    this.inviteSendSubscription?.unsubscribe();
+    this.invitePanelOpen = false;
+    this.inviteLoading = false;
+    this.inviteBusyKey = null;
+    this.inviteError = '';
+    this.inviteSuccess = '';
+    this.inviteCommunities = [];
+    this.inviteSessions = [];
+  }
+
+  sendProfileInvite(kind: 'community' | 'session', id: number): void {
+    const person = this.selectedProfile;
+    if (!person || this.isOwnProfile(person) || this.selectedBlocked || this.inviteBusyKey
+        || !this.invitePanelOpen || !Number.isSafeInteger(id) || id <= 0) return;
+    const eligible = kind === 'community'
+      ? this.availableInviteCommunities.some(item => item.id === id)
+      : this.availableInviteSessions.some(item => item.id === id);
+    const key = kind + ':' + id + ':' + person.username.toLowerCase();
+    if (!eligible || this.sentInvites.has(key)) return;
+    const version = this.inviteVersion;
+    this.inviteBusyKey = key;
+    this.inviteError = '';
+    this.inviteSuccess = '';
+    const request = kind === 'community'
+      ? this.communityGroups.invite(id, person.username)
+      : this.sessionService.invitePlayer(id, person.username);
+    this.inviteSendSubscription = request.pipe(timeout(12000)).subscribe({
+      next: () => {
+        if (version !== this.inviteVersion || this.selectedProfile?.username !== person.username) return;
+        this.sentInvites.add(key);
+        this.inviteBusyKey = null;
+        this.inviteSuccess = t('profileInvite.sent');
+      },
+      error: () => {
+        if (version !== this.inviteVersion || this.selectedProfile?.username !== person.username) return;
+        this.inviteBusyKey = null;
+        this.inviteError = t('profileInvite.sendError');
+      }
+    });
+  }
+
 
   constructor(
     private communityService: CommunityService,
     private authenticationService: AuthenticationService,
     private reliabilityService: ReliabilityService,
     private socialGraphService: SocialGraphService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private communityGroups: CommunityGroupsService,
+    private sessionService: SessionService
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
@@ -188,6 +291,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.profileSubscription?.unsubscribe();
     this.detailSubscription?.unsubscribe();
     this.friendshipSubscription?.unsubscribe();
+    this.closeInvitePanel();
   }
 
   private ageFromQuery(value: string | null): number | null {
@@ -333,6 +437,8 @@ export class PerfisComponent implements OnInit, OnDestroy {
   }
 
   private showProfile(profile: CommunityProfile): void {
+    this.closeInvitePanel();
+    this.sentInvites.clear();
     this.selectedProfile = profile;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
@@ -368,6 +474,8 @@ export class PerfisComponent implements OnInit, OnDestroy {
   }
 
   closeProfile(): void {
+    this.closeInvitePanel();
+    this.sentInvites.clear();
     this.selectedProfile = undefined;
     this.selectedFriendshipStatus = null;
     this.friendshipLoading = false;
@@ -411,6 +519,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
             this.pendingFriendRequests.delete(profile.username);
             this.reportOpen = false;
             this.reportReason = '';
+            this.closeInvitePanel();
           }
 
           if (!status.blocked) this.loadFriendshipStatus(profile.username);
