@@ -870,13 +870,15 @@ describe('Events2Component', () => {
     expect(component.gpsAccuracyMeters).toBe(24);
   });
 
-  it('fills locality and street using a GPS-triggered reverse lookup, preserving the exact pin', () => {
+  it('fills locality and street using a GPS-triggered reverse lookup, preserving the exact pin', fakeAsync(() => {
     venueService.reverseLocation.and.returnValue(of({
       city: 'Agualva-Cacém', address: 'Rua de São João', distanceMeters: 24,
       provider: 'My Geocode'
     }));
     component.chooseLocationMethod('gps');
     component.applyCurrentPosition(38.7655,-9.2902,79);
+    fixture.detectChanges();
+    tick();
     fixture.detectChanges();
     expect(venueService.reverseLocation).toHaveBeenCalledWith(38.7655,-9.2902,79);
     expect(component.city).toBe('Agualva-Cacém');
@@ -888,7 +890,7 @@ describe('Events2Component', () => {
     const roadField = fixture.nativeElement.querySelector('input[name="address"]') as HTMLInputElement;
     expect(cityField.value).toBe('Agualva-Cacém');
     expect(roadField.value).toBe('Rua de São João');
-  });
+  }));
 
   it('cannot overwrite manual edits or a changed GPS point with a delayed reverse result', () => {
     const first = new Subject<{city:string|null;address:string|null;distanceMeters:number|null;provider:string}>();
