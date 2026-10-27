@@ -138,6 +138,28 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     }
   });
 
+  it('displays the municipality-linked Évora pools point as site-only, never a verified entrance', () => {
+    const candidate = {
+      latitude: 38.573234,
+      longitude: -7.928876,
+      officialSourceUrl: 'https://www.cm-evora.pt/municipe/equipamentos/equipamentos-desportivos/piscinas-municipais/contactos-e-localizacao-das-piscinas-municipais/',
+      secondarySourceUrl: 'https://www.outdooractive.pt/',
+      precision: 'MUNICIPAL_MAP_LINK_SITE_NOT_VERIFIED_ENTRANCE'
+    };
+    expect(component.gpsResearchMapUrl(candidate))
+      .toBe('https://www.google.com/maps/search/?api=1&query=38.573234%2C-7.928876');
+    expect(component.gpsResearchWarningKey(candidate))
+      .toBe('adminVenueGps.researchMunicipalMapWarning');
+    expect(component.gpsResearchWarningKey({...candidate, precision: 'SITE_REFERENCE_NOT_VERIFIED_ENTRANCE'}))
+      .toBe('adminVenueGps.researchWarning');
+    expect(component.gpsResearchMapUrl({...candidate, latitude: Infinity})).toBeNull();
+    expect(component.gpsResearchMapUrl({...candidate, precision: 'VERIFIED_ENTRANCE'})).toBeNull();
+    expect(component.gpsResearchMapUrl({...candidate, longitude: 181})).toBeNull();
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+    expect(component.gpsOfficialLink('http://www.google.com/maps/place/38.573234, -7.928876'))
+      .toBeNull();
+  });
+
   it('shows only recognized address discrepancies and never treats office address as venue GPS', () => {
     const review = {
       issueCode: 'ADMIN_OFFICE_ADDRESS_VS_VENUE_LOCATION_REVIEW',
