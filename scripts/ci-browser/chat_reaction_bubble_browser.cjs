@@ -13,6 +13,9 @@ fs.mkdirSync(OUT,{recursive:true});
 const saved=new Map([['ana','👍']]);
 const writes=[];
 const errors=[];
+const CHECK_CALLS=process.env.JYNLO_VERIFY_CALLS === '1';
+const callActions=[];
+const callSockets=new Map();
 const requests=[];
 function token(user){
   const encode=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
@@ -35,8 +38,12 @@ async function context(browser,username,width){
   await ctx.addInitScript(t=>localStorage.setItem('t',t),token(username));
   await ctx.routeWebSocket('**/ws/chat',sock=>{
     sock.onMessage(message=>{
-      try{if(JSON.parse(String(message)).type==='AUTH')
-        sock.send(JSON.stringify({type:'AUTHENTICATED',username}));}catch{}
+      try {
+        if(JSON.parse(String(message)).type==='AUTH'){
+          callSockets.set(username,sock);
+          sock.send(JSON.stringify({type:'AUTHENTICATED',username}));
+        }
+      }catch{}
     });
   });
   await ctx.route('**/*',async route=>{
@@ -45,6 +52,16 @@ async function context(browser,username,width){
     if(url.origin!=='https://api.d24sports.com' && url.origin!=='http://localhost:8080')
       return route.abort('blockedbyclient');
     const p=url.pathname,peer=username==='ana'?'bea':'ana';
+    if(CHECK_CALLS && method==='GET' && p==='/api/calls/direct/availability')
+      return reply(route,200,{enabled:true});
+    if(CHECK_CALLS && method==='POST' && p===`/api/calls/direct/${peer}`){
+      callActions.push(username+':start:'+req.postDataJSON().media);
+      return reply(route,409,{message:'Synthetic busy call'});
+    }
+    if(CHECK_CALLS && method==='POST' && /^\/api\/calls\/direct\/[\w-]+\/decline$/.test(p)){
+      callActions.push(username+':decline');
+      return reply(route,200,{});
+    }
     requests.push(username+':'+method+' '+p+(url.search||''));
     if(method==='OPTIONS')return route.fulfill({status:204,headers:{
       'access-control-allow-origin':'*','access-control-allow-headers':'*',
@@ -232,6 +249,30 @@ async function main(){
       undefined, {timeout:7000});
     assert.equal((await a.locator('.reaction-count').first().textContent()).trim(),'👍');
     await a.screenshot({path:path.join(OUT,'desktop-after-explicit-removal.png')});
+    if(CHECK_CALLS){
+      // An incoming call is rendered in the global overlay even when user
+      // is already in a different chat; no LiveKit credentials or microphones.
+      const incoming={type:'DIRECT_CALL_EVENT',call:{
+        callId:'139c55a0-6b16-4de2-b055-d9940fddce5a',
+        caller:'ana',peer:'bea',actor:'ana',media:'video',status:'RINGING',
+        expiresAt:new Date(Date.now()+60000).toISOString()
+      }};
+      assert.ok(callSockets.get('bea'),'Bea authenticated websocket');
+      callSockets.get('bea').send(JSON.stringify(incoming));
+      await b.locator('.call-panel').waitFor({timeout:7000});
+      assert.match(await b.locator('.call-panel').innerText(),/Videochamada/);
+      await b.screenshot({path:path.join(OUT,'incoming-video-call-mock.png')});
+      await b.locator('.call-panel .call-decline').click();
+      assert.deepEqual(callActions,['bea:decline']);
+      await b.locator('.call-panel').waitFor({state:'detached'});
+      await a.locator('.inbox-call-trigger').first().waitFor({timeout:7000});
+      await a.locator('.inbox-call-trigger').first().click();
+      await a.locator('.call-panel').waitFor();
+      assert.match(await a.locator('.call-panel').innerText(),/Não foi possível iniciar/);
+      assert.deepEqual(callActions,['bea:decline','ana:start:voice']);
+      await a.locator('.call-panel .call-decline').click();
+      await a.locator('.call-panel').waitFor({state:'detached'});
+    }
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');
     process.stdout.write('PASS: tapping own DISPLAYED emoji directly removes only own reaction, without modal; independent people details remain, replacement, counts, desktop/mobile.\\n');

@@ -101,7 +101,12 @@
 .inbox-detail-heading p {font-size:.76rem;color:#afcdd4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .inbox-detail-type {font-size:inherit;letter-spacing:normal;text-transform:none;
   font-weight:750;color:var(--inbox-accent);}
-.inbox-heading-actions {flex:0 0 auto;display:flex;align-items:center;}
+.inbox-heading-actions {flex:0 0 auto;display:flex;align-items:center;gap:6px;}
+.inbox-call-trigger {display:grid;place-items:center;width:41px;height:41px;
+  border:1px solid #376e77;background:rgba(15,66,76,.55);border-radius:13px;
+  color:#89e7d3;cursor:pointer;font:inherit;font-size:1.28rem;}
+.inbox-call-trigger:hover {background:#1c625c;border-color:#66dfc7;}
+.inbox-call-trigger:focus-visible {outline:2px solid #8af6da;outline-offset:2px;}
 .inbox-search-toggle {display:grid;place-items:center;width:41px;height:41px;
   border:1px solid transparent;background:transparent;border-radius:13px;
   color:#c5e1eb;padding:0;}

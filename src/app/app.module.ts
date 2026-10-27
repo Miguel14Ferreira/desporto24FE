@@ -25,6 +25,7 @@ import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { TranslatePipe } from './i18n/translate.pipe';
+import { DirectCallOverlayComponent } from './shared/direct-call-overlay.component';
 import { LegalPageComponent } from './pages/legal-page/legal-page.component';
 
 @NgModule({ declarations: [
@@ -54,5 +55,6 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         FormsModule,
         ReactiveFormsModule,
         BrowserAnimationsModule,
-        TranslatePipe], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
+        TranslatePipe,
+        DirectCallOverlayComponent], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }
