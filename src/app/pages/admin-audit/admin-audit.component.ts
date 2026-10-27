@@ -72,11 +72,17 @@ export interface AdminRodoviaCartographyReview {
   parkAreaUrl: string;
   sportsBuildingUrl: string;
 }
+export interface AdminRodoviaNumberingPlanReview {
+  issueCode: string;
+  signageGalleryUrl: string;
+  fieldOneScheduleUrl: string | null;
+}
 export interface AdminVenueFacilityContextReview {
   issueCode: string;
   officialSourceUrl: string;
   relatedSourceUrl: string;
   cartographyReview?: AdminRodoviaCartographyReview | null;
+  numberingPlanReview?: AdminRodoviaNumberingPlanReview | null;
 }
 export interface AdminVenueGpsReviewPage {
   venues: {id:number; name:string; city:string; district:string|null; address:string|null;
@@ -257,6 +263,11 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   /** The historic official guide and OSM area/building geometries are not field GPS. */
   gpsRodoviaCartographyVisible(value: AdminRodoviaCartographyReview | null | undefined): boolean {
     return value?.issueCode === 'ADJACENT_PARK_AND_SPORTS_BUILDING_NOT_NUMBERED_PITCH';
+  }
+
+  /** On-site numbered plan is documentary orientation, never a georeferenced point. */
+  gpsRodoviaNumberingVisible(value: AdminRodoviaNumberingPlanReview | null | undefined): boolean {
+    return value?.issueCode === 'NUMBERED_SIGN_SCHEMATIC_WITHOUT_GEOREFERENCE';
   }
 
   /** Optional, bounded admin-only list. No GPS is inferred or modified here. */

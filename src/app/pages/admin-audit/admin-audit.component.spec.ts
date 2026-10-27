@@ -254,6 +254,23 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.gpsOfficialLink('http://mapcarta.com/pt/W884706818')).toBeNull();
   });
 
+  it('shows a numbered Rodovia sign as evidence, not coordinates, and federation only for field one', () => {
+    const numbering = {
+      issueCode: 'NUMBERED_SIGN_SCHEMATIC_WITHOUT_GEOREFERENCE',
+      signageGalleryUrl: 'https://fr.tripadvisor.ch/Attraction_Review-g189171-d19701352-Reviews-Parque_Desportivo_da_Rodovia-Braga_Braga_District_Northern_Portugal.html',
+      fieldOneScheduleUrl: 'https://afbraga.fpf.pt/DesktopModules/InstitutionalDocuments/DownloadFiles.ashx?IdDoc=184789'
+    };
+    expect(component.gpsRodoviaNumberingVisible(numbering)).toBeTrue();
+    expect(component.gpsOfficialLink(numbering.signageGalleryUrl)).toBe(numbering.signageGalleryUrl);
+    expect(component.gpsOfficialLink(numbering.fieldOneScheduleUrl)).toBe(numbering.fieldOneScheduleUrl);
+    expect(component.gpsRodoviaNumberingVisible({...numbering, issueCode: 'GPS_APPROVED'}))
+      .toBeFalse();
+    expect(component.gpsRodoviaNumberingVisible(null)).toBeFalse();
+    expect(component.gpsOfficialLink('javascript:alert(1)')).toBeNull();
+    expect(component.gpsOfficialLink('http://afbraga.fpf.pt/')).toBeNull();
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],
