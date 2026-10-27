@@ -4096,6 +4096,7 @@ export const EN: Record<string, string> = {
   'adminVenueGps.openOsm': "Open source on OpenStreetMap",
   'adminVenueGps.openOfficial': "Open saved page (unverified)",
   'adminVenueGps.researchTitle': "Venue site point — review candidate",
+  'adminVenueGps.researchMunicipalMapWarning': "These coordinates appear explicitly in the “view on map” link on Évora municipality's official swimming pools page. This is an official complex/site reference, NOT a verified entrance or gate. Do not save GPS automatically; check the access point and use the moderated review flow.",
   'adminVenueGps.researchWarning': "Site-level reference only. Entrance unverified. HTTPS source, proposal and administrator approval required.",
   'adminVenueGps.researchMap': "View candidate point on map",
   'adminVenueGps.researchOfficial': "Municipal source",
