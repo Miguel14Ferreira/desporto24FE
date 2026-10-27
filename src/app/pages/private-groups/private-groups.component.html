@@ -133,39 +133,84 @@
    </div>
  }
  @if (showCreate || showAdd) {
-   <div class="group-modal-backdrop" (click)="showCreate=false;showAdd=false"
-       (keydown.escape)="showCreate=false;showAdd=false">
-     <section class="group-modal" role="dialog" aria-modal="true"
-        [attr.aria-label]="(showAdd ? 'groups.addMembers' : 'groups.create') | t"
-        (click)="$event.stopPropagation()" (keydown.escape)="showCreate=false;showAdd=false">
-       <header>
-         <h2>{{ (showAdd ? 'groups.addMembers' : 'groups.create') | t }}</h2>
-         <button type="button" [attr.aria-label]="'common.close' | t"
-           (click)="showCreate=false;showAdd=false">×</button>
+   <div class="group-modal-backdrop" (click)="closeInviteDialog()"
+       (keydown.escape)="closeInviteDialog()">
+     <section class="group-modal group-invite-modal" role="dialog" aria-modal="true"
+        aria-labelledby="group-invite-title"
+        (click)="$event.stopPropagation()" (keydown.escape)="closeInviteDialog()">
+       <header class="group-invite-heading">
+         <div class="group-invite-heading-copy">
+           <span class="group-invite-kicker">{{ 'groups.inviteKicker' | t }}</span>
+           <h2 id="group-invite-title">{{ (showAdd ? 'groups.addMembers' : 'groups.create') | t }}</h2>
+           <p>{{ (showAdd ? 'groups.addMembersDescription' : 'groups.createDescription') | t }}</p>
+         </div>
+         <button type="button" class="group-modal-close" [attr.aria-label]="'common.close' | t"
+           [disabled]="busy" (click)="closeInviteDialog()">×</button>
        </header>
+
        @if (showCreate) {
-         <label>{{ 'groups.name' | t }}
-           <input type="text" maxlength="90" [(ngModel)]="title" [ngModelOptions]="{standalone:true}"
-             [placeholder]="'groups.namePlaceholder' | t">
-         </label>
+         <div class="group-invite-name-section">
+           <label for="group-invite-name">{{ 'groups.name' | t }}</label>
+           <input id="group-invite-name" type="text" maxlength="90"
+             [(ngModel)]="title" [ngModelOptions]="{standalone:true}"
+             [placeholder]="'groups.namePlaceholder' | t" [disabled]="busy">
+         </div>
        }
-       <p class="group-modal-help">{{ 'groups.selectFriends' | t }}</p>
-       <div class="group-friend-options">
-         @for(friend of invitedFriends; track friend.username){
-           <label class="group-friend">
+
+       <div class="group-invite-friends-head">
+         <div>
+           <strong>{{ 'groups.selectFriends' | t }}</strong>
+           <span>{{ 'groups.selectedFriends' | t:{ count: selectedNames.size } }}</span>
+         </div>
+       </div>
+
+       <div class="group-friend-search-wrap">
+         <label for="group-friend-search">{{ 'groups.searchFriends' | t }}</label>
+         <div class="group-friend-search-field">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+             <circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path>
+           </svg>
+           <input id="group-friend-search" type="search"
+             [(ngModel)]="friendSearch" [ngModelOptions]="{standalone:true}"
+             [placeholder]="'groups.searchFriendsPlaceholder' | t"
+             [disabled]="busy" autocomplete="off">
+           @if (friendSearch) {
+             <button type="button" class="group-friend-search-clear"
+               [disabled]="busy" [attr.aria-label]="'groups.clearSearch' | t"
+               (click)="clearFriendSearch()">×</button>
+           }
+         </div>
+       </div>
+
+       <div class="group-friend-options" role="group" [attr.aria-label]="'groups.selectFriends' | t">
+         @for (friend of filteredInviteFriends; track friend.username) {
+           <label class="group-friend" [class.is-selected]="selectedNames.has(friend.username.toLowerCase())">
+             <span class="group-friend-avatar" aria-hidden="true">
+               @if (friend.profilePicUrl) {
+                 <img [src]="friend.profilePicUrl" alt="" loading="lazy">
+               } @else {
+                 {{ (friend.nickname || friend.fullName || friend.username).slice(0,1).toUpperCase() }}
+               }
+             </span>
+             <span class="group-friend-details">
+               <strong>{{ friend.nickname || friend.fullName || friend.username }}</strong>
+               <small>@{{ friend.username }}</small>
+             </span>
              <input type="checkbox" [checked]="selectedNames.has(friend.username.toLowerCase())"
-                (change)="toggle(friend.username)">
-             <span>{{ friend.nickname || friend.fullName || friend.username }}</span>
-             <small>@{{ friend.username }}</small>
+                [disabled]="busy" (change)="toggle(friend.username)">
            </label>
          } @empty {
-           <p>{{ 'groups.noFriends' | t }}</p>
+           <p class="group-invite-empty" role="status">
+             {{ (invitedFriends.length ? 'groups.noSearchResults' : 'groups.noFriends') | t }}
+           </p>
          }
        </div>
-       @if(groupError){<p class="group-error" role="alert">{{groupError}}</p>}
-       <footer>
-         <button type="button" class="group-cancel"
-             (click)="showCreate=false;showAdd=false">{{ 'common.cancel' | t }}</button>
+
+       @if (groupError) { <p class="group-error" role="alert">{{ groupError }}</p> }
+       <footer class="group-invite-actions">
+         <button type="button" class="group-cancel" [disabled]="busy"
+             (click)="closeInviteDialog()">{{ 'common.cancel' | t }}</button>
          <button type="button" class="group-submit"
              [disabled]="busy || !selectedNames.size || (showCreate && (title.trim().length<2 || title.trim().length>90))"
              (click)="showCreate ? create() : add()">
