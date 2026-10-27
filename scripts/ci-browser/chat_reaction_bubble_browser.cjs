@@ -13,6 +13,7 @@ fs.mkdirSync(OUT,{recursive:true});
 const saved=new Map([['ana','👍']]);
 const writes=[];
 const errors=[];
+const requests=[];
 function token(user){
   const encode=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
   return [encode({alg:'none',typ:'JWT'}),encode({
@@ -44,6 +45,7 @@ async function context(browser,username,width){
     if(url.origin!=='https://api.d24sports.com' && url.origin!=='http://localhost:8080')
       return route.abort('blockedbyclient');
     const p=url.pathname,peer=username==='ana'?'bea':'ana';
+    requests.push(username+':'+method+' '+p+(url.search||''));
     if(method==='OPTIONS')return route.fulfill({status:204,headers:{
       'access-control-allow-origin':'*','access-control-allow-headers':'*',
       'access-control-allow-methods':'GET,POST,PUT,DELETE,OPTIONS'}});
@@ -101,7 +103,19 @@ async function assertClickable(page,kind,name){
   const bubble=page.locator(kind==='inbox'?'.inbox-bubble[data-message-id="41"]':'.message').first();
   const shelf=page.locator(kind==='inbox'?'app-chat-reactions.inbox-reaction-under-message':'app-chat-reactions.direct-reaction-under-message').first();
   await bubble.waitFor();
-  await shelf.locator('.reaction-count').waitFor();
+  try {
+    await shelf.locator('.reaction-count').waitFor({timeout:7000});
+  } catch(e) {
+    console.error('DIAGNOSTIC',JSON.stringify({
+      kind,name,requests:requests.slice(-32),errors,
+      bubbles:await page.locator('.inbox-bubble').count(),
+      shelves:await page.locator('app-chat-reactions').count(),
+      shelfHtml:await shelf.evaluate(el=>el.outerHTML).catch(()=>null),
+      body:((await page.locator('body').innerText().catch(()=>''))||'').slice(-700)
+    }));
+    await page.screenshot({path:path.join(OUT,name+'-diagnostic.png')});
+    throw e;
+  }
   const b=await bubble.boundingBox(), c=await shelf.locator('.reaction-count').boundingBox();
   assert.ok(b&&c,'reaction and message are visible');
   // THE EXACT REPORTED REGRESSION: the badge must be below, not across the timestamp.
