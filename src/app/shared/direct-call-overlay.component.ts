@@ -19,6 +19,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
           <div class="call-info">
             <span class="call-avatar" aria-hidden="true">{{ call.peer.slice(0,1).toUpperCase() }}</span>
             <h2>{{ call.peer }}</h2>
+            <p class="call-media-type">{{ (call.media === 'video' ? 'calls.video' : 'calls.voice') | t }}</p>
             <p role="status">{{ (call.phase === 'incoming' ? 'calls.incoming' :
               call.phase === 'dialing' ? 'calls.ringing' :
               call.phase === 'connecting' ? 'calls.connecting' :
@@ -75,6 +76,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
       border-radius:50%;background:#27615d;color:#bdf9eb;font-size:2rem;font-weight:700;}
     .call-info h2 {font-size:1.35rem;margin:0 0 8px;overflow-wrap:anywhere;}
     .call-info p {color:#accfd0;font-size:.86rem;margin:0;}
+    .call-media-type {color:#7ce2c6!important;font-weight:700;margin:0 0 5px!important;}
     .call-videos {position:relative;min-height:210px;max-height:360px;
       overflow:hidden;background:#081c28;border-radius:17px;margin-bottom:20px;}
     .call-videos video:first-child {display:block;width:100%;height:300px;object-fit:cover;}
