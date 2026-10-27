@@ -472,7 +472,7 @@ async function main(){
       assert.ok(!(await panel.innerText()).includes('Membro'), 'do not expose unmanaged groups');
       await a.screenshot({path:path.join(OUT,'premium-profile-invite-community-desktop.png')});
       await panel.locator('.profile-invite-option button').click();
-      await panel.locator('.profile-invite-option button').first().waitFor();
+      await panel.locator('.profile-invite-option button:disabled').first().waitFor({timeout:8000});
       assert.equal(await panel.locator('.profile-invite-option button:disabled').count(),1);
       await panel.locator('.profile-invite-tabs button').nth(1).click();
       assert.equal(await panel.locator('.profile-invite-option').count(),1,
