@@ -25,7 +25,8 @@
     "pretty-bytes": "^6.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.1"
+    "zone.js": "~0.15.1",
+    "livekit-client": "^2.23.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^22.2.0",
@@ -39,7 +40,9 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "@livekit/throws-transformer": "^0.1.8",
+    "@types/sdp-transform": "^3.0.0"
   },
   "packageManager": "npm@10.9.9",
   "overrides": {
