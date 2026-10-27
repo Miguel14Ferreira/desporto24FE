@@ -234,6 +234,26 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.gpsOfficialLink('http://www.cm-braga.pt/pt/')).toBeNull();
   });
 
+  it('treats Rodovia municipal map and OSM area/building as sources, never numbered-field GPS', () => {
+    const map = {
+      issueCode: 'ADJACENT_PARK_AND_SPORTS_BUILDING_NOT_NUMBERED_PITCH',
+      municipalGuideUrl: 'https://juventude.cm-braga.pt/wp-content/uploads/2023/06/Roteiro-Desportivo-e-Lazer-2020.pdf',
+      parkAreaUrl: 'https://mapcarta.com/pt/W106454979',
+      sportsBuildingUrl: 'https://mapcarta.com/pt/W884706818'
+    };
+    expect(component.gpsRodoviaCartographyVisible(map)).toBeTrue();
+    expect(component.gpsOfficialLink(map.municipalGuideUrl)).toBe(map.municipalGuideUrl);
+    expect(component.gpsOfficialLink(map.parkAreaUrl)).toBe(map.parkAreaUrl);
+    expect(component.gpsOfficialLink(map.sportsBuildingUrl)).toBe(map.sportsBuildingUrl);
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+    expect(component.gpsRodoviaCartographyVisible({...map, issueCode: 'COORDINATES_VERIFIED'}))
+      .toBeFalse();
+    expect(component.gpsRodoviaCartographyVisible(null)).toBeFalse();
+    expect(component.gpsRodoviaCartographyVisible(undefined)).toBeFalse();
+    expect(component.gpsOfficialLink('javascript:alert(1)')).toBeNull();
+    expect(component.gpsOfficialLink('http://mapcarta.com/pt/W884706818')).toBeNull();
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],
