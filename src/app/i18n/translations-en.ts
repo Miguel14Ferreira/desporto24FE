@@ -3778,7 +3778,7 @@ export const EN: Record<string, string> = {
   'profileInvite.noCommunities': 'You do not manage any communities this person can be invited to.',
   'profileInvite.noSessions': 'You do not have any upcoming public sessions available for invitation.',
   'profileInvite.about': 'About the player',
-  'profile.contactInfo': 'Contact information',
+  'profile.contactInfo': 'Profile information',
   'profile.openFullProfile': 'View full profile',
   'groups.title': 'Group conversations',
   'groups.subtitle': 'Chat with friends in your own private space.',
