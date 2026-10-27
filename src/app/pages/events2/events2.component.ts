@@ -252,7 +252,7 @@ export class Events2Component implements OnInit, OnDestroy {
 
     if (this.sportSelected) this.loadVenues();
 
-    if (params.get('intent') === 'findPlayers') this.creationMode = 'COMPLETE';
+    this.creationMode = params.get('intent') === 'findPlayers' ? 'COMPLETE' : 'START';
 
     if (!(Number.isFinite(communityId) && communityId > 0)) {
       this.communitiesLoading = true;
