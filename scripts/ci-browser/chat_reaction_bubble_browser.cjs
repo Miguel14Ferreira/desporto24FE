@@ -83,7 +83,7 @@ async function context(browser,username,width){
         profilePicUrl:null,emoji,mine:person===username
       })));
     }
-    const mutation=new RegExp('^/api/messages/reactions/direct/'+peer+'/([0-9]+)
+    const mutation=new RegExp('^/api/messages/reactions/direct/'+peer+'/([0-9]+)$').exec(p);
     if(mutation&&method==='PUT'){
       const emoji=req.postDataJSON().emoji;
       assert.ok(['👍','❤️','😂','🎉','👏','🔥'].includes(emoji),'supported emoji');
