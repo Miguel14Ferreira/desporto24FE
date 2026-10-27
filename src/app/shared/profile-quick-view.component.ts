@@ -109,7 +109,7 @@ export class ProfileQuickViewComponent implements OnDestroy {
  initials(p:CommunityProfile):string{
    return (p.nickname||p.fullName||p.username||'?').trim().slice(0,1).toUpperCase();
  }
- trapFocus(event:KeyboardEvent):void{
+ trapFocus(event:Event):void{
    const root=(event.currentTarget as HTMLElement);
    const els=Array.from(root.querySelectorAll<HTMLElement>('button:not(:disabled),a[href]'));
    if(!els.length)return;
