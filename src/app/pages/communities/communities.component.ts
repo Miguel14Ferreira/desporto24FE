@@ -756,6 +756,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   historicalClaimsError = '';
   historicalReleaseId: number | null = null;
   rankingHistoricalRow?: CommunityStanding;
+  /** Stats belong to the historical player, not to an account. Claiming is optional. */
+  rankingHistoricalClaimExpanded = false;
   rankingHistoricalCandidate?: HistoricalPlayerCandidate;
   rankingHistoricalLoading = false;
   rankingHistoricalSaving = false;
@@ -2158,15 +2160,24 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   /**
-   * The public ranking can display an imported player without an account.
-   * Recheck the server's candidate list before offering the self-claim, rather
-   * than trusting a name or an old browser-side identity cache.
+   * Historical ranking statistics are always available to view, even when the
+   * player has no account or the viewer is not a community member.
+   * Claim eligibility is checked separately and only after an explicit request.
    */
   openRankingHistoricalPlayer(row: CommunityStanding): void {
     if (!this.selected || row.username || !row.fullName?.trim()) return;
     this.closeRankingHistoricalDialog();
     this.rankingHistoricalSuccess = '';
     this.rankingHistoricalRow = row;
+  }
+
+  startRankingHistoricalClaim(): void {
+    const row = this.rankingHistoricalRow;
+    if (!this.selected || !row || row.username || this.rankingHistoricalSaving
+        || this.rankingHistoricalLoading) return;
+    this.rankingHistoricalClaimExpanded = true;
+    this.rankingHistoricalCandidate = undefined;
+    this.rankingHistoricalAcknowledged = false;
     this.rankingHistoricalError = '';
     if (!this.selected.myRole) {
       this.rankingHistoricalError = t('communities.identity.claimMembersOnly');
@@ -2184,7 +2195,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       .subscribe({
         next: candidates => {
           if (this.rankingHistoricalRequestVersion !== requestVersion ||
-              this.selected?.id !== communityId) return;
+              this.selected?.id !== communityId || this.rankingHistoricalRow !== row) return;
           const name = row.fullName!.trim().normalize('NFC').toLocaleLowerCase();
           const matching = candidates.filter(candidate =>
             candidate.historicalName.trim().normalize('NFC').toLocaleLowerCase() === name);
@@ -2196,7 +2207,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         },
         error: () => {
           if (this.rankingHistoricalRequestVersion === requestVersion &&
-              this.selected?.id === communityId) {
+              this.selected?.id === communityId && this.rankingHistoricalRow === row) {
             this.rankingHistoricalError = t('communities.identity.loadError');
           }
         }
@@ -2207,6 +2218,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (this.rankingHistoricalSaving) return;
     this.rankingHistoricalRequestVersion = (this.rankingHistoricalRequestVersion || 0) + 1;
     this.rankingHistoricalRow = undefined;
+    this.rankingHistoricalClaimExpanded = false;
     this.rankingHistoricalCandidate = undefined;
     this.rankingHistoricalLoading = false;
     this.rankingHistoricalAcknowledged = false;
@@ -2214,7 +2226,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   confirmRankingHistoricalClaim(): void {
-    if (!this.selected?.myRole || !this.rankingHistoricalCandidate ||
+    if (!this.selected?.myRole || !this.rankingHistoricalClaimExpanded ||
+        !this.rankingHistoricalRow || !this.rankingHistoricalCandidate ||
         !this.rankingHistoricalAcknowledged || this.rankingHistoricalSaving) return;
     const communityId = this.selected.id;
     const playerId = this.rankingHistoricalCandidate.playerId;
