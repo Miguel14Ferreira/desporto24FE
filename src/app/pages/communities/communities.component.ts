@@ -1462,6 +1462,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   roundDeleteConfirmId?: number;
 
   selectedSeasonId: number | null = null;
+  // Import destination is independent from the ranking season filter.
+  importSeasonId: number | null = null;
   seasonName = '';
   seasonStartsAt = '';
   seasonSaving = false;
@@ -2038,6 +2040,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.racketMatchFormat = 'SINGLES';
         this.racketSetScores = [{sideA: null,sideB: null},{sideA: null,sideB: null}];
         this.selectedSeasonId = null;
+        this.importSeasonId = null;
+        this.importFile = undefined;
+        this.importFileName = '';
+        this.importPreview = undefined;
+        this.resetImportAfterFile();
         this.closeSeasonConfirming = false;
         this.prepareRoundEntries(full);
         this.archiveSummaries = [];
@@ -3831,6 +3838,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.importResult = undefined;
   }
 
+  startNewHistoricalImport(): void {
+    // The successful summary remains visible until the user explicitly starts a new import.
+    // The file input is recreated by the template when importResult is cleared.
+    this.importMode = 'ROUNDS';
+    this.importSeasonId = null;
+    this.importFile = undefined;
+    this.importFileName = '';
+    this.importFileError = '';
+    this.importPreview = undefined;
+    this.resetImportAfterFile();
+  }
+
   onImportFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -3839,6 +3858,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.importFile = undefined;
     this.importFileName = '';
     this.importPreview = undefined;
+    this.importSeasonId = null;
     this.resetImportAfterFile();
 
     if (!file) return;
@@ -3860,6 +3880,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   clearImportFile(input: HTMLInputElement): void {
     this.importFile = undefined;
+    this.importSeasonId = null;
     this.importFileName = '';
     this.importFileError = '';
     this.importPreview = undefined;
@@ -4341,15 +4362,33 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return `${startYear}/${startYear + 1}`;
   }
 
+  get importDestinationSeasonId(): number | null {
+    const seasons = this.competition?.seasons ?? [];
+    if (this.importSeasonId !== null &&
+        seasons.some(season => season.id === this.importSeasonId)) return this.importSeasonId;
+    // Prefer the active season for every new Excel, without changing the ranking filter.
+    if (this.competition?.activeSeasonId != null &&
+        seasons.some(season => season.id === this.competition?.activeSeasonId)) {
+      return this.competition.activeSeasonId;
+    }
+    // If there is no active season, use the latest registered one.
+    return seasons[0]?.id ?? null;
+  }
+
+  selectImportSeason(seasonId: number | null): void {
+    this.importSeasonId = seasonId;
+    this.invalidateImportPlan();
+  }
+
   get canAutoCreateImportSeason(): boolean {
     // Never create a season when the competition has not loaded or already has seasons.
-    return this.selectedSeasonId == null &&
+    return this.importDestinationSeasonId == null &&
       this.competition != null && this.competition.seasons.length === 0;
   }
 
   buildImportFinalPlan(): void {
     if (!this.selected || !this.importFile || !this.importSheetName || this.importPlanLoading) return;
-    if (this.selectedSeasonId == null && !this.canAutoCreateImportSeason) {
+    if (this.importDestinationSeasonId == null && !this.canAutoCreateImportSeason) {
       this.importFileError = t('communities.import.seasonRequired');
       return;
     }
@@ -4409,8 +4448,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         });
     };
 
-    if (this.selectedSeasonId != null) {
-      prepareForSeason(this.selectedSeasonId);
+    if (this.importDestinationSeasonId != null) {
+      prepareForSeason(this.importDestinationSeasonId);
       return;
     }
 
@@ -4424,6 +4463,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.importPlanLoading = false;
           return;
         }
+        this.importSeasonId = season.id;
         this.selectedSeasonId = season.id;
         this.loadCompetition(this.selected, season.id);
         prepareForSeason(season.id);
@@ -4440,7 +4480,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   confirmHistoricalImport(): void {
-    if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || !this.importFinalPlan || this.importConfirming) return;
+    const destinationSeasonId = this.importDestinationSeasonId;
+    if (!this.selected || !this.importFile || !this.importSheetName || destinationSeasonId == null || !this.importFinalPlan || this.importConfirming) return;
     if (this.communityRoundSports.length > 1 && !this.newImportSport) {
       this.importFileError = t('feedback.communities.roundSportRequired');
       return;
@@ -4454,9 +4495,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.importFileError = t('communities.import.notReady');
       return;
     }
+    const communityId = this.selected.id;
+    const file = this.importFile;
+    const revision = this.importRevision;
     const mapping = { sheetName: this.importSheetName, columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field })) };
     const context = {
-      seasonId: this.selectedSeasonId,
+      seasonId: destinationSeasonId,
       defaultYear: this.importDefaultYear || null,
       sourceCompetition: this.importSourceCompetition?.trim() || null,
       sourceRound: this.importSourceRound?.trim() || null,
@@ -4465,14 +4509,22 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.importConfirming = true;
     this.importFileError = '';
     this.importResult = undefined;
-    this.communityService.confirmImportRounds(this.selected.id, this.importFile, mapping, context)
+    this.communityService.confirmImportRounds(communityId, file, mapping, context)
       .pipe(timeout(30_000), finalize(() => this.importConfirming = false))
       .subscribe({
         next: result => {
+          if (this.selected?.id !== communityId || this.importFile !== file ||
+              this.importRevision !== revision) return;
           this.importResult = result;
-          this.loadCompetition(this.selected!, this.selectedSeasonId);
+          this.selectedSeasonId = destinationSeasonId;
+          this.loadCompetition(this.selected, destinationSeasonId);
         },
-        error: error => this.importFileError = this.importRequestError(error, 'communities.import.confirmError')
+        error: error => {
+          if (this.selected?.id === communityId && this.importFile === file &&
+              this.importRevision === revision) {
+            this.importFileError = this.importRequestError(error, 'communities.import.confirmError');
+          }
+        }
       });
   }
 
