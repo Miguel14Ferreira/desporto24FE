@@ -750,6 +750,7 @@ export class Events2Component implements OnInit, OnDestroy {
           if (!isCurrentRequest()) {
             return;
           }
+          this.clearAutoGpsFields();
           this.latitude = candidate.latitude;
           this.longitude = candidate.longitude;
           this.locationCaptured = true;
@@ -762,6 +763,7 @@ export class Events2Component implements OnInit, OnDestroy {
             + candidate.latitude + ',' + candidate.longitude
             + '&z=16&output=embed'
           );
+          this.lookupGpsAddress(candidate.latitude, candidate.longitude, undefined, 'map');
         },
         error: () => {
           if (isCurrentRequest()) {
@@ -936,7 +938,7 @@ export class Events2Component implements OnInit, OnDestroy {
     this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
       'https://www.google.com/maps?q=' + latitude + ',' + longitude + '&z=17&output=embed'
     );
-    this.lookupGpsAddress(latitude, longitude, accuracyMeters);
+    this.lookupGpsAddress(latitude, longitude, accuracyMeters, 'gps');
   }
 
   /**
@@ -944,20 +946,23 @@ export class Events2Component implements OnInit, OnDestroy {
    * A stale reply may not overwrite another venue, another GPS point,
    * or text that the user edited while the lookup was pending.
    */
-  private lookupGpsAddress(latitude: number, longitude: number, accuracyMeters?: number): void {
+  private lookupGpsAddress(
+    latitude: number, longitude: number, accuracyMeters: number | undefined,
+    source: 'gps' | 'map'
+  ): void {
     const requestId = this.gpsRequestId;
     const startingCity = this.city;
     const startingAddress = this.address;
     this.gpsAddressLoading = true;
     this.gpsAddressNotice = '';
     this.venueService.reverseLocation(latitude, longitude, accuracyMeters).pipe(
-      timeout(7000),
+      timeout(20000),
       finalize(() => {
         if (this.gpsRequestId === requestId) this.gpsAddressLoading = false;
       })
     ).subscribe({
       next: value => {
-        if (this.gpsRequestId !== requestId || this.locationSource !== 'gps'
+        if (this.gpsRequestId !== requestId || this.locationSource !== source
             || this.latitude !== latitude || this.longitude !== longitude) return;
         const city = value.city?.trim().slice(0,120) || '';
         const address = value.address?.trim().slice(0,250) || '';

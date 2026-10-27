@@ -385,6 +385,50 @@ describe('Events2Component', () => {
     );
   });
 
+  it('automatically fills locality and street after a Google Maps link is resolved', fakeAsync(() => {
+    venueService.reverseLocation.and.returnValue(of({
+      city:'Agualva-Cacém',address:'Rua das Flores',
+      distanceMeters:20,provider:'My Geocode'
+    }));
+    venueService.resolveMapLink.and.returnValue(of({
+      resolvedUrl:'https://www.google.com/maps?q=38.765,-9.29',
+      latitude:38.765,longitude:-9.29
+    }));
+    component.chooseLocationMethod('maps');
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.765,-9.29');
+    component.resolveVenueMapLink();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(venueService.reverseLocation).toHaveBeenCalledWith(38.765,-9.29,undefined);
+    expect(component.locationSource).toBe('map');
+    expect(component.city).toBe('Agualva-Cacém');
+    expect(component.address).toBe('Rua das Flores');
+    expect((fixture.nativeElement.querySelector('input[name="city"]') as HTMLInputElement).value)
+      .toBe('Agualva-Cacém');
+    expect((fixture.nativeElement.querySelector('input[name="address"]') as HTMLInputElement).value)
+      .toBe('Rua das Flores');
+  }));
+
+  it('ignores the old map address response if the Google Maps link changes', () => {
+    const old=new Subject<{city:string|null;address:string|null;distanceMeters:number|null;provider:string}>();
+    venueService.reverseLocation.and.returnValue(old.asObservable());
+    venueService.resolveMapLink.and.returnValue(of({
+      resolvedUrl:'https://www.google.com/maps?q=38.72,-9.14',latitude:38.72,longitude:-9.14
+    }));
+    component.chooseLocationMethod('maps');
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.72,-9.14');
+    component.resolveVenueMapLink();
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.70,-9.16');
+    old.next({city:'Lisboa',address:'Rua anterior',distanceMeters:10,provider:'My Geocode'});
+    old.complete();
+    expect(component.city).toBe('');
+    expect(component.address).toBe('');
+    expect(component.hasCoordinates).toBeFalse();
+  });
+
   it('replaces Maps coordinates with current GPS and never reuses them on switching source', () => {
     component.chooseLocationMethod('maps');
     venueService.resolveMapLink.and.returnValue(of({
