@@ -284,12 +284,6 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   loading = false;
   saving = false;
   competitionLoading = false;
-
-  isDetailMode = false;
-
-  loading = false;
-  saving = false;
-  competitionLoading = false;
   sessionsLoading = false;
   openingSessionId?: number;
   joiningSessionId?: number;
