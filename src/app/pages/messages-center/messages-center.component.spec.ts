@@ -109,6 +109,17 @@ describe('Unified Jynlo message center', () => {
     expect(component.selectedAttachment).toBeNull();
   });
 
+  it('closes contact information when switching to another private conversation', () => {
+    const first = item('direct', 'bea'), second = item('direct', 'carla');
+    component.conversations = [first, second];
+    component.selectedKey = first.key;
+    component.contactPreviewOpen = true;
+    direct.recentHistory.and.returnValue(of({content: [], last: true}));
+    component.selectConversation(second);
+    expect(component.contactPreviewOpen).toBeFalse();
+    expect(component.selectedKey).toBe(second.key);
+  });
+
   it('clears share previews after switching conversation', () => {
     const peer=item('direct','bea');
     component.conversations=[peer,item('direct','carlos')];
