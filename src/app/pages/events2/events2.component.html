@@ -484,6 +484,18 @@
                 <p class="venue-current-location" style="margin-top:.6rem;">
                   {{ (locationSource === 'gps' ? 'createSession.gpsLocationFound' : 'venue.mapLink.found') | t }}
                 </p>
+                @if (locationMethod === 'maps') {
+                  @if (gpsAddressLoading) {
+                    <p class="venue-current-location" role="status">
+                      {{ 'createSession.gpsAddressLoading' | t }}
+                    </p>
+                  } @else if (gpsAddressNotice) {
+                    <p class="venue-current-location" role="status">{{ gpsAddressNotice }}</p>
+                  }
+                  <small class="venue-current-location">
+                    {{ 'createSession.gpsAddressPrivacy' | t }}
+                  </small>
+                }
                 @if (locationSource === 'gps' && gpsAccuracyMeters !== null) {
                   <p class="gps-accuracy" [class.gps-accuracy-warning]="gpsAccuracyIsLow"
                      [attr.role]="gpsAccuracyIsLow ? 'status' : null">
