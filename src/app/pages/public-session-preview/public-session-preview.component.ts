@@ -46,7 +46,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   /** Guest invitations are scoped to a random organizer-issued link. */
   guestToken: string | null = null;
   guestPlayers: {id:number;name:string}[] = [];
-  guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' = 'choose';
+  guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' | 'linked' = 'choose';
   guestPlayerId: number | null = null;
   guestNewName = '';
   guestNote = '';
@@ -55,6 +55,33 @@ export class PublicSessionPreviewComponent implements OnInit {
   guestError = '';
   guestReceipt = '';
   guestCommunityId: number | null = null;
+  guestLinked = false;
+  guestLinking = false;
+
+  get guestRegistrationReturnUrl(): string | null {
+    return this.sessionId && this.guestToken
+      ? '/sessions/' + this.sessionId + '?guest=' + this.guestToken : null;
+  }
+
+  linkGuestAccount(): void {
+    if (!this.sessionId || !this.guestReceipt || this.guestStep !== 'approved'
+        || !this.isAuthenticated || this.guestLinking) return;
+    this.guestLinking=true;
+    this.guestError='';
+    this.http.post<{status:string;username:string}>(
+      environment.apiUrl+'/api/sessions/'+this.sessionId+'/guest-requests/link-account',
+      {receipt:this.guestReceipt}
+    ).pipe(timeout(10000),finalize(()=>this.guestLinking=false)).subscribe({
+      next: result => {
+        if (result.status==='LINKED'){
+          this.guestLinked=true;
+          this.guestStep='linked';
+        }
+      },
+      error: () => { this.guestError='guestRsvp.linkError'; }
+    });
+  }
+
 
   get guestPlayerName(): string {
     return this.guestPlayers.find(p => p.id === this.guestPlayerId)?.name
@@ -138,12 +165,13 @@ export class PublicSessionPreviewComponent implements OnInit {
     if (!this.sessionId || !this.guestReceipt || this.guestSending) return;
     this.guestSending=true;
     this.guestError='';
-    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'}>(
+    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'}>(
       environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/status',
       {receipt:this.guestReceipt}
     ).pipe(timeout(10000),finalize(()=>this.guestSending=false)).subscribe({
       next: r => {
-        this.guestStep=r.status==='APPROVED'?'approved':
+        this.guestStep=r.status==='LINKED'?'linked':
+          r.status==='APPROVED'?'approved':
           r.status==='REJECTED'?'rejected':'pending';
       },
       error:()=>{this.guestError='guestRsvp.statusError';}
