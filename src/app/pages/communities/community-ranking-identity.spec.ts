@@ -54,16 +54,40 @@ describe('Ranking historical player self-claim', () => {
     expect(reloadLinks).not.toHaveBeenCalled();
   });
 
-  it('loads current server candidates before asking to link an unlinked name', () => {
+  it('opens a read-only historical profile without requesting identity data', () => {
     component.openRankingHistoricalPlayer(historic);
-    expect(service.historicalPlayerCandidates).toHaveBeenCalledOnceWith(9);
-    expect(component.rankingHistoricalCandidate?.playerId).toBe(77);
-    expect(component.rankingHistoricalLoading).toBeFalse();
+    expect(component.rankingHistoricalRow).toBe(historic);
+    expect(component.rankingHistoricalRow?.games).toBe(5);
+    expect(component.rankingHistoricalRow?.points).toBe(6);
+    expect(component.rankingHistoricalRow?.wins).toBe(2);
+    expect(component.rankingHistoricalClaimExpanded).toBeFalse();
+    expect(service.historicalPlayerCandidates).not.toHaveBeenCalled();
     expect(service.claimHistoricalPlayer).not.toHaveBeenCalled();
   });
 
-  it('requires explicit ownership acknowledgement before making the authenticated claim', () => {
+  it('shows historical player results even to someone without membership', () => {
+    component.selected = { id: 9, myRole: null } as any;
     component.openRankingHistoricalPlayer(historic);
+    expect(component.rankingHistoricalRow).toBe(historic);
+    expect(component.rankingHistoricalError).toBe('');
+    expect(service.historicalPlayerCandidates).not.toHaveBeenCalled();
+  });
+
+  it('checks current server eligibility only when an eligible member explicitly requests linking', () => {
+    component.openRankingHistoricalPlayer(historic);
+    expect(service.historicalPlayerCandidates).not.toHaveBeenCalled();
+    component.startRankingHistoricalClaim();
+    expect(component.rankingHistoricalClaimExpanded).toBeTrue();
+    expect(service.historicalPlayerCandidates).toHaveBeenCalledOnceWith(9);
+    expect(component.rankingHistoricalCandidate?.playerId).toBe(77);
+    expect(service.claimHistoricalPlayer).not.toHaveBeenCalled();
+  });
+
+  it('requires ownership acknowledgement before linking a historical name', () => {
+    component.openRankingHistoricalPlayer(historic);
+    component.confirmRankingHistoricalClaim();
+    expect(service.claimHistoricalPlayer).not.toHaveBeenCalled();
+    component.startRankingHistoricalClaim();
     component.confirmRankingHistoricalClaim();
     expect(service.claimHistoricalPlayer).not.toHaveBeenCalled();
     component.rankingHistoricalAcknowledged = true;
@@ -75,51 +99,78 @@ describe('Ranking historical player self-claim', () => {
     expect(reloadLinks).toHaveBeenCalledWith(9);
   });
 
-  it('never claims a name already accepted by another member', () => {
+  it('does not claim a name already accepted by another member but keeps its statistics viewable', () => {
     service.historicalPlayerCandidates.and.returnValue(of([{ ...candidate, linkStatus: 'ACCEPTED' }]));
     component.openRankingHistoricalPlayer(historic);
+    component.startRankingHistoricalClaim();
     expect(component.rankingHistoricalCandidate).toBeUndefined();
     expect(component.rankingHistoricalError).toBeTruthy();
+    expect(component.rankingHistoricalRow?.points).toBe(6);
     component.rankingHistoricalAcknowledged = true;
     component.confirmRankingHistoricalClaim();
     expect(service.claimHistoricalPlayer).not.toHaveBeenCalled();
   });
 
-  it('does not guess an identity if server candidates do not match this historical name', () => {
+  it('never guesses an identity from an unrelated imported historical player', () => {
     service.historicalPlayerCandidates.and.returnValue(of([{ ...candidate, historicalName: 'Outra pessoa' }]));
     component.openRankingHistoricalPlayer(historic);
+    component.startRankingHistoricalClaim();
     expect(component.rankingHistoricalCandidate).toBeUndefined();
     expect(component.rankingHistoricalError).toBeTruthy();
+    expect(component.rankingHistoricalRow?.fullName).toBe('Ferreirinha');
   });
 
-  it('does not allow non-members to submit a self-claim', () => {
+  it('does not allow non-members to submit a claim even though they may view stats', () => {
     component.selected = { id: 9, myRole: null } as any;
     component.openRankingHistoricalPlayer(historic);
+    component.startRankingHistoricalClaim();
+    expect(component.rankingHistoricalRow).toBe(historic);
     expect(service.historicalPlayerCandidates).not.toHaveBeenCalled();
     expect(component.rankingHistoricalError).toBeTruthy();
     expect(component.rankingHistoricalCandidate).toBeUndefined();
+    component.rankingHistoricalAcknowledged = true;
+    component.confirmRankingHistoricalClaim();
+    expect(service.claimHistoricalPlayer).not.toHaveBeenCalled();
   });
 
-  it('ignores stale server results after closing the dialog', () => {
+  it('ignores stale identity lookups after closing the read-only statistics view', () => {
     const delayed = new Subject<HistoricalPlayerCandidate[]>();
     service.historicalPlayerCandidates.and.returnValue(delayed);
     component.openRankingHistoricalPlayer(historic);
+    component.startRankingHistoricalClaim();
     component.closeRankingHistoricalDialog();
     delayed.next([candidate]);
     delayed.complete();
     expect(component.rankingHistoricalRow).toBeUndefined();
+    expect(component.rankingHistoricalClaimExpanded).toBeFalse();
     expect(component.rankingHistoricalCandidate).toBeUndefined();
   });
 
-  it('preserves the prompt and displays server conflicts without rewriting results', () => {
+  it('keeps historical results intact when a link fails and displays the server conflict', () => {
     service.claimHistoricalPlayer.and.returnValue(throwError(() => ({
       error: { message: 'Este perfil já tem uma participação na mesma jornada' }
     })));
     component.openRankingHistoricalPlayer(historic);
+    component.startRankingHistoricalClaim();
     component.rankingHistoricalAcknowledged = true;
     component.confirmRankingHistoricalClaim();
     expect(component.rankingHistoricalError).toContain('participação');
     expect(component.rankingHistoricalRow?.fullName).toBe('Ferreirinha');
+    expect(component.rankingHistoricalRow?.games).toBe(5);
     expect(reload).not.toHaveBeenCalled();
   });
+
+  it('switches cleanly between historical rows and never carries an old claim forward', () => {
+    component.openRankingHistoricalPlayer(historic);
+    component.startRankingHistoricalClaim();
+    expect(component.rankingHistoricalCandidate).toBeTruthy();
+    const other = { ...historic, fullName:'Afonso Salvador',points:18,games:10 };
+    component.openRankingHistoricalPlayer(other);
+    expect(component.rankingHistoricalRow?.fullName).toBe('Afonso Salvador');
+    expect(component.rankingHistoricalRow?.points).toBe(18);
+    expect(component.rankingHistoricalClaimExpanded).toBeFalse();
+    expect(component.rankingHistoricalCandidate).toBeUndefined();
+    expect(service.historicalPlayerCandidates).toHaveBeenCalledTimes(1);
+  });
+
 });
