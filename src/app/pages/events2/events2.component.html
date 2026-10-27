@@ -459,6 +459,12 @@
               @if (locationError) {
                 <div class="location-error" role="alert">{{ locationError }}</div>
               }
+              @if (gpsAddressLoading) {
+                <p class="venue-current-location" role="status">{{ 'createSession.gpsAddressLoading' | t }}</p>
+              } @else if (gpsAddressNotice) {
+                <p class="venue-current-location" role="status">{{ gpsAddressNotice }}</p>
+              }
+              <small class="venue-current-location">{{ 'createSession.gpsAddressPrivacy' | t }}</small>
             </div>
           }
 
@@ -848,7 +854,7 @@
 
       <div class="form-actions">
         <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
-        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || venueSaving || venueMapLinkLoading">
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || venueSaving || venueMapLinkLoading || gpsAddressLoading">
           {{ loading ? ('createSession.creating' | t) : ('mySessions.create' | t) }}
         </button>
       </div>
