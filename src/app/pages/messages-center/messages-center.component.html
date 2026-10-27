@@ -4,6 +4,8 @@
       <aside class="inbox-sidebar" [attr.aria-label]="'inbox.listLabel' | t">
         <div class="inbox-side-top">
           <header class="inbox-side-heading">
+            <a routerLink="/menu/groups" class="inbox-groups-shortcut"
+               [attr.title]="'groups.title' | t">👥 {{ 'groups.title' | t }}</a>
             <div>
               <h1>{{ 'inbox.title' | t }}</h1>
               <p>{{ 'inbox.subtitle' | t }}</p>
@@ -75,6 +77,14 @@
               </div>
             </div>
             <div class="inbox-heading-actions">
+              @if(conversation.kind==='direct' && composerAllowed){
+                <a routerLink="/menu/groups" [queryParams]="{from:conversation.id}"
+                   class="inbox-call-trigger inbox-group-create"
+                   [attr.title]="'groups.addMembers' | t"
+                   [attr.aria-label]="'groups.addMembers' | t">
+                   <span aria-hidden="true">👥＋</span>
+                </a>
+              }
               @if (conversation.kind === 'direct' && composerAllowed && (calls?.available$ | async)) {
                 <button type="button" class="inbox-call-trigger"
                     [attr.aria-label]="'calls.voice' | t" [attr.title]="'calls.voice' | t"

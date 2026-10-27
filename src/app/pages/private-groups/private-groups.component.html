@@ -1,0 +1,122 @@
+<section class="group-page jynlo-c1">
+ <header class="group-top">
+   <div>
+     <p class="eyebrow">Jynlo</p>
+     <h1>{{ 'groups.title' | t }}</h1>
+     <p>{{ 'groups.subtitle' | t }}</p>
+   </div>
+   <a routerLink="/menu/messages" class="group-back">← {{ 'inbox.title' | t }}</a>
+ </header>
+ <div class="group-layout">
+   <aside class="group-sidebar">
+     <button type="button" class="group-create-button" (click)="openCreate()">
+       <span aria-hidden="true">＋</span>{{ 'groups.create' | t }}
+     </button>
+     @if (loading) {<p role="status">{{ 'common.loading' | t }}</p>}
+     @if (error) {<p role="alert">{{ error }}</p>}
+     @for (group of groups; track group.id) {
+       <button type="button" class="group-entry" [class.current]="selected?.id===group.id"
+           (click)="select(group)">
+         <span class="group-circle" aria-hidden="true">👥</span>
+         <span><strong>{{ group.title }}</strong><small>{{ group.members.length }} {{ 'groups.members' | t }}</small></span>
+       </button>
+     } @empty {
+       @if (!loading) { <p class="group-empty">{{ 'groups.empty' | t }}</p> }
+     }
+   </aside>
+   <main class="group-chat">
+     @if (selected; as group) {
+       <header class="group-chat-header">
+         <div class="group-header-info">
+           <h2>{{ group.title }}</h2>
+           <p>{{ group.members.length }} {{ 'groups.members' | t }}</p>
+         </div>
+         @if (isCreator) {
+           <button class="group-header-button" type="button" (click)="openAdd()">
+             <span aria-hidden="true">＋</span> {{ 'groups.addMembers' | t }}
+           </button>
+         }
+       </header>
+       <div class="group-member-links" [attr.aria-label]="'groups.members' | t">
+         @for (m of group.members; track m.username) {
+           <a [routerLink]="['/menu/perfis',m.username]" [title]="m.displayName">
+             {{ m.displayName }} @if(m.admin){ <span aria-hidden="true">★</span> }
+           </a>
+         }
+       </div>
+       <div class="group-message-list" role="log" aria-live="polite">
+         @if (loadingMessages) {<p role="status">{{ 'common.loading' | t }}</p>}
+         @if (hasMore) {
+           <button type="button" class="group-more" (click)="older()" [disabled]="loadingMessages">
+             {{ 'groups.olderMessages' | t }}
+           </button>
+         }
+         @for (message of messages; track message.id) {
+           <article class="group-bubble" [class.mine]="message.sender.toLowerCase()===me">
+             <a [routerLink]="['/menu/perfis',message.sender]">{{ message.sender }}</a>
+             <p>{{ message.text }}</p>
+             <time>{{ message.createdAt | date:'dd/MM HH:mm' }}</time>
+           </article>
+         } @empty {
+           @if(!loadingMessages){<p class="group-empty">{{ 'groups.noMessages' | t }}</p>}
+         }
+       </div>
+       @if(groupError){<p role="alert" class="group-error">{{ groupError }}</p>}
+       <form class="group-compose" (ngSubmit)="send()">
+         <textarea name="draft" [(ngModel)]="draft" rows="2" maxlength="2000"
+           [placeholder]="'groups.messagePlaceholder' | t"></textarea>
+         <button type="submit" [disabled]="busy || !draft.trim()">{{ 'chat.send' | t }}</button>
+       </form>
+     } @else {
+       <div class="group-welcome">
+         <span aria-hidden="true">👥</span>
+         <h2>{{ 'groups.welcomeTitle' | t }}</h2>
+         <p>{{ 'groups.welcomeText' | t }}</p>
+       </div>
+     }
+   </main>
+ </div>
+ @if (showCreate || showAdd) {
+   <div class="group-modal-backdrop" (click)="showCreate=false;showAdd=false"
+       (keydown.escape)="showCreate=false;showAdd=false">
+     <section class="group-modal" role="dialog" aria-modal="true"
+        [attr.aria-label]="(showAdd ? 'groups.addMembers' : 'groups.create') | t"
+        (click)="$event.stopPropagation()" (keydown.escape)="showCreate=false;showAdd=false">
+       <header>
+         <h2>{{ (showAdd ? 'groups.addMembers' : 'groups.create') | t }}</h2>
+         <button type="button" [attr.aria-label]="'common.close' | t"
+           (click)="showCreate=false;showAdd=false">×</button>
+       </header>
+       @if (showCreate) {
+         <label>{{ 'groups.name' | t }}
+           <input type="text" maxlength="90" [(ngModel)]="title" [ngModelOptions]="{standalone:true}"
+             [placeholder]="'groups.namePlaceholder' | t">
+         </label>
+       }
+       <p class="group-modal-help">{{ 'groups.selectFriends' | t }}</p>
+       <div class="group-friend-options">
+         @for(friend of invitedFriends; track friend.username){
+           <label class="group-friend">
+             <input type="checkbox" [checked]="selectedNames.has(friend.username.toLowerCase())"
+                (change)="toggle(friend.username)">
+             <span>{{ friend.nickname || friend.fullName || friend.username }}</span>
+             <small>@{{ friend.username }}</small>
+           </label>
+         } @empty {
+           <p>{{ 'groups.noFriends' | t }}</p>
+         }
+       </div>
+       @if(groupError){<p class="group-error" role="alert">{{groupError}}</p>}
+       <footer>
+         <button type="button" class="group-cancel"
+             (click)="showCreate=false;showAdd=false">{{ 'common.cancel' | t }}</button>
+         <button type="button" class="group-submit"
+             [disabled]="busy || !selectedNames.size || (showCreate && (title.trim().length<2 || title.trim().length>90))"
+             (click)="showCreate ? create() : add()">
+           {{ (showAdd ? 'groups.addMembers' : 'groups.create') | t }}
+         </button>
+       </footer>
+     </section>
+   </div>
+ }
+</section>

@@ -71,6 +71,7 @@ const routes: Routes = [
   {path:'menu', redirectTo:'/menu/feed', pathMatch:'full'},
   {path:'menu/friendList',loadChildren:() => import('./pages/friends/friends.module').then(m => m.FriendsModule),canActivate:[AuthenticationGuard]},
   {path:'menu/messages',loadComponent:() => import('./pages/messages-center/messages-center.component').then(m => m.MessagesCenterComponent),canActivate:[AuthenticationGuard]},
+  {path:'menu/groups',loadComponent:() => import('./pages/private-groups/private-groups.component').then(m => m.PrivateGroupsComponent),canActivate:[AuthenticationGuard]},
   {path:'menu/friendList/chat/:username',canActivate:[AuthenticationGuard,legacyPrivateChatRedirect],children:[]},
   {path:'menu/friendList/chat/:username1/:username2',canActivate:[AuthenticationGuard,legacyPrivateChatRedirect],children:[]},
   {path:'menu/notifications',loadChildren:() => import('./pages/notifications/notifications.module').then(m => m.NotificationsModule),canActivate:[AuthenticationGuard]},
