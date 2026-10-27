@@ -3550,9 +3550,10 @@ export const EN: Record<string, string> = {
   'createSession.useLocation': 'Use current location',
   'createSession.gpsLocationHint': 'Already at the field? Share your current location with browser permission and confirm the map point before creating the session.',
   'createSession.gpsAddressLoading': 'Looking up the approximate locality and street address…',
-  'createSession.gpsAddressSuggested': 'GPS location suggested. Check the address before creating the session; both fields remain editable.',
+  'createSession.gpsAddressSuggested': 'Locality and street filled automatically. The address is approximate; check it before creating your session.',
+  'createSession.gpsAddressCityOnly': 'The locality was identified but we could not determine a street. You can fill the address manually.',
   'createSession.gpsAddressUnknown': 'We could not safely identify the street. The GPS pin remains saved; enter the locality manually.',
-  'createSession.gpsAddressPrivacy': 'When using GPS, My Geocode receives the location to suggest a locality and address. The result may be approximate.',
+  'createSession.gpsAddressPrivacy': 'Address lookups use external geocoding services, including Photon (OpenStreetMap data) and My Geocode. Your original GPS point remains unchanged.'
   'createSession.gpsLocationFound': 'GPS point saved for this session. Confirm you are at the correct field.',
   'createSession.gpsAccuracy': 'Estimated GPS accuracy: ±{{meters}} m.',
   'createSession.gpsAccuracyWarning': 'This location is approximate. Check the field on the map; if it is incorrect, use a Google Maps link.',
