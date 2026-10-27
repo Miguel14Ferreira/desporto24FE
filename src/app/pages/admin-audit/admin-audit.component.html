@@ -218,6 +218,11 @@
                       {{ row.district === 'Sem distrito' ? ('adminVenueQuality.unknownDistrict' | t) : row.district }}
                     </option>
                   </select>
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="gpsLoading" [attr.aria-pressed]="gpsOnlyWithEvidence"
+                    (click)="toggleGpsEvidenceOnly()">
+                    {{ (gpsOnlyWithEvidence ? 'adminVenueGps.showAll' : 'adminVenueGps.showInvestigated') | t }}
+                  </button>
                 </div>
                 <p *ngIf="gpsLoading" role="status" class="overview-status">{{ 'adminVenueGps.loading' | t }}</p>
                 <div *ngIf="gpsError" role="alert" class="overview-error">
@@ -226,7 +231,9 @@
                     [disabled]="gpsLoading" (click)="loadGpsReview()">{{ 'common.retry' | t }}</button>
                 </div>
                 <ng-container *ngIf="gpsPage as review">
-                  <p *ngIf="!review.venues.length" class="overview-updated">{{ 'adminVenueGps.empty' | t }}</p>
+                  <p *ngIf="!review.venues.length" class="overview-updated">
+                    {{ (gpsOnlyWithEvidence ? 'adminVenueGps.noInvestigated' : 'adminVenueGps.empty') | t }}
+                  </p>
                   <div *ngIf="review.venues.length" class="venue-quality-table-wrap">
                     <table class="venue-quality-table venue-gps-review-table">
                       <thead><tr>
