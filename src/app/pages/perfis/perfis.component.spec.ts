@@ -927,6 +927,7 @@ describe('PerfisComponent', () => {
 
     beforeEach(() => {
       component.currentUsername='miguel';
+      component.profilePage=true;
       component.selectedProfile={...profile,username:'ana'};
       component.selectedBlocked=false;
     });
