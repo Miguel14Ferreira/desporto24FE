@@ -106,9 +106,9 @@
                   {{ (guestSending ? 'guestRsvp.sending' : 'guestRsvp.send') | t }}
                 </button>
               } @else {
-                <h2>{{ (guestStep === 'approved' ? 'guestRsvp.approved'
+                <h2>{{ (guestStep === 'linked' ? 'guestRsvp.linked' : guestStep === 'approved' ? 'guestRsvp.approved'
                           : guestStep === 'rejected' ? 'guestRsvp.rejected' : 'guestRsvp.pending') | t }}</h2>
-                <p>{{ (guestStep === 'approved' ? 'guestRsvp.approvedHelp'
+                <p>{{ (guestStep === 'linked' ? 'guestRsvp.linkedHelp' : guestStep === 'approved' ? 'guestRsvp.approvedHelp'
                          : guestStep === 'rejected' ? 'guestRsvp.rejectedHelp'
                          : 'guestRsvp.pendingHelp') | t }}</p>
                 @if (guestStep === 'pending') {
@@ -121,12 +121,28 @@
                   <div class="guest-rsvp-upgrade">
                     <h3>{{ 'guestRsvp.createAccountTitle' | t }}</h3>
                     <p>{{ 'guestRsvp.createAccountHelp' | t }}</p>
-                    <a class="guest-rsvp-primary" routerLink="/login/registerNewUser"
-                      [queryParams]="{returnUrl: participationReturnUrl}">
-                      {{ 'guestRsvp.createAccount' | t }}
-                    </a>
+                    @if (isAuthenticated) {
+                      <button type="button" class="guest-rsvp-primary"
+                        [disabled]="guestLinking" (click)="linkGuestAccount()">
+                        {{ (guestLinking ? 'guestRsvp.linking' : 'guestRsvp.linkAccount') | t }}
+                      </button>
+                    } @else {
+                      <a class="guest-rsvp-primary" routerLink="/login/registerNewUser"
+                        [queryParams]="{returnUrl: guestRegistrationReturnUrl}">
+                        {{ 'guestRsvp.createAccount' | t }}
+                      </a>
+                      <a class="guest-rsvp-back" routerLink="/login"
+                        [queryParams]="{returnUrl: guestRegistrationReturnUrl}">
+                        {{ 'guestRsvp.haveAccount' | t }}
+                      </a>
+                    }
                     <p>{{ 'guestRsvp.noThanks' | t }}</p>
                   </div>
+                }
+                @if (guestStep === 'linked') {
+                  <a class="guest-rsvp-primary" [routerLink]="returnUrl">
+                    {{ 'guestRsvp.openSession' | t }}
+                  </a>
                 }
               }
               @if (guestError && guestStep !== 'choose' && guestStep !== 'confirm') {
