@@ -1198,6 +1198,85 @@ input,textarea,select {
   .import-wizard-complete .import-wizard-new-file { width: 100%; }
 }
 
+
+/* Historical competitors keep a first-class read-only statistical identity. */
+.ranking-history-profile {
+  width: min(100%, 630px);
+  max-height: min(92dvh, 820px);
+  padding: clamp(18px, 3vw, 27px);
+}
+.ranking-history-profile .ranking-identity-close{
+  display:grid;place-items:center;padding:0;
+}
+.ranking-history-profile .ranking-identity-close svg{display:block}
+.ranking-history-person{
+  display:flex;align-items:center;gap:15px;
+  padding:14px 16px;margin:19px 0 11px;
+}
+.ranking-history-person>div{display:grid;gap:5px;min-width:0}
+.ranking-history-avatar{
+  flex:0 0 56px;width:56px;height:56px;
+  display:grid;place-items:center;border-radius:16px;
+  background:linear-gradient(135deg,#176373,#1b4c60);
+  color:#d2fff6;font-size:1.65rem;font-weight:850;
+  border:1px solid #3d8d96;
+}
+.ranking-history-explainer{
+  margin:0 0 17px;font-size:.86rem;color:#bcd9dd!important;
+}
+.ranking-history-keyfacts{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+  margin:12px 0 20px;
+}
+.ranking-history-mainstat{
+  display:grid;align-content:center;gap:6px;min-width:0;
+  padding:17px 14px;background:#0a3444;border:1px solid #2d6876;
+  border-radius:13px;
+}
+.ranking-history-mainstat span{font-size:.78rem;color:#a8d0d6}
+.ranking-history-mainstat strong{color:#f5fffc;font-size:1.55rem;line-height:1.2}
+.ranking-history-subtitle{
+  font-size:.83rem;color:#8df6db;text-transform:uppercase;
+  letter-spacing:.07em;margin:0 0 11px;
+}
+.ranking-history-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+}
+.ranking-history-grid>div{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  min-width:0;padding:12px 14px;border-radius:11px;
+  background:#082938;border:1px solid #265160;
+}
+.ranking-history-grid span{min-width:0;color:#b2d0d6;font-size:.82rem}
+.ranking-history-grid strong{color:#f5fffc;font-size:1rem;white-space:nowrap}
+.ranking-history-readonly{
+  font-size:.77rem!important;color:#91bac3!important;margin:13px 0;
+}
+.ranking-history-claim{
+  border-top:1px solid #315765;margin-top:14px;padding-top:18px;
+}
+.ranking-history-claim-toggle{
+  padding:10px 13px;border:1px solid #398b8a;
+  border-radius:10px;background:#123f4c;color:#e5fff7;
+  font-size:.85rem;font-weight:750;cursor:pointer;
+}
+.ranking-history-claim-toggle:hover{background:#1a5460}
+.ranking-history-claim>p{font-size:.85rem;margin:10px 0}
+.ranking-history-confirm{margin-top:14px;min-height:42px}
+@media(max-width:480px){
+  .ranking-history-profile{padding:15px;width:100%;max-height:91dvh}
+  .ranking-history-keyfacts{gap:7px}
+  .ranking-history-mainstat{padding:12px 9px}
+  .ranking-history-mainstat span{font-size:.7rem}
+  .ranking-history-mainstat strong{font-size:1.3rem}
+  .ranking-history-grid{grid-template-columns:1fr}
+  .ranking-history-person{gap:11px}
+  .ranking-history-avatar{flex-basis:46px;width:46px;height:46px}
+}
+@media(prefers-reduced-motion:reduce){
+  .ranking-history-claim-toggle{transition:none}
+}
+
 /* Ranking identity: modal appears only after selecting an unlinked historical player. */
 .ranking-identity-backdrop {
   position: fixed;

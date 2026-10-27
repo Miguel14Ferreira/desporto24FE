@@ -49,7 +49,7 @@ describe('CommunityRankingTableComponent', () => {
     expect(open).toHaveBeenCalledOnceWith('ana');
   });
 
-  it('emits an unlinked historical row for explicit self-claim confirmation', () => {
+  it('emits unlinked historical player data to open read-only stats without a user account', () => {
     const fixture = TestBed.createComponent(CommunityRankingTableComponent);
     const historic = {...item, username: null, profileId: null, fullName: 'Ferreirinha'};
     const selected = jasmine.createSpy('historicalSelected');
