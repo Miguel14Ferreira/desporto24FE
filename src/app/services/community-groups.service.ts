@@ -340,6 +340,17 @@ export class CommunityGroupsService {
     );
   }
 
+  recordedSessionResults(id: number): Observable<number[]> {
+    return this.http.get<number[]>(this.url + '/' + id + '/sessions/competition-results');
+  }
+
+  recordSessionResult(id: number, sessionId: number, request: {
+    outcome: 'A' | 'B' | 'DRAW';
+    players: Array<{ username: string; team: 'A' | 'B' }>;
+  }): Observable<unknown> {
+    return this.http.post(this.url + '/' + id + '/sessions/' + sessionId + '/competition-result', request);
+  }
+
   openSessionToPublic(id: number, sessionId: number): Observable<SessionSummary> {
     return this.http.post<SessionSummary>(
       this.url + '/' + id + '/sessions/' + sessionId + '/open-public',
