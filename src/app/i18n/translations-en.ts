@@ -576,7 +576,7 @@ export const EN: Record<string, string> = {
   'guestRsvp.rejected': 'Request declined',
   'guestRsvp.rejectedHelp': 'The organizer declined the request. Please contact them directly.',
   'guestRsvp.cancelled': 'Attendance cancelled',
-  'guestRsvp.cancelledHelp': 'The organiser has cancelled this attendance. Contact them if you need more information.'
+  'guestRsvp.cancelledHelp': 'The organiser has cancelled this attendance. Contact them if you need more information.',
   'guestRsvp.checkStatus': 'Check status',
   'guestRsvp.linkAccount': 'Link attendance and history to my account',
   'guestRsvp.linking': 'Linking...',
