@@ -94,6 +94,17 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
   }));
 
 
+  it('only constructs public OpenStreetMap links from strict source IDs', () => {
+    expect(component.gpsSourceLink('OSM:WAY:123456')).toBe('https://www.openstreetmap.org/way/123456');
+    expect(component.gpsSourceLink('OSM:NODE:21')).toBe('https://www.openstreetmap.org/node/21');
+    expect(component.gpsSourceLink('OSM:RELATION:42')).toBe('https://www.openstreetmap.org/relation/42');
+    for (const invalid of [null, '', 'SOURCE:WAY:33', 'OSM:WAY:0',
+        'OSM:WAY:33/../evil', 'https://evil.test/x', 'OSM:WAY:1?foo=bar',
+        'OSM:WAY:9'.repeat(15), 'OSM:WAY:01']) {
+      expect(component.gpsSourceLink(invalid)).toBeNull();
+    }
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],

@@ -150,6 +150,17 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     this.loadGpsReview(0);
   }
 
+  /** Strictly convert official OSM source identifiers into the public source page.
+   * Never interpolate arbitrary user-supplied URLs or treat the map as proof
+   * that a saved venue's location is correct.
+   */
+  gpsSourceLink(sourceReference: string | null): string | null {
+    const match = /^OSM:(NODE|WAY|RELATION):([1-9][0-9]{0,17})$/.exec(sourceReference || '');
+    if (!match) return null;
+    const kind = match[1].toLowerCase();
+    return 'https://www.openstreetmap.org/' + kind + '/' + match[2];
+  }
+
   /** Optional, bounded admin-only list. No GPS is inferred or modified here. */
   loadGpsReview(page = this.gpsPageIndex): void {
     if (!this.gpsOpen || !Number.isInteger(page) || page < 0 || page > 1000) return;
