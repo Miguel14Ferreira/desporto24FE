@@ -206,7 +206,7 @@
 @media(max-width:760px){
   .inbox-page {padding:12px 10px 25px;}
   .inbox-layout {display:flex;flex-direction:column;height:auto;min-height:0;gap:10px;}
-  .inbox-sidebar {min-height:270px;max-height:390px;flex:0 0 auto;}
+  .inbox-sidebar {min-height:340px;max-height:min(75dvh,600px);flex:0 0 auto;}
   .inbox-side-heading p {font-size:.74rem;}
   .inbox-detail {min-height:510px;max-height:none;}
   .inbox-message-log {min-height:300px;max-height:56vh;padding:16px;}
