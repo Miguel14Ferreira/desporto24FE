@@ -194,12 +194,23 @@ async function main(){
     await mobile.locator('.reaction-person').first().waitFor();
     assert.equal(await mobile.locator('.reaction-person').count(),2);
     await b.screenshot({path:path.join(OUT,'mobile-two-hearts-details.png')});
-    await mobile.locator('.reaction-details-close').click();
+    // WhatsApp behavior: tap the selected heart IN the chooser a second time.
+    // Only Bea's heart disappears; Ana's heart remains and loses its count.
+    await mobile.locator('.reaction-details-add').click();
+    const selected=mobile.locator('.reaction-details-chooser button[aria-label="❤️"]');
+    assert.equal(await selected.getAttribute('aria-pressed'),'true');
+    assert.match(await selected.getAttribute('title'),/Remover/);
+    await selected.click();
+    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:DELETE']);
+    await b.waitForFunction(()=>document.querySelectorAll('.reaction-count').length===1
+      && document.querySelector('.reaction-count')?.textContent?.trim()==='❤️');
+    await b.screenshot({path:path.join(OUT,'mobile-after-tap-same-emoji-to-remove.png')});
+    // Another person's reaction is untouched; clicking it opens details.
     await mobile.locator('.reaction-count').click();
     await mobile.locator('.reaction-details-add').click();
     await mobile.locator('.reaction-details-chooser button[aria-label="👍"]').click();
     await b.waitForFunction(()=>[...document.querySelectorAll('.reaction-count')].some(x=>x.textContent?.includes('👍')));
-    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:PUT:👍']);
+    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:DELETE','bea:PUT:👍']);
 
     await a.reload({waitUntil:'domcontentloaded'});
     await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').first().waitFor();
@@ -210,7 +221,7 @@ async function main(){
     const personCount=await a.locator('.reaction-person').count();
     assert.equal(personCount,2,'participant detail shows both actors for different emojis');
     await a.locator('.reaction-details-remove').click();
-    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:PUT:👍','ana:DELETE']);
+    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:DELETE','bea:PUT:👍','ana:DELETE']);
     await a.waitForFunction(() =>
       document.querySelectorAll('app-chat-reactions.inbox-reaction-under-message .reaction-count').length === 1,
       undefined, {timeout:7000});
@@ -218,7 +229,7 @@ async function main(){
     await a.screenshot({path:path.join(OUT,'desktop-after-explicit-removal.png')});
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');
-    process.stdout.write('PASS: named reaction dialog, singleton hidden count, multi-user count, own remove, private actor list, desktop/mobile, fake HTTP only.\\n');
+    process.stdout.write('PASS: selected emoji tapped twice removes only own reaction; names, multi-user count, changed emoji and explicit remove, desktop/mobile, fake HTTP only.\\n');
   }finally{await browser.close();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
