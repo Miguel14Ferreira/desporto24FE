@@ -233,3 +233,11 @@
 }
 .inbox-message-log app-chat-reactions.inbox-reaction-under-message.is-picker-open {z-index:30;}
 .inbox-message-log {padding-bottom:48px;}
+
+/* Shortcut into dedicated private group conversations, preserving existing chat. */
+.inbox-groups-shortcut {font-size:.75rem;font-weight:750;color:#71eaca;
+  text-decoration:none;align-self:flex-start;padding:8px 10px;
+  background:#1c4952;border:1px solid #416d73;border-radius:10px;}
+.inbox-groups-shortcut:hover{text-decoration:underline;background:#25635b;}
+.inbox-group-create{text-decoration:none;min-width:41px;padding:0;}
+.inbox-group-create span{font-size:1rem;}
