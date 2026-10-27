@@ -167,9 +167,9 @@ async function main(){
     assert.equal(await shelf.locator('.reaction-details-remove').count(),1,
       'your own reaction is always removable');
     await shelf.locator('.reaction-details-add').click();
-    await shelf.locator('.reaction-picker').waitFor();
+    await shelf.locator('.reaction-details-chooser').waitFor();
     assert.deepEqual(writes,[],'opening participants and emoji chooser must not change reaction');
-    await shelf.locator('.reaction-picker button[aria-label="❤️"]').click();
+    await shelf.locator('.reaction-details-chooser button[aria-label="❤️"]').click();
     await a.waitForFunction(()=>document.querySelector('app-chat-reactions.inbox-reaction-under-message .reaction-count')?.textContent?.includes('❤️'));
     assert.deepEqual(writes,['ana:PUT:❤️']);
     assert.equal((await shelf.locator('.reaction-count').textContent()).trim(),'❤️',
@@ -185,7 +185,7 @@ async function main(){
     assert.equal(await mobile.locator('.reaction-details-remove').count(),0,
       'you cannot delete someone else\'s reaction');
     await mobile.locator('.reaction-details-add').click();
-    await mobile.locator('.reaction-picker button[aria-label="❤️"]').click();
+    await mobile.locator('.reaction-details-chooser button[aria-label="❤️"]').click();
     await b.waitForFunction(()=>document.querySelector('.reaction-count')?.textContent?.includes('2'));
     assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️']);
     assert.equal((await mobile.locator('.reaction-count').textContent()).replace(/\\s/g,''),'❤️2',
@@ -197,7 +197,7 @@ async function main(){
     await mobile.locator('.reaction-details-close').click();
     await mobile.locator('.reaction-count').click();
     await mobile.locator('.reaction-details-add').click();
-    await mobile.locator('.reaction-picker button[aria-label="👍"]').click();
+    await mobile.locator('.reaction-details-chooser button[aria-label="👍"]').click();
     await b.waitForFunction(()=>[...document.querySelectorAll('.reaction-count')].some(x=>x.textContent?.includes('👍')));
     assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:PUT:👍']);
 
