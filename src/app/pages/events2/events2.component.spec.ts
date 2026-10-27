@@ -397,6 +397,9 @@ describe('Events2Component', () => {
     component.chooseLocationMethod('maps');
     component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.765,-9.29');
     component.resolveVenueMapLink();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
     tick();
     fixture.detectChanges();
     expect(venueService.reverseLocation).toHaveBeenCalledWith(38.765,-9.29,undefined);
