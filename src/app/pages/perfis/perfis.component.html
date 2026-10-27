@@ -195,7 +195,7 @@
     }
 
     @if (profilePage && selectedProfile) {
-        <article class="profile-detail">
+        <article class="profile-detail" aria-label="Perfil público">
 
           <div class="detail-heading">
             <div class="avatar large-avatar">
@@ -209,7 +209,13 @@
             <div class="profile-identity">
               <p class="eyebrow">{{ 'community.profile' | t }}</p>
               <h1>{{ selectedProfile.username }}</h1>
-              <p>{{ selectedProfile.nickname || selectedProfile.fullName || ('community.player' | t) }}</p>
+              <p class="profile-display-name">{{ selectedProfile.nickname || selectedProfile.fullName || ('community.player' | t) }}</p>
+              @if (selectedProfile.location || selectedProfile.favoriteSports) {
+                <div class="profile-headline-details">
+                  @if (selectedProfile.location) { <span>⌖ {{ selectedProfile.location }}</span> }
+                  @if (selectedProfile.favoriteSports) { <span>◈ {{ selectedProfile.favoriteSports }}</span> }
+                </div>
+              }
 
               @if (selectedFollowStatus) {
                 <section class="social-summary">
@@ -278,47 +284,116 @@
                 }
               </button>
             }
-
+            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
+              <button type="button" class="profile-invite-trigger"
+                [attr.aria-expanded]="invitePanelOpen"
+                [attr.aria-controls]="'profile-invitation-panel'"
+                (click)="toggleInvitePanel()">
+                <span aria-hidden="true">＋</span>
+                {{ 'profileInvite.cta' | t }}
+              </button>
+            }
           </div>
+
+          @if (invitePanelOpen && !selectedBlocked && !isOwnProfile(selectedProfile)) {
+            <section id="profile-invitation-panel" class="profile-invite-panel"
+              [attr.aria-label]="'profileInvite.title' | t">
+              <header class="profile-invite-header">
+                <div>
+                  <span class="section-kicker">{{ 'profileInvite.eyebrow' | t }}</span>
+                  <h2>{{ 'profileInvite.title' | t }}</h2>
+                  <p>{{ 'profileInvite.intro' | t }} <strong>@{{ selectedProfile.username }}</strong></p>
+                </div>
+                <button type="button" class="profile-invite-close" [attr.aria-label]="'common.close' | t"
+                  (click)="closeInvitePanel()">×</button>
+              </header>
+              <div class="profile-invite-tabs" role="tablist" [attr.aria-label]="'profileInvite.title' | t">
+                <button type="button" role="tab" [attr.aria-selected]="inviteTab === 'community'"
+                  [class.active]="inviteTab === 'community'" (click)="inviteTab = 'community'">
+                  {{ 'profileInvite.communities' | t }}
+                </button>
+                <button type="button" role="tab" [attr.aria-selected]="inviteTab === 'session'"
+                  [class.active]="inviteTab === 'session'" (click)="inviteTab = 'session'">
+                  {{ 'profileInvite.sessions' | t }}
+                </button>
+              </div>
+              @if (inviteLoading) {
+                <p class="profile-invite-state" role="status">{{ 'common.loading' | t }}</p>
+              } @else {
+                @if (inviteTab === 'community') {
+                  <div class="profile-invite-options">
+                    @for (community of availableInviteCommunities; track community.id) {
+                      <div class="profile-invite-option">
+                        <span class="profile-invite-option-icon" aria-hidden="true">👥</span>
+                        <div class="profile-invite-option-info">
+                          <strong>{{ community.name }}</strong>
+                          <small>{{ community.sport || ('profileInvite.communityLabel' | t) }}</small>
+                        </div>
+                        <button type="button"
+                          [disabled]="!!inviteBusyKey || sentInvites.has('community:' + community.id + ':' + selectedProfile.username.toLowerCase())"
+                          (click)="sendProfileInvite('community',community.id)">
+                          {{ sentInvites.has('community:' + community.id + ':' + selectedProfile.username.toLowerCase())
+                            ? ('profileInvite.sentShort' | t) : (inviteBusyKey === 'community:' + community.id + ':' + selectedProfile.username.toLowerCase()
+                            ? ('common.processing' | t) : ('profileInvite.send' | t)) }}
+                        </button>
+                      </div>
+                    } @empty { <p class="profile-invite-state">{{ 'profileInvite.noCommunities' | t }}</p> }
+                  </div>
+                } @else {
+                  <div class="profile-invite-options">
+                    @for (session of availableInviteSessions; track session.id) {
+                      <div class="profile-invite-option">
+                        <span class="profile-invite-option-icon" aria-hidden="true">⚽</span>
+                        <div class="profile-invite-option-info">
+                          <strong>{{ session.sport }} · {{ session.city }}</strong>
+                          <small>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</small>
+                        </div>
+                        <button type="button"
+                          [disabled]="!!inviteBusyKey || sentInvites.has('session:' + session.id + ':' + selectedProfile.username.toLowerCase())"
+                          (click)="sendProfileInvite('session',session.id)">
+                          {{ sentInvites.has('session:' + session.id + ':' + selectedProfile.username.toLowerCase())
+                            ? ('profileInvite.sentShort' | t) : (inviteBusyKey === 'session:' + session.id + ':' + selectedProfile.username.toLowerCase()
+                            ? ('common.processing' | t) : ('profileInvite.send' | t)) }}
+                        </button>
+                      </div>
+                    } @empty { <p class="profile-invite-state">{{ 'profileInvite.noSessions' | t }}</p> }
+                  </div>
+                }
+              }
+              @if (inviteError) { <p role="alert" class="profile-invite-error">{{ inviteError }}</p> }
+              @if (inviteSuccess) { <p role="status" class="profile-invite-success">{{ inviteSuccess }}</p> }
+            </section>
+          }
 
           @if (selectedProfile.bio) {
             <p class="public-bio">{{ selectedProfile.bio }}</p>
           }
 
-          <div class="profile-meta">
-            <div>
-              <span>{{ 'common.country' | t }}</span>
-              <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
-            </div>
-            <div>
-              <span>{{ 'community.age' | t }}</span>
-              <strong>
-                {{ selectedProfile.age !== null
-                  ? (selectedProfile.age + ' ' + ('community.years' | t))
-                  : ('common.notProvided' | t) }}
-              </strong>
-            </div>
-            <div>
-              <span>{{ 'profileData.favoriteSports' | t }}</span>
-              <strong>{{ selectedProfile.favoriteSports || ('common.notProvided' | t) }}</strong>
-            </div>
-            <div>
-              <span>{{ 'profile.skillLevel' | t }}</span>
-              <strong>
-                {{ selectedProfile.skillLevel
-                  ? (('profile.level.' + selectedProfile.skillLevel) | t)
-                  : ('common.notProvided' | t) }}
-              </strong>
-            </div>
-            <div>
-              <span>{{ 'profile.availability' | t }}</span>
-              <strong>{{ selectedProfile.availability || ('common.notProvided' | t) }}</strong>
-            </div>
-            <div>
-              <span>{{ 'community.memberSince' | t }}</span>
-              <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
-            </div>
-          </div>
+          <section class="profile-meta" [attr.aria-label]="'profileInvite.about' | t">
+            @if (selectedProfile.country) {
+              <div><span>{{ 'common.country' | t }}</span><strong>{{ selectedProfile.country }}</strong></div>
+            }
+            @if (selectedProfile.age !== null) {
+              <div><span>{{ 'community.age' | t }}</span>
+                <strong>{{ selectedProfile.age }} {{ 'community.years' | t }}</strong></div>
+            }
+            @if (selectedProfile.favoriteSports) {
+              <div><span>{{ 'profileData.favoriteSports' | t }}</span>
+                <strong>{{ selectedProfile.favoriteSports }}</strong></div>
+            }
+            @if (selectedProfile.skillLevel) {
+              <div><span>{{ 'profile.skillLevel' | t }}</span>
+                <strong>{{ ('profile.level.' + selectedProfile.skillLevel) | t }}</strong></div>
+            }
+            @if (selectedProfile.availability) {
+              <div><span>{{ 'profile.availability' | t }}</span>
+                <strong>{{ selectedProfile.availability }}</strong></div>
+            }
+            @if (selectedProfile.joinDateDisplay) {
+              <div><span>{{ 'community.memberSince' | t }}</span>
+                <strong>{{ selectedProfile.joinDateDisplay }}</strong></div>
+            }
+          </section>
 
           @if (selectedActivity) {
             <section class="public-activity">
