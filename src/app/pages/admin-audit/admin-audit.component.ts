@@ -113,6 +113,7 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   gpsOpen = false;
   gpsPage: AdminVenueGpsReviewPage | null = null;
   gpsDistrict = '';
+  gpsOnlyWithEvidence = false;
   gpsPageIndex = 0;
   gpsLoading = false;
   gpsError = '';
@@ -155,6 +156,12 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
       this.gpsRequest?.unsubscribe();
       this.gpsLoading = false;
     }
+  }
+
+  toggleGpsEvidenceOnly(): void {
+    if (!this.gpsOpen || this.gpsLoading) return;
+    this.gpsOnlyWithEvidence = !this.gpsOnlyWithEvidence;
+    this.loadGpsReview(0);
   }
 
   selectGpsDistrict(district: string): void {
@@ -227,7 +234,8 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     this.gpsError = '';
     this.gpsPage = null;
     const url = environment.apiUrl + '/api/admin/overview/venue-gps-review?page=' + page
-      + (this.gpsDistrict ? '&district=' + encodeURIComponent(this.gpsDistrict) : '');
+      + (this.gpsDistrict ? '&district=' + encodeURIComponent(this.gpsDistrict) : '')
+      + (this.gpsOnlyWithEvidence ? '&onlyWithEvidence=true' : '');
     this.gpsRequest = this.http.get<AdminVenueGpsReviewPage>(url).pipe(
       timeout(this.requestTimeoutMs),
       finalize(() => {
