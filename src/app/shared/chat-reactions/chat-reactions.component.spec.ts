@@ -64,7 +64,8 @@ describe('Keyboard-accessible chat reaction picker', () => {
     const {fixture,component,element}=mount();
     const chip=element.querySelector<HTMLButtonElement>('.reaction-count')!;
     expect(chip.textContent?.trim()).toBe('👍');
-    chip.click();
+    expect(chip.getAttribute('aria-label')).toContain('Remover reação');
+    element.querySelector<HTMLButtonElement>('.reaction-details-trigger')!.click();
     fixture.detectChanges();
     expect(component.detailsOpen).toBeTrue();
     expect(store.participants).toHaveBeenCalledOnceWith('direct','bea',51);
@@ -74,6 +75,42 @@ describe('Keyboard-accessible chat reaction picker', () => {
     element.querySelector<HTMLButtonElement>('.reaction-details-close')!.click();
     fixture.detectChanges();
     expect(component.detailsOpen).toBeFalse();
+    fixture.destroy();
+  });
+
+  it('removes own displayed reaction with one click and does not open the people modal', () => {
+    store.get.and.returnValue({messageId:51,counts:{'❤️':2},myEmoji:'❤️'});
+    const {fixture,component,element}=mount();
+    const badge=element.querySelector<HTMLButtonElement>('.reaction-count')!;
+    badge.click();
+    fixture.detectChanges();
+    expect(store.toggle).toHaveBeenCalledOnceWith('direct','bea',51,'❤️',jasmine.any(Function));
+    expect(component.detailsOpen).toBeFalse();
+    expect(store.participants).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('opens people details when clicking someone elses reaction', () => {
+    store.get.and.returnValue({messageId:51,counts:{'❤️':1},myEmoji:null});
+    const {fixture,component,element}=mount();
+    expect(element.querySelector('.reaction-details-trigger')).toBeNull();
+    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    fixture.detectChanges();
+    expect(component.detailsOpen).toBeTrue();
+    expect(store.participants).toHaveBeenCalledOnceWith('direct','bea',51);
+    expect(store.toggle).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('opens names for own emoji via the separate information action', () => {
+    store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
+    const {fixture,element}=mount();
+    const info=element.querySelector<HTMLButtonElement>('.reaction-details-trigger')!;
+    expect(info).not.toBeNull();
+    info.click();
+    fixture.detectChanges();
+    expect(element.querySelector('.reaction-details-dialog')).not.toBeNull();
+    expect(store.toggle).not.toHaveBeenCalled();
     fixture.destroy();
   });
 
@@ -89,7 +126,7 @@ describe('Keyboard-accessible chat reaction picker', () => {
     const buttons=element.querySelectorAll<HTMLButtonElement>('.reaction-count');
     expect(buttons[0].textContent).toContain('2');
     expect(buttons[1].textContent?.trim()).toBe('❤️');
-    buttons[0].click();
+    element.querySelector<HTMLButtonElement>('.reaction-details-trigger')!.click();
     fixture.detectChanges();
     expect(element.querySelectorAll('.reaction-person').length).toBe(3);
     element.querySelectorAll<HTMLButtonElement>('.reaction-filter')[2].click();
@@ -103,7 +140,7 @@ describe('Keyboard-accessible chat reaction picker', () => {
     store.get.and.returnValue({messageId:51,counts:{'❤️':1},myEmoji:'❤️'});
     store.participants.and.returnValue(throwError(() => new Error('offline')));
     const {fixture,element}=mount();
-    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    element.querySelector<HTMLButtonElement>('.reaction-details-trigger')!.click();
     fixture.detectChanges();
     expect(element.querySelector('.reaction-details-state[role="alert"]')).not.toBeNull();
     element.querySelector<HTMLButtonElement>('.reaction-details-remove')!.click();
@@ -135,7 +172,7 @@ describe('Keyboard-accessible chat reaction picker', () => {
   it('restores focus from people dialog with Escape without deleting the reaction', () => {
     store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
     const {fixture,component,element}=mount();
-    const chip=element.querySelector<HTMLButtonElement>('.reaction-count')!;
+    const chip=element.querySelector<HTMLButtonElement>('.reaction-details-trigger')!;
     chip.focus();
     chip.click();
     fixture.detectChanges();
@@ -152,7 +189,7 @@ describe('Keyboard-accessible chat reaction picker', () => {
   it('only removes own emoji with the explicit action in the details dialog', () => {
     store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
     const {fixture,element}=mount();
-    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    element.querySelector<HTMLButtonElement>('.reaction-details-trigger')!.click();
     fixture.detectChanges();
     expect(store.toggle).not.toHaveBeenCalled();
     element.querySelector<HTMLButtonElement>('.reaction-details-remove')!.click();
@@ -163,7 +200,7 @@ describe('Keyboard-accessible chat reaction picker', () => {
   it('removes my reaction when I tap the already selected emoji in the picker', () => {
     store.get.and.returnValue({messageId:51,counts:{'❤️':2},myEmoji:'❤️'});
     const {fixture,component,element}=mount();
-    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    element.querySelector<HTMLButtonElement>('.reaction-details-trigger')!.click();
     fixture.detectChanges();
     element.querySelector<HTMLButtonElement>('.reaction-details-add')!.click();
     fixture.detectChanges();
@@ -190,7 +227,7 @@ describe('Keyboard-accessible chat reaction picker', () => {
   it('opens the inline emoji picker from the detail dialog without changing the existing reaction', () => {
     store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
     const {fixture,element}=mount();
-    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    element.querySelector<HTMLButtonElement>('.reaction-details-trigger')!.click();
     fixture.detectChanges();
     element.querySelector<HTMLButtonElement>('.reaction-details-add')!.click();
     fixture.detectChanges();
