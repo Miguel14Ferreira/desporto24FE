@@ -3785,7 +3785,7 @@ const PT: Dictionary = {
   'profileInvite.noCommunities': 'Não tens comunidades que possas gerir e para as quais esta pessoa ainda não seja membro.',
   'profileInvite.noSessions': 'Não tens sessões públicas futuras que possas convidar esta pessoa a participar.',
   'profileInvite.about': 'Sobre o jogador',
-  'profile.contactInfo': 'Informações de contacto',
+  'profile.contactInfo': 'Informações do perfil',
   'profile.openFullProfile': 'Ver perfil completo',
   'groups.title': 'Conversas de grupo',
   'groups.subtitle': 'Conversa com os teus amigos num espaço privado.',
