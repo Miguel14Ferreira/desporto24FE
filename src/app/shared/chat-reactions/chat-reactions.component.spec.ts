@@ -160,6 +160,33 @@ describe('Keyboard-accessible chat reaction picker', () => {
     fixture.destroy();
   });
 
+  it('removes my reaction when I tap the already selected emoji in the picker', () => {
+    store.get.and.returnValue({messageId:51,counts:{'❤️':2},myEmoji:'❤️'});
+    const {fixture,component,element}=mount();
+    element.querySelector<HTMLButtonElement>('.reaction-count')!.click();
+    fixture.detectChanges();
+    element.querySelector<HTMLButtonElement>('.reaction-details-add')!.click();
+    fixture.detectChanges();
+    const chosen=element.querySelector<HTMLButtonElement>('.reaction-details-chooser button[aria-label="❤️"]')!;
+    expect(chosen.getAttribute('aria-pressed')).toBe('true');
+    expect(chosen.title).toBe('Remover reação');
+    chosen.click();
+    fixture.detectChanges();
+    expect(store.toggle).toHaveBeenCalledOnceWith('direct','bea',51,'❤️',jasmine.any(Function));
+    expect(component.detailsOpen).toBeFalse();
+    expect(element.querySelector('.reaction-details-dialog')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('does not send duplicate reactions while a write is in progress', () => {
+    store.get.and.returnValue({messageId:51,counts:{'❤️':2},myEmoji:'❤️'});
+    const {fixture,component}=mount();
+    store.isBusy.and.returnValue(true);
+    component.pick('❤️');
+    expect(store.toggle).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
   it('opens the inline emoji picker from the detail dialog without changing the existing reaction', () => {
     store.get.and.returnValue({messageId:51,counts:{'👍':1},myEmoji:'👍'});
     const {fixture,element}=mount();
