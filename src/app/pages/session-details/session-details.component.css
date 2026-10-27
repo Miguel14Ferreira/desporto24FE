@@ -1281,3 +1281,33 @@ h1 {
 .session-profile-link{color:inherit;text-decoration:underline;text-decoration-color:#66d7c080;text-underline-offset:3px;overflow-wrap:anywhere}
 .session-profile-link:hover{color:#79efd6}
 .session-profile-link:focus-visible{outline:2px solid #79efd6;outline-offset:3px;border-radius:4px}
+
+/* Organizer-authorized guest reservations. No public roster is displayed here. */
+.guest-organizer-panel{
+  display:grid;gap:13px;margin:19px 0;padding:clamp(16px,2.5vw,24px);
+  border:1px solid #337a87;border-radius:18px;
+  background:linear-gradient(155deg,#104452,#092e40);
+  color:#ecfff9;
+}
+.guest-organizer-panel h2{margin:5px 0;font-size:1.25rem}
+.guest-organizer-panel p{margin:0;color:#b7d6df;font-size:.85rem;line-height:1.5}
+.guest-organizer-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.guest-organizer-actions button,.guest-organizer-actions a{
+  display:inline-flex;align-items:center;justify-content:center;min-height:40px;
+  text-decoration:none
+}
+.guest-organizer-hint{color:#9cbdc7!important;font-size:.77rem!important}
+.guest-organizer-link{display:grid;gap:9px;min-width:0;border-radius:12px;background:#092e3a;padding:15px}
+.guest-organizer-link label{font-size:.82rem;font-weight:700}
+.guest-organizer-link input{box-sizing:border-box;min-width:0;width:100%;
+  padding:12px 14px;border:1px solid #36717e;border-radius:10px;background:#061e2e;color:#d1fef4}
+.guest-organizer-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:14px;border:1px solid #235a6b;border-radius:13px;background:#082c3a;padding:13px}
+.guest-organizer-row>div:first-child{display:grid;gap:5px;min-width:0}
+.guest-organizer-row strong{font-size:.96rem;overflow-wrap:anywhere}
+.guest-organizer-row span,.guest-organizer-row small{color:#c1dce1;font-size:.8rem}
+.guest-organizer-error{color:#ffc5c1!important}
+.guest-organizer-success{color:#76f7d7!important}
+.team-guest-label{font-weight:800;color:#e3fff6;overflow-wrap:anywhere}
+.guest-organizer-panel :is(button,a,input):focus-visible{outline:2px solid #8affea;outline-offset:3px}
+@media(max-width:530px){.guest-organizer-row{align-items:stretch;flex-direction:column}.guest-organizer-actions{width:100%}.guest-organizer-actions>*{flex:1 1 auto}}
