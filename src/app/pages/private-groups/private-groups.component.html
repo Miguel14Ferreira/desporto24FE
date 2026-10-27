@@ -17,7 +17,10 @@
      @for (group of groups; track group.id) {
        <button type="button" class="group-entry" [class.current]="selected?.id===group.id"
            (click)="select(group)">
-         <span class="group-circle" aria-hidden="true">👥</span>
+         <span class="group-circle" aria-hidden="true">
+           @if(photoUrl(group); as avatar){<img [src]="avatar" alt="" loading="lazy">}
+           @else {👥}
+         </span>
          <span><strong>{{ group.title }}</strong><small>{{ group.members.length }} {{ 'groups.members' | t }}</small></span>
        </button>
      } @empty {
@@ -28,11 +31,24 @@
      @if (selected; as group) {
        <header class="group-chat-header">
          <div class="group-header-info">
-           <h2>{{ group.title }}</h2>
-           <p>{{ group.members.length }} {{ 'groups.members' | t }}</p>
+           <span class="group-header-avatar" aria-hidden="true">
+             @if(photoUrl(group); as avatar){<img [src]="avatar" alt="">}
+             @else {👥}
+           </span>
+           <div>
+             <h2>{{ group.title }}</h2>
+             <p>{{ group.members.length }} {{ 'groups.members' | t }}</p>
+           </div>
          </div>
          <div class="group-header-actions">
            @if (isCreator) {
+             <input #groupPhotoInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+               class="group-photo-input" [attr.aria-label]="'groups.changePhoto' | t"
+               (change)="uploadPhoto($event)">
+             <button class="group-header-button" type="button" [disabled]="photoUploading"
+               (click)="groupPhotoInput.click()">
+               {{ photoUploading ? ('groups.uploadingPhoto' | t) : ('groups.changePhoto' | t) }}
+             </button>
              <button class="group-header-button" type="button" (click)="openRename()">{{ 'groups.rename' | t }}</button>
              <button class="group-header-button" type="button" (click)="openAdd()">
                <span aria-hidden="true">＋</span> {{ 'groups.addMembers' | t }}
