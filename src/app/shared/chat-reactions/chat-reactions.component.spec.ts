@@ -167,10 +167,10 @@ describe('Keyboard-accessible chat reaction picker', () => {
     fixture.detectChanges();
     element.querySelector<HTMLButtonElement>('.reaction-details-add')!.click();
     fixture.detectChanges();
-    expect(element.querySelector('[role="dialog"]')).toBeNull();
-    expect(element.querySelector('.reaction-picker')).not.toBeNull();
+    expect(element.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(element.querySelector('.reaction-details-chooser')).not.toBeNull();
     expect(store.toggle).not.toHaveBeenCalled();
-    element.querySelector<HTMLButtonElement>('.reaction-picker button[aria-label="❤️"]')!.click();
+    element.querySelector<HTMLButtonElement>('.reaction-details-chooser button[aria-label="❤️"]')!.click();
     expect(store.toggle).toHaveBeenCalledOnceWith('direct','bea',51,'❤️',jasmine.any(Function));
     fixture.destroy();
   });
