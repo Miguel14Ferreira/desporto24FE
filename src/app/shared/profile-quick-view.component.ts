@@ -114,8 +114,8 @@ export class ProfileQuickViewComponent implements OnDestroy {
    const els=Array.from(root.querySelectorAll<HTMLElement>('button:not(:disabled),a[href]'));
    if(!els.length)return;
    const first=els[0],last=els[els.length-1];
-   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
-   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+   if((event as KeyboardEvent).shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+   else if(!(event as KeyboardEvent).shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
  }
  close():void{this.quick.close();}
  ngOnDestroy():void{this.profileLoad?.unsubscribe();this.subscription.unsubscribe();}
