@@ -605,6 +605,22 @@
                   <h2>{{ 'guestAdmin.title' | t }}</h2>
                   <p>{{ 'guestAdmin.help' | t }}</p>
                 </header>
+                <div class="invite-choice-guide">
+                  <div class="invite-choice-member">
+                    <span class="section-kicker">{{ 'guestAdmin.registeredBadge' | t }}</span>
+                    <strong>{{ 'guestAdmin.registeredTitle' | t }}</strong>
+                    <p>{{ 'guestAdmin.registeredHelp' | t }}</p>
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [disabled]="!canFindPlayers()" (click)="openRegisteredInvitePicker()">
+                      {{ 'guestAdmin.registeredAction' | t }}
+                    </button>
+                  </div>
+                  <div class="invite-choice-guest">
+                    <span class="section-kicker">{{ 'guestAdmin.guestBadge' | t }}</span>
+                    <strong>{{ 'guestAdmin.guestTitle' | t }}</strong>
+                    <p>{{ 'guestAdmin.guestHelp' | t }}</p>
+                  </div>
+                </div>
                 <div class="guest-organizer-actions">
                   <button type="button" class="jynlo-action jynlo-action--primary"
                     [disabled]="guestLinkWorking" (click)="createGuestLink()">
