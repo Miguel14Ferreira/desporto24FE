@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { BehaviorSubject, filter, firstValueFrom, Subscription, timeout } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, Subscription, TimeoutError, timeout } from 'rxjs';
 import { Room, RoomEvent } from 'livekit-client';
 import { environment } from 'src/environment/environment';
 import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
@@ -105,6 +105,27 @@ export class DirectCallClientService implements OnDestroy {
     this.realtime.connect();
   }
 
+  /**
+   * The HTTP signalling step can fail before a LiveKit room is joined.
+   * Never collapse 403/409/429/503 into a WebRTC or microphone error.
+   * Codes are safe to show: no server internals, peer information or tokens.
+   */
+  private startFailureMessage(error: unknown): string {
+    if (error instanceof TimeoutError) return 'calls.timeout';
+    if (!(error instanceof HttpErrorResponse)) return 'calls.unavailable';
+    switch (error.status) {
+      case 0: return 'calls.networkError';
+      case 400: return 'calls.invalidRequest';
+      case 401: return 'calls.sessionExpired';
+      case 403: return 'calls.notAllowed';
+      case 404: return 'calls.notFound';
+      case 409: return 'calls.busy';
+      case 429: return 'calls.rateLimited';
+      case 503: return 'calls.providerUnavailable';
+      default: return 'calls.unavailable';
+    }
+  }
+
   async start(peer: string, media: CallMedia): Promise<void> {
     if (this.state$.value || !this.available$.value || !peer) return;
     const version = ++this.generation;
@@ -121,10 +142,10 @@ export class DirectCallClientService implements OnDestroy {
         expiresAt: Date.parse(session.expiresAt)});
       this.scheduleExpiry(session.callId, Date.parse(session.expiresAt));
       await this.join(session, version);
-    } catch {
+    } catch (error) {
       if (version === this.generation) {
         this.state$.next({id:'',peer,media,phase:'error',micEnabled:false,
-          cameraEnabled:false,error:'calls.unavailable'});
+          cameraEnabled:false,error:this.startFailureMessage(error)});
       }
     }
   }
@@ -140,9 +161,9 @@ export class DirectCallClientService implements OnDestroy {
         this.base + '/' + encodeURIComponent(call.id) + '/accept', {}).pipe(timeout(10000)));
       if (version !== this.generation || this.state$.value?.id !== call.id) return;
       await this.join(session, version);
-    } catch {
+    } catch (error) {
       if (version === this.generation) {
-        this.state$.next({...call,phase:'error',error:'calls.unavailable'});
+        this.state$.next({...call,phase:'error',error:this.startFailureMessage(error)});
       }
     }
   }
