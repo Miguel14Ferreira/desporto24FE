@@ -271,6 +271,25 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.gpsResearchMapUrl(null)).toBeNull();
   });
 
+  it('links the Braga official tree-report false GPS and public GeoPortal without creating pitch candidates', () => {
+    const map = {
+      issueCode: 'ADJACENT_PARK_AND_SPORTS_BUILDING_NOT_NUMBERED_PITCH',
+      municipalGuideUrl: 'https://juventude.cm-braga.pt/wp-content/uploads/2023/06/Roteiro-Desportivo-e-Lazer-2020.pdf',
+      parkAreaUrl: 'https://mapcarta.com/pt/W106454979',
+      sportsBuildingUrl: 'https://mapcarta.com/pt/W884706818',
+      nonPitchTreeReportUrl: 'https://www.cm-braga.pt/archive/doc/Parque_Desportivo_da_Rodovia_0.pdf',
+      officialGeoportalUrl: 'https://sigportal.cm-braga.pt/WebSIGBraga/'
+    };
+    expect(component.gpsRodoviaCartographyVisible(map)).toBeTrue();
+    expect(component.gpsOfficialLink(map.nonPitchTreeReportUrl)).toBe(map.nonPitchTreeReportUrl);
+    expect(component.gpsOfficialLink(map.officialGeoportalUrl)).toBe(map.officialGeoportalUrl);
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+    expect(component.gpsOfficialLink('http://sigportal.cm-braga.pt/WebSIGBraga/')).toBeNull();
+    expect(component.gpsOfficialLink('javascript:alert(1)')).toBeNull();
+    expect(component.gpsRodoviaCartographyVisible({...map, issueCode: 'GPS_VERIFIED'}))
+      .toBeFalse();
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],

@@ -71,6 +71,8 @@ export interface AdminRodoviaCartographyReview {
   municipalGuideUrl: string;
   parkAreaUrl: string;
   sportsBuildingUrl: string;
+  nonPitchTreeReportUrl?: string | null;
+  officialGeoportalUrl?: string | null;
 }
 export interface AdminRodoviaNumberingPlanReview {
   issueCode: string;
