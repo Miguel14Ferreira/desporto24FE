@@ -4371,7 +4371,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         seasons.some(season => season.id === this.competition?.activeSeasonId)) {
       return this.competition.activeSeasonId;
     }
-    // If there is no active season, use the latest registered one.
+    // Older import callers can already have a selected ranking season before
+    // the competition overview has loaded. Keep that destination compatible.
+    if (this.selectedSeasonId != null &&
+        (!this.competition || seasons.some(season => season.id === this.selectedSeasonId))) {
+      return this.selectedSeasonId;
+    }
+    // If there is no active or selected season, use the latest registered one.
     return seasons[0]?.id ?? null;
   }
 
