@@ -14,6 +14,10 @@ const saved=new Map([['ana','👍']]);
 const writes=[];
 const errors=[];
 const CHECK_CALLS=process.env.JYNLO_VERIFY_CALLS === '1';
+const CHECK_GROUPS=process.env.JYNLO_VERIFY_GROUPS === '1';
+let group=null;
+const groupTexts=[];
+const groupWrites=[];
 const callActions=[];
 const callSockets=new Map();
 const requests=[];
@@ -66,10 +70,36 @@ async function context(browser,username,width){
     if(method==='OPTIONS')return route.fulfill({status:204,headers:{
       'access-control-allow-origin':'*','access-control-allow-headers':'*',
       'access-control-allow-methods':'GET,POST,PUT,DELETE,OPTIONS'}});
-    if(method==='GET'&&p==='/api/friends/me')return reply(route,200,[{
-      username:peer,nickname:peer==='bea'?'Bea':'Ana',fullName:null,chatBlocked:false,
-      blockedByMe:false,profilePicUrl:null
-    }]);
+    if(method==='GET'&&p==='/api/friends/me')return reply(route,200,[
+      {username:peer,nickname:peer==='bea'?'Bea':'Ana',fullName:null,
+       chatBlocked:false,blockedByMe:false,profilePicUrl:null},
+      ...(CHECK_GROUPS&&username==='ana'?[{username:'carla',nickname:'Carla',
+        fullName:'Carla',chatBlocked:false,blockedByMe:false,profilePicUrl:null}]:[])
+    ]);
+    if(CHECK_GROUPS && p==='/api/private-groups' && method==='GET')
+      return reply(route,200,group&&group.members.some(m=>m.username===username)?[group]:[]);
+    if(CHECK_GROUPS && p==='/api/private-groups' && method==='POST'){
+      const data=req.postDataJSON();
+      assert.deepEqual(data,{title:'Equipa de sábado',usernames:['bea']});
+      group={id:77,title:data.title,creatorUsername:'ana',createdAt:'2026-10-27T11:00:00Z',
+        members:[{username:'ana',displayName:'Ana',profilePicUrl:null,admin:true},
+        {username:'bea',displayName:'Bea',profilePicUrl:null,admin:false}]};
+      groupWrites.push('created');return reply(route,200,group);
+    }
+    if(CHECK_GROUPS && p==='/api/private-groups/77/members' && method==='POST'){
+      assert.deepEqual(req.postDataJSON(),{usernames:['carla']});
+      group.members.push({username:'carla',displayName:'Carla',profilePicUrl:null,admin:false});
+      groupWrites.push('invited');return reply(route,200,group);
+    }
+    if(CHECK_GROUPS && p==='/api/private-groups/77/messages' && method==='GET')
+      return reply(route,200,groupTexts);
+    if(CHECK_GROUPS && p==='/api/private-groups/77/messages' && method==='POST'){
+      const body=req.postDataJSON().text;assert.ok(body&&body.length<=2000);
+      const msg={id:groupTexts.length+1,groupId:77,sender:username,text:body,
+        createdAt:'2026-10-27T11:05:00Z'};
+      groupTexts.push(msg);groupWrites.push(username+':message');
+      return reply(route,200,msg);
+    }
     if(method==='GET'&&p==='/api/communities/mine')return reply(route,200,[]);
     if(method==='GET'&&p==='/api/sessions/mine')return reply(route,200,{created:[],joined:[],waitlisted:[]});
     if(method==='POST'&&p==='/api/messages/inbox/summaries')return reply(route,200,[{
@@ -272,6 +302,39 @@ async function main(){
       assert.deepEqual(callActions,['bea:decline','ana:start:voice']);
       await a.locator('.call-panel .call-decline').click();
       await a.locator('.call-panel').waitFor({state:'detached'});
+    }
+    if(CHECK_GROUPS){
+      await a.goto(SITE+'/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
+      await a.locator('.inbox-group-create').waitFor({timeout:7000});
+      await a.locator('.inbox-group-create').click();
+      await a.locator('.group-modal').waitFor();
+      await a.locator('.group-modal input[type="text"]').fill('Equipa de sábado');
+      const checks=a.locator('.group-friend input[type="checkbox"]');
+      assert.equal(await checks.count(),2);
+      assert.equal(await checks.first().isChecked(),true,'initial DM peer must be preselected');
+      await a.locator('.group-submit').click();
+      await a.locator('.group-chat-header').waitFor({timeout:7000});
+      assert.deepEqual(groupWrites,['created']);
+      await a.screenshot({path:path.join(OUT,'group-created-desktop.png')});
+      await a.locator('.group-compose textarea').fill('Olá equipa!');
+      await a.locator('.group-compose button').click();
+      await a.locator('.group-bubble').first().waitFor();
+      assert.match(await a.locator('.group-bubble').first().innerText(),/Olá equipa/);
+      await a.locator('.group-header-button').click();
+      await a.locator('.group-modal').waitFor();
+      const carla=a.locator('.group-friend').filter({hasText:'Carla'});
+      await carla.locator('input[type=checkbox]').check();
+      await a.locator('.group-submit').click();
+      await a.locator('.group-member-links a').filter({hasText:'Carla'}).waitFor();
+      assert.deepEqual(groupWrites,['created','ana:message','invited']);
+      await a.screenshot({path:path.join(OUT,'group-added-third-person.png')});
+      await b.goto(SITE+'/menu/groups?id=77',{waitUntil:'domcontentloaded'});
+      await b.locator('.group-chat-header').waitFor();
+      assert.equal(await b.locator('.group-bubble').count(),1);
+      assert.equal(await b.locator('.group-header-button').count(),0,
+        'non-creator must not see add-member control');
+      assert.equal(await b.locator('.group-member-links a[href*="/menu/perfis/ana"]').count(),1);
+      await b.screenshot({path:path.join(OUT,'group-member-mobile.png')});
     }
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');
