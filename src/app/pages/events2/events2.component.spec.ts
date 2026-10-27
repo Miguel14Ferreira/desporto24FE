@@ -1999,7 +1999,7 @@ describe('Events2Component', () => {
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'community' ? '7' : null);
     const communities = TestBed.inject(CommunityGroupsService);
-    spyOn(communities, 'get').and.returnValue(of({
+    communityGroups.get.and.returnValue(of({
       id: 7, name: 'Desportistas de Lisboa', sport: 'Futebol',
       sports: ['Futebol', 'Padel']
     } as any));
@@ -2038,7 +2038,7 @@ describe('Events2Component', () => {
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'community' ? '8' : null);
     const communities = TestBed.inject(CommunityGroupsService);
-    spyOn(communities, 'get').and.returnValue(of({
+    communityGroups.get.and.returnValue(of({
       id: 8, name: 'Futebol de Bairro', sport: 'Futebol'
     } as any));
     const page = TestBed.createComponent(Events2Component);
@@ -2053,7 +2053,7 @@ describe('Events2Component', () => {
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'community' ? '9' : null);
     const communities = TestBed.inject(CommunityGroupsService);
-    spyOn(communities, 'get').and.returnValue(of({
+    communityGroups.get.and.returnValue(of({
       id: 9, name: 'Desporto Livre', sport: null, sports: []
     } as any));
     const page = TestBed.createComponent(Events2Component);
