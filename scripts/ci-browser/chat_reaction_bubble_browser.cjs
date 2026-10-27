@@ -77,6 +77,12 @@ async function context(browser,username,width){
       const ids=(url.searchParams.get('ids')||'').split(',').map(Number).filter(Number.isFinite);
       return reply(route,200,ids.map(id=>record(id,username)));
     }
+    if(method==='GET'&&p===`/api/messages/reactions/direct/${peer}/41/participants`) {
+      return reply(route,200,[...saved.entries()].map(([person,emoji])=>({
+        username:person,displayName:person==='ana'?'Ana':'Bea',
+        profilePicUrl:null,emoji,mine:person===username
+      })));
+    }
     const mutation=new RegExp('^/api/messages/reactions/direct/'+peer+'/([0-9]+)$').exec(p);
     if(mutation&&method==='PUT'){
       const emoji=req.postDataJSON().emoji;
@@ -128,30 +134,25 @@ async function assertClickable(page,kind,name){
   assert.ok(target,'reaction badge center is not hit-testable');
   assert.equal(await shelf.locator('.reaction-open').count(),0,'no duplicate permanent smiley');
   await page.screenshot({path:path.join(OUT,name+'.png')});
-  await shelf.locator('.reaction-count').click({timeout:5000}); // real pointer; never force click
-  const panel=shelf.locator('.reaction-picker');
-  await panel.waitFor();
-  const badge=await shelf.locator('.reaction-count').first().boundingBox();
-  const tray=await panel.boundingBox();
-  const emojiBoxes=await shelf.locator('.reaction-choice').evaluateAll(buttons =>
-    buttons.map(b=>{const r=b.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right};}));
-  assert.ok(badge && tray,'picker is visibly rendered');
-  assert.ok(tray.y >= badge.y + badge.height + 3,
-    'expanded picker must live UNDER the badge, not across the message');
-  assert.ok(tray.y >= b.y + b.height + 3,'expanded picker overlaps message or timestamp');
-  assert.ok(tray.width <= 270 && tray.height <= 105,
-    `picker too large: ${tray.width}x${tray.height}`);
-  assert.ok(tray.x>=0 && tray.x+tray.width<=page.viewportSize().width,
-    'picker escapes viewport horizontally');
-  assert.equal(emojiBoxes.length,6,'all six emojis available');
-  assert.ok(emojiBoxes.every(x=>Math.abs(x.top-emojiBoxes[0].top)<2),
-    'emoji row wraps instead of staying compact');
-  if(await shelf.locator('.reaction-remove').count() > 0) {
-    const remove=await shelf.locator('.reaction-remove').boundingBox();
-    assert.ok(remove && remove.y>=emojiBoxes[0].top+35,
-      'remove action must be on its own secondary row');
+  const chip=shelf.locator('.reaction-count').first();
+  if(await chip.count()===1) {
+    const emojis=await shelf.locator('.reaction-count').allTextContents();
+    if(emojis.length===1 && saved.size===1) {
+      assert.equal(emojis[0].trim(),[...saved.values()][0],
+        'single reaction must have no numeric count');
+    }
   }
-  await page.screenshot({path:path.join(OUT,name+'-compact-picker.png')});
+  await chip.click({timeout:5000}); // real pointer, no force
+  const dialog=shelf.locator('.reaction-details-dialog');
+  await dialog.waitFor();
+  await shelf.locator('.reaction-person').first().waitFor();
+  const detailBox=await dialog.boundingBox();
+  assert.ok(detailBox && detailBox.width<=425 && detailBox.height<=550,
+    'compact modal must not overflow expected bounds');
+  assert.ok(detailBox.x>=0 && detailBox.x+detailBox.width<=page.viewportSize().width,
+    'reaction details must stay inside viewport');
+  assert.equal(await shelf.locator('.reaction-details-add').count(),1);
+  await page.screenshot({path:path.join(OUT,name+'-details-dialog.png')});
   return shelf;
 }
 async function main(){
@@ -163,37 +164,61 @@ async function main(){
     a.on('pageerror',e=>errors.push('ana: '+e.message));
     await a.goto(SITE+'/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
     const shelf=await assertClickable(a,'inbox','desktop-reaction-before');
-    await shelf.locator('button[aria-label="👍"]').click();
-    assert.deepEqual(writes,[],'re-select must not trigger DELETE');
-    await shelf.locator('.reaction-count').click();
-    await shelf.locator('button[aria-label="❤️"]').click();
+    assert.equal(await shelf.locator('.reaction-details-remove').count(),1,
+      'your own reaction is always removable');
+    await shelf.locator('.reaction-details-add').click();
+    await shelf.locator('.reaction-details-chooser').waitFor();
+    assert.deepEqual(writes,[],'opening participants and emoji chooser must not change reaction');
+    await shelf.locator('.reaction-details-chooser button[aria-label="❤️"]').click();
     await a.waitForFunction(()=>document.querySelector('app-chat-reactions.inbox-reaction-under-message .reaction-count')?.textContent?.includes('❤️'));
     assert.deepEqual(writes,['ana:PUT:❤️']);
-    await a.screenshot({path:path.join(OUT,'desktop-reaction-after.png')});
+    assert.equal((await shelf.locator('.reaction-count').textContent()).trim(),'❤️',
+      'a single heart must not display 1');
+    await a.screenshot({path:path.join(OUT,'desktop-one-heart.png')});
+
     const bea=await context(browser,'bea',390);
     const b=await bea.newPage();
     b.on('pageerror',e=>errors.push('bea: '+e.message));
     await b.goto(SITE+'/menu/messages?kind=direct&id=ana',{waitUntil:'domcontentloaded'});
     const mobile=await assertClickable(b,'inbox','mobile-peer-reaction');
-    assert.match(await mobile.locator('.reaction-count').textContent(),/❤️/);
-    await mobile.locator('button[aria-label="👍"]').click();
+    assert.match(await mobile.locator('.reaction-person-name').first().textContent(),/Ana/);
+    assert.equal(await mobile.locator('.reaction-details-remove').count(),0,
+      'you cannot delete someone else\'s reaction');
+    await mobile.locator('.reaction-details-add').click();
+    await mobile.locator('.reaction-details-chooser button[aria-label="❤️"]').click();
+    await b.waitForFunction(()=>document.querySelector('.reaction-count')?.textContent?.includes('2'));
+    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️']);
+    assert.equal((await mobile.locator('.reaction-count').textContent()).replace(/\s/g,''),'❤️2',
+      'a reaction count appears only when there are two or more');
+    await mobile.locator('.reaction-count').click();
+    await mobile.locator('.reaction-person').first().waitFor();
+    assert.equal(await mobile.locator('.reaction-person').count(),2);
+    await b.screenshot({path:path.join(OUT,'mobile-two-hearts-details.png')});
+    await mobile.locator('.reaction-details-close').click();
+    await mobile.locator('.reaction-count').click();
+    await mobile.locator('.reaction-details-add').click();
+    await mobile.locator('.reaction-details-chooser button[aria-label="👍"]').click();
     await b.waitForFunction(()=>[...document.querySelectorAll('.reaction-count')].some(x=>x.textContent?.includes('👍')));
-    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:👍']);
+    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:PUT:👍']);
+
     await a.reload({waitUntil:'domcontentloaded'});
     await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').first().waitFor();
     assert.equal(await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').count(),2);
     const heart=a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').filter({hasText:'❤️'});
     await heart.click();
-    await a.locator('.reaction-remove').click();
-    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:👍','ana:DELETE']);
+    await a.locator('.reaction-person').first().waitFor({timeout:7000});
+    const personCount=await a.locator('.reaction-person').count();
+    assert.equal(personCount,2,'participant detail shows both actors for different emojis');
+    await a.locator('.reaction-details-remove').click();
+    assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:PUT:👍','ana:DELETE']);
     await a.waitForFunction(() =>
       document.querySelectorAll('app-chat-reactions.inbox-reaction-under-message .reaction-count').length === 1,
       undefined, {timeout:7000});
-    assert.equal(await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').count(),1);
+    assert.equal((await a.locator('.reaction-count').first().textContent()).trim(),'👍');
     await a.screenshot({path:path.join(OUT,'desktop-after-explicit-removal.png')});
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');
-    process.stdout.write('PASS: two synthetic users, desktop+390px hitboxes, reactions below date, click, replace, explicit remove, persisted counts.\\n');
+    process.stdout.write('PASS: named reaction dialog, singleton hidden count, multi-user count, own remove, private actor list, desktop/mobile, fake HTTP only.\\n');
   }finally{await browser.close();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

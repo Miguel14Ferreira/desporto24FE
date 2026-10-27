@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { environment } from 'src/environment/environment';
 import { ChatReactionEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
@@ -10,6 +10,13 @@ export interface ChatReactionSummary {
   messageId: number;
   counts: Record<string, number>;
   myEmoji: string | null;
+}
+export interface ChatReactionParticipant {
+  username: string;
+  displayName: string;
+  profilePicUrl: string | null;
+  emoji: string;
+  mine: boolean;
 }
 export const CHAT_REACTION_EMOJIS = ['👍', '❤️', '😂', '🎉', '👏', '🔥'] as const;
 
@@ -171,6 +178,14 @@ export class ChatReactionStoreService {
         });
       }
     }
+  }
+
+  /** Fetch names only when a member opens a particular message's reaction details. */
+  participants(kind: ChatReactionKind, id: string | number,
+      messageId: number): Observable<ChatReactionParticipant[]> {
+    return this.http.get<ChatReactionParticipant[]>(
+      this.url(kind, id) + '/' + encodeURIComponent(String(messageId)) + '/participants'
+    );
   }
 
   toggle(kind: ChatReactionKind, id: string | number, messageId: number,
