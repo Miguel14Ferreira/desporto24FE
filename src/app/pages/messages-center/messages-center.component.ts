@@ -16,6 +16,7 @@ import { SessionService } from '../../services/session.service';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityTimelineService } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { DirectCallClientService } from '../../services/direct-call-client.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
@@ -286,9 +287,19 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     private readonly timeline: CommunityTimelineService,
     private readonly realtime: DirectChatRealtimeService,
     private readonly inboxApi: InboxApiService,
-    @Optional() private readonly route: ActivatedRoute | null = null
+    @Optional() private readonly route: ActivatedRoute | null = null,
+    @Optional() public readonly calls: DirectCallClientService | null = null
   ) {
     this.typing = new ChatTypingTracker(realtime);
+  }
+
+  get callsEnabled(): boolean {
+    return this.calls?.available$.value === true;
+  }
+
+  startCall(conversation: InboxConversation, media: 'voice' | 'video'): void {
+    if (conversation.kind !== 'direct' || !this.composerAllowed || !this.callsEnabled) return;
+    void this.calls?.start(String(conversation.id), media);
   }
 
   ngOnInit(): void {
