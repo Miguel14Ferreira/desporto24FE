@@ -30,10 +30,8 @@ describe('Community sessions: quick competition results', () => {
     save = jasmine.createSpy('recordSessionResult').and.returnValue(of({}));
     (component as any).communityService = {
       recordSessionResult: save,
-      recordedSessionResults: jasmine.createSpy('recordedSessionResults').and.returnValue(of([]))
-    };
-    (component as any).sessionService = {
-      participants: jasmine.createSpy('participants').and.returnValue(of([
+      recordedSessionResults: jasmine.createSpy('recordedSessionResults').and.returnValue(of([])),
+      sessionResultRoster: jasmine.createSpy('sessionResultRoster').and.returnValue(of([
         { id: 1, username: 'ana', teamCode: 'A', attendanceStatus: 'ATTENDED' },
         { id: 2, username: 'bea', teamCode: 'B', attendanceStatus: 'PENDING' },
         { id: 3, username: 'carlos', teamCode: 'A', attendanceStatus: 'NO_SHOW' }
