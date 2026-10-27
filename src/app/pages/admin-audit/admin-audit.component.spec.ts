@@ -93,6 +93,51 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.qualityError).toBe('');
   }));
 
+
+  it('only fetches GPS review after opening the panel and paginates per district', () => {
+    const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
+      address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],
+      page:0,hasMore:true};
+    http.get.and.returnValues(of(quality), of(queue), of(queue), of(queue));
+    component.toggleVenueQuality();
+    expect(http.get).toHaveBeenCalledTimes(1);
+    component.toggleGpsReview();
+    expect(http.get).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/admin/overview/venue-gps-review?page=0');
+    expect(component.gpsPage?.venues[0].id).toBe(15);
+    component.loadGpsReview(1);
+    expect(http.get).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/admin/overview/venue-gps-review?page=1');
+    component.selectGpsDistrict('Lisboa');
+    expect(http.get).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/admin/overview/venue-gps-review?page=0&district=Lisboa');
+    expect(component.gpsPageIndex).toBe(0);
+  });
+
+  it('protects against stale GPS pages and rejects invalid page numbers', () => {
+    const pending = new Subject<any>();
+    http.get.and.returnValues(pending.asObservable(), of({venues:[], page:1, hasMore:false}));
+    component.gpsOpen = true;
+    component.loadGpsReview(0);
+    component.loadGpsReview(1);
+    pending.next({venues:[{id:99}],page:0,hasMore:true});
+    expect(component.gpsPage?.page).toBe(1);
+    component.loadGpsReview(-1);
+    expect(http.get).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not auto-load GPS queue and cancels it on closing', fakeAsync(() => {
+    http.get.and.returnValue(NEVER);
+    component.ngOnInit();
+    expect(http.get).toHaveBeenCalledTimes(2);
+    component.gpsOpen = true;
+    component.loadGpsReview(0);
+    component.toggleGpsReview();
+    tick(12_001);
+    expect(component.gpsLoading).toBeFalse();
+    expect(component.gpsError).toBe('');
+  }));
+
   it('loads admin counters and eight-week trends on entering the dashboard', () => {
     http.get.and.returnValues(of(summary), of(trends));
     component.ngOnInit();

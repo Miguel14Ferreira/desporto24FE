@@ -55,6 +55,11 @@ export interface AdminVenueQuality {
   generatedAt: string;
 }
 
+export interface AdminVenueGpsReviewPage {
+  venues: {id:number; name:string; city:string; district:string|null; address:string|null;
+    sourceReference:string|null; informationSource:string|null}[];
+  page:number; hasMore:boolean;
+}
 interface GrowthChart {
   key: 'users' | 'sessions' | 'communities';
   title: string;
@@ -76,9 +81,11 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   private overviewRequest?: Subscription;
   private growthRequest?: Subscription;
   private qualityRequest?: Subscription;
+  private gpsRequest?: Subscription;
   private overviewRequestVersion = 0;
   private growthRequestVersion = 0;
   private qualityRequestVersion = 0;
+  private gpsRequestVersion = 0;
   private readonly requestTimeoutMs = 12_000;
   private destroyed = false;
   private viewUpdateScheduled = false;
@@ -89,6 +96,12 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   quality: AdminVenueQuality | null = null;
   qualityLoading = false;
   qualityError = '';
+  gpsOpen = false;
+  gpsPage: AdminVenueGpsReviewPage | null = null;
+  gpsDistrict = '';
+  gpsPageIndex = 0;
+  gpsLoading = false;
+  gpsError = '';
 
   ngOnInit(): void {
     this.refreshIndicators();
@@ -99,15 +112,18 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     ++this.overviewRequestVersion;
     ++this.growthRequestVersion;
     ++this.qualityRequestVersion;
+    ++this.gpsRequestVersion;
     this.overviewRequest?.unsubscribe();
     this.growthRequest?.unsubscribe();
     this.qualityRequest?.unsubscribe();
+    this.gpsRequest?.unsubscribe();
   }
 
   refreshIndicators(): void {
     this.loadOverview();
     this.loadGrowth();
     if (this.qualityOpen) this.loadVenueQuality();
+    if (this.qualityOpen && this.gpsOpen) this.loadGpsReview();
   }
 
   toggleVenueQuality(): void {
@@ -115,6 +131,55 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     if (this.qualityOpen && !this.quality && !this.qualityLoading) {
       this.loadVenueQuality();
     }
+  }
+
+  toggleGpsReview(): void {
+    this.gpsOpen = !this.gpsOpen;
+    if (this.gpsOpen && !this.gpsPage) this.loadGpsReview(0);
+    if (!this.gpsOpen) {
+      ++this.gpsRequestVersion;
+      this.gpsRequest?.unsubscribe();
+      this.gpsLoading = false;
+    }
+  }
+
+  selectGpsDistrict(district: string): void {
+    if (district && !this.quality?.districts.some(item =>
+      item.district === district && item.district !== 'Sem distrito')) return;
+    this.gpsDistrict = district;
+    this.loadGpsReview(0);
+  }
+
+  /** Optional, bounded admin-only list. No GPS is inferred or modified here. */
+  loadGpsReview(page = this.gpsPageIndex): void {
+    if (!this.gpsOpen || !Number.isInteger(page) || page < 0 || page > 1000) return;
+    const version = ++this.gpsRequestVersion;
+    this.gpsRequest?.unsubscribe();
+    this.gpsPageIndex = page;
+    this.gpsLoading = true;
+    this.gpsError = '';
+    this.gpsPage = null;
+    const url = environment.apiUrl + '/api/admin/overview/venue-gps-review?page=' + page
+      + (this.gpsDistrict ? '&district=' + encodeURIComponent(this.gpsDistrict) : '');
+    this.gpsRequest = this.http.get<AdminVenueGpsReviewPage>(url).pipe(
+      timeout(this.requestTimeoutMs),
+      finalize(() => {
+        if (version !== this.gpsRequestVersion) return;
+        this.gpsLoading = false;
+        this.refreshView();
+      })
+    ).subscribe({
+      next: value => {
+        if (version !== this.gpsRequestVersion) return;
+        this.gpsPage = value;
+        this.refreshView();
+      },
+      error: error => {
+        if (version !== this.gpsRequestVersion) return;
+        this.gpsError = this.requestError(error, 'recintos para revisão GPS');
+        this.refreshView();
+      }
+    });
   }
 
   /** Data-quality numbers are opt-in to avoid extra queries on every admin visit. */
@@ -240,7 +305,7 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     });
   }
 
-  private requestError(error: unknown, subject: 'indicadores' | 'gráficos' | 'dados de recintos'): string {
+  private requestError(error: unknown, subject: 'indicadores' | 'gráficos' | 'dados de recintos' | 'recintos para revisão GPS'): string {
     if (error instanceof TimeoutError) {
       return `O pedido de ${subject} demorou demasiado tempo (12 segundos). Tenta novamente.`;
     }
