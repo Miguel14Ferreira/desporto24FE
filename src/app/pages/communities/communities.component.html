@@ -850,6 +850,9 @@
                   </a>
                 </div>
 
+                @if (sessionResultSuccess) {
+                  <p class="community-session-result-counted" role="status">{{ sessionResultSuccess }}</p>
+                }
                 @if (sessionsLoading) {
                   <div class="module-empty compact">
                     <p>{{ 'communities.sessionsLoading' | t }}</p>
