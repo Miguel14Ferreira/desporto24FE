@@ -580,6 +580,7 @@ export const EN: Record<string, string> = {
   'guestRsvp.checkStatus': 'Check status',
   'guestRsvp.linkAccount': 'Link attendance and history to my account',
   'guestRsvp.linking': 'Linking...',
+  'guestRsvp.memberJoinError': 'Could not confirm attendance with this account. The invitation may have expired or registration may be closed. Please contact the organiser.',
   'guestRsvp.linkError': 'Could not link the account. Make sure you\'re the approved player or ask the organizer.',
   'guestRsvp.linked': 'Account linked!',
   'guestRsvp.linkedHelp': 'Your attendance is linked to your Jynlo account without duplicating the place. Available history has been preserved.',
