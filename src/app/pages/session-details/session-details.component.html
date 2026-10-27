@@ -952,6 +952,9 @@
                         @for (participant of teamParticipants('A'); track participant.id) {
                           <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
                         }
+                        @for (guest of guestTeamParticipants('A'); track guest.id) {
+                          <span class="team-guest-label">{{ guest.name }}</span>
+                        }
                       </div>
                     </div>
                     <div>
@@ -959,6 +962,9 @@
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('B'); track participant.id) {
                           <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
+                        }
+                        @for (guest of guestTeamParticipants('B'); track guest.id) {
+                          <span class="team-guest-label">{{ guest.name }}</span>
                         }
                       </div>
                     </div>
