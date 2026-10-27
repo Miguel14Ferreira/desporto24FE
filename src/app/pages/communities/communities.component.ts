@@ -270,6 +270,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   activeCommunitySeason?: CommunitySeason;
   communityTrophies: CommunitySeason[] = [];
   communitySessions: SessionSummary[] = [];
+  recordedCommunitySessionIds = new Set<number>();
+  sessionResultSession?: SessionSummary;
+  sessionResultPlayers: Array<{ username: string; included: boolean; team: 'A' | 'B' | '' }> = [];
+  sessionResultWinner: 'A' | 'B' | 'DRAW' | '' = '';
+  sessionResultLoading = false;
+  sessionResultSaving = false;
+  sessionResultError = '';
+  sessionResultSuccess = '';
+  private sessionResultRevision = 0;
   isDetailMode = false;
 
   loading = false;
@@ -2501,12 +2510,127 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           if (requestVersion !== this.communitySessionsRequestVersion ||
               this.selected?.id !== community.id) return;
           this.communitySessions = sessions;
+          if (this.canManage()) this.loadRecordedCommunitySessionResults(community.id);
         },
         error: () => {
           if (requestVersion !== this.communitySessionsRequestVersion ||
               this.selected?.id !== community.id) return;
           this.communitySessions = [];
           this.errorMessage = t('feedback.communities.sessionsLoadError');
+        }
+      });
+  }
+
+  canRecordCommunitySession(session: SessionSummary): boolean {
+    return this.canManage()
+      && !!this.competition?.settings?.rankingsEnabled
+      && session.status !== 'CANCELLED'
+      && Number.isFinite(Date.parse(session.gameDate))
+      && Date.parse(session.gameDate) < Date.now();
+  }
+
+  loadRecordedCommunitySessionResults(communityId: number): void {
+    // Keep isolated community test stubs and gradually upgraded services compatible.
+    const list = this.communityService.recordedSessionResults;
+    if (typeof list !== 'function') return;
+    list.call(this.communityService, communityId)
+      .pipe(timeout(10_000))
+      .subscribe({
+        next: ids => {
+          if (this.selected?.id === communityId) {
+            this.recordedCommunitySessionIds = new Set(ids);
+          }
+        },
+        error: () => {
+          // The server remains authoritative and rejects any duplicate confirmation.
+          if (this.selected?.id === communityId) {
+            this.recordedCommunitySessionIds = new Set<number>();
+          }
+        }
+      });
+  }
+
+  closeCommunitySessionResult(): void {
+    ++this.sessionResultRevision;
+    this.sessionResultSession = undefined;
+    this.sessionResultPlayers = [];
+    this.sessionResultWinner = '';
+    this.sessionResultError = '';
+    this.sessionResultLoading = false;
+  }
+
+  openCommunitySessionResult(session: SessionSummary): void {
+    if (!this.selected || !this.canRecordCommunitySession(session)
+        || this.recordedCommunitySessionIds.has(session.id) || this.sessionResultSaving) return;
+    this.closeCommunitySessionResult();
+    const version = this.sessionResultRevision;
+    const communityId = this.selected.id;
+    this.sessionResultSession = session;
+    this.sessionResultSuccess = '';
+    this.sessionResultLoading = true;
+    this.communityService.sessionResultRoster(communityId, session.id)
+      .pipe(timeout(10_000), finalize(() => {
+        if (this.sessionResultRevision === version) this.sessionResultLoading = false;
+      }))
+      .subscribe({
+        next: players => {
+          if (this.sessionResultRevision !== version || this.selected?.id !== communityId) return;
+          this.sessionResultPlayers = players
+            .filter(p => p.attendanceStatus !== 'NO_SHOW' && p.attendanceStatus !== 'LATE_CANCELLED')
+            .map(p => ({
+              username: p.username,
+              included: p.attendanceStatus === 'ATTENDED',
+              team: p.teamCode === 'A' || p.teamCode === 'B' ? p.teamCode : '' as const
+            }));
+        },
+        error: () => {
+          if (this.sessionResultRevision === version && this.selected?.id === communityId) {
+            this.sessionResultError = t('communities.sessionResult.loadError');
+          }
+        }
+      });
+  }
+
+  get canConfirmCommunitySessionResult(): boolean {
+    if (!this.sessionResultSession || this.sessionResultLoading || this.sessionResultSaving
+        || !this.sessionResultWinner) return false;
+    const included = this.sessionResultPlayers.filter(p => p.included);
+    return included.some(p => p.team === 'A') && included.some(p => p.team === 'B')
+      && included.every(p => p.team === 'A' || p.team === 'B');
+  }
+
+  confirmCommunitySessionResult(): void {
+    if (!this.selected || !this.canConfirmCommunitySessionResult
+        || !this.canRecordCommunitySession(this.sessionResultSession!)
+        || this.recordedCommunitySessionIds.has(this.sessionResultSession!.id)) return;
+    const communityId = this.selected.id;
+    const sessionId = this.sessionResultSession!.id;
+    const version = this.sessionResultRevision;
+    const request = {
+      outcome: this.sessionResultWinner as 'A' | 'B' | 'DRAW',
+      players: this.sessionResultPlayers
+        .filter(p => p.included && (p.team === 'A' || p.team === 'B'))
+        .map(p => ({ username: p.username, team: p.team as 'A' | 'B' }))
+    };
+    this.sessionResultSaving = true;
+    this.sessionResultError = '';
+    this.communityService.recordSessionResult(communityId, sessionId, request)
+      .pipe(timeout(15_000), finalize(() => this.sessionResultSaving = false))
+      .subscribe({
+        next: () => {
+          if (this.selected?.id !== communityId || this.sessionResultRevision !== version) return;
+          this.recordedCommunitySessionIds = new Set([...this.recordedCommunitySessionIds, sessionId]);
+          this.closeCommunitySessionResult();
+          this.sessionResultSuccess = t('communities.sessionResult.saved');
+          this.loadCompetition(this.selected, this.selectedSeasonId);
+        },
+        error: error => {
+          if (this.selected?.id === communityId && this.sessionResultRevision === version) {
+            this.sessionResultError = error?.status === 409
+              ? t('communities.sessionResult.conflict')
+              : error?.error?.message || t('communities.sessionResult.saveError');
+            if (error?.status === 409) this.loadRecordedCommunitySessionResults(communityId);
+          }
         }
       });
   }
