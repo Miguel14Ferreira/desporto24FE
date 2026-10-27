@@ -32,6 +32,7 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
   removingUsername:string|null=null;
   renameTitle='';
   selectedNames=new Set<string>();
+  friendSearch='';
   initialFriend='';
   loading=true;
   loadingMessages=false;
@@ -150,12 +151,14 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
 
   openCreate(initial=''):void{
     this.showCreate=true;this.showAdd=false;this.showRename=false;this.title='';
-    this.selectedNames=new Set(initial?[initial.toLowerCase()]:[]);
+    this.friendSearch='';
+    this.selectedNames=new Set(initial?[initial.trim().toLowerCase()]:[]);
     this.groupError='';
   }
   openAdd():void{
     if(!this.isCreator)return;
     this.selectedNames=new Set();
+    this.friendSearch='';
     this.showAdd=true;this.showCreate=false;this.showRename=false;this.groupError='';
   }
 
@@ -208,6 +211,33 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
     const existing=new Set(this.selected.members.map(m=>m.username.toLowerCase()));
     return this.friends.filter(f=>!existing.has(f.username.toLowerCase()));
   }
+  /** Accent-insensitive, case-insensitive search over all visible friend identities.
+   * Filtering only changes what is shown, never the selected usernames.
+   */
+  private normalizeFriendSearch(value:string):string{
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .trim().toLocaleLowerCase();
+  }
+
+  get filteredInviteFriends():FriendSummary[]{
+    const query=this.normalizeFriendSearch(this.friendSearch);
+    const friends=this.invitedFriends;
+    if(!query)return friends;
+    return friends.filter(friend=>
+      [friend.username,friend.fullName,friend.nickname]
+        .some(value=>this.normalizeFriendSearch(value||'').includes(query)));
+  }
+
+  clearFriendSearch():void{this.friendSearch='';}
+
+  closeInviteDialog():void{
+    if(this.busy)return;
+    this.showCreate=false;
+    this.showAdd=false;
+    this.friendSearch='';
+    this.groupError='';
+  }
+
   toggle(name:string):void{
     const key=name.toLowerCase();
     if(this.selectedNames.has(key))this.selectedNames.delete(key);
