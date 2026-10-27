@@ -122,6 +122,9 @@ export class DirectCallClientService implements OnDestroy {
       case 409: return 'calls.busy';
       case 429: return 'calls.rateLimited';
       case 503: return 'calls.providerUnavailable';
+      case 500:
+      case 502:
+      case 504: return 'calls.serverError';
       default: return 'calls.unavailable';
     }
   }
