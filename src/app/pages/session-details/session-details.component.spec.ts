@@ -2739,6 +2739,19 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
   });
 
+  it('shows confirmed guest team members by name without creating a profile link', () => {
+    component.guestRequests = [
+      {id: 501,name:'Afonso Salvador',status:'APPROVED',teamCode:'A',note:''},
+      {id: 502,name:'João Marques',status:'APPROVED',teamCode:'B',note:''},
+      {id: 503,name:'Outro',status:'CANCELLED',teamCode:'A',note:''}
+    ];
+    spyOn(component,'isCreator').and.returnValue(true);
+    expect(component.guestTeamParticipants('A').map(item=>item.name)).toEqual(['Afonso Salvador']);
+    expect(component.guestTeamParticipants('B').map(item=>item.name)).toEqual(['João Marques']);
+    component.confirmedTeams=false;
+    expect(component.hasConfirmedTeams()).toBeTrue();
+  });
+
   it('lets the organizer restrict a present player for lack of fair play without changing attendance', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
