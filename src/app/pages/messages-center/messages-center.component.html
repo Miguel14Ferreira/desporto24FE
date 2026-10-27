@@ -184,7 +184,14 @@
                 [attr.data-message-id]="message.id" tabindex="-1">
                 <div class="inbox-bubble-meta">
                   @if (!continuesGroupAt(i)) {
-                    <strong>{{ isMine(message) ? ('chat.you' | t) : message.sender }}</strong>
+                    @if (message.sender && message.sender.toLowerCase() !== 'system') {
+                      <a class="inbox-sender-profile" [routerLink]="['/menu/perfis', message.sender]"
+                        [attr.title]="('chat.viewProfile' | t) + ': ' + message.sender">
+                        {{ isMine(message) ? ('chat.you' | t) : message.sender }}
+                      </a>
+                    } @else {
+                      <strong>{{ message.sender }}</strong>
+                    }
                   }
                   <time>{{ formatDate(message.createdAt) }}</time>
                   @if (message.editedAt && !message.deletedAt) {
