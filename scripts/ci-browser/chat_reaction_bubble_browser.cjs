@@ -283,6 +283,8 @@ async function main(){
     if(CHECK_PROFILE){
       await a.locator('.inbox-contact-name').click({timeout:5000});
       await a.locator('.contact-panel').waitFor();
+      await a.locator('.contact-panel .contact-identity h2').filter({hasText:'Bea'}).waitFor({timeout:8000});
+      await a.locator('.contact-panel .contact-meta').filter({hasText:'Lisboa'}).waitFor({timeout:8000});
       assert.match(await a.locator('.contact-panel').innerText(),/Bea/);
       assert.match(await a.locator('.contact-panel').innerText(),/Lisboa/);
       assert.equal(await a.locator('.contact-panel a[href*="/menu/perfis/bea"]').count(),1);
