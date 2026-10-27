@@ -926,8 +926,8 @@ describe('PerfisComponent', () => {
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('.profile-hero > .detail-heading')).toBeTruthy();
     expect(root.querySelector('.profile-hero > .detail-actions')).toBeTruthy();
-    expect(root.querySelectorAll('.profile-meta > .profile-meta-card').length).toBe(4);
-    expect(root.querySelectorAll('.profile-meta .profile-stat-icon svg').length).toBe(4);
+    expect(root.querySelectorAll('.profile-meta > .profile-meta-card').length).toBe(5);
+    expect(root.querySelectorAll('.profile-meta .profile-stat-icon svg').length).toBe(5);
     expect(root.querySelectorAll('.public-activity-grid > .profile-activity-card').length).toBe(4);
     expect(root.querySelectorAll('.public-activity-grid svg').length).toBe(4);
     expect(root.querySelector('.profile-invite-trigger')).toBeTruthy();
