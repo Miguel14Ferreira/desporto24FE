@@ -275,6 +275,21 @@
                             class="jynlo-action jynlo-action--neutral">
                             {{ 'adminVenueGps.openOfficial' | t }}
                           </a>
+                          <div class="venue-gps-research" *ngIf="gpsFacilityContextKey(item.facilityContextReview) as contextKey">
+                            <strong>{{ 'adminVenueGps.contextTitle' | t }}</strong>
+                            <small>{{ contextKey | t }}</small>
+                            <small>{{ 'adminVenueGps.contextWarning' | t }}</small>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.officialSourceUrl) as primary"
+                              [href]="primary" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.contextPrimary' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.relatedSourceUrl) as related"
+                              [href]="related" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.contextRelated' | t }}
+                            </a>
+                          </div>
                           <div class="venue-gps-research" *ngIf="gpsPossibleDuplicateVisible(item.possibleDuplicateReview)">
                             <strong>{{ 'adminVenueGps.duplicateTitle' | t }}</strong>
                             <small>{{ 'adminVenueGps.duplicateCaution' | t }}</small>
