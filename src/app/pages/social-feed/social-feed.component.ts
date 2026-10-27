@@ -99,19 +99,6 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   sessionSearchError = false;
 
   loading = false;
-  // A short path into the existing public Find Players session flow.
-  // Both values can be adjusted in the full creation form.
-  quickConfirmedPlayers: number | null = 1;
-  quickMissingPlayers: number | null = 2;
-
-  get quickRecruitValid(): boolean {
-    const confirmed = this.quickConfirmedPlayers;
-    const missing = this.quickMissingPlayers;
-    return confirmed !== null && missing !== null
-      && Number.isInteger(confirmed) && Number.isInteger(missing)
-      && confirmed >= 1 && missing >= 1 && confirmed + missing <= 100;
-  }
-
   posting = false;
   deletingPostId: number | null = null;
   hidingAttendanceSessionId: number | null = null;
