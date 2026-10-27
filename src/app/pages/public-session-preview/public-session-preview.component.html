@@ -167,7 +167,7 @@
             } @else {
               <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: participationReturnUrl }">{{ 'nav.register' | t }}</a>
             }
-          } @else {
+          } @else if (!canRequestParticipation) {
             <h2>{{ 'publicSession.closedHeading' | t }}</h2>
             <p>{{ 'publicSession.closedExplanation' | t }}</p>
             @if (isAuthenticated) {
