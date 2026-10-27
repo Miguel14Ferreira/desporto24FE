@@ -4378,28 +4378,78 @@
                               </button>
 
                               @if (importFinalPlan) {
-                                <div class="import-final-plan">
-                                  <strong>{{ 'communities.import.planReady' | t }}</strong>
-                                  <span>{{ importFinalPlan.distinctRounds }} {{ 'communities.import.rounds' | t }} · {{ importFinalPlan.duplicateRounds }} {{ 'communities.import.duplicates' | t }}</span>
-                                  @for (round of importFinalPlan.rounds; track round.sourceDate) {
-                                    <div class="import-round-plan" [class.duplicate]="round.duplicate">
-                                      <b>{{ round.parsedDate || round.sourceDate }}</b>
-                                      <span>{{ round.players }} {{ 'communities.import.players' | t }}</span>
-                                      <span>{{ round.wins }}V · {{ round.draws }}E · {{ round.losses }}D</span>
-                                      @if (round.duplicate) { <span>{{ 'communities.import.duplicate' | t }}</span> }
-                                      @if (round.unresolvedResults > 0) { <span>{{ round.unresolvedResults }} {{ 'communities.import.unresolved' | t }}</span> }
+                                <section class="import-final-plan import-final-plan--rounds" aria-labelledby="import-rounds-plan-title">
+                                  <div class="import-plan-header">
+                                    <div class="import-plan-heading">
+                                      <span class="import-plan-kicker">{{ 'communities.import.planPreview' | t }}</span>
+                                      <h4 id="import-rounds-plan-title">{{ 'communities.import.planReady' | t }}</h4>
                                     </div>
-                                  }
-                                </div>
+                                    <div class="import-plan-summary">
+                                      <div class="import-plan-summary-item">
+                                        <strong>{{ importFinalPlan.distinctRounds }}</strong>
+                                        <span>{{ 'communities.import.rounds' | t }}</span>
+                                      </div>
+                                      <div class="import-plan-summary-item import-plan-summary-item--duplicates">
+                                        <strong>{{ importFinalPlan.duplicateRounds }}</strong>
+                                        <span>{{ 'communities.import.duplicates' | t }}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div class="import-plan-rows" role="list">
+                                    @for (round of importFinalPlan.rounds; track round.sourceDate) {
+                                      <div class="import-plan-row" role="listitem" [class.import-plan-row--duplicate]="round.duplicate">
+                                        <div class="import-plan-date">
+                                          <span class="import-plan-index">{{ $index + 1 }}</span>
+                                          <div class="import-plan-date-copy">
+                                            <small>{{ 'communities.import.roundLabel' | t }} {{ $index + 1 }}</small>
+                                            <strong>{{ round.parsedDate || round.sourceDate }}</strong>
+                                          </div>
+                                        </div>
+                                        <div class="import-plan-players">
+                                          <strong>{{ round.players }}</strong>
+                                          <span>{{ 'communities.import.players' | t }}</span>
+                                        </div>
+                                        <div class="import-plan-scores">
+                                          <span class="import-plan-score import-plan-score--win" [attr.aria-label]="round.wins + ' ' + ('communities.import.wins' | t)">
+                                            <strong>{{ round.wins }}</strong><span>{{ 'communities.import.winsShort' | t }}</span>
+                                          </span>
+                                          <span class="import-plan-score import-plan-score--draw" [attr.aria-label]="round.draws + ' ' + ('communities.import.draws' | t)">
+                                            <strong>{{ round.draws }}</strong><span>{{ 'communities.import.drawsShort' | t }}</span>
+                                          </span>
+                                          <span class="import-plan-score import-plan-score--loss" [attr.aria-label]="round.losses + ' ' + ('communities.import.losses' | t)">
+                                            <strong>{{ round.losses }}</strong><span>{{ 'communities.import.lossesShort' | t }}</span>
+                                          </span>
+                                        </div>
+                                        @if (round.duplicate || round.unresolvedResults > 0) {
+                                          <div class="import-plan-row-flags">
+                                            @if (round.duplicate) { <span>{{ 'communities.import.duplicate' | t }}</span> }
+                                            @if (round.unresolvedResults > 0) {
+                                              <span>{{ round.unresolvedResults }} {{ 'communities.import.unresolved' | t }}</span>
+                                            }
+                                          </div>
+                                        }
+                                      </div>
+                                    }
+                                  </div>
+                                </section>
+
                                 @if (importIncludesPoints) {
-                                  <div class="import-validation" role="note">
-                                    <p>{{ 'communities.import.pointsNotStored' | t }}</p>
-                                    <label>
+                                  <aside class="import-points-notice" role="note">
+                                    <div class="import-points-message">
+                                      <span class="import-points-info-icon" aria-hidden="true">i</span>
+                                      <div class="import-points-copy">
+                                        <strong>{{ 'communities.import.pointsNoticeTitle' | t }}</strong>
+                                        <p>{{ 'communities.import.pointsNotStored' | t }}</p>
+                                      </div>
+                                    </div>
+                                    <label class="import-points-acknowledgement">
                                       <input type="checkbox" [(ngModel)]="importPointsAcknowledged">
                                       <span>{{ 'communities.import.pointsAcknowledgement' | t }}</span>
                                     </label>
-                                  </div>
+                                  </aside>
                                 }
+
                                 @if (importFinalPlan.invalidDates === 0 && importFinalPlan.roundsNeedingYear === 0) {
                                   <button type="button" class="primary-action import-confirm jynlo-action jynlo-action--primary"
                                     [disabled]="importConfirming || (importIncludesPoints && !importPointsAcknowledged)"
