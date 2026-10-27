@@ -87,6 +87,16 @@ async function context(browser,username,width){
         skillLevel:null,availability:null,age:28,country:'Portugal',
         joinDateDisplay:'22/10/2026'});
     }
+    if(CHECK_PROFILE_INVITES && method==='GET') {
+      if(/^\/api\/friends\/status\//.test(p))return reply(route,200,{friends:true,pendingRequest:false});
+      if(/^\/api\/blocks\/users\/[^/]+\/status$/.test(p))return reply(route,200,{blocked:false});
+      if(/^\/api\/follows\/[^/]+\/status$/.test(p))
+        return reply(route,200,{followedByMe:false,followsMe:false,followers:1,following:2});
+      if(/^\/api\/profiles\/[^/]+\/activity$/.test(p))
+        return reply(route,200,{activitiesCompleted:3,peoplePlayedWith:8,
+          sportsPractised:2,eventsCreated:1,participantsMobilized:12,
+          communitiesJoined:1,achievements:[]});
+    }
     if(method==='GET'&&p==='/api/friends/me')return reply(route,200,[
       {username:peer,nickname:peer==='bea'?'Bea':'Ana',fullName:null,
        chatBlocked:false,blockedByMe:false,profilePicUrl:null},
