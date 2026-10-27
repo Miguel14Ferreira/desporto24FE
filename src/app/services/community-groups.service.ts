@@ -372,6 +372,13 @@ export class CommunityGroupsService {
     );
   }
 
+  restrictSessionToMembers(id: number, sessionId: number): Observable<SessionSummary> {
+    return this.http.post<SessionSummary>(
+      this.url + '/' + id + '/sessions/' + sessionId + '/restrict-members',
+      null
+    );
+  }
+
   updateRaceRule(communityId: number, seasonId: number,
     request: { sport: string; pointsByPlace: string }
   ): Observable<unknown> {
