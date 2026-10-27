@@ -82,7 +82,7 @@
               <span class="inbox-avatar inbox-detail-avatar"
                 [class.inbox-avatar--community]="conversation.kind === 'community'"
                 [class.inbox-avatar--session]="conversation.kind === 'session'" aria-hidden="true">
-                {{ conversation.kind === 'direct' ? conversation.title.slice(0, 1).toUpperCase() : conversation.kind === 'community' ? '👥' : '⚽' }}
+                {{ conversation.kind === 'community' ? '👥' : '⚽' }}
               </span>
               <div class="inbox-detail-info">
                 <h2>{{ conversation.title }}</h2>
