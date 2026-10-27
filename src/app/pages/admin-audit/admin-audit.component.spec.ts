@@ -200,6 +200,20 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.gpsOfficialLink('http://cm-mira.pt/node/4084')).toBeNull();
   });
 
+  it('labels distinct numbered Braga pitches without guessing a shared GPS', () => {
+    const rodovia = {
+      issueCode: 'SHARED_COMPLEX_NUMBERED_FIELDS_NO_POINT',
+      officialSourceUrl: 'https://www.cm-braga.pt/pt/1201/viver/desporto/equipamentos-desportivas/item/item-1-6223',
+      relatedSourceUrl: 'https://www.cm-braga.pt/pt/1201/viver/desporto/equipamentos-desportivas/item/item-1-6224'
+    };
+    expect(component.gpsFacilityContextKey(rodovia)).toBe('adminVenueGps.contextBraga');
+    expect(component.gpsOfficialLink(rodovia.officialSourceUrl)).toBe(rodovia.officialSourceUrl);
+    expect(component.gpsOfficialLink(rodovia.relatedSourceUrl)).toBe(rodovia.relatedSourceUrl);
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+    expect(component.gpsFacilityContextKey({...rodovia, issueCode: 'APPROVED'})).toBeNull();
+    expect(component.gpsOfficialLink('http://www.cm-braga.pt/pt/')).toBeNull();
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],
