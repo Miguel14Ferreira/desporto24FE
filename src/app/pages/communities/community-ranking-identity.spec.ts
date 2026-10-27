@@ -38,7 +38,7 @@ describe('Ranking historical player self-claim', () => {
   });
 
   it('does not fetch obsolete historical identity options when members open their tab', () => {
-    const requests = spyOn(component, 'loadPendingJoinRequests');
+    const requests = spyOn(component as any, 'loadPendingJoinRequests');
     component.setTab('members');
     expect(component.activeTab).toBe('members');
     expect(reloadLinks).not.toHaveBeenCalled();
@@ -48,7 +48,7 @@ describe('Ranking historical player self-claim', () => {
 
   it('keeps join-request management when an administrator opens the members tab', () => {
     component.selected = { id: 9, myRole: 'ADMIN' } as any;
-    const requests = spyOn(component, 'loadPendingJoinRequests');
+    const requests = spyOn(component as any, 'loadPendingJoinRequests');
     component.setTab('members');
     expect(requests).toHaveBeenCalledOnceWith(9);
     expect(reloadLinks).not.toHaveBeenCalled();
