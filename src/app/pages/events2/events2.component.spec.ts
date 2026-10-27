@@ -14,10 +14,13 @@ describe('Events2Component', () => {
   let fixture: ComponentFixture<Events2Component>;
   let sessionService: jasmine.SpyObj<SessionService>;
   let venueService: jasmine.SpyObj<VenueService>;
+  let communityGroups: jasmine.SpyObj<CommunityGroupsService>;
   let router: Router;
 
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
+    communityGroups = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine', 'get']);
+    communityGroups.mine.and.returnValue(of([]));
     venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'submitSuggestion', 'listPhotos', 'resolveMapLink', 'reverseLocation']);
     venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     venueService.listPhotos.and.returnValue(of([]));
@@ -52,6 +55,7 @@ describe('Events2Component', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: SessionService, useValue: sessionService },
+        { provide: CommunityGroupsService, useValue: communityGroups },
         { provide: VenueService, useValue: venueService }
       ]
     }).compileComponents();
@@ -587,13 +591,14 @@ describe('Events2Component', () => {
     const route = TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    component.selectCreationMode('COMPLETE');
     fixture.detectChanges();
 
     expect(component.findPlayersMode).toBeTrue();
     expect(fixture.nativeElement.querySelector('.page-header h1')?.textContent)
-      .toContain('Encontrar jogadores');
-    expect(fixture.nativeElement.querySelector('.recruit-context')?.textContent)
-      .toContain('total de jogadores');
+      .toContain('Criar uma sessão');
+    expect(fixture.nativeElement.querySelector('.create-mode-feedback')?.textContent)
+      .toContain('confirmados');
     expect(fixture.nativeElement.querySelector('input[name="privateGame"]')).toBeNull();
 
     component.sport = 'Padel';
@@ -667,6 +672,7 @@ describe('Events2Component', () => {
     const route = TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    component.selectCreationMode('COMPLETE');
     fixture.detectChanges();
 
     component.sport = 'Padel';
@@ -696,6 +702,7 @@ describe('Events2Component', () => {
     const route = TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    component.selectCreationMode('COMPLETE');
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
     component.city = 'Lisboa';
@@ -722,6 +729,58 @@ describe('Events2Component', () => {
     const request = sessionService.create.calls.mostRecent().args[0];
     expect(request.externalConfirmedParticipants).toBeUndefined();
     expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).toBeNull();
+  });
+
+  it('lets the organiser choose between starting a game and completing a known team', () => {
+    fixture.detectChanges();
+    const buttons=fixture.nativeElement.querySelectorAll('.create-mode-option');
+    expect(buttons.length).toBe(2);
+    expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
+    buttons[1].click();
+    fixture.detectChanges();
+    expect(component.findPlayersMode).toBeTrue();
+    expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).not.toBeNull();
+    buttons[0].click();
+    fixture.detectChanges();
+    expect(component.findPlayersMode).toBeFalse();
+    expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).toBeNull();
+  });
+
+  it('selects up to five own communities and creates one public session for them', () => {
+    component.communities = [12, 13, 14, 15, 16, 17].map(id => ({
+      id, name:'Comunidade '+id, myRole:'MEMBER', description:null, sport:'Futebol',
+      photoUrl:null, visibility:'PRIVATE', rankingsEnabled:false,
+      ownerUsername:'owner', memberCount:1, createdAt:'2026-01-01', members:[]
+    }));
+    fixture.detectChanges();
+    const choices=fixture.nativeElement.querySelectorAll('.create-share-community input');
+    expect(choices.length).toBe(6);
+    component.toggleCommunityShare(12,true);
+    component.toggleCommunityShare(13,true);
+    component.toggleCommunityShare(14,true);
+    component.toggleCommunityShare(15,true);
+    component.toggleCommunityShare(16,true);
+    component.toggleCommunityShare(17,true);
+    expect(component.shareCommunityIds).toEqual([12,13,14,15,16]);
+    expect(component.privateGame).toBeFalse();
+    component.sport='Futebol';
+    component.gameDate='2099-10-15T18:00';
+    component.city='Lisboa';
+    component.address='Rua do Campo';
+    component.createSession();
+    const request=sessionService.create.calls.mostRecent().args[0];
+    expect(request.communityShareIds).toEqual([12,13,14,15,16]);
+    expect(request.communityId).toBeNull();
+    expect(request.externalConfirmedParticipants).toBeUndefined();
+  });
+
+  it('keeps direct community-session creation separate from cross-posting', () => {
+    component.communities=[];
+    component.communityId=12;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.create-share-panel')).toBeNull();
+    component.toggleCommunityShare(12,true);
+    expect(component.shareCommunityIds).toEqual([]);
   });
 
   it('should reject an incomplete session', () => {
