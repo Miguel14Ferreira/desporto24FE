@@ -152,6 +152,10 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
       .toBe('adminVenueGps.researchMunicipalMapWarning');
     expect(component.gpsResearchWarningKey({...candidate, precision: 'SITE_REFERENCE_NOT_VERIFIED_ENTRANCE'}))
       .toBe('adminVenueGps.researchWarning');
+    expect(component.gpsResearchWarningKey({...candidate, precision: 'UNKNOWN_OR_APPROVED'}))
+      .toBe('adminVenueGps.researchWarning');
+    expect(component.gpsResearchWarningKey(undefined))
+      .toBe('adminVenueGps.researchWarning');
     expect(component.gpsResearchMapUrl({...candidate, latitude: Infinity})).toBeNull();
     expect(component.gpsResearchMapUrl({...candidate, precision: 'VERIFIED_ENTRANCE'})).toBeNull();
     expect(component.gpsResearchMapUrl({...candidate, longitude: 181})).toBeNull();
