@@ -923,6 +923,18 @@ describe('PublicSessionPreviewComponent', () => {
       expect((http.post as jasmine.Spy).calls.mostRecent().args[0]).toContain('/guest-requests/status');
     });
 
+    it('shows a cancelled approved reservation without asking the guest to register', () => {
+      const page=renderGuest();
+      const component=fixture.componentInstance;
+      component.guestReceipt=receipt;
+      (http.post as jasmine.Spy).and.returnValue(of({receipt,status:'CANCELLED'}));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(component.guestStep).toBe('cancelled');
+      expect(page.textContent).toContain('Presença cancelada');
+      expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
+    });
+
     it('never treats an invalid guest link as a public roster permission', () => {
       routeQueryParamMap=convertToParamMap({guest:'bad'});
       const page=render({sport:'Futebol'});
