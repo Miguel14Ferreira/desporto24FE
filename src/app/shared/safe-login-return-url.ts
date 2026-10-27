@@ -7,7 +7,7 @@ export function safeLoginReturnUrl(value: string | null): string {
   const path = value.split(/[?#]/)[0];
   const validMenuPath = path === '/menu' || path.startsWith('/menu/');
   // Only strict organizer-issued guest links may return to a public page.
-  const validGuestReturn = /^\\/sessions\\/[1-9]\\d*\\?guest=[A-Za-z0-9_-]{43}$/.test(value);
+  const validGuestReturn = /^\/sessions\/[1-9]\d*\?guest=[A-Za-z0-9_-]{43}$/.test(value);
   const hasUnsafeSegments = path.split('/').some(segment =>
     segment === '.' || segment === '..'
   );
