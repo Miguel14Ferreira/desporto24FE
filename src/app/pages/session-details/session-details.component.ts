@@ -1773,6 +1773,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.teamSuggestionPendingConfirmation = false;
           this.teamsSuccess = t('feedback.session.teamsConfirmed');
           this.loadSessionParticipants();
+          if (this.isCreator()) this.loadGuestRequests();
         },
         error: error => {
           this.teamsError = this.errorFrom(error, t('feedback.session.teamsConfirmError'));
@@ -1784,8 +1785,16 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return code === 'A' ? this.teamAParticipants : this.teamBParticipants;
   }
 
+  guestTeamParticipants(code: 'A' | 'B'): SessionGuestRequest[] {
+    return this.isCreator()
+      ? this.guestRequests.filter(guest => guest.status === 'APPROVED' && guest.teamCode === code)
+      : [];
+  }
+
   hasConfirmedTeams(): boolean {
-    return this.confirmedTeams;
+    return this.confirmedTeams
+      || this.guestTeamParticipants('A').length > 0
+      || this.guestTeamParticipants('B').length > 0;
   }
 
   canShareGuestInvites(): boolean {
