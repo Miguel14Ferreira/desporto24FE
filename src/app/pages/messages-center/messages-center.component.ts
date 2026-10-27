@@ -61,6 +61,17 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   @ViewChild('previewLog') previewLog?: ElementRef<HTMLElement>;
   @ViewChild('composerTextarea') composerTextarea?: ElementRef<HTMLTextAreaElement>;
 
+  contactInfoConversation: InboxConversation | null = null;
+
+  showContactInfo(conversation: InboxConversation): void {
+    if (conversation.kind !== 'direct') return;
+    this.contactInfoConversation = conversation;
+  }
+
+  closeContactInfo(): void {
+    this.contactInfoConversation = null;
+  }
+
   conversations: InboxConversation[] = [];
   selectedKey: string | null = null;
   messages: InboxMessage[] = [];
@@ -747,6 +758,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   selectConversation(conversation: InboxConversation): void {
+    this.closeContactInfo();
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) {
       this.drafts.set(this.selectedKey, this.draft);
