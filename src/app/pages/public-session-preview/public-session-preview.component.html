@@ -64,7 +64,7 @@
 
         <aside class="join-panel">
           <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
-          @if (guestToken && canRequestParticipation) {
+          @if (guestToken && canRequestParticipation && (!isAuthenticated || !!guestReceipt)) {
             <section class="guest-rsvp" [attr.aria-label]="'guestRsvp.title' | t">
               <span class="guest-rsvp-kicker">{{ 'guestRsvp.noAccount' | t }}</span>
               @if (guestLoading) {
@@ -150,17 +150,19 @@
               }
             </section>
           }
-          @if (canRequestParticipation && !guestToken) {
+          @if (canRequestParticipation && (!guestToken || (isAuthenticated && !guestReceipt))) {
             @if (details.status === 'FULL') {
               <h2>{{ 'publicSession.fullHeading' | t }}</h2>
               <p>{{ 'publicSession.fullExplanation' | t }}</p>
             } @else {
-              <h2>{{ 'publicSession.openHeading' | t }}</h2>
-              <p>{{ (isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
+              <h2>{{ (guestToken && isAuthenticated ? 'inviteCenter.memberHeading' : 'publicSession.openHeading') | t }}</h2>
+              <p>{{ (guestToken && isAuthenticated ? 'inviteCenter.memberHelp'
+                         : isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
             }
             @if (isAuthenticated) {
               <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl" [queryParams]="{ join: 1 }">
-                {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
+                {{ (guestToken ? 'inviteCenter.joinWithAccount' : details.status === 'FULL'
+                        ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
               </a>
             } @else {
               <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: participationReturnUrl }">{{ 'nav.register' | t }}</a>
