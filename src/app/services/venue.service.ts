@@ -44,6 +44,14 @@ export interface ResolveVenueMapLinkResponse {
   longitude: number;
 }
 
+/** Optional reverse lookup; GPS coordinates remain authoritative for the map. */
+export interface ReverseVenueLocation {
+  city: string | null;
+  address: string | null;
+  distanceMeters: number | null;
+  provider: string;
+}
+
 export interface VenueSportCondition {
   id: number;
   sport: string;
@@ -119,6 +127,16 @@ export class VenueService {
       this.baseUrl + '/resolve-map-link',
       { url }
     );
+  }
+
+  reverseLocation(latitude: number, longitude: number, accuracyMeters?: number): Observable<ReverseVenueLocation> {
+    let params = new HttpParams()
+      .set('latitude', String(latitude))
+      .set('longitude', String(longitude));
+    if (accuracyMeters !== undefined && Number.isFinite(accuracyMeters)) {
+      params = params.set('accuracyMeters', String(accuracyMeters));
+    }
+    return this.http.get<ReverseVenueLocation>(this.baseUrl + '/reverse-location', { params });
   }
 
   listPhotos(id: number): Observable<VenuePhoto[]> {

@@ -18,9 +18,12 @@ describe('Events2Component', () => {
 
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'submitSuggestion', 'listPhotos', 'resolveMapLink']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'submitSuggestion', 'listPhotos', 'resolveMapLink', 'reverseLocation']);
     venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     venueService.listPhotos.and.returnValue(of([]));
+    venueService.reverseLocation.and.returnValue(of({
+      city: null, address: null, distanceMeters: null, provider: 'My Geocode'
+    }));
 
     sessionService.create.and.returnValue(of({
       id: 42,
@@ -865,6 +868,73 @@ describe('Events2Component', () => {
     expect(component.latitude).toBe(38.72);
     expect(component.longitude).toBe(-9.14);
     expect(component.gpsAccuracyMeters).toBe(24);
+  });
+
+  it('fills locality and street using a GPS-triggered reverse lookup, preserving the exact pin', fakeAsync(() => {
+    venueService.reverseLocation.and.returnValue(of({
+      city: 'Agualva-Cacém', address: 'Rua de São João', distanceMeters: 24,
+      provider: 'My Geocode'
+    }));
+    component.chooseLocationMethod('gps');
+    component.applyCurrentPosition(38.7655,-9.2902,79);
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(venueService.reverseLocation).toHaveBeenCalledWith(38.7655,-9.2902,79);
+    expect(component.city).toBe('Agualva-Cacém');
+    expect(component.address).toBe('Rua de São João');
+    expect(component.latitude).toBe(38.7655);
+    expect(component.longitude).toBe(-9.2902);
+    expect(component.gpsAddressNotice).toContain('Confirma a morada');
+    const cityField = fixture.nativeElement.querySelector('input[name="city"]') as HTMLInputElement;
+    const roadField = fixture.nativeElement.querySelector('input[name="address"]') as HTMLInputElement;
+    expect(cityField.value).toBe('Agualva-Cacém');
+    expect(roadField.value).toBe('Rua de São João');
+  }));
+
+  it('cannot overwrite manual edits or a changed GPS point with a delayed reverse result', () => {
+    const first = new Subject<{city:string|null;address:string|null;distanceMeters:number|null;provider:string}>();
+    venueService.reverseLocation.and.returnValue(first.asObservable());
+    component.applyCurrentPosition(38.72,-9.14,15);
+    expect(component.gpsAddressLoading).toBeTrue();
+    component.onCityChanged('Localidade escolhida');
+    component.address='Morada personalizada';
+    first.next({city:'Lisboa',address:'Rua Diferente',distanceMeters:5,provider:'My Geocode'});
+    first.complete();
+    expect(component.city).toBe('Localidade escolhida');
+    expect(component.address).toBe('Morada personalizada');
+    expect(component.gpsAddressLoading).toBeFalse();
+
+    const old = new Subject<{city:string|null;address:string|null;distanceMeters:number|null;provider:string}>();
+    venueService.reverseLocation.and.returnValue(old.asObservable());
+    component.applyCurrentPosition(38.73,-9.15,20);
+    component.clearLocation();
+    old.next({city:'Porto',address:'Rua Antiga',distanceMeters:5,provider:'My Geocode'});
+    old.complete();
+    expect(component.city).toBe('Localidade escolhida');
+    expect(component.address).toBe('Morada personalizada');
+    expect(component.latitude).toBeNull();
+    expect(component.gpsAddressNotice).toBe('');
+  });
+
+  it('does not block GPS when the address provider fails, and clears only auto-filled details', () => {
+    venueService.reverseLocation.and.returnValue(of({
+      city:'Lisboa',address:'Rua do Campo',distanceMeters:20,provider:'My Geocode'
+    }));
+    component.applyCurrentPosition(38.72,-9.14,40);
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua do Campo');
+    component.address='Rua confirmada manualmente';
+    component.clearLocation();
+    expect(component.city).toBe('');
+    expect(component.address).toBe('Rua confirmada manualmente');
+    expect(component.latitude).toBeNull();
+
+    venueService.reverseLocation.and.returnValue(throwError(()=>new Error('unavailable')));
+    component.applyCurrentPosition(38.72,-9.14,40);
+    expect(component.hasCoordinates).toBeTrue();
+    expect(component.gpsAddressNotice).toContain('manualmente');
+    expect(component.gpsAddressLoading).toBeFalse();
   });
 
   it('shows the browser-reported GPS accuracy and warns when it exceeds 100 metres', () => {

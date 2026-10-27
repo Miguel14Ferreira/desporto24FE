@@ -48,6 +48,10 @@ export class Events2Component implements OnInit, OnDestroy {
   locationSource: 'gps' | 'map' | null = null;
   locationMethod: 'venue' | 'maps' | 'gps' = 'venue';
   gpsAccuracyMeters: number | null = null;
+  gpsAddressLoading = false;
+  gpsAddressNotice = '';
+  private gpsAutoCity = '';
+  private gpsAutoAddress = '';
   private gpsRequestId = 0;
 
   get gpsAccuracyIsLow(): boolean {
@@ -260,7 +264,7 @@ export class Events2Component implements OnInit, OnDestroy {
   }
 
   createSession(): void {
-    if (this.loading || this.venueSaving || this.venueMapLinkLoading) {
+    if (this.loading || this.venueSaving || this.venueMapLinkLoading || this.gpsAddressLoading) {
       return;
     }
 
@@ -914,6 +918,7 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     this.invalidateVenueMapLinkRequest();
+    this.clearAutoGpsFields();
     this.locationMethod = 'gps';
     this.latitude = latitude;
     this.longitude = longitude;
@@ -931,11 +936,64 @@ export class Events2Component implements OnInit, OnDestroy {
     this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
       'https://www.google.com/maps?q=' + latitude + ',' + longitude + '&z=17&output=embed'
     );
+    this.lookupGpsAddress(latitude, longitude, accuracyMeters);
+  }
+
+  /**
+   * Reverse-lookup is best-effort, never changes the actual GPS pin.
+   * A stale reply may not overwrite another venue, another GPS point,
+   * or text that the user edited while the lookup was pending.
+   */
+  private lookupGpsAddress(latitude: number, longitude: number, accuracyMeters?: number): void {
+    const requestId = this.gpsRequestId;
+    const startingCity = this.city;
+    const startingAddress = this.address;
+    this.gpsAddressLoading = true;
+    this.gpsAddressNotice = '';
+    this.venueService.reverseLocation(latitude, longitude, accuracyMeters).pipe(
+      timeout(7000),
+      finalize(() => {
+        if (this.gpsRequestId === requestId) this.gpsAddressLoading = false;
+      })
+    ).subscribe({
+      next: value => {
+        if (this.gpsRequestId !== requestId || this.locationSource !== 'gps'
+            || this.latitude !== latitude || this.longitude !== longitude) return;
+        const city = value.city?.trim().slice(0,120) || '';
+        const address = value.address?.trim().slice(0,250) || '';
+        if (city && this.city === startingCity) {
+          this.onCityChanged(city);
+          this.gpsAutoCity = city;
+        }
+        if (address && this.address === startingAddress) {
+          this.address = address;
+          this.gpsAutoAddress = address;
+        }
+        this.gpsAddressNotice = city
+          ? t('createSession.gpsAddressSuggested')
+          : t('createSession.gpsAddressUnknown');
+      },
+      error: () => {
+        if (requestId === this.gpsRequestId) {
+          this.gpsAddressNotice = t('createSession.gpsAddressUnknown');
+        }
+      }
+    });
+  }
+
+  private clearAutoGpsFields(): void {
+    if (this.gpsAutoCity && this.city === this.gpsAutoCity) this.onCityChanged('');
+    if (this.gpsAutoAddress && this.address === this.gpsAutoAddress) this.address = '';
+    this.gpsAutoCity = '';
+    this.gpsAutoAddress = '';
   }
 
   clearLocation(): void {
     this.invalidateVenueMapLinkRequest();
     this.gpsRequestId++;
+    this.clearAutoGpsFields();
+    this.gpsAddressLoading = false;
+    this.gpsAddressNotice = '';
     this.locating = false;
     this.locationCaptured = false;
     this.latitude = null;
@@ -984,6 +1042,9 @@ export class Events2Component implements OnInit, OnDestroy {
   private validate(): string | null {
     if (!this.sportSelected) {
       return 'Seleciona um desporto da lista.';
+    }
+    if (this.gpsAddressLoading) {
+      return t('createSession.gpsAddressLoading');
     }
     if (this.locationMethod === 'maps' && !(this.hasCoordinates && this.locationSource === 'map')) {
       return 'Resolve primeiro a ligação do Google Maps para confirmar o ponto do recinto.';
