@@ -1624,6 +1624,8 @@ const PT: Dictionary = {
   'communities.import.validateError': 'Não foi possível validar este mapeamento.',
   'communities.import.normalizeError': 'Não foi possível preparar o preview dos dados.',
   'communities.import.season': 'Época de destino',
+  'communities.import.autoSeasonNotice': 'Ainda não existe uma época. Será criada automaticamente ao preparar a importação.',
+  'communities.import.seasonCreateError': 'Não foi possível criar a época automaticamente. Tenta novamente.',
   'communities.import.selectSeason': 'Selecionar época',
   'communities.import.defaultYear': 'Ano para datas sem ano',
   'communities.import.sourceCompetition': 'Competição de origem (opcional)',
