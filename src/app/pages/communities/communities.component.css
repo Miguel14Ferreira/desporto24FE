@@ -1481,3 +1481,38 @@ input,textarea,select {
   .community-session-result-choices button {font-size:.74rem;}
   .community-session-result-footer button {flex:1 1 auto;}
 }
+
+
+/* Community sessions: each item is one complete card, not overlapping siblings. */
+.community-sessions-list { display:grid; gap:18px; margin-top:20px; }
+.community-session-entry {
+  display:grid; gap:14px; min-width:0; padding:16px;
+  border:1px solid rgba(79,163,173,.29); border-radius:18px;
+  background:linear-gradient(150deg,rgba(14,48,63,.75),rgba(6,32,47,.9));
+}
+.community-session-entry app-community-session-card {min-width:0}
+.community-session-entry-actions {
+  display:flex; align-items:center; flex-wrap:wrap; gap:12px;
+  padding-top:13px; border-top:1px solid rgba(132,194,198,.16);
+}
+.community-session-entry-actions > * {min-width:0}
+.community-session-entry-status {width:max-content;max-width:100%;padding:9px 13px}
+.community-session-visibility-control {
+  display:flex; flex-direction:column; align-items:flex-start; gap:7px;
+  flex:1 1 235px; min-width:min(100%,230px); padding:12px;
+  border:1px solid rgba(93,174,177,.27); border-radius:13px;
+  background:rgba(11,42,56,.7);
+}
+.community-session-visibility-control .jynlo-action {
+  max-width:100%; min-height:42px; white-space:normal; line-height:1.35; text-align:center;
+}
+.community-session-visibility-control p {
+  margin:0; color:#b9d4dd; line-height:1.55; font-size:.83rem;
+}
+.community-session-result-actions {margin:0}
+@media(max-width:650px) {
+  .community-session-entry {padding:12px;gap:12px}
+  .community-session-entry-actions {align-items:stretch;flex-direction:column}
+  .community-session-visibility-control {flex:0 0 auto;min-width:0;width:100%}
+  .community-session-visibility-control .jynlo-action {width:100%}
+}
