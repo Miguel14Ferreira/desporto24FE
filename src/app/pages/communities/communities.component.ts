@@ -2530,7 +2530,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   loadRecordedCommunitySessionResults(communityId: number): void {
-    this.communityService.recordedSessionResults(communityId)
+    // Keep isolated community test stubs and gradually upgraded services compatible.
+    const list = this.communityService.recordedSessionResults;
+    if (typeof list !== 'function') return;
+    list.call(this.communityService, communityId)
       .pipe(timeout(10_000))
       .subscribe({
         next: ids => {
