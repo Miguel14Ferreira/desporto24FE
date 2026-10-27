@@ -21,37 +21,6 @@
         <a class="jynlo-action jynlo-action--accent week-hub-create"
            routerLink="/menu/createEvent">{{ 'week.create' | t }} <span aria-hidden="true">↗</span></a>
       </div>
-      <section class="week-recruit" [attr.aria-label]="'week.recruitTitle' | t">
-        <div class="week-recruit-copy">
-          <span class="week-recruit-label">{{ 'week.recruitKicker' | t }}</span>
-          <strong>{{ 'week.recruitTitle' | t }}</strong>
-          <p>{{ 'week.recruitHint' | t }}</p>
-        </div>
-        <div class="week-recruit-actions">
-          <label class="week-recruit-field">
-            <span>{{ 'week.alreadyConfirmed' | t }}</span>
-            <input type="number" min="1" max="99" step="1" name="weekConfirmed"
-              [(ngModel)]="quickConfirmedPlayers" [attr.aria-label]="'week.alreadyConfirmed' | t">
-          </label>
-          <label class="week-recruit-field">
-            <span>{{ 'week.missing' | t }}</span>
-            <input type="number" min="1" max="99" step="1" name="weekMissing"
-              [(ngModel)]="quickMissingPlayers" [attr.aria-label]="'week.missing' | t">
-          </label>
-          <a class="jynlo-action jynlo-action--primary week-recruit-cta"
-             [routerLink]="quickRecruitValid ? '/menu/createEvent' : null"
-             [queryParams]="quickRecruitValid
-               ? { intent: 'findPlayers', confirmed: quickConfirmedPlayers, missing: quickMissingPlayers }
-               : null"
-             [class.week-recruit-disabled]="!quickRecruitValid"
-             [attr.aria-disabled]="!quickRecruitValid">
-            {{ 'week.recruitAction' | t }} <span aria-hidden="true">→</span>
-          </a>
-        </div>
-        @if (!quickRecruitValid) {
-          <small class="week-recruit-error" role="status">{{ 'week.recruitValidation' | t }}</small>
-        }
-      </section>
       <div class="week-hub-grid">
         <article class="week-hub-card" aria-label="Os teus próximos jogos">
           <div class="week-card-heading"><span aria-hidden="true">▦</span><h3>{{ 'week.upcoming' | t }}</h3></div>
