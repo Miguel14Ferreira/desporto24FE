@@ -75,6 +75,14 @@
               </div>
             </div>
             <div class="inbox-heading-actions">
+              @if (conversation.kind === 'direct' && composerAllowed && callsEnabled) {
+                <button type="button" class="inbox-call-trigger"
+                    [attr.aria-label]="'calls.voice' | t" [attr.title]="'calls.voice' | t"
+                    (click)="startCall(conversation, 'voice')"><span aria-hidden="true">☎</span></button>
+                <button type="button" class="inbox-call-trigger"
+                    [attr.aria-label]="'calls.video' | t" [attr.title]="'calls.video' | t"
+                    (click)="startCall(conversation, 'video')"><span aria-hidden="true">▣</span></button>
+              }
               <button type="button" class="inbox-search-toggle"
                 [attr.aria-expanded]="messageSearchOpen"
                 [attr.aria-label]="(messageSearchOpen ? 'inbox.closeMessageSearch' : 'inbox.searchMessages') | t"
