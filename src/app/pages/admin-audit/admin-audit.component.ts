@@ -66,12 +66,18 @@ export interface AdminVenuePossibleDuplicateReview {
   issueCode:string; relatedVenueId:number; relatedVenueName:string;
   officialSourceUrl:string; mapSourceUrl:string;
 }
+export interface AdminVenueFacilityContextReview {
+  issueCode: string;
+  officialSourceUrl: string;
+  relatedSourceUrl: string;
+}
 export interface AdminVenueGpsReviewPage {
   venues: {id:number; name:string; city:string; district:string|null; address:string|null;
     sourceReference:string|null; informationSource:string|null; sourceWebsite:string|null;
     researchCandidate?: AdminGpsResearchCandidate|null;
     addressReview?: AdminVenueAddressReview|null;
-    possibleDuplicateReview?: AdminVenuePossibleDuplicateReview|null}[];
+    possibleDuplicateReview?: AdminVenuePossibleDuplicateReview|null;
+    facilityContextReview?: AdminVenueFacilityContextReview|null}[];
   page:number; hasMore:boolean;
 }
 interface GrowthChart {
@@ -222,6 +228,19 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     return !!value && value.issueCode === 'POTENTIAL_SAME_FACILITY_REVIEW'
       && value.relatedVenueId === 2623
       && value.relatedVenueName === 'Campo Sintético do Viso';
+  }
+
+  /** Only two documented facilities, never a GPS candidate, duplicate or approval. */
+  gpsFacilityContextKey(value: AdminVenueFacilityContextReview | null | undefined):
+      string | null {
+    switch (value?.issueCode) {
+      case 'DISTINCT_MUNICIPAL_SPORTS_VENUES_NO_POINT':
+        return 'adminVenueGps.contextMaia';
+      case 'SHARED_COMPLEX_DIFFERENT_SPORTS_NO_POINT':
+        return 'adminVenueGps.contextMira';
+      default:
+        return null;
+    }
   }
 
   /** Optional, bounded admin-only list. No GPS is inferred or modified here. */
