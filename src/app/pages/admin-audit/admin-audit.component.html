@@ -253,6 +253,25 @@
                             class="jynlo-action jynlo-action--neutral">
                             {{ 'adminVenueGps.openOfficial' | t }}
                           </a>
+                          <div class="venue-gps-research" *ngIf="gpsResearchMapUrl(item.researchCandidate) as mapUrl">
+                            <strong>{{ 'adminVenueGps.researchTitle' | t }}</strong>
+                            <small>{{ item.researchCandidate?.latitude }}, {{ item.researchCandidate?.longitude }}</small>
+                            <small>{{ 'adminVenueGps.researchWarning' | t }}</small>
+                            <a [href]="mapUrl" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.researchMap' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.researchCandidate?.officialSourceUrl) as source"
+                              [href]="source" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.researchOfficial' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.researchCandidate?.secondarySourceUrl) as source"
+                              [href]="source" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.researchRegional' | t }}
+                            </a>
+                          </div>
                         </td>
                         <td><a class="jynlo-action jynlo-action--neutral"
                           [routerLink]="['/menu/venues', item.id, 'suggest-edit']">
