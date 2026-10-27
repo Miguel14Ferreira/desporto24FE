@@ -136,6 +136,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   guestRequests: SessionGuestRequest[] = [];
   guestRequestsLoading = false;
   guestRequestBusyId: number | null = null;
+  guestRequestsLoadedForSession: number | null = null;
 
   inviteFriendsLoading = false;
   inviteSendingTo: string | null = null;
@@ -1792,6 +1793,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       && this.canPromoteSession() && this.session.audience === 'PUBLIC';
   }
 
+  openRegisteredInvitePicker(): void {
+    if (!this.canFindPlayers()) return;
+    if (!this.inviteFriendsOpen) this.toggleFriendInvites();
+    this.scrollToPlayerSearch();
+  }
+
   createGuestLink(): void {
     if (!this.sessionId || !this.canShareGuestInvites() || this.guestLinkWorking) return;
     this.guestLinkWorking=true;
@@ -1835,7 +1842,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       timeout(10000),finalize(()=>this.guestRequestsLoading=false)
     ).subscribe({
       next:rows=>{if(id===this.sessionId)this.guestRequests=rows;},
-      error:()=>{this.guestPanelError=t('guestAdmin.loadError');}
+      error:()=>{
+        this.guestRequestsLoadedForSession=null;
+        this.guestPanelError=t('guestAdmin.loadError');
+      }
     });
   }
 
@@ -2216,6 +2226,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       .subscribe({
         next: session => {
           this.session = session;
+          if (this.canShareGuestInvites()
+              && this.guestRequestsLoadedForSession !== session.id) {
+            this.guestRequestsLoadedForSession = session.id;
+            this.loadGuestRequests();
+          }
           // Rating eligibility is determined after the participant roster loads,
           // not from the joined flag alone.
           if (session.creatorUsername) {
