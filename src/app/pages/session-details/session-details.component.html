@@ -228,7 +228,9 @@
             </div>
             <div>
               <span>{{ 'sessionDetail.creator' | t }}</span>
-              <strong>{{ session.creatorUsername || ('sessionDetail.user' | t) }}</strong>
+              @if (session.creatorUsername) {
+                <a class="session-profile-link" [routerLink]="['/menu/perfis',session.creatorUsername]">{{ session.creatorUsername }}</a>
+              } @else { <strong>{{ 'sessionDetail.user' | t }}</strong> }
             </div>
           </div>
 
@@ -857,7 +859,7 @@
                       <strong>{{ 'sessionDetail.teamA' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('A'); track participant.id) {
-                          <span>{{ '@' + participant.username }}</span>
+                          <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
                         }
                       </div>
                     </div>
@@ -962,7 +964,7 @@
                   @for (participant of participants; track participant.id) {
                     <article class="participant-row">
                       <div class="participant-identity">
-                        <strong>{{ participant.username }}</strong>
+                        <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ participant.username }}</a>
                         <span>{{ 'sessionDetail.joinedAt' | t:{ date: (participant.joinedAt | date:'dd/MM/yyyy HH:mm')! } }}</span>
                       </div>
 
