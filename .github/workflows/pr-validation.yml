@@ -26,6 +26,7 @@ on:
       - 'scripts/ci-browser/concept_one_populated_admin_readonly.cjs'
       - 'scripts/ci-browser/desktop_candidate_smoke.cjs'
       - 'scripts/ci-browser/authenticated_candidate_smoke.cjs'
+      - 'scripts/ci-browser/chat_reaction_bubble_browser.cjs'
       - 'package.json'
       - 'package-lock.json'
       - 'angular.json'
@@ -126,6 +127,49 @@ jobs:
         run: node --test scripts/ci-browser/html_security_policy.test.cjs
       - name: Build frontend once
         run: npm run build
+      # Regression reproduced by a real user: reaction badges overlapped the
+      # date and pointer clicks missed their target. Two synthetic friends, no
+      # production requests, against the production-built Angular candidate.
+      - name: Install isolated browser runner for reaction hitboxes
+        if: ${{ startsWith(github.head_ref, 'fix/chat-reactions-hitbox-e2e-') }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-chat-reactions-browser"
+          mkdir -p "$QA_DEPS" node_modules
+          printf '%s\n' '{"private":true,"dependencies":{"playwright":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/playwright" node_modules/playwright
+      - name: Real Chromium reaction badges — two fake accounts, desktop and mobile
+        if: ${{ startsWith(github.head_ref, 'fix/chat-reactions-hitbox-e2e-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > /tmp/jynlo-chat-reactions-spa.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:4173/; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then
+            cat /tmp/jynlo-chat-reactions-spa.log
+            exit 1
+          fi
+          node scripts/ci-browser/chat_reaction_bubble_browser.cjs
+      - name: Save real reaction badge screenshots
+        if: ${{ always() && startsWith(github.head_ref, 'fix/chat-reactions-hitbox-e2e-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-reactions-desktop-mobile-chromium
+          path: artifacts/chat-reactions/*.png
+          retention-days: 7
+          if-no-files-found: ignore
+
       # 390px real-browser visual contract against the BUILT candidate.
       # Synthetic JWT, GET-only fixtures and blocked outbound network;
       # no live API requests, credentials or Render writes.

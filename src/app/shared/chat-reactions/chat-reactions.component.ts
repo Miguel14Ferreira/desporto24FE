@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { skip, Subscription } from 'rxjs';
 import {
   CHAT_REACTION_EMOJIS, ChatReactionKind,
   ChatReactionStoreService, ChatReactionSummary
@@ -124,13 +125,30 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   expanded = false;
   error = false;
   private watching?: { kind: ChatReactionKind; id: string | number; messageId: number };
+  private reactionUpdates?: Subscription;
   private pickerTrigger?: HTMLElement;
 
-  constructor(public readonly store: ChatReactionStoreService) {}
+  constructor(
+    public readonly store: ChatReactionStoreService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-  ngOnInit(): void { this.watchCurrent(); }
+  ngOnInit(): void {
+    // The store uses ordinary mutable Maps, not Angular signals. Without a
+    // notification, the host can know that counts exist while its @for template
+    // stays stuck displaying only the empty reaction button (Chromium QA).
+    // Render immediately on each HTTP / WebSocket state change. The first
+    // BehaviorSubject emission happens during ngOnInit and is ignored to avoid
+    // re-entrant initial template rendering.
+    this.reactionUpdates = this.store.changed.pipe(skip(1))
+      .subscribe(() => this.cdr.detectChanges());
+    this.watchCurrent();
+  }
   ngOnChanges(): void { this.watchCurrent(); }
-  ngOnDestroy(): void { this.stopWatching(); }
+  ngOnDestroy(): void {
+    this.reactionUpdates?.unsubscribe();
+    this.stopWatching();
+  }
 
   get summary(): ChatReactionSummary | undefined {
     return this.store.get(this.kind, this.conversationId, this.messageId);
