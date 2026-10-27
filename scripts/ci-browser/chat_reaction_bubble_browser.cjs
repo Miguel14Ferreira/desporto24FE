@@ -465,6 +465,7 @@ async function main(){
       await a.locator('.profile-invite-trigger').click();
       const panel=a.locator('.profile-invite-panel');
       await panel.waitFor();
+      await panel.locator('.profile-invite-option').first().waitFor({timeout:8000});
       assert.equal(await panel.locator('.profile-invite-option').count(),1,
         'only one eligible managed community may be invited');
       assert.match(await panel.innerText(),/Futebol sábado/);
