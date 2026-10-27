@@ -14,6 +14,7 @@ const saved=new Map([['ana','👍']]);
 const writes=[];
 const errors=[];
 const CHECK_CALLS=process.env.JYNLO_VERIFY_CALLS === '1';
+const CHECK_PROFILE=process.env.JYNLO_VERIFY_PROFILE==='1';
 const callActions=[];
 const callSockets=new Map();
 const requests=[];
@@ -66,6 +67,12 @@ async function context(browser,username,width){
     if(method==='OPTIONS')return route.fulfill({status:204,headers:{
       'access-control-allow-origin':'*','access-control-allow-headers':'*',
       'access-control-allow-methods':'GET,POST,PUT,DELETE,OPTIONS'}});
+    if(CHECK_PROFILE && method==='GET' && p.startsWith('/api/profile/')) {
+      const lookup=decodeURIComponent(p.slice('/api/profile/'.length));
+      return reply(route,200,{username:lookup,nickname:lookup==='bea'?'Bea':'Ana',
+        fullName:'Pessoa de teste',profilePicUrl:null,location:'Lisboa',
+        favoriteSports:'Futebol',bio:'Jogar com amigos',country:'Portugal',age:25});
+    }
     if(method==='GET'&&p==='/api/friends/me')return reply(route,200,[{
       username:peer,nickname:peer==='bea'?'Bea':'Ana',fullName:null,chatBlocked:false,
       blockedByMe:false,profilePicUrl:null
@@ -272,6 +279,21 @@ async function main(){
       assert.deepEqual(callActions,['bea:decline','ana:start:voice']);
       await a.locator('.call-panel .call-decline').click();
       await a.locator('.call-panel').waitFor({state:'detached'});
+    }
+    if(CHECK_PROFILE){
+      await a.locator('.inbox-contact-name').click({timeout:5000});
+      await a.locator('.contact-panel').waitFor();
+      assert.match(await a.locator('.contact-panel').innerText(),/Bea/);
+      assert.match(await a.locator('.contact-panel').innerText(),/Lisboa/);
+      assert.equal(await a.locator('.contact-panel a[href*="/menu/perfis/bea"]').count(),1);
+      await a.screenshot({path:path.join(OUT,'contact-preview-desktop.png')});
+      await a.locator('.contact-close').click();
+      await a.locator('.contact-panel').waitFor({state:'detached'});
+      const messageName=a.locator('.inbox-contact-sender').first();
+      await messageName.click();
+      await a.locator('.contact-panel').waitFor();
+      await a.screenshot({path:path.join(OUT,'contact-preview-message-sender.png')});
+      await a.locator('.contact-close').click();
     }
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');
