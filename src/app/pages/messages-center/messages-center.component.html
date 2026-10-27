@@ -69,7 +69,12 @@
                 {{ conversation.kind === 'direct' ? conversation.title.slice(0, 1).toUpperCase() : conversation.kind === 'community' ? '👥' : '⚽' }}
               </span>
               <div class="inbox-detail-info">
-                <h2>{{ conversation.title }}</h2>
+                @if (conversation.kind === 'direct') {
+                  <button type="button" class="inbox-contact-name" (click)="showContact('' + conversation.id)"
+                    [attr.aria-label]="'profile.contactInfo' | t">
+                    <h2>{{ conversation.title }}</h2>
+                  </button>
+                } @else { <h2>{{ conversation.title }}</h2> }
                 <p><span class="inbox-detail-type">{{ kindLabel(conversation.kind) | t }}</span>
                   @if (conversation.subtitle) { <span aria-hidden="true"> · </span>{{ conversation.subtitle }} }</p>
               </div>
@@ -159,7 +164,12 @@
                 [attr.data-message-id]="message.id" tabindex="-1">
                 <div class="inbox-bubble-meta">
                   @if (!continuesGroupAt(i)) {
-                    <strong>{{ isMine(message) ? ('chat.you' | t) : message.sender }}</strong>
+                    @if (isMine(message)) {
+                      <strong>{{ 'chat.you' | t }}</strong>
+                    } @else {
+                      <button type="button" class="inbox-contact-sender"
+                        (click)="showContact(message.sender)">{{ message.sender }}</button>
+                    }
                   }
                   <time>{{ formatDate(message.createdAt) }}</time>
                   @if (message.editedAt && !message.deletedAt) {
@@ -174,7 +184,8 @@
                 </div>
                 @if (!message.deletedAt && message.replyToMessageId && message.replyToText) {
                   <div class="inbox-message-quote">
-                    <strong>{{ message.replyToSender }}</strong>
+                    <button type="button" class="inbox-contact-sender"
+                      (click)="showContact(message.replyToSender)">{{ message.replyToSender }}</button>
                     <span>{{ displayMessagePreview(message.replyToText) }}</span>
                   </div>
                 }
