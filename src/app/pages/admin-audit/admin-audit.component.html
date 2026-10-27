@@ -290,6 +290,26 @@
                               {{ 'adminVenueGps.contextRelated' | t }}
                             </a>
                           </div>
+                          <div class="venue-gps-research"
+                            *ngIf="gpsRodoviaCartographyVisible(item.facilityContextReview?.cartographyReview)">
+                            <strong>{{ 'adminVenueGps.rodoviaMapTitle' | t }}</strong>
+                            <small>{{ 'adminVenueGps.rodoviaMapCaution' | t }}</small>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.municipalGuideUrl) as guide"
+                              [href]="guide" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaMunicipalGuide' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.parkAreaUrl) as park"
+                              [href]="park" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaParkArea' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.sportsBuildingUrl) as building"
+                              [href]="building" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaBuildingArea' | t }}
+                            </a>
+                          </div>
                           <div class="venue-gps-research" *ngIf="gpsPossibleDuplicateVisible(item.possibleDuplicateReview)">
                             <strong>{{ 'adminVenueGps.duplicateTitle' | t }}</strong>
                             <small>{{ 'adminVenueGps.duplicateCaution' | t }}</small>
