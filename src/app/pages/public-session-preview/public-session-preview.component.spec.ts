@@ -897,6 +897,32 @@ describe('PublicSessionPreviewComponent', () => {
       expect(page.querySelector('.guest-rsvp-upgrade a[routerlink]')).toBeTruthy();
       expect((http.post as jasmine.Spy).calls.allArgs()[1][1].playerId).toBeNull();
     });
+    it('uses the Jynlo account instead of claiming a historical name when already logged in', () => {
+      authenticationService.isLoggedIn.and.returnValue(true);
+      routeQueryParamMap=convertToParamMap({guest:token});
+      const page=render({sport:'Futebol'});
+      expect(fixture.componentInstance.isAuthenticated).toBeTrue();
+      expect(fixture.componentInstance.guestPlayers).toEqual([]);
+      expect(http.post).not.toHaveBeenCalled();
+      expect(page.querySelector('.guest-rsvp')).toBeNull();
+      const join=page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+      expect(new URL(join.href).pathname).toBe('/menu/events/42');
+      expect(join.textContent).toContain('Participar com a minha conta');
+    });
+
+    it('keeps an approved receipt available for explicit linking after optional signup', () => {
+      authenticationService.isLoggedIn.and.returnValue(true);
+      localStorage.setItem('jynlo-guest-receipt:42',receipt);
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.returnValue(of({receipt,status:'APPROVED'}));
+      const page=render({sport:'Futebol'});
+      expect(fixture.componentInstance.guestStep).toBe('approved');
+      expect(page.querySelector('.guest-rsvp')).toBeTruthy();
+      expect(page.querySelector('.guest-rsvp-upgrade button')).toBeTruthy();
+      expect(http.post).toHaveBeenCalledTimes(1);
+      expect((http.post as jasmine.Spy).calls.mostRecent().args[0]).toContain('/guest-requests/status');
+    });
+
     it('never treats an invalid guest link as a public roster permission', () => {
       routeQueryParamMap=convertToParamMap({guest:'bad'});
       const page=render({sport:'Futebol'});
