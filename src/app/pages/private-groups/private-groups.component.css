@@ -82,3 +82,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
 .group-member-remove:hover{background:#753a43;color:#fff}
 .group-modal form{display:block}
 .group-modal form footer{margin-top:14px}
+
+.group-member-chip a{display:inline-flex;align-items:center;gap:7px}
+.group-member-avatar{width:25px;height:25px;object-fit:cover;border-radius:50%;background:#245e68}
