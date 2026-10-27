@@ -1603,6 +1603,37 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.canOpenSessionToPublic(session)).toBeFalse();
   });
 
+  it('lets managers return a public future session to members-only even when full', () => {
+    session.audience = 'PUBLIC';
+    expect(component.canRestrictSessionToMembers(session)).toBeTrue();
+    session.participantCount = session.maxParticipants;
+    session.status = 'FULL';
+    expect(component.canRestrictSessionToMembers(session)).toBeTrue();
+    session.status = 'CANCELLED';
+    expect(component.canRestrictSessionToMembers(session)).toBeFalse();
+    session.status = 'OPEN';
+    session.gameDate = new Date(Date.now() - 60_000).toISOString();
+    expect(component.canRestrictSessionToMembers(session)).toBeFalse();
+    session.gameDate = new Date(Date.now() + 3600_000).toISOString();
+    session.audience = 'COMMUNITY_ONLY';
+    expect(component.canRestrictSessionToMembers(session)).toBeFalse();
+    session.audience = 'PUBLIC';
+    (component.canManage as jasmine.Spy).and.returnValue(false);
+    expect(component.canRestrictSessionToMembers(session)).toBeFalse();
+  });
+
+  it('changes the audience only for the selected community after the API accepts it', () => {
+    component.selected = { id: 12 } as any;
+    component.communitySessions = [session];
+    session.audience = 'PUBLIC';
+    const update = jasmine.createSpy('restrictSessionToMembers').and.returnValue(
+      of({...session,audience:'COMMUNITY_ONLY'}));
+    (component as any).communityService = { restrictSessionToMembers:update };
+    component.restrictSessionToMembers(session);
+    expect(update).toHaveBeenCalledOnceWith(12,42);
+    expect(component.communitySessions[0].audience).toBe('COMMUNITY_ONLY');
+  });
+
   it('hides the action for non-managers', () => {
     (component.canManage as jasmine.Spy).and.returnValue(false);
     expect(component.canOpenSessionToPublic(session)).toBeFalse();
