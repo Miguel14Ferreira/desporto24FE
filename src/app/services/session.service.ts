@@ -90,7 +90,7 @@ export interface SessionTeamPlayer {
 export interface SessionGuestRequest {
   id: number;
   name: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'LINKED' | 'CANCELLED';
   note: string;
   teamCode?: string | null;
 }
@@ -121,6 +121,11 @@ export class SessionService {
   reviewGuestRequest(id:number,requestId:number,approve:boolean): Observable<SessionGuestRequest> {
     return this.http.post<SessionGuestRequest>(
       this.baseUrl+'/'+id+'/guest-requests/'+requestId+'/decision',{approve});
+  }
+
+  cancelGuestRequest(id:number,requestId:number): Observable<SessionGuestRequest> {
+    return this.http.post<SessionGuestRequest>(
+      this.baseUrl+'/'+id+'/guest-requests/'+requestId+'/cancel',{});
   }
 
   pendingInvites(): Observable<PendingSessionInvite[]> {
