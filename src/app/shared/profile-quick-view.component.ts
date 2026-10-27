@@ -92,7 +92,7 @@ export class ProfileQuickViewComponent implements OnDestroy {
      this.profileLoad?.unsubscribe();this.person=null;this.error=false;this.loading=!!username;
      const version=++this.current;
      if(!username)return;
-     this.profileLoad=this.profiles.getProfile(username).pipe(timeout(12000)).subscribe({
+     this.profileLoad=this.profiles.publicProfile(username).pipe(timeout(12000)).subscribe({
        next:person=>{if(version===this.current){this.person=person;this.loading=false;}},
        error:()=>{if(version===this.current){this.error=true;this.loading=false;}}
      });
