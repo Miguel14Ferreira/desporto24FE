@@ -3553,7 +3553,7 @@ export const EN: Record<string, string> = {
   'createSession.gpsAddressSuggested': 'Locality and street filled automatically. The address is approximate; check it before creating your session.',
   'createSession.gpsAddressCityOnly': 'The locality was identified but we could not determine a street. You can fill the address manually.',
   'createSession.gpsAddressUnknown': 'We could not safely identify the street. The GPS pin remains saved; enter the locality manually.',
-  'createSession.gpsAddressPrivacy': 'Address lookups use external geocoding services, including Photon (OpenStreetMap data) and My Geocode. Your original GPS point remains unchanged.'
+  'createSession.gpsAddressPrivacy': 'Address lookups use external geocoding services, including Photon (OpenStreetMap data) and My Geocode. Your original GPS point remains unchanged.',
   'createSession.gpsLocationFound': 'GPS point saved for this session. Confirm you are at the correct field.',
   'createSession.gpsAccuracy': 'Estimated GPS accuracy: ±{{meters}} m.',
   'createSession.gpsAccuracyWarning': 'This location is approximate. Check the field on the map; if it is incorrect, use a Google Maps link.',
