@@ -3906,7 +3906,7 @@ const PT: Dictionary = {
   'adminVenueGps.researchWarning': "Referência à área do complexo. Entrada não confirmada. Requer proposta com fonte HTTPS e aprovação.",
   'adminVenueGps.researchMap': "Ver ponto candidato no mapa",
   'adminVenueGps.researchOfficial': "Fonte municipal",
-  'adminVenueGps.researchRegional': "Confirmação Turismo do Alentejo",
+  'adminVenueGps.researchRegional': "Fonte cartográfica complementar",
   'adminVenueGps.review': "Propor coordenadas",
   'adminVenueGps.warning': "A morada e a referência são pistas de pesquisa, não comprovativos GPS. Nunca usar o centro de uma localidade ou complexo como se fosse o recinto. A publicação exige fonte HTTPS verificada e aprovação administrativa.",
   'adminAudit.subtitle': 'Indicadores de utilização e crescimento da Jynlo. O histórico de ações administrativas ainda não está disponível.',

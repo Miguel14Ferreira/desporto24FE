@@ -3899,7 +3899,7 @@ export const EN: Record<string, string> = {
   'adminVenueGps.researchWarning': "Site-level reference only. Entrance unverified. HTTPS source, proposal and administrator approval required.",
   'adminVenueGps.researchMap': "View candidate point on map",
   'adminVenueGps.researchOfficial': "Municipal source",
-  'adminVenueGps.researchRegional': "Alentejo Tourism corroboration",
+  'adminVenueGps.researchRegional': "Additional map evidence",
   'adminVenueGps.review': "Suggest coordinates",
   'adminVenueGps.warning': "Addresses and source references are research clues, not GPS evidence. Never substitute a city or complex centre for the actual venue. Publication requires verified HTTPS evidence and administrator approval.",
   'adminAudit.subtitle': 'Jynlo usage and growth indicators. Administrative action history is not available yet.',
