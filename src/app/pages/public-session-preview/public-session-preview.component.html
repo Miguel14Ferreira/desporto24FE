@@ -162,10 +162,19 @@
                          : isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
             }
             @if (isAuthenticated) {
-              <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl" [queryParams]="{ join: 1 }">
-                {{ (guestToken ? 'inviteCenter.joinWithAccount' : details.status === 'FULL'
-                        ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
-              </a>
+              @if (guestToken && !guestReceipt) {
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                        [disabled]="memberJoining" (click)="joinWithAccount()">
+                  {{ (memberJoining ? 'guestRsvp.linking' : 'inviteCenter.joinWithAccount') | t }}
+                </button>
+                @if (memberJoinError) {
+                  <p role="alert" class="guest-rsvp-error">{{ memberJoinError | t }}</p>
+                }
+              } @else {
+                <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl" [queryParams]="{ join: 1 }">
+                  {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
+                </a>
+              }
             } @else {
               <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: participationReturnUrl }">{{ 'nav.register' | t }}</a>
             }
