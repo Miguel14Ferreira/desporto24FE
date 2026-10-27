@@ -581,7 +581,7 @@ const PT: Dictionary = {
   'guestRsvp.rejected': 'Pedido não aprovado',
   'guestRsvp.rejectedHelp': 'O organizador não aprovou este pedido. Contacta-o diretamente para esclarecer.',
   'guestRsvp.cancelled': 'Presença cancelada',
-  'guestRsvp.cancelledHelp': 'O organizador cancelou esta presença. Contacta-o se precisares de esclarecimentos.'
+  'guestRsvp.cancelledHelp': 'O organizador cancelou esta presença. Contacta-o se precisares de esclarecimentos.',
   'guestRsvp.checkStatus': 'Verificar resposta',
   'guestRsvp.linkAccount': 'Associar presença e histórico à minha conta',
   'guestRsvp.linking': 'A associar...',
