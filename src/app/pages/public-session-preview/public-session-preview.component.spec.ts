@@ -14,10 +14,12 @@ describe('PublicSessionPreviewComponent', () => {
   let http: jasmine.SpyObj<HttpClient>;
   let authenticationService: jasmine.SpyObj<AuthenticationService>;
   let routeParamMap: ReturnType<typeof convertToParamMap>;
+  let routeQueryParamMap: ReturnType<typeof convertToParamMap>;
 
   beforeEach(async () => {
     routeParamMap = convertToParamMap({ id: '42' });
-    http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
+    routeQueryParamMap = convertToParamMap({});
+    http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get', 'post']);
     authenticationService = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate']
     );
@@ -29,7 +31,8 @@ describe('PublicSessionPreviewComponent', () => {
         { provide: HttpClient, useValue: http },
         { provide: AuthenticationService, useValue: authenticationService },
         { provide: ActivatedRoute, useValue: {
-          snapshot: { get paramMap() { return routeParamMap; } }
+          snapshot: { get paramMap() { return routeParamMap; },
+                      get queryParamMap() { return routeQueryParamMap; } }
         } }
       ]
     }).compileComponents();
@@ -40,6 +43,7 @@ describe('PublicSessionPreviewComponent', () => {
   afterEach(() => {
     TestBed.inject(I18nService).setLanguage('pt');
     localStorage.removeItem('d24-language');
+    localStorage.removeItem('jynlo-guest-receipt:42');
   });
 
   function render(overrides: Record<string, unknown> = {}): HTMLElement {
@@ -827,4 +831,78 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.join-panel .primary-action')).toBeNull();
     expect(page.textContent).toContain('Inscrições encerradas');
   });
+
+  describe('no-login guest invitations', () => {
+    const token='A'.repeat(43);
+    const receipt='B'.repeat(43);
+    function renderGuest() {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string,body:any) => {
+        if(url.endsWith('/guest-roster')) {
+          expect(body.token).toBe(token);
+          return of({sessionId:42,communityId:7,players:[
+            {id:21,name:'Afonso Salvador'},{id:22,name:'João Marques'}]});
+        }
+        if(url.endsWith('/guest-requests')) {
+          return of({receipt,status:'PENDING'});
+        }
+        if(url.endsWith('/guest-requests/status')) {
+          return of({receipt,status:'APPROVED'});
+        }
+        return throwError(()=>new Error('Unexpected route '+url));
+      });
+      return render({sport:'Futebol'});
+    }
+    it('loads the name list only when holding a valid organizer-issued invite token', () => {
+      const page=renderGuest();
+      expect(page.querySelector('.guest-rsvp')).toBeTruthy();
+      expect(fixture.componentInstance.guestPlayers.length).toBe(2);
+      expect(fixture.componentInstance.guestCommunityId).toBe(7);
+      expect(http.post).toHaveBeenCalledTimes(1);
+      expect(page.querySelector('.guest-rsvp-primary:disabled')).toBeTruthy();
+    });
+    it('lets guests go back and correct their chosen player before submitting', () => {
+      renderGuest();
+      const component=fixture.componentInstance;
+      component.selectGuestPlayer(21);
+      component.chooseGuest();
+      fixture.detectChanges();
+      expect(component.guestStep).toBe('confirm');
+      expect(component.guestPlayerName).toBe('Afonso Salvador');
+      const back=fixture.nativeElement.querySelector('.guest-rsvp-back') as HTMLButtonElement;
+      back.click();
+      fixture.detectChanges();
+      expect(component.guestStep).toBe('choose');
+      component.selectGuestPlayer(22);
+      component.chooseGuest();
+      component.sendGuestRequest();
+      fixture.detectChanges();
+      const calls=(http.post as jasmine.Spy).calls.allArgs();
+      expect(calls[1][1].playerId).toBe(22);
+      expect(calls[1][1].newName).toBeNull();
+      expect(component.guestStep).toBe('pending');
+      expect(localStorage.getItem('jynlo-guest-receipt:42')).toBe(receipt);
+    });
+    it('offers optional registration only after organizer approval, not after sending', () => {
+      const page=renderGuest();
+      const component=fixture.componentInstance;
+      component.setGuestNewName('Convidado novo');
+      component.chooseGuest();
+      component.sendGuestRequest();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(component.guestStep).toBe('approved');
+      expect(page.querySelector('.guest-rsvp-upgrade a[routerlink]')).toBeTruthy();
+      expect((http.post as jasmine.Spy).calls.allArgs()[1][1].playerId).toBeNull();
+    });
+    it('never treats an invalid guest link as a public roster permission', () => {
+      routeQueryParamMap=convertToParamMap({guest:'bad'});
+      const page=render({sport:'Futebol'});
+      expect(page.querySelector('.guest-rsvp')).toBeNull();
+      expect(http.post).not.toHaveBeenCalled();
+    });
+  });
+
 });
