@@ -53,6 +53,13 @@ export interface PendingSessionInvite {
   sessionId: number;
   inviterUsername: string;
   createdAt: string;
+  /** Only safe session metadata, accessible to the authenticated invitee. */
+  sport?: string | null;
+  city?: string | null;
+  gameDate?: string | null;
+  maxParticipants?: number | null;
+  participantCount?: number | null;
+  status?: 'OPEN' | 'FULL' | 'CANCELLED' | 'COMPLETED' | null;
 }
 
 export interface JoinSessionResponse {
@@ -75,6 +82,17 @@ export interface SessionTeamPlayer {
   wins: number;
   goals: number;
   assists: number;
+  /** Guest players are not navigable Jynlo accounts. */
+  guest?: boolean;
+  displayName?: string;
+}
+
+export interface SessionGuestRequest {
+  id: number;
+  name: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  note: string;
+  teamCode?: string | null;
 }
 
 export interface SessionTeamSuggestion {
@@ -93,6 +111,17 @@ export class SessionService {
   private readonly baseUrl = environment.apiUrl + '/api/sessions';
 
   constructor(private http: HttpClient) {}
+
+  issueGuestLink(id:number): Observable<{token:string}> {
+    return this.http.post<{token:string}>(this.baseUrl+'/'+id+'/guest-link',{});
+  }
+  guestRequests(id:number): Observable<SessionGuestRequest[]> {
+    return this.http.get<SessionGuestRequest[]>(this.baseUrl+'/'+id+'/guest-requests');
+  }
+  reviewGuestRequest(id:number,requestId:number,approve:boolean): Observable<SessionGuestRequest> {
+    return this.http.post<SessionGuestRequest>(
+      this.baseUrl+'/'+id+'/guest-requests/'+requestId+'/decision',{approve});
+  }
 
   pendingInvites(): Observable<PendingSessionInvite[]> {
     return this.http.get<PendingSessionInvite[]>(environment.apiUrl + '/api/session-invites/pending');

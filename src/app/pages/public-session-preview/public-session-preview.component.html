@@ -64,22 +64,110 @@
 
         <aside class="join-panel">
           <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
-          @if (canRequestParticipation) {
+          @if (guestToken && canRequestParticipation && (!isAuthenticated || !!guestReceipt)) {
+            <section class="guest-rsvp" [attr.aria-label]="'guestRsvp.title' | t">
+              <span class="guest-rsvp-kicker">{{ 'guestRsvp.noAccount' | t }}</span>
+              @if (guestLoading) {
+                <p role="status">{{ 'publicSession.loading' | t }}</p>
+              } @else if (guestError === 'guestRsvp.invalidLink') {
+                <p role="alert" class="guest-rsvp-error">{{ guestError | t }}</p>
+              } @else if (guestStep === 'choose') {
+                <h2>{{ 'guestRsvp.title' | t }}</h2>
+                <p>{{ 'guestRsvp.chooseHelp' | t }}</p>
+                <label for="guest-player-select">{{ 'guestRsvp.selectPlayer' | t }}</label>
+                <select id="guest-player-select" [ngModel]="guestPlayerId"
+                  (ngModelChange)="selectGuestPlayer($event)" [disabled]="guestSending">
+                  <option [ngValue]="null">{{ 'guestRsvp.choosePlaceholder' | t }}</option>
+                  @for (person of guestPlayers; track person.id) {
+                    <option [ngValue]="person.id">{{ person.name }}</option>
+                  }
+                </select>
+                <label for="guest-new-name">{{ 'guestRsvp.notListed' | t }}</label>
+                <input id="guest-new-name" type="text" maxlength="80" autocomplete="name"
+                  [ngModel]="guestNewName" (ngModelChange)="setGuestNewName($event)"
+                  [placeholder]="'guestRsvp.newNamePlaceholder' | t"/>
+                <button type="button" class="guest-rsvp-primary"
+                  [disabled]="!guestPlayerName || guestSending" (click)="chooseGuest()">
+                  {{ 'guestRsvp.continue' | t }}
+                </button>
+              } @else if (guestStep === 'confirm') {
+                <button type="button" class="guest-rsvp-back" (click)="backToGuestChoices()"
+                  [disabled]="guestSending">← {{ 'guestRsvp.back' | t }}</button>
+                <h2>{{ 'guestRsvp.confirmTitle' | t }}</h2>
+                <p>{{ 'guestRsvp.confirmHelp' | t }}</p>
+                <div class="guest-rsvp-identity">{{ guestPlayerName }}</div>
+                <label for="guest-note">{{ 'guestRsvp.note' | t }}</label>
+                <textarea id="guest-note" rows="3" maxlength="160" [(ngModel)]="guestNote"
+                  [placeholder]="'guestRsvp.notePlaceholder' | t"></textarea>
+                <p class="guest-rsvp-hint">{{ 'guestRsvp.pendingWarning' | t }}</p>
+                @if (guestError) { <p role="alert" class="guest-rsvp-error">{{ guestError | t }}</p> }
+                <button type="button" class="guest-rsvp-primary"
+                  [disabled]="guestSending" (click)="sendGuestRequest()">
+                  {{ (guestSending ? 'guestRsvp.sending' : 'guestRsvp.send') | t }}
+                </button>
+              } @else {
+                <h2>{{ (guestStep === 'linked' ? 'guestRsvp.linked' : guestStep === 'approved' ? 'guestRsvp.approved'
+                          : guestStep === 'rejected' ? 'guestRsvp.rejected' : 'guestRsvp.pending') | t }}</h2>
+                <p>{{ (guestStep === 'linked' ? 'guestRsvp.linkedHelp' : guestStep === 'approved' ? 'guestRsvp.approvedHelp'
+                         : guestStep === 'rejected' ? 'guestRsvp.rejectedHelp'
+                         : 'guestRsvp.pendingHelp') | t }}</p>
+                @if (guestStep === 'pending') {
+                  <button type="button" class="guest-rsvp-primary"
+                    [disabled]="guestSending" (click)="checkGuestStatus()">
+                    {{ 'guestRsvp.checkStatus' | t }}
+                  </button>
+                }
+                @if (guestStep === 'approved') {
+                  <div class="guest-rsvp-upgrade">
+                    <h3>{{ 'guestRsvp.createAccountTitle' | t }}</h3>
+                    <p>{{ 'guestRsvp.createAccountHelp' | t }}</p>
+                    @if (isAuthenticated) {
+                      <button type="button" class="guest-rsvp-primary"
+                        [disabled]="guestLinking" (click)="linkGuestAccount()">
+                        {{ (guestLinking ? 'guestRsvp.linking' : 'guestRsvp.linkAccount') | t }}
+                      </button>
+                    } @else {
+                      <a class="guest-rsvp-primary" routerLink="/login/registerNewUser"
+                        [queryParams]="{returnUrl: guestRegistrationReturnUrl}">
+                        {{ 'guestRsvp.createAccount' | t }}
+                      </a>
+                      <a class="guest-rsvp-back" routerLink="/login"
+                        [queryParams]="{returnUrl: guestRegistrationReturnUrl}">
+                        {{ 'guestRsvp.haveAccount' | t }}
+                      </a>
+                    }
+                    <p>{{ 'guestRsvp.noThanks' | t }}</p>
+                  </div>
+                }
+                @if (guestStep === 'linked') {
+                  <a class="guest-rsvp-primary" [routerLink]="returnUrl">
+                    {{ 'guestRsvp.openSession' | t }}
+                  </a>
+                }
+              }
+              @if (guestError && guestStep !== 'choose' && guestStep !== 'confirm') {
+                <p role="alert" class="guest-rsvp-error">{{ guestError | t }}</p>
+              }
+            </section>
+          }
+          @if (canRequestParticipation && (!guestToken || (isAuthenticated && !guestReceipt))) {
             @if (details.status === 'FULL') {
               <h2>{{ 'publicSession.fullHeading' | t }}</h2>
               <p>{{ 'publicSession.fullExplanation' | t }}</p>
             } @else {
-              <h2>{{ 'publicSession.openHeading' | t }}</h2>
-              <p>{{ (isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
+              <h2>{{ (guestToken && isAuthenticated ? 'inviteCenter.memberHeading' : 'publicSession.openHeading') | t }}</h2>
+              <p>{{ (guestToken && isAuthenticated ? 'inviteCenter.memberHelp'
+                         : isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
             }
             @if (isAuthenticated) {
               <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl" [queryParams]="{ join: 1 }">
-                {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
+                {{ (guestToken ? 'inviteCenter.joinWithAccount' : details.status === 'FULL'
+                        ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
               </a>
             } @else {
               <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: participationReturnUrl }">{{ 'nav.register' | t }}</a>
             }
-          } @else {
+          } @else if (!canRequestParticipation) {
             <h2>{{ 'publicSession.closedHeading' | t }}</h2>
             <p>{{ 'publicSession.closedExplanation' | t }}</p>
             @if (isAuthenticated) {

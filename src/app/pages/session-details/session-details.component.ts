@@ -14,7 +14,7 @@ import { compactSessionShareMessage } from '../../shared/session-share-message';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion, SessionTeamScoreSource } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion, SessionTeamScoreSource, SessionGuestRequest } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
@@ -129,6 +129,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   joinStatusChecking = false;
   joinStatusMessage = '';
   inviteFriendsOpen = false;
+  guestLinkUrl = '';
+  guestLinkWorking = false;
+  guestPanelError = '';
+  guestPanelSuccess = '';
+  guestRequests: SessionGuestRequest[] = [];
+  guestRequestsLoading = false;
+  guestRequestBusyId: number | null = null;
+  guestRequestsLoadedForSession: number | null = null;
+
   inviteFriendsLoading = false;
   inviteSendingTo: string | null = null;
   formalInviteSendingTo: string | null = null;
@@ -1779,6 +1788,87 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return this.confirmedTeams;
   }
 
+  canShareGuestInvites(): boolean {
+    return !!this.session && this.isCreator() && !!this.session.communityId
+      && this.canPromoteSession() && this.session.audience === 'PUBLIC';
+  }
+
+  openRegisteredInvitePicker(): void {
+    if (!this.canFindPlayers()) return;
+    if (!this.inviteFriendsOpen) this.toggleFriendInvites();
+    this.scrollToPlayerSearch();
+  }
+
+  createGuestLink(): void {
+    if (!this.sessionId || !this.canShareGuestInvites() || this.guestLinkWorking) return;
+    this.guestLinkWorking=true;
+    this.guestPanelError='';
+    this.guestPanelSuccess='';
+    this.sessionService.issueGuestLink(this.sessionId).pipe(
+      timeout(10000),finalize(()=>this.guestLinkWorking=false)
+    ).subscribe({
+      next:({token})=>{
+        this.guestLinkUrl=new URL('/sessions/'+this.sessionId+'?guest='+encodeURIComponent(token),
+          window.location.origin).href;
+        this.guestPanelSuccess=t('guestAdmin.newLink');
+        this.loadGuestRequests();
+      },
+      error:()=>{this.guestPanelError=t('guestAdmin.linkError');}
+    });
+  }
+
+  get guestLinkWhatsAppUrl(): string {
+    return this.guestLinkUrl
+      ? 'https://wa.me/?text='+encodeURIComponent(this.compactShareText()+'\n'+this.guestLinkUrl)
+      : '';
+  }
+
+  async copyGuestLink(): Promise<void> {
+    if (!this.guestLinkUrl) return;
+    try {
+      await navigator.clipboard.writeText(this.guestLinkUrl);
+      this.guestPanelSuccess=t('guestAdmin.copied');
+    } catch {
+      this.guestPanelError=t('guestAdmin.copyError');
+    }
+  }
+
+  loadGuestRequests(): void {
+    if(!this.sessionId || !this.isCreator() || this.guestRequestsLoading) return;
+    this.guestRequestsLoading=true;
+    this.guestPanelError='';
+    const id=this.sessionId;
+    this.sessionService.guestRequests(id).pipe(
+      timeout(10000),finalize(()=>this.guestRequestsLoading=false)
+    ).subscribe({
+      next:rows=>{if(id===this.sessionId)this.guestRequests=rows;},
+      error:()=>{
+        this.guestRequestsLoadedForSession=null;
+        this.guestPanelError=t('guestAdmin.loadError');
+      }
+    });
+  }
+
+  reviewGuest(request:SessionGuestRequest,approve:boolean): void {
+    if(!this.sessionId || !this.isCreator() || this.guestRequestBusyId!==null
+      || request.status!=='PENDING') return;
+    this.guestRequestBusyId=request.id;
+    this.guestPanelError='';
+    this.guestPanelSuccess='';
+    this.sessionService.reviewGuestRequest(this.sessionId,request.id,approve).pipe(
+      timeout(10000),finalize(()=>this.guestRequestBusyId=null)
+    ).subscribe({
+      next:updated=>{
+        this.guestRequests=this.guestRequests.map(g=>g.id===updated.id?updated:g);
+        this.guestPanelSuccess=t('guestAdmin.saved');
+        this.teamSuggestion=undefined;
+        this.teamSuggestionPendingConfirmation=false;
+        this.loadSession(false);
+      },
+      error:()=>{this.guestPanelError=t('guestAdmin.decisionError');}
+    });
+  }
+
   canPromoteSession(): boolean {
     const session = this.session;
     return !!session && this.isCreator() && this.canShareSession()
@@ -2136,6 +2226,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       .subscribe({
         next: session => {
           this.session = session;
+          if (this.canShareGuestInvites()
+              && this.guestRequestsLoadedForSession !== session.id) {
+            this.guestRequestsLoadedForSession = session.id;
+            this.loadGuestRequests();
+          }
           // Rating eligibility is determined after the participant roster loads,
           // not from the joined flag alone.
           if (session.creatorUsername) {

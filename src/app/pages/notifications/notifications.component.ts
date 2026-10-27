@@ -170,7 +170,8 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
-          this.pendingInvites = [];
+          // A failure to load optional alert history must not hide a valid,
+          // authenticated session invitation already returned by its own API.
           this.updateUnreadCount();
           this.errorMessage = t('feedback.notifications.loadError');
         }
@@ -263,12 +264,29 @@ export class NotificationsComponent implements OnInit {
     );
   }
 
+  /** Work both from a notification detail and from the independent invite inbox.
+   *  An invitation remains accessible when optional notification alerts are off. */
   respondToInvite(notification: AppNotification, accept: boolean): void {
     const invite = this.pendingInviteFor(notification);
-    if (!invite || this.actionLoadingId !== null) {
-      return;
+    if (invite) this.decideInvite(invite, accept, notification.id);
+  }
+
+  respondToPendingInvite(invite: PendingSessionInvite, accept: boolean): void {
+    if (!this.pendingInvites.some(item => item.id === invite.id)) return;
+    this.decideInvite(invite, accept, -invite.id);
+  }
+
+  pendingInviteRemaining(invite: PendingSessionInvite): number | null {
+    if (typeof invite.maxParticipants !== 'number' || invite.maxParticipants <= 0 ||
+        typeof invite.participantCount !== 'number' || invite.participantCount < 0) {
+      return null;
     }
-    this.actionLoadingId = notification.id;
+    return Math.max(0, invite.maxParticipants - invite.participantCount);
+  }
+
+  private decideInvite(invite: PendingSessionInvite, accept: boolean, loadingId: number): void {
+    if (this.actionLoadingId !== null) return;
+    this.actionLoadingId = loadingId;
     this.actionError = '';
     this.actionSuccess = '';
     const operation: Observable<JoinSessionResponse | null> = accept
@@ -279,12 +297,11 @@ export class NotificationsComponent implements OnInit {
         this.pendingInvites = this.pendingInvites.filter(item => item.id !== invite.id);
         this.actionSuccess = accept
           ? ((result && 'state' in result && result.state === 'WAITLISTED')
-              ? 'Convite aceite. Ficaste na lista de espera.'
-              : 'Convite aceite. Estás inscrito na sessão.')
-          : 'Convite recusado.';
+              ? t('inviteCenter.waitlisted') : t('inviteCenter.joined'))
+          : t('inviteCenter.declined');
       },
       error: (error: HttpErrorResponse) => {
-        this.actionError = this.errorFrom(error, 'Não foi possível responder ao convite.');
+        this.actionError = this.errorFrom(error, t('inviteCenter.error'));
         if (error.status === 404 || error.status === 409) {
           this.sessionService.pendingInvites().pipe(timeout(10_000))
             .subscribe({ next: invites => this.pendingInvites = invites });

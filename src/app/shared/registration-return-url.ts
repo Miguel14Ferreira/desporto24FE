@@ -1,20 +1,23 @@
 const REGISTRATION_DESTINATION_KEY = 'jynlo-registration-destination';
 const REGISTRATION_DESTINATION_TTL_MS = 24 * 60 * 60 * 1000;
 const SESSION_DESTINATION_PATTERN = /^\/menu\/events\/([1-9]\d*)(?:\?join=1)?$/;
+const GUEST_DESTINATION_PATTERN = /^\/sessions\/([1-9]\d*)\?guest=([A-Za-z0-9_-]{43})$/;
 const COMMUNITY_DESTINATION_PATTERN = /^\/menu\/communities\/([1-9]\d*)$/;
 
 /** Keep only ID-based internal invitation destinations, never external URLs or setup routes. */
 function isAllowedRegistrationDestination(value: unknown): value is string {
   if (typeof value !== 'string') return false;
   const idText = value.match(SESSION_DESTINATION_PATTERN)?.[1]
-    ?? value.match(COMMUNITY_DESTINATION_PATTERN)?.[1];
+    ?? value.match(COMMUNITY_DESTINATION_PATTERN)?.[1]
+    ?? value.match(GUEST_DESTINATION_PATTERN)?.[1];
   if (!idText) return false;
   const id = Number(idText);
   return Number.isSafeInteger(id) && id > 0;
 }
 
 export function registrationSessionId(returnUrl: string | null): number | null {
-  const match = returnUrl?.match(SESSION_DESTINATION_PATTERN);
+  const match = returnUrl?.match(SESSION_DESTINATION_PATTERN)
+    ?? returnUrl?.match(GUEST_DESTINATION_PATTERN);
   if (!match) {
     return null;
   }
