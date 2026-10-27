@@ -1869,6 +1869,27 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     });
   }
 
+  cancelApprovedGuest(request:SessionGuestRequest): void {
+    if(!this.sessionId || !this.isCreator() || this.guestRequestBusyId!==null
+      || request.status!=='APPROVED' || !this.canShareGuestInvites()) return;
+    this.guestRequestBusyId=request.id;
+    this.guestPanelError='';
+    this.guestPanelSuccess='';
+    this.sessionService.cancelGuestRequest(this.sessionId,request.id).pipe(
+      timeout(10000),finalize(()=>this.guestRequestBusyId=null)
+    ).subscribe({
+      next:updated=>{
+        this.guestRequests=this.guestRequests.map(g=>g.id===updated.id?updated:g);
+        this.guestPanelSuccess=t('guestAdmin.cancelled');
+        this.teamSuggestion=undefined;
+        this.teamSuggestionPendingConfirmation=false;
+        this.loadSession(false);
+        this.loadSessionParticipants();
+      },
+      error:()=>{this.guestPanelError=t('guestAdmin.cancelError');}
+    });
+  }
+
   canPromoteSession(): boolean {
     const session = this.session;
     return !!session && this.isCreator() && this.canShareSession()
