@@ -2684,6 +2684,34 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       && session.participantCount < session.maxParticipants;
   }
 
+  canRestrictSessionToMembers(session: SessionSummary): boolean {
+    const start = Date.parse(session.gameDate);
+    return this.canManage() && session.audience === 'PUBLIC'
+      && (session.status === 'OPEN' || session.status === 'FULL')
+      && Number.isFinite(start) && start > Date.now();
+  }
+
+  restrictSessionToMembers(session: SessionSummary): void {
+    if (!this.selected || !this.canRestrictSessionToMembers(session)
+        || this.openingSessionId !== undefined) return;
+    const communityId = this.selected.id;
+    this.openingSessionId = session.id;
+    this.errorMessage = '';
+    this.communityService.restrictSessionToMembers(communityId, session.id)
+      .pipe(timeout(10_000), finalize(() => this.openingSessionId = undefined))
+      .subscribe({
+        next: updated => {
+          if (this.selected?.id !== communityId) return;
+          this.communitySessions = this.communitySessions.map(item =>
+            item.id === updated.id ? updated : item);
+        },
+        error: () => {
+          if (this.selected?.id === communityId)
+            this.errorMessage = t('feedback.communities.restrictMembersError');
+        }
+      });
+  }
+
   openSessionToPublic(session: SessionSummary): void {
     if (!this.selected || !this.canOpenSessionToPublic(session)
         || this.openingSessionId !== undefined) {

@@ -2,11 +2,11 @@
    Community enrollment and visibility rules stay with the parent component. */
 :host { display: block; }
 .community-session-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(0, 1.9fr);
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
-  padding: .85rem .95rem;
+  padding: 1rem;
   border: 1px solid rgba(255,255,255,.09);
   border-radius: .85rem;
   background: rgba(255,255,255,.035);
@@ -40,8 +40,18 @@
 }
 
 .community-session-meta {
-  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  min-width: 0;
+  row-gap: .55rem;
+  column-gap: .8rem;
+  line-height: 1.45;
 }
+.community-session-meta > span { white-space: normal; }
+.community-session-main strong {font-size:1rem;color:#f2fffd;}
+.community-session-main span {line-height:1.5;}
+
 
 .competition-badge {
   display: inline-flex;
@@ -54,10 +64,8 @@
 }
 
 @media (max-width: 700px) {
-  .community-session-card,
-  .community-session-meta {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  .community-session-card {grid-template-columns:minmax(0,1fr);}
+  .community-session-meta {justify-content:flex-start;}
+
 }
 

@@ -1,0 +1,48 @@
+/* Session finder is an independent card, never an inline strip of adjacent buttons. */
+.session-player-search {
+  display:grid; gap:20px; min-width:0; margin:24px 0 28px;
+  padding:clamp(18px,2.3vw,26px); border:1px solid rgba(75,178,175,.36);
+  border-radius:18px; background:linear-gradient(140deg,rgba(10,50,66,.92),rgba(6,35,49,.92));
+}
+.session-player-search-header,
+.session-friend-invite-heading {
+  display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center;
+  gap:16px; min-width:0;
+}
+.session-player-search-heading,
+.session-friend-invite-heading > div {display:grid;gap:6px;flex:1 1 230px;min-width:0}
+.session-player-search-heading h3,
+.session-friend-invite-heading h4 {margin:0;color:#f1fffb;font-size:1.02rem;line-height:1.35}
+.session-player-search-heading p,
+.session-friend-invite-heading p {margin:0;color:#b6d9df;line-height:1.5;font-size:.87rem}
+.session-player-search-header > a {flex:0 0 auto;min-height:44px;text-decoration:none}
+.session-friend-invite-section {
+  display:grid; gap:14px; padding-top:18px; min-width:0;
+  border-top:1px solid rgba(133,199,197,.19)
+}
+.session-friend-invite-heading > button {flex:0 0 auto;min-height:42px}
+.session-friend-invites {display:grid;gap:10px;min-width:0}
+.session-friend-invite-row {
+  display:grid;grid-template-columns:minmax(145px,1fr) minmax(0,auto);
+  align-items:center;gap:14px;padding:13px 15px;
+  background:rgba(1,25,39,.45);border:1px solid rgba(112,185,190,.21);border-radius:13px;
+}
+.session-friend-invite-name {
+  min-width:0;color:#eafff8;overflow-wrap:anywhere;font-size:.9rem;font-weight:700
+}
+.session-friend-invite-actions {display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px;min-width:0}
+.session-friend-invite-actions .jynlo-action {
+  min-height:40px;line-height:1.35;white-space:normal;text-align:center
+}
+.session-friend-invites > p {margin:4px 0;line-height:1.5}
+@media(max-width:690px) {
+  .session-player-search {padding:16px;gap:16px}
+  .session-player-search-header > a {flex:1 1 100%;text-align:center}
+  .session-friend-invite-row {grid-template-columns:minmax(0,1fr);gap:10px}
+  .session-friend-invite-actions {justify-content:stretch}
+  .session-friend-invite-actions .jynlo-action {flex:1 1 140px}
+}
+@media(max-width:420px) {
+  .session-friend-invite-actions {flex-direction:column}
+  .session-friend-invite-actions .jynlo-action {flex:0 0 auto;width:100%}
+}

@@ -24,7 +24,7 @@ import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 @Component({
   selector: 'app-session-details',
   templateUrl: './session-details.component.html',
-  styleUrls: ['./session-details.component.css', './session-details-concept-one-premium.css'],
+  styleUrls: ['./session-details.component.css', './session-details-concept-one-premium.css', './session-details-invite-layout.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })

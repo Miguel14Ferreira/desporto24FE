@@ -865,6 +865,7 @@
                 } @else {
                   <div class="community-sessions-list">
                     @for (session of communitySessions; track session.id) {
+                      <div class="community-session-entry">
                       <app-community-session-card
                         [session]="session"
                         [formattedDate]="formatSessionDate(session.gameDate)"
@@ -967,12 +968,13 @@
                       }
 
 
+                      <div class="community-session-entry-actions">
                       @if (session.joinedByViewer) {
-                        <span class="competition-badge">
+                        <span class="competition-badge community-session-entry-status">
                           {{ 'communities.sessionConfirmed' | t }}
                         </span>
                       } @else if (session.waitlistedByViewer) {
-                        <span class="competition-badge">
+                        <span class="competition-badge community-session-entry-status">
                           {{ 'communities.sessionWaitlisted' | t }}
                         </span>
                       } @else if (canJoinCommunitySession(session)) {
@@ -989,7 +991,7 @@
                         </button>
                       }
                       @if (canOpenSessionToPublic(session)) {
-                        <div>
+                        <div class="community-session-visibility-control">
                           <button
                             type="button"
                             class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
@@ -1004,6 +1006,20 @@
                           </p>
                         </div>
                       }
+                      @if (canRestrictSessionToMembers(session)) {
+                        <div class="community-session-visibility-control">
+                          <button type="button"
+                            class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                            [disabled]="openingSessionId !== undefined"
+                            (click)="restrictSessionToMembers(session)">
+                            {{ (openingSessionId === session.id
+                                ? 'communities.restrictingMembers' : 'communities.restrictMembers') | t }}
+                          </button>
+                          <p class="venue-current-location">{{ 'communities.restrictMembersHint' | t }}</p>
+                        </div>
+                      }
+                      </div>
+                      </div>
                     }
                   </div>
                 }

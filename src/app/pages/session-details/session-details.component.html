@@ -173,38 +173,55 @@
           }
 
           @if (canFindPlayers()) {
-            <div id="session-player-search" class="session-player-search" role="region" aria-label="Procurar jogadores">
-              <strong>Faltam {{ missingPlayers() }} jogadores</strong>
+            <section id="session-player-search" class="session-player-search" role="region" aria-label="Procurar jogadores">
+              <div class="session-player-search-header">
+                <div class="session-player-search-heading">
+                  <span class="section-kicker">{{ 'sessionDetail.organizerKicker' | t }}</span>
+                  <h3>Encontrar jogadores para a sessão</h3>
+                  <p>Faltam {{ missingPlayers() }} jogadores para completar a equipa.</p>
+                </div>
+                <a class="jynlo-action jynlo-action--primary" routerLink="/menu/perfis"
+                   [queryParams]="{ from: 'people', sport: session.sport, city: session.city }">
+                  Procurar jogadores
+                </a>
+              </div>
               @if (canShareSession()) {
-                <button type="button" class="jynlo-action jynlo-action--neutral"
-                        (click)="toggleFriendInvites()">Convidar amigos</button>
-                @if (inviteFriendsOpen) {
-                  <div class="session-friend-invites">
-                    @if (inviteFriendsLoading) { <p>A carregar amigos...</p> }
-                    @if (!inviteFriendsLoading && inviteFriends.length === 0 && !inviteError) {
-                      <p>Não tens amigos disponíveis para convidar.</p>
-                    }
-                    @for (friend of inviteFriends; track friend.username) {
-                      <div>
-                        <span>@{{ friend.username }}</span>
-                        <button type="button" class="jynlo-action jynlo-action--neutral"
-                          [disabled]="inviteSendingTo !== null"
-                          (click)="sendSessionInvite(friend.username)">Enviar mensagem</button>
-                        <button type="button" class="jynlo-action jynlo-action--neutral"
-                          [disabled]="formalInviteSendingTo !== null || formalInvitedFriends.has(friend.username)"
-                          (click)="sendFormalSessionInvite(friend.username)">{{ formalInvitedFriends.has(friend.username) ? 'Convite enviado' : 'Enviar convite' }}</button>
-                      </div>
-                    }
-                    @if (inviteFeedback) { <p role="status">{{ inviteFeedback }}</p> }
-                    @if (inviteError) { <p role="alert">{{ inviteError }}</p> }
+                <div class="session-friend-invite-section">
+                  <div class="session-friend-invite-heading">
+                    <div>
+                      <h4>Convidar amigos</h4>
+                      <p>Escolhe os jogadores que queres convidar diretamente.</p>
+                    </div>
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [attr.aria-expanded]="inviteFriendsOpen"
+                      (click)="toggleFriendInvites()">{{ inviteFriendsOpen ? 'Ocultar amigos' : 'Ver amigos' }}</button>
                   </div>
-                }
+                  @if (inviteFriendsOpen) {
+                    <div class="session-friend-invites">
+                      @if (inviteFriendsLoading) { <p>A carregar amigos...</p> }
+                      @if (!inviteFriendsLoading && inviteFriends.length === 0 && !inviteError) {
+                        <p>Não tens amigos disponíveis para convidar.</p>
+                      }
+                      @for (friend of inviteFriends; track friend.username) {
+                        <div class="session-friend-invite-row">
+                          <span class="session-friend-invite-name">@{{ friend.username }}</span>
+                          <div class="session-friend-invite-actions">
+                            <button type="button" class="jynlo-action jynlo-action--neutral"
+                              [disabled]="inviteSendingTo !== null"
+                              (click)="sendSessionInvite(friend.username)">Enviar mensagem</button>
+                            <button type="button" class="jynlo-action jynlo-action--neutral"
+                              [disabled]="formalInviteSendingTo !== null || formalInvitedFriends.has(friend.username)"
+                              (click)="sendFormalSessionInvite(friend.username)">{{ formalInvitedFriends.has(friend.username) ? 'Convite enviado' : 'Enviar convite' }}</button>
+                          </div>
+                        </div>
+                      }
+                      @if (inviteFeedback) { <p role="status">{{ inviteFeedback }}</p> }
+                      @if (inviteError) { <p role="alert">{{ inviteError }}</p> }
+                    </div>
+                  }
+                </div>
               }
-              <a class="jynlo-action jynlo-action--primary" routerLink="/menu/perfis"
-                 [queryParams]="{ from: 'people', sport: session.sport, city: session.city }">
-                Procurar jogadores
-              </a>
-            </div>
+            </section>
           }
 
           <div class="detail-grid">
