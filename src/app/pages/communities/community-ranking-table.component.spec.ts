@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { CommunityStanding } from '../model/community-group';
 import { CommunityRankingTableComponent } from './community-ranking-table.component';
+import { ProfileQuickViewService } from '../../services/profile-quick-view.service';
 
 describe('CommunityRankingTableComponent', () => {
   const item: CommunityStanding = {
@@ -34,7 +35,31 @@ describe('CommunityRankingTableComponent', () => {
     expect(cells[4].textContent?.trim()).toBe('1');
     expect(cells[5].textContent?.trim()).toBe('1');
     expect(cells[6].textContent?.trim()).toBe('25');
-    expect(root.querySelector('button, input, a')).toBeNull();
+    expect(root.querySelectorAll('tbody button.ranking-player--interactive').length).toBe(1);
+    expect(root.querySelector('tbody input, tbody a')).toBeNull();
+  });
+
+  it('opens the linked player profile through the existing quick-view service', () => {
+    const quick = TestBed.inject(ProfileQuickViewService);
+    const open = spyOn(quick, 'open');
+    const root = render([item]);
+    const button = root.querySelector<HTMLButtonElement>('tbody button.ranking-player');
+    expect(button).toBeTruthy();
+    button!.click();
+    expect(open).toHaveBeenCalledOnceWith('ana');
+  });
+
+  it('emits an unlinked historical row for explicit self-claim confirmation', () => {
+    const fixture = TestBed.createComponent(CommunityRankingTableComponent);
+    const historic = {...item, username: null, profileId: null, fullName: 'Ferreirinha'};
+    const selected = jasmine.createSpy('historicalSelected');
+    fixture.componentRef.setInput('rows', [historic]);
+    fixture.componentInstance.historicalSelected.subscribe(selected);
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('tbody button.ranking-player') as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    button.click();
+    expect(selected).toHaveBeenCalledOnceWith(historic);
   });
 
   it('renders the top three podium and never changes the supplied ordering', () => {

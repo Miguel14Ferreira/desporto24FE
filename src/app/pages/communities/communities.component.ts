@@ -755,6 +755,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   historicalClaimsLoading = false;
   historicalClaimsError = '';
   historicalReleaseId: number | null = null;
+  rankingHistoricalRow?: CommunityStanding;
+  rankingHistoricalCandidate?: HistoricalPlayerCandidate;
+  rankingHistoricalLoading = false;
+  rankingHistoricalSaving = false;
+  rankingHistoricalAcknowledged = false;
+  rankingHistoricalError = '';
+  rankingHistoricalSuccess = '';
+  private rankingHistoricalRequestVersion = 0;
 
   get rankingParticipants(): CommunityStanding[] {
     return (this.competition?.standings || []).filter(row => row.games > 0);
@@ -2081,6 +2089,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
+    if (tab !== 'ranking') this.closeRankingHistoricalDialog();
     if (tab === 'sessions' && this.selected && !this.selected.rankingsEnabled) {
       this.loadStandaloneSpeedTournament(this.selected);
     }
@@ -2107,6 +2116,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   private resetHistoricalLinks(): void {
+    this.closeRankingHistoricalDialog();
+    this.rankingHistoricalSuccess = '';
     this.historicalPlayers = [];
     this.historicalPlayersLoading = false;
     this.historicalPlayersError = '';
@@ -2155,6 +2166,91 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         },
         error: () => {
           if (this.selected?.id === communityId) this.historicalPlayersError = t('communities.identity.loadError');
+        }
+      });
+  }
+
+  /**
+   * The public ranking can display an imported player without an account.
+   * Recheck the server's candidate list before offering the self-claim, rather
+   * than trusting a name or an old browser-side identity cache.
+   */
+  openRankingHistoricalPlayer(row: CommunityStanding): void {
+    if (!this.selected || row.username || !row.fullName?.trim()) return;
+    this.closeRankingHistoricalDialog();
+    this.rankingHistoricalSuccess = '';
+    this.rankingHistoricalRow = row;
+    this.rankingHistoricalError = '';
+    if (!this.selected.myRole) {
+      this.rankingHistoricalError = t('communities.identity.claimMembersOnly');
+      return;
+    }
+    const communityId = this.selected.id;
+    const requestVersion = ++this.rankingHistoricalRequestVersion;
+    this.rankingHistoricalLoading = true;
+    this.communityService.historicalPlayerCandidates(communityId)
+      .pipe(timeout(10_000), finalize(() => {
+        if (this.rankingHistoricalRequestVersion === requestVersion) {
+          this.rankingHistoricalLoading = false;
+        }
+      }))
+      .subscribe({
+        next: candidates => {
+          if (this.rankingHistoricalRequestVersion !== requestVersion ||
+              this.selected?.id !== communityId) return;
+          const name = row.fullName!.trim().normalize('NFC').toLocaleLowerCase();
+          const matching = candidates.filter(candidate =>
+            candidate.historicalName.trim().normalize('NFC').toLocaleLowerCase() === name);
+          if (matching.length !== 1 || matching[0].linkStatus !== 'UNLINKED') {
+            this.rankingHistoricalError = t('communities.identity.claimUnavailable');
+            return;
+          }
+          this.rankingHistoricalCandidate = matching[0];
+        },
+        error: () => {
+          if (this.rankingHistoricalRequestVersion === requestVersion &&
+              this.selected?.id === communityId) {
+            this.rankingHistoricalError = t('communities.identity.loadError');
+          }
+        }
+      });
+  }
+
+  closeRankingHistoricalDialog(): void {
+    if (this.rankingHistoricalSaving) return;
+    this.rankingHistoricalRequestVersion = (this.rankingHistoricalRequestVersion || 0) + 1;
+    this.rankingHistoricalRow = undefined;
+    this.rankingHistoricalCandidate = undefined;
+    this.rankingHistoricalLoading = false;
+    this.rankingHistoricalAcknowledged = false;
+    this.rankingHistoricalError = '';
+  }
+
+  confirmRankingHistoricalClaim(): void {
+    if (!this.selected?.myRole || !this.rankingHistoricalCandidate ||
+        !this.rankingHistoricalAcknowledged || this.rankingHistoricalSaving) return;
+    const communityId = this.selected.id;
+    const playerId = this.rankingHistoricalCandidate.playerId;
+    const requestVersion = this.rankingHistoricalRequestVersion;
+    this.rankingHistoricalSaving = true;
+    this.rankingHistoricalError = '';
+    this.communityService.claimHistoricalPlayer(communityId, playerId)
+      .pipe(timeout(10_000), finalize(() => this.rankingHistoricalSaving = false))
+      .subscribe({
+        next: () => {
+          if (this.rankingHistoricalRequestVersion !== requestVersion ||
+              this.selected?.id !== communityId) return;
+          this.rankingHistoricalSaving = false;
+          this.closeRankingHistoricalDialog();
+          this.rankingHistoricalSuccess = t('communities.identity.claimed');
+          this.loadHistoricalLinks(communityId);
+          this.loadCompetition(this.selected, this.selectedSeasonId);
+        },
+        error: error => {
+          if (this.rankingHistoricalRequestVersion === requestVersion &&
+              this.selected?.id === communityId) {
+            this.rankingHistoricalError = error.error?.message || t('communities.identity.claimError');
+          }
         }
       });
   }

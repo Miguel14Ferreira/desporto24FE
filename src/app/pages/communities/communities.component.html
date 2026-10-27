@@ -4503,7 +4503,63 @@
                     [showAll]="showAllStandings"
                     (showAllChange)="showAllStandings = $event"
                   ></app-community-ranking-visibility>
-                  <app-community-ranking-table [rows]="displayedRankings"></app-community-ranking-table>
+                  @if (rankingHistoricalSuccess) {
+                    <p class="ranking-identity-success" role="status">{{ rankingHistoricalSuccess }}</p>
+                  }
+                  <app-community-ranking-table [rows]="displayedRankings"
+                    (historicalSelected)="openRankingHistoricalPlayer($event)"></app-community-ranking-table>
+
+                  @if (rankingHistoricalRow) {
+                    <div class="ranking-identity-backdrop" role="presentation"
+                      (click)="closeRankingHistoricalDialog()" (keydown.escape)="closeRankingHistoricalDialog()">
+                      <section class="ranking-identity-dialog" role="dialog" aria-modal="true"
+                        aria-labelledby="ranking-identity-title" tabindex="-1"
+                        (click)="$event.stopPropagation()" (keydown.escape)="closeRankingHistoricalDialog()">
+                        <div class="ranking-identity-heading">
+                          <div>
+                            <span class="section-kicker">{{ 'communities.identity.kicker' | t }}</span>
+                            <h3 id="ranking-identity-title">{{ 'communities.identity.linkMyProfileTitle' | t }}</h3>
+                          </div>
+                          <button type="button" class="ranking-identity-close" autofocus
+                            [disabled]="rankingHistoricalSaving"
+                            [attr.aria-label]="'common.close' | t"
+                            (click)="closeRankingHistoricalDialog()">×</button>
+                        </div>
+                        <div class="ranking-identity-player">
+                          <strong>{{ rankingHistoricalRow.fullName }}</strong>
+                          <span>{{ 'communities.identity.unlinked' | t }}</span>
+                        </div>
+                        @if (rankingHistoricalLoading) {
+                          <p role="status">{{ 'communities.identity.loading' | t }}</p>
+                        } @else {
+                          @if (rankingHistoricalCandidate) {
+                            <p>{{ 'communities.identity.linkMyProfilePrompt' | t }}</p>
+                            <label class="ranking-identity-acknowledge">
+                              <input type="checkbox" [(ngModel)]="rankingHistoricalAcknowledged"
+                                [disabled]="rankingHistoricalSaving">
+                              <span>{{ 'communities.identity.acknowledge' | t }}</span>
+                            </label>
+                          }
+                          @if (rankingHistoricalError) {
+                            <p class="ranking-identity-error" role="alert">{{ rankingHistoricalError }}</p>
+                          }
+                        }
+                        <div class="ranking-identity-actions">
+                          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                            [disabled]="rankingHistoricalSaving" (click)="closeRankingHistoricalDialog()">
+                            {{ 'common.cancel' | t }}
+                          </button>
+                          @if (rankingHistoricalCandidate) {
+                            <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                              [disabled]="!rankingHistoricalAcknowledged || rankingHistoricalSaving"
+                              (click)="confirmRankingHistoricalClaim()">
+                              {{ rankingHistoricalSaving ? ('communities.identity.claiming' | t) : ('communities.identity.linkMyProfileAction' | t) }}
+                            </button>
+                          }
+                        </div>
+                      </section>
+                    </div>
+                  }
                 }
               </section>
             }
