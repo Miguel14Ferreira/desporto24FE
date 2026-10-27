@@ -138,6 +138,24 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     }
   });
 
+  it('shows only recognized address discrepancies and never treats office address as venue GPS', () => {
+    const review = {
+      issueCode: 'ADMIN_OFFICE_ADDRESS_VS_VENUE_LOCATION_REVIEW',
+      venueLocationToCheck: 'Mercado do Forno do Tijolo, Rua Maria da Fonte — entrada por confirmar',
+      equipmentSourceUrl: 'https://jfarroios.pt/equipamentos/polidesportivo-de-arroios/',
+      marketSourceUrl: 'https://jfarroios.pt/equipamentos/mercados/mercado-do-forno-do-tijolo/'
+    };
+    expect(component.gpsAddressReviewVisible(review)).toBeTrue();
+    expect(component.gpsOfficialLink(review.marketSourceUrl)).toBe(review.marketSourceUrl);
+    for (const input of [null, undefined, {...review, issueCode: 'APPROVED'},
+      {...review, issueCode: ''}, {...review, venueLocationToCheck: ''},
+      {...review, venueLocationToCheck: 'X'.repeat(201)}]) {
+      expect(component.gpsAddressReviewVisible(input)).toBeFalse();
+    }
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+    expect(component.gpsOfficialLink('javascript:alert(1)')).toBeNull();
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],

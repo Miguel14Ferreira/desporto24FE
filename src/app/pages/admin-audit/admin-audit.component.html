@@ -239,6 +239,21 @@
                           <strong>{{ item.name }}</strong>
                           <small>{{ item.city }} · {{ item.district || ('adminVenueQuality.unknownDistrict' | t) }}</small>
                           <small>{{ item.address || ('adminVenueGps.noAddress' | t) }}</small>
+                          <div class="venue-gps-research" *ngIf="gpsAddressReviewVisible(item.addressReview)">
+                            <strong>{{ 'adminVenueGps.addressIssue' | t }}</strong>
+                            <small>{{ 'adminVenueGps.addressCaution' | t }}</small>
+                            <small>{{ item.addressReview?.venueLocationToCheck }}</small>
+                            <a *ngIf="gpsOfficialLink(item.addressReview?.equipmentSourceUrl) as source"
+                              [href]="source" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.addressEquipment' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.addressReview?.marketSourceUrl) as source"
+                              [href]="source" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.addressMarket' | t }}
+                            </a>
+                          </div>
                         </td>
                         <td>
                           <small>{{ item.informationSource || '—' }}</small>
