@@ -75,7 +75,7 @@
               </div>
             </div>
             <div class="inbox-heading-actions">
-              @if (conversation.kind === 'direct' && composerAllowed && callsEnabled) {
+              @if (conversation.kind === 'direct' && composerAllowed && (calls?.available$ | async)) {
                 <button type="button" class="inbox-call-trigger"
                     [attr.aria-label]="'calls.voice' | t" [attr.title]="'calls.voice' | t"
                     (click)="startCall(conversation, 'voice')"><span aria-hidden="true">☎</span></button>
