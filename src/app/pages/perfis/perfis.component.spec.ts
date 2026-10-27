@@ -6,6 +6,8 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { PerfisComponent } from './perfis.component';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { CommunityService } from '../../services/community.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
+import { SessionService } from '../../services/session.service';
 import { SocialGraphService } from '../../services/social-graph.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
@@ -14,6 +16,8 @@ describe('PerfisComponent', () => {
   let fixture: ComponentFixture<PerfisComponent>;
   let service: jasmine.SpyObj<CommunityService>;
   let socialGraphService: jasmine.SpyObj<SocialGraphService>;
+  let groups: jasmine.SpyObj<CommunityGroupsService>;
+  let sessions: jasmine.SpyObj<SessionService>;
 
   const profile = {
     username: 'ana',
@@ -73,6 +77,13 @@ describe('PerfisComponent', () => {
       following: 5
     }));
 
+    groups = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine','invite']);
+    sessions = jasmine.createSpyObj<SessionService>('SessionService', ['mine','invitePlayer']);
+    groups.mine.and.returnValue(of([]));
+    groups.invite.and.returnValue(of({} as any));
+    sessions.mine.and.returnValue(of({created:[],joined:[],waitlisted:[]}));
+    sessions.invitePlayer.and.returnValue(of({id:1}));
+
     await TestBed.configureTestingModule({
       declarations: [PerfisComponent],
       imports: TEST_IMPORTS,
@@ -80,6 +91,8 @@ describe('PerfisComponent', () => {
         ...TEST_PROVIDERS,
         { provide: CommunityService, useValue: service },
         { provide: SocialGraphService, useValue: socialGraphService },
+        { provide: CommunityGroupsService, useValue: groups },
+        { provide: SessionService, useValue: sessions },
         { provide: ActivatedRoute, useValue: { paramMap: routeParams, snapshot: { params: {}, queryParams: {}, paramMap: convertToParamMap({}), queryParamMap: convertToParamMap({}) } } }
       ]
     }).compileComponents();
@@ -900,4 +913,98 @@ describe('PerfisComponent', () => {
     expect(component.profiles).toEqual([]);
     expect(component.searched).toBeFalse();
   });
+
+  describe('profile community and session invitations', () => {
+    const future = () => new Date(Date.now()+86400_000).toISOString();
+    const eligibleGroup = (members: {username:string}[] = []) => ({
+      id: 41, name:'Futebol de sábado', sport:'Futebol', myRole:'OWNER',
+      members
+    });
+    const eligibleSession = () => ({
+      id: 55, sport:'Futebol', city:'Lisboa', gameDate:future(), status:'OPEN',
+      privateGame:false, audience:'PUBLIC'
+    });
+
+    beforeEach(() => {
+      component.currentUsername='miguel';
+      component.selectedProfile={...profile,username:'ana'};
+      component.selectedBlocked=false;
+    });
+
+    it('loads only on user action and filters admin-only communities plus public upcoming sessions', () => {
+      groups.mine.and.returnValue(of([
+        eligibleGroup(), {...eligibleGroup(),id:42,myRole:'MEMBER'},
+        {...eligibleGroup(),id:43,members:[{username:'ANA'}]}
+      ] as any));
+      sessions.mine.and.returnValue(of({
+        created:[eligibleSession(),{...eligibleSession(),id:56,privateGame:true},
+          {...eligibleSession(),id:57,audience:'COMMUNITY_ONLY'},
+          {...eligibleSession(),id:58,gameDate:'2020-01-01T00:00:00Z'}],
+        joined:[],waitlisted:[]
+      } as any));
+      expect(groups.mine).not.toHaveBeenCalled();
+      expect(sessions.mine).not.toHaveBeenCalled();
+      component.toggleInvitePanel();
+      fixture.detectChanges();
+      expect(component.availableInviteCommunities.map(v=>v.id)).toEqual([41]);
+      expect(component.availableInviteSessions.map(v=>v.id)).toEqual([55]);
+      expect(fixture.nativeElement.querySelector('.profile-invite-tabs')).toBeTruthy();
+      expect(fixture.nativeElement.querySelectorAll('.profile-invite-option').length).toBe(1);
+    });
+
+    it('sends authorized invitations through existing endpoints exactly once per target', () => {
+      groups.mine.and.returnValue(of([eligibleGroup()] as any));
+      sessions.mine.and.returnValue(of({created:[eligibleSession()],joined:[],waitlisted:[]} as any));
+      component.toggleInvitePanel();
+      component.sendProfileInvite('community',41);
+      component.sendProfileInvite('community',41);
+      component.sendProfileInvite('session',55);
+      component.sendProfileInvite('session',55);
+      expect(groups.invite).toHaveBeenCalledOnceWith(41,'ana');
+      expect(sessions.invitePlayer).toHaveBeenCalledOnceWith(55,'ana');
+      expect(component.sentInvites.size).toBe(2);
+    });
+
+    it('will not invite to an unauthorized community, old session, or from own and blocked profiles', () => {
+      groups.mine.and.returnValue(of([{...eligibleGroup(),myRole:'MEMBER'}] as any));
+      sessions.mine.and.returnValue(of({created:[{...eligibleSession(),gameDate:'2020-01-01T00:00:00Z'}],joined:[],waitlisted:[]} as any));
+      component.toggleInvitePanel();
+      component.sendProfileInvite('community',41);
+      component.sendProfileInvite('session',55);
+      expect(groups.invite).not.toHaveBeenCalled();
+      expect(sessions.invitePlayer).not.toHaveBeenCalled();
+      component.closeInvitePanel();
+      component.selectedBlocked=true;
+      component.toggleInvitePanel();
+      expect(component.invitePanelOpen).toBeFalse();
+      component.selectedBlocked=false;
+      component.selectedProfile={...profile,username:'miguel'};
+      component.toggleInvitePanel();
+      expect(component.invitePanelOpen).toBeFalse();
+    });
+
+    it('invalidates stale invite choices after navigating to a different profile', () => {
+      const pending=new Subject<any[]>();
+      groups.mine.and.returnValue(pending.asObservable());
+      sessions.mine.and.returnValue(of({created:[],joined:[],waitlisted:[]}));
+      component.toggleInvitePanel();
+      expect(component.inviteLoading).toBeTrue();
+      component.closeProfile();
+      component.selectedProfile={...profile,username:'bea'};
+      pending.next([eligibleGroup()]);
+      pending.complete();
+      expect(component.invitePanelOpen).toBeFalse();
+      expect(component.availableInviteCommunities).toEqual([]);
+    });
+
+    it('keeps profile details compact without placeholder tiles for missing public fields', () => {
+      component.profilePage=true;
+      component.selectedProfile={...profile,country:null,location:null,age:null,
+        favoriteSports:null,skillLevel:null,availability:null,joinDateDisplay:null};
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('.profile-meta > div').length).toBe(0);
+    });
+  });
+
+
 });
