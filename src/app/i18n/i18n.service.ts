@@ -3910,6 +3910,7 @@ const PT: Dictionary = {
   'calls.busy': 'Um dos participantes já está numa chamada. Termina a chamada anterior e tenta novamente.',
   'calls.rateLimited': 'Fizeste várias tentativas seguidas. Aguarda alguns segundos antes de tentar novamente.',
   'calls.providerUnavailable': 'O serviço de chamadas não está configurado ou está temporariamente indisponível.',
+  'calls.serverError': 'A API falhou ao iniciar a chamada. Não é um problema de microfone; tenta novamente mais tarde.',
   'calls.mediaError': 'Erro de ligação ou acesso ao microfone/câmara.',
   'calls.audioBlocked': 'O navegador bloqueou a reprodução de som.',
   'chat.viewProfile': 'Ver perfil',
