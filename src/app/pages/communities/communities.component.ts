@@ -2565,7 +2565,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.sessionResultSession = session;
     this.sessionResultSuccess = '';
     this.sessionResultLoading = true;
-    this.sessionService.participants(session.id)
+    this.communityService.sessionResultRoster(communityId, session.id)
       .pipe(timeout(10_000), finalize(() => {
         if (this.sessionResultRevision === version) this.sessionResultLoading = false;
       }))
