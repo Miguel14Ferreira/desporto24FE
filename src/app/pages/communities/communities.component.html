@@ -4403,7 +4403,7 @@
                                           <span class="import-plan-index">{{ $index + 1 }}</span>
                                           <div class="import-plan-date-copy">
                                             <small>{{ 'communities.import.roundLabel' | t }} {{ $index + 1 }}</small>
-                                            <strong>{{ round.parsedDate || round.sourceDate }}</strong>
+                                            <strong>{{ importRoundDisplayDate(round.parsedDate || round.sourceDate) }}</strong>
                                           </div>
                                         </div>
                                         <div class="import-plan-players">
