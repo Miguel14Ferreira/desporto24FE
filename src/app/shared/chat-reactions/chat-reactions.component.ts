@@ -49,7 +49,7 @@ let reactionPickerSequence = 0;
           @if (summary; as state) {
             <div class="reaction-choices">
               @for (emoji of emojis; track emoji) {
-                <button type="button" class="reaction-choice" [attr.aria-label]="emoji"
+                <button #reactionChoice type="button" class="reaction-choice" [attr.aria-label]="emoji"
                   [attr.aria-pressed]="state.myEmoji === emoji"
                   [disabled]="store.isBusy(kind, conversationId, messageId)"
                   (click)="pick(emoji)">{{ emoji }}</button>
@@ -247,6 +247,7 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   @Input() disabled = false;
   @ViewChild('reactionToggle') private reactionToggle?: ElementRef<HTMLButtonElement>;
   @ViewChild('detailsClose') private detailsClose?: ElementRef<HTMLButtonElement>;
+  @ViewChild('reactionChoice') private reactionChoice?: ElementRef<HTMLButtonElement>;
   readonly emojis = CHAT_REACTION_EMOJIS;
   // Instance-local ID avoids duplicate aria-controls even for repeated messages.
   readonly pickerId = 'chat-reactions-' + ++reactionPickerSequence;
@@ -356,6 +357,10 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
     this.expanded = true;
     this.pickerTrigger = source;
     if (this.store.hasFailed(this.kind, this.conversationId, this.messageId)) this.retry();
+    // Focus must enter the newly visible picker before the removed dialog's
+    // focusout event can collapse it. This also avoids an invisible keyboard trap.
+    this.cdr.detectChanges();
+    this.reactionChoice?.nativeElement.focus({ preventScroll: true });
   }
 
   onDetailsKeydown(event: KeyboardEvent): void {
