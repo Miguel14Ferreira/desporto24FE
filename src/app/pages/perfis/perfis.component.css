@@ -632,3 +632,140 @@ h1 {
   margin: 0;
   color: #94a3b8;
 }
+
+/* Concept One Premium: detailed public profile, without changing search cards. */
+.community-page .profile-detail{
+  --profile-accent:#37dbc1;overflow:hidden;max-width:1120px;margin-inline:auto;
+  padding:clamp(18px,3vw,34px);border-radius:24px;border:1px solid #2b5865;
+  background:linear-gradient(154deg,#123b48 0%,#0b2b3b 40%,#092532 100%);
+  color:#effcf9;box-shadow:0 24px 70px #020e1c66
+}
+.community-page .profile-detail::before{
+  content:"";pointer-events:none;position:absolute;top:0;left:0;right:0;height:5px;
+  background:linear-gradient(90deg,#27d9bb,#4c9ba8 65%,transparent)
+}
+.community-page .profile-detail .detail-heading{
+  display:flex;align-items:center;gap:clamp(20px,3vw,34px);
+  padding:7px 0 clamp(22px,3vw,30px);border-bottom:1px solid #ffffff1c
+}
+.community-page .profile-detail .large-avatar{
+  flex:0 0 clamp(112px,13vw,158px);width:clamp(112px,13vw,158px);
+  height:clamp(112px,13vw,158px);border-radius:24px;
+  background:#174a58;color:#d5fbf3;font-size:3rem;
+  border:1px solid #5c9b9b;box-shadow:0 10px 28px #00142155
+}
+.community-page .profile-detail .large-avatar img{width:100%;height:100%;object-fit:cover}
+.community-page .profile-detail .profile-identity{flex:1;min-width:0}
+.community-page .profile-detail .profile-identity .eyebrow{color:#39edca;letter-spacing:.16em;font-size:.7rem}
+.community-page .profile-detail .profile-identity h1{
+  color:#fff;font-size:clamp(2.05rem,4vw,3.45rem);letter-spacing:-.055em;
+  font-weight:850;line-height:1.08;margin:.25rem 0 .5rem
+}
+.community-page .profile-detail .profile-display-name{color:#c2e1e2;font-size:1.05rem!important}
+.profile-headline-details{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 2px}
+.profile-headline-details span{
+  display:inline-flex;padding:6px 11px;background:#1b4c55;border:1px solid #3b7175;
+  border-radius:999px;color:#c6f7ed;font-size:.8rem
+}
+.community-page .profile-detail .social-summary{gap:12px;margin-top:18px}
+.community-page .profile-detail .social-summary>div{
+  display:flex;gap:7px;align-items:center;padding:9px 13px;min-width:0;
+  border-radius:12px;background:#092a38;border:1px solid #2a5860
+}
+.community-page .profile-detail .social-summary strong{font-size:1.05rem;color:white}
+.community-page .profile-detail .social-summary span{font-size:.73rem;color:#a7cbd0}
+.community-page .profile-detail .detail-actions{
+  margin:0;padding:18px 0;gap:10px;border-bottom:1px solid #ffffff18;
+  border-top:0;align-items:center
+}
+.community-page .profile-detail .detail-actions>.jynlo-action,
+.community-page .profile-detail .profile-invite-trigger{
+  display:inline-flex;align-items:center;justify-content:center;min-height:44px;
+  padding:11px 18px;border-radius:12px;font-size:.86rem;
+  font-weight:800;text-decoration:none;cursor:pointer
+}
+.community-page .profile-detail .profile-invite-trigger{
+  border:1px solid #4c9290;background:#174854;color:#d6fff6;gap:8px
+}
+.community-page .profile-detail .profile-invite-trigger:hover{background:#21626a}
+.community-page .profile-detail .profile-invite-trigger span{font-size:1.35rem;line-height:.6}
+.community-page .profile-detail .friend-status:disabled{opacity:1;cursor:default}
+.community-page .profile-detail .profile-meta{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0;
+}
+.community-page .profile-detail .profile-meta:empty{display:none}
+.community-page .profile-detail .profile-meta>div{
+  min-width:0;border-radius:14px;background:#092736;
+  border:1px solid #2c515a;padding:15px 17px
+}
+.community-page .profile-detail .profile-meta span{font-size:.75rem;color:#98c5cc;margin-bottom:7px}
+.community-page .profile-detail .profile-meta strong{font-size:.98rem;color:#fff;line-height:1.35}
+.community-page .profile-detail .public-activity{
+  padding:19px;border-radius:17px;background:#103646;
+  border:1px solid #2f6770;margin:14px 0 0
+}
+.community-page .profile-detail .public-activity-grid{gap:10px;margin-top:12px}
+.community-page .profile-detail .public-activity-grid>div{
+  padding:15px;background:#072736;border:1px solid #2a4b59;border-radius:12px
+}
+.community-page .profile-detail .public-activity-grid strong{font-size:1.45rem;color:#fff}
+.community-page .profile-detail .public-activity-grid span{font-size:.75rem;color:#a8cad2}
+.community-page .profile-detail .profile-safety{margin-top:20px}
+.community-page .profile-detail .public-bio{background:#092d39;border-left:3px solid #39d9be}
+
+/* Invitation picker only fetches eligible owned/admin communities and own public sessions. */
+.profile-invite-panel{
+  margin:2px 0 18px;padding:20px;border:1px solid #408579;border-radius:17px;
+  background:#123c46;box-shadow:0 8px 24px #00131c33
+}
+.profile-invite-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.profile-invite-header h2{font-size:1.14rem;margin:5px 0;color:white}
+.profile-invite-header p{font-size:.83rem;color:#b8dade;margin:0 0 14px}
+.profile-invite-close{display:grid;place-items:center;width:36px;height:36px;
+  flex:0 0 36px;border:1px solid #3b6c72;border-radius:10px;
+  background:#174652;color:#e9fffb;cursor:pointer;font-size:1.35rem
+}
+.profile-invite-tabs{display:flex;gap:8px;border-bottom:1px solid #397078;margin-bottom:13px}
+.profile-invite-tabs button{border:0;border-bottom:2px solid transparent;padding:10px 14px;
+  background:transparent;color:#b7d6dc;cursor:pointer;font-weight:750}
+.profile-invite-tabs button.active{border-color:#43e5c9;color:#82ffe8}
+.profile-invite-options{display:grid;gap:8px;max-height:350px;overflow:auto}
+.profile-invite-option{display:flex;align-items:center;gap:12px;padding:12px;
+  border:1px solid #2c5864;border-radius:12px;background:#092c3b}
+.profile-invite-option-icon{display:grid;place-items:center;background:#194b57;
+  flex:0 0 42px;height:42px;border-radius:12px;font-size:1.1rem}
+.profile-invite-option-info{display:grid;gap:4px;flex:1;min-width:0}
+.profile-invite-option-info strong{overflow-wrap:anywhere;color:#f2fffb;font-size:.86rem}
+.profile-invite-option-info small{color:#9dc5ca;font-size:.74rem}
+.profile-invite-option button{border:0;border-radius:10px;background:#37dabc;
+  color:#062c35;font-size:.79rem;font-weight:850;padding:10px 12px;cursor:pointer}
+.profile-invite-option button:disabled{opacity:.65;cursor:default}
+.profile-invite-state,.profile-invite-error,.profile-invite-success{font-size:.85rem;padding:12px;margin:0}
+.profile-invite-state{color:#b5d3d8}
+.profile-invite-error{color:#ffc1b7}.profile-invite-success{color:#80f5d7}
+.profile-detail button:focus-visible,.profile-detail a:focus-visible{
+  outline:2px solid #84ffe7;outline-offset:3px
+}
+@media(max-width:850px){
+  .community-page .profile-detail .profile-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .community-page .profile-detail{padding:16px;border-radius:18px}
+  .community-page .profile-detail .detail-heading{flex-direction:row;align-items:flex-start;gap:15px}
+  .community-page .profile-detail .large-avatar{
+    width:86px;height:86px;flex-basis:86px;border-radius:17px;font-size:2rem
+  }
+  .community-page .profile-detail .profile-identity h1{font-size:clamp(1.55rem,6vw,2.1rem)}
+  .community-page .profile-detail .social-summary{gap:7px}
+  .community-page .profile-detail .social-summary>div{padding:8px}
+  .community-page .profile-detail .detail-actions>a,
+  .community-page .profile-detail .detail-actions>button{flex:1 1 auto}
+  .community-page .profile-detail .profile-meta{grid-template-columns:1fr 1fr}
+  .profile-invite-panel{padding:14px}
+  .profile-invite-option{gap:9px;padding:9px}
+}
+@media(max-width:390px){
+  .community-page .profile-detail .detail-heading{flex-direction:column}
+  .community-page .profile-detail .profile-meta{grid-template-columns:1fr}
+  .profile-invite-option-icon{display:none}
+}
