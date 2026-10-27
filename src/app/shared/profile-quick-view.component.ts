@@ -17,13 +17,20 @@ import { TranslatePipe } from '../i18n/translate.pipe';
  @if (quick.username$ | async; as username) {
    <div class="contact-backdrop" (click)="close()" (keydown.escape)="close()">
      <section class="contact-panel" role="dialog" aria-modal="true"
-       aria-labelledby="contact-name" tabindex="-1"
+       aria-labelledby="contact-title" tabindex="-1"
        (click)="$event.stopPropagation()" (keydown.escape)="close()"
        (keydown.tab)="trapFocus($event)">
-       <header>
+       <header class="contact-header">
+         <strong id="contact-title">{{ 'profile.contactInfo' | t }}</strong>
          <button #closeControl type="button" class="contact-close"
-           [attr.aria-label]="'common.close' | t" (click)="close()">×</button>
-         <strong>{{ 'profile.contactInfo' | t }}</strong>
+           [attr.aria-label]="'common.close' | t" [attr.title]="'common.close' | t"
+           (click)="close()">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"
+             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true" focusable="false">
+             <path d="M18 6 6 18M6 6l12 12" />
+           </svg>
+         </button>
        </header>
        @if (loading) {
          <p role="status" class="contact-state">{{ 'common.loading' | t }}</p>
@@ -65,10 +72,16 @@ import { TranslatePipe } from '../i18n/translate.pipe';
  .contact-panel{width:min(100%,430px);max-height:min(88dvh,680px);overflow-y:auto;
    border:1px solid #416b72;background:#122e3a;color:#effdfa;border-radius:22px;
    box-shadow:0 25px 70px #001018bd;outline:none}
- header{display:flex;align-items:center;gap:15px;padding:16px 20px;
-   border-bottom:1px solid #ffffff19;font-size:1.06rem}
- .contact-close{width:40px;height:40px;border-radius:50%;border:0;
-   background:#214850;color:#f3fffa;font-size:1.8rem;cursor:pointer}
+ .contact-header{display:flex;align-items:center;justify-content:space-between;gap:15px;
+   padding:16px 20px;border-bottom:1px solid #ffffff19;font-size:1.06rem}
+ .contact-header strong{min-width:0;overflow-wrap:anywhere}
+ .contact-close{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;
+   padding:0;border:1px solid transparent;border-radius:10px;
+   background:transparent;color:#e5f7f4;line-height:1;cursor:pointer;
+   transition:background-color .15s ease,border-color .15s ease}
+ .contact-close svg{display:block;width:18px;height:18px}
+ .contact-close:hover{background:#214850;border-color:#3c6b70}
+ .contact-close:active{background:#2e5b61}
  .contact-identity{text-align:center;padding:24px 24px 14px}
  .contact-avatar{height:154px;width:154px;display:grid;place-items:center;margin:0 auto 15px;
    border-radius:50%;background:#28635c;border:3px solid #6ddec6;color:white;
