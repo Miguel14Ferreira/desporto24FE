@@ -53,6 +53,13 @@ export interface PendingSessionInvite {
   sessionId: number;
   inviterUsername: string;
   createdAt: string;
+  /** Only safe session metadata, accessible to the authenticated invitee. */
+  sport?: string | null;
+  city?: string | null;
+  gameDate?: string | null;
+  maxParticipants?: number | null;
+  participantCount?: number | null;
+  status?: 'OPEN' | 'FULL' | 'CANCELLED' | 'COMPLETED' | null;
 }
 
 export interface JoinSessionResponse {
