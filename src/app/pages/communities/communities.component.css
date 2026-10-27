@@ -1167,3 +1167,33 @@ input,textarea,select {
   .import-plan-scores { padding-left: 38px; }
   .import-points-acknowledgement { padding: 11px; }
 }
+
+/* Finished historical import: keep only the receipt and a clean next-file action. */
+.import-wizard-complete {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  margin-top: 18px;
+}
+.import-wizard-complete .import-success--completed {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 19px 21px;
+  border-color: rgba(40, 185, 131, .35);
+  border-radius: 14px;
+  background: rgba(22, 119, 88, .14);
+  line-height: 1.6;
+}
+.import-wizard-complete .import-success--completed strong {
+  color: #bbf9dc;
+  font-size: 1rem;
+}
+.import-wizard-complete .import-wizard-new-file {
+  min-height: 42px;
+  padding: 10px 16px;
+}
+@media (max-width: 480px) {
+  .import-wizard-complete .import-success--completed { padding: 15px; }
+  .import-wizard-complete .import-wizard-new-file { width: 100%; }
+}
