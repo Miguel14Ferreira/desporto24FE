@@ -55,9 +55,14 @@ export interface AdminVenueQuality {
   generatedAt: string;
 }
 
+export interface AdminGpsResearchCandidate {
+  latitude: number; longitude: number;
+  officialSourceUrl: string; secondarySourceUrl: string; precision: string;
+}
 export interface AdminVenueGpsReviewPage {
   venues: {id:number; name:string; city:string; district:string|null; address:string|null;
-    sourceReference:string|null; informationSource:string|null; sourceWebsite:string|null}[];
+    sourceReference:string|null; informationSource:string|null; sourceWebsite:string|null;
+    researchCandidate?: AdminGpsResearchCandidate|null}[];
   page:number; hasMore:boolean;
 }
 interface GrowthChart {
@@ -174,6 +179,18 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     } catch {
       return null;
     }
+  }
+
+  /** Map research lead only: accepts strictly bounded, finite site coordinates,
+   * never changes venue GPS or claims a verified public entrance.
+   */
+  gpsResearchMapUrl(candidate: AdminGpsResearchCandidate | null | undefined): string | null {
+    if (!candidate || candidate.precision !== 'SITE_REFERENCE_NOT_VERIFIED_ENTRANCE') return null;
+    const { latitude, longitude } = candidate;
+    if (typeof latitude !== 'number' || typeof longitude !== 'number'
+        || !Number.isFinite(latitude) || !Number.isFinite(longitude)
+        || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
+    return 'https://www.google.com/maps/search/?api=1&query=' + latitude + '%2C' + longitude;
   }
 
   /** Optional, bounded admin-only list. No GPS is inferred or modified here. */
