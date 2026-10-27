@@ -6,6 +6,7 @@ import {
   ChatReactionStoreService, ChatReactionSummary, ChatReactionParticipant
 } from '../../services/chat-reaction-store.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { ProfileQuickViewService } from '../../services/profile-quick-view.service';
 
 let reactionPickerSequence = 0;
 
@@ -151,7 +152,10 @@ let reactionPickerSequence = 0;
                       }
                     </span>
                     <div class="reaction-person-name">
-                      <strong>{{ person.mine ? ('chat.you' | t) : person.displayName }}</strong>
+                      <button type="button" class="reaction-person-profile"
+                          (click)="viewProfile(person.username)">
+                        {{ person.mine ? ('chat.you' | t) : person.displayName }}
+                      </button>
                       @if (person.mine) { <small>{{ person.displayName }}</small> }
                     </div>
                     <span class="reaction-person-emoji">{{ person.emoji }}</span>
@@ -249,6 +253,9 @@ let reactionPickerSequence = 0;
     .reaction-avatar img {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
     .reaction-person-name {display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
     .reaction-person-name strong {font-size:.85rem;overflow-wrap:anywhere;}
+    .reaction-person-profile {all:unset;cursor:pointer;font-size:.85rem;font-weight:700;}
+    .reaction-person-profile:hover {text-decoration:underline;color:#83e8d0;}
+    .reaction-person-profile:focus-visible {outline:2px solid #83e8d0;}
     .reaction-person-name small {color:#9dbbb9;font-size:.7rem;}
     .reaction-person-emoji {font-size:1.4rem;padding:4px 8px;}
     .reaction-details-state {margin:12px;font-size:.8rem;color:#c8e4e0;}
@@ -303,7 +310,8 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     public readonly store: ChatReactionStoreService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly profileQuickView: ProfileQuickViewService
   ) {}
 
   ngOnInit(): void {
@@ -330,6 +338,11 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   get entries(): { emoji: string; count: number }[] {
     return this.emojis.filter(emoji => (this.summary?.counts?.[emoji] || 0) > 0)
       .map(emoji => ({ emoji, count: this.summary?.counts[emoji] || 0 }));
+  }
+
+  viewProfile(username: string): void {
+    this.closeDetails(false);
+    this.profileQuickView.open(username);
   }
 
   get totalCount(): number {
