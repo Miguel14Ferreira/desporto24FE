@@ -268,6 +268,25 @@
                             class="jynlo-action jynlo-action--neutral">
                             {{ 'adminVenueGps.openOfficial' | t }}
                           </a>
+                          <div class="venue-gps-research" *ngIf="gpsPossibleDuplicateVisible(item.possibleDuplicateReview)">
+                            <strong>{{ 'adminVenueGps.duplicateTitle' | t }}</strong>
+                            <small>{{ 'adminVenueGps.duplicateCaution' | t }}</small>
+                            <a [routerLink]="['/menu/venues', item.possibleDuplicateReview?.relatedVenueId]"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.duplicateOther' | t }}:
+                              {{ item.possibleDuplicateReview?.relatedVenueName }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.possibleDuplicateReview?.officialSourceUrl) as official"
+                              [href]="official" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.duplicateOfficial' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.possibleDuplicateReview?.mapSourceUrl) as mapSource"
+                              [href]="mapSource" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.duplicateMap' | t }}
+                            </a>
+                          </div>
                           <div class="venue-gps-research" *ngIf="gpsResearchMapUrl(item.researchCandidate) as mapUrl">
                             <strong>{{ 'adminVenueGps.researchTitle' | t }}</strong>
                             <small>{{ item.researchCandidate?.latitude }}, {{ item.researchCandidate?.longitude }}</small>

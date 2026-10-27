@@ -156,6 +156,25 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.gpsOfficialLink('javascript:alert(1)')).toBeNull();
   });
 
+  it('only shows reviewed Viso duplicate link and never assumes equivalence from name alone', () => {
+    const lead = {
+      issueCode: 'POTENTIAL_SAME_FACILITY_REVIEW',
+      relatedVenueId: 2623,
+      relatedVenueName: 'Campo Sintético do Viso',
+      officialSourceUrl: 'https://www.agoraporto.pt/grandes-campos-municipais/campo-sintetico-do-viso',
+      mapSourceUrl: 'https://www.openstreetmap.org/way/334849388'
+    };
+    expect(component.gpsPossibleDuplicateVisible(lead)).toBeTrue();
+    expect(component.gpsOfficialLink(lead.officialSourceUrl)).toBe(lead.officialSourceUrl);
+    expect(component.gpsOfficialLink(lead.mapSourceUrl)).toBe(lead.mapSourceUrl);
+    for (const invalid of [null, undefined, {...lead, relatedVenueId: 999},
+      {...lead, relatedVenueId: NaN}, {...lead, relatedVenueName: 'Other'},
+      {...lead, issueCode: 'MERGED'}]) {
+      expect(component.gpsPossibleDuplicateVisible(invalid)).toBeFalse();
+    }
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],

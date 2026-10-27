@@ -62,11 +62,16 @@ export interface AdminGpsResearchCandidate {
 export interface AdminVenueAddressReview {
   issueCode:string; venueLocationToCheck:string; equipmentSourceUrl:string; marketSourceUrl:string;
 }
+export interface AdminVenuePossibleDuplicateReview {
+  issueCode:string; relatedVenueId:number; relatedVenueName:string;
+  officialSourceUrl:string; mapSourceUrl:string;
+}
 export interface AdminVenueGpsReviewPage {
   venues: {id:number; name:string; city:string; district:string|null; address:string|null;
     sourceReference:string|null; informationSource:string|null; sourceWebsite:string|null;
     researchCandidate?: AdminGpsResearchCandidate|null;
-    addressReview?: AdminVenueAddressReview|null}[];
+    addressReview?: AdminVenueAddressReview|null;
+    possibleDuplicateReview?: AdminVenuePossibleDuplicateReview|null}[];
   page:number; hasMore:boolean;
 }
 interface GrowthChart {
@@ -203,6 +208,13 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
       && typeof item.venueLocationToCheck === 'string'
       && item.venueLocationToCheck.trim().length > 0
       && item.venueLocationToCheck.length <= 200;
+  }
+
+  /** Allow only the deliberately reviewed Viso relationship, never an auto-merge. */
+  gpsPossibleDuplicateVisible(value: AdminVenuePossibleDuplicateReview | null | undefined): boolean {
+    return !!value && value.issueCode === 'POTENTIAL_SAME_FACILITY_REVIEW'
+      && value.relatedVenueId === 2623
+      && value.relatedVenueName === 'Campo Sintético do Viso';
   }
 
   /** Optional, bounded admin-only list. No GPS is inferred or modified here. */
