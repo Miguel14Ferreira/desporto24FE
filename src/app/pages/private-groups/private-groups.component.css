@@ -72,3 +72,13 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
  .group-chat-header{padding:12px}.group-message-list{min-height:350px}
  .group-top{align-items:flex-start}
 }
+
+/* Group management controls remain separate from profile links, including on narrow screens. */
+.group-header-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.group-member-chip{display:inline-flex;align-items:center;border-radius:99px;background:#173c4a}
+.group-member-chip a{background:transparent}
+.group-member-remove{border:0;background:transparent;color:#fac4ba;font-size:1.15rem;
+  min-width:30px;min-height:30px;cursor:pointer;border-radius:50%;padding:3px 8px}
+.group-member-remove:hover{background:#753a43;color:#fff}
+.group-modal form{display:block}
+.group-modal form footer{margin-top:14px}
