@@ -238,9 +238,20 @@ async function main(){
     a.on('pageerror',e=>errors.push('ana: '+e.message));
     await a.goto(SITE+'/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
     if(CHECK_CONTACT){
+      const label=await a.locator('.inbox-contact-caption').innerText();
+      assert.equal(label.trim(),'Ver perfil','chat header must show translated PT label, not i18n key');
       await a.locator('.inbox-contact-opener').click();
       const panel=a.locator('.contact-panel');
       await panel.waitFor();
+      const close=a.locator('.contact-close');
+      assert.equal(await close.locator('svg path').count(),1,
+        'close control must use a centered SVG, not a font glyph');
+      const buttonBox=await close.boundingBox();
+      assert.ok(buttonBox && buttonBox.width===36 && buttonBox.height===36,
+        'close button should have a consistent 36px hit target');
+      const titleBox=await panel.locator('#contact-title').boundingBox();
+      assert.ok(titleBox && buttonBox.x>titleBox.x+titleBox.width,
+        'standard close button should be at the top right');
       await panel.locator('.contact-identity h2').filter({hasText:'Bea'}).waitFor();
       assert.match(await panel.innerText(),/Lisboa/);
       assert.equal(await panel.locator('a[href*="/menu/perfis/bea"]').count(),1);
