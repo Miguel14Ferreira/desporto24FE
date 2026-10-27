@@ -838,6 +838,12 @@ describe('PublicSessionPreviewComponent', () => {
     function renderGuest() {
       routeQueryParamMap=convertToParamMap({guest:token});
       (http.post as jasmine.Spy).and.callFake((url:string,body:any) => {
+        if(url.endsWith('/guest-preview')) {
+          expect(body.token).toBe(token);
+          return of({id:42,sport:'Futebol',city:'Lisboa',
+            gameDate:new Date(Date.now()+3600_000).toISOString(),
+            maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        }
         if(url.endsWith('/guest-roster')) {
           expect(body.token).toBe(token);
           return of({sessionId:42,communityId:7,players:[
@@ -858,7 +864,7 @@ describe('PublicSessionPreviewComponent', () => {
       expect(page.querySelector('.guest-rsvp')).toBeTruthy();
       expect(fixture.componentInstance.guestPlayers.length).toBe(2);
       expect(fixture.componentInstance.guestCommunityId).toBe(7);
-      expect(http.post).toHaveBeenCalledTimes(1);
+      expect(http.post).toHaveBeenCalledTimes(2);
       expect(page.querySelector('.guest-rsvp-primary:disabled')).toBeTruthy();
     });
     it('lets guests go back and correct their chosen player before submitting', () => {
@@ -878,8 +884,9 @@ describe('PublicSessionPreviewComponent', () => {
       component.sendGuestRequest();
       fixture.detectChanges();
       const calls=(http.post as jasmine.Spy).calls.allArgs();
-      expect(calls[1][1].playerId).toBe(22);
-      expect(calls[1][1].newName).toBeNull();
+      const requestCall=calls.find(args=>String(args[0]).endsWith('/guest-requests'))!;
+      expect(requestCall[1].playerId).toBe(22);
+      expect(requestCall[1].newName).toBeNull();
       expect(component.guestStep).toBe('pending');
       expect(localStorage.getItem('jynlo-guest-receipt:42')).toBe(receipt);
     });
@@ -895,15 +902,19 @@ describe('PublicSessionPreviewComponent', () => {
       fixture.detectChanges();
       expect(component.guestStep).toBe('approved');
       expect(page.querySelector('.guest-rsvp-upgrade a[routerlink]')).toBeTruthy();
-      expect((http.post as jasmine.Spy).calls.allArgs()[1][1].playerId).toBeNull();
+      expect((http.post as jasmine.Spy).calls.allArgs().find(args=>String(args[0]).endsWith('/guest-requests'))![1].playerId).toBeNull();
     });
     it('uses the Jynlo account instead of claiming a historical name when already logged in', () => {
       authenticationService.isLoggedIn.and.returnValue(true);
       routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.returnValue(of({id:42,sport:'Futebol',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null}));
       const page=render({sport:'Futebol'});
       expect(fixture.componentInstance.isAuthenticated).toBeTrue();
       expect(fixture.componentInstance.guestPlayers).toEqual([]);
-      expect(http.post).not.toHaveBeenCalled();
+      expect(http.post).toHaveBeenCalledTimes(1);
+      expect((http.post as jasmine.Spy).calls.mostRecent().args[0]).toContain('/guest-preview');
       expect(page.querySelector('.guest-rsvp')).toBeNull();
       const join=page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
       expect(new URL(join.href).pathname).toBe('/menu/events/42');
@@ -914,13 +925,19 @@ describe('PublicSessionPreviewComponent', () => {
       authenticationService.isLoggedIn.and.returnValue(true);
       localStorage.setItem('jynlo-guest-receipt:42',receipt);
       routeQueryParamMap=convertToParamMap({guest:token});
-      (http.post as jasmine.Spy).and.returnValue(of({receipt,status:'APPROVED'}));
+      (http.post as jasmine.Spy).and.callFake((url:string) =>
+        url.endsWith('/guest-preview')
+          ? of({id:42,sport:'Futebol',city:'Lisboa',
+              gameDate:new Date(Date.now()+3600_000).toISOString(),
+              maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null})
+          : of({receipt,status:'APPROVED'}));
       const page=render({sport:'Futebol'});
       expect(fixture.componentInstance.guestStep).toBe('approved');
       expect(page.querySelector('.guest-rsvp')).toBeTruthy();
       expect(page.querySelector('.guest-rsvp-upgrade button')).toBeTruthy();
-      expect(http.post).toHaveBeenCalledTimes(1);
-      expect((http.post as jasmine.Spy).calls.mostRecent().args[0]).toContain('/guest-requests/status');
+      expect(http.post).toHaveBeenCalledTimes(2);
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        args=>String(args[0]).endsWith('/guest-requests/status'))).toBeTrue();
     });
 
     it('shows a cancelled approved reservation without asking the guest to register', () => {
