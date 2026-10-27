@@ -4327,8 +4327,22 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.importFileError = '';
   }
 
+  get automaticImportSeasonName(): string {
+    const now = new Date();
+    // Current sporting season: July to June (2026/2027 in October 2026).
+    const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${startYear}/${startYear + 1}`;
+  }
+
+  get canAutoCreateImportSeason(): boolean {
+    // Never create a season when the competition has not loaded or already has seasons.
+    return this.selectedSeasonId == null &&
+      this.competition != null && this.competition.seasons.length === 0;
+  }
+
   buildImportFinalPlan(): void {
-    if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || this.importPlanLoading) {
+    if (!this.selected || !this.importFile || !this.importSheetName || this.importPlanLoading) return;
+    if (this.selectedSeasonId == null && !this.canAutoCreateImportSeason) {
       this.importFileError = t('communities.import.seasonRequired');
       return;
     }
@@ -4341,28 +4355,81 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.importFileError = t('communities.import.explicitYearRequired');
       return;
     }
+
+    const communityId = this.selected.id;
+    const file = this.importFile;
+    const revision = this.importRevision;
     const mapping = {
       sheetName: this.importSheetName,
       columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field }))
-    };
-    const context = {
-      seasonId: this.selectedSeasonId,
-      defaultYear: this.importDefaultYear || null,
-      sourceCompetition: this.importSourceCompetition?.trim() || null,
-      sourceRound: this.importSourceRound?.trim() || null,
-      ...(this.newImportSport ? { sport: this.newImportSport } : {})
     };
 
     this.importPlanLoading = true;
     this.importFileError = '';
     this.importFinalPlan = undefined;
     this.importResult = undefined;
-    this.communityService.finalImportPlan(this.selected.id, this.importFile, mapping, context)
-      .pipe(timeout(20_000), finalize(() => this.importPlanLoading = false))
-      .subscribe({
-        next: plan => this.importFinalPlan = plan,
-        error: error => this.importFileError = this.importRequestError(error, 'communities.import.planError')
-      });
+
+    const prepareForSeason = (seasonId: number): void => {
+      // A user may switch communities or choose a different file during creation.
+      if (this.selected?.id !== communityId || this.importFile !== file || this.importRevision !== revision) {
+        this.importPlanLoading = false;
+        return;
+      }
+      const context = {
+        seasonId,
+        defaultYear: this.importDefaultYear || null,
+        sourceCompetition: this.importSourceCompetition?.trim() || null,
+        sourceRound: this.importSourceRound?.trim() || null,
+        ...(this.newImportSport ? { sport: this.newImportSport } : {})
+      };
+      this.communityService.finalImportPlan(communityId, file, mapping, context)
+        .pipe(timeout(20_000), finalize(() => {
+          if (this.selected?.id === communityId && this.importRevision === revision) {
+            this.importPlanLoading = false;
+          }
+        }))
+        .subscribe({
+          next: plan => {
+            if (this.selected?.id === communityId && this.importRevision === revision) {
+              this.importFinalPlan = plan;
+            }
+          },
+          error: error => {
+            if (this.selected?.id === communityId && this.importRevision === revision) {
+              this.importFileError = this.importRequestError(error, 'communities.import.planError');
+            }
+          }
+        });
+    };
+
+    if (this.selectedSeasonId != null) {
+      prepareForSeason(this.selectedSeasonId);
+      return;
+    }
+
+    // No season in this community: create the default only after Excel mapping was validated.
+    this.communityService.createSeason(communityId, {
+      name: this.automaticImportSeasonName,
+      startsAt: null
+    }).pipe(timeout(10_000)).subscribe({
+      next: season => {
+        if (this.selected?.id !== communityId) {
+          this.importPlanLoading = false;
+          return;
+        }
+        this.selectedSeasonId = season.id;
+        this.loadCompetition(this.selected, season.id);
+        prepareForSeason(season.id);
+      },
+      error: error => {
+        this.importPlanLoading = false;
+        if (this.selected?.id === communityId && this.importRevision === revision) {
+          this.importFileError = this.importRequestError(error, 'communities.import.seasonCreateError');
+          // Another manager may have created a season meanwhile: show it for selection.
+          if (error?.status === 409) this.loadCompetition(this.selected);
+        }
+      }
+    });
   }
 
   confirmHistoricalImport(): void {
