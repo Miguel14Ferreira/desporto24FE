@@ -77,7 +77,6 @@ jobs:
         if: ${{ startsWith(github.head_ref, 'qa/track-sprint-olympic-browser-') }}
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
-          JYNLO_VERIFY_CALLS: ${{ startsWith(github.head_ref, 'feat/private-calls-live-rebased-') && '1' || '0' }}
         run: |
           "$RUNNER_TEMP/jynlo-sprint-playwright/node_modules/.bin/playwright" test e2e/community-track-sprint.spec.ts --config=playwright.config.ts --project=desktop-chromium
 
@@ -143,6 +142,7 @@ jobs:
         if: ${{ (startsWith(github.head_ref, 'fix/chat-reactions-hitbox-e2e-') || startsWith(github.head_ref, 'fix/chat-reaction-compact-inline-') || startsWith(github.head_ref, 'feat/chat-reaction-details-') || startsWith(github.head_ref, 'fix/chat-reactions-tap-same-emoji-') || startsWith(github.head_ref, 'fix/chat-reaction-badge-direct-toggle-') || startsWith(github.head_ref, 'feat/private-calls-live-rebased-')) }}
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
+          JYNLO_VERIFY_CALLS: ${{ startsWith(github.head_ref, 'feat/private-calls-live-rebased-') && '1' || '0' }}
         shell: bash
         run: |
           set -euo pipefail
