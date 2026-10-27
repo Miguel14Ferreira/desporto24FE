@@ -27,6 +27,12 @@ export class PrivateGroupService {
   add(id:number,usernames:string[]):Observable<PrivateGroup> {
     return this.http.post<PrivateGroup>(this.base+'/'+id+'/members',{usernames});
   }
+  rename(id:number,title:string):Observable<PrivateGroup> {
+    return this.http.patch<PrivateGroup>(this.base+'/'+id,{title});
+  }
+  removeMember(id:number,username:string):Observable<PrivateGroup> {
+    return this.http.delete<PrivateGroup>(this.base+'/'+id+'/members/'+encodeURIComponent(username));
+  }
   messages(id:number,beforeId?:number):Observable<PrivateGroupMessage[]> {
     return this.http.get<PrivateGroupMessage[]>(this.base+'/'+id+'/messages',{
       params:beforeId?{beforeId}:{}

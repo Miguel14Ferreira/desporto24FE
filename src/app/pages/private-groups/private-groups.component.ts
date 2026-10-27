@@ -28,6 +28,9 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
   title='';
   showCreate=false;
   showAdd=false;
+  showRename=false;
+  removingUsername:string|null=null;
+  renameTitle='';
   selectedNames=new Set<string>();
   initialFriend='';
   loading=true;
@@ -99,6 +102,7 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
   select(group:PrivateGroup):void{
     if(this.selected?.id===group.id)return;
     this.selected=group;this.showCreate=false;this.showAdd=false;
+    this.showRename=false;this.removingUsername=null;
     this.messages=[];this.loadingMessages=true;this.hasMore=false;
     this.groupError='';
     const ticket=++this.currentRequest;
@@ -145,14 +149,55 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
   }
 
   openCreate(initial=''):void{
-    this.showCreate=true;this.showAdd=false;this.title='';
+    this.showCreate=true;this.showAdd=false;this.showRename=false;this.title='';
     this.selectedNames=new Set(initial?[initial.toLowerCase()]:[]);
     this.groupError='';
   }
   openAdd():void{
     if(!this.isCreator)return;
     this.selectedNames=new Set();
-    this.showAdd=true;this.showCreate=false;this.groupError='';
+    this.showAdd=true;this.showCreate=false;this.showRename=false;this.groupError='';
+  }
+
+  openRename():void {
+    if(!this.isCreator||!this.selected)return;
+    this.renameTitle=this.selected.title;
+    this.showRename=true;this.showAdd=false;this.showCreate=false;this.groupError='';
+  }
+  rename():void {
+    const group=this.selected,title=this.renameTitle.trim();
+    if(!group||!this.isCreator||this.busy||title.length<2||title.length>90)return;
+    this.busy=true;this.groupError='';
+    this.api.rename(group.id,title).subscribe({
+      next:updated=>{
+        this.busy=false;this.showRename=false;this.selected=updated;
+        this.groups=this.groups.map(g=>g.id===updated.id?updated:g);
+      },
+      error:()=>{this.busy=false;this.groupError=t('groups.renameError');}
+    });
+  }
+  askRemove(username:string):void{
+    if(!this.selected || (!this.isCreator&&username.toLowerCase()!==this.me)
+        || (this.isCreator&&username.toLowerCase()===this.me))return;
+    this.removingUsername=username;this.groupError='';
+  }
+  confirmRemove():void{
+    const group=this.selected,username=this.removingUsername;
+    if(!group||!username||this.busy)return;
+    this.busy=true;this.groupError='';
+    this.api.removeMember(group.id,username).subscribe({
+      next:updated=>{
+        this.busy=false;this.removingUsername=null;
+        if(username.toLowerCase()===this.me){
+          this.selected=null;this.messages=[];this.currentRequest++;
+          this.groups=this.groups.filter(g=>g.id!==group.id);
+          void this.router.navigate(['/menu/groups']);
+        }else{
+          this.selected=updated;this.groups=this.groups.map(g=>g.id===updated.id?updated:g);
+        }
+      },
+      error:()=>{this.busy=false;this.groupError=t('groups.removeError');}
+    });
   }
   get isCreator():boolean{
     return !!this.selected?.creatorUsername
