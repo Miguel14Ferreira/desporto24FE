@@ -340,6 +340,20 @@ export class CommunityGroupsService {
     );
   }
 
+  sessionResultRoster(id: number, sessionId: number): Observable<Array<{
+    id: number;
+    username: string;
+    attendanceStatus: 'PENDING' | 'ATTENDED' | 'NO_SHOW' | 'LATE_CANCELLED';
+    teamCode?: 'A' | 'B' | null;
+  }>> {
+    return this.http.get<Array<{
+      id: number;
+      username: string;
+      attendanceStatus: 'PENDING' | 'ATTENDED' | 'NO_SHOW' | 'LATE_CANCELLED';
+      teamCode?: 'A' | 'B' | null;
+    }>>(this.url + '/' + id + '/sessions/' + sessionId + '/competition-result/roster');
+  }
+
   recordedSessionResults(id: number): Observable<number[]> {
     return this.http.get<number[]>(this.url + '/' + id + '/sessions/competition-results');
   }
