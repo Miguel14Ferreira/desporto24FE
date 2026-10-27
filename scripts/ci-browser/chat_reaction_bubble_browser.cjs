@@ -458,10 +458,25 @@ async function main(){
       assert.deepEqual(groupWrites,['created','renamed','ana:message','invited','removed:carla','removed:bea']);
     }
     if(CHECK_PROFILE_INVITES){
+      await a.setViewportSize({width:1440,height:900});
       await a.goto(SITE+'/menu/perfis/bea',{waitUntil:'domcontentloaded'});
       await a.locator('.profile-detail .profile-identity h1').filter({hasText:'bea'}).waitFor({timeout:8000});
       assert.equal(await a.locator('.profile-meta > div').count(),3,
         'only supplied country, age and member-since fields should render');
+      const hero=a.locator('.profile-hero');
+      const header=await a.locator('.profile-hero .detail-heading').boundingBox();
+      const actions=await a.locator('.profile-hero .detail-actions').boundingBox();
+      assert.ok(header&&actions&&actions.x>header.x+header.width-5,
+        'approved desktop hero places social actions to the right of the identity');
+      assert.equal(await a.locator('.profile-meta .profile-stat-icon svg').count(),3,
+        'each populated public detail has its own icon');
+      await a.locator('.public-activity-grid .profile-activity-card').first().waitFor();
+      assert.equal(await a.locator('.public-activity-grid .profile-activity-card').count(),4);
+      const top=await a.locator('.profile-meta').boundingBox();
+      const activity=await a.locator('.public-activity').boundingBox();
+      assert.ok(top&&activity&&activity.y>=top.y+top.height,
+        'activities must be visually separated from profile details');
+      assert.ok(await hero.isVisible());
       await a.locator('.profile-invite-trigger').click();
       const panel=a.locator('.profile-invite-panel');
       await panel.waitFor();
@@ -489,6 +504,10 @@ async function main(){
       await b.locator('.profile-invite-panel').waitFor();
       const box=await b.locator('.profile-detail').boundingBox();
       assert.ok(box && box.x>=0 && box.x+box.width<=391, 'profile must fit 390px mobile');
+      const mobileClipping=await b.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
+      assert.equal(mobileClipping,false,'responsive premium profile cannot overflow mobile viewport');
+      assert.equal(await b.locator('.profile-meta .profile-stat-icon svg').count(),3);
+      assert.equal(await b.locator('.public-activity-grid .profile-activity-card').count(),4);
       await b.screenshot({path:path.join(OUT,'premium-profile-invite-mobile.png')});
       assert.deepEqual(profileInvitePosts,['community:41:bea','session:7:bea'],
         'no sends should happen without explicit inviter action');
