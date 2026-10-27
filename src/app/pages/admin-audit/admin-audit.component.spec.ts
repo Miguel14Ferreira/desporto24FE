@@ -175,6 +175,31 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.gpsResearchMapUrl(null)).toBeNull();
   });
 
+  it('recognizes researched Maia/Mira facility context without implying GPS approval', () => {
+    const maia = {
+      issueCode: 'DISTINCT_MUNICIPAL_SPORTS_VENUES_NO_POINT',
+      officialSourceUrl: 'https://www.cm-maia.pt/desporto/instalacoes-desportivas',
+      relatedSourceUrl: 'https://www.cm-maia.pt/desporto/instalacoes-desportivas?pois_list_14_page=4'
+    };
+    const mira = {
+      issueCode: 'SHARED_COMPLEX_DIFFERENT_SPORTS_NO_POINT',
+      officialSourceUrl: 'https://www.cm-mira.pt/node/4084',
+      relatedSourceUrl: 'https://www.cm-mira.pt/node/3308'
+    };
+    expect(component.gpsFacilityContextKey(maia)).toBe('adminVenueGps.contextMaia');
+    expect(component.gpsFacilityContextKey(mira)).toBe('adminVenueGps.contextMira');
+    expect(component.gpsOfficialLink(mira.officialSourceUrl)).toBe(mira.officialSourceUrl);
+    expect(component.gpsOfficialLink(mira.relatedSourceUrl)).toBe(mira.relatedSourceUrl);
+    expect(component.gpsResearchMapUrl(null)).toBeNull();
+    for (const bad of [
+      null, undefined, {...maia, issueCode: 'APPROVED'},
+      {...mira, issueCode: 'POTENTIAL_SAME_FACILITY_REVIEW'}, {...mira, issueCode: ''}
+    ]) {
+      expect(component.gpsFacilityContextKey(bad)).toBeNull();
+    }
+    expect(component.gpsOfficialLink('http://cm-mira.pt/node/4084')).toBeNull();
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],
