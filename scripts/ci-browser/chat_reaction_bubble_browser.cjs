@@ -129,7 +129,29 @@ async function assertClickable(page,kind,name){
   assert.equal(await shelf.locator('.reaction-open').count(),0,'no duplicate permanent smiley');
   await page.screenshot({path:path.join(OUT,name+'.png')});
   await shelf.locator('.reaction-count').click({timeout:5000}); // real pointer; never force click
-  await shelf.locator('.reaction-picker').waitFor();
+  const panel=shelf.locator('.reaction-picker');
+  await panel.waitFor();
+  const badge=await shelf.locator('.reaction-count').first().boundingBox();
+  const tray=await panel.boundingBox();
+  const emojiBoxes=await shelf.locator('.reaction-choice').evaluateAll(buttons =>
+    buttons.map(b=>{const r=b.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right};}));
+  assert.ok(badge && tray,'picker is visibly rendered');
+  assert.ok(tray.y >= badge.y + badge.height + 3,
+    'expanded picker must live UNDER the badge, not across the message');
+  assert.ok(tray.y >= b.y + b.height + 3,'expanded picker overlaps message or timestamp');
+  assert.ok(tray.width <= 270 && tray.height <= 105,
+    `picker too large: ${tray.width}x${tray.height}`);
+  assert.ok(tray.x>=0 && tray.x+tray.width<=page.viewportSize().width,
+    'picker escapes viewport horizontally');
+  assert.equal(emojiBoxes.length,6,'all six emojis available');
+  assert.ok(emojiBoxes.every(x=>Math.abs(x.top-emojiBoxes[0].top)<2),
+    'emoji row wraps instead of staying compact');
+  if(await shelf.locator('.reaction-remove').count() > 0) {
+    const remove=await shelf.locator('.reaction-remove').boundingBox();
+    assert.ok(remove && remove.y>=emojiBoxes[0].top+35,
+      'remove action must be on its own secondary row');
+  }
+  await page.screenshot({path:path.join(OUT,name+'-compact-picker.png')});
   return shelf;
 }
 async function main(){
