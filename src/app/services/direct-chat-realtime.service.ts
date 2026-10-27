@@ -6,6 +6,7 @@ import { environment } from 'src/environment/environment';
 import { DirectChatMessage } from '../pages/model/direct-chat';
 import { SessionMessage } from '../pages/model/session-message';
 import { CommunityTimelineEntry } from './community-timeline.service';
+import { PrivateGroupMessage } from './private-group.service';
 
 export interface ChatReactionEvent {
   kind: 'direct' | 'session' | 'community';
@@ -53,7 +54,8 @@ interface ChatSocketEnvelope {
   receipt?: DirectChatReadReceiptEvent;
   read?: InboxOwnReadEvent;
   type?: string;
-  message?: DirectChatMessage | SessionMessage | CommunityTimelineEntry;
+  groupId?: number;
+  message?: DirectChatMessage | SessionMessage | CommunityTimelineEntry | PrivateGroupMessage;
 }
 
 /**
@@ -116,6 +118,8 @@ export class DirectChatRealtimeService {
   private readonly communityMessageSubject = new Subject<CommunityTimelineEntry>();
   private readonly reactionSubject = new Subject<ChatReactionEvent>();
   private readonly callSubject = new Subject<DirectCallEvent>();
+  private readonly groupMessageSubject = new Subject<PrivateGroupMessage>();
+  private readonly groupUpdateSubject = new Subject<number>();
   private readonly typingSubject = new Subject<ChatTypingEvent>();
   private readonly readReceiptSubject = new Subject<DirectChatReadReceiptEvent>();
   private readonly ownReadSubject = new Subject<InboxOwnReadEvent>();
@@ -126,6 +130,8 @@ export class DirectChatRealtimeService {
   readonly communityMessages$ = this.communityMessageSubject.asObservable();
   readonly reactions$ = this.reactionSubject.asObservable();
   readonly calls$ = this.callSubject.asObservable();
+  readonly groupMessages$ = this.groupMessageSubject.asObservable();
+  readonly groupUpdates$ = this.groupUpdateSubject.asObservable();
   readonly typing$ = this.typingSubject.asObservable();
   readonly readReceipts$ = this.readReceiptSubject.asObservable();
   readonly ownReads$ = this.ownReadSubject.asObservable();
@@ -205,6 +211,17 @@ export class DirectChatRealtimeService {
               && typeof event.conversationId === 'string'
               && typeof event.username === 'string'
               && typeof event.active === 'boolean') this.typingSubject.next(event);
+          return;
+        }
+
+        if ((envelope.type === 'PRIVATE_GROUP_UPDATED' || envelope.type === 'PRIVATE_GROUP_MESSAGE')
+            && Number.isSafeInteger(envelope.groupId) && (envelope.groupId ?? 0) > 0) {
+          if (envelope.type === 'PRIVATE_GROUP_UPDATED') this.groupUpdateSubject.next(envelope.groupId!);
+          else if (envelope.message && typeof (envelope.message as PrivateGroupMessage).sender === 'string') {
+            const m = envelope.message as PrivateGroupMessage;
+            this.groupMessageSubject.next({...m,
+              createdAt:normalizeRealtimeChatInstant(m.createdAt)});
+          }
           return;
         }
 
