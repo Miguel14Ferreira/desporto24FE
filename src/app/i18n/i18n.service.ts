@@ -1659,6 +1659,7 @@ const PT: Dictionary = {
   'communities.import.pointsAcknowledgement': 'Compreendo que os pontos originais do ficheiro não serão guardados.',
   'communities.import.pointsAcknowledgementRequired': 'Confirma que compreendes como serão calculados os pontos antes de importar.',
   'communities.import.confirmError': 'Não foi possível importar estas jornadas.',
+  'communities.import.importAnother': 'Importar outro Excel',
   'communities.import.success': 'Histórico importado com sucesso',
   'communities.import.roundsCreated': 'jornadas criadas',
   'communities.import.entriesCreated': 'participações criadas',
