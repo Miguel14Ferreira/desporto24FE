@@ -233,3 +233,44 @@
 }
 .inbox-message-log app-chat-reactions.inbox-reaction-under-message.is-picker-open {z-index:30;}
 .inbox-message-log {padding-bottom:48px;}
+
+/* Contact details: keyboard-accessible compact dialog in the current inbox. */
+.inbox-contact-avatar {cursor:pointer;font:inherit;border:1px solid #33727b;
+  display:grid;place-items:center;color:#d9fff5;}
+.inbox-contact-avatar:hover {outline:2px solid #5bcbaf;outline-offset:2px;}
+.inbox-profile-link {color:inherit;text-decoration:none;outline-offset:3px;}
+.inbox-profile-link:hover,.inbox-profile-link:focus-visible {
+  text-decoration:underline;text-decoration-color:#66e3c1;}
+.inbox-contact-scrim {position:fixed;inset:0;z-index:10050;
+  display:grid;place-items:center;padding:16px;
+  background:rgba(1,12,20,.78);backdrop-filter:blur(5px);}
+.inbox-contact-sheet {width:min(440px,100%);max-height:88dvh;
+  overflow:auto;background:#102b38;border:1px solid #416d77;
+  color:#efffff;border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.5);}
+.inbox-contact-top {display:flex;align-items:center;gap:14px;
+  padding:16px 19px;font-size:.92rem;border-bottom:1px solid #29505b;}
+.inbox-contact-close {display:grid;place-items:center;width:35px;height:35px;
+  border:1px solid #396b75;border-radius:50%;background:#1a4250;
+  color:#ddfaf7;font-size:1.45rem;cursor:pointer;}
+.inbox-contact-main {display:flex;flex-direction:column;align-items:center;
+  padding:23px 18px 30px;text-align:center;}
+.inbox-contact-photo {display:grid;place-items:center;width:110px;height:110px;
+  border-radius:50%;background:#1a5660;border:2px solid #49baa9;
+  color:#d4fff2;font-size:3.25rem;font-weight:800;}
+.inbox-contact-main h2 {margin:15px 0 4px;font-size:1.55rem;}
+.inbox-contact-main p {margin:0;color:#a9ced5;font-size:.85rem;}
+.inbox-contact-actions {display:flex;align-items:center;justify-content:center;
+  flex-wrap:wrap;gap:12px;margin-top:23px;}
+.inbox-contact-actions button,.inbox-contact-actions a {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:7px;min-width:84px;min-height:78px;padding:10px;
+  text-align:center;text-decoration:none;color:#e8fff6;background:#193f4d;
+  border:1px solid #427684;border-radius:16px;font-size:.81rem;cursor:pointer;}
+.inbox-contact-actions span {font-size:1.3rem;}
+.inbox-contact-actions button:hover,.inbox-contact-actions a:hover {
+  background:#205964;border-color:#65cdb8;}
+.inbox-contact-footer {border-top:1px solid #29505b;padding:16px 19px;
+  text-align:center;}
+.inbox-contact-footer a {color:#9ff0db;font-size:.84rem;overflow-wrap:anywhere;}
+.inbox-contact-sheet :is(a,button):focus-visible {
+  outline:2px solid #9af5de;outline-offset:3px;}
