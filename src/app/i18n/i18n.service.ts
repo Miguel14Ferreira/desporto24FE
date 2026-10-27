@@ -3750,6 +3750,8 @@ const PT: Dictionary = {
   'calls.unavailable': 'Não foi possível iniciar a chamada.',
   'calls.mediaError': 'Erro de ligação ou acesso ao microfone/câmara.',
   'calls.audioBlocked': 'O navegador bloqueou a reprodução de som.',
+  'profile.contactInfo': 'Informações de contacto',
+  'profile.openFullProfile': 'Ver perfil completo',
   'chat.react': 'Reagir à mensagem',
   'chat.reactionError': 'Não foi possível guardar a reação.',
   'chat.replyingTo': 'A responder a',
