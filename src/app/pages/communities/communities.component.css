@@ -971,3 +971,199 @@ input,textarea,select {
 .community-avatar.community-avatar--animated > img {
   object-fit: cover;
 }
+
+/* Historical Excel import — reviewable rounds, compact scores and clear consent.
+   Scoped to this wizard so archives, tournament lists and other tables are unchanged. */
+.import-final-plan--rounds {
+  display: block;
+  padding: clamp(16px, 2.2vw, 24px);
+  border: 1px solid rgba(86, 170, 179, .27);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(16, 50, 65, .94), rgba(9, 34, 49, .96));
+  box-shadow: 0 12px 30px rgba(0, 12, 24, .12);
+}
+.import-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px 24px;
+  padding-bottom: 19px;
+  border-bottom: 1px solid rgba(105, 176, 185, .19);
+}
+.import-plan-heading { min-width: 0; }
+.import-plan-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: #81e7d4;
+  font-size: .74rem;
+  font-weight: 750;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+.import-plan-heading h4 {
+  margin: 0;
+  color: #f1fbff;
+  font-size: clamp(1.06rem, 1.8vw, 1.3rem);
+  letter-spacing: -.025em;
+}
+.import-plan-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.import-plan-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid rgba(45, 224, 189, .25);
+  border-radius: 11px;
+  background: rgba(40, 222, 191, .09);
+  color: #c4e6e6;
+  font-size: .8rem;
+  white-space: nowrap;
+}
+.import-plan-summary-item strong {
+  color: #a7f8e6;
+  font-size: 1.15rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.import-plan-summary-item--duplicates {
+  border-color: rgba(155, 179, 195, .22);
+  background: rgba(134, 161, 180, .08);
+}
+.import-plan-summary-item--duplicates strong { color: #ebf5ff; }
+.import-plan-rows { display: grid; gap: 9px; padding-top: 17px; }
+.import-plan-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(100px, .55fr) minmax(170px, .85fr);
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 13px 16px;
+  border: 1px solid rgba(101, 172, 186, .21);
+  border-radius: 12px;
+  background: rgba(5, 29, 44, .56);
+}
+.import-plan-row--duplicate { opacity: .68; }
+.import-plan-date { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.import-plan-index {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(40, 222, 191, .12);
+  color: #8cecd7;
+  font-size: .82rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.import-plan-date-copy { display: grid; min-width: 0; gap: 3px; }
+.import-plan-date-copy small { color: #9cbfc9; font-size: .73rem; }
+.import-plan-date-copy strong {
+  color: #f4fbff;
+  font-size: .94rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.import-plan-players { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; color: #aacbd4; }
+.import-plan-players strong { font-size: 1.05rem; color: #f2fcff; font-variant-numeric: tabular-nums; }
+.import-plan-players span { font-size: .8rem; }
+.import-plan-scores { display: flex; justify-content: flex-end; align-items: center; gap: 6px; flex-wrap: wrap; }
+.import-plan-score {
+  display: inline-flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 47px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+}
+.import-plan-score strong { font-size: .92rem; }
+.import-plan-score--win { color: #a4f4d5; background: rgba(40, 185, 131, .16); }
+.import-plan-score--draw { color: #d6e0ed; background: rgba(161, 183, 206, .13); }
+.import-plan-score--loss { color: #ffd2bd; background: rgba(230, 120, 91, .13); }
+.import-plan-row-flags {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: .77rem;
+  color: #ffcfac;
+}
+.import-plan-row-flags span {
+  padding: 5px 9px;
+  border: 1px solid rgba(238, 163, 111, .28);
+  border-radius: 7px;
+  background: rgba(229, 151, 93, .09);
+}
+.import-points-notice {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+  padding: clamp(15px, 2vw, 20px);
+  border: 1px solid rgba(94, 160, 182, .33);
+  border-radius: 14px;
+  background: rgba(25, 64, 78, .46);
+}
+.import-points-message { display: flex; align-items: flex-start; gap: 12px; }
+.import-points-info-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 27px;
+  width: 27px;
+  height: 27px;
+  border: 1px solid rgba(130, 207, 221, .44);
+  border-radius: 50%;
+  color: #afe8f0;
+  font-size: .85rem;
+  font-weight: 800;
+}
+.import-points-copy { min-width: 0; }
+.import-points-copy strong { display: block; margin-bottom: 5px; color: #ecfaff; font-size: .92rem; }
+.import-points-copy p { margin: 0; color: #bfd5dd; line-height: 1.55; font-size: .86rem; }
+.import-points-acknowledgement {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(110, 182, 188, .24);
+  border-radius: 10px;
+  background: rgba(4, 31, 44, .43);
+  cursor: pointer;
+  color: #e3f5f9;
+  line-height: 1.5;
+  font-size: .86rem;
+  font-weight: 550;
+}
+.import-points-acknowledgement input[type="checkbox"] {
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+  margin: 1px 0 0;
+  accent-color: #28debf;
+  cursor: pointer;
+}
+.import-points-acknowledgement span { min-width: 0; }
+.import-points-acknowledgement:focus-within {
+  border-color: #77ecd6;
+  outline: 2px solid rgba(40, 222, 191, .35);
+  outline-offset: 2px;
+}
+@media (max-width: 720px) {
+  .import-plan-row { grid-template-columns: minmax(0, 1fr) auto; gap: 11px; padding: 13px; }
+  .import-plan-scores { grid-column: 1 / -1; justify-content: flex-start; padding-left: 42px; }
+}
+@media (max-width: 420px) {
+  .import-plan-header { gap: 14px; }
+  .import-plan-summary { width: 100%; }
+  .import-plan-summary-item { flex: 1 1 0; justify-content: center; padding-inline: 8px; }
+  .import-plan-date { gap: 8px; }
+  .import-plan-players { flex-direction: column; gap: 0; align-items: flex-end; }
+  .import-plan-scores { padding-left: 38px; }
+  .import-points-acknowledgement { padding: 11px; }
+}
