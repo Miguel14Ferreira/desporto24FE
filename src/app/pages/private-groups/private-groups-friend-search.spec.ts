@@ -36,7 +36,7 @@ describe('Private group friend picker', () => {
     expect(component.filteredInviteFriends.map(friend => friend.username)).toEqual(['miguel']);
 
     component.friendSearch = '@monicagomes';
-    expect(component.filteredInviteFriends).toEqual([]);
+    expect(component.filteredInviteFriends.map(friend => friend.username)).toEqual(['monicagomes']);
 
     component.friendSearch = 'MONICAGOMES';
     expect(component.filteredInviteFriends.map(friend => friend.username)).toEqual(['monicagomes']);
