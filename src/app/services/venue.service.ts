@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import {
@@ -50,6 +50,13 @@ export interface ReverseVenueLocation {
   address: string | null;
   distanceMeters: number | null;
   provider: string;
+}
+
+interface MyGeocodeReverseResponse {
+  result?: {
+    components?: Record<string, string>;
+    distance_m?: number;
+  } | null;
 }
 
 export interface VenueSportCondition {
@@ -136,7 +143,35 @@ export class VenueService {
     if (accuracyMeters !== undefined && Number.isFinite(accuracyMeters)) {
       params = params.set('accuracyMeters', String(accuracyMeters));
     }
-    return this.http.get<ReverseVenueLocation>(this.baseUrl + '/reverse-location', { params });
+    return this.http.get<ReverseVenueLocation>(this.baseUrl + '/reverse-location', { params }).pipe(
+      // If the application's server cannot reach the provider, retry directly
+      // from the user's browser. My Geocode documents keyless browser requests;
+      // location is sent only after the explicit Maps/GPS user action.
+      catchError(() => this.http.get<MyGeocodeReverseResponse>(
+        'https://api.mygeocode.com/v1/reverse',
+        { params: new HttpParams()
+          .set('lat', String(latitude)).set('lon', String(longitude))
+          .set('level', 'address').set('radius', '1500').set('lang', 'pt') }
+      ).pipe(map(value => this.parseReverseGeocode(value, accuracyMeters))))
+    );
+  }
+
+  private parseReverseGeocode(
+    value: MyGeocodeReverseResponse, accuracyMeters?: number
+  ): ReverseVenueLocation {
+    const address = value.result?.components ?? {};
+    const choose = (...names: string[]) =>
+      names.map(name => address[name]?.trim()).find(name => !!name) ?? null;
+    const city = choose('city', 'town', 'village', 'locality', 'municipality',
+      'city_district', 'suburb', 'quarter', 'county');
+    const road = choose('road', 'street', 'pedestrian', 'residential');
+    const distance = Number.isFinite(value.result?.distance_m)
+      ? Math.max(0, Number(value.result!.distance_m)) : null;
+    const allowedDistance = accuracyMeters === undefined ? 140
+      : Math.max(90, Math.min(220, accuracyMeters + 90));
+    const street = road && distance !== null && distance <= allowedDistance
+      ? road : null;
+    return {city, address: street, distanceMeters: distance, provider:'My Geocode'};
   }
 
   listPhotos(id: number): Observable<VenuePhoto[]> {
