@@ -58,6 +58,26 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     expect(calls.state$.value).toBeNull();
   });
 
+  it('rejects outgoing calls before backend readiness is confirmed', async () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:false});
+    await calls.start('bea','voice');
+    http.expectNone(r => r.url.endsWith('/api/calls/direct/bea'));
+    expect(calls.state$.value).toBeNull();
+  });
+
+  it('handles a backend call conflict with an actionable error instead of showing a phantom call', async () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const sending=calls.start('bea','video');
+    const request=http.expectOne(r => r.url.endsWith('/api/calls/direct/bea'));
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({media:'video'});
+    request.flush({message:'Already in a call'}, {status:409,statusText:'Conflict'});
+    await sending;
+    expect(calls.state$.value?.phase).toBe('error');
+    calls.closeError();
+    expect(calls.state$.value).toBeNull();
+  });
+
   it('ignores replayed expired invitations instead of ringing indefinitely', () => {
     http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     events.next({callId:'abc',caller:'bea',peer:'ana',media:'video',
