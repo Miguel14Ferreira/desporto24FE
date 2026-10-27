@@ -3967,6 +3967,7 @@ export const EN: Record<string, string> = {
   'adminVenueGps.duplicateMap': "Sports area on OpenStreetMap",
   'adminVenueGps.contextTitle': "Venue identity and site — investigate",
   'adminVenueGps.contextMaia': "Maia: the municipality lists Polidesportivo do Paço separately from other Pedrouços facilities. Verify the correct playing area and access before suggesting GPS.",
+  'adminVenueGps.contextBraga': "Braga: the municipality identifies this numbered pitch separately within Rodovia and documents another numbered pitch at the same address. Verify the exact playing surface before proposing GPS; do not merge records or reuse a generic site point.",
   'adminVenueGps.contextMira': "Mira: the Fojo padel court is separate from the eleven-a-side football pitch in the same complex. Never reuse the football pitch coordinates.",
   'adminVenueGps.contextWarning': "Documentation-only sources without coordinates for this venue. Not a GPS candidate or approval to change its address or merge records.",
   'adminVenueGps.contextPrimary': "Official facility source",
