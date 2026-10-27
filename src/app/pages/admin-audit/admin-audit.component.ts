@@ -163,7 +163,7 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
 
   /** Admin research link only: a saved HTTPS page is NOT proof of facility GPS. */
   gpsOfficialLink(raw: string | null | undefined): string | null {
-    if (!raw || raw.length > 255 || /\s|[\u0000-\u001f\u007f]/.test(raw)) return null;
+    if (!raw || raw.length > 255 || /\s|[\\\u0000-\u001f\u007f]/.test(raw)) return null;
     try {
       const uri = new URL(raw);
       const hostname = uri.hostname.toLowerCase();
