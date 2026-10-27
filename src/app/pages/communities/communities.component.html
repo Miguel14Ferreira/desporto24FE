@@ -4334,12 +4334,17 @@
                                 }
                                 <label>
                                   <span>{{ 'communities.import.season' | t }}</span>
-                                  <select [(ngModel)]="selectedSeasonId" (ngModelChange)="invalidateImportPlan()">
-                                    <option [ngValue]="null">{{ 'communities.import.selectSeason' | t }}</option>
-                                    @for (season of competition?.seasons || []; track season.id) {
-                                      <option [ngValue]="season.id">{{ seasonOptionLabel(season) }}</option>
-                                    }
-                                  </select>
+                                  @if (competition && competition.seasons.length === 0) {
+                                    <input type="text" [value]="automaticImportSeasonName" readonly>
+                                    <small role="note">{{ 'communities.import.autoSeasonNotice' | t }}</small>
+                                  } @else {
+                                    <select [(ngModel)]="selectedSeasonId" (ngModelChange)="invalidateImportPlan()">
+                                      <option [ngValue]="null">{{ 'communities.import.selectSeason' | t }}</option>
+                                      @for (season of competition?.seasons || []; track season.id) {
+                                        <option [ngValue]="season.id">{{ seasonOptionLabel(season) }}</option>
+                                      }
+                                    </select>
+                                  }
                                 </label>
                                 <label>
                                   <span>{{ 'communities.import.defaultYear' | t }}</span>
@@ -4365,7 +4370,7 @@
                               </div>
 
                               <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
-                                [disabled]="importPlanLoading || !selectedSeasonId || (sourceDatesNeedYear && !importDefaultYear)"
+                                [disabled]="importPlanLoading || (!selectedSeasonId && !canAutoCreateImportSeason) || (sourceDatesNeedYear && !importDefaultYear)"
                                 (click)="buildImportFinalPlan()">
                                 {{ importPlanLoading
                                   ? ('communities.import.planning' | t)
