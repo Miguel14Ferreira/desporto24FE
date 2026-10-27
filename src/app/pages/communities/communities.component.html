@@ -3856,6 +3856,18 @@
                           <span class="import-wizard-header-icon" aria-hidden="true">📥</span>
                         </div>
 
+                        @if (importResult && importMode === 'ROUNDS') {
+                          <div class="import-wizard-complete" role="status">
+                            <div class="import-success import-success--completed">
+                              <strong>{{ 'communities.import.success' | t }}</strong>
+                              <span>{{ importResult.createdRounds }} {{ 'communities.import.roundsCreated' | t }} · {{ importResult.createdEntries }} {{ 'communities.import.entriesCreated' | t }} · {{ importResult.skippedDuplicateRounds }} {{ 'communities.import.duplicatesSkipped' | t }}</span>
+                            </div>
+                            <button type="button" class="secondary-action import-wizard-new-file jynlo-action jynlo-action--neutral"
+                              (click)="startNewHistoricalImport()">
+                              {{ 'communities.import.importAnother' | t }}
+                            </button>
+                          </div>
+                        } @else {
                         <div class="import-wizard-steps" role="list" [attr.aria-label]="'communities.import.wizard.progressLabel' | t">
                           <div class="import-wizard-step" [class.is-active]="!importFile" role="listitem">
                             <span class="import-wizard-step-number">1</span>
@@ -4338,8 +4350,10 @@
                                     <input type="text" [value]="automaticImportSeasonName" readonly>
                                     <small role="note">{{ 'communities.import.autoSeasonNotice' | t }}</small>
                                   } @else {
-                                    <select [(ngModel)]="selectedSeasonId" (ngModelChange)="invalidateImportPlan()">
-                                      <option [ngValue]="null">{{ 'communities.import.selectSeason' | t }}</option>
+                                    <select [ngModel]="importDestinationSeasonId" (ngModelChange)="selectImportSeason($event)">
+                                      @if (!competition?.seasons?.length) {
+                                        <option [ngValue]="null">{{ 'communities.import.selectSeason' | t }}</option>
+                                      }
                                       @for (season of competition?.seasons || []; track season.id) {
                                         <option [ngValue]="season.id">{{ seasonOptionLabel(season) }}</option>
                                       }
@@ -4370,7 +4384,7 @@
                               </div>
 
                               <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
-                                [disabled]="importPlanLoading || (!selectedSeasonId && !canAutoCreateImportSeason) || (sourceDatesNeedYear && !importDefaultYear)"
+                                [disabled]="importPlanLoading || (importDestinationSeasonId === null && !canAutoCreateImportSeason) || (sourceDatesNeedYear && !importDefaultYear)"
                                 (click)="buildImportFinalPlan()">
                                 {{ importPlanLoading
                                   ? ('communities.import.planning' | t)
@@ -4459,14 +4473,9 @@
                                 }
                               }
 
-                              @if (importResult) {
-                                <div class="import-success" role="status">
-                                  <strong>{{ 'communities.import.success' | t }}</strong>
-                                  <span>{{ importResult.createdRounds }} {{ 'communities.import.roundsCreated' | t }} · {{ importResult.createdEntries }} {{ 'communities.import.entriesCreated' | t }} · {{ importResult.skippedDuplicateRounds }} {{ 'communities.import.duplicatesSkipped' | t }}</span>
-                                </div>
-                              }
                             }
                           </div>
+                        }
                         }
                       </section>
                     }
