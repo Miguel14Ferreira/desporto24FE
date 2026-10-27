@@ -866,6 +866,103 @@
                         [session]="session"
                         [formattedDate]="formatSessionDate(session.gameDate)"
                       ></app-community-session-card>
+                      @if (canRecordCommunitySession(session)) {
+                        <div class="community-session-result-actions">
+                          @if (recordedCommunitySessionIds.has(session.id)) {
+                            <span class="community-session-result-counted">
+                              {{ 'communities.sessionResult.alreadyRecorded' | t }}
+                            </span>
+                          } @else {
+                            <button type="button"
+                              class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              [disabled]="sessionResultSaving"
+                              (click)="openCommunitySessionResult(session)">
+                              {{ 'communities.sessionResult.open' | t }}
+                            </button>
+                          }
+                        </div>
+                        @if (sessionResultSession?.id === session.id) {
+                          <section class="community-session-result-editor" aria-labelledby="community-session-result-heading">
+                            <div class="community-session-result-header">
+                              <div>
+                                <span class="section-kicker">{{ 'communities.sessionResult.kicker' | t }}</span>
+                                <h4 id="community-session-result-heading">{{ 'communities.sessionResult.title' | t }}</h4>
+                                <p>{{ 'communities.sessionResult.help' | t }}</p>
+                              </div>
+                              <button type="button" class="community-session-result-close"
+                                [disabled]="sessionResultSaving"
+                                [attr.aria-label]="'common.close' | t"
+                                (click)="closeCommunitySessionResult()">×</button>
+                            </div>
+                            @if (sessionResultLoading) {
+                              <p role="status">{{ 'communities.sessionsLoading' | t }}</p>
+                            } @else {
+                              <div class="community-session-result-roster">
+                                @for (player of sessionResultPlayers; track player.username) {
+                                  <div class="community-session-result-player">
+                                    <label class="community-session-result-attendance">
+                                      <input type="checkbox" [(ngModel)]="player.included"
+                                        [disabled]="sessionResultSaving">
+                                      <span>{{ player.username }}</span>
+                                    </label>
+                                    <select [(ngModel)]="player.team"
+                                      [disabled]="!player.included || sessionResultSaving"
+                                      [attr.aria-label]="player.username + ' — ' + ('communities.sessionResult.team' | t)">
+                                      <option value="">{{ 'communities.sessionResult.selectTeam' | t }}</option>
+                                      <option value="A">{{ 'communities.sessionResult.teamA' | t }}</option>
+                                      <option value="B">{{ 'communities.sessionResult.teamB' | t }}</option>
+                                    </select>
+                                  </div>
+                                }
+                                @if (!sessionResultPlayers.length && !sessionResultError) {
+                                  <p>{{ 'communities.sessionResult.noPlayers' | t }}</p>
+                                }
+                              </div>
+                              <div class="community-session-result-outcome">
+                                <strong>{{ 'communities.sessionResult.whoWon' | t }}</strong>
+                                <div class="community-session-result-choices" role="group"
+                                    [attr.aria-label]="'communities.sessionResult.whoWon' | t">
+                                  <button type="button" [class.is-selected]="sessionResultWinner === 'A'"
+                                    [attr.aria-pressed]="sessionResultWinner === 'A'"
+                                    [disabled]="sessionResultSaving"
+                                    (click)="sessionResultWinner = 'A'">
+                                    {{ 'communities.sessionResult.teamA' | t }}
+                                  </button>
+                                  <button type="button" [class.is-selected]="sessionResultWinner === 'DRAW'"
+                                    [attr.aria-pressed]="sessionResultWinner === 'DRAW'"
+                                    [disabled]="sessionResultSaving"
+                                    (click)="sessionResultWinner = 'DRAW'">
+                                    {{ 'communities.sessionResult.draw' | t }}
+                                  </button>
+                                  <button type="button" [class.is-selected]="sessionResultWinner === 'B'"
+                                    [attr.aria-pressed]="sessionResultWinner === 'B'"
+                                    [disabled]="sessionResultSaving"
+                                    (click)="sessionResultWinner = 'B'">
+                                    {{ 'communities.sessionResult.teamB' | t }}
+                                  </button>
+                                </div>
+                              </div>
+                              <p class="community-session-result-note">{{ 'communities.sessionResult.noScoreNeeded' | t }}</p>
+                              @if (sessionResultError) {
+                                <p class="community-session-result-error" role="alert">{{ sessionResultError }}</p>
+                              }
+                              <div class="community-session-result-footer">
+                                <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                                  [disabled]="sessionResultSaving"
+                                  (click)="closeCommunitySessionResult()">{{ 'common.cancel' | t }}</button>
+                                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                                  [disabled]="!canConfirmCommunitySessionResult"
+                                  (click)="confirmCommunitySessionResult()">
+                                  {{ (sessionResultSaving
+                                      ? 'communities.sessionResult.saving'
+                                      : 'communities.sessionResult.confirm') | t }}
+                                </button>
+                              </div>
+                            }
+                          </section>
+                        }
+                      }
+
                       @if (session.joinedByViewer) {
                         <span class="competition-badge">
                           {{ 'communities.sessionConfirmed' | t }}
