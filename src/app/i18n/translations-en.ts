@@ -3903,6 +3903,7 @@ export const EN: Record<string, string> = {
   'calls.busy': 'Someone is already in a call. End the previous call and try again.',
   'calls.rateLimited': 'Too many call attempts. Wait a few seconds before trying again.',
   'calls.providerUnavailable': 'Calling is not configured or the provider is temporarily unavailable.',
+  'calls.serverError': 'The API failed to start this call. This is not a microphone issue; try again later.',
   'calls.mediaError': 'Connection or microphone/camera permission failed.',
   'calls.audioBlocked': 'Your browser blocked audio playback.',
   'chat.viewProfile': 'View profile',
