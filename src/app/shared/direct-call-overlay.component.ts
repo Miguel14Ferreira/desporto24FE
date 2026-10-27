@@ -20,10 +20,11 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
             <span class="call-avatar" aria-hidden="true">{{ call.peer.slice(0,1).toUpperCase() }}</span>
             <h2>{{ call.peer }}</h2>
             <p class="call-media-type">{{ (call.media === 'video' ? 'calls.video' : 'calls.voice') | t }}</p>
-            <p role="status">{{ (call.phase === 'incoming' ? 'calls.incoming' :
-              call.phase === 'dialing' ? 'calls.ringing' :
-              call.phase === 'connecting' ? 'calls.connecting' :
-              call.phase === 'error' ? 'calls.unavailable' : 'calls.connected') | t }}</p>
+            @if (call.phase !== 'error') {
+              <p role="status">{{ (call.phase === 'incoming' ? 'calls.incoming' :
+                call.phase === 'dialing' ? 'calls.ringing' :
+                call.phase === 'connecting' ? 'calls.connecting' : 'calls.connected') | t }}</p>
+            }
           </div>
           @if (call.media === 'video' && call.phase !== 'incoming' && call.phase !== 'error') {
             <div class="call-videos">

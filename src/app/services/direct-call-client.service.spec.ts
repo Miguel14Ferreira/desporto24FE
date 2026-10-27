@@ -74,8 +74,32 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     request.flush({message:'Already in a call'}, {status:409,statusText:'Conflict'});
     await sending;
     expect(calls.state$.value?.phase).toBe('error');
+    expect(calls.state$.value?.error).toBe('calls.busy');
     calls.closeError();
     expect(calls.state$.value).toBeNull();
+  });
+
+  it('explains the exact signalling failure class instead of always saying unavailable', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability'))
+      .flush({enabled:true});
+    const examples: Array<{status:number; statusText:string; key:string}> = [
+      {status:403,statusText:'Forbidden',key:'calls.notAllowed'},
+      {status:409,statusText:'Conflict',key:'calls.busy'},
+      {status:429,statusText:'Too Many Requests',key:'calls.rateLimited'},
+      {status:503,statusText:'Unavailable',key:'calls.providerUnavailable'},
+      {status:500,statusText:'Server Error',key:'calls.serverError'},
+      {status:401,statusText:'Unauthorized',key:'calls.sessionExpired'},
+      {status:0,statusText:'Unknown Error',key:'calls.networkError'}
+    ];
+    for (const item of examples) {
+      const sending=calls.start('bea','voice');
+      http.expectOne(req => req.url.endsWith('/api/calls/direct/bea'))
+        .flush({message:'hidden backend detail'}, {status:item.status,statusText:item.statusText});
+      await sending;
+      expect(calls.state$.value?.phase).toBe('error');
+      expect(calls.state$.value?.error).toBe(item.key);
+      calls.closeError();
+    }
   });
 
   it('ignores replayed expired invitations instead of ringing indefinitely', () => {
