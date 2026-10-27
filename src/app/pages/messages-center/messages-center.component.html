@@ -278,10 +278,14 @@
                       @if (mutationError) { <p role="alert">{{ mutationError }}</p> }
                     </div>
                   }
-                  <app-chat-reactions [kind]="conversation.kind" [conversationId]="conversation.id"
-                    [messageId]="message.id" [disabled]="!composerAllowed"></app-chat-reactions>
                 }
               </article>
+              @if (!message.deletedAt && message.id > 0) {
+                <app-chat-reactions class="inbox-reaction-under-message"
+                  [class.own-reaction]="isMine(message)"
+                  [kind]="conversation.kind" [conversationId]="conversation.id"
+                  [messageId]="message.id" [disabled]="!composerAllowed"></app-chat-reactions>
+              }
             }
           </div>
           @if (!historicalPreview && !previewLoading && !previewError && newMessagesPending > 0) {
