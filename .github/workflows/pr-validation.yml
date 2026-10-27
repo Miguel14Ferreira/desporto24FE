@@ -127,6 +127,18 @@ jobs:
         run: node --test scripts/ci-browser/html_security_policy.test.cjs
       - name: Build frontend once
         run: npm run build
+      - name: Chromium historical player modal layout and close translation (isolated)
+        if: ${{ startsWith(github.head_ref, 'fix/historical-player-modal-size-close-i18n-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          QA_DEPS="$RUNNER_TEMP/jynlo-historical-modal-browser"
+          mkdir -p "$QA_DEPS"
+          printf '%s\n' '{"private":true,"dependencies":{"playwright":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          NODE_PATH="$QA_DEPS/node_modules" node scripts/ci-browser/historical_modal_layout_browser.cjs
       # Regression reproduced by a real user: reaction badges overlapped the
       # date and pointer clicks missed their target. Two synthetic friends, no
       # production requests, against the production-built Angular candidate.
