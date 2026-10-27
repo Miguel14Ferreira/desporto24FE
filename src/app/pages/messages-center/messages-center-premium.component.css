@@ -278,3 +278,9 @@
   outline:2px solid #7df4d9;outline-offset:2px;}
 @media(max-width:460px){.inbox-contact-dialog-actions {flex-direction:column;}
 .inbox-contact-dialog {max-height:calc(100dvh - 30px);}}
+
+/* Message authors are navigable public profiles, without changing bubbles. */
+.inbox-bubble-meta .inbox-sender-profile {color:inherit;font-weight:750;
+  text-decoration:none;border-bottom:1px solid transparent;}
+.inbox-bubble-meta .inbox-sender-profile:hover {color:#83eacf;border-bottom-color:currentColor;}
+.inbox-bubble-meta .inbox-sender-profile:focus-visible {outline:2px solid #7df4d9;outline-offset:3px;}
