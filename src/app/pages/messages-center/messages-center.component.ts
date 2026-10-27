@@ -17,6 +17,7 @@ import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityTimelineService } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { DirectCallClientService } from '../../services/direct-call-client.service';
+import { ProfileQuickViewService } from '../../services/profile-quick-view.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
@@ -289,9 +290,16 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     private readonly realtime: DirectChatRealtimeService,
     private readonly inboxApi: InboxApiService,
     @Optional() private readonly route: ActivatedRoute | null = null,
-    @Optional() public readonly calls: DirectCallClientService | null = null
+    @Optional() public readonly calls: DirectCallClientService | null = null,
+    @Optional() private readonly profilePeek: ProfileQuickViewService | null = null
   ) {
     this.typing = new ChatTypingTracker(realtime);
+  }
+
+  openContact(username: string | null | undefined): void {
+    if(!username?.trim())return;
+    this.contactPreviewOpen=true;
+    this.profilePeek?.open(username);
   }
 
   get callsEnabled(): boolean {
@@ -749,6 +757,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   selectConversation(conversation: InboxConversation): void {
     this.contactPreviewOpen = false;
+    this.profilePeek?.close();
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) {
       this.drafts.set(this.selectedKey, this.draft);
