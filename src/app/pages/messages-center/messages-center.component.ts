@@ -290,13 +290,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     private readonly inboxApi: InboxApiService,
     @Optional() private readonly route: ActivatedRoute | null = null,
     @Optional() public readonly calls: DirectCallClientService | null = null,
-    private readonly profilePeek: ProfileQuickViewService
+    @Optional() private readonly profilePeek: ProfileQuickViewService | null = null
   ) {
     this.typing = new ChatTypingTracker(realtime);
   }
 
   showContact(username: string | null | undefined): void {
-    this.profilePeek.open(username);
+    this.profilePeek?.open(username);
   }
 
   get callsEnabled(): boolean {
