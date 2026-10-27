@@ -585,6 +585,7 @@ const PT: Dictionary = {
   'guestRsvp.checkStatus': 'Verificar resposta',
   'guestRsvp.linkAccount': 'Associar presença e histórico à minha conta',
   'guestRsvp.linking': 'A associar...',
+  'guestRsvp.memberJoinError': 'Não foi possível confirmar a presença com esta conta. O convite pode ter expirado ou as inscrições podem estar encerradas. Verifica com o organizador.',
   'guestRsvp.linkError': 'Não foi possível associar a conta. Confirma que és o jogador aprovado ou contacta o organizador.',
   'guestRsvp.linked': 'Conta associada!',
   'guestRsvp.linkedHelp': 'A presença já está associada à tua conta Jynlo, sem duplicar a vaga. O histórico disponível foi preservado.',
