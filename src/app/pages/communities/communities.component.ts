@@ -2687,6 +2687,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   canRestrictSessionToMembers(session: SessionSummary): boolean {
     const start = Date.parse(session.gameDate);
     return this.canManage() && session.audience === 'PUBLIC'
+      && session.communityId === this.selected?.id
       && (session.status === 'OPEN' || session.status === 'FULL')
       && Number.isFinite(start) && start > Date.now();
   }
