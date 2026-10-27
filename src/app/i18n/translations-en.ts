@@ -3873,6 +3873,7 @@ export const EN: Record<string, string> = {
   'adminVenueGps.noAddress': "No postal address",
   'adminVenueGps.noReference': "No saved external reference",
   'adminVenueGps.openOsm': "Open source on OpenStreetMap",
+  'adminVenueGps.openOfficial': "Open saved page (unverified)",
   'adminVenueGps.review': "Suggest coordinates",
   'adminVenueGps.warning': "Addresses and source references are research clues, not GPS evidence. Never substitute a city or complex centre for the actual venue. Publication requires verified HTTPS evidence and administrator approval.",
   'adminAudit.subtitle': 'Jynlo usage and growth indicators. Administrative action history is not available yet.',

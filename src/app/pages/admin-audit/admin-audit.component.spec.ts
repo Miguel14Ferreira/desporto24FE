@@ -105,6 +105,17 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     }
   });
 
+  it('shows only validated HTTPS official-source research links without implying verified GPS', () => {
+    expect(component.gpsOfficialLink('https://viversantarem.pt/pavilhoes-desportivos/'))
+      .toBe('https://viversantarem.pt/pavilhoes-desportivos/');
+    for (const invalid of [null, '', 'http://cm-braga.pt/', 'javascript:alert(1)',
+        'https://localhost/x', 'https://127.0.0.1/x', 'https://cm-viseu.pt:8080/',
+        'https://cm-braga.pt@evil.test/', 'https://cm-braga.pt/#jump',
+        'https://source.pt/\\nnext', 'https://example.local/']) {
+      expect(component.gpsOfficialLink(invalid)).toBeNull();
+    }
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],

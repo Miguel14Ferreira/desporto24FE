@@ -57,7 +57,7 @@ export interface AdminVenueQuality {
 
 export interface AdminVenueGpsReviewPage {
   venues: {id:number; name:string; city:string; district:string|null; address:string|null;
-    sourceReference:string|null; informationSource:string|null}[];
+    sourceReference:string|null; informationSource:string|null; sourceWebsite:string|null}[];
   page:number; hasMore:boolean;
 }
 interface GrowthChart {
@@ -159,6 +159,21 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     if (!match) return null;
     const kind = match[1].toLowerCase();
     return 'https://www.openstreetmap.org/' + kind + '/' + match[2];
+  }
+
+  /** Admin research link only: a saved HTTPS page is NOT proof of facility GPS. */
+  gpsOfficialLink(raw: string | null | undefined): string | null {
+    if (!raw || raw.length > 255 || /\s|[\\\u0000-\u001f\u007f]/.test(raw)) return null;
+    try {
+      const uri = new URL(raw);
+      const hostname = uri.hostname.toLowerCase();
+      if (uri.protocol !== 'https:' || uri.username || uri.password || uri.port
+          || uri.hash || !hostname.includes('.') || hostname === 'localhost'
+          || hostname.endsWith('.local') || /^[0-9.]+$/.test(hostname)) return null;
+      return raw;
+    } catch {
+      return null;
+    }
   }
 
   /** Optional, bounded admin-only list. No GPS is inferred or modified here. */

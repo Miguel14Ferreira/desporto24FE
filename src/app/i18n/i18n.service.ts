@@ -3880,6 +3880,7 @@ const PT: Dictionary = {
   'adminVenueGps.noAddress': "Sem morada postal",
   'adminVenueGps.noReference': "Sem referência externa guardada",
   'adminVenueGps.openOsm': "Abrir fonte no OpenStreetMap",
+  'adminVenueGps.openOfficial': "Abrir página guardada (por verificar)",
   'adminVenueGps.review': "Propor coordenadas",
   'adminVenueGps.warning': "A morada e a referência são pistas de pesquisa, não comprovativos GPS. Nunca usar o centro de uma localidade ou complexo como se fosse o recinto. A publicação exige fonte HTTPS verificada e aprovação administrativa.",
   'adminAudit.subtitle': 'Indicadores de utilização e crescimento da Jynlo. O histórico de ações administrativas ainda não está disponível.',

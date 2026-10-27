@@ -248,6 +248,11 @@
                             class="jynlo-action jynlo-action--neutral">
                             {{ 'adminVenueGps.openOsm' | t }}
                           </a>
+                          <a *ngIf="gpsOfficialLink(item.sourceWebsite) as official"
+                            [href]="official" target="_blank" rel="noopener noreferrer"
+                            class="jynlo-action jynlo-action--neutral">
+                            {{ 'adminVenueGps.openOfficial' | t }}
+                          </a>
                         </td>
                         <td><a class="jynlo-action jynlo-action--neutral"
                           [routerLink]="['/menu/venues', item.id, 'suggest-edit']">
