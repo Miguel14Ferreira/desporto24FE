@@ -228,7 +228,10 @@
             </div>
             <div>
               <span>{{ 'sessionDetail.creator' | t }}</span>
-              <strong>{{ session.creatorUsername || ('sessionDetail.user' | t) }}</strong>
+              @if (session.creatorUsername) {
+                <a [routerLink]="['/menu/perfis',session.creatorUsername]"
+                   class="session-profile-link">{{ session.creatorUsername }}</a>
+              } @else { <strong>{{ 'sessionDetail.user' | t }}</strong> }
             </div>
           </div>
 
