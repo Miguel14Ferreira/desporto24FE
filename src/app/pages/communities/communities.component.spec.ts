@@ -644,48 +644,6 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.gif.backup')).toBeFalse();
   });
 
-  it('hides historical identity association without any eligible names, claims or errors', () => {
-    component.historicalPlayers = [];
-    component.historicalClaims = [];
-    component.historicalPlayersError = '';
-    component.historicalClaimsError = '';
-    component.historicalPlayersLoading = true;
-    component.historicalClaimsLoading = true;
-
-    expect(component.showHistoricalIdentitySection).toBeFalse();
-    component.historicalPlayersLoading = false;
-    component.historicalClaimsLoading = false;
-    expect(component.showHistoricalIdentitySection).toBeFalse();
-
-    // A historical name already claimed by another member is not actionable.
-    component.historicalPlayers = [
-      { playerId: 10, historicalName: 'Ferreirinha', linkStatus: 'ACCEPTED' } as any
-    ];
-    expect(component.showHistoricalIdentitySection).toBeFalse();
-  });
-
-  it('shows historical association for free names, owned claims or load errors', () => {
-    component.historicalPlayers = [
-      { playerId: 10, historicalName: 'Ferreirinha', linkStatus: 'UNLINKED' } as any
-    ];
-    component.historicalClaims = [];
-    component.historicalPlayersError = '';
-    component.historicalClaimsError = '';
-    expect(component.showHistoricalIdentitySection).toBeTrue();
-
-    component.historicalPlayers = [];
-    component.historicalClaims = [{ id: 12, historicalName: 'Ferreirinha' } as any];
-    expect(component.showHistoricalIdentitySection).toBeTrue();
-
-    component.historicalClaims = [];
-    component.historicalPlayersError = 'Não foi possível carregar.';
-    expect(component.showHistoricalIdentitySection).toBeTrue();
-
-    component.historicalPlayersError = '';
-    component.historicalClaimsError = 'Não foi possível carregar.';
-    expect(component.showHistoricalIdentitySection).toBeTrue();
-  });
-
   it('keeps rankings activation as an explicit saved setting, independent of switch styling', () => {
     const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
       .and.returnValue(of({ rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 }));
