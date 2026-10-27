@@ -195,7 +195,7 @@
     }
 
     @if (profilePage && selectedProfile) {
-        <article class="profile-detail" aria-label="Perfil público">
+        <article class="profile-detail" [attr.aria-label]="'community.profile' | t">
 
           <div class="detail-heading">
             <div class="avatar large-avatar">
