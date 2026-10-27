@@ -294,6 +294,17 @@
                             *ngIf="gpsRodoviaCartographyVisible(item.facilityContextReview?.cartographyReview)">
                             <strong>{{ 'adminVenueGps.rodoviaMapTitle' | t }}</strong>
                             <small>{{ 'adminVenueGps.rodoviaMapCaution' | t }}</small>
+                            <small>{{ 'adminVenueGps.rodoviaTreePointWarning' | t }}</small>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.nonPitchTreeReportUrl) as treeReport"
+                              [href]="treeReport" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaTreePointReport' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.officialGeoportalUrl) as geoportal"
+                              [href]="geoportal" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaOfficialGeoportal' | t }}
+                            </a>
                             <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.municipalGuideUrl) as guide"
                               [href]="guide" target="_blank" rel="noopener noreferrer"
                               class="jynlo-action jynlo-action--neutral">
