@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
@@ -57,6 +57,8 @@ export class PublicSessionPreviewComponent implements OnInit {
   guestCommunityId: number | null = null;
   guestLinked = false;
   guestLinking = false;
+  memberJoining = false;
+  memberJoinError = '';
 
   get guestRegistrationReturnUrl(): string | null {
     return this.sessionId && this.guestToken
@@ -82,6 +84,31 @@ export class PublicSessionPreviewComponent implements OnInit {
     });
   }
 
+
+  /**
+   * A user with an account must confirm attendance with the signed organizer
+   * link first. Navigating straight to a members-only /menu/events page causes 403.
+   */
+  joinWithAccount(): void {
+    if (!this.isAuthenticated || !this.guestToken || !this.sessionId
+        || this.guestReceipt || this.memberJoining || !this.canRequestParticipation) return;
+    this.memberJoining = true;
+    this.memberJoinError = '';
+    const id = this.sessionId;
+    this.http.post<{state:'PARTICIPANT'|'WAITLISTED';waitlistPosition:number|null}>(
+      environment.apiUrl + '/api/sessions/' + id + '/guest-join-account',
+      {token:this.guestToken}
+    ).pipe(timeout(10000),finalize(()=>this.memberJoining=false)).subscribe({
+      next: result => {
+        if (result.state === 'PARTICIPANT' || result.state === 'WAITLISTED') {
+          void this.router.navigate(['/menu/events',id]);
+        } else {
+          this.memberJoinError='guestRsvp.memberJoinError';
+        }
+      },
+      error: () => {this.memberJoinError='guestRsvp.memberJoinError';}
+    });
+  }
 
   get guestPlayerName(): string {
     return this.guestPlayers.find(p => p.id === this.guestPlayerId)?.name
@@ -182,6 +209,7 @@ export class PublicSessionPreviewComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly http: HttpClient,
     private readonly authenticationService: AuthenticationService,
     private readonly i18n: I18nService
@@ -226,6 +254,9 @@ export class PublicSessionPreviewComponent implements OnInit {
   // Keep the join/waitlist section in view after sign-in or registration.
   // This never submits a join request automatically.
   get participationReturnUrl(): string | null {
+    // Preserve the token through login/sign-up; a community-only session is
+    // deliberately NOT readable by an unregistered outsider at /menu/events.
+    if (this.guestRegistrationReturnUrl) return this.guestRegistrationReturnUrl;
     return this.returnUrl && this.canRequestParticipation
       ? this.returnUrl + '?join=1'
       : this.returnUrl;
