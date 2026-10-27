@@ -146,9 +146,11 @@ async function assertClickable(page,kind,name){
   assert.equal(emojiBoxes.length,6,'all six emojis available');
   assert.ok(emojiBoxes.every(x=>Math.abs(x.top-emojiBoxes[0].top)<2),
     'emoji row wraps instead of staying compact');
-  const remove=await shelf.locator('.reaction-remove').boundingBox();
-  if(remove) assert.ok(remove.y>=emojiBoxes[0].top+35,
-    'remove action must be on its own secondary row');
+  if(await shelf.locator('.reaction-remove').count() > 0) {
+    const remove=await shelf.locator('.reaction-remove').boundingBox();
+    assert.ok(remove && remove.y>=emojiBoxes[0].top+35,
+      'remove action must be on its own secondary row');
+  }
   await page.screenshot({path:path.join(OUT,name+'-compact-picker.png')});
   return shelf;
 }
