@@ -91,6 +91,22 @@ async function context(browser,username,width){
       group.members.push({username:'carla',displayName:'Carla',profilePicUrl:null,admin:false});
       groupWrites.push('invited');return reply(route,200,group);
     }
+
+    if(CHECK_GROUPS && p==='/api/private-groups/77' && method==='PATCH'){
+      if(username!=='ana')return reply(route,403,{message:'Only creator can rename'});
+      const title=req.postDataJSON().title;
+      assert.equal(title,'Futebol de sábado');
+      group.title=title;groupWrites.push('renamed');
+      return reply(route,200,group);
+    }
+    if(CHECK_GROUPS && p.startsWith('/api/private-groups/77/members/') && method==='DELETE'){
+      const target=decodeURIComponent(p.split('/').pop());
+      if(username!=='ana'&&username!==target)return reply(route,403,{message:'Forbidden'});
+      if(target==='ana')return reply(route,409,{message:'Creator must transfer ownership'});
+      group.members=group.members.filter(m=>m.username!==target);
+      groupWrites.push('removed:'+target);
+      return reply(route,200,group);
+    }
     if(CHECK_GROUPS && p==='/api/private-groups/77/messages' && method==='GET')
       return reply(route,200,groupTexts);
     if(CHECK_GROUPS && p==='/api/private-groups/77/messages' && method==='POST'){
@@ -333,25 +349,42 @@ async function main(){
       await a.locator('.group-chat-header').waitFor({timeout:7000});
       assert.deepEqual(groupWrites,['created']);
       await a.screenshot({path:path.join(OUT,'group-created-desktop.png')});
+      await a.locator('.group-header-button').filter({hasText:'Alterar nome'}).click();
+      await a.locator('.group-modal input[name="renameTitle"]').fill('Futebol de sábado');
+      await a.locator('.group-modal .group-submit').click();
+      await a.locator('.group-chat-header h2').filter({hasText:'Futebol de sábado'}).waitFor();
+      assert.deepEqual(groupWrites,['created','renamed']);
       await a.locator('.group-compose textarea').fill('Olá equipa!');
       await a.locator('.group-compose button').click();
       await a.locator('.group-bubble').first().waitFor();
       assert.match(await a.locator('.group-bubble').first().innerText(),/Olá equipa/);
-      await a.locator('.group-header-button').click();
+      await a.locator('.group-header-button').filter({hasText:'Adicionar membros'}).click();
       await a.locator('.group-modal').waitFor();
       const carla=a.locator('.group-friend').filter({hasText:'Carla'});
       await carla.locator('input[type=checkbox]').check();
       await a.locator('.group-submit').click();
       await a.locator('.group-member-links a').filter({hasText:'Carla'}).waitFor();
-      assert.deepEqual(groupWrites,['created','ana:message','invited']);
+      assert.deepEqual(groupWrites,['created','renamed','ana:message','invited']);
       await a.screenshot({path:path.join(OUT,'group-added-third-person.png')});
       await b.goto(SITE+'/menu/groups?id=77',{waitUntil:'domcontentloaded'});
       await b.locator('.group-chat-header').waitFor();
       assert.equal(await b.locator('.group-bubble').count(),1);
-      assert.equal(await b.locator('.group-header-button').count(),0,
-        'non-creator must not see add-member control');
+      assert.equal(await b.locator('.group-header-button').count(),1,
+        'non-creator can leave but must not manage other members');
+      assert.match(await b.locator('.group-header-button').innerText(),/Sair do grupo/);
+      assert.equal(await b.locator('.group-member-remove').count(),0,
+        'non-creator must not see remove-member controls');
       assert.equal(await b.locator('.group-member-links a[href*="/menu/perfis/ana"]').count(),1);
       await b.screenshot({path:path.join(OUT,'group-member-mobile.png')});
+      await a.locator('.group-member-chip').filter({hasText:'Carla'}).locator('button').click();
+      await a.locator('[role="alertdialog"] .group-submit').click();
+      await a.locator('.group-member-chip').filter({hasText:'Carla'}).waitFor({state:'detached'});
+      assert.ok(!group.members.some(m=>m.username==='carla'));
+      await b.locator('.group-header-button').click();
+      await b.locator('[role="alertdialog"] .group-submit').click();
+      await b.locator('.group-welcome').waitFor();
+      assert.ok(!group.members.some(m=>m.username==='bea'));
+      assert.deepEqual(groupWrites,['created','renamed','ana:message','invited','removed:carla','removed:bea']);
     }
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');
