@@ -974,9 +974,10 @@ export class Events2Component implements OnInit, OnDestroy {
           this.address = address;
           this.gpsAutoAddress = address;
         }
-        this.gpsAddressNotice = city
+        this.gpsAddressNotice = address
           ? t('createSession.gpsAddressSuggested')
-          : t('createSession.gpsAddressUnknown');
+          : city ? t('createSession.gpsAddressCityOnly')
+            : t('createSession.gpsAddressUnknown');
       },
       error: () => {
         if (requestId === this.gpsRequestId) {

@@ -929,7 +929,7 @@ describe('Events2Component', () => {
     expect(component.address).toBe('Rua de São João');
     expect(component.latitude).toBe(38.7655);
     expect(component.longitude).toBe(-9.2902);
-    expect(component.gpsAddressNotice).toContain('Confirma a morada');
+    expect(component.gpsAddressNotice).toContain('Localidade e rua preenchidas');
     const cityField = fixture.nativeElement.querySelector('input[name="city"]') as HTMLInputElement;
     const roadField = fixture.nativeElement.querySelector('input[name="address"]') as HTMLInputElement;
     expect(cityField.value).toBe('Agualva-Cacém');

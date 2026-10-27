@@ -464,7 +464,11 @@
               } @else if (gpsAddressNotice) {
                 <p class="venue-current-location" role="status">{{ gpsAddressNotice }}</p>
               }
-              <small class="venue-current-location">{{ 'createSession.gpsAddressPrivacy' | t }}</small>
+              <small class="venue-current-location">
+                {{ 'createSession.gpsAddressPrivacy' | t }}
+                <a href="https://www.openstreetmap.org/copyright" target="_blank"
+                   rel="noopener noreferrer">© OpenStreetMap contributors</a>
+              </small>
             </div>
           }
 
@@ -494,6 +498,8 @@
                   }
                   <small class="venue-current-location">
                     {{ 'createSession.gpsAddressPrivacy' | t }}
+                    <a href="https://www.openstreetmap.org/copyright" target="_blank"
+                       rel="noopener noreferrer">© OpenStreetMap contributors</a>
                   </small>
                 }
                 @if (locationSource === 'gps' && gpsAccuracyMeters !== null) {
