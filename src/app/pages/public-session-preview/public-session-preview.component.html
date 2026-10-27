@@ -76,7 +76,7 @@
                 <p>{{ 'guestRsvp.chooseHelp' | t }}</p>
                 <label for="guest-player-select">{{ 'guestRsvp.selectPlayer' | t }}</label>
                 <select id="guest-player-select" [ngModel]="guestPlayerId"
-                  (ngModelChange)="selectGuestPlayer(+$event)" [disabled]="guestSending">
+                  (ngModelChange)="selectGuestPlayer($event)" [disabled]="guestSending">
                   <option [ngValue]="null">{{ 'guestRsvp.choosePlaceholder' | t }}</option>
                   @for (person of guestPlayers; track person.id) {
                     <option [ngValue]="person.id">{{ person.name }}</option>
