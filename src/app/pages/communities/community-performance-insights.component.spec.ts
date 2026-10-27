@@ -27,8 +27,8 @@ describe('CommunityPerformanceInsightsComponent', () => {
     fixture.componentRef.setInput('bestWinRate', alpha);
     fixture.componentRef.setInput('bestWinStreak', alpha);
     fixture.componentRef.setInput('maxStandingPoints', 50);
-    fixture.componentRef.setInput('compareUsernameA', 'alpha');
-    fixture.componentRef.setInput('compareUsernameB', 'beta');
+    fixture.componentRef.setInput('compareSelectionA', 'standing:0');
+    fixture.componentRef.setInput('compareSelectionB', 'standing:1');
     fixture.componentRef.setInput('comparePlayerA', alpha);
     fixture.componentRef.setInput('comparePlayerB', beta);
     fixture.detectChanges();
@@ -60,14 +60,40 @@ describe('CommunityPerformanceInsightsComponent', () => {
     fixture.componentInstance.compareBChange.subscribe(b);
     const selectA = opts[0] as HTMLSelectElement;
     const selectB = opts[1] as HTMLSelectElement;
-    selectA.value = 'beta';
+    selectA.value = 'standing:1';
     selectA.dispatchEvent(new Event('change', {bubbles: true}));
-    selectB.value = 'alpha';
+    selectB.value = 'standing:0';
     selectB.dispatchEvent(new Event('change', {bubbles: true}));
     fixture.detectChanges();
-    expect(a).toHaveBeenCalledWith('beta');
-    expect(b).toHaveBeenCalledWith('alpha');
-    expect(fixture.componentInstance.compareUsernameA).toBe('alpha');
+    expect(a).toHaveBeenCalledWith('standing:1');
+    expect(b).toHaveBeenCalledWith('standing:0');
+    expect(fixture.componentInstance.compareSelectionA).toBe('standing:0');
+  });
+
+  it('offers historical players without accounts in both selectors and compares their real numbers', () => {
+    const fixture = render();
+    const historic = {
+      ...alpha, username: null, profileId: null, fullName: 'Ferreirinha', points: 16
+    };
+    const other = {
+      ...beta, username: null, profileId: null, fullName: 'Mestre', points: 22
+    };
+    fixture.componentRef.setInput('rows', [historic, other]);
+    fixture.componentRef.setInput('compareSelectionA', 'standing:0');
+    fixture.componentRef.setInput('compareSelectionB', 'standing:1');
+    fixture.componentRef.setInput('comparePlayerA', historic);
+    fixture.componentRef.setInput('comparePlayerB', other);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const options = Array.from(root.querySelectorAll('.compare-selectors select')).map(select =>
+      Array.from((select as HTMLSelectElement).options).map(option => [option.value, option.textContent?.trim()])
+    );
+    expect(options[0].slice(1)).toEqual([['standing:0', 'Ferreirinha'], ['standing:1', 'Mestre']]);
+    expect(options[1].slice(1)).toEqual([['standing:0', 'Ferreirinha'], ['standing:1', 'Mestre']]);
+    expect(root.querySelector('.compare-table')?.textContent).toContain('Ferreirinha');
+    expect(root.querySelector('.compare-table')?.textContent).toContain('Mestre');
+    expect(root.querySelector('.compare-table')?.textContent).toContain('16');
+    expect(root.querySelector('.compare-table')?.textContent).toContain('22');
   });
 
   it('hides the head-to-head matrix without both selected players and keeps the empty chart', () => {
