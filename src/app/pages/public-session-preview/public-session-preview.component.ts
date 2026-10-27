@@ -46,7 +46,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   /** Guest invitations are scoped to a random organizer-issued link. */
   guestToken: string | null = null;
   guestPlayers: {id:number;name:string}[] = [];
-  guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' | 'linked' = 'choose';
+  guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' | 'linked' | 'cancelled' = 'choose';
   guestPlayerId: number | null = null;
   guestNewName = '';
   guestNote = '';
@@ -165,14 +165,15 @@ export class PublicSessionPreviewComponent implements OnInit {
     if (!this.sessionId || !this.guestReceipt || this.guestSending) return;
     this.guestSending=true;
     this.guestError='';
-    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'}>(
+    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'|'CANCELLED'}>(
       environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/status',
       {receipt:this.guestReceipt}
     ).pipe(timeout(10000),finalize(()=>this.guestSending=false)).subscribe({
       next: r => {
         this.guestStep=r.status==='LINKED'?'linked':
           r.status==='APPROVED'?'approved':
-          r.status==='REJECTED'?'rejected':'pending';
+          r.status==='REJECTED'?'rejected':
+          r.status==='CANCELLED'?'cancelled':'pending';
       },
       error:()=>{this.guestError='guestRsvp.statusError';}
     });
