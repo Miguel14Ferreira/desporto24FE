@@ -241,3 +241,46 @@
 .inbox-groups-shortcut:hover{text-decoration:underline;background:#25635b;}
 .inbox-group-create{text-decoration:none;min-width:41px;padding:0;}
 .inbox-group-create span{font-size:1rem;}
+
+/* WhatsApp-inspired lightweight contact sheet, scoped to private chat. */
+.inbox-contact-opener {padding:0;border:0;background:transparent;color:inherit;
+  cursor:pointer;text-align:left;max-width:min(340px,100%);}
+.inbox-contact-opener:hover .inbox-contact-name {color:#7df4d9;}
+.inbox-contact-opener:focus-visible {outline:2px solid #72f0d3;outline-offset:5px;border-radius:9px;}
+.inbox-contact-name {display:block;font-size:1.19rem;font-weight:830;color:#f5ffff;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.inbox-contact-caption {display:block;color:#92cbd0;font-size:.76rem;margin-top:4px;}
+.inbox-contact-backdrop {position:fixed;inset:0;z-index:10000;
+  display:flex;justify-content:center;align-items:center;padding:16px;
+  background:rgba(0,12,20,.76);backdrop-filter:blur(5px);}
+.inbox-contact-dialog {width:min(100%,420px);max-height:85dvh;overflow-y:auto;
+  background:#152d38;border:1px solid #446c75;border-radius:20px;
+  color:#f2fbfa;box-shadow:0 24px 65px rgba(0,0,0,.48);}
+.inbox-contact-dialog-top {display:flex;align-items:center;justify-content:space-between;
+  padding:18px 22px;border-bottom:1px solid rgba(144,214,209,.17);}
+.inbox-contact-dialog-top h2 {margin:0;font-size:1rem;font-weight:740;}
+.inbox-contact-close {width:36px;height:36px;border-radius:50%;border:0;
+  background:#234550;color:#fff;font-size:1.65rem;cursor:pointer;}
+.inbox-contact-person {display:flex;flex-direction:column;align-items:center;
+  padding:30px 20px 22px;text-align:center;}
+.inbox-contact-large-avatar {display:grid;place-items:center;width:116px;height:116px;
+  border-radius:50%;background:linear-gradient(135deg,#1d7777,#15414d);
+  color:#d7fff5;font-size:3.7rem;font-weight:730;border:2px solid #66cdbd;}
+.inbox-contact-person h3 {font-size:1.6rem;margin:17px 0 5px;}
+.inbox-contact-person p {font-size:.88rem;color:#a9c4c7;margin:0;}
+.inbox-contact-dialog-actions {display:flex;gap:12px;padding:12px 20px 24px;justify-content:center;}
+.inbox-contact-dialog-actions a {display:flex;align-items:center;justify-content:center;
+  gap:6px;flex:1;padding:12px 8px;min-height:47px;text-align:center;
+  border:1px solid #4b8984;border-radius:12px;background:#1c4b52;
+  color:#ecfffa;text-decoration:none;font-size:.82rem;font-weight:680;}
+.inbox-contact-dialog-actions a:hover {background:#276b63;}
+.inbox-contact-dialog-actions a:focus-visible,.inbox-contact-close:focus-visible {
+  outline:2px solid #7df4d9;outline-offset:2px;}
+@media(max-width:460px){.inbox-contact-dialog-actions {flex-direction:column;}
+.inbox-contact-dialog {max-height:calc(100dvh - 30px);}}
+
+/* Message authors are navigable public profiles, without changing bubbles. */
+.inbox-bubble-meta .inbox-sender-profile {color:inherit;font-weight:750;
+  text-decoration:none;border-bottom:1px solid transparent;}
+.inbox-bubble-meta .inbox-sender-profile:hover {color:#83eacf;border-bottom-color:currentColor;}
+.inbox-bubble-meta .inbox-sender-profile:focus-visible {outline:2px solid #7df4d9;outline-offset:3px;}

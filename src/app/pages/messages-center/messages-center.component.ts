@@ -63,6 +63,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   conversations: InboxConversation[] = [];
   selectedKey: string | null = null;
+  contactPreviewOpen = false;
   messages: InboxMessage[] = [];
   filter: InboxFilter = 'all';
   search = '';
@@ -747,6 +748,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   selectConversation(conversation: InboxConversation): void {
+    this.contactPreviewOpen = false;
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) {
       this.drafts.set(this.selectedKey, this.draft);

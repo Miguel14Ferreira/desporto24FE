@@ -214,6 +214,23 @@ async function main(){
     const a=await ana.newPage();
     a.on('pageerror',e=>errors.push('ana: '+e.message));
     await a.goto(SITE+'/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
+    if(process.env.JYNLO_VERIFY_CONTACT==='1'){
+      await a.locator('.inbox-contact-opener').click();
+      const panel=a.locator('.inbox-contact-dialog');
+      await panel.waitFor();
+      assert.match(await panel.innerText(),/Bea/i);
+      assert.equal(await panel.locator('a[href*="/menu/perfis/bea"]').count(),1);
+      const group=panel.locator('a[href*="/menu/groups"]');
+      assert.equal(await group.count(),1);
+      assert.match(await group.getAttribute('href'),/from=bea/);
+      await a.screenshot({path:path.join(OUT,'contact-preview-desktop.png')});
+      await panel.locator('.inbox-contact-close').click();
+      assert.equal(await a.locator('.inbox-contact-dialog').count(),0);
+      const sender=a.locator('.inbox-bubble-meta a.inbox-sender-profile').first();
+      await sender.waitFor();
+      assert.match(await sender.getAttribute('href'),/\/menu\/perfis\//);
+    }
+
     const shelf=await assertClickable(a,'inbox','desktop-reaction-before');
     assert.equal(await shelf.locator('.reaction-details-remove').count(),1,
       'your own reaction is always removable');
