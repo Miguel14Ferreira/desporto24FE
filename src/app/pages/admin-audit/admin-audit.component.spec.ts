@@ -195,6 +195,38 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     expect(component.gpsPageIndex).toBe(0);
   });
 
+  it('focuses verified investigated GPS reviews without changing default full catalogue queue', () => {
+    http.get.and.returnValue(of({venues:[], page:0, hasMore:false}));
+    component.gpsOpen = true;
+    component.loadGpsReview(0);
+    expect(http.get).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/admin/overview/venue-gps-review?page=0');
+    component.toggleGpsEvidenceOnly();
+    expect(component.gpsOnlyWithEvidence).toBeTrue();
+    expect(component.gpsPageIndex).toBe(0);
+    expect(http.get).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/admin/overview/venue-gps-review?page=0&onlyWithEvidence=true');
+    component.gpsDistrict = 'Porto';
+    component.loadGpsReview(0);
+    expect(http.get).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/admin/overview/venue-gps-review?page=0&district=Porto&onlyWithEvidence=true');
+    component.toggleGpsEvidenceOnly();
+    expect(component.gpsOnlyWithEvidence).toBeFalse();
+    expect(http.get).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/admin/overview/venue-gps-review?page=0&district=Porto');
+  });
+
+  it('does not toggle focus while GPS queue is loading or closed', () => {
+    http.get.and.returnValue(NEVER);
+    component.toggleGpsEvidenceOnly();
+    expect(component.gpsOnlyWithEvidence).toBeFalse();
+    component.gpsOpen = true;
+    component.loadGpsReview(0);
+    component.toggleGpsEvidenceOnly();
+    expect(component.gpsOnlyWithEvidence).toBeFalse();
+    expect(http.get).toHaveBeenCalledTimes(1);
+  });
+
   it('protects against stale GPS pages and rejects invalid page numbers', () => {
     const pending = new Subject<any>();
     http.get.and.returnValues(pending.asObservable(), of({venues:[], page:1, hasMore:false}));
