@@ -29,7 +29,7 @@ function token(user){
 }
 function reply(route,status,body){
   return route.fulfill({status,contentType:'application/json',body:JSON.stringify(body),
-    headers:{'access-control-allow-origin':'*','access-control-allow-methods':'GET,POST,PUT,DELETE,OPTIONS',
+    headers:{'access-control-allow-origin':'*','access-control-allow-methods':'GET,POST,PUT,PATCH,DELETE,OPTIONS',
       'access-control-allow-headers':'*'}});
 }
 function record(id,actor){
