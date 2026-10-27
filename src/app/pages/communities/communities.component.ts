@@ -2240,6 +2240,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         next: () => {
           if (this.rankingHistoricalRequestVersion !== requestVersion ||
               this.selected?.id !== communityId) return;
+          this.rankingHistoricalSaving = false;
           this.closeRankingHistoricalDialog();
           this.rankingHistoricalSuccess = t('communities.identity.claimed');
           this.loadHistoricalLinks(communityId);
