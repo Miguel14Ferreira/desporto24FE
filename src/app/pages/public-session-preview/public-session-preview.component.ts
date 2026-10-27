@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
@@ -26,7 +27,7 @@ interface SessionPublicPreview {
 @Component({
   selector: 'app-public-session-preview',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe],
   templateUrl: './public-session-preview.component.html',
   styleUrls: ['./public-session-preview.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -42,6 +43,113 @@ export class PublicSessionPreviewComponent implements OnInit {
   isAuthenticated = false;
   returnUrl: string | null = null;
   private sessionId: number | null = null;
+  /** Guest invitations are scoped to a random organizer-issued link. */
+  guestToken: string | null = null;
+  guestPlayers: {id:number;name:string}[] = [];
+  guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' = 'choose';
+  guestPlayerId: number | null = null;
+  guestNewName = '';
+  guestNote = '';
+  guestLoading = false;
+  guestSending = false;
+  guestError = '';
+  guestReceipt = '';
+  guestCommunityId: number | null = null;
+
+  get guestPlayerName(): string {
+    return this.guestPlayers.find(p => p.id === this.guestPlayerId)?.name
+      || this.guestNewName.trim();
+  }
+
+  chooseGuest(): void {
+    if ((this.guestPlayerId === null && (this.guestNewName.trim().length < 2 ||
+        this.guestNewName.trim().length > 80)) || this.guestSending) return;
+    this.guestError = '';
+    this.guestStep = 'confirm';
+  }
+
+  backToGuestChoices(): void {
+    if (!this.guestSending) {
+      this.guestStep = 'choose';
+      this.guestError = '';
+    }
+  }
+
+  selectGuestPlayer(id: number): void {
+    this.guestPlayerId = id;
+    this.guestNewName = '';
+  }
+
+  setGuestNewName(name: string): void {
+    this.guestNewName = name;
+    if (name.trim()) this.guestPlayerId = null;
+  }
+
+  private receiptKey(): string {
+    return 'jynlo-guest-receipt:' + this.sessionId;
+  }
+
+  private loadGuestRoster(): void {
+    if (!this.sessionId || !this.guestToken || this.guestLoading) return;
+    this.guestLoading = true;
+    this.http.post<{sessionId:number;communityId:number;players:{id:number;name:string}[]}>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-roster',
+      {token:this.guestToken}
+    ).pipe(timeout(10000),finalize(() => this.guestLoading = false)).subscribe({
+      next: data => {
+        if (data.sessionId !== this.sessionId || !Array.isArray(data.players)) {
+          this.guestError = 'guestRsvp.invalidLink'; return;
+        }
+        this.guestPlayers = data.players;
+        this.guestCommunityId = data.communityId;
+        try {
+          const receipt = localStorage.getItem(this.receiptKey());
+          if (receipt && /^[A-Za-z0-9_-]{43}$/.test(receipt)) {
+            this.guestReceipt = receipt;
+            this.checkGuestStatus();
+          }
+        } catch { /* Private browsing may disable storage. */ }
+      },
+      error: () => {this.guestError='guestRsvp.invalidLink';}
+    });
+  }
+
+  sendGuestRequest(): void {
+    if (!this.sessionId || !this.guestToken || this.guestStep !== 'confirm' ||
+        this.guestSending || !this.guestPlayerName) return;
+    this.guestSending = true;
+    this.guestError = '';
+    this.http.post<{receipt:string;status:string}>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests',
+      {linkToken:this.guestToken,playerId:this.guestPlayerId,
+       newName:this.guestPlayerId===null?this.guestNewName.trim():null,
+       note:this.guestNote.trim()}
+    ).pipe(timeout(10000),finalize(() => this.guestSending=false)).subscribe({
+      next: response => {
+        this.guestReceipt = response.receipt;
+        try {localStorage.setItem(this.receiptKey(),response.receipt);} catch {}
+        this.guestStep='pending';
+      },
+      error: () => {this.guestError='guestRsvp.requestError';}
+    });
+  }
+
+  checkGuestStatus(): void {
+    if (!this.sessionId || !this.guestReceipt || this.guestSending) return;
+    this.guestSending=true;
+    this.guestError='';
+    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'}>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/status',
+      {receipt:this.guestReceipt}
+    ).pipe(timeout(10000),finalize(()=>this.guestSending=false)).subscribe({
+      next: r => {
+        this.guestStep=r.status==='APPROVED'?'approved':
+          r.status==='REJECTED'?'rejected':'pending';
+      },
+      error:()=>{this.guestError='guestRsvp.statusError';}
+    });
+  }
+
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -64,6 +172,11 @@ export class PublicSessionPreviewComponent implements OnInit {
 
     this.sessionId = id;
     this.returnUrl = '/menu/events/' + id;
+    const token=this.route.snapshot.queryParamMap?.get('guest');
+    if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) {
+      this.guestToken=token;
+      this.loadGuestRoster();
+    }
     this.loadPreview();
   }
 
