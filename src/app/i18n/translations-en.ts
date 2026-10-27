@@ -1619,6 +1619,8 @@ export const EN: Record<string, string> = {
   'communities.import.validateError': 'We could not validate this mapping.',
   'communities.import.normalizeError': 'We could not prepare the data preview.',
   'communities.import.season': 'Target season',
+  'communities.import.autoSeasonNotice': 'No season exists yet. It will be created automatically when preparing the import.',
+  'communities.import.seasonCreateError': 'We could not create the season automatically. Please try again.',
   'communities.import.selectSeason': 'Select season',
   'communities.import.defaultYear': 'Year for dates without a year',
   'communities.import.sourceCompetition': 'Source competition (optional)',
