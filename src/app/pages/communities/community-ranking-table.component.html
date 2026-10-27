@@ -18,7 +18,7 @@
             <td><strong>{{ $index + 1 }}</strong></td>
             <td>
               <button type="button" class="ranking-player ranking-player--interactive"
-                [attr.title]="(row.username ? 'communities.identity.openProfileHint' : 'communities.identity.claimProfileHint') | t"
+                [attr.title]="(row.username ? 'communities.identity.openProfileHint' : 'historicalStats.hint') | t"
                 (click)="openPlayer(row)">
                 <strong>{{ row.fullName || row.username }}</strong>
                 @if (row.username) {
