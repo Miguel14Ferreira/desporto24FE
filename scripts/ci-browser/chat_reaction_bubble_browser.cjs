@@ -142,7 +142,11 @@ async function assertClickable(page,kind,name){
         'single reaction must have no numeric count');
     }
   }
-  await chip.click({timeout:5000}); // real pointer, no force
+  // The user's own emoji now removes on click. Use its dedicated info icon
+  // to open details; an emoji from another person still opens names directly.
+  const detailsAction=(await shelf.locator('.reaction-details-trigger').count())
+    ? shelf.locator('.reaction-details-trigger') : chip;
+  await detailsAction.click({timeout:5000}); // real pointer, no force
   const dialog=shelf.locator('.reaction-details-dialog');
   await dialog.waitFor();
   await shelf.locator('.reaction-person').first().waitFor();
@@ -194,17 +198,17 @@ async function main(){
     await mobile.locator('.reaction-person').first().waitFor();
     assert.equal(await mobile.locator('.reaction-person').count(),2);
     await b.screenshot({path:path.join(OUT,'mobile-two-hearts-details.png')});
-    // WhatsApp behavior: tap the selected heart IN the chooser a second time.
-    // Only Bea's heart disappears; Ana's heart remains and loses its count.
-    await mobile.locator('.reaction-details-add').click();
-    const selected=mobile.locator('.reaction-details-chooser button[aria-label="❤️"]');
-    assert.equal(await selected.getAttribute('aria-pressed'),'true');
-    assert.match(await selected.getAttribute('title'),/Remover/);
-    await selected.click();
+    // THIS IS THE USER-REPORTED BUG: tapping Bea's OWN displayed ❤️ 2
+    // must DELETE immediately and never open the people dialog. Ana keeps ❤️.
+    await mobile.locator('.reaction-details-close').click();
+    const selectedBadge=mobile.locator('.reaction-count').first();
+    assert.match(await selectedBadge.getAttribute('aria-label'),/Remover/);
+    await selectedBadge.click({timeout:5000});
     assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️','bea:DELETE']);
+    assert.equal(await mobile.locator('.reaction-details-dialog').count(),0);
     await b.waitForFunction(()=>document.querySelectorAll('.reaction-count').length===1
       && document.querySelector('.reaction-count')?.textContent?.trim()==='❤️');
-    await b.screenshot({path:path.join(OUT,'mobile-after-tap-same-emoji-to-remove.png')});
+    await b.screenshot({path:path.join(OUT,'mobile-after-direct-badge-removal.png')});
     // Another person's reaction is untouched; clicking it opens details.
     await mobile.locator('.reaction-count').click();
     await mobile.locator('.reaction-details-add').click();
@@ -216,7 +220,8 @@ async function main(){
     await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').first().waitFor();
     assert.equal(await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').count(),2);
     const heart=a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').filter({hasText:'❤️'});
-    await heart.click();
+    // Ana can still see all participant details through the separate ⓘ icon.
+    await a.locator('.reaction-details-trigger').click();
     await a.locator('.reaction-person').first().waitFor({timeout:7000});
     const personCount=await a.locator('.reaction-person').count();
     assert.equal(personCount,2,'participant detail shows both actors for different emojis');
@@ -229,7 +234,7 @@ async function main(){
     await a.screenshot({path:path.join(OUT,'desktop-after-explicit-removal.png')});
     await ana.close();await bea.close();
     assert.deepEqual(errors,[],'no Angular page errors');
-    process.stdout.write('PASS: selected emoji tapped twice removes only own reaction; names, multi-user count, changed emoji and explicit remove, desktop/mobile, fake HTTP only.\\n');
+    process.stdout.write('PASS: tapping own DISPLAYED emoji directly removes only own reaction, without modal; independent people details remain, replacement, counts, desktop/mobile.\\n');
   }finally{await browser.close();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
