@@ -310,6 +310,21 @@
                               {{ 'adminVenueGps.rodoviaBuildingArea' | t }}
                             </a>
                           </div>
+                          <div class="venue-gps-research"
+                            *ngIf="gpsRodoviaNumberingVisible(item.facilityContextReview?.numberingPlanReview)">
+                            <strong>{{ 'adminVenueGps.rodoviaNumberingTitle' | t }}</strong>
+                            <small>{{ 'adminVenueGps.rodoviaNumberingWarning' | t }}</small>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.numberingPlanReview?.signageGalleryUrl) as sign"
+                              [href]="sign" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaNumberingSign' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.numberingPlanReview?.fieldOneScheduleUrl) as schedule"
+                              [href]="schedule" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaFieldOneSchedule' | t }}
+                            </a>
+                          </div>
                           <div class="venue-gps-research" *ngIf="gpsPossibleDuplicateVisible(item.possibleDuplicateReview)">
                             <strong>{{ 'adminVenueGps.duplicateTitle' | t }}</strong>
                             <small>{{ 'adminVenueGps.duplicateCaution' | t }}</small>
