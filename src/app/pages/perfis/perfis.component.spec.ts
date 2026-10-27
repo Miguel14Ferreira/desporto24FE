@@ -914,6 +914,27 @@ describe('PerfisComponent', () => {
     expect(component.searched).toBeFalse();
   });
 
+  it('keeps premium profile hero actions, iconic details and activity accessible', () => {
+    component.profilePage = true;
+    component.selectedProfile = { ...profile, username: 'ana', bio: 'Gosto de jogar' };
+    component.selectedActivity = {
+      activitiesCompleted: 3, peoplePlayedWith: 5, sportsPractised: 2,
+      eventsCreated: 1, participantsMobilized: 8, communitiesJoined: 1,
+      achievements: []
+    };
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.profile-hero > .detail-heading')).toBeTruthy();
+    expect(root.querySelector('.profile-hero > .detail-actions')).toBeTruthy();
+    expect(root.querySelectorAll('.profile-meta > .profile-meta-card').length).toBe(5);
+    expect(root.querySelectorAll('.profile-meta .profile-stat-icon svg').length).toBe(5);
+    expect(root.querySelectorAll('.public-activity-grid > .profile-activity-card').length).toBe(4);
+    expect(root.querySelectorAll('.public-activity-grid svg').length).toBe(4);
+    expect(root.querySelector('.profile-invite-trigger')).toBeTruthy();
+    expect(root.querySelector('.profile-safety summary')).toBeTruthy();
+    expect(root.querySelector('.public-bio')?.textContent).toContain('Gosto de jogar');
+  });
+
   describe('profile community and session invitations', () => {
     const future = () => new Date(Date.now()+86400_000).toISOString();
     const eligibleGroup = (members: {username:string}[] = []) => ({
