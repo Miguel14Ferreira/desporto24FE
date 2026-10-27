@@ -17,6 +17,7 @@ import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityTimelineService } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { DirectCallClientService } from '../../services/direct-call-client.service';
+import { ProfileQuickViewService } from '../../services/profile-quick-view.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
@@ -288,9 +289,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     private readonly realtime: DirectChatRealtimeService,
     private readonly inboxApi: InboxApiService,
     @Optional() private readonly route: ActivatedRoute | null = null,
-    @Optional() public readonly calls: DirectCallClientService | null = null
+    @Optional() public readonly calls: DirectCallClientService | null = null,
+    @Optional() private readonly profilePeek: ProfileQuickViewService | null = null
   ) {
     this.typing = new ChatTypingTracker(realtime);
+  }
+
+  showContact(username: string | null | undefined): void {
+    this.profilePeek?.open(username);
   }
 
   get callsEnabled(): boolean {
