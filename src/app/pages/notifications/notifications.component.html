@@ -131,6 +131,60 @@
       <div class="feedback error-feedback">{{ actionError }}</div>
     }
 
+    @if (pendingInvites.length > 0) {
+      <section class="session-invites-inbox" aria-labelledby="session-invites-title">
+        <div class="session-invites-heading">
+          <div>
+            <span class="eyebrow">{{ 'inviteCenter.eyebrow' | t }}</span>
+            <h2 id="session-invites-title">{{ 'inviteCenter.title' | t }}</h2>
+            <p>{{ 'inviteCenter.help' | t }}</p>
+          </div>
+          <span class="session-invites-count">{{ pendingInvites.length }}</span>
+        </div>
+        <div class="session-invites-grid">
+          @for (invite of pendingInvites; track invite.id) {
+            <article class="session-invite-card">
+              <div class="session-invite-overline">
+                <span>{{ 'inviteCenter.from' | t:{ organizer: invite.inviterUsername } }}</span>
+                <span class="session-invite-status">{{ 'inviteCenter.pending' | t }}</span>
+              </div>
+              <h3>{{ invite.sport || ('inviteCenter.sportFallback' | t) }}</h3>
+              <div class="session-invite-facts">
+                @if (invite.gameDate) {
+                  <span><span aria-hidden="true">📅</span> {{ invite.gameDate | date:'dd/MM/yyyy · HH:mm' }}</span>
+                }
+                @if (invite.city) {
+                  <span><span aria-hidden="true">📍</span> {{ invite.city }}</span>
+                }
+                @if (pendingInviteRemaining(invite); as remaining) {
+                  <span><span aria-hidden="true">👥</span>
+                    {{ 'inviteCenter.places' | t:{ count: remaining } }}</span>
+                } @else if (pendingInviteRemaining(invite) === 0) {
+                  <span><span aria-hidden="true">👥</span> {{ 'inviteCenter.full' | t }}</span>
+                }
+              </div>
+              <div class="session-invite-actions">
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                  [disabled]="actionLoadingId !== null"
+                  (click)="respondToPendingInvite(invite, true)">
+                  {{ (actionLoadingId === -invite.id ? 'inviteCenter.processing' : 'inviteCenter.going') | t }}
+                </button>
+                <button type="button" class="secondary-button jynlo-action jynlo-action--neutral"
+                  [disabled]="actionLoadingId !== null"
+                  (click)="respondToPendingInvite(invite, false)">
+                  {{ 'inviteCenter.notGoing' | t }}
+                </button>
+                <a class="session-invite-details jynlo-action jynlo-action--neutral"
+                  [routerLink]="['/menu/events',invite.sessionId]">
+                  {{ 'inviteCenter.details' | t }}
+                </a>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
     @if (loading) {
       <div class="state-card">{{ 'notifications.loading' | t }}</div>
     }
@@ -142,7 +196,7 @@
       </div>
     }
 
-    @if (!loading && !errorMessage && notifications.length === 0) {
+    @if (!loading && !errorMessage && notifications.length === 0 && pendingInvites.length === 0) {
       <div class="state-card">
         <h2>{{ 'notifications.emptyTitle' | t }}</h2>
         <p>{{ 'notifications.emptyText' | t }}</p>
