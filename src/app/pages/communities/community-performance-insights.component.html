@@ -59,24 +59,20 @@
   <div class="compare-selectors">
     <label>
       <span>{{ 'communities.playerA' | t }}</span>
-      <select [ngModel]="compareUsernameA" (ngModelChange)="compareAChange.emit($event)">
+      <select [ngModel]="compareSelectionA" (ngModelChange)="compareAChange.emit($event)">
         <option value="">{{ 'communities.selectPlayer' | t }}</option>
         @for (row of rows; track $index) {
-          @if (row.username) {
-             <option [value]="row.username">{{ row.fullName || row.username }}</option>
-           }
+          <option [value]="selectionKey($index)">{{ row.fullName || row.username || ('#' + row.position) }}</option>
         }
       </select>
     </label>
     <span class="versus">VS</span>
     <label>
       <span>{{ 'communities.playerB' | t }}</span>
-      <select [ngModel]="compareUsernameB" (ngModelChange)="compareBChange.emit($event)">
+      <select [ngModel]="compareSelectionB" (ngModelChange)="compareBChange.emit($event)">
         <option value="">{{ 'communities.selectPlayer' | t }}</option>
         @for (row of rows; track $index) {
-          @if (row.username) {
-             <option [value]="row.username">{{ row.fullName || row.username }}</option>
-           }
+          <option [value]="selectionKey($index)">{{ row.fullName || row.username || ('#' + row.position) }}</option>
         }
       </select>
     </label>

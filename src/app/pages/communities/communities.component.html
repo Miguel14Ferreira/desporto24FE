@@ -4746,12 +4746,12 @@
                     [bestWinRate]="bestWinRate()"
                     [bestWinStreak]="bestWinStreak()"
                     [maxStandingPoints]="maxStandingPoints"
-                    [compareUsernameA]="compareUsernameA"
-                    [compareUsernameB]="compareUsernameB"
+                    [compareSelectionA]="compareSelectionA"
+                    [compareSelectionB]="compareSelectionB"
                     [comparePlayerA]="comparePlayerA()"
                     [comparePlayerB]="comparePlayerB()"
-                    (compareAChange)="compareUsernameA = $event"
-                    (compareBChange)="compareUsernameB = $event"
+                    (compareAChange)="compareSelectionA = $event"
+                    (compareBChange)="compareSelectionB = $event"
                   ></app-community-performance-insights>
 
                   <app-community-stats-table [rows]="rankingParticipants"></app-community-stats-table>

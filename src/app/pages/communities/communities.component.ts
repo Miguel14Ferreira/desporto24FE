@@ -6,6 +6,7 @@ import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, Tim
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { environment } from 'src/environment/environment';
 import { communityAvatarUploadError } from './community-avatar-upload';
+import { communityComparisonLookup } from './community-player-comparison';
 import {
   avatarCanvasPosition, clampAvatarOffset, communityAvatarCrop,
   CommunityAvatarCrop, COMMUNITY_COVER_WIDTH, COMMUNITY_COVER_HEIGHT
@@ -266,7 +267,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   mostGamesStanding?: CommunityStanding;
   bestWinRateStanding?: CommunityStanding;
   bestWinStreakStanding?: CommunityStanding;
-  standingsByUsername = new Map<string, CommunityStanding>();
+  standingsByComparisonKey = new Map<string, CommunityStanding>();
   activeCommunitySeason?: CommunitySeason;
   communityTrophies: CommunitySeason[] = [];
   communitySessions: SessionSummary[] = [];
@@ -1571,8 +1572,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }>;
   };
 
-  compareUsernameA = '';
-  compareUsernameB = '';
+  compareSelectionA = '';
+  compareSelectionB = '';
 
   constructor(
     private communityService: CommunityGroupsService,
@@ -3624,10 +3625,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
             (best, row) => !best || row.bestWinStreak > best.bestWinStreak || (row.bestWinStreak === best.bestWinStreak && row.position < best.position) ? row : best,
             undefined
           );
-          this.standingsByUsername = new Map<string, CommunityStanding>(
-            competition.standings.filter(row => row.username !== null)
-              .map(row => [row.username!, row])
-          );
+          // A ranking row represents a player regardless of account association.
+          // Regenerate selections on each season/reload so an index cannot silently
+          // point to a different person if the ranking has changed.
+          this.standingsByComparisonKey = communityComparisonLookup(competition.standings);
+          this.compareSelectionA = '';
+          this.compareSelectionB = '';
           this.activeCommunitySeason = competition.seasons.find(
             season => season.id === competition.activeSeasonId
           );
@@ -3659,7 +3662,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.mostGamesStanding = undefined;
           this.bestWinRateStanding = undefined;
           this.bestWinStreakStanding = undefined;
-          this.standingsByUsername.clear();
+          this.standingsByComparisonKey.clear();
+          this.compareSelectionA = '';
+          this.compareSelectionB = '';
           this.activeCommunitySeason = undefined;
           this.communityTrophies = [];
           this.errorMessage = t('feedback.communities.competitionLoadError');
@@ -5282,7 +5287,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.mostGamesStanding = undefined;
         this.bestWinRateStanding = undefined;
         this.bestWinStreakStanding = undefined;
-        this.standingsByUsername.clear();
+        this.standingsByComparisonKey.clear();
+        this.compareSelectionA = '';
+        this.compareSelectionB = '';
         this.activeCommunitySeason = undefined;
         this.communityTrophies = [];
         this.communitySessions = [];
@@ -5733,11 +5740,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   comparePlayerA(): CommunityStanding | undefined {
-    return this.standingsByUsername.get(this.compareUsernameA);
+    return this.standingsByComparisonKey.get(this.compareSelectionA);
   }
 
   comparePlayerB(): CommunityStanding | undefined {
-    return this.standingsByUsername.get(this.compareUsernameB);
+    return this.standingsByComparisonKey.get(this.compareSelectionB);
   }
 
   pointsBarWidth(row: CommunityStanding): number {
