@@ -46,6 +46,7 @@
          @for (m of group.members; track m.username) {
            <div class="group-member-chip">
              <a [routerLink]="['/menu/perfis',m.username]" [title]="m.displayName">
+               @if(m.profilePicUrl){<img class="group-member-avatar" [src]="m.profilePicUrl" alt="" loading="lazy">}
                {{ m.displayName }} @if(m.admin){ <span aria-hidden="true">★</span> }
              </a>
              @if (isCreator && !m.admin) {
