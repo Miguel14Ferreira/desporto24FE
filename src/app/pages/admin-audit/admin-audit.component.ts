@@ -59,10 +59,14 @@ export interface AdminGpsResearchCandidate {
   latitude: number; longitude: number;
   officialSourceUrl: string; secondarySourceUrl: string; precision: string;
 }
+export interface AdminVenueAddressReview {
+  issueCode:string; venueLocationToCheck:string; equipmentSourceUrl:string; marketSourceUrl:string;
+}
 export interface AdminVenueGpsReviewPage {
   venues: {id:number; name:string; city:string; district:string|null; address:string|null;
     sourceReference:string|null; informationSource:string|null; sourceWebsite:string|null;
-    researchCandidate?: AdminGpsResearchCandidate|null}[];
+    researchCandidate?: AdminGpsResearchCandidate|null;
+    addressReview?: AdminVenueAddressReview|null}[];
   page:number; hasMore:boolean;
 }
 interface GrowthChart {
@@ -191,6 +195,14 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
         || !Number.isFinite(latitude) || !Number.isFinite(longitude)
         || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
     return 'https://www.google.com/maps/search/?api=1&query=' + latitude + '%2C' + longitude;
+  }
+
+  /** Only display a known address investigation status; no automatic correction. */
+  gpsAddressReviewVisible(item: AdminVenueAddressReview | null | undefined): boolean {
+    return item?.issueCode === 'ADMIN_OFFICE_ADDRESS_VS_VENUE_LOCATION_REVIEW'
+      && typeof item.venueLocationToCheck === 'string'
+      && item.venueLocationToCheck.trim().length > 0
+      && item.venueLocationToCheck.length <= 200;
   }
 
   /** Optional, bounded admin-only list. No GPS is inferred or modified here. */
