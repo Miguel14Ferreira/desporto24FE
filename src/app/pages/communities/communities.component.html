@@ -4512,50 +4512,97 @@
                   @if (rankingHistoricalRow) {
                     <div class="ranking-identity-backdrop" role="presentation"
                       (click)="closeRankingHistoricalDialog()" (keydown.escape)="closeRankingHistoricalDialog()">
-                      <section class="ranking-identity-dialog" role="dialog" aria-modal="true"
-                        aria-labelledby="ranking-identity-title" tabindex="-1"
+                      <section class="ranking-identity-dialog ranking-history-profile" role="dialog"
+                        aria-modal="true" aria-labelledby="ranking-identity-title" tabindex="-1"
                         (click)="$event.stopPropagation()" (keydown.escape)="closeRankingHistoricalDialog()">
                         <div class="ranking-identity-heading">
                           <div>
                             <span class="section-kicker">{{ 'communities.identity.kicker' | t }}</span>
-                            <h3 id="ranking-identity-title">{{ 'communities.identity.linkMyProfileTitle' | t }}</h3>
+                            <h3 id="ranking-identity-title">{{ 'historicalStats.title' | t }}</h3>
                           </div>
                           <button type="button" class="ranking-identity-close" autofocus
                             [disabled]="rankingHistoricalSaving"
-                            [attr.aria-label]="'common.close' | t"
-                            (click)="closeRankingHistoricalDialog()">×</button>
+                            [attr.aria-label]="'common.close' | t" (click)="closeRankingHistoricalDialog()">
+                            <svg viewBox="0 0 24 24" width="19" height="19" fill="none"
+                              stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                          </button>
                         </div>
-                        <div class="ranking-identity-player">
-                          <strong>{{ rankingHistoricalRow.fullName }}</strong>
-                          <span>{{ 'communities.identity.unlinked' | t }}</span>
+                        <div class="ranking-identity-player ranking-history-person">
+                          <span class="ranking-history-avatar" aria-hidden="true">{{ rankingHistoricalRow.fullName?.charAt(0) || '?' }}</span>
+                          <div>
+                            <strong>{{ rankingHistoricalRow.fullName }}</strong>
+                            <span>{{ 'communities.identity.unlinked' | t }}</span>
+                          </div>
                         </div>
-                        @if (rankingHistoricalLoading) {
-                          <p role="status">{{ 'communities.identity.loading' | t }}</p>
-                        } @else {
-                          @if (rankingHistoricalCandidate) {
-                            <p>{{ 'communities.identity.linkMyProfilePrompt' | t }}</p>
-                            <label class="ranking-identity-acknowledge">
-                              <input type="checkbox" [(ngModel)]="rankingHistoricalAcknowledged"
-                                [disabled]="rankingHistoricalSaving">
-                              <span>{{ 'communities.identity.acknowledge' | t }}</span>
-                            </label>
-                          }
-                          @if (rankingHistoricalError) {
-                            <p class="ranking-identity-error" role="alert">{{ rankingHistoricalError }}</p>
-                          }
+                        <p class="ranking-history-explainer">{{ 'historicalStats.explainer' | t }}</p>
+                        <div class="ranking-history-keyfacts">
+                          <div class="ranking-history-mainstat">
+                            <span>{{ 'historicalStats.position' | t }}</span>
+                            <strong>#{{ rankingHistoricalRow.position }}</strong>
+                          </div>
+                          <div class="ranking-history-mainstat">
+                            <span>{{ 'historicalStats.points' | t }}</span>
+                            <strong>{{ rankingHistoricalRow.points }}</strong>
+                          </div>
+                          <div class="ranking-history-mainstat">
+                            <span>{{ 'historicalStats.games' | t }}</span>
+                            <strong>{{ rankingHistoricalRow.games }}</strong>
+                          </div>
+                        </div>
+                        <h4 class="ranking-history-subtitle">{{ 'historicalStats.breakdown' | t }}</h4>
+                        <div class="ranking-history-grid" [attr.aria-label]="'historicalStats.breakdown' | t">
+                          <div><span>{{ 'historicalStats.wins' | t }}</span><strong>{{ rankingHistoricalRow.wins }}</strong></div>
+                          <div><span>{{ 'historicalStats.draws' | t }}</span><strong>{{ rankingHistoricalRow.draws }}</strong></div>
+                          <div><span>{{ 'historicalStats.losses' | t }}</span><strong>{{ rankingHistoricalRow.losses }}</strong></div>
+                          <div><span>{{ 'historicalStats.goals' | t }}</span><strong>{{ rankingHistoricalRow.goals }}</strong></div>
+                          <div><span>{{ 'historicalStats.assists' | t }}</span><strong>{{ rankingHistoricalRow.assists }}</strong></div>
+                          <div><span>{{ 'historicalStats.mvps' | t }}</span><strong>{{ rankingHistoricalRow.mvps }}</strong></div>
+                          <div><span>{{ 'historicalStats.cleanSheets' | t }}</span><strong>{{ rankingHistoricalRow.cleanSheets }}</strong></div>
+                          <div><span>{{ 'historicalStats.winRate' | t }}</span><strong>{{ rankingHistoricalRow.winRate }}%</strong></div>
+                          <div><span>{{ 'historicalStats.currentStreak' | t }}</span><strong>{{ rankingHistoricalRow.currentStreak || '—' }}</strong></div>
+                          <div><span>{{ 'historicalStats.bestStreak' | t }}</span><strong>{{ rankingHistoricalRow.bestWinStreak }}</strong></div>
+                        </div>
+                        <p class="ranking-history-readonly">{{ 'historicalStats.readonly' | t }}</p>
+
+                        @if (selected?.myRole) {
+                          <section class="ranking-history-claim">
+                            @if (!rankingHistoricalClaimExpanded) {
+                              <button type="button" class="ranking-history-claim-toggle"
+                                (click)="startRankingHistoricalClaim()">
+                                {{ 'historicalStats.claimOptional' | t }}
+                              </button>
+                            } @else {
+                              <p>{{ 'communities.identity.linkMyProfilePrompt' | t }}</p>
+                              @if (rankingHistoricalLoading) {
+                                <p role="status">{{ 'communities.identity.loading' | t }}</p>
+                              }
+                              @if (rankingHistoricalCandidate && !rankingHistoricalLoading) {
+                                <label class="ranking-identity-acknowledge">
+                                  <input type="checkbox" [(ngModel)]="rankingHistoricalAcknowledged"
+                                    [disabled]="rankingHistoricalSaving">
+                                  <span>{{ 'communities.identity.acknowledge' | t }}</span>
+                                </label>
+                              }
+                              @if (rankingHistoricalError) {
+                                <p class="ranking-identity-error" role="alert">{{ rankingHistoricalError }}</p>
+                              }
+                              @if (rankingHistoricalCandidate && !rankingHistoricalLoading) {
+                                <button type="button" class="primary-action jynlo-action jynlo-action--primary ranking-history-confirm"
+                                  [disabled]="!rankingHistoricalAcknowledged || rankingHistoricalSaving"
+                                  (click)="confirmRankingHistoricalClaim()">
+                                  {{ rankingHistoricalSaving ? ('communities.identity.claiming' | t)
+                                    : ('communities.identity.linkMyProfileAction' | t) }}
+                                </button>
+                              }
+                            }
+                          </section>
                         }
                         <div class="ranking-identity-actions">
                           <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
                             [disabled]="rankingHistoricalSaving" (click)="closeRankingHistoricalDialog()">
-                            {{ 'common.cancel' | t }}
+                            {{ 'common.close' | t }}
                           </button>
-                          @if (rankingHistoricalCandidate) {
-                            <button type="button" class="primary-action jynlo-action jynlo-action--primary"
-                              [disabled]="!rankingHistoricalAcknowledged || rankingHistoricalSaving"
-                              (click)="confirmRankingHistoricalClaim()">
-                              {{ rankingHistoricalSaving ? ('communities.identity.claiming' | t) : ('communities.identity.linkMyProfileAction' | t) }}
-                            </button>
-                          }
                         </div>
                       </section>
                     </div>
