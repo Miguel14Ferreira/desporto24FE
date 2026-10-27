@@ -79,6 +79,22 @@ describe('Unified Jynlo message center', () => {
     (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
   });
 
+  it('opens a direct contact info sheet and links conversation switching safely', () => {
+    const person=item('direct','bea');
+    person.title='Beatriz';
+    component.showContactInfo(person);
+    expect(component.contactInfoConversation?.id).toBe('bea');
+    component.closeContactInfo();
+    expect(component.contactInfoConversation).toBeNull();
+    component.showContactInfo(person);
+    const group=item('community',3);
+    component.showContactInfo(group);
+    expect(component.contactInfoConversation?.id).toBe('bea');
+    direct.recentHistory.and.returnValue(of({content:[],last:true}));
+    component.selectConversation(group);
+    expect(component.contactInfoConversation).toBeNull();
+  });
+
   it('shares public Jynlo entities without leaking private sessions or groups', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];
