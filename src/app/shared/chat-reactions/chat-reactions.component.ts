@@ -27,11 +27,25 @@ let reactionPickerSequence = 0;
           <button type="button" class="reaction-count"
               [class.mine]="summary?.myEmoji === entry.emoji"
               [disabled]="store.isBusy(kind, conversationId, messageId)"
-              [attr.aria-label]="('chat.reactionDetails' | t) + ': ' + entry.emoji + ' · ' + entry.count"
-              [attr.aria-expanded]="detailsOpen" [attr.aria-controls]="detailsId"
-              (click)="openDetails($event)">
+              [attr.aria-label]="summary?.myEmoji === entry.emoji && !disabled
+                ? ('chat.removeReaction' | t) + ': ' + entry.emoji
+                : ('chat.reactionDetails' | t) + ': ' + entry.emoji + ' · ' + entry.count"
+              [attr.title]="summary?.myEmoji === entry.emoji && !disabled
+                ? ('chat.removeReaction' | t) : ('chat.reactionDetails' | t)"
+              [attr.aria-expanded]="summary?.myEmoji !== entry.emoji || disabled ? detailsOpen : null"
+              [attr.aria-controls]="summary?.myEmoji !== entry.emoji || disabled ? detailsId : null"
+              (click)="onBadgeClick(entry.emoji, $event)">
             {{ entry.emoji }}
             @if (entry.count > 1) { <span>{{ entry.count }}</span> }
+          </button>
+        }
+        @if (summary?.myEmoji && !disabled && entries.length > 0) {
+          <button type="button" class="reaction-details-trigger"
+              [attr.aria-label]="'chat.reactionDetails' | t"
+              [attr.title]="'chat.reactionDetails' | t"
+              [attr.aria-expanded]="detailsOpen" [attr.aria-controls]="detailsId"
+              (click)="openDetails($event)">
+            <span aria-hidden="true">ⓘ</span>
           </button>
         }
         @if (!disabled && entries.length === 0) {
@@ -174,6 +188,11 @@ let reactionPickerSequence = 0;
       background:#1b424a;color:#f1fffc;border:1px solid #5fa99a;
       font-size:.79rem;box-shadow:0 2px 10px rgba(0,12,19,.32);}
     .reaction-count.mine {background:#245d55;border-color:#69eac5;}
+    .reaction-details-trigger {display:grid;place-items:center;
+      width:25px;height:25px;padding:0;border-radius:50%;border:1px solid #467b77;
+      background:#15313a;color:#bcdad4;font-size:.82rem;
+      box-shadow:0 2px 8px rgba(0,12,19,.18);}
+    .reaction-details-trigger:hover {background:#24534c;color:#f1fffc;}
     .reaction-open {display:grid;place-items:center;width:29px;height:29px;
       border:1px solid #467b77;border-radius:50%;background:#173c46;
       color:#daf9ed;font-size:.92rem;}
@@ -323,6 +342,17 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   }
   readonly detailsId = this.pickerId + '-details';
   readonly detailsTitleId = this.pickerId + '-title';
+
+  /** Tap your own displayed emoji to remove it directly; other people's
+   * emojis open the list. The separate ⓘ button always opens the list for
+   * messages with your own reaction, so that feature stays reachable. */
+  onBadgeClick(emoji: string, event: Event): void {
+    if (!this.disabled && this.summary?.myEmoji === emoji) {
+      this.remove();
+      return;
+    }
+    this.openDetails(event);
+  }
 
   openDetails(event?: Event): void {
     if (this.totalCount === 0 || this.detailsOpen) return;
