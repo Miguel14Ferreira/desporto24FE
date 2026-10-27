@@ -49,7 +49,7 @@ let reactionPickerSequence = 0;
           @if (summary; as state) {
             <div class="reaction-choices">
               @for (emoji of emojis; track emoji) {
-                <button #reactionChoice type="button" class="reaction-choice" [attr.aria-label]="emoji"
+                <button type="button" class="reaction-choice" [attr.aria-label]="emoji"
                   [attr.aria-pressed]="state.myEmoji === emoji"
                   [disabled]="store.isBusy(kind, conversationId, messageId)"
                   (click)="pick(emoji)">{{ emoji }}</button>
@@ -91,6 +91,18 @@ let reactionPickerSequence = 0;
                     (click)="closeDetails()">×</button>
               </div>
             </header>
+            @if (detailsPickerOpen) {
+              <div class="reaction-details-chooser" role="group" [attr.aria-label]="'chat.react' | t">
+                <div class="reaction-choices">
+                  @for (emoji of emojis; track emoji) {
+                    <button #reactionChoice type="button" class="reaction-choice"
+                        [attr.aria-label]="emoji" [attr.aria-pressed]="summary?.myEmoji === emoji"
+                        [disabled]="store.isBusy(kind, conversationId, messageId)"
+                        (click)="pick(emoji)">{{ emoji }}</button>
+                  }
+                </div>
+              </div>
+            }
             <div class="reaction-details-filters" role="group" [attr.aria-label]="'chat.reactionFilter' | t">
               <button type="button" class="reaction-filter" [class.active]="!detailFilter"
                   [attr.aria-pressed]="!detailFilter"
@@ -196,6 +208,8 @@ let reactionPickerSequence = 0;
       width:36px;height:36px;background:#203f47;color:#d9fff3;
       border:1px solid #4e7576;border-radius:50%;}
     .reaction-details-actions .reaction-details-close {font-size:1.45rem;line-height:1;}
+    .reaction-details-chooser {display:flex;justify-content:center;padding:8px 14px 13px;
+      border-bottom:1px solid rgba(133,173,172,.16);}
     .reaction-details-filters {display:flex;align-items:center;gap:7px;
       overflow-x:auto;flex:0 0 auto;padding:3px 18px 13px;
       scrollbar-width:thin;border-bottom:1px solid #344c50;}
@@ -253,6 +267,7 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   readonly pickerId = 'chat-reactions-' + ++reactionPickerSequence;
   expanded = false;
   detailsOpen = false;
+  detailsPickerOpen = false;
   detailsLoading = false;
   detailsError = false;
   detailFilter: string | null = null;
@@ -342,6 +357,7 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
     this.detailsSubscription?.unsubscribe();
     this.detailsSubscription = undefined;
     this.detailsOpen = false;
+    this.detailsPickerOpen = false;
     this.detailsLoading = false;
     this.detailsError = false;
     this.detailFilter = null;
@@ -352,15 +368,13 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   openPickerFromDetails(): void {
-    const source = this.detailsTrigger;
-    this.closeDetails(false);
-    this.expanded = true;
-    this.pickerTrigger = source;
-    if (this.store.hasFailed(this.kind, this.conversationId, this.messageId)) this.retry();
-    // Focus must enter the newly visible picker before the removed dialog's
-    // focusout event can collapse it. This also avoids an invisible keyboard trap.
+    // Keep the people dialog mounted while choosing another emoji. Removing
+    // its focused button and opening an unrelated picker caused focusout to
+    // close that picker immediately in real Chromium.
+    this.detailsPickerOpen = !this.detailsPickerOpen;
     this.cdr.detectChanges();
-    this.reactionChoice?.nativeElement.focus({ preventScroll: true });
+    if (this.detailsPickerOpen) this.reactionChoice?.nativeElement.focus({ preventScroll: true });
+    else this.detailsClose?.nativeElement.focus({ preventScroll: true });
   }
 
   onDetailsKeydown(event: KeyboardEvent): void {
@@ -420,9 +434,11 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
     // Removal is a separately labelled action in the picker.
     if (this.summary.myEmoji === emoji) {
       this.expanded = false;
+      if (this.detailsOpen) this.closeDetails();
       return;
     }
     this.error = false;
+    this.closeDetails(false);
     this.expanded = false;
     this.store.toggle(this.kind, this.conversationId, this.messageId, emoji,
       () => { this.error = true; });
