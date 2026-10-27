@@ -239,7 +239,9 @@ export class PublicSessionPreviewComponent implements OnInit {
 
   publicShareUrl(): string | null {
     return this.session && this.canRequestParticipation && this.sessionId !== null
-      ? new URL('/sessions/' + this.sessionId, window.location.origin).href
+      ? new URL('/sessions/' + this.sessionId
+          + (this.guestToken ? '?guest=' + encodeURIComponent(this.guestToken) : ''),
+          window.location.origin).href
       : null;
   }
 
@@ -314,9 +316,15 @@ export class PublicSessionPreviewComponent implements OnInit {
     this.errorMessageKey = '';
     this.canRetry = false;
 
-    this.http.get<SessionPublicPreview>(
-      environment.apiUrl + '/api/sessions/' + this.sessionId + '/public-preview'
-    ).pipe(
+    // The signed POST preview is the only safe way to open a members-only
+    // community game without publishing its details on the anonymous GET API.
+    const preview$ = this.guestToken
+      ? this.http.post<SessionPublicPreview>(
+          environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-preview',
+          {token:this.guestToken})
+      : this.http.get<SessionPublicPreview>(
+          environment.apiUrl + '/api/sessions/' + this.sessionId + '/public-preview');
+    preview$.pipe(
       timeout(10000),
       finalize(() => this.loading = false)
     ).subscribe({
