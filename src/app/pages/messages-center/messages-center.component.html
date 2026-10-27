@@ -4,16 +4,38 @@
       <aside class="inbox-sidebar" [attr.aria-label]="'inbox.listLabel' | t">
         <div class="inbox-side-top">
           <header class="inbox-side-heading">
-            <a routerLink="/menu/groups" class="inbox-groups-shortcut"
-               [attr.title]="'groups.title' | t">👥 {{ 'groups.title' | t }}</a>
-            <div>
+            <div class="inbox-side-heading-top">
+              <span class="inbox-heading-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H8l-4 2v-6.3A7.5 7.5 0 1 1 20 11.5Z"/>
+                  <path d="M8.5 11.5h7"/>
+                </svg>
+              </span>
+              <span class="inbox-connection" [class.is-online]="realtimeConnected" role="status">
+                <span aria-hidden="true" class="inbox-connection-dot"></span>
+                <span class="inbox-connection-label">{{ (realtimeConnected ? 'chat.connected' : everConnected ? 'chat.reconnecting' : 'chat.connecting') | t }}</span>
+              </span>
+            </div>
+            <div class="inbox-side-heading-copy">
               <h1>{{ 'inbox.title' | t }}</h1>
               <p>{{ 'inbox.subtitle' | t }}</p>
             </div>
-            <span class="inbox-connection" [class.is-online]="realtimeConnected" role="status">
-              <span aria-hidden="true" class="inbox-connection-dot"></span>
-              <span class="inbox-connection-label">{{ (realtimeConnected ? 'chat.connected' : everConnected ? 'chat.reconnecting' : 'chat.connecting') | t }}</span>
-            </span>
+            <a routerLink="/menu/groups" class="inbox-groups-shortcut"
+               [attr.title]="'groups.title' | t">
+              <span class="inbox-groups-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </span>
+              <span class="inbox-groups-label">{{ 'groups.title' | t }}</span>
+              <svg class="inbox-groups-arrow" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
           </header>
           <label class="inbox-search">
             <span>{{ 'inbox.search' | t }}</span>
