@@ -170,7 +170,8 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
-          this.pendingInvites = [];
+          // A failure to load optional alert history must not hide a valid,
+          // authenticated session invitation already returned by its own API.
           this.updateUnreadCount();
           this.errorMessage = t('feedback.notifications.loadError');
         }
