@@ -116,6 +116,28 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     }
   });
 
+  it('shows site-only research map link for finite values and never infers an entrance', () => {
+    const candidate = {
+      latitude: 38.573234, longitude: -7.928876,
+      officialSourceUrl: 'https://www.cm-evora.pt/',
+      secondarySourceUrl: 'https://www.outdooractive.pt/',
+      precision: 'SITE_REFERENCE_NOT_VERIFIED_ENTRANCE'
+    };
+    expect(component.gpsResearchMapUrl(candidate))
+      .toBe('https://www.google.com/maps/search/?api=1&query=38.573234%2C-7.928876');
+    for (const bad of [
+      null, undefined,
+      {...candidate, latitude: 91},
+      {...candidate, longitude: -181},
+      {...candidate, latitude: NaN},
+      {...candidate, longitude: Infinity},
+      {...candidate, precision: 'VERIFIED_ENTRANCE'},
+      {...candidate, latitude: '38.573234' as unknown as number},
+    ]) {
+      expect(component.gpsResearchMapUrl(bad)).toBeNull();
+    }
+  });
+
   it('only fetches GPS review after opening the panel and paginates per district', () => {
     const queue = {venues:[{id:15,name:'Campo Municipal',city:'Sintra',district:'Lisboa',
       address:'Rua A',sourceReference:'OSM:WAY:22',informationSource:'OPENSTREETMAP'}],
