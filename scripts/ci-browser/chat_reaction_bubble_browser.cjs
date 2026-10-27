@@ -188,7 +188,7 @@ async function main(){
     await mobile.locator('.reaction-details-chooser button[aria-label="❤️"]').click();
     await b.waitForFunction(()=>document.querySelector('.reaction-count')?.textContent?.includes('2'));
     assert.deepEqual(writes,['ana:PUT:❤️','bea:PUT:❤️']);
-    assert.equal((await mobile.locator('.reaction-count').textContent()).replace(/\\s/g,''),'❤️2',
+    assert.equal((await mobile.locator('.reaction-count').textContent()).replace(/\s/g,''),'❤️2',
       'a reaction count appears only when there are two or more');
     await mobile.locator('.reaction-count').click();
     await mobile.locator('.reaction-person').first().waitFor();
