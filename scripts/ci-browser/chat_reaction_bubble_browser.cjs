@@ -206,6 +206,7 @@ async function main(){
     assert.equal(await a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').count(),2);
     const heart=a.locator('app-chat-reactions.inbox-reaction-under-message .reaction-count').filter({hasText:'❤️'});
     await heart.click();
+    await a.locator('.reaction-person').first().waitFor({timeout:7000});
     const personCount=await a.locator('.reaction-person').count();
     assert.equal(personCount,2,'participant detail shows both actors for different emojis');
     await a.locator('.reaction-details-remove').click();
