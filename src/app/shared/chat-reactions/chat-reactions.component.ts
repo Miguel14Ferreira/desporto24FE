@@ -51,6 +51,7 @@ let reactionPickerSequence = 0;
               @for (emoji of emojis; track emoji) {
                 <button type="button" class="reaction-choice" [attr.aria-label]="emoji"
                   [attr.aria-pressed]="state.myEmoji === emoji"
+                  [attr.title]="state.myEmoji === emoji ? ('chat.removeReaction' | t) : ('chat.react' | t)"
                   [disabled]="store.isBusy(kind, conversationId, messageId)"
                   (click)="pick(emoji)">{{ emoji }}</button>
               }
@@ -97,6 +98,7 @@ let reactionPickerSequence = 0;
                   @for (emoji of emojis; track emoji) {
                     <button #reactionChoice type="button" class="reaction-choice"
                         [attr.aria-label]="emoji" [attr.aria-pressed]="summary?.myEmoji === emoji"
+                        [attr.title]="summary?.myEmoji === emoji ? ('chat.removeReaction' | t) : ('chat.react' | t)"
                         [disabled]="store.isBusy(kind, conversationId, messageId)"
                         (click)="pick(emoji)">{{ emoji }}</button>
                   }
@@ -429,14 +431,11 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   pick(emoji: string): void {
-    if (this.disabled || !this.summary) return;
-    // Re-selecting an existing emoji must never silently erase it.
-    // Removal is a separately labelled action in the picker.
-    if (this.summary.myEmoji === emoji) {
-      this.expanded = false;
-      if (this.detailsOpen) this.closeDetails();
-      return;
-    }
+    if (this.disabled || !this.summary
+        || this.store.isBusy(this.kind, this.conversationId, this.messageId)) return;
+    // WhatsApp-style toggle: choosing the same emoji again removes ONLY my
+    // reaction (DELETE); choosing a different one replaces it (PUT).
+    // The authoritative store already implements both operations safely.
     this.error = false;
     this.closeDetails(false);
     this.expanded = false;
