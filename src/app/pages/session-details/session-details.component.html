@@ -598,6 +598,65 @@
               }
             </section>
           } @else if (isCreator()) {
+            @if (canShareGuestInvites()) {
+              <section class="guest-organizer-panel" [attr.aria-label]="'guestAdmin.title' | t">
+                <header>
+                  <span class="section-kicker">{{ 'guestAdmin.eyebrow' | t }}</span>
+                  <h2>{{ 'guestAdmin.title' | t }}</h2>
+                  <p>{{ 'guestAdmin.help' | t }}</p>
+                </header>
+                <div class="guest-organizer-actions">
+                  <button type="button" class="jynlo-action jynlo-action--primary"
+                    [disabled]="guestLinkWorking" (click)="createGuestLink()">
+                    {{ (guestLinkWorking ? 'guestAdmin.creating' : 'guestAdmin.generate') | t }}
+                  </button>
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="guestRequestsLoading" (click)="loadGuestRequests()">
+                    {{ 'guestAdmin.refresh' | t }}
+                  </button>
+                </div>
+                <p class="guest-organizer-hint">{{ 'guestAdmin.rotateWarning' | t }}</p>
+                @if (guestLinkUrl) {
+                  <div class="guest-organizer-link">
+                    <label for="guest-organizer-share-url">{{ 'guestAdmin.shareLink' | t }}</label>
+                    <input id="guest-organizer-share-url" type="text" readonly [value]="guestLinkUrl"
+                      #guestLinkField (click)="guestLinkField.select()"/>
+                    <div class="guest-organizer-actions">
+                      <button type="button" class="jynlo-action jynlo-action--neutral"
+                        (click)="copyGuestLink()">{{ 'guestAdmin.copy' | t }}</button>
+                      <a [href]="guestLinkWhatsAppUrl" target="_blank" rel="noopener noreferrer"
+                        class="jynlo-action jynlo-action--primary">{{ 'guestAdmin.whatsApp' | t }}</a>
+                    </div>
+                  </div>
+                }
+                @if (guestPanelError) {<p class="guest-organizer-error" role="alert">{{ guestPanelError }}</p>}
+                @if (guestPanelSuccess) {<p class="guest-organizer-success" role="status">{{ guestPanelSuccess }}</p>}
+                @if (guestRequestsLoading) {
+                  <p role="status">{{ 'guestAdmin.loading' | t }}</p>
+                } @else {
+                  @for (guest of guestRequests; track guest.id) {
+                    <div class="guest-organizer-row">
+                      <div>
+                        <strong>{{ guest.name }}</strong>
+                        <span>{{ ('guestAdmin.status.' + guest.status) | t }}</span>
+                        @if(guest.note){<small>{{ guest.note }}</small>}
+                        @if(guest.teamCode){<small>{{ 'guestAdmin.team' | t }} {{ guest.teamCode }}</small>}
+                      </div>
+                      @if (guest.status === 'PENDING') {
+                        <div class="guest-organizer-actions">
+                          <button type="button" class="jynlo-action jynlo-action--primary"
+                            [disabled]="guestRequestBusyId!==null"
+                            (click)="reviewGuest(guest,true)">{{ 'guestAdmin.approve' | t }}</button>
+                          <button type="button" class="jynlo-action jynlo-action--neutral"
+                            [disabled]="guestRequestBusyId!==null"
+                            (click)="reviewGuest(guest,false)">{{ 'guestAdmin.reject' | t }}</button>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+              </section>
+            }
             <section class="participation-panel">
               <div>
                 <h2>{{ 'sessionDetail.ownTitle' | t }}</h2>
@@ -632,7 +691,7 @@
                       [disabled]="teamsLoading || teamsConfirming"
                       [attr.aria-pressed]="teamsScoreSource === 'EXCEL_POINTS'"
                       (click)="generateTeams('EXCEL_POINTS')">
-                      {{ 'sessionDetail.teamsFromExcel' | t }}
+                      {{ 'guestAdmin.teamsFromExcel' | t }}
                     </button>
                   </div>
                 </div>
@@ -647,7 +706,11 @@
                       <h3>{{ 'sessionDetail.teamA' | t }} <span>{{ teamSuggestion.teamAScore }}</span></h3>
                       @for (player of teamSuggestion.teamA; track player.username) {
                         <div class="team-player">
-                          <a class="session-profile-link" [routerLink]="['/menu/perfis',player.username]">{{ '@' + player.username }}</a>
+                          @if(player.guest){
+                            <span class="team-guest-label">{{ player.displayName || ('guestAdmin.guestPlayer' | t) }}</span>
+                          } @else {
+                            <a class="session-profile-link" [routerLink]="['/menu/perfis',player.username]">{{ '@' + player.username }}</a>
+                          }
                           @if (teamsScoreSource === 'EXCEL_POINTS') {
                             <small>{{ player.statsAvailable
                               ? ('sessionDetail.excelPlayerPoints' | t:{ points: player.strengthScore })
@@ -665,7 +728,11 @@
                       <h3>{{ 'sessionDetail.teamB' | t }} <span>{{ teamSuggestion.teamBScore }}</span></h3>
                       @for (player of teamSuggestion.teamB; track player.username) {
                         <div class="team-player">
-                          <a class="session-profile-link" [routerLink]="['/menu/perfis',player.username]">{{ '@' + player.username }}</a>
+                          @if(player.guest){
+                            <span class="team-guest-label">{{ player.displayName || ('guestAdmin.guestPlayer' | t) }}</span>
+                          } @else {
+                            <a class="session-profile-link" [routerLink]="['/menu/perfis',player.username]">{{ '@' + player.username }}</a>
+                          }
                           @if (teamsScoreSource === 'EXCEL_POINTS') {
                             <small>{{ player.statsAvailable
                               ? ('sessionDetail.excelPlayerPoints' | t:{ points: player.strengthScore })
