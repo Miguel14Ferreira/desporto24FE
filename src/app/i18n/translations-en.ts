@@ -601,6 +601,8 @@ export const EN: Record<string, string> = {
   'guestRsvp.createAccount': 'Create Jynlo account (optional)',
   'guestRsvp.noThanks': 'You can keep your attendance without an account.',
   'guestRsvp.requestError': 'Could not send request. Check your information or contact the organizer.',
+  'guestRsvp.savedBookingsTitle': 'Bookings on this device',
+  'guestRsvp.savedBookingsHelp': 'Already confirmed someone using this browser? Select their name to view or correct their booking.',
   'guestRsvp.changeOwnPlayer': 'Change my player',
   'guestRsvp.changePlayerTitle': 'Correct the player name',
   'guestRsvp.changePlayerHelp': 'Your place stays reserved. Only the name on this booking changes.',
