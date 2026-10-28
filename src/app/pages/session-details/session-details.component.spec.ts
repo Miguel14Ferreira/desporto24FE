@@ -3453,7 +3453,7 @@ describe('SessionDetailsComponent', () => {
     expect(invites).not.toBeNull();
     expect(invites.querySelector('button.session-player-card__cancel')).toBeNull();
     expect(invites.textContent).toContain('Barata');
-    expect(invites.querySelectorAll('button')).not.toContain(jasmine.objectContaining({textContent:'Atualizar pedidos'}) as any);
+    expect(invites.textContent).not.toContain('Atualizar pedidos');
     expect(roster.querySelector('button.secondary-action')).toBeNull();
     const fresco = roster.querySelector('.session-player-card--guest') as HTMLElement;
     expect(fresco.textContent).toContain('Fresco');
@@ -3468,7 +3468,7 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
     expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
 
-    request.click();
+    (fresco.querySelector('.session-player-card__cancel') as HTMLButtonElement).click();
     fixture.detectChanges();
     const submit = fresco.querySelector('.session-player-card__confirmation button') as HTMLButtonElement;
     submit.click();
