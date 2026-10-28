@@ -20,6 +20,7 @@ import { DirectCallClientService } from '../../services/direct-call-client.servi
 import { ProfileQuickViewService } from '../../services/profile-quick-view.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
+import { chatMediaPreviewKind } from '../../shared/chat-media-preview';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { DirectChatMessage } from '../model/direct-chat';
 import { SessionMessage } from '../model/session-message';
@@ -1865,7 +1866,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (shared) return t('chat.shareType.' + shared.kind) + ': ' + shared.title;
     // Reserved GIPHY envelopes must never appear as raw JSON in previews,
     // including historic malformed envelopes that cannot be rendered as media.
-    if (value.startsWith('[JYNLO:GIPHY:1]')) return 'GIF';
+    const media = chatMediaPreviewKind(value);
+    if (media) return t('chat.mediaPreview.' + media);
     return value;
   }
 
