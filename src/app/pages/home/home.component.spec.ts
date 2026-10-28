@@ -138,7 +138,7 @@ describe('HomeComponent public discovery', () => {
     expect(fixture.componentInstance.featuredSessions).toEqual([]);
     expect(fixture.componentInstance.featuredVenues).toEqual([]);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-state').length).toBe(2);
-    expect((fixture.nativeElement as HTMLElement).querySelector('.preview-cta')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.preview-cta')).toBeNull();
   });
 
   it('finds complete venues after an incomplete first page without downloading the whole catalogue', () => {
