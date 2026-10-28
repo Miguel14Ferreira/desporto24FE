@@ -15,6 +15,7 @@ const writes=[];
 const errors=[];
 const CHECK_CALLS=process.env.JYNLO_VERIFY_CALLS === '1';
 const CHECK_GROUPS=process.env.JYNLO_VERIFY_GROUPS === '1';
+const GROUP_PHOTO_ONLY=process.env.JYNLO_GROUP_PHOTO_ONLY === '1';
 const CHECK_CONTACT=process.env.JYNLO_VERIFY_CONTACT === '1';
 const CHECK_PROFILE_INVITES=process.env.JYNLO_VERIFY_PROFILE_INVITES === '1';
 const profileInvitePosts=[];
@@ -112,6 +113,18 @@ async function context(browser,username,width){
         members:[{username:'ana',displayName:'Ana',profilePicUrl:null,admin:true},
         {username:'bea',displayName:'Bea',profilePicUrl:null,admin:false}]};
       groupWrites.push('created');return reply(route,200,group);
+    }
+    if(CHECK_GROUPS && p==='/api/test-group-photo.png' && method==='GET'){
+      return route.fulfill({status:200,contentType:'image/png',headers:{
+        'access-control-allow-origin':'*'},body:Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Xlnci0AAAAASUVORK5CYII=','base64')});
+    }
+    if(CHECK_GROUPS && p==='/api/private-groups/77/photo' && method==='POST'){
+      if(username!=='ana')return reply(route,403,{message:'Only creator can update photo'});
+      assert.match((await req.headerValue('content-type'))||'',/multipart\/form-data/);
+      group.photoUrl='https://api.d24sports.com/api/test-group-photo.png';
+      groupWrites.push('photo');
+      return reply(route,200,group);
     }
     if(CHECK_GROUPS && p==='/api/private-groups/77/members' && method==='POST'){
       assert.deepEqual(req.postDataJSON(),{usernames:['carla']});
@@ -318,6 +331,10 @@ async function main(){
       await panel.waitFor({state:'detached'});
     }
 
+    const bea=await context(browser,'bea',390);
+    const b=await bea.newPage();
+    b.on('pageerror',e=>errors.push('bea: '+e.message));
+    if(!GROUP_PHOTO_ONLY){
     const shelf=await assertClickable(a,'inbox','desktop-reaction-before');
     assert.equal(await shelf.locator('.reaction-details-remove').count(),1,
       'your own reaction is always removable');
@@ -331,9 +348,6 @@ async function main(){
       'a single heart must not display 1');
     await a.screenshot({path:path.join(OUT,'desktop-one-heart.png')});
 
-    const bea=await context(browser,'bea',390);
-    const b=await bea.newPage();
-    b.on('pageerror',e=>errors.push('bea: '+e.message));
     await b.goto(SITE+'/menu/messages?kind=direct&id=ana',{waitUntil:'domcontentloaded'});
     const mobile=await assertClickable(b,'inbox','mobile-peer-reaction');
     assert.match(await mobile.locator('.reaction-person-name').first().textContent(),/Ana/);
@@ -383,6 +397,7 @@ async function main(){
       undefined, {timeout:7000});
     assert.equal((await a.locator('.reaction-count').first().textContent()).trim(),'👍');
     await a.screenshot({path:path.join(OUT,'desktop-after-explicit-removal.png')});
+    }
     if(CHECK_CALLS){
       // An incoming call is rendered in the global overlay even when user
       // is already in a different chat; no LiveKit credentials or microphones.
@@ -425,6 +440,12 @@ async function main(){
       await a.locator('.group-modal .group-submit').click();
       await a.locator('.group-chat-header h2').filter({hasText:'Futebol de sábado'}).waitFor();
       assert.deepEqual(groupWrites,['created','renamed']);
+      await a.locator('.group-photo-input').setInputFiles({name:'team.png',mimeType:'image/png',
+        buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Xlnci0AAAAASUVORK5CYII=','base64')});
+      await a.locator('.group-header-avatar img').waitFor();
+      await a.locator('.group-entry.current .group-circle img').waitFor();
+      assert.equal(groupWrites.at(-1),'photo');
+      await a.screenshot({path:path.join(OUT,'group-photo-updated.png')});
       await a.locator('.group-compose textarea').fill('Olá equipa!');
       await a.locator('.group-compose button').click();
       await a.locator('.group-bubble').first().waitFor();
@@ -435,7 +456,7 @@ async function main(){
       await carla.locator('input[type=checkbox]').check();
       await a.locator('.group-submit').click();
       await a.locator('.group-member-links a').filter({hasText:'Carla'}).waitFor();
-      assert.deepEqual(groupWrites,['created','renamed','ana:message','invited']);
+      assert.deepEqual(groupWrites,['created','renamed','photo','ana:message','invited']);
       await a.screenshot({path:path.join(OUT,'group-added-third-person.png')});
       await b.goto(SITE+'/menu/groups?id=77',{waitUntil:'domcontentloaded'});
       await b.locator('.group-chat-header').waitFor();
@@ -455,7 +476,7 @@ async function main(){
       await b.locator('[role="alertdialog"] .group-submit').click();
       await b.locator('.group-welcome').waitFor();
       assert.ok(!group.members.some(m=>m.username==='bea'));
-      assert.deepEqual(groupWrites,['created','renamed','ana:message','invited','removed:carla','removed:bea']);
+      assert.deepEqual(groupWrites,['created','renamed','photo','ana:message','invited','removed:carla','removed:bea']);
     }
     if(CHECK_PROFILE_INVITES){
       await a.setViewportSize({width:1440,height:900});
