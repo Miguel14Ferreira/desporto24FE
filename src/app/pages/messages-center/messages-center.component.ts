@@ -1186,7 +1186,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   canEditSentMessage(message: InboxMessage): boolean {
     const date = Date.parse(message.createdAt);
     return this.canDeleteSentMessage(message) && !message.attachmentName
-      && !readGiphyText(message.text) && !readSharedMessage(message.text)
+      && !message.text.startsWith('[JYNLO:GIPHY:1]') && !readSharedMessage(message.text)
       && Number.isFinite(date) && Date.now() >= date
       && Date.now() - date <= 15 * 60_000;
   }
@@ -1863,7 +1863,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!value) return '';
     const shared = readSharedMessage(value);
     if (shared) return t('chat.shareType.' + shared.kind) + ': ' + shared.title;
-    if (readGiphyText(value)) return 'GIF · GIPHY';
+    // Reserved GIPHY envelopes must never appear as raw JSON in previews,
+    // including historic malformed envelopes that cannot be rendered as media.
+    if (value.startsWith('[JYNLO:GIPHY:1]')) return 'GIF';
     return value;
   }
 
