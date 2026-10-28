@@ -376,6 +376,14 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationMessage(notification: AppNotification): string {
+    // Direct chat stores GIPHY as a typed message; notification cards should
+    // show a human-readable summary, including for existing saved alerts.
+    // Never render the payload JSON or a third-party URL in the notification.
+    if (notification.type === 'CHAT_MESSAGE'
+        && (notification.message.startsWith('[JYNLO:GIPHY:1]')
+            || notification.message === '🎞️ GIF')) {
+      return t('notification.chatGifPreview');
+    }
     if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
       // Never render meeting instructions from the alert itself. Always send
       // players to session details where the API re-checks membership.
