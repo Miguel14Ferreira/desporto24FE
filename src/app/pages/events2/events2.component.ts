@@ -65,7 +65,7 @@ export class Events2Component implements OnInit, OnDestroy {
   }
 
   toggleSeasonGame(checked: boolean): void {
-    if (this.loading || !this.communitySessionSelected) return;
+    if (this.loading || (checked && !this.communitySessionSelected)) return;
     this.seasonGame = checked;
     this.confirmActivateRankings = false;
     if (checked) {
