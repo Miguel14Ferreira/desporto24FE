@@ -293,6 +293,21 @@ export class Events2Component implements OnInit, OnDestroy {
   selectedPresetId: number | null = null;
   presetName = '';
   presetsLoading = false;
+  presetEditorOpen = false;
+
+  togglePresetEditor(): void {
+    if (this.loading || this.presetSaving || this.presetDeleting) return;
+    this.presetEditorOpen = !this.presetEditorOpen;
+    this.presetError = '';
+    this.presetMessage = '';
+    if (this.presetEditorOpen) this.presetName = '';
+  }
+
+  closePresetEditor(): void {
+    if (this.presetSaving) return;
+    this.presetEditorOpen = false;
+    this.presetError = '';
+  }
   presetSaving = false;
   presetDeleting = false;
   presetConfirmDelete = false;
@@ -379,6 +394,7 @@ export class Events2Component implements OnInit, OnDestroy {
         this.selectedPresetId = saved.id;
         this.presetName = saved.name;
         this.presetConfirmDelete = false;
+        this.presetEditorOpen = false;
         this.presetMessage = t(update ? 'createSession.presets.updated' : 'createSession.presets.saved');
       },
       error: () => { this.presetError = t('createSession.presets.saveError'); }
@@ -779,10 +795,11 @@ export class Events2Component implements OnInit, OnDestroy {
         finalize(() => this.loading = false)
       )
       .subscribe({
+        // Every creator sees an appropriate share dialog on first entry.
+        // Community/private links stay authenticated; public preview is never invented.
         next: session => this.router.navigate(
           ['/menu/events', session.id],
-          !session.privateGame && session.canSharePublicly === true
-            ? { queryParams: { created: 1 } } : {}
+          { queryParams: { created: 1 } }
         ),
         error: error => {
           this.errorMessage = this.errorFrom(

@@ -111,6 +111,30 @@
   .create-preset-actions button { flex: 1 1 145px; }
 }
 
+/* Keep saved presets compact. The editor appears only on explicit "Save configuration". */
+.create-preset-save-editor {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: clamp(16px,2.4vw,22px);
+  border: 1px solid rgba(55,210,174,.4);
+  border-radius: 14px;
+  background: rgba(12,58,66,.72);
+}
+.create-preset-save-editor > div:first-child { display: grid; gap: 5px; }
+.create-preset-save-editor strong { color: #e8fffa; }
+.create-preset-save-editor p { color: #c0dadd; margin: 0; line-height: 1.5; }
+.create-preset-save-editor label { display: grid; gap: 7px; min-width: 0; font-weight: 700; }
+.create-preset-save-editor input {
+  min-height: 44px; width: 100%; min-width: 0;
+  padding: 10px 12px; border: 1px solid #447984; border-radius: 10px;
+  background: #092a3b; color: #f0fffd; font: inherit;
+}
+.create-preset-panel .create-preset-heading {display:grid;gap:4px}
+.create-preset-panel .create-preset-heading p {max-width: 75ch}
+.create-card .form-actions {flex-wrap:wrap;gap:12px}
+
 /* Separate private arrival instructions from the venue address and GPS. */
 .create-meeting-point-panel { display:grid;gap:12px;min-width:0;margin:21px 0;
   padding:clamp(16px,2.5vw,22px);border:1px solid rgba(82,197,182,.31);

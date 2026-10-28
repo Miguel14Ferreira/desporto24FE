@@ -148,6 +148,45 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   inviteFeedback = '';
   inviteError = '';
   sharingSession = false;
+  cancelSessionConfirmOpen = false;
+  cancelSessionWorking = false;
+
+  canCancelOwnSession(): boolean {
+    return !!this.session && this.isCreator()
+      && (this.session.status === 'OPEN' || this.session.status === 'FULL');
+  }
+
+  requestCancelOwnSession(): void {
+    if (!this.canCancelOwnSession() || this.cancelSessionWorking) return;
+    this.cancelSessionConfirmOpen = true;
+    this.actionError = '';
+  }
+
+  dismissCancelOwnSession(): void {
+    if (!this.cancelSessionWorking) this.cancelSessionConfirmOpen = false;
+  }
+
+  confirmCancelOwnSession(): void {
+    if (!this.canCancelOwnSession() || !this.cancelSessionConfirmOpen
+        || this.cancelSessionWorking || !this.sessionId) return;
+    this.cancelSessionWorking = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+    this.sessionService.cancel(this.sessionId).pipe(
+      timeout(10000), finalize(() => this.cancelSessionWorking = false)
+    ).subscribe({
+      next: () => {
+        if (this.session) this.session = {...this.session, status: 'CANCELLED'};
+        this.cancelSessionConfirmOpen = false;
+        this.promotionOpen = false;
+        this.creationShareDismissed = true;
+        this.actionSuccess = t('feedback.sessions.cancelled');
+      },
+      error: error => {
+        this.actionError = this.errorFrom(error, t('feedback.sessions.cancelError'));
+      }
+    });
+  }
   creationShareDismissed = false;
   promotionOpen = false;
   shareFeedback = '';
@@ -1936,14 +1975,22 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       && Date.parse(session.gameDate) > Date.now();
   }
 
+  /** Public sessions may be shared openly; restricted links work only for authorized users. */
+  canOpenOrganizerShare(): boolean {
+    return !!this.session && this.isCreator()
+      && (this.session.status === 'OPEN' || this.session.status === 'FULL')
+      && Date.parse(this.session.gameDate) > Date.now()
+      && this.session.id > 0;
+  }
+
   showCreationSharePanel(): boolean {
     return !this.creationShareDismissed
       && this.route.snapshot.queryParamMap?.get('created') === '1'
-      && this.canPromoteSession();
+      && this.canOpenOrganizerShare();
   }
 
   togglePromotionPanel(): void {
-    if (this.canPromoteSession()) {
+    if (this.canOpenOrganizerShare()) {
       this.promotionOpen = !this.promotionOpen;
     }
   }
@@ -1963,14 +2010,21 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }, document.documentElement.lang === 'en' ? 'en-GB' : 'pt-PT');
   }
 
+  /** Never use the public /sessions route for member-only or password-protected games. */
+  organizerShareUrl(): string | null {
+    if (!this.session || !this.canOpenOrganizerShare()) return null;
+    if (this.canShareSession()) return this.publicShareUrl();
+    return new URL('/menu/events/' + this.session.id, window.location.origin).href;
+  }
+
   whatsappShareUrl(): string | null {
-    const url = this.publicShareUrl();
-    if (!url || !this.session || !this.canPromoteSession()) return null;
+    const url = this.organizerShareUrl();
+    if (!url) return null;
     return 'https://wa.me/?text=' + encodeURIComponent(this.compactShareText() + '\n' + url);
   }
 
   async copyPublicShareLink(): Promise<void> {
-    const url = this.publicShareUrl();
+    const url = this.organizerShareUrl();
     if (!url || this.sharingSession) {
       return;
     }

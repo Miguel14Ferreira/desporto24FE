@@ -81,6 +81,29 @@ describe('Events2Component', () => {
   });
 
 
+  it('shows saved presets only after saving, with a separate save action beside Create session', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.create-preset-panel')).toBeNull();
+    const saveAction = fixture.nativeElement.querySelector('.form-actions button[type="button"]') as HTMLButtonElement;
+    expect(saveAction.textContent).toContain('Guardar configuração');
+    saveAction.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.create-preset-save-editor')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.create-preset-panel')).toBeNull();
+
+    component.sport = 'Futsal';
+    component.presetName = 'Treino semanal';
+    presetService.create.and.callFake((name, settings) => of({
+      id: 16, name, settings, createdAt: '', updatedAt: ''
+    }));
+    component.savePreset();
+    fixture.detectChanges();
+    expect(component.presetEditorOpen).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.create-preset-save-editor')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.create-preset-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('select[name="sessionPresetSelection"]')).not.toBeNull();
+  });
+
   it('saves a reusable preset without a date, password, photo or registration time', () => {
     component.sport = 'Futsal';
     component.city = 'Lisboa';
@@ -1257,7 +1280,7 @@ describe('Events2Component', () => {
     component.privateGame = true;
     component.password = 'secret';
     component.createSession();
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42], {});
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42], { queryParams: { created: 1 } });
   });
 
   it('blocks session submission during a pending venue submission but never attaches its id', () => {
