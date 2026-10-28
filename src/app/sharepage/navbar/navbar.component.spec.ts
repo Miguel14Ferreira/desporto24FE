@@ -6,6 +6,8 @@ import { NavbarComponent } from './navbar.component';
 import { AuthenticationService } from '../../services/authethication.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { InboxApiService } from '../../services/inbox-api.service';
+import { PrivateGroupService } from '../../services/private-group.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('NavbarComponent', () => {
@@ -14,6 +16,11 @@ describe('NavbarComponent', () => {
   let authService: jasmine.SpyObj<AuthenticationService>;
   let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
   let notificationService: jasmine.SpyObj<NotificationApiService>;
+  let inboxApi: jasmine.SpyObj<InboxApiService>;
+  let privateGroups: jasmine.SpyObj<PrivateGroupService>;
+  let communityEvents: Subject<any>;
+  let sessionEvents: Subject<any>;
+  let groupEvents: Subject<any>;
   let incomingMessages: Subject<any>;
   let notificationChanges: Subject<void>;
   let originalTabTitle: string;
@@ -28,18 +35,33 @@ describe('NavbarComponent', () => {
     authService.terminarSessao.and.returnValue(of(undefined));
 
     incomingMessages = new Subject<any>();
+    communityEvents = new Subject<any>();
+    sessionEvents = new Subject<any>();
+    groupEvents = new Subject<any>();
     realtimeService = jasmine.createSpyObj<DirectChatRealtimeService>(
       'DirectChatRealtimeService',
       ['connect', 'disconnect'],
-      { messages$: incomingMessages.asObservable() }
+      { messages$: incomingMessages.asObservable(),
+        communityMessages$: communityEvents.asObservable(),
+        sessionMessages$: sessionEvents.asObservable(),
+        groupMessages$: groupEvents.asObservable() }
     );
 
     notificationChanges = new Subject<void>();
     notificationService = jasmine.createSpyObj<NotificationApiService>(
-      'NotificationApiService', ['unreadCount', 'mine'], { changes$: notificationChanges.asObservable() }
+      'NotificationApiService', ['unreadCount', 'mine', 'preferences'], { changes$: notificationChanges.asObservable() }
     );
     notificationService.unreadCount.and.returnValue(of(0));
     notificationService.mine.and.returnValue(of([]));
+    notificationService.preferences.and.returnValue(of({
+      inAppEnabled: true, emailEnabled: true, disabledInAppTypes: [], disabledEmailTypes: []
+    }));
+    inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries']);
+    inboxApi.summaries.and.returnValue(of([]));
+    privateGroups = jasmine.createSpyObj<PrivateGroupService>('PrivateGroupService', ['get']);
+    privateGroups.get.and.returnValue(of({ id: 2, title: 'Grupo QA',
+      members: [{ username: 'bea', displayName: 'Bea', profilePicUrl: null, admin: false }],
+      creatorUsername: 'ana', createdAt: new Date().toISOString() }));
 
     await TestBed.configureTestingModule({
       declarations: [NavbarComponent],
@@ -48,7 +70,9 @@ describe('NavbarComponent', () => {
         ...TEST_PROVIDERS,
         { provide: AuthenticationService, useValue: authService },
         { provide: DirectChatRealtimeService, useValue: realtimeService },
-        { provide: NotificationApiService, useValue: notificationService }
+        { provide: NotificationApiService, useValue: notificationService },
+        { provide: InboxApiService, useValue: inboxApi },
+        { provide: PrivateGroupService, useValue: privateGroups }
       ]
     }).compileComponents();
 
@@ -61,6 +85,119 @@ describe('NavbarComponent', () => {
     document.title = originalTabTitle;
   });
 
+
+
+  it('shows authorized community messages in PT and opens the correct conversation', fakeAsync(() => {
+    const previous = localStorage.getItem('t');
+    localStorage.setItem('t', 'group-test-token');
+    try {
+      spyOn(document, 'hasFocus').and.returnValue(true);
+      spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
+      (authService as any).loggedInPerfilname = 'bea';
+      authService.hasSessionCandidate.and.returnValue(true);
+      (component as any).syncAuthenticatedState();
+      inboxApi.summaries.and.returnValue(of([{
+        kind: 'community', id: '35', latestMessageId: 102, latestText: 'Olá',
+        latestSender: 'ana', latestAt: new Date().toISOString(), unreadCount: 1
+      }]));
+      const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      communityEvents.next({
+        id: 102, communityId: 35, username: 'ana',
+        kind: 'CHAT', body: 'Olá', createdAt: new Date().toISOString()
+      });
+      tick(300);
+      fixture.detectChanges();
+      const toast: HTMLElement = fixture.nativeElement.querySelector('.jynlo-chat-toast');
+      expect(toast?.textContent).toContain('Comunidade · mensagem de ana');
+      expect(toast?.textContent).toContain('Olá');
+      component.openGroupToast();
+      expect(navigate).toHaveBeenCalledWith(['/menu/messages'], {
+        queryParams: { kind: 'community', id: '35' }
+      });
+      communityEvents.next({ id: 102, communityId: 35, username: 'ana',
+        kind: 'CHAT', body: 'Olá', createdAt: new Date().toISOString() });
+      tick(300);
+      expect(component.groupToast).toBeUndefined();
+      expect(inboxApi.summaries).toHaveBeenCalledTimes(1);
+    } finally {
+      component.ngOnDestroy();
+      if (previous === null) localStorage.removeItem('t');
+      else localStorage.setItem('t', previous);
+    }
+  }));
+
+  it('requires unread membership and notification opt-in for session alerts', fakeAsync(() => {
+    const previous = localStorage.getItem('t');
+    localStorage.setItem('t', 'group-test-token');
+    try {
+      spyOn(document, 'hasFocus').and.returnValue(true);
+      spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
+      (authService as any).loggedInPerfilname = 'bea';
+      authService.hasSessionCandidate.and.returnValue(true);
+      (component as any).syncAuthenticatedState();
+      const event = {id: 73, sessionId: 18, senderUsername: 'ana',
+        body: 'O jogo começa às 18h', createdAt: new Date().toISOString()};
+      inboxApi.summaries.and.returnValue(of([{
+        kind: 'session', id: '18', latestMessageId: 73, latestText: event.body,
+        latestSender: 'ana', latestAt: new Date().toISOString(), unreadCount: 0
+      }]));
+      sessionEvents.next(event); tick(300);
+      expect(component.groupToast).toBeUndefined();
+      inboxApi.summaries.and.returnValue(of([{
+        kind: 'session', id: '18', latestMessageId: 73, latestText: event.body,
+        latestSender: 'ana', latestAt: new Date().toISOString(), unreadCount: 1
+      }]));
+      notificationService.preferences.and.returnValue(of({
+        inAppEnabled: true, emailEnabled: true,
+        disabledInAppTypes: ['CHAT_MESSAGE'], disabledEmailTypes: []
+      }));
+      sessionEvents.next(event); tick(300);
+      expect(component.groupToast).toBeUndefined();
+      notificationService.preferences.and.returnValue(of({
+        inAppEnabled: true, emailEnabled: true,
+        disabledInAppTypes: [], disabledEmailTypes: []
+      }));
+      sessionEvents.next(event); tick(300);
+      expect(component.groupToast?.kind).toBe('session');
+      expect(component.groupToastMessage(component.groupToast!)).toContain('O jogo');
+    } finally {
+      component.ngOnDestroy();
+      if (previous === null) localStorage.removeItem('t');
+      else localStorage.setItem('t', previous);
+    }
+  }));
+
+  it('revalidates private group membership and links to the group conversation', fakeAsync(() => {
+    const previous = localStorage.getItem('t');
+    localStorage.setItem('t', 'group-test-token');
+    try {
+      spyOn(document, 'hasFocus').and.returnValue(true);
+      spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
+      (authService as any).loggedInPerfilname = 'bea';
+      authService.hasSessionCandidate.and.returnValue(true);
+      (component as any).syncAuthenticatedState();
+      privateGroups.get.and.returnValue(of({ id: 2, title: 'Equipa Futsal',
+        members: [], creatorUsername: 'ana', createdAt: new Date().toISOString() }));
+      groupEvents.next({id: 77, groupId: 2, sender: 'ana', text: 'Bora!',
+        createdAt: new Date().toISOString()});
+      tick(300);
+      expect(component.groupToast).toBeUndefined();
+      privateGroups.get.and.returnValue(of({id: 2, title: 'Equipa Futsal',
+        members: [{username:'bea', displayName:'Bea', profilePicUrl:null,admin:false}],
+        creatorUsername:'ana', createdAt:new Date().toISOString()}));
+      const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      groupEvents.next({id: 77, groupId: 2, sender: 'ana', text: 'Bora!',
+        createdAt: new Date().toISOString()});
+      tick(300);
+      expect(component.groupToast?.title).toBe('Equipa Futsal');
+      component.openGroupToast();
+      expect(navigate).toHaveBeenCalledWith(['/menu/groups'], {queryParams:{id:2}});
+    } finally {
+      component.ngOnDestroy();
+      if (previous === null) localStorage.removeItem('t');
+      else localStorage.setItem('t', previous);
+    }
+  }));
 
   it('shows only confirmed, eligible incoming media alerts and opens the right chat', fakeAsync(() => {
     const oldToken = localStorage.getItem('t');
