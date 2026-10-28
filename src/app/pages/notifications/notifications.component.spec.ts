@@ -219,7 +219,7 @@ describe('NotificationsComponent', () => {
       const page=fixture.nativeElement as HTMLElement;
       expect(component.notificationMessage(notice)).toBe('TMF14 enviou-te um GIF 🎞️');
       expect(component.notificationSubject(notice)).toBe('Nova mensagem de TMF14');
-      expect(page.textContent).toContain('Enviou-te um GIF');
+      expect(page.textContent).toContain('TMF14 enviou-te um GIF');
       expect(page.textContent).not.toContain('JYNLO:GIPHY:1');
       expect(page.textContent).not.toContain('XdUMQuuiaAEkOUtezd');
       expect(page.textContent).not.toContain('giphy.com');
