@@ -141,12 +141,15 @@
             <p class="preview-state">{{ 'home.preview.emptyVenues' | t }}</p>
           } @else {
             @for (venue of featuredVenues; track venue.id) {
-              <article class="preview-item preview-venue">
+              <a class="preview-item preview-venue"
+                 [routerLink]="['/venues', venue.id]"
+                 [attr.aria-label]="('home.preview.viewVenue' | t) + ': ' + venue.name">
                 <strong>{{ venue.name }}</strong>
                 <span class="preview-venue-city">{{ venue.city }}</span>
                 <app-venue-sports-badges [sports]="venue.sports" [limit]="3"
                   [compact]="true"></app-venue-sports-badges>
-              </article>
+                <small class="preview-venue-action">{{ 'home.preview.viewVenue' | t }} ↗</small>
+              </a>
             }
           }
         </div>
