@@ -3391,4 +3391,41 @@ describe('SessionDetailsComponent', () => {
     expect(component.errorMessage).toBe('');
     expect(component.session?.id).toBe(7);
   });
+
+  it('shows account photos and guest initials in readable roster cards', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {...session, joined:true};
+    component.sessionParticipants = [
+      {id:1,username:'player-one',profilePicUrl:'https://cdn.example.test/player.jpg',
+       attendanceStatus:'PENDING',joinedAt:'2026-09-20T18:00:00Z'}
+    ];
+    component.memberConfirmedGuests = [{id:501,name:'Fresco',teamCode:null}];
+    component.confirmedTeams = false;
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const cards = panel.querySelectorAll('.session-player-card');
+    expect(cards.length).toBe(2);
+    const linked = panel.querySelector('a.session-player-card--member') as HTMLAnchorElement;
+    expect(linked).not.toBeNull();
+    expect(linked.querySelector('img')?.getAttribute('src'))
+      .toBe('https://cdn.example.test/player.jpg');
+    const guest = panel.querySelector('.session-player-card--guest') as HTMLElement;
+    expect(guest.querySelector('img')).toBeNull();
+    expect(guest.querySelector('.session-player-card__avatar')?.textContent?.trim()).toBe('F');
+    expect(panel.textContent).toContain('2 jogadores');
+  });
+
+  it('keeps location navigation and organiser edit action in distinct visual regions', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {...session,canSeeExactAddress:true,
+      address:'Rua da Paz 10, Lisboa',meetingPointInstructions:null};
+    fixture.detectChanges();
+    const location = fixture.nativeElement.querySelector('.address-panel') as HTMLElement;
+    expect(location.querySelector('.session-location-heading')).not.toBeNull();
+    expect(location.querySelector('.session-location-detail')).not.toBeNull();
+    const maps = location.querySelector('a.session-location-map') as HTMLAnchorElement;
+    expect(maps?.href).toContain('google.com/maps');
+    expect(location.querySelector('.session-meeting-edit-button')).not.toBeNull();
+  });
 });
