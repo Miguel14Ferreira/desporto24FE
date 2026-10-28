@@ -280,6 +280,89 @@ describe('PublicSessionPreviewComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Cancelaste a tua presença');
   });
 
+  it('lets a cancelled historical guest confirm again in one click without duplicating a place', () => {
+    const secret='A'.repeat(43),oldReceipt='B'.repeat(43),newReceipt='C'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    localStorage.setItem(key,oldReceipt);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    let participants=9;
+    let rejoinCalls=0;
+    http.post.and.callFake(((url:string,body:any) => {
+      if(url.endsWith('/guest-roster')) return of({
+        sessionId:42,communityId:5,players:[{id:18,name:'Mestre'},{id:19,name:'Outro'}]
+      });
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        status:participants===10?'FULL':'OPEN',maxParticipants:10,
+        participantCount:participants,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      if(url.endsWith('/guest-requests/status')) return of({
+        status:participants===10?'APPROVED':'CANCELLED',playerName:'Mestre'
+      });
+      if(url.endsWith('/guest-requests')){
+        rejoinCalls++;
+        expect(body).toEqual({linkToken:secret,playerId:18,newName:null,note:''});
+        participants=10;
+        return of({status:'APPROVED',receipt:newReceipt,playerName:'Mestre'});
+      }
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const page=fixture.nativeElement as HTMLElement;
+    const component=fixture.componentInstance;
+    expect(component.guestStep).toBe('cancelled');
+    const button=page.querySelector('.guest-rejoin-button') as HTMLButtonElement;
+    expect(button).not.toBeNull();
+    expect(button.textContent).toContain('voltar a marcar presença');
+    button.click();
+    fixture.detectChanges();
+    expect(rejoinCalls).toBe(1);
+    expect(component.guestStep).toBe('approved');
+    expect(component.guestReceipt).toBe(newReceipt);
+    expect(localStorage.getItem(key)).toBe(newReceipt);
+    expect(component.session?.participantCount).toBe(10);
+    expect(component.guestConfirmedName).toBe('Mestre');
+    expect(page.querySelector('.guest-rejoin-button')).toBeNull();
+    expect(page.querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    expect((http.post as jasmine.Spy).calls.allArgs().filter(
+      args=>String(args[0]).endsWith('/guest-requests')).length).toBe(1);
+  });
+
+  it('does not restore a cancelled guest if their released place was taken', () => {
+    const secret='D'.repeat(43),receipt='E'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    localStorage.setItem(key,receipt);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({
+        sessionId:42,communityId:5,players:[]
+      });
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        status:'FULL',maxParticipants:10,participantCount:10,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      if(url.endsWith('/guest-requests/status')) return of({
+        status:'CANCELLED',playerName:'Barata'
+      });
+      if(url.endsWith('/guest-requests'))
+        return throwError(()=>new HttpErrorResponse({status:409}));
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    const page=fixture.nativeElement as HTMLElement;
+    expect(component.guestStep).toBe('cancelled');
+    (page.querySelector('.guest-rejoin-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('cancelled');
+    expect(component.guestReceipt).toBe(receipt);
+    expect(localStorage.getItem(key)).toBe(receipt);
+    expect(page.querySelector('.guest-rsvp-error')?.textContent)
+      .toContain('Não foi possível recuperar a presença');
+    expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
+    expect(component.session?.participantCount).toBe(10);
+  });
+
   it('does not show a second-registration button for an approved guest even when the session is full', () => {
     const secret='H'.repeat(43),receipt='R'.repeat(43);
     routeQueryParamMap=convertToParamMap({guest:secret});
