@@ -247,8 +247,10 @@
                       }
                     }
                   </div>
-                  <div class="guest-rsvp-upgrade">
-                    <h3>{{ 'guestRsvp.createAccountTitle' | t }}</h3>
+                  @if (!guestEditingIdentity && !guestChangingIdentity
+                       && !guestConfirmCancellation && !guestCancelling) {
+                    <div class="guest-rsvp-upgrade">
+                      <h3>{{ 'guestRsvp.createAccountTitle' | t }}</h3>
                     <p>{{ 'guestRsvp.createAccountHelp' | t }}</p>
                     @if (isAuthenticated) {
                       <button type="button" class="guest-rsvp-primary"
@@ -265,8 +267,9 @@
                         {{ 'guestRsvp.haveAccount' | t }}
                       </a>
                     }
-                    <p>{{ 'guestRsvp.noThanks' | t }}</p>
-                  </div>
+                      <p>{{ 'guestRsvp.noThanks' | t }}</p>
+                    </div>
+                  }
                 }
                 @if (guestReceipt && !guestEditingIdentity && !guestConfirmCancellation) {
                   <button type="button" class="guest-rsvp-back"
