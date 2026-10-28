@@ -17,6 +17,7 @@
         <input #filterInput class="jynlo-select__search" type="search"
           [attr.aria-label]="ariaLabel || placeholder"
           [placeholder]="placeholder" [(ngModel)]="query"
+          [ngModelOptions]="{standalone:true}"
           (keydown)="searchKey($event)" autocomplete="off">
       }
       <div class="jynlo-select__options" role="listbox" [id]="listId"
