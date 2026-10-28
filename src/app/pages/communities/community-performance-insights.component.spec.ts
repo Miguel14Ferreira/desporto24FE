@@ -52,18 +52,22 @@ describe('CommunityPerformanceInsightsComponent', () => {
   it('keeps player selector choices wired to parent-managed names', () => {
     const fixture = render();
     const root = fixture.nativeElement as HTMLElement;
-    const opts = root.querySelectorAll('.compare-selectors select');
-    expect(opts.length).toBe(2);
+    const pickers = root.querySelectorAll('app-community-compare-picker');
+    expect(pickers.length).toBe(2);
     const a = jasmine.createSpy('A');
     const b = jasmine.createSpy('B');
     fixture.componentInstance.compareAChange.subscribe(a);
     fixture.componentInstance.compareBChange.subscribe(b);
-    const selectA = opts[0] as HTMLSelectElement;
-    const selectB = opts[1] as HTMLSelectElement;
-    selectA.value = 'standing:1';
-    selectA.dispatchEvent(new Event('change', {bubbles: true}));
-    selectB.value = 'standing:0';
-    selectB.dispatchEvent(new Event('change', {bubbles: true}));
+    const triggers = root.querySelectorAll<HTMLButtonElement>('.picker-trigger');
+    triggers[0].click();
+    fixture.detectChanges();
+    const optionsA = root.querySelectorAll<HTMLButtonElement>('app-community-compare-picker:first-child .picker-option');
+    optionsA[1].click();
+    fixture.detectChanges();
+    triggers[1].click();
+    fixture.detectChanges();
+    const optionsB = root.querySelectorAll<HTMLButtonElement>('app-community-compare-picker:last-child .picker-option');
+    optionsB[0].click();
     fixture.detectChanges();
     expect(a).toHaveBeenCalledWith('standing:1');
     expect(b).toHaveBeenCalledWith('standing:0');
@@ -85,15 +89,36 @@ describe('CommunityPerformanceInsightsComponent', () => {
     fixture.componentRef.setInput('comparePlayerB', other);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
-    const options = Array.from(root.querySelectorAll('.compare-selectors select')).map(select =>
-      Array.from((select as HTMLSelectElement).options).map(option => [option.value, option.textContent?.trim()])
+    const triggers = root.querySelectorAll<HTMLButtonElement>('.picker-trigger');
+    triggers[0].click();
+    fixture.detectChanges();
+    const options = Array.from(root.querySelectorAll<HTMLButtonElement>('.picker-option'));
+    expect(options.map(option => option.textContent?.trim())).toEqual(
+      [jasmine.stringMatching(/Ferreirinha/), jasmine.stringMatching(/Mestre/)]
     );
-    expect(options[0].slice(1)).toEqual([['standing:0', 'Ferreirinha'], ['standing:1', 'Mestre']]);
-    expect(options[1].slice(1)).toEqual([['standing:0', 'Ferreirinha'], ['standing:1', 'Mestre']]);
     expect(root.querySelector('.compare-table')?.textContent).toContain('Ferreirinha');
     expect(root.querySelector('.compare-table')?.textContent).toContain('Mestre');
     expect(root.querySelector('.compare-table')?.textContent).toContain('16');
     expect(root.querySelector('.compare-table')?.textContent).toContain('22');
+  });
+
+  it('shows clear actions for both players and delegates returning to standings to the parent', () => {
+    const fixture=render();
+    const root=fixture.nativeElement as HTMLElement;
+    const actions=root.querySelectorAll<HTMLButtonElement>('.picker-clear');
+    expect(actions.length).toBe(2);
+    const clear=jasmine.createSpy('clear');
+    fixture.componentInstance.clearRequested.subscribe(clear);
+    actions[1].click();
+    expect(clear).toHaveBeenCalledTimes(1);
+    // Inputs are parent-owned. The parent resets both keys and navigates to standings.
+    fixture.componentRef.setInput('compareSelectionA','');
+    fixture.componentRef.setInput('compareSelectionB','');
+    fixture.componentRef.setInput('comparePlayerA',undefined);
+    fixture.componentRef.setInput('comparePlayerB',undefined);
+    fixture.detectChanges();
+    expect(root.querySelector('.compare-table')).toBeNull();
+    expect(root.querySelectorAll('.picker-clear')).toHaveSize(0);
   });
 
   it('hides the head-to-head matrix without both selected players and keeps the empty chart', () => {
