@@ -350,3 +350,8 @@ h1 {
 }
 .guest-reservation-actions button:disabled{opacity:.55;cursor:wait}
 @media(max-width:1030px){.session-layout>.join-panel{max-width:none}}
+
+.guest-saved-bookings{display:grid;gap:8px;padding:12px;border:1px solid rgba(104,216,201,.35);border-radius:13px;background:rgba(24,88,89,.22)}
+.guest-saved-bookings h3{margin:0;font-size:1rem}
+.guest-saved-booking{justify-self:stretch;width:100%;text-align:left;font-weight:800}
+.guest-saved-booking:hover{border-color:rgba(119,245,216,.7)}
