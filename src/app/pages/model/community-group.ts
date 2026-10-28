@@ -18,6 +18,11 @@ export interface CommunityGroup {
   photoUrl: string | null;
   defaultVenueId?: number | null;
   defaultVenueName?: string | null;
+  habitualLocationSource?: 'MAPS' | 'GPS' | null;
+  habitualLatitude?: number | null;
+  habitualLongitude?: number | null;
+  habitualCity?: string | null;
+  habitualAddress?: string | null;
   photoZoom?: number | null;
   photoFocusX?: number | null;
   photoFocusY?: number | null;
