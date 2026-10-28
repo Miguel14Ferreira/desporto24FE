@@ -1945,6 +1945,23 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return code === 'A' ? this.teamAParticipants : this.teamBParticipants;
   }
 
+  /** Confirmed guests are real reserved places, even before they create accounts. */
+  confirmedGuestParticipants(): SessionGuestRequest[] {
+    return this.isCreator()
+      ? this.guestRequests.filter(g => g.status === 'APPROVED') : [];
+  }
+
+  visiblePlayerCount(): number {
+    return this.sessionParticipants.length + this.confirmedGuestParticipants().length;
+  }
+
+  refreshVisiblePlayers(): void {
+    this.loadSessionParticipants();
+    if (this.isCreator()) this.loadGuestRequests();
+    // The confirmed count in the detail header also includes external people.
+    this.loadSession(false);
+  }
+
   guestTeamParticipants(code: 'A' | 'B'): SessionGuestRequest[] {
     return this.isCreator()
       ? this.guestRequests.filter(guest => guest.status === 'APPROVED' && guest.teamCode === code)
