@@ -3566,7 +3566,7 @@ const PT: Dictionary = {
   'createSession.modeCompleteNote': 'Indica os jogadores já confirmados, incluindo-te a ti. Não serão criadas contas nem inscrições duplicadas.',
   'createSession.communityShareKicker': 'Comunidades',
   'createSession.communityShareTitle': 'Sessão para as minhas comunidades',
-  'createSession.communityShareHelp': 'Opcional: escolhe até 5 comunidades a que pertences. Sem seleção, a sessão é pública. Ao selecionar comunidades, só os seus membros podem inscrever-se e ficam disponíveis a repetição e as convocatórias. Não altera as classificações.',
+  'createSession.communityShareHelp': 'Opcional: escolhe até 5 comunidades a que pertences. Sem seleção, podes criar uma sessão pública ou protegida por palavra-passe. Ao selecionar comunidades, só os seus membros podem inscrever-se e ficam disponíveis a repetição e as convocatórias. Não altera as classificações.',
   'createSession.communityShareLoading': 'A carregar as tuas comunidades…',
   'createSession.communityShareUnavailable': 'Não foi possível carregar as comunidades. Podes criar a sessão sem as selecionar.',
   'createSession.communityShareNone': 'Ainda não participas em nenhuma comunidade. Podes criar a sessão normalmente.',
