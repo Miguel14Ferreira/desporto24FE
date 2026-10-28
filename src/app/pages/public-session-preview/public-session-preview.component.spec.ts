@@ -266,9 +266,18 @@ describe('PublicSessionPreviewComponent', () => {
     component.cancelOwnGuestReservation();
     fixture.detectChanges();
     expect(component.guestStep).toBe('cancelled');
+    expect(component.guestCancelledBySelf).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Cancelaste a tua presença');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('O organizador cancelou');
     expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
     expect(component.session?.participantCount).toBe(9);
     expect(component.guestSavedBookings).toEqual([]);
+    fixture.destroy();
+    fixture=TestBed.createComponent(PublicSessionPreviewComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('cancelled');
+    expect(fixture.componentInstance.guestCancelledBySelf).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Cancelaste a tua presença');
   });
 
   it('does not show a second-registration button for an approved guest even when the session is full', () => {
@@ -1304,6 +1313,10 @@ describe('PublicSessionPreviewComponent', () => {
       fixture.detectChanges();
       expect(component.guestStep).toBe('cancelled');
       expect(page.textContent).toContain('Presença cancelada');
+      expect(page.textContent).toContain('Esta presença foi cancelada');
+      expect(page.textContent).not.toContain('O organizador cancelou');
+      expect(page.textContent).not.toContain('Cancelaste a tua presença');
+      expect(component.guestCancelledBySelf).toBeFalse();
       expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
     });
 
