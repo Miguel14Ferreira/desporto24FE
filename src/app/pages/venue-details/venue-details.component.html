@@ -8,23 +8,31 @@
         <p>{{ 'venue.catalog.loadFailedHelp' | t }}</p>
         <div class="venue-error-actions">
           <button class="jynlo-action jynlo-action--primary" type="button" (click)="retryVenue()">{{ 'common.retry' | t }}</button>
-          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/venues"
-             [queryParams]="backToDirectoryQueryParams">{{ 'venue.catalog.backToList' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral"
+             [routerLink]="isPublicView ? '/home' : '/menu/venues'"
+             [fragment]="isPublicView ? 'jynlo-public-discovery' : undefined"
+             [queryParams]="isPublicView ? null : backToDirectoryQueryParams">
+            {{ (isPublicView ? 'venue.detail.back' : 'venue.catalog.backToList') | t }}
+          </a>
         </div>
       </div>
     } @else {
       <header class="venue-header">
-        <a class="back-link venue-hero-back" routerLink="/menu/venues"
-           [queryParams]="backToDirectoryQueryParams">
-          ← {{ 'venue.catalog.backToList' | t }}
+        <a class="back-link venue-hero-back"
+           [routerLink]="isPublicView ? '/home' : '/menu/venues'"
+           [fragment]="isPublicView ? 'jynlo-public-discovery' : undefined"
+           [queryParams]="isPublicView ? null : backToDirectoryQueryParams">
+          ← {{ (isPublicView ? 'venue.detail.back' : 'venue.catalog.backToList') | t }}
         </a>
         <span class="venue-kicker">{{ 'venue.detail.kicker' | t }}</span>
         <h1>{{ venue.name }}</h1>
         <p class="venue-hero-location">📍 {{ venue.city }}@if (venue.district && venue.district !== venue.city) {, {{ venue.district }}}</p>
-        <a class="jynlo-action jynlo-action--neutral venue-edit-link"
-          [routerLink]="['/menu/venues', venue.id, 'suggest-edit']">
-          ✎ {{ 'venue.edit.suggest' | t }}
-        </a>
+        @if (!isPublicView) {
+          <a class="jynlo-action jynlo-action--neutral venue-edit-link"
+            [routerLink]="['/menu/venues', venue.id, 'suggest-edit']">
+            ✎ {{ 'venue.edit.suggest' | t }}
+          </a>
+        }
         @if (venue.sports) {
           <div class="venue-hero-sports">
             <app-venue-sports-badges [sports]="venue.sports"
@@ -74,6 +82,12 @@
           }
         </div>
       </div>
+      @if (isPublicView) {
+        <div class="venue-public-more">
+          <span>{{ 'venue.detail.publicMore' | t }}</span>
+          <a [routerLink]="['/menu/venues', venue.id]">{{ 'venue.detail.openFull' | t }} ↗</a>
+        </div>
+      }
 
       @if (!ratingSummaryLoading && !ratingSummaryLoadError) {
         <section class="venue-rating-summary" aria-labelledby="venue-rating-heading">
@@ -157,10 +171,12 @@
                   {{ 'venue.visit.findGoogleContact' | t }}
                 </a>
               }
-              <a class="jynlo-action jynlo-action--neutral venue-visit-action"
-                 [routerLink]="['/menu/venues', venue.id, 'suggest-edit']">
-                {{ (venue.contact?.trim() ? 'venue.visit.correctContact' : 'venue.visit.suggestContact') | t }}
-              </a>
+              @if (!isPublicView) {
+                <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                   [routerLink]="['/menu/venues', venue.id, 'suggest-edit']">
+                  {{ (venue.contact?.trim() ? 'venue.visit.correctContact' : 'venue.visit.suggestContact') | t }}
+                </a>
+              }
             </div>
             @if (venueWebsiteUrl; as safeVenueWebsite) {
               <a class="venue-website-under-contact"
@@ -173,6 +189,7 @@
         <p class="venue-access-note">{{ 'venue.detail.accessNotice' | t }}</p>
       </section>
 
+      @if (!isPublicView) {
       <section class="venue-photos-section">
         <div class="venue-photos-heading">
           <h2>{{ 'venue.detail.photos' | t }}</h2>
@@ -225,6 +242,7 @@
           </div>
         }
       </section>
+      }
 
       <section class="venue-information-section">
         <h2>{{ 'venue.detail.information' | t }}</h2>
@@ -285,6 +303,7 @@
         </div>
       </section>
 
+      @if (!isPublicView) {
       <section class="venue-sport-conditions-section">
         <div class="venue-sport-conditions-heading">
           <h2>{{ 'venue.detail.sportConditions' | t }}</h2>
@@ -365,6 +384,7 @@
           </div>
         }
       </section>
+      }
 
       <section class="venue-amenities-section">
         <h2>{{ 'venue.detail.amenities' | t }}</h2>

@@ -558,3 +558,14 @@
     margin-top: 20px;
   }
 }
+
+
+/* Guest-friendly detail preview links into the authenticated contribution view. */
+.venue-public-more {
+  display: flex; align-items: center; flex-wrap: wrap; gap: .65rem 1.1rem;
+  padding: .85rem 1.05rem; border: 1px solid rgba(87, 219, 189, .25);
+  border-radius: 12px; color: #c7e7e3; background: rgba(14, 57, 69, .7);
+  font-size: .87rem; line-height: 1.5;
+}
+.venue-public-more a { color: #8ef1d4; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.venue-public-more a:focus-visible { outline: 2px solid #8ef1d4; outline-offset: 3px; }

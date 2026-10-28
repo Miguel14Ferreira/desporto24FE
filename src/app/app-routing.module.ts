@@ -35,6 +35,9 @@ const routes: Routes = [
   {path:'privacy',component:LegalPageComponent,data:{document:'privacy'}},
   {path:'terms',component:LegalPageComponent,data:{document:'terms'}},
   {path:'sessions/:id',component:PublicSessionPreviewComponent},
+  // The same venue details page can be read by visitors. The authenticated route
+  // below still exposes photo uploads, community contributions and suggestions.
+  {path:'venues/:id',loadChildren:() => import('./pages/venue-details/venue-details.module').then(m => m.VenueDetailsModule),data:{publicVenueView:true}},
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
   {path:'menu/my-sessions',loadChildren:() => import('./pages/my-sessions/my-sessions.module').then(m => m.MySessionsModule),canActivate:[AuthenticationGuard]},
   {path:'menu/events/:id',loadChildren:() => import('./pages/session-details/session-details.module').then(m => m.SessionDetailsModule),canActivate:[AuthenticationGuard]},

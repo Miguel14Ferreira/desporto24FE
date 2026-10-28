@@ -94,8 +94,25 @@ describe('HomeComponent public discovery', () => {
     }));
     expect(component.featuredSessions.map(value => value.id)).toEqual([1, 6]);
     expect(component.featuredVenues.map(value => value.id)).toEqual([10]);
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item').length).toBe(2);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item:not(.preview-venue)').length).toBe(2);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-venue').length).toBe(1);
+  });
+
+  it('makes every public venue card a keyboard-accessible link to its own detail page', () => {
+    venues.suggest.and.returnValue(of({
+      venues: [venue(17, 'Futsal;Natação'), venue(29, 'Padel;Yoga')],
+      page: 0, hasMore: false
+    }));
+    const fixture = render();
+    const cards = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('a.preview-venue'));
+    expect(cards.length).toBe(2);
+    expect(cards.map(card => card.getAttribute('href'))).toEqual(['/venues/17', '/venues/29']);
+    expect(cards[0].getAttribute('aria-label')).toContain('Campo 17');
+    expect(cards[0].querySelector('.venue-sports-chip')?.textContent).toContain('Futsal');
+    expect(cards.every(card => card.querySelector('.preview-venue-action')?.textContent?.trim())).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).querySelector('article.preview-venue')).toBeNull();
+    fixture.destroy();
   });
 
   it('renders the public venue sports as compact tags instead of semicolon strings', () => {
