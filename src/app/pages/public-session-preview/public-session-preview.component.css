@@ -11,7 +11,7 @@
 }
 
 .public-session-shell {
-  width: min(1100px, 100%);
+  width: min(1380px, 100%);
   margin: 0 auto;
 }
 
@@ -43,7 +43,7 @@
 
 .session-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(370px, 43%);
+  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
   gap: clamp(1rem, 2.4vw, 2rem);
   align-items: start;
 }
@@ -210,7 +210,7 @@ h1 {
 .retry-action:hover { background: #dbeafe; }
 .retry-action:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
 
-@media (max-width: 850px) {
+@media (max-width: 1030px) {
   .session-layout { grid-template-columns: minmax(0, 1fr); }
   .public-header { margin-bottom: 2rem; }
 }
@@ -324,3 +324,29 @@ h1 {
 }
 .guest-private-meeting-point small {color:#bddbd9;line-height:1.5}
 .guest-meeting-refresh {max-width:100%;min-height:42px;white-space:normal}
+
+/* RSVP is the primary action: at desktop sizes it gets more space than details. */
+.session-layout > .join-panel{width:100%;box-sizing:border-box}
+.guest-reservation-actions{display:grid;gap:12px;min-width:0}
+.guest-change-panel{display:grid;gap:10px;padding:15px;min-width:0;
+  border:1px solid rgba(104,216,201,.32);border-radius:14px;
+  background:rgba(8,37,51,.72)}
+.guest-change-panel h3{margin:0}
+.guest-change-panel label{font-weight:750}
+.guest-change-panel .guest-rsvp-primary{width:100%}
+.guest-change-player-button{justify-self:stretch;width:100%;text-align:center;font-weight:800}
+.guest-cancel-link{justify-self:start;padding:8px 3px;background:transparent;border:0;
+  color:#f5b7bb;font:inherit;font-size:.83rem;text-decoration:underline;
+  text-underline-offset:3px;cursor:pointer}
+.guest-cancel-link:hover{color:#ffdedf}
+.guest-cancel-confirm{display:grid;gap:10px;padding:14px;
+  border:1px solid rgba(248,113,113,.4);border-radius:12px;
+  background:rgba(100,20,33,.15)}
+.guest-cancel-danger{min-height:44px;padding:10px 14px;
+  border:1px solid rgba(248,113,113,.6);border-radius:10px;
+  background:#6c2334;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+.guest-reservation-actions :is(button,select,input):focus-visible{
+  outline:2px solid #8affe5;outline-offset:3px
+}
+.guest-reservation-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:1030px){.session-layout>.join-panel{max-width:none}}
