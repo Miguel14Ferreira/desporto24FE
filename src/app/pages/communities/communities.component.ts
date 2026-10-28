@@ -5826,6 +5826,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.bestWinStreakStanding;
   }
 
+  /** Clear both picks and return to the community's standings tab. */
+  clearPlayerComparison(): void {
+    this.compareSelectionA = '';
+    this.compareSelectionB = '';
+    this.setTab('ranking');
+  }
+
   comparePlayerA(): CommunityStanding | undefined {
     return this.standingsByComparisonKey.get(this.compareSelectionA);
   }
