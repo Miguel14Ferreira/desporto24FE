@@ -85,7 +85,7 @@ export class CommunityComparePickerComponent {
   }
 
   @HostListener('document:keydown.escape', ['$event'])
-  escape(event: KeyboardEvent): void {
+  escape(event: Event): void {
     if (!this.open) return;
     event.preventDefault();
     this.close();
