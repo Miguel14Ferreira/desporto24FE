@@ -212,9 +212,19 @@ export class Events2Component implements OnInit, OnDestroy {
     if (this.confirmedPlayers === null) this.confirmedPlayers = 1;
   }
 
+  canCreateForCommunity(group: CommunityGroup): boolean {
+    return group.membersCanCreateSessions !== false
+      || group.myRole === 'ADMIN' || group.myRole === 'OWNER';
+  }
+
+  get communityCreationBlocked(): boolean {
+    return !!this.directCommunity && !this.canCreateForCommunity(this.directCommunity);
+  }
+
   toggleCommunityShare(id: number, checked: boolean): void {
     if (this.loading || this.communityId !== null
-        || !this.communities.some(group => group.id === id && group.myRole)) return;
+        || !this.communities.some(group => group.id === id
+            && group.myRole && this.canCreateForCommunity(group))) return;
     if (checked && !this.shareCommunityIds.includes(id)) {
       if (this.shareCommunityIds.length >= 5) return;
       this.shareCommunityIds = [...this.shareCommunityIds, id];
@@ -1272,6 +1282,13 @@ export class Events2Component implements OnInit, OnDestroy {
   }
 
   private validate(): string | null {
+    if (this.communityCreationBlocked) {
+      return t('communities.sessionPolicy.blocked');
+    }
+    if (this.shareCommunityIds.some(id =>
+        this.communities.some(group => group.id === id && !this.canCreateForCommunity(group)))) {
+      return t('communities.sessionPolicy.shareBlocked');
+    }
     if (!this.sportSelected) {
       return 'Seleciona um desporto da lista.';
     }
