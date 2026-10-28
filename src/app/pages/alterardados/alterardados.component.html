@@ -231,6 +231,7 @@
 
           <div class="full-width sport-selector">
             <span class="field-label">{{ 'profile.favoriteSports' | t }}</span>
+            <p class="sport-selection-count">{{ 'profile.favoriteSportsSelected' | t:{ count: selectedSports.length } }}</p>
 
             @if (selectedSports.length > 0) {
               <div class="sport-chips">
@@ -256,7 +257,6 @@
               autocomplete="off"
               [disabled]="saving"
               (keydown)="onSportSearchKeydown($event)"
-              (blur)="clearInvalidSportQuery()"
               [placeholder]="'profile.favoriteSportsSearch' | t">
 
             @if (sportSuggestions.length > 0) {
@@ -273,6 +273,9 @@
               </div>
             }
 
+            @if (sportFeedbackKey) {
+              <p class="sport-selection-feedback" role="status" aria-live="polite">{{ sportFeedbackKey | t }}</p>
+            }
             <small>{{ 'profile.favoriteSportsHint' | t }}</small>
           </div>
 
