@@ -43,7 +43,8 @@
 
 .session-layout {
   display: grid;
-  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
+  /* Session details get ~60% of the desktop width; RSVP stays comfortable. */
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
   gap: clamp(1rem, 2.4vw, 2rem);
   align-items: start;
 }
@@ -325,7 +326,7 @@ h1 {
 .guest-private-meeting-point small {color:#bddbd9;line-height:1.5}
 .guest-meeting-refresh {max-width:100%;min-height:42px;white-space:normal}
 
-/* RSVP is the primary action: at desktop sizes it gets more space than details. */
+/* RSVP fills its column; the session details take priority in desktop width. */
 .session-layout > .join-panel{width:100%;box-sizing:border-box}
 .guest-reservation-actions{display:grid;gap:12px;min-width:0}
 .guest-change-panel{display:grid;gap:10px;padding:15px;min-width:0;
