@@ -410,7 +410,7 @@ describe('Community habitual venue picker — interactive template', () => {
   it('starts collapsed with an existing usual venue, then collapses after changing it', () => {
     const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
     const component = fixture.componentInstance;
-    component.community = {...community, defaultVenueId: 55, defaultVenueName: venue.name};
+    fixture.componentRef.setInput('community', {...community, defaultVenueId: 55, defaultVenueName: venue.name});
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-location-method-selector')).toBeNull();
     (fixture.nativeElement.querySelector('.community-venue-edit') as HTMLButtonElement).click();
