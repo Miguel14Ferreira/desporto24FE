@@ -79,6 +79,20 @@ describe('Unified Jynlo message center', () => {
     (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
   });
 
+  it('persists the selected conversation mute without changing another chat', () => {
+    const api = jasmine.createSpyObj('ConversationMuteService', ['list','set']);
+    api.set.and.returnValue(of({kind:'direct',id:'bea'}));
+    (component as any).conversationMutes = api;
+    const peer=item('direct','bea'), other=item('community',12);
+    component.toggleConversationMute(peer);
+    expect(api.set).toHaveBeenCalledWith('direct','bea',true);
+    expect(component.isMuted(peer)).toBeTrue();
+    expect(component.isMuted(other)).toBeFalse();
+    component.toggleConversationMute(peer);
+    expect(api.set).toHaveBeenCalledWith('direct','bea',false);
+    expect(component.isMuted(peer)).toBeFalse();
+  });
+
   it('formats valid and malformed GIF envelopes without leaking metadata in any chat preview', () => {
     const envelope = '[JYNLO:GIPHY:1]' + JSON.stringify({
       id: 'XdUMQuuiaAEkOUtezd',
