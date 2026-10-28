@@ -169,8 +169,9 @@ select option {
   vertical-align: middle !important;
   box-sizing: border-box;
   min-height: 40px !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  /* Default no outer margin, but let a page's spacing rules take precedence. */
+  margin-top: 0;
+  margin-bottom: 0;
   padding: .58rem .92rem !important;
   border: 1px solid var(--jynlo-action-border) !important;
   border-radius: 999px !important;
