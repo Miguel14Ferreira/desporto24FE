@@ -326,6 +326,33 @@ describe('Events2Component', () => {
     expect(sessionService.create).not.toHaveBeenCalled();
   });
 
+  it('sends an optional trimmed meeting point without changing venue or address', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.meetingPointInstructions = '  Portão lateral junto ao parque  ';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        address: 'Rua do Campo',
+        meetingPointInstructions: 'Portão lateral junto ao parque'
+      }), undefined);
+  });
+
+  it('rejects overlong and multi-line arrival instructions', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    for (const invalid of ['x'.repeat(241), 'porta\ntraseira']) {
+      component.meetingPointInstructions = invalid;
+      component.createSession();
+      expect(sessionService.create).not.toHaveBeenCalled();
+      expect(component.errorMessage).toBeTruthy();
+    }
+  });
+
   it('keeps one-weekly-session default compatible with existing request', () => {
     component.communityId = 7;
     component.sport = 'Padel';

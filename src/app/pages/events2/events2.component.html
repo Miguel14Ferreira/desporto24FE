@@ -955,6 +955,22 @@
         </div>
       }
 
+      <section class="create-meeting-point-panel" aria-labelledby="create-meeting-point-title">
+        <div>
+          <h2 id="create-meeting-point-title">{{ 'createSession.meetingPointTitle' | t }}</h2>
+          <p id="create-meeting-point-help">{{ 'createSession.meetingPointHint' | t }}</p>
+        </div>
+        <label for="create-meeting-point-instructions">
+          <span>{{ 'createSession.meetingPointLabel' | t }}</span>
+          <input id="create-meeting-point-instructions" type="text" name="meetingPointInstructions"
+                 [(ngModel)]="meetingPointInstructions" maxlength="240"
+                 autocomplete="off" [disabled]="loading"
+                 aria-describedby="create-meeting-point-help"
+                 [placeholder]="'createSession.meetingPointPlaceholder' | t">
+        </label>
+        <small>{{ 'createSession.meetingPointPrivacy' | t }}</small>
+      </section>
+
       <div class="options-grid">
         @if (!findPlayersMode && shareCommunityIds.length === 0) {
         <section class="option-card">

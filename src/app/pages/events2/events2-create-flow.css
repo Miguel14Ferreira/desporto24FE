@@ -110,3 +110,16 @@
   .create-preset-fields { grid-template-columns: minmax(0, 1fr); }
   .create-preset-actions button { flex: 1 1 145px; }
 }
+
+/* Separate private arrival instructions from the venue address and GPS. */
+.create-meeting-point-panel { display:grid;gap:12px;min-width:0;margin:21px 0;
+  padding:clamp(16px,2.5vw,22px);border:1px solid rgba(82,197,182,.31);
+  border-radius:16px;background:linear-gradient(145deg,rgba(11,49,62,.83),rgba(7,33,48,.92)); }
+.create-meeting-point-panel h2 { margin:0 0 5px;color:#f0fffc;font-size:1.13rem; }
+.create-meeting-point-panel p { margin:0;color:#bbd8db;font-size:.88rem;line-height:1.5; }
+.create-meeting-point-panel label { display:grid;gap:7px;min-width:0; }
+.create-meeting-point-panel label span { color:#e2f7f2;font-weight:750;font-size:.9rem; }
+.create-meeting-point-panel input { box-sizing:border-box;width:100%;min-width:0;min-height:45px;
+  padding:10px 13px;border:1px solid #4c8490;border-radius:11px;color:#f0fffd;background:#092b3c;font:inherit; }
+.create-meeting-point-panel input:focus-visible { outline:2px solid #54ddc3;outline-offset:2px; }
+.create-meeting-point-panel small { color:#accbd0;line-height:1.45; }
