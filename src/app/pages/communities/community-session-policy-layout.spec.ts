@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { CommunitySportManagementComponent } from './community-sport-management.component';
 
 /**
  * Real-browser CSS regression for the communities session permission selector.
@@ -8,8 +9,11 @@ import { TestBed } from '@angular/core/testing';
  */
 @Component({
   standalone: true,
+  imports: [CommunitySportManagementComponent],
   template: `
-    <section class="community-session-policy">
+    <div class="community-tab-panel">
+      <app-community-sport-management [sports]="['Futsal']"></app-community-sport-management>
+      <section class="community-session-policy">
       <fieldset class="community-session-policy-options">
         <legend>Permitir criar sessões a</legend>
         <div class="community-session-policy-choice-grid">
@@ -23,7 +27,8 @@ import { TestBed } from '@angular/core/testing';
           </label>
         </div>
       </fieldset>
-    </section>
+      </section>
+    </div>
   `,
   styleUrls: ['./communities.component.css']
 })
@@ -41,6 +46,16 @@ describe('Community session creation policy — browser layout regression', () =
       const host = fixture.nativeElement as HTMLElement;
       host.style.width = width + 'px';
       fixture.detectChanges();
+
+      const sportBadge = host.querySelector('app-community-sport-management .sport-tag') as HTMLElement;
+      const policy = host.querySelector('.community-session-policy') as HTMLElement;
+      const sportBox = sportBadge.getBoundingClientRect();
+      const sectionBox = policy.getBoundingClientRect();
+      expect(sectionBox.top - sportBox.bottom)
+        .withContext('sport badge must not touch the next settings card')
+        .toBeGreaterThanOrEqual(23);
+      expect(sectionBox.left).toBeGreaterThanOrEqual(host.getBoundingClientRect().left);
+      expect(sectionBox.right).toBeLessThanOrEqual(host.getBoundingClientRect().right + 1);
 
       const grid = host.querySelector('.community-session-policy-choice-grid') as HTMLElement;
       const labels = Array.from(grid.querySelectorAll('label')) as HTMLElement[];
