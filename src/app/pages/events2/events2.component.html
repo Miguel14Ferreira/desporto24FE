@@ -102,6 +102,67 @@
           }
         </section>
       }
+      @if (communitySessionSelected) {
+        <section class="create-share-panel" aria-labelledby="create-season-game-title">
+          <div>
+            <span class="section-kicker">{{ 'createSession.seasonGameKicker' | t }}</span>
+            <h2 id="create-season-game-title">{{ 'createSession.seasonGameTitle' | t }}</h2>
+            <p>{{ 'createSession.seasonGameHelp' | t }}</p>
+          </div>
+          <label class="create-share-community" [class.selected]="seasonGame">
+            <input type="checkbox" name="seasonGame" [ngModel]="seasonGame"
+              (ngModelChange)="toggleSeasonGame($event)" [disabled]="loading">
+            <span><strong>{{ 'createSession.seasonGameToggle' | t }}</strong></span>
+          </label>
+          @if (seasonGame) {
+            <label>
+              <span>{{ 'createSession.seasonGameCommunity' | t }}</span>
+              <select name="seasonGameCommunityId" [ngModel]="seasonGameCommunityId"
+                (ngModelChange)="selectSeasonDestination($event)" [disabled]="loading">
+                @for (group of seasonCommunities; track group.id) {
+                  <option [ngValue]="group.id">{{ group.name }}</option>
+                }
+              </select>
+            </label>
+            @if (seasonOverviewLoading) {
+              <p role="status">{{ 'createSession.communityShareLoading' | t }}</p>
+            } @else if (seasonOverviewError) {
+              <p role="alert">{{ 'createSession.seasonGameDataUnavailable' | t }}</p>
+            } @else if (seasonOverview) {
+              @if (seasonRankingsInactive) {
+                <p class="create-share-members-note" role="note">
+                  {{ 'createSession.seasonGameActivationExplained' | t }}
+                </p>
+                @if (canAdministerSeason) {
+                  <label class="create-share-community">
+                    <input type="checkbox" name="confirmActivateRankings"
+                      [(ngModel)]="confirmActivateRankings" [disabled]="loading">
+                    <span>{{ 'createSession.seasonGameConfirmActivation' | t }}</span>
+                  </label>
+                } @else {
+                  <p role="alert">{{ 'createSession.seasonGameAdminRequired' | t }}</p>
+                }
+              } @else {
+                <p class="create-share-members-note" role="status">
+                  {{ 'createSession.seasonGameExistingStandings' | t }}
+                </p>
+              }
+              @if (seasonOverview.activeSeasonId === null) {
+                <p class="create-share-members-note" role="note">
+                  {{ 'createSession.seasonGameNewSeason' | t }}
+                </p>
+                @if (!canAdministerSeason) {
+                  <p role="alert">{{ 'createSession.seasonGameAdminRequired' | t }}</p>
+                }
+              } @else {
+                <p class="create-share-members-note">
+                  {{ 'createSession.seasonGameActiveSeason' | t }}
+                </p>
+              }
+            }
+          }
+        </section>
+      }
       <div class="form-grid">
         @if (communityId && communitySportLoaded && communitySports.length) {
           <div class="community-sport-choices">
