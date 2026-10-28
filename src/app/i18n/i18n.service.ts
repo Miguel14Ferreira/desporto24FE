@@ -3608,6 +3608,8 @@ const PT: Dictionary = {
   'communities.habitualVenue.errorDetails': 'Não foi possível carregar os detalhes deste recinto.',
   'communities.habitualVenue.venueRemoved': 'Recinto habitual removido.',
   'communities.habitualVenue.venueSaved': 'Recinto habitual guardado.',
+  'communities.habitualVenue.change': 'Alterar recinto habitual',
+  'communities.habitualVenue.cancelChange': 'Cancelar alteração',
   'communities.habitualVenue.errorSaveVenue': 'Não foi possível guardar o recinto habitual.',
   'communities.habitualVenue.confirmPoint': 'Confirmar localização',
   'communities.habitualVenue.resolving': 'A localizar…',

@@ -1,4 +1,4 @@
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { VenueService } from '../../services/venue.service';
@@ -256,6 +256,42 @@ describe('Community habitual venue picker', () => {
       42, 'GPS', 38.7, -9.2, null, null);
   });
 
+  it('collapses the Maps/GPS editor after a successful save and clears its draft', () => {
+    const {component} = setup();
+    component.chooseLocationMethod('maps');
+    component.mapLink = 'https://www.google.com/maps?q=38.71,-9.13';
+    component.resolveMapLink();
+    expect(component.locationPoint).not.toBeNull();
+
+    component.savePoint();
+
+    expect(component.editing).toBeFalse();
+    expect(component.community.habitualLocationSource).toBe('MAPS');
+    expect(component.locationMethod).toBe('venue');
+    expect(component.locationPoint).toBeNull();
+    expect(component.pointMapPreviewUrl).toBeNull();
+    expect(component.mapLink).toBe('');
+    expect(component.saving).toBeFalse();
+    component.openEditor();
+    expect(component.editing).toBeTrue();
+    expect(component.locationPoint).toBeNull();
+    component.cancelEdit();
+    expect(component.editing).toBeFalse();
+  });
+
+  it('keeps the venue details open if saving fails', () => {
+    const {component, groups} = setup();
+    component.query = 'Campo';
+    component.search();
+    component.openDetails(55);
+    groups.updateDefaultVenue.and.returnValue(throwError(() => new Error('offline')));
+    component.save(55);
+    expect(component.editing).toBeTrue();
+    expect(component.expanded?.id).toBe(55);
+    expect(component.error).toBeTruthy();
+    expect(component.saving).toBeFalse();
+  });
+
   it('does not allow an ordinary member to change location preferences', () => {
     const {component, groups} = setup();
     component.community = {...group, myRole: 'MEMBER'};
@@ -337,6 +373,59 @@ describe('Community habitual venue picker — interactive template', () => {
     fixture.detectChanges();
     expect(venues.suggest).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('.community-venue-result-name')?.textContent)
+      .toContain('Campo Municipal');
+    fixture.destroy();
+  });
+
+  it('shows only the saved Maps summary after confirmation and allows editing again', () => {
+    const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
+    const component = fixture.componentInstance;
+    component.community = {...community};
+    fixture.detectChanges();
+    component.chooseLocationMethod('maps');
+    component.mapLink = 'https://www.google.com/maps?q=38.71,-9.13';
+    component.resolveMapLink();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.community-venue-map-preview iframe')).toBeTruthy();
+
+    component.savePoint();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.community-venue-current')?.textContent)
+      .toContain('Rua da Bola');
+    expect(fixture.nativeElement.querySelector('app-location-method-selector')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.community-venue-map-preview')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="habitualPointAddress"]')).toBeNull();
+    const edit = fixture.nativeElement.querySelector('.community-venue-edit') as HTMLButtonElement;
+    expect(edit).toBeTruthy();
+    edit.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-location-method-selector')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('input[name="habitualVenueQuery"]')).toBeTruthy();
+    (fixture.nativeElement.querySelector('.community-venue-cancel') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-location-method-selector')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('starts collapsed with an existing usual venue, then collapses after changing it', () => {
+    const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
+    const component = fixture.componentInstance;
+    fixture.componentRef.setInput('community', {...community, defaultVenueId: 55, defaultVenueName: venue.name});
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-location-method-selector')).toBeNull();
+    (fixture.nativeElement.querySelector('.community-venue-edit') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    component.query = 'Campo';
+    component.search();
+    component.openDetails(55);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.community-venue-detail')).toBeTruthy();
+
+    component.save(55);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.community-venue-detail')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-location-method-selector')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.community-venue-current')?.textContent)
       .toContain('Campo Municipal');
     fixture.destroy();
   });
