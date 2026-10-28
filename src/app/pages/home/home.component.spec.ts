@@ -74,6 +74,9 @@ describe('HomeComponent public discovery', () => {
     expect(communitySection?.querySelector('h2')?.textContent?.trim()).toBeTruthy();
     expect(communityCta?.getAttribute('href')).toBe('/login/registerNewUser');
     expect(root.querySelectorAll('.hero-actions a[href="/login/registerNewUser"]').length).toBe(1);
+    // A discovery list must not end with a second registration advertisement.
+    expect(root.querySelector('.preview-cta')).toBeNull();
+    expect(root.querySelector('.public-discovery a[href="/login/registerNewUser"]')).toBeNull();
   });
 
   it('shows real upcoming public sessions and no private, closed or community-only activities', () => {
