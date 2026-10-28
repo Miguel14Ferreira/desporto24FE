@@ -1338,6 +1338,39 @@ h1 {
 .guest-organizer-error{color:#ffc5c1!important}
 .guest-organizer-success{color:#76f7d7!important}
 .team-guest-label{font-weight:800;color:#e3fff6;overflow-wrap:anywhere}
+
+/* All confirmed players share one compact, premium visual language.
+   Registered players remain real profile links; guests never impersonate one. */
+.session-participant-list > .session-player-chip{
+  display:inline-flex;align-items:center;justify-content:flex-start;
+  flex-wrap:wrap;gap:7px;min-width:0;max-width:100%;
+  padding:6px 9px;border:1px solid rgba(76,210,196,.3);border-radius:12px;
+  background:rgba(16,78,80,.45);color:#e8fffa;
+  font-size:.82rem;font-weight:750;line-height:1.4;text-decoration:none;
+}
+.session-participant-list > .session-player-chip--member{
+  border-color:rgba(116,189,242,.32);background:rgba(21,67,96,.45);
+}
+.session-player-chip__name{min-width:0;max-width:100%;overflow-wrap:anywhere;font-weight:800}
+.session-player-chip__status{
+  display:inline-flex;align-items:center;min-height:24px;
+  padding:3px 8px;border-radius:999px;white-space:normal;
+  font-size:.63rem;font-weight:850;letter-spacing:.035em;line-height:1.2;
+  color:#70f9d8;background:rgba(25,222,181,.13);
+}
+.session-player-chip--member .session-player-chip__status{
+  color:#b6e5ff;background:rgba(71,166,228,.17);
+}
+.session-participant-list > a.session-player-chip:hover{
+  color:#fff;background:rgba(27,112,137,.58);border-color:rgba(118,228,244,.6);
+}
+.session-participant-list > a.session-player-chip:focus-visible{
+  outline:2px solid #8affea;outline-offset:3px;
+}
+@media(max-width:480px){
+ .session-participant-list{gap:8px}
+ .session-participant-list > .session-player-chip{padding:8px 10px}
+}
 .guest-organizer-panel :is(button,a,input):focus-visible{outline:2px solid #8affea;outline-offset:3px}
 @media(max-width:530px){.guest-organizer-row{align-items:stretch;flex-direction:column}.guest-organizer-actions{width:100%}.guest-organizer-actions>*{flex:1 1 auto}}
 

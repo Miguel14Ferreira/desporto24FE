@@ -623,6 +623,7 @@ const PT: Dictionary = {
   'sessionDetail.invitePlayers': 'Convidar jogadores',
   'sessionDetail.hideInvites': 'Ocultar convites',
   'guestAdmin.registeredBadge': 'COM CONTA JYNLO',
+  'guestAdmin.memberBadge': 'COM CONTA',
   'guestAdmin.registeredTitle': 'Convidar utilizadores registados',
   'guestAdmin.registeredHelp': 'Se já têm conta, podem usar a mesma ligação para entrar com o próprio perfil, sem aderir à comunidade nem escolher nomes históricos.',
   'guestAdmin.registeredAction': 'Selecionar jogadores da Jynlo',
