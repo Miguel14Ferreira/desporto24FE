@@ -1546,6 +1546,7 @@ describe('SessionDetailsComponent', () => {
       {id:1,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T15:00:00Z'},
       {id:2,username:'monicagomes',attendanceStatus:'PENDING',joinedAt:'2026-10-28T15:01:00Z'}
     ];
+    sessionService.participants.and.returnValue(of(component.sessionParticipants));
     sessionService.confirmedGuests.and.returnValue(of([
       {id:40,name:'oal',teamCode:null}
     ]));
