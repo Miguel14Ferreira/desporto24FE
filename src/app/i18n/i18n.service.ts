@@ -4551,6 +4551,7 @@ const PT: Dictionary = {
   'sessionDetail.organizerFull': 'A sessão está marcada como cheia. A contagem pode ainda estar a atualizar.',
   'sessionDetail.organizerFindPlayers': 'Encontrar jogadores',
   'sessionDetail.whosGoingText': '{{count}} jogadores visíveis, incluindo convidados confirmados.',
+  'sessionDetail.confirmedGuestsError': 'Não foi possível atualizar os convidados confirmados. Tenta novamente.',
   'sessionDetail.loadingParticipants': 'A carregar jogadores confirmados...',
   'sessionDetail.noVisibleParticipants': 'Ainda não há participantes para mostrar.',
   'sessionDetail.noParticipants': 'Ainda não há participantes ativos para gerir.',
