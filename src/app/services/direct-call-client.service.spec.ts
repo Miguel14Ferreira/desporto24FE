@@ -122,6 +122,98 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     expect(calls.state$.value).toBeNull();
   });
 
+  it('keeps LiveKit connection failure visible after the disconnect callback and ENDED echo', async () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners = new Map<string, () => void>();
+    const room = {
+      on: jasmine.createSpy('on').and.callFake((event: string, cb: () => void) => {
+        listeners.set(event, cb); return room;
+      }),
+      connect: jasmine.createSpy('connect').and.rejectWith(new Error('LiveKit connection refused')),
+      disconnect: jasmine.createSpy('disconnect').and.callFake(() => {
+        listeners.get('disconnected')?.(); return Promise.resolve();
+      }),
+      remoteParticipants: new Map(),
+      localParticipant: {setMicrophoneEnabled: jasmine.createSpy('microphone')}
+    };
+    spyOn(calls as any, 'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/bea'))
+      .flush({callId:'call-failed',peer:'bea',media:'voice',
+        serverUrl:'wss://livekit.example.test',token:'fixture',
+        expiresAt:new Date(Date.now()+60_000).toISOString()});
+    await starting;
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/call-failed/end')).flush(null);
+    expect(calls.state$.value?.phase).toBe('error');
+    expect(calls.state$.value?.error).toBe('calls.connectionFailed');
+    expect(room.disconnect).toHaveBeenCalled();
+    events.next({callId:'call-failed',caller:'ana',peer:'bea',media:'voice',
+      status:'ENDED',actor:'ana',expiresAt:new Date().toISOString()});
+    expect(calls.state$.value?.phase).toBe('error');
+    calls.closeError();
+    expect(calls.state$.value).toBeNull();
+  });
+
+  it('allows an established call to continue without microphone permission', async () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room = {
+      on: jasmine.createSpy('on').and.callFake(() => room),
+      connect: jasmine.createSpy('connect').and.resolveTo(),
+      disconnect: jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants: new Map(),
+      localParticipant: {
+        setMicrophoneEnabled: jasmine.createSpy('microphone').and.rejectWith(new Error('Denied')),
+        setCameraEnabled: jasmine.createSpy('camera').and.resolveTo()
+      }
+    };
+    spyOn(calls as any, 'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','video');
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/bea'))
+      .flush({callId:'call-media',peer:'bea',media:'video',
+        serverUrl:'wss://livekit.example.test',token:'fixture',
+        expiresAt:new Date(Date.now()+60_000).toISOString()});
+    await starting;
+    expect(calls.state$.value?.id).toBe('call-media');
+    expect(calls.state$.value?.phase).toBe('dialing');
+    expect(calls.state$.value?.micEnabled).toBeFalse();
+    expect(calls.state$.value?.cameraEnabled).toBeTrue();
+    expect(calls.state$.value?.error).toBe('calls.microphoneAccessError');
+    expect(room.disconnect).not.toHaveBeenCalled();
+    http.expectNone(r => r.url.endsWith('/api/calls/direct/call-media/end'));
+    room.localParticipant.setMicrophoneEnabled.and.resolveTo();
+    await calls.setMicrophone(true);
+    expect(calls.state$.value?.micEnabled).toBeTrue();
+    expect(calls.state$.value?.error).toBeUndefined();
+    calls.end();
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/call-media/end')).flush(null);
+  });
+
+  it('keeps an unexpected LiveKit disconnect visible instead of silently closing', async () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners = new Map<string, () => void>();
+    const room = {
+      on: jasmine.createSpy('on').and.callFake((event: string, cb: () => void) => {
+        listeners.set(event, cb); return room;
+      }),
+      connect: jasmine.createSpy('connect').and.resolveTo(),
+      disconnect: jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants: new Map(),
+      localParticipant: {setMicrophoneEnabled: jasmine.createSpy('microphone').and.resolveTo()}
+    };
+    spyOn(calls as any, 'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/bea'))
+      .flush({callId:'call-disconnected',peer:'bea',media:'voice',
+        serverUrl:'wss://livekit.example.test',token:'fixture',
+        expiresAt:new Date(Date.now()+60_000).toISOString()});
+    await starting;
+    listeners.get('disconnected')?.();
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/call-disconnected/end')).flush(null);
+    expect(calls.state$.value?.phase).toBe('error');
+    expect(calls.state$.value?.error).toBe('calls.connectionLost');
+    calls.closeError();
+  });
+
   it('rejects outgoing calls before backend readiness is confirmed', async () => {
     http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:false});
     await calls.start('bea','voice');
