@@ -1979,6 +1979,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   canOpenOrganizerShare(): boolean {
     return !!this.session && this.isCreator()
       && (this.session.status === 'OPEN' || this.session.status === 'FULL')
+      && Date.parse(this.session.gameDate) > Date.now()
       && this.session.id > 0;
   }
 
