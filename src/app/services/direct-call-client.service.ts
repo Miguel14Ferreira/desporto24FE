@@ -260,17 +260,17 @@ export class DirectCallClientService implements OnDestroy {
     if (!this.room) return;
     try {
       await this.room.localParticipant.setMicrophoneEnabled(enabled);
-      this.update({micEnabled:enabled});
-    } catch { this.update({error:'calls.mediaError'}); }
+      this.update({micEnabled:enabled,error:undefined});
+    } catch { this.update({error:'calls.microphoneAccessError'}); }
   }
 
   async setCamera(enabled: boolean): Promise<void> {
     if (!this.room || this.state$.value?.media !== 'video') return;
     try {
       await this.room.localParticipant.setCameraEnabled(enabled);
-      this.update({cameraEnabled:enabled});
+      this.update({cameraEnabled:enabled,error:undefined});
       this.mediaChanged$.next(this.mediaChanged$.value+1);
-    } catch { this.update({error:'calls.mediaError'}); }
+    } catch { this.update({error:'calls.cameraAccessError'}); }
   }
 
   async allowAudio(): Promise<void> {
@@ -278,33 +278,75 @@ export class DirectCallClientService implements OnDestroy {
     catch { this.update({error:'calls.audioBlocked'}); }
   }
 
+  /** Factory for deterministic LiveKit integration tests without real hardware. */
+  private createRoom(): Room {
+    return new Room({adaptiveStream:true,dynacast:true});
+  }
+
+  /**
+   * Keep the real error visible when LiveKit fails. end() used to clear the
+   * overlay and the echoed ENDED event hid the explanation milliseconds later.
+   */
+  private failConnection(session: CallSession, version: number, message: string): void {
+    if (version !== this.generation) return;
+    ++this.generation;
+    this.clearRingTimer();
+    const room=this.room;
+    this.room=null; // suppress Disconnected callback triggered by our cleanup
+    if (room) void room.disconnect();
+    this.state$.next({id:session.callId,peer:session.peer,media:session.media,
+      phase:'error',micEnabled:false,cameraEnabled:false,error:message});
+    this.mediaChanged$.next(this.mediaChanged$.value+1);
+    // Release the server-side call. Even if signalling fails, keep error
+    // explanation visible until the user explicitly closes the dialog.
+    this.http.post<void>(this.base + '/' + encodeURIComponent(session.callId) + '/end', {})
+      .subscribe({error:()=>{}});
+  }
+
   private async join(session: CallSession, version: number): Promise<void> {
-    const room=new Room({adaptiveStream:true,dynacast:true});
+    const room=this.createRoom();
     this.room=room;
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.TrackUnsubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
-    room.on(RoomEvent.ParticipantConnected, () => this.update({phase:'active'}));
-    room.on(RoomEvent.ParticipantDisconnected, () => this.end());
+    room.on(RoomEvent.ParticipantConnected, () => {
+      if (this.room===room && version===this.generation) this.update({phase:'active'});
+    });
+    room.on(RoomEvent.ParticipantDisconnected, () => {
+      if (this.room===room) this.failConnection(session,version,'calls.peerDisconnected');
+    });
     room.on(RoomEvent.Disconnected, () => {
-      if (this.room===room) this.dropCall();
+      if (this.room===room) this.failConnection(session,version,'calls.connectionLost');
     });
     try {
       await room.connect(session.serverUrl,session.token,{autoSubscribe:true});
-      if (version!==this.generation) {room.disconnect();return;}
-      await room.localParticipant.setMicrophoneEnabled(true);
-      if (version!==this.generation) {room.disconnect();return;}
-      if (session.media==='video') await room.localParticipant.setCameraEnabled(true);
-      if (version!==this.generation) {room.disconnect();return;}
-      this.update({micEnabled:true,cameraEnabled:session.media==='video'});
-      if (room.remoteParticipants.size) this.update({phase:'active'});
-      this.mediaChanged$.next(this.mediaChanged$.value+1);
     } catch {
-      if (version===this.generation) {
-        this.end();
-        this.state$.next({id:'',peer:session.peer,media:session.media,
-          phase:'error',micEnabled:false,cameraEnabled:false,error:'calls.mediaError'});
+      this.failConnection(session,version,'calls.connectionFailed');
+      return;
+    }
+    if (version!==this.generation) {void room.disconnect();return;}
+    // Microphone/camera permission failures should not end an established
+    // room: stay connected as listener and let the user retry the devices.
+    let micEnabled=false;
+    let cameraEnabled=false;
+    try {
+      await room.localParticipant.setMicrophoneEnabled(true);
+      micEnabled=true;
+    } catch {
+      if (version===this.generation) this.update({error:'calls.microphoneAccessError'});
+    }
+    if (version!==this.generation) {void room.disconnect();return;}
+    if (session.media==='video') {
+      try {
+        await room.localParticipant.setCameraEnabled(true);
+        cameraEnabled=true;
+      } catch {
+        if (version===this.generation) this.update({error:'calls.cameraAccessError'});
       }
     }
+    if (version!==this.generation) {void room.disconnect();return;}
+    this.update({micEnabled:micEnabled,cameraEnabled:cameraEnabled});
+    if (room.remoteParticipants.size) this.update({phase:'active'});
+    this.mediaChanged$.next(this.mediaChanged$.value+1);
   }
 
   private onEvent(call: DirectCallEvent): void {
@@ -330,7 +372,10 @@ export class DirectCallClientService implements OnDestroy {
         this.dropCall();
       }
     }
-    if (call.status==='DECLINED' || call.status==='ENDED') this.dropCall();
+    if (call.status==='DECLINED' || call.status==='ENDED') {
+      // A late server echo must not hide a locally detected connection error.
+      if (state.phase!=='error') this.dropCall();
+    }
   }
 
   private scheduleExpiry(id: string, expiresAt: number): void {
