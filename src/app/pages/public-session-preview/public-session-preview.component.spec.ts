@@ -44,6 +44,8 @@ describe('PublicSessionPreviewComponent', () => {
     TestBed.inject(I18nService).setLanguage('pt');
     localStorage.removeItem('d24-language');
     localStorage.removeItem('jynlo-guest-receipt:42');
+    Object.keys(localStorage).filter(key => key.startsWith('jynlo-guest-receipt:42:'))
+      .forEach(key => localStorage.removeItem(key));
   });
 
   function render(overrides: Record<string, unknown> = {}): HTMLElement {
@@ -941,7 +943,7 @@ describe('PublicSessionPreviewComponent', () => {
       expect(requestCall[1].playerId).toBe(22);
       expect(requestCall[1].newName).toBeNull();
       expect(component.guestStep).toBe('pending');
-      expect(localStorage.getItem('jynlo-guest-receipt:42')).toBe(receipt);
+      expect(localStorage.getItem('jynlo-guest-receipt:42:'+token.slice(0,18))).toBe(receipt);
     });
     it('offers optional registration only after organizer approval, not after sending', () => {
       const page=renderGuest();
