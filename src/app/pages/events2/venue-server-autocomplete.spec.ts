@@ -2,6 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { Router } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { Events2Component } from './events2.component';
+import { LocationMethodSelectorComponent } from '../../shared/location-method-selector/location-method-selector.component';
 import { Venue } from '../model/venue';
 import { VenueService, VenueSuggestionPage } from '../../services/venue.service';
 import { SessionService } from '../../services/session.service';
@@ -27,7 +28,7 @@ describe('Create session venue server autocomplete', () => {
     venues.listPhotos.and.returnValue(of([]));
     await TestBed.configureTestingModule({
       declarations: [Events2Component],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, LocationMethodSelectorComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: VenueService, useValue: venues },

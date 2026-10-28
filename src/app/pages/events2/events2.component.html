@@ -393,17 +393,9 @@
           }
         </div>
 
-        <div class="location-methods" role="group" [attr.aria-label]="'createSession.locationMethods' | t">
-          <button type="button" class="location-method" [class.active]="locationMethod === 'venue'"
-                  [attr.aria-pressed]="locationMethod === 'venue'" [disabled]="loading || venueSaving"
-                  (click)="chooseLocationMethod('venue')">{{ 'createSession.locationMethod.venue' | t }}</button>
-          <button type="button" class="location-method" [class.active]="locationMethod === 'maps'"
-                  [attr.aria-pressed]="locationMethod === 'maps'" [disabled]="loading || venueSaving"
-                  (click)="chooseLocationMethod('maps')">{{ 'createSession.locationMethod.maps' | t }}</button>
-          <button type="button" class="location-method" [class.active]="locationMethod === 'gps'"
-                  [attr.aria-pressed]="locationMethod === 'gps'" [disabled]="loading || venueSaving"
-                  (click)="chooseLocationMethod('gps')">{{ 'createSession.locationMethod.gps' | t }}</button>
-        </div>
+        <app-location-method-selector
+          [value]="locationMethod" [disabled]="loading || venueSaving"
+          (valueChange)="chooseLocationMethod($event)"></app-location-method-selector>
         @if (locationMethod === 'venue') {
         <label class="venue-select-field">
           <span>{{ 'venue.district' | t }}</span>

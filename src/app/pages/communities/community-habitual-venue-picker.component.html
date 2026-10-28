@@ -32,29 +32,20 @@
   }
 
   @if (canManage) {
-    <div class="community-venue-location-methods" role="group"
-         [attr.aria-label]="'createSession.locationMethods' | t">
-      <button type="button" class="community-venue-method" [class.active]="locationMethod === 'venue'"
-              [attr.aria-pressed]="locationMethod === 'venue'" [disabled]="saving"
-              (click)="chooseLocationMethod('venue')">{{ 'createSession.locationMethod.venue' | t }}</button>
-      <button type="button" class="community-venue-method" [class.active]="locationMethod === 'maps'"
-              [attr.aria-pressed]="locationMethod === 'maps'" [disabled]="saving"
-              (click)="chooseLocationMethod('maps')">{{ 'createSession.locationMethod.maps' | t }}</button>
-      <button type="button" class="community-venue-method" [class.active]="locationMethod === 'gps'"
-              [attr.aria-pressed]="locationMethod === 'gps'" [disabled]="saving"
-              (click)="chooseLocationMethod('gps')">{{ 'createSession.locationMethod.gps' | t }}</button>
-    </div>
+    <app-location-method-selector
+      [value]="locationMethod" [disabled]="saving"
+      (valueChange)="chooseLocationMethod($event)"></app-location-method-selector>
     @if (locationMethod === 'venue') {
     <form class="community-venue-search-row" (ngSubmit)="search()">
       <label class="community-venue-search-field">
         <span>{{ 'communities.habitualVenue.searchLabel' | t }}</span>
         <input name="habitualVenueQuery" [(ngModel)]="query" type="search"
-               [disabled]="searching || saving" autocomplete="off"
+               [disabled]="saving" autocomplete="off"
                [placeholder]="'communities.habitualVenue.searchPlaceholder' | t">
       </label>
       <button type="submit" class="community-venue-search-button"
-              [disabled]="searching || saving || !query.trim()">
-        {{ (searching ? 'communities.habitualVenue.searching' : 'communities.habitualVenue.search') | t }}
+              [disabled]="saving || !query.trim() || (searching && query.trim() === searchQuery)">
+        {{ ((searching && query.trim() === searchQuery) ? 'communities.habitualVenue.searching' : 'communities.habitualVenue.search') | t }}
       </button>
     </form>
 
@@ -96,6 +87,7 @@
                    [disabled]="saving" maxlength="350">
           </label>
         </div>
+        @if (resolvingAddress) { <p class="community-venue-empty" role="status">{{ 'createSession.gpsAddressLoading' | t }}</p> }
         <p class="community-venue-empty">{{ 'communities.habitualVenue.pointHint' | t }}</p>
         <div class="community-venue-detail-actions">
           @if (mapPointUrl; as url) {
@@ -103,7 +95,7 @@
                class="community-venue-detail-link">{{ 'venue.visit.openGoogleMap' | t }}</a>
           }
           <button type="button" class="community-venue-confirm"
-                  [disabled]="saving" (click)="savePoint()">
+                  [disabled]="saving || resolvingAddress" (click)="savePoint()">
             {{ 'communities.habitualVenue.set' | t }}
           </button>
         </div>
@@ -113,11 +105,17 @@
       <button type="button" class="community-venue-remove" (click)="save(null)"
               [disabled]="saving">{{ 'communities.habitualVenue.remove' | t }}</button>
     }
+    @if (searching && locationMethod === 'venue') {
+      <p class="community-venue-empty" role="status">{{ 'communities.habitualVenue.searching' | t }}</p>
+    }
     @if (error) { <p class="community-venue-error" role="alert">{{ error }}</p> }
     @if (feedback) { <p class="community-venue-feedback" role="status">{{ feedback }}</p> }
-    @if (locationMethod === 'venue' && !searching && query.trim()
-         && !results.length && !error && !detailLoading && !expanded) {
-      <p class="community-venue-empty">{{ 'communities.habitualVenue.searchHelp' | t }}</p>
+    @if (locationMethod === 'venue' && !searching && !error && !detailLoading && !expanded) {
+      @if (searchAttempted && !results.length) {
+        <p class="community-venue-empty" role="status">{{ 'communities.habitualVenue.noResults' | t }}</p>
+      } @else if (!searchAttempted && query.trim()) {
+        <p class="community-venue-empty">{{ 'communities.habitualVenue.searchHelp' | t }}</p>
+      }
     }
     @if (locationMethod === 'venue' && results.length) {
       <div class="community-venue-results" role="group"

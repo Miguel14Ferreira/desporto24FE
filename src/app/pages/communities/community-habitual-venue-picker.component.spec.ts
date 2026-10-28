@@ -1,4 +1,5 @@
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
+import { fakeAsync, tick } from '@angular/core/testing';
 import { CommunityHabitualVenuePickerComponent } from './community-habitual-venue-picker.component';
 import { CommunityGroup } from '../model/community-group';
 import { Venue } from '../model/venue';
@@ -36,9 +37,10 @@ describe('Community habitual venue picker', () => {
             habitualCity: city, habitualAddress: address})
       )
     };
-    const component = new CommunityHabitualVenuePickerComponent(venues as any, groups as any);
+    const cdr = { markForCheck: jasmine.createSpy('markForCheck') };
+    const component = new CommunityHabitualVenuePickerComponent(venues as any, groups as any, cdr as any);
     component.community = {...group};
-    return {component, venues, groups};
+    return {component, venues, groups, cdr};
   }
 
   it('opens a catalogue venue detail without silently making it the default', () => {
@@ -55,6 +57,49 @@ describe('Community habitual venue picker', () => {
     expect(component.community.defaultVenueId).toBe(55);
   });
 
+  it('leaves search mode when the backend responds and displays results', () => {
+    const {component, venues, cdr} = setup();
+    const pending = new Subject<any>();
+    venues.suggest.and.returnValue(pending.asObservable());
+    component.query = 'Campo';
+    component.search();
+    expect(component.searching).toBeTrue();
+    pending.next({venues: [venue], page: 0, hasMore: false});
+    pending.complete();
+    expect(component.searching).toBeFalse();
+    expect(component.searchAttempted).toBeTrue();
+    expect(component.results.length).toBe(1);
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it('cancels a slow search when another query is submitted', () => {
+    const {component, venues} = setup();
+    const pending = new Subject<any>();
+    venues.suggest.and.returnValues(pending.asObservable(), of({
+      venues: [venue], page: 0, hasMore: false
+    }));
+    component.query = 'Campo antigo';
+    component.search();
+    component.query = 'Campo Municipal';
+    component.search();
+    pending.next({venues: [], page: 0, hasMore: false});
+    pending.complete();
+    expect(component.searching).toBeFalse();
+    expect(component.results).toEqual([venue]);
+  });
+
+  it('stops the search after the timeout and lets the user retry', fakeAsync(() => {
+    const {component, venues} = setup();
+    venues.suggest.and.returnValue(new Subject<any>().asObservable());
+    component.query = 'Recinto difícil';
+    component.search();
+    tick(8_100);
+    expect(component.searching).toBeFalse();
+    expect(component.searchAttempted).toBeTrue();
+    expect(component.error).toBeTruthy();
+    component.ngOnDestroy();
+  }));
+
   it('resolves and saves a Google Maps point without creating a fake catalog venue', () => {
     const {component, venues, groups} = setup();
     component.chooseLocationMethod('maps');
@@ -67,6 +112,24 @@ describe('Community habitual venue picker', () => {
     expect(groups.updateHabitualLocation).toHaveBeenCalledWith(
       42, 'MAPS', 38.71, -9.13, 'Lisboa', 'Rua da Bola');
     expect(groups.updateDefaultVenue).not.toHaveBeenCalled();
+  });
+
+  it('waits for reverse geocoding before saving a habitual Maps point', () => {
+    const {component, venues, groups} = setup();
+    const geocode = new Subject<any>();
+    venues.reverseLocation.and.returnValue(geocode.asObservable());
+    component.chooseLocationMethod('maps');
+    component.mapLink = 'https://www.google.com/maps?q=38.71,-9.13';
+    component.resolveMapLink();
+    expect(component.resolvingAddress).toBeTrue();
+    component.savePoint();
+    expect(groups.updateHabitualLocation).not.toHaveBeenCalled();
+    geocode.next({city: 'Lisboa', address: 'Rua da Bola'});
+    geocode.complete();
+    expect(component.resolvingAddress).toBeFalse();
+    component.savePoint();
+    expect(groups.updateHabitualLocation).toHaveBeenCalledWith(
+      42, 'MAPS', 38.71, -9.13, 'Lisboa', 'Rua da Bola');
   });
 
   it('supports a GPS location point without forcing a directory venue', () => {

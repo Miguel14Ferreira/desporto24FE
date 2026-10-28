@@ -571,34 +571,7 @@ input[type='datetime-local'],
   color: #bbf7d0; }
 .community-sport-option:focus-visible { outline: 2px solid #86efac; outline-offset: 3px; }
 
-/* Choose exactly one location source; this also works without an existing venue. */
-.location-methods {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .6rem;
-}
-.location-method {
-  min-width: 0;
-  padding: .85rem .5rem;
-  border-radius: .85rem;
-  border: 1px solid rgba(148, 163, 184, .4);
-  background: rgba(15, 23, 42, .5);
-  color: #e2e8f0;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-.location-method.active,
-.location-method[aria-pressed='true'] {
-  border-color: #00e676;
-  background: rgba(0, 230, 118, .1);
-  color: #b9f6ca;
-}
-.location-method:focus-visible { outline: 3px solid #7dd3fc; outline-offset: 2px; }
-.location-method:disabled { opacity: .6; cursor: not-allowed; }
-@media (max-width: 540px) {
-  .location-methods { grid-template-columns: 1fr; }
-}
+/* The shared selector owns all three location-method button styles. */
 
 
 .venue-source-caution {

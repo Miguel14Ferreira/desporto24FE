@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { finalize, Subscription, timeout } from 'rxjs';
+import { finalize, Subscription, take, timeout } from 'rxjs';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityGroup } from '../model/community-group';
 import { Venue } from '../model/venue';
 import { VenueService } from '../../services/venue.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
+import { LocationMethodSelectorComponent } from '../../shared/location-method-selector/location-method-selector.component';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 /** Reusable, admin-only venue selector for community setup and settings.
  * Opening a result is read-only. Saving requires a second explicit action. */
@@ -16,7 +18,7 @@ import { CommunityGroupsService } from '../../services/community-groups.service'
   templateUrl: './community-habitual-venue-picker.component.html',
   styleUrls: ['./community-habitual-venue-picker.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe]
+  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe, LocationMethodSelectorComponent]
 })
 export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) community!: CommunityGroup;
@@ -26,18 +28,22 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   mapLink = '';
   resolvingMap = false;
   locating = false;
+  resolvingAddress = false;
   locationPoint: {source: 'MAPS' | 'GPS'; latitude: number; longitude: number;
                   city: string; address: string} | null = null;
   query = '';
   results: Venue[] = [];
   expanded: Venue | null = null;
   searching = false;
+  searchAttempted = false;
+  searchQuery = '';
   detailLoading = false;
   saving = false;
   error = '';
   feedback = '';
   private revision = 0;
   private subs = new Subscription();
+  private searchRequest?: Subscription;
   private previousCommunityId: number | null = null;
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -53,9 +59,13 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       this.locationMethod = 'venue';
       this.resolvingMap = false;
       this.locating = false;
+      this.resolvingAddress = false;
       this.results = [];
       this.expanded = null;
+      this.searchRequest = undefined;
       this.searching = false;
+      this.searchAttempted = false;
+      this.searchQuery = '';
       this.detailLoading = false;
       this.saving = false;
       this.error = '';
@@ -64,7 +74,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.previousCommunityId = id;
   }
 
-  constructor(private venues: VenueService, private groups: CommunityGroupsService) {}
+  constructor(private venues: VenueService, private groups: CommunityGroupsService,
+              private readonly cdr: ChangeDetectorRef) {}
 
   get canManage(): boolean {
     return this.community?.myRole === 'OWNER' || this.community?.myRole === 'ADMIN';
@@ -73,6 +84,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   chooseLocationMethod(method: 'venue' | 'maps' | 'gps'): void {
     if (!this.canManage || this.saving || this.locationMethod === method) return;
     ++this.revision; // stale Maps, GPS and catalogue requests cannot change the new mode.
+    this.searchRequest?.unsubscribe();
+    this.searchRequest = undefined;
     this.locationMethod = method;
     this.results = [];
     this.expanded = null;
@@ -80,9 +93,12 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.mapLink = '';
     this.locationPoint = null;
     this.searching = false;
+    this.searchAttempted = false;
+    this.searchQuery = '';
     this.detailLoading = false;
     this.resolvingMap = false;
     this.locating = false;
+    this.resolvingAddress = false;
     this.error = '';
     this.feedback = '';
   }
@@ -102,14 +118,14 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
           if (revision !== this.revision || this.community.id !== communityId
               || this.locationMethod !== 'maps') return;
           if (!this.validPoint(point.latitude, point.longitude)) {
-            this.error = 'Não foi possível confirmar este ponto do mapa.';
+            this.error = t('communities.habitualVenue.errorMapPoint');
             return;
           }
           this.useCoordinates('MAPS', point.latitude, point.longitude, revision);
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
-          this.error = 'Não foi possível resolver esta ligação do Google Maps.';
+          this.error = t('communities.habitualVenue.errorMapLink');
         }
       });
     this.subs.add(sub);
@@ -118,7 +134,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   captureCurrentLocation(): void {
     if (!this.canManage || this.saving || this.locating || this.locationMethod !== 'gps') return;
     if (!navigator.geolocation) {
-      this.error = 'Este dispositivo não disponibiliza localização GPS.';
+      this.error = t('communities.habitualVenue.errorGpsUnsupported');
       return;
     }
     const revision = ++this.revision, communityId = this.community.id;
@@ -132,7 +148,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
         this.locating = false;
         const { latitude, longitude } = position.coords;
         if (!this.validPoint(latitude, longitude)) {
-          this.error = 'A localização devolvida é inválida.';
+          this.error = t('communities.habitualVenue.errorGpsInvalid');
           return;
         }
         this.useCoordinates('GPS', latitude, longitude, revision, position.coords.accuracy);
@@ -140,7 +156,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       () => {
         if (revision !== this.revision || this.community.id !== communityId) return;
         this.locating = false;
-        this.error = 'Não foi possível obter a localização. Verifica as permissões do dispositivo.';
+        this.error = t('communities.habitualVenue.errorGpsPermission');
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
@@ -155,8 +171,11 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
                          longitude: number, revision: number, accuracy?: number): void {
     this.locationPoint = {source, latitude, longitude, city: '', address: ''};
     const communityId = this.community.id;
+    this.resolvingAddress = true;
     const sub = this.venues.reverseLocation(latitude, longitude, accuracy)
-      .pipe(timeout(10000)).subscribe({
+      .pipe(timeout(20000), finalize(() => {
+        if (revision === this.revision && this.community.id === communityId) this.resolvingAddress = false;
+      })).subscribe({
         next: result => {
           if (revision !== this.revision || communityId !== this.community.id
               || this.locationPoint?.source !== source) return;
@@ -171,7 +190,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
 
   savePoint(): void {
     const point = this.locationPoint;
-    if (!point || !this.canManage || this.saving
+    if (!point || !this.canManage || this.saving || this.resolvingAddress
         || (this.locationMethod === 'maps' && point.source !== 'MAPS')
         || (this.locationMethod === 'gps' && point.source !== 'GPS')) return;
     const communityId = this.community.id, revision = ++this.revision;
@@ -188,11 +207,11 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
           if (revision !== this.revision || this.community.id !== communityId) return;
           this.community = group;
           this.venueSaved.emit(group);
-          this.feedback = 'Localização habitual guardada.';
+          this.feedback = t('communities.habitualVenue.pointSaved');
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
-          this.error = 'Não foi possível guardar a localização habitual.';
+          this.error = t('communities.habitualVenue.errorSavePoint');
         }
       });
     this.subs.add(sub);
@@ -204,34 +223,57 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   }
 
   search(): void {
-    if (!this.canManage || this.searching || this.saving || this.locationMethod !== 'venue') return;
+    if (!this.canManage || this.saving || this.locationMethod !== 'venue') return;
     const query = this.query.trim();
-    if (!query) return;
+    if (!query || (this.searching && query === this.searchQuery)) return;
+
+    // A new query cancels the previous HTTP request immediately. Old responses
+    // must never replace newer results or leave the form stuck in loading state.
     const revision = ++this.revision;
     const communityId = this.community.id;
+    this.searchRequest?.unsubscribe();
+    this.searchRequest = undefined;
+    this.searchQuery = query;
+    this.searchAttempted = false;
     this.error = '';
     this.feedback = '';
     this.results = [];
     this.expanded = null;
     this.detailLoading = false;
     this.searching = true;
+
     const sports = this.community.sports?.length ? this.community.sports
       : this.community.sport ? [this.community.sport] : [];
-    const sub = this.venues.suggest(query, undefined, sports.length === 1 ? sports[0] : undefined, 0)
-      .pipe(timeout(10000), finalize(() => {
-        if (revision === this.revision) this.searching = false;
-      }))
-      .subscribe({
+    const request = this.venues.suggest(query, undefined,
+      sports.length === 1 ? sports[0] : undefined, 0)
+      .pipe(
+        timeout({ first: 8000 }),
+        take(1),
+        finalize(() => {
+          if (revision !== this.revision || this.community.id !== communityId) return;
+          this.searching = false;
+          this.cdr.markForCheck();
+        })
+      ).subscribe({
         next: result => {
-          if (revision !== this.revision || this.community.id !== communityId) return;
-          this.results = result.venues;
+          if (revision !== this.revision || this.community.id !== communityId
+              || this.locationMethod !== 'venue') return;
+          this.results = Array.isArray(result?.venues) ? result.venues : [];
+          this.searchAttempted = true;
+          this.cdr.markForCheck();
         },
-        error: () => {
-          if (revision !== this.revision || this.community.id !== communityId) return;
-          this.error = 'Não foi possível pesquisar os recintos.';
+        error: (reason: unknown) => {
+          if (revision !== this.revision || this.community.id !== communityId
+              || this.locationMethod !== 'venue') return;
+          this.searchAttempted = true;
+          this.error = (reason as {name?: string})?.name === 'TimeoutError'
+            ? t('communities.habitualVenue.searchTimeout')
+            : t('communities.habitualVenue.errorSearch');
+          this.cdr.markForCheck();
         }
       });
-    this.subs.add(sub);
+    this.searchRequest = request;
+    this.subs.add(request);
   }
 
   openDetails(id: number): void {
@@ -253,7 +295,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       },
       error: () => {
         if (revision !== this.revision || this.community.id !== communityId) return;
-        this.error = 'Não foi possível carregar os detalhes deste recinto.';
+        this.error = t('communities.habitualVenue.errorDetails');
       }
     });
     this.subs.add(sub);
@@ -288,12 +330,12 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
           this.results = [];
           this.query = '';
           this.feedback = id === null
-            ? 'Recinto habitual removido.'
-            : 'Recinto habitual guardado.';
+            ? t('communities.habitualVenue.venueRemoved')
+            : t('communities.habitualVenue.venueSaved');
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
-          this.error = 'Não foi possível guardar o recinto habitual.';
+          this.error = t('communities.habitualVenue.errorSaveVenue');
         }
       });
     this.subs.add(sub);
@@ -301,6 +343,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
 
   ngOnDestroy(): void {
     ++this.revision;
+    this.searchRequest?.unsubscribe();
     this.subs.unsubscribe();
   }
 }

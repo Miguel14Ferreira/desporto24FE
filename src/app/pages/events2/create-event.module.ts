@@ -5,6 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { Events2Component } from './events2.component';
+import { LocationMethodSelectorComponent } from '../../shared/location-method-selector/location-method-selector.component';
 
 const routes: Routes = [
   { path: '', component: Events2Component }
@@ -12,6 +13,6 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [Events2Component],
-  imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe]
+  imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe, LocationMethodSelectorComponent]
 })
 export class CreateEventModule {}
