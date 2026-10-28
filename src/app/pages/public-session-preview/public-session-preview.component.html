@@ -64,7 +64,7 @@
 
         <aside class="join-panel">
           <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
-          @if (guestToken && canRequestParticipation && (!isAuthenticated || !!guestReceipt)) {
+          @if (guestToken && (canRequestParticipation || !!guestReceipt) && (!isAuthenticated || !!guestReceipt)) {
             <section class="guest-rsvp" [attr.aria-label]="'guestRsvp.title' | t">
               <span class="guest-rsvp-kicker">{{ 'guestRsvp.noAccount' | t }}</span>
               @if (guestLoading) {
@@ -140,6 +140,12 @@
                     }
                     <p>{{ 'guestRsvp.noThanks' | t }}</p>
                   </div>
+                }
+                @if (guestReceipt && guestStep !== 'pending') {
+                  <button type="button" class="guest-rsvp-back"
+                          (click)="registerAnotherGuest()" [disabled]="guestSending || guestLinking">
+                    {{ 'guestRsvp.differentPlayer' | t }}
+                  </button>
                 }
                 @if (guestStep === 'linked') {
                   <a class="guest-rsvp-primary" [routerLink]="returnUrl">
