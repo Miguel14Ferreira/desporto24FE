@@ -10,6 +10,7 @@ import { Venue } from '../model/venue';
 import { VenueService } from '../../services/venue.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { LocationMethodSelectorComponent } from '../../shared/location-method-selector/location-method-selector.component';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 /** Reusable, admin-only venue selector for community setup and settings.
@@ -19,7 +20,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
   templateUrl: './community-habitual-venue-picker.component.html',
   styleUrls: ['./community-habitual-venue-picker.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe, LocationMethodSelectorComponent]
+  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe, LocationMethodSelectorComponent, VenueSportsBadgesComponent]
 })
 export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) community!: CommunityGroup;
