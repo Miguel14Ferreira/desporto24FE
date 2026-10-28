@@ -85,4 +85,17 @@ describe('CommunityRankingTableComponent', () => {
     expect(root.querySelector('.module-empty.compact h3')).not.toBeNull();
     expect(root.querySelector('.module-empty.compact p')).not.toBeNull();
   });
+
+  it('shows real account avatars, with initials fallback for historic players', () => {
+    const root = render([
+      {...item, profilePicUrl:'https://images.example.com/ana.jpg'},
+      {...item, username:null, profileId:null, fullName:'Ferreirinha', profilePicUrl:null}
+    ]);
+    const rows = root.querySelectorAll('tbody tr');
+    const img = rows[0].querySelector<HTMLImageElement>('.ranking-player__avatar img');
+    expect(img?.getAttribute('src')).toBe('https://images.example.com/ana.jpg');
+    expect(rows[1].querySelector('.ranking-player__avatar')?.textContent?.trim()).toBe('F');
+    expect(rows[1].querySelector('img')).toBeNull();
+    expect(root.querySelectorAll('thead th').length).toBe(7);
+  });
 });

@@ -1535,7 +1535,7 @@ describe('SessionDetailsComponent', () => {
     expect(region.textContent).toContain('2 jogadores visíveis');
     expect(region.textContent).not.toContain('Pedido Antigo');
     expect(region.textContent).not.toContain('Conta criada');
-    expect(region.querySelectorAll('a.session-player-chip--member').length).toBe(1);
+    expect(region.querySelectorAll('a.session-player-card--member').length).toBe(1);
   });
 
   it('shows confirmed guests to a joined non-organizer without organizer access', () => {
@@ -1556,8 +1556,8 @@ describe('SessionDetailsComponent', () => {
     expect(section.textContent).toContain('3 jogadores visíveis');
     expect(section.textContent).toContain('@monicagomes');
     expect(section.textContent).toContain('oal');
-    expect(section.querySelectorAll('.session-player-chip--guest').length).toBe(1);
-    expect(section.querySelectorAll('a.session-player-chip--member').length).toBe(2);
+    expect(section.querySelectorAll('.session-player-card--guest').length).toBe(1);
+    expect(section.querySelectorAll('a.session-player-card--member').length).toBe(2);
     expect(sessionService.confirmedGuests).toHaveBeenCalledWith(7);
     expect(sessionService.guestRequests).not.toHaveBeenCalled();
     expect(component.isCreator()).toBeFalse();
@@ -1579,7 +1579,7 @@ describe('SessionDetailsComponent', () => {
     expect(section.textContent).not.toContain('Private guest');
   });
 
-  it('renders ten registered and confirmed guest players as matching profile chips', () => {
+  it('renders ten registered and confirmed guest players as matching profile cards', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, creatorUsername: 'creator-user', joined: true };
     component.sessionParticipants = Array.from({length: 5}, (_, index) => ({
@@ -1592,18 +1592,18 @@ describe('SessionDetailsComponent', () => {
     }));
     fixture.detectChanges();
     const region = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
-    const chips = region.querySelectorAll('.session-participant-list > .session-player-chip');
+    const chips = region.querySelectorAll('.session-participant-list > .session-player-card');
     expect(chips.length).toBe(10);
     expect(region.textContent).toContain('10 jogadores visíveis');
-    expect(region.querySelectorAll('a.session-player-chip--member').length).toBe(5);
-    expect(region.querySelectorAll('span.session-player-chip--guest').length).toBe(5);
+    expect(region.querySelectorAll('a.session-player-card--member').length).toBe(5);
+    expect(region.querySelectorAll('span.session-player-card--guest').length).toBe(5);
     expect(region.textContent).toContain('COM CONTA');
     expect(region.textContent).toContain('SEM CONTA');
-    const links = region.querySelectorAll('a.session-player-chip--member');
+    const links = region.querySelectorAll('a.session-player-card--member');
     expect(links[0].getAttribute('href')).toContain('/menu/perfis/creator-user');
   });
 
-  it('preserves the same identity chips in two confirmed teams of five', () => {
+  it('preserves the same identity cards in two confirmed teams of five', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, creatorUsername: 'creator-user', joined: true };
     const registered = Array.from({length: 6}, (_, index) => ({
@@ -1624,10 +1624,10 @@ describe('SessionDetailsComponent', () => {
     const region = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
     const teams = region.querySelectorAll('.confirmed-teams > div');
     expect(teams.length).toBe(2);
-    expect(teams[0].querySelectorAll('.session-player-chip').length).toBe(5);
-    expect(teams[1].querySelectorAll('.session-player-chip').length).toBe(5);
-    expect(region.querySelectorAll('a.session-player-chip--member').length).toBe(6);
-    expect(region.querySelectorAll('span.session-player-chip--guest').length).toBe(4);
+    expect(teams[0].querySelectorAll('.session-player-card').length).toBe(5);
+    expect(teams[1].querySelectorAll('.session-player-card').length).toBe(5);
+    expect(region.querySelectorAll('a.session-player-card--member').length).toBe(6);
+    expect(region.querySelectorAll('span.session-player-card--guest').length).toBe(4);
   });
 
   it('starts with guest-first invitations after creating a community game', () => {
@@ -3390,5 +3390,43 @@ describe('SessionDetailsComponent', () => {
 
     expect(component.errorMessage).toBe('');
     expect(component.session?.id).toBe(7);
+  });
+
+  it('shows account photos and guest initials in readable roster cards', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {...session, joined:true};
+    component.sessionParticipants = [
+      {id:1,username:'player-one',profilePicUrl:'https://cdn.example.test/player.jpg',
+       attendanceStatus:'PENDING',joinedAt:'2026-09-20T18:00:00Z'}
+    ];
+    component.memberConfirmedGuests = [{id:501,name:'Fresco',teamCode:null}];
+    component.confirmedTeams = false;
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const cards = panel.querySelectorAll('.session-player-card');
+    expect(cards.length).toBe(2);
+    const linked = panel.querySelector('a.session-player-card--member') as HTMLAnchorElement;
+    expect(linked).not.toBeNull();
+    expect(linked.querySelector('img')?.getAttribute('src'))
+      .toBe('https://cdn.example.test/player.jpg');
+    const guest = panel.querySelector('.session-player-card--guest') as HTMLElement;
+    expect(guest.querySelector('img')).toBeNull();
+    expect(guest.querySelector('.session-player-card__avatar')?.textContent?.trim()).toBe('F');
+    expect(panel.textContent).toContain('2 jogadores');
+  });
+
+  it('keeps location navigation and organiser edit action in distinct visual regions', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {...session,canSeeExactAddress:true,
+      address:'Rua da Paz 10, Lisboa',meetingPointInstructions:null,
+      gameDate:'2099-10-01T18:00:00Z'};
+    fixture.detectChanges();
+    const location = fixture.nativeElement.querySelector('.address-panel') as HTMLElement;
+    expect(location.querySelector('.session-location-heading')).not.toBeNull();
+    expect(location.querySelector('.session-location-detail')).not.toBeNull();
+    const maps = location.querySelector('a.session-location-map') as HTMLAnchorElement;
+    expect(maps?.href).toContain('google.com/maps');
+    expect(location.querySelector('.session-meeting-edit-button')).not.toBeNull();
   });
 });

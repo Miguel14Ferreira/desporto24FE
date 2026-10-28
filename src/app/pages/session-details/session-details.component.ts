@@ -13,6 +13,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { compactSessionShareMessage } from '../../shared/session-share-message';
 import { venueHasPortugueseCoordinates, venueDirectionsUrl, VenueTravelMode } from '../../shared/venue-public-contact';
 import { venueUsableAddress } from '../../shared/venue-location';
+import { playerAvatarInitials, playerAvatarUrl } from '../../shared/player-avatar';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
@@ -2507,6 +2508,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       : '';
 
     return `Sessão de ${this.session?.sport ?? 'desporto'} no Desporto24.${creator}`;
+  }
+
+  /** The session endpoint supplies profile photos only to authorised attendees. */
+  rosterAvatar(url: string | null | undefined): string | null {
+    return playerAvatarUrl(url, environment.apiUrl);
+  }
+
+  rosterInitials(name: string): string {
+    return playerAvatarInitials(name);
+  }
+
+  rosterAvatarFailed(event: Event): void {
+    (event.target as HTMLImageElement).remove();
   }
 
   /** GPS can identify a venue site without certifying its public entrance. */

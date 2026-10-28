@@ -744,14 +744,16 @@
           </section>
 
           <section class="address-panel">
-            <h2>{{ 'sessionDetail.location' | t }}</h2>
-            @if (canEditMeetingPoint() && !meetingPointEditing) {
-              <button class="session-meeting-edit-button jynlo-action jynlo-action--neutral"
-                type="button" (click)="beginMeetingPointEdit()">
-                {{ (session.meetingPointInstructions
-                    ? 'sessionDetail.meetingPointEdit' : 'sessionDetail.meetingPointAdd') | t }}
-              </button>
-            }
+            <div class="session-location-heading">
+              <h2>{{ 'sessionDetail.location' | t }}</h2>
+              @if (canEditMeetingPoint() && !meetingPointEditing) {
+                <button class="session-meeting-edit-button jynlo-action jynlo-action--neutral"
+                  type="button" (click)="beginMeetingPointEdit()">
+                  {{ (session.meetingPointInstructions
+                      ? 'sessionDetail.meetingPointEdit' : 'sessionDetail.meetingPointAdd') | t }}
+                </button>
+              }
+            </div>
             @if (meetingPointEditing && canEditMeetingPoint()) {
               <div class="session-meeting-edit" role="group"
                    [attr.aria-label]="'sessionDetail.meetingPointTitle' | t">
@@ -789,12 +791,17 @@
               </div>
             }
             @if (exactGoogleMapsUrl(); as mapsUrl) {
-              <a class="session-location-map" [href]="mapsUrl" target="_blank" rel="noopener noreferrer"
-                 [attr.aria-label]="'sessionDetail.openMaps' | t">
-                {{ exactLocationLabel() }} <span aria-hidden="true">↗</span>
-              </a>
-              <small>{{ (hasVenueMapCoordinates() ? 'sessionDetail.mapPointNotEntrance'
-                         : 'sessionDetail.openMapsHint') | t }}</small>
+              <div class="session-location-detail">
+                <span class="session-location-pin" aria-hidden="true">⌖</span>
+                <div class="session-location-copy">
+                  <a class="session-location-map" [href]="mapsUrl" target="_blank" rel="noopener noreferrer"
+                     [attr.aria-label]="'sessionDetail.openMaps' | t">
+                    {{ exactLocationLabel() }} <span aria-hidden="true">↗</span>
+                  </a>
+                  <small>{{ (hasVenueMapCoordinates() ? 'sessionDetail.mapPointNotEntrance'
+                             : 'sessionDetail.openMapsHint') | t }}</small>
+                </div>
+              </div>
               @if (hasVenueMapCoordinates()) {
                 <div class="session-route-planner" aria-label="{{ 'venue.visit.directionsTitle' | t }}">
                   <strong>{{ 'venue.visit.directionsTitle' | t }}</strong>
@@ -1152,15 +1159,22 @@
                       <strong>{{ 'sessionDetail.teamA' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('A'); track participant.id) {
-                          <a class="session-player-chip session-player-chip--member" [routerLink]="['/menu/perfis',participant.username]">
-                            <span class="session-player-chip__name">{{ '@' + participant.username }}</span>
-                            <span class="session-player-chip__status">{{ 'guestAdmin.memberBadge' | t }}</span>
+                          <a class="session-player-card session-player-card--member" [routerLink]="['/menu/perfis',participant.username]">
+                            <span class="session-player-card__avatar" aria-hidden="true">
+                              <span>{{ rosterInitials(participant.username) }}</span>
+                              @if (rosterAvatar(participant.profilePicUrl); as photo) {
+                                <img [src]="photo" alt="" loading="lazy" (error)="rosterAvatarFailed($event)">
+                              }
+                            </span>
+                            <span class="session-player-card__name">{{ '@' + participant.username }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
                           </a>
                         }
                         @for (guest of guestTeamParticipants('A'); track guest.id) {
-                          <span class="session-player-chip session-player-chip--guest">
-                            <span class="session-player-chip__name">{{ guest.name }}</span>
-                            <span class="session-player-chip__status">{{ 'guestAdmin.guestBadge' | t }}</span>
+                          <span class="session-player-card session-player-card--guest">
+                            <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
+                            <span class="session-player-card__name">{{ guest.name }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
                           </span>
                         }
                       </div>
@@ -1169,15 +1183,22 @@
                       <strong>{{ 'sessionDetail.teamB' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('B'); track participant.id) {
-                          <a class="session-player-chip session-player-chip--member" [routerLink]="['/menu/perfis',participant.username]">
-                            <span class="session-player-chip__name">{{ '@' + participant.username }}</span>
-                            <span class="session-player-chip__status">{{ 'guestAdmin.memberBadge' | t }}</span>
+                          <a class="session-player-card session-player-card--member" [routerLink]="['/menu/perfis',participant.username]">
+                            <span class="session-player-card__avatar" aria-hidden="true">
+                              <span>{{ rosterInitials(participant.username) }}</span>
+                              @if (rosterAvatar(participant.profilePicUrl); as photo) {
+                                <img [src]="photo" alt="" loading="lazy" (error)="rosterAvatarFailed($event)">
+                              }
+                            </span>
+                            <span class="session-player-card__name">{{ '@' + participant.username }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
                           </a>
                         }
                         @for (guest of guestTeamParticipants('B'); track guest.id) {
-                          <span class="session-player-chip session-player-chip--guest">
-                            <span class="session-player-chip__name">{{ guest.name }}</span>
-                            <span class="session-player-chip__status">{{ 'guestAdmin.guestBadge' | t }}</span>
+                          <span class="session-player-card session-player-card--guest">
+                            <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
+                            <span class="session-player-card__name">{{ guest.name }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
                           </span>
                         }
                       </div>
@@ -1186,15 +1207,22 @@
                 } @else {
                   <div class="session-participant-list">
                     @for (participant of sessionParticipants; track participant.id) {
-                      <a class="session-player-chip session-player-chip--member" [routerLink]="['/menu/perfis',participant.username]">
-                            <span class="session-player-chip__name">{{ '@' + participant.username }}</span>
-                            <span class="session-player-chip__status">{{ 'guestAdmin.memberBadge' | t }}</span>
+                      <a class="session-player-card session-player-card--member" [routerLink]="['/menu/perfis',participant.username]">
+                            <span class="session-player-card__avatar" aria-hidden="true">
+                              <span>{{ rosterInitials(participant.username) }}</span>
+                              @if (rosterAvatar(participant.profilePicUrl); as photo) {
+                                <img [src]="photo" alt="" loading="lazy" (error)="rosterAvatarFailed($event)">
+                              }
+                            </span>
+                            <span class="session-player-card__name">{{ '@' + participant.username }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
                           </a>
                     }
                     @for (guest of confirmedGuestParticipants(); track guest.id) {
-                      <span class="session-player-chip session-player-chip--guest">
-                            <span class="session-player-chip__name">{{ guest.name }}</span>
-                            <span class="session-player-chip__status">{{ 'guestAdmin.guestBadge' | t }}</span>
+                      <span class="session-player-card session-player-card--guest">
+                            <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
+                            <span class="session-player-card__name">{{ guest.name }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
                           </span>
                     }
                     @if (visiblePlayerCount() === 0) {

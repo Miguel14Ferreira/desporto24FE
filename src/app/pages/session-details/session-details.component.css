@@ -1513,3 +1513,112 @@ h1 {
 /* Notification deep-link focus is visible for keyboard/screen-reader users.
    The private point is only rendered after an authorised session response. */
 .session-meeting-point:focus { outline: 2px solid #73e5c9; outline-offset: 3px; scroll-margin-block: 90px; }
+
+
+/* Premium session information: distinct actions and readable map address. */
+.address-panel {min-width:0;}
+.session-location-heading {
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px 20px;min-width:0;margin-bottom:16px;
+}
+.address-panel .session-location-heading h2 {margin:0;font-size:1.04rem;}
+.session-location-heading .session-meeting-edit-button {
+  margin:0;flex:0 1 auto;max-width:100%;min-height:42px;
+}
+.session-location-detail {
+  display:flex;align-items:flex-start;gap:13px;min-width:0;
+  padding:15px 17px;border:1px solid rgba(81,208,198,.22);
+  border-radius:14px;background:rgba(7,42,58,.45);
+}
+.session-location-pin {
+  display:grid;place-items:center;flex:0 0 36px;
+  width:36px;height:36px;border-radius:12px;
+  background:rgba(40,220,184,.13);color:#85ffdf;font-size:1.55rem;line-height:1;
+}
+.session-location-copy {min-width:0;display:grid;gap:7px;flex:1;}
+.session-location-copy .session-location-map {
+  display:inline-flex;align-items:flex-start;gap:7px;
+  width:fit-content;max-width:100%;font-weight:750;line-height:1.5;
+  text-decoration:none;color:#a8ffec;overflow-wrap:anywhere;
+}
+.session-location-copy .session-location-map:hover {text-decoration:underline;color:#dcfff6;}
+.session-location-copy .session-location-map span {margin:0;flex:0 0 auto;letter-spacing:0;}
+.session-location-copy small {
+  margin:0;color:#a7cbd2;line-height:1.55;font-weight:450;
+}
+.session-route-planner {margin-top:17px;padding-top:17px;}
+.session-route-modes {gap:10px;}
+@media(max-width:530px) {
+  .session-location-heading {display:grid;grid-template-columns:1fr;align-items:start;}
+  .session-location-heading .session-meeting-edit-button {justify-self:start;}
+  .session-location-detail {padding:12px;gap:10px;}
+  .session-location-pin {width:30px;height:30px;flex-basis:30px;}
+}
+
+/* Attendees look like compact ranking cards, not crowded inline tags. */
+.session-participants-panel {
+  gap:16px;padding:clamp(16px,2vw,22px);
+  background:linear-gradient(125deg,rgba(12,53,66,.64),rgba(8,34,51,.55));
+  border-color:rgba(70,205,188,.25);
+}
+.session-participants-header {align-items:flex-start;flex-wrap:wrap;gap:12px;}
+.session-participants-header p {line-height:1.5;margin-top:5px;color:#a7cbd4;}
+.session-participant-list {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));
+  gap:10px;min-width:0;align-items:stretch;
+}
+.session-participant-list > .session-player-card {
+  box-sizing:border-box;display:grid;grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;column-gap:11px;min-width:0;min-height:68px;
+  padding:11px 13px;border:1px solid rgba(87,171,211,.28);
+  border-radius:14px;background:linear-gradient(125deg,rgba(18,73,93,.55),rgba(10,49,68,.6));
+  color:#f2fffd;text-decoration:none;line-height:1.3;
+  transition:transform .15s,border-color .15s,background-color .15s;
+}
+.session-participant-list > .session-player-card--guest {
+  border-color:rgba(61,214,180,.24);background:rgba(12,76,72,.37);
+}
+.session-player-card__avatar {
+  position:relative;display:grid;place-items:center;overflow:hidden;
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid rgba(123,231,214,.48);
+  background:linear-gradient(135deg,#166b74,#152f4c);
+  color:#e4fff8;font-size:.81rem;font-weight:900;line-height:1;
+}
+.session-player-card__avatar img {
+  position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;
+}
+.session-player-card__name {
+  min-width:0;color:#f2fffc;font-size:.93rem;font-weight:800;
+  overflow-wrap:anywhere;
+}
+.session-player-card__badge {
+  display:inline-flex;align-items:center;justify-content:center;
+  max-width:100%;min-height:25px;padding:4px 7px;
+  border-radius:7px;background:rgba(73,167,220,.16);
+  color:#c2eeff;font-size:.64rem;letter-spacing:.015em;
+  line-height:1.2;font-weight:800;text-align:center;
+}
+.session-player-card--guest .session-player-card__badge {
+  background:rgba(45,208,169,.13);color:#a1ffe3;
+}
+.session-participant-list > a.session-player-card:hover {
+  transform:translateY(-1px);border-color:#66efd9;background:rgba(28,95,110,.64);
+}
+.session-participant-list > a.session-player-card:focus-visible {
+  outline:2px solid #87ffdf;outline-offset:3px;
+}
+.session-participants-panel .confirmed-teams {gap:14px;}
+.session-participants-panel .confirmed-teams > div {min-width:0;padding:13px;}
+.session-participant-list > .session-participants-empty {
+  grid-column:1/-1;min-width:0;white-space:normal;
+}
+@media(max-width:620px) {
+  .session-participant-list {grid-template-columns:1fr;}
+  .session-participant-list > .session-player-card {min-height:64px;padding:10px;}
+  .session-player-card__badge {font-size:.62rem;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .session-participant-list > .session-player-card {transition:none;}
+  .session-participant-list > a.session-player-card:hover {transform:none;}
+}
