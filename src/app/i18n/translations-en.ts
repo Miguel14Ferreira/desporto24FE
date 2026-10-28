@@ -3601,6 +3601,8 @@ export const EN: Record<string, string> = {
   'communities.habitualVenue.errorDetails': 'Unable to load the venue details.',
   'communities.habitualVenue.venueRemoved': 'Usual venue removed.',
   'communities.habitualVenue.venueSaved': 'Usual venue saved.',
+  'communities.habitualVenue.change': 'Change usual venue',
+  'communities.habitualVenue.cancelChange': 'Cancel change',
   'communities.habitualVenue.errorSaveVenue': 'Unable to save the usual venue.',
   'communities.habitualVenue.confirmPoint': 'Confirm location',
   'communities.habitualVenue.resolving': 'Locating…',
