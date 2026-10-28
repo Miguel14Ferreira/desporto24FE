@@ -763,6 +763,11 @@ describe('Events2Component', () => {
     component.toggleCommunityShare(17,true);
     expect(component.shareCommunityIds).toEqual([12,13,14,15,16]);
     expect(component.privateGame).toBeFalse();
+    expect(component.communitySessionSelected).toBeTrue();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('select[name="recurrence"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('select[name="registrationOpeningMode"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="privateGame"]')).toBeNull();
     component.sport='Futebol';
     component.gameDate='2099-10-15T18:00';
     component.city='Lisboa';
@@ -772,6 +777,69 @@ describe('Events2Component', () => {
     expect(request.communityShareIds).toEqual([12,13,14,15,16]);
     expect(request.communityId).toBeNull();
     expect(request.externalConfirmedParticipants).toBeUndefined();
+  });
+
+  it('supports weekly repeats and scheduled registration when several communities are selected', () => {
+    component.communities = [12, 13].map(id => ({
+      id, name: 'Grupo ' + id, myRole: 'MEMBER', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: false,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }));
+    component.toggleCommunityShare(12, true);
+    component.toggleCommunityShare(13, true);
+    component.sport = 'Futebol';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.registrationOpeningMode = 'SCHEDULED';
+    component.registrationOpensAt = '2099-10-14T18:00';
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('input[name="recurrenceOccurrences"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="registrationOpensAt"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('apenas membros');
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [12, 13],
+        communityId: null,
+        privateGame: false,
+        password: null,
+        recurrence: 'WEEKLY',
+        recurrenceOccurrences: 4,
+        registrationOpeningMode: 'SCHEDULED',
+        registrationOpensAt: new Date('2099-10-14T18:00').toISOString()
+      }), undefined);
+  });
+
+  it('hides repeat options again and sends a public one-off session after deselecting communities', () => {
+    component.communities = [12].map(id => ({
+      id, name: 'Grupo ' + id, myRole: 'MEMBER', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: false,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }));
+    component.toggleCommunityShare(12, true);
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.registrationOpeningMode = 'MANUAL';
+    component.toggleCommunityShare(12, false);
+    fixture.detectChanges();
+    expect(component.communitySessionSelected).toBeFalse();
+    expect(fixture.nativeElement.querySelector('select[name="recurrence"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('select[name="registrationOpeningMode"]')).toBeNull();
+    component.sport = 'Futebol';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [], recurrence: 'NONE',
+        registrationOpeningMode: 'IMMEDIATE'
+      }), undefined);
   });
 
   it('keeps direct community-session creation separate from cross-posting', () => {
