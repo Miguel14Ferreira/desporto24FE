@@ -1517,6 +1517,12 @@ input,textarea,select {
   .community-session-visibility-control .jynlo-action {width:100%}
 }
 
+/* Top-level community settings need breathing room after the sport badges.
+   Scope this to the HOME panel instead of changing nested cards or form grids. */
+.community-tab-panel > app-community-sport-management + .community-session-policy {
+  margin-block-start: clamp(24px, 2.5vw, 32px);
+}
+
 /* Community session creation policy: readable owner/admin settings. */
 .community-session-policy {
   display: flex;
