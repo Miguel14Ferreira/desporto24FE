@@ -27,10 +27,16 @@ export class JynloSelectComponent implements ControlValueAccessor {
   @Input() searchable = false;
   @Input() invalid = false;
   @Input() required = false;
-  // NgModel owns the [disabled] input and calls setDisabledState() through
-  // ControlValueAccessor. A second @Input('disabled') on this component can
-  // race the NgModel directive and incorrectly leave the trigger enabled.
-  disabled = false;
+  // A custom element receives [disabled] as an Angular @Input while NgModel
+  // also calls setDisabledState(). Combining both sources prevents the
+  // initial form write (false) from silently overriding an explicit disable.
+  private disabledInput = false;
+  private disabledByForms = false;
+  @Input() set disabled(value: boolean) {
+    this.disabledInput = value === true;
+    if (this.disabled) this.close();
+  }
+  get disabled(): boolean { return this.disabledInput || this.disabledByForms; }
   @Input() accent: 'teal' | 'violet' = 'teal';
   @Output() picked = new EventEmitter<string>();
 
@@ -54,8 +60,8 @@ export class JynloSelectComponent implements ControlValueAccessor {
   registerOnChange(fn: (value: string) => void): void { this.change = fn; }
   registerOnTouched(fn: () => void): void { this.touched = fn; }
   setDisabledState(disabled: boolean): void {
-    this.disabled = disabled;
-    if (disabled) this.close();
+    this.disabledByForms = disabled;
+    if (this.disabled) this.close();
   }
 
   get selected(): JynloSelectOption | undefined {
