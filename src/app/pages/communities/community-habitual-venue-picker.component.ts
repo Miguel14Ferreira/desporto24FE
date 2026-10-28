@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { finalize, Subscription, timeout } from 'rxjs';
@@ -18,7 +18,7 @@ import { CommunityGroupsService } from '../../services/community-groups.service'
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, TranslatePipe]
 })
-export class CommunityHabitualVenuePickerComponent implements OnDestroy {
+export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) community!: CommunityGroup;
   @Output() venueSaved = new EventEmitter<CommunityGroup>();
 
@@ -32,6 +32,26 @@ export class CommunityHabitualVenuePickerComponent implements OnDestroy {
   feedback = '';
   private revision = 0;
   private subs = new Subscription();
+  private previousCommunityId: number | null = null;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['community']) return;
+    const id = this.community?.id ?? null;
+    if (this.previousCommunityId !== null && this.previousCommunityId !== id) {
+      ++this.revision;
+      this.subs.unsubscribe();
+      this.subs = new Subscription();
+      this.query = '';
+      this.results = [];
+      this.expanded = null;
+      this.searching = false;
+      this.detailLoading = false;
+      this.saving = false;
+      this.error = '';
+      this.feedback = '';
+    }
+    this.previousCommunityId = id;
+  }
 
   constructor(private venues: VenueService, private groups: CommunityGroupsService) {}
 
