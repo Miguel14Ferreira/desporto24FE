@@ -26,7 +26,7 @@
               @if (cityMapsUrl; as mapUrl) {
                 <a class="public-location-link" [href]="mapUrl" target="_blank" rel="noopener noreferrer"
                    [attr.aria-label]="'publicSession.viewAreaOnMaps' | t">
-                  <strong>{{ details.city }}</strong> <span aria-hidden="true">↗</span>
+                  <strong>{{ exactInvitationLocation || details.city }}</strong> <span aria-hidden="true">↗</span>
                 </a>
               } @else {
                 <strong>{{ 'publicSession.notSpecified' | t }}</strong>
@@ -59,12 +59,16 @@
               </div>
             }
           </div>
-          <p class="privacy-note">{{ 'publicSession.privacyNote' | t }}</p>
+          @if (exactInvitationLocation) {
+            <p class="privacy-note">{{ 'publicSession.invitationLocationHint' | t }}</p>
+          } @else {
+            <p class="privacy-note">{{ 'publicSession.privacyNote' | t }}</p>
+          }
         </div>
 
         <aside class="join-panel">
           <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
-          @if (guestToken && canRequestParticipation && (!isAuthenticated || !!guestReceipt)) {
+          @if (guestToken && (canRequestParticipation || !!guestReceipt) && (!isAuthenticated || !!guestReceipt)) {
             <section class="guest-rsvp" [attr.aria-label]="'guestRsvp.title' | t">
               <span class="guest-rsvp-kicker">{{ 'guestRsvp.noAccount' | t }}</span>
               @if (guestLoading) {
@@ -140,6 +144,12 @@
                     }
                     <p>{{ 'guestRsvp.noThanks' | t }}</p>
                   </div>
+                }
+                @if (guestReceipt) {
+                  <button type="button" class="guest-rsvp-back"
+                          (click)="registerAnotherGuest()" [disabled]="guestSending || guestLinking">
+                    {{ 'guestRsvp.differentPlayer' | t }}
+                  </button>
                 }
                 @if (guestStep === 'linked') {
                   <a class="guest-rsvp-primary" [routerLink]="returnUrl">
