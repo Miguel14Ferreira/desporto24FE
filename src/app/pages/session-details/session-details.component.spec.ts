@@ -206,6 +206,42 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('returns to Discover with original filters without forwarding join action', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({
+        from: 'discover', sport: 'Ténis', city: 'Sintra', player: 'Ana', join: '1'
+      })
+    });
+    fixture.detectChanges();
+
+    const back = fixture.nativeElement.querySelector('.back-link') as HTMLAnchorElement;
+    const url = new URL(back.getAttribute('href')!, 'https://jynlo.test');
+    expect(url.pathname).toBe('/menu/discover');
+    expect(url.searchParams.get('sport')).toBe('Ténis');
+    expect(url.searchParams.get('city')).toBe('Sintra');
+    expect(url.searchParams.get('player')).toBe('Ana');
+    expect(url.searchParams.has('join')).toBeFalse();
+    expect(back.textContent).toContain('Voltar ao Descobrir');
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('ignores untrusted return origins and keeps the default sessions destination', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({
+        from: 'https://untrusted.example/', sport: 'Ténis', join: '1'
+      })
+    });
+    fixture.detectChanges();
+    const back = fixture.nativeElement.querySelector('.back-link') as HTMLAnchorElement;
+    expect(back.getAttribute('href')).toBe('/menu/events');
+    expect(back.textContent).toContain('Voltar às sessões');
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
   it('keeps session detail navigation and participation information inside the Premium shell', () => {
     const shell: HTMLElement = fixture.nativeElement.querySelector('.detail-page');
     expect(shell.classList.contains('jynlo-session-detail-premium')).toBeTrue();
