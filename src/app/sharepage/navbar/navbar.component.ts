@@ -160,7 +160,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * proof of notification visibility or expose private media URLs. */
     private maybeShowChatToast(message: DirectChatMessage): void {
       const account = this.authService.loggedInPerfilname?.toLowerCase();
-      if (!account || !Number.isSafeInteger(message?.id) || (message.id ?? 0) <= 0
+      if (!account || typeof message?.id !== 'number' || !Number.isSafeInteger(message.id) || message.id <= 0
           || message.username2?.toLowerCase() !== account
           || message.username1?.toLowerCase() === account
           || message.editedAt || message.deletedAt
