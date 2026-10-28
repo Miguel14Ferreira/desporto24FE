@@ -13,6 +13,7 @@ import { AuthenticationService } from '../../services/authethication.service';
 import { FeedItem } from '../model/feed-item';
 import { appTranslate as t, preloadEnglishTranslations } from '../../i18n/i18n.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 @Component({ selector: 'app-social-stories', standalone: true, template: '' })
 class StubStoriesComponent {}
@@ -42,7 +43,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
 
     await TestBed.configureTestingModule({
       declarations: [SocialFeedComponent],
-      imports: [...TEST_IMPORTS, StubStoriesComponent],
+      imports: [...TEST_IMPORTS, StubStoriesComponent, VenueSportsBadgesComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: SocialFeedService, useValue: feed },
