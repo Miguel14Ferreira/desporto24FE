@@ -376,7 +376,16 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     // navigation do not wait forever for a persistent repeating task.
     this.zone.runOutsideAngular(() => {
       this.registrationClockTimer = setInterval(
-        () => this.zone.run(() => this.registrationClock = Date.now()), 15000);
+        () => this.zone.run(() => {
+          this.registrationClock = Date.now();
+          // Keep the organiser's visible guest list and remaining capacity fresh
+          // after attendees confirm via WhatsApp on a different device.
+          if (this.canShareGuestInvites() && !this.loading
+              && !this.guestRequestsLoading && !document.hidden) {
+            this.loadGuestRequests();
+            this.loadSession(false);
+          }
+        }), 15000);
     });
     this.realtimeService.connect();
 
