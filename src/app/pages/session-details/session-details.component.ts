@@ -246,6 +246,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   guestRequestsLoading = false;
   guestRequestBusyId: number | null = null;
   guestRequestsLoadedForSession: number | null = null;
+  guestCancellationPendingId: number | null = null;
+  guestRosterSuccess = '';
+  guestRosterError = '';
+  private guestRequestsRefreshing = false;
+  private participantRosterRefreshing = false;
 
   inviteFriendsLoading = false;
   inviteSendingTo: string | null = null;
@@ -452,17 +457,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.registrationClockTimer = setInterval(
         () => this.zone.run(() => {
           this.registrationClock = Date.now();
-          // Keep the organiser's visible guest list and remaining capacity fresh
-          // after attendees confirm via WhatsApp on a different device.
-          if (!this.loading && !document.hidden && this.session) {
-            if (this.canShareGuestInvites() && !this.guestRequestsLoading) {
-              this.loadGuestRequests();
-              this.loadSession(false);
-            } else if (this.session.joined && !this.isCreator()
-                       && !this.memberConfirmedGuestsLoading) {
-              this.loadMemberConfirmedGuests();
-            }
-          }
+          // Reconcile reservations, confirmed guests and players while this tab is visible.
+          // Silent refresh keeps the roster cards mounted instead of flashing loaders.
+          this.syncVisibleRoster();
         }), 15000);
     });
     this.realtimeService.connect();
@@ -489,6 +486,20 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         }
       })
     );
+  }
+
+  /** Read-only automatic reconciliation; never changes or cancels a booking. */
+  syncVisibleRoster(): void {
+    if (document.hidden || this.loading || !this.session
+        || (!this.session.joined && !this.isCreator())) return;
+    this.loadSession(false);
+    if (this.isCreator()) this.loadGuestRequests(true);
+  }
+
+  @HostListener('window:focus')
+  @HostListener('document:visibilitychange')
+  onRosterVisibleAgain(): void {
+    this.syncVisibleRoster();
   }
 
   ngOnDestroy(): void {
@@ -1137,20 +1148,26 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       });
   }
 
-  loadSessionParticipants(): void {
+  loadSessionParticipants(silent = false): void {
     if (!this.sessionId || !this.session
-        || (!this.session.joined && !this.isCreator()) || this.sessionParticipantsLoading) {
+        || (!this.session.joined && !this.isCreator()) || this.participantRosterRefreshing) {
       return;
     }
 
-    this.sessionParticipantsLoading = true;
-    this.sessionParticipantsError = '';
+    this.participantRosterRefreshing = true;
+    if (!silent) {
+      this.sessionParticipantsLoading = true;
+      this.sessionParticipantsError = '';
+    }
 
     this.sessionService.participants(this.sessionId)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.sessionParticipantsLoading = false)
+        finalize(() => {
+          this.participantRosterRefreshing = false;
+          if (!silent) this.sessionParticipantsLoading = false;
+        })
       )
       .subscribe({
         next: participants => {
@@ -1171,6 +1188,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
         },
         error: error => {
+          // A temporary background network error must not erase the last valid roster.
+          if (silent) return;
           this.sessionParticipants = [];
           this.teamAParticipants = [];
           this.teamBParticipants = [];
@@ -2046,7 +2065,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return code === 'A' ? this.teamAParticipants : this.teamBParticipants;
   }
 
-  private loadMemberConfirmedGuests(): void {
+  private loadMemberConfirmedGuests(silent = false): void {
     if (!this.sessionId || !this.session?.joined || this.isCreator()
         || this.memberConfirmedGuestsLoading) return;
     const id=this.sessionId;
@@ -2063,7 +2082,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
             : [];
         },
         error: () => {
-          if (this.session?.id !== id) return;
+          if (this.session?.id !== id || silent) return;
           this.memberConfirmedGuests=[];
           this.memberConfirmedGuestsError=t('sessionDetail.confirmedGuestsError');
         }
@@ -2084,10 +2103,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return this.sessionParticipants.length + this.confirmedGuestParticipants().length;
   }
 
-  refreshVisiblePlayers(): void {
-    this.loadSessionParticipants();
-    if (this.isCreator()) this.loadGuestRequests();
-    else this.loadMemberConfirmedGuests();
+  refreshVisiblePlayers(silent = false): void {
+    this.loadSessionParticipants(silent);
+    if (this.isCreator()) this.loadGuestRequests(silent);
+    else this.loadMemberConfirmedGuests(silent);
     // The confirmed count in the detail header also includes external people.
     this.loadSession(false);
   }
@@ -2150,20 +2169,59 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }
   }
 
-  loadGuestRequests(): void {
-    if(!this.sessionId || !this.isCreator() || this.guestRequestsLoading) return;
-    this.guestRequestsLoading=true;
-    this.guestPanelError='';
-    const id=this.sessionId;
+  loadGuestRequests(silent = false): void {
+    if (!this.sessionId || !this.isCreator() || this.guestRequestsRefreshing
+        || this.guestRequestBusyId !== null) return;
+    this.guestRequestsRefreshing = true;
+    if (!silent) {
+      this.guestRequestsLoading = true;
+      this.guestPanelError = '';
+    }
+    const id = this.sessionId;
     this.sessionService.guestRequests(id).pipe(
-      timeout(10000),finalize(()=>this.guestRequestsLoading=false)
+      timeout(10000),
+      finalize(() => {
+        this.guestRequestsRefreshing = false;
+        if (!silent) this.guestRequestsLoading = false;
+      })
     ).subscribe({
-      next:rows=>{if(id===this.sessionId)this.guestRequests=rows;},
-      error:()=>{
-        this.guestRequestsLoadedForSession=null;
-        this.guestPanelError=t('guestAdmin.loadError');
+      next: rows => {
+        if (id === this.sessionId) {
+          this.guestRequests = rows;
+          if (this.guestCancellationPendingId !== null &&
+              !rows.some(g => g.id === this.guestCancellationPendingId && g.status === 'APPROVED')) {
+            this.guestCancellationPendingId = null;
+          }
+        }
+      },
+      error: () => {
+        if (silent || id !== this.sessionId) return; // Keep the last good list on transient errors.
+        this.guestRequestsLoadedForSession = null;
+        this.guestPanelError = t('guestAdmin.loadError');
       }
     });
+  }
+
+  canCancelGuestPresence(guest: SessionGuestRequest): boolean {
+    return guest.status === 'APPROVED' && this.canShareGuestInvites();
+  }
+
+  requestGuestCancellation(guest: SessionGuestRequest): void {
+    if (!this.canCancelGuestPresence(guest) || this.guestRequestBusyId !== null) return;
+    this.guestCancellationPendingId = guest.id;
+    this.guestRosterSuccess = '';
+    this.guestRosterError = '';
+  }
+
+  dismissGuestCancellation(): void {
+    if (this.guestRequestBusyId !== null) return;
+    this.guestCancellationPendingId = null;
+  }
+
+  confirmGuestCancellation(guest: SessionGuestRequest): void {
+    if (this.guestCancellationPendingId !== guest.id
+        || !this.canCancelGuestPresence(guest)) return;
+    this.cancelApprovedGuest(guest);
   }
 
   reviewGuest(request:SessionGuestRequest,approve:boolean): void {
@@ -2197,13 +2255,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     ).subscribe({
       next:updated=>{
         this.guestRequests=this.guestRequests.map(g=>g.id===updated.id?updated:g);
-        this.guestPanelSuccess=t('guestAdmin.cancelled');
-        this.teamSuggestion=undefined;
-        this.teamSuggestionPendingConfirmation=false;
+        this.guestCancellationPendingId = null;
+        this.guestRosterError = '';
+        this.guestRosterSuccess = t('guestAdmin.cancelled');
+        this.teamSuggestion = undefined;
+        this.teamSuggestionPendingConfirmation = false;
         this.loadSession(false);
-        this.loadSessionParticipants();
+        this.loadGuestRequests(true);
       },
-      error:()=>{this.guestPanelError=t('guestAdmin.cancelError');}
+      error: () => { this.guestRosterError = t('guestAdmin.cancelError'); }
     });
   }
 
@@ -2655,8 +2715,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           if (session.joined || this.isCreator()) {
             // Creator has organizer guest controls; ordinary members get only a
             // minimal approved-guest display roster from a separately guarded API.
-            this.loadSessionParticipants();
-            if (session.joined && !this.isCreator()) this.loadMemberConfirmedGuests();
+            this.loadSessionParticipants(!showPageLoader);
+            if (session.joined && !this.isCreator()) this.loadMemberConfirmedGuests(!showPageLoader);
           } else {
             this.memberConfirmedGuests=[];
             this.memberConfirmedGuestsError='';
