@@ -10,6 +10,7 @@ import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SessionSummary } from '../model/session-summary';
 import { Venue } from '../model/venue';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 describe('HomeComponent public discovery', () => {
   let sessions: jasmine.SpyObj<SessionService>;
@@ -35,7 +36,7 @@ describe('HomeComponent public discovery', () => {
 
     await TestBed.configureTestingModule({
       declarations: [HomeComponent],
-      imports: [CommonModule, TranslatePipe, RouterModule.forRoot([])],
+      imports: [CommonModule, TranslatePipe, VenueSportsBadgesComponent, RouterModule.forRoot([])],
       providers: [
         { provide: SessionService, useValue: sessions },
         { provide: VenueService, useValue: venues }
