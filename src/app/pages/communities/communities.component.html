@@ -711,36 +711,36 @@
                 <section class="season-dashboard" aria-labelledby="community-habitual-venue-title">
                   <div class="section-heading">
                     <div>
-                      <span class="section-kicker">RECINTO</span>
-                      <h3 id="community-habitual-venue-title">Recinto habitual</h3>
-                      <p>Será sugerido nas novas sessões desta comunidade, mas pode ser alterado pelo organizador.</p>
+                      <span class="section-kicker">{{ 'communities.habitualVenue.kicker' | t }}</span>
+                      <h3 id="community-habitual-venue-title">{{ 'communities.habitualVenue.title' | t }}</h3>
+                      <p>{{ 'communities.habitualVenue.hint' | t }}</p>
                     </div>
                   </div>
                   @if (selected.defaultVenueId) {
-                    <p><strong>{{ selected.defaultVenueName || 'Recinto guardado' }}</strong></p>
+                    <p><strong>{{ selected.defaultVenueName || ('communities.habitualVenue.savedName' | t) }}</strong></p>
                   } @else {
-                    <p>Ainda não existe um recinto habitual definido.</p>
+                    <p>{{ 'communities.habitualVenue.none' | t }}</p>
                   }
                   @if (canManage()) {
                     <div class="row-actions">
                       <label>
-                        <span>Pesquisar recinto</span>
+                        <span>{{ 'communities.habitualVenue.searchLabel' | t }}</span>
                         <input type="search" name="habitualVenueQuery"
                           [(ngModel)]="habitualVenueQuery"
                           [disabled]="habitualVenueSearching || habitualVenueSaving"
-                          placeholder="Nome do recinto">
+                          [placeholder]="'communities.habitualVenue.searchPlaceholder' | t">
                       </label>
                       <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
                         [disabled]="habitualVenueSearching || habitualVenueSaving || !habitualVenueQuery.trim()"
-                        (click)="searchHabitualVenues()">Pesquisar</button>
+                        (click)="searchHabitualVenues()">{{ 'communities.habitualVenue.search' | t }}</button>
                       @if (selected.defaultVenueId) {
                         <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
                           [disabled]="habitualVenueSaving" (click)="saveHabitualVenue(null)">
-                          Remover recinto habitual
+                          {{ 'communities.habitualVenue.remove' | t }}
                         </button>
                       }
                     </div>
-                    @if (habitualVenueSearching) { <p role="status">A pesquisar recintos…</p> }
+                    @if (habitualVenueSearching) { <p role="status">{{ 'communities.habitualVenue.searching' | t }}</p> }
                     @if (habitualVenueError) { <p role="alert">{{ habitualVenueError }}</p> }
                     @if (habitualVenueMessage) { <p role="status">{{ habitualVenueMessage }}</p> }
                     @if (habitualVenueResults.length) {
