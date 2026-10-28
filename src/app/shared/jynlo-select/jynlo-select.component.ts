@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, forwardRef, HostListener, Input, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, forwardRef, HostListener, Input, OnDestroy, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface JynloSelectOption {
@@ -20,7 +20,7 @@ export interface JynloSelectOption {
   styleUrls: ['./jynlo-select.component.css'],
   providers: [{provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => JynloSelectComponent), multi: true}]
 })
-export class JynloSelectComponent implements ControlValueAccessor {
+export class JynloSelectComponent implements ControlValueAccessor, OnDestroy {
   @Input() options: readonly JynloSelectOption[] = [];
   @Input() placeholder = 'Selecionar';
   @Input() ariaLabel = '';
@@ -47,11 +47,57 @@ export class JynloSelectComponent implements ControlValueAccessor {
   value = '';
   open = false;
   query = '';
+  /** Viewport-coordinates: the menu must escape overflow-clipped form cards. */
+  popoverLeft = 0;
+  popoverTop = 0;
+  popoverBottom = 0;
+  popoverWidth = 240;
+  popoverMaxHeight = 350;
+  openAbove = false;
 
   constructor(private readonly cdr: ChangeDetectorRef) {}
 
   private change: (value: string) => void = () => {};
   private touched: () => void = () => {};
+  private readonly repositionOnScroll = (): void => this.repositionPopover();
+
+  ngOnDestroy(): void {
+    document.removeEventListener('scroll', this.repositionOnScroll, true);
+  }
+
+  /** Place a fixed-position menu against the trigger, including in clipped cards. */
+  repositionPopover(): void {
+    if (!this.open || !this.trigger) return;
+    const rect = this.trigger.nativeElement.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const margin = 8;
+    const below = Math.max(0, viewportHeight - rect.bottom - margin - 6);
+    const above = Math.max(0, rect.top - margin - 6);
+    const wanted = Math.min(360, this.options.length * 43 + (this.searchable ? 66 : 10));
+    this.openAbove = below < Math.min(wanted, 240) && above > below;
+    const available = this.openAbove ? above : below;
+    this.popoverMaxHeight = Math.max(0, available);
+    this.popoverWidth = Math.min(rect.width, viewportWidth - 2 * margin);
+    this.popoverLeft = Math.max(margin, Math.min(rect.left, viewportWidth - margin - this.popoverWidth));
+    this.popoverTop = rect.bottom + 6;
+    this.popoverBottom = viewportHeight - rect.top + 6;
+    this.cdr.markForCheck();
+  }
+
+  @HostListener('window:resize')
+  resized(): void { this.repositionPopover(); }
+
+  @HostListener('focusout')
+  focusLeft(): void {
+    // A tab out must finish the interaction, but moving to search/options is internal.
+    setTimeout(() => {
+      if (this.open && !this.root?.nativeElement.contains(document.activeElement)) {
+        this.close();
+        this.touched();
+      }
+    }, 0);
+  }
 
   writeValue(value: unknown): void {
     this.value = typeof value === 'string' ? value : (value == null ? '' : String(value));
@@ -84,8 +130,14 @@ export class JynloSelectComponent implements ControlValueAccessor {
     if (this.open) { this.close(); return; }
     this.open = true;
     this.query = '';
+    this.repositionPopover();
+    document.addEventListener('scroll', this.repositionOnScroll, true);
     if (this.searchable) {
-      setTimeout(() => { if (this.open) this.filterInput?.nativeElement.focus(); }, 0);
+      setTimeout(() => {
+        if (!this.open) return;
+        this.filterInput?.nativeElement.focus();
+        this.repositionPopover(); // mobile virtual keyboard can shrink the viewport
+      }, 0);
     }
   }
 
@@ -102,6 +154,7 @@ export class JynloSelectComponent implements ControlValueAccessor {
   close(): void {
     this.open = false;
     this.query = '';
+    document.removeEventListener('scroll', this.repositionOnScroll, true);
   }
 
   @HostListener('document:click', ['$event'])
@@ -134,17 +187,25 @@ export class JynloSelectComponent implements ControlValueAccessor {
   }
 
   searchKey(event: KeyboardEvent): void {
-    if (event.key !== 'ArrowDown') return;
+    if (event.key === 'Enter') {
+      event.preventDefault(); // never submit the enclosing registration/profile form
+      const first = this.visibleOptions[0];
+      if (first) this.choose(first.value);
+      return;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
     event.preventDefault();
-    this.optionButtons?.first?.nativeElement.focus();
+    const buttons = this.optionButtons?.toArray() || [];
+    (event.key === 'ArrowUp' ? buttons[buttons.length - 1] : buttons[0])?.nativeElement.focus();
   }
 
   optionKey(event: KeyboardEvent, index: number): void {
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
     const buttons = this.optionButtons?.toArray() || [];
     if (!buttons.length) return;
     event.preventDefault();
-    buttons[(index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]
-      .nativeElement.focus();
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
+      : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+    buttons[next].nativeElement.focus();
   }
 }
