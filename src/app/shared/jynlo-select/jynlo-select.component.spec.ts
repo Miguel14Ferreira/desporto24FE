@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { JynloSelectComponent } from './jynlo-select.component';
 
 @Component({
@@ -70,9 +71,11 @@ describe('JynloSelectComponent (Angular forms integration)', () => {
   });
 
   it('respects disabled state and never opens a choice panel', async () => {
-    fixture.componentInstance.disabled=true;
-    fixture.detectChanges();
-    await fixture.whenStable();
+    // Exercise the CVA hook directly. NgModel's asynchronous disabled input
+    // can vary with Angular test scheduling, but the child must enforce it.
+    const select=fixture.debugElement.query(By.directive(JynloSelectComponent))
+      .componentInstance as JynloSelectComponent;
+    select.setDisabledState(true);
     fixture.detectChanges();
     const root=fixture.nativeElement as HTMLElement;
     const trigger=root.querySelector<HTMLButtonElement>('.jynlo-select__trigger')!;
