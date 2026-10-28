@@ -618,6 +618,7 @@ export const EN: Record<string, string> = {
   'sessionDetail.invitePlayers': 'Invite players',
   'sessionDetail.hideInvites': 'Hide invitations',
   'guestAdmin.registeredBadge': 'WITH A JYNLO ACCOUNT',
+  'guestAdmin.memberBadge': 'WITH ACCOUNT',
   'guestAdmin.registeredTitle': 'Invite registered members',
   'guestAdmin.registeredHelp': 'People with an account use the same invitation link to join with their own profile, without joining the community or choosing a historical name.',
   'guestAdmin.registeredAction': 'Select Jynlo players',
