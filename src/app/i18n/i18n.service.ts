@@ -3581,6 +3581,8 @@ const PT: Dictionary = {
   'communities.habitualVenue.errorGpsPermission': 'Não foi possível obter a localização. Verifica as permissões do dispositivo.',
   'communities.habitualVenue.pointSaved': 'Localização habitual guardada.',
   'communities.habitualVenue.errorSavePoint': 'Não foi possível guardar a localização habitual.',
+  'communities.habitualVenue.searchTimeout': 'A pesquisa demorou demasiado. Tenta novamente ou procura outro nome.',
+  'communities.habitualVenue.noResults': 'Não encontrámos recintos com este nome. Experimenta outra pesquisa ou escolhe Google Maps.',
   'communities.habitualVenue.errorSearch': 'Não foi possível pesquisar os recintos.',
   'communities.habitualVenue.errorDetails': 'Não foi possível carregar os detalhes deste recinto.',
   'communities.habitualVenue.venueRemoved': 'Recinto habitual removido.',
