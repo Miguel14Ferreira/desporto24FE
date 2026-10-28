@@ -72,6 +72,11 @@ export class PublicSessionPreviewComponent implements OnInit {
   guestCommunityId: number | null = null;
   guestLinked = false;
   guestLinking = false;
+  guestEditingIdentity = false;
+  guestChangingIdentity = false;
+  guestConfirmCancellation = false;
+  guestCancelling = false;
+  guestSavedBookings: {receipt:string;name:string}[] = [];
   memberJoining = false;
   memberJoinError = '';
 
@@ -162,6 +167,40 @@ export class PublicSessionPreviewComponent implements OnInit {
     return 'jynlo-guest-receipt:' + this.sessionId + ':' + (this.guestToken || '').slice(0,18);
   }
 
+  private bookingsKey(): string {
+    return this.receiptKey() + ':bookings';
+  }
+
+  private loadSavedBookings(): void {
+    try {
+      const raw=JSON.parse(localStorage.getItem(this.bookingsKey()) || '[]');
+      this.guestSavedBookings=Array.isArray(raw)?raw.filter(
+        row => typeof row?.receipt==='string' && /^[A-Za-z0-9_-]{43}$/.test(row.receipt)
+          && typeof row?.name==='string' && row.name.length<=120
+      ).slice(-20):[];
+    } catch { this.guestSavedBookings=[]; }
+  }
+
+  private rememberGuestBooking(receipt:string,name:string): void {
+    if(!/^[A-Za-z0-9_-]{43}$/.test(receipt)) return;
+    this.guestSavedBookings=[
+      ...this.guestSavedBookings.filter(entry=>entry.receipt!==receipt),
+      {receipt,name}
+    ].slice(-20);
+    try {localStorage.setItem(this.bookingsKey(),JSON.stringify(this.guestSavedBookings));}catch{}
+  }
+
+  recoverGuestBooking(receipt:string): void {
+    if(this.guestSending || !this.guestSavedBookings.some(entry=>entry.receipt===receipt)) return;
+    this.guestReceipt=receipt;
+    try{localStorage.setItem(this.receiptKey(),receipt);}catch{}
+    this.guestEditingIdentity=false;
+    this.guestConfirmCancellation=false;
+    this.guestError='';
+    this.guestStep='pending';
+    this.checkGuestStatus();
+  }
+
   /** Existing visitors may still have a receipt in the pre-fix session-only key. */
   private savedGuestReceipt(): string | null {
     try {
@@ -179,6 +218,8 @@ export class PublicSessionPreviewComponent implements OnInit {
 
   /** Explicitly begin a new guest registration on a shared device/link. */
   registerAnotherGuest(): void {
+    if(this.guestReceipt) this.rememberGuestBooking(
+      this.guestReceipt,this.guestConfirmedName || this.guestPlayerName);
     try {
       localStorage.removeItem(this.receiptKey());
       localStorage.removeItem('jynlo-guest-receipt:' + this.sessionId);
@@ -187,11 +228,91 @@ export class PublicSessionPreviewComponent implements OnInit {
     this.guestConfirmedName = '';
     this.guestMeetingPoint = '';
     this.guestStep = 'choose';
+    this.guestEditingIdentity = false;
+    this.guestConfirmCancellation = false;
     this.guestPlayerId = null;
     this.guestNewName = '';
     this.guestNote = '';
     this.guestError = '';
     this.loadGuestRoster();
+  }
+
+  /** Correct the identity attached to THIS guest receipt: never create a new seat. */
+  startChangingGuestIdentity(): void {
+    if (this.guestStep !== 'approved' || !this.guestReceipt) return;
+    this.guestEditingIdentity = true;
+    this.guestConfirmCancellation = false;
+    this.guestPlayerId = null;
+    this.guestNewName = '';
+    this.guestError = '';
+    this.loadGuestRoster();
+  }
+
+  cancelChangingGuestIdentity(): void {
+    if (this.guestChangingIdentity) return;
+    this.guestEditingIdentity = false;
+    this.guestPlayerId = null;
+    this.guestNewName = '';
+    this.guestError = '';
+  }
+
+  changeGuestIdentity(): void {
+    if (!this.sessionId || !this.guestReceipt || !this.guestEditingIdentity
+        || this.guestChangingIdentity || this.guestStep !== 'approved'
+        || (!this.guestPlayerId && (this.guestNewName.trim().length < 2
+            || this.guestNewName.trim().length > 80))) return;
+    const name = this.guestPlayerName;
+    this.guestChangingIdentity = true;
+    this.guestError = '';
+    this.http.post<{status:string;playerName:string;receipt:string}>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/change-player',
+      {receipt:this.guestReceipt,playerId:this.guestPlayerId,
+       newName:this.guestPlayerId===null?this.guestNewName.trim():null}
+    ).pipe(timeout(10000),finalize(()=>this.guestChangingIdentity=false)).subscribe({
+      next: response => {
+        if(response.status!=='APPROVED') {this.guestError='guestRsvp.changeError';return;}
+        this.guestConfirmedName = response.playerName?.trim() || name;
+        this.rememberGuestBooking(this.guestReceipt,this.guestConfirmedName);
+        this.guestEditingIdentity = false;
+        this.guestPlayerId = null;
+        this.guestNewName = '';
+        this.loadConfirmedPlayers();
+        this.loadPreview();
+        this.loadGuestRoster();
+      },
+      error: (error: unknown) => {
+        this.guestError=error instanceof HttpErrorResponse && error.status===409
+          ? 'guestRsvp.changeConflict' : 'guestRsvp.changeError';
+        // Never delete the receipt or abandon the reserved seat after a failure.
+        this.loadConfirmedPlayers();
+      }
+    });
+  }
+
+  cancelOwnGuestReservation(): void {
+    if (!this.sessionId || !this.guestReceipt || this.guestStep!=='approved'
+        || !this.guestConfirmCancellation || this.guestCancelling) return;
+    this.guestCancelling=true;
+    this.guestError='';
+    this.http.post<{status:string;playerName?:string}>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/cancel-self',
+      {receipt:this.guestReceipt}
+    ).pipe(timeout(10000),finalize(()=>this.guestCancelling=false)).subscribe({
+      next: response => {
+        if(response.status !== 'CANCELLED') {this.guestError='guestRsvp.cancelError';return;}
+        this.guestStep='cancelled';
+        this.guestSavedBookings=this.guestSavedBookings.filter(
+          entry => entry.receipt !== this.guestReceipt);
+        try{localStorage.setItem(this.bookingsKey(),JSON.stringify(this.guestSavedBookings));}catch{}
+        this.guestConfirmCancellation=false;
+        this.guestEditingIdentity=false;
+        this.guestMeetingPoint='';
+        this.loadConfirmedPlayers();
+        this.loadPreview();
+        this.loadGuestRoster();
+      },
+      error:()=>{this.guestError='guestRsvp.cancelError';}
+    });
   }
 
   /** This endpoint checks the signed invitation before revealing participant names. */
@@ -251,6 +372,7 @@ export class PublicSessionPreviewComponent implements OnInit {
     ).pipe(timeout(10000),finalize(() => this.guestSending=false)).subscribe({
       next: response => {
         this.guestConfirmedName = response.playerName?.trim() || this.guestPlayerName;
+        this.rememberGuestBooking(response.receipt,this.guestConfirmedName);
         this.guestMeetingPoint = response.status === 'APPROVED' &&
           typeof response.meetingPointInstructions === 'string'
           ? response.meetingPointInstructions : '';
@@ -285,11 +407,18 @@ export class PublicSessionPreviewComponent implements OnInit {
     ).pipe(timeout(10000),finalize(()=>this.guestSending=false)).subscribe({
       next: r => {
         this.guestConfirmedName = r.playerName?.trim() || this.guestConfirmedName;
+        if (r.status==='APPROVED' && this.guestConfirmedName) {
+          this.rememberGuestBooking(this.guestReceipt,this.guestConfirmedName);
+        }
         // The receipt response is authoritative: never cache private arrival
         // instructions, and clear them if removed or the attendance is revoked.
         this.guestMeetingPoint = (r.status === 'APPROVED' || r.status === 'LINKED')
           && typeof r.meetingPointInstructions === 'string'
           ? r.meetingPointInstructions : '';
+        if(r.status!=='APPROVED') {
+          this.guestEditingIdentity=false;
+          this.guestConfirmCancellation=false;
+        }
         this.guestStep=r.status==='LINKED'?'linked':
           r.status==='APPROVED'?'approved':
           r.status==='REJECTED'?'rejected':
@@ -309,6 +438,8 @@ export class PublicSessionPreviewComponent implements OnInit {
           this.guestConfirmedName = '';
           this.guestMeetingPoint = '';
           this.guestStep = 'choose';
+          this.guestEditingIdentity = false;
+          this.guestConfirmCancellation = false;
           this.guestError = '';
           return;
         }
@@ -349,6 +480,7 @@ export class PublicSessionPreviewComponent implements OnInit {
     const token=this.route.snapshot.queryParamMap?.get('guest');
     if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) {
       this.guestToken=token;
+      this.loadSavedBookings();
       if (!this.isAuthenticated) {
         // Anonymous guests can choose a historical name. Known Jynlo members
         // never see that impersonation-prone selector.
