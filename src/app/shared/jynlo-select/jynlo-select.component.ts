@@ -27,16 +27,13 @@ export class JynloSelectComponent implements ControlValueAccessor {
   @Input() searchable = false;
   @Input() invalid = false;
   @Input() required = false;
-  // A custom element receives [disabled] as an Angular @Input while NgModel
-  // also calls setDisabledState(). Combining both sources prevents the
-  // initial form write (false) from silently overriding an explicit disable.
-  private disabledInput = false;
+  // Angular NgModel handles the [disabled] form state; [blocked] makes the
+  // UI unavailable immediately without competing for the same input.
   private disabledByForms = false;
-  @Input() set disabled(value: boolean) {
-    this.disabledInput = value === true;
-    if (this.disabled) this.close();
-  }
-  get disabled(): boolean { return this.disabledInput || this.disabledByForms; }
+  // Explicitly separate the presentation state from NgModel's [disabled]
+  // directive input, which may win the shared binding on a custom element.
+  @Input() blocked = false;
+  get disabled(): boolean { return this.blocked || this.disabledByForms; }
   @Input() accent: 'teal' | 'violet' = 'teal';
   @Output() picked = new EventEmitter<string>();
 
