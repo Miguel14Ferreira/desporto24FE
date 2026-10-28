@@ -641,3 +641,39 @@
     max-width: 100%;
   }
 }
+
+/* Arrival modes are route-planner links, not verified facility entrances.
+   Flexible, equal-height actions prevent overflow on narrow mobile widths. */
+.venue-route-planner {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(153, 213, 218, .21);
+  min-width: 0;
+}
+.venue-route-planner > strong { display: block; color: #f1fcf9; font-size: .94rem; }
+.venue-route-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 10px;
+}
+.venue-detail-page .venue-route-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px;
+  font-size: .82rem;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.venue-route-caveat { display: block; margin-top: 11px; color: #b0cbd5; line-height: 1.5; }
+.venue-route-mode:focus-visible { outline: 2px solid #8eefd3; outline-offset: 3px; }
+@media (max-width: 390px) {
+  .venue-route-modes { grid-template-columns: 1fr; }
+  .venue-detail-page .venue-route-mode { width: 100%; }
+}

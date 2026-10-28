@@ -1,4 +1,4 @@
-import { venueHasMainlandCoordinates, venueHasPortugueseCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from './venue-public-contact';
+import { venueHasMainlandCoordinates, venueHasPortugueseCoordinates, venueDirectionsUrl, venueOsmEmbedUrl, venueTelephoneUrl } from './venue-public-contact';
 
 describe('public venue map/contact links', () => {
   it('embeds valid coordinates with an OSM marker and small surrounding area', () => {
@@ -43,6 +43,36 @@ describe('public venue map/contact links', () => {
       expect(venueHasPortugueseCoordinates(latitude, longitude)).toBeFalse();
       expect(venueOsmEmbedUrl(latitude, longitude)).toBeNull();
     }
+  });
+
+  it('creates mode-specific Google Maps directions without guessing an origin', () => {
+    const directions = [
+      ['driving', '38.7223,-9.1393'],
+      ['walking', '37.741,-25.675'],
+      ['transit', '32.648,-16.908']
+    ] as const;
+    for (const [mode, destination] of directions) {
+      const url = venueDirectionsUrl(
+        Number(destination.split(',')[0]), Number(destination.split(',')[1]), mode);
+      expect(url).not.toBeNull();
+      const parsed = new URL(url!);
+      expect(parsed.origin).toBe('https://www.google.com');
+      expect(parsed.pathname).toBe('/maps/dir/');
+      expect(parsed.searchParams.get('api')).toBe('1');
+      expect(parsed.searchParams.get('destination')).toBe(destination);
+      expect(parsed.searchParams.get('travelmode')).toBe(mode);
+      expect(parsed.searchParams.has('origin')).toBeFalse();
+      expect(parsed.searchParams.has('dir_action')).toBeFalse();
+    }
+  });
+
+  it('does not fabricate routes for missing or implausible GPS', () => {
+    for (const [lat, lon] of [[0, 0], [38.7, -5.5], [NaN, -8], [42.8, -8]]) {
+      expect(venueDirectionsUrl(lat, lon, 'driving')).toBeNull();
+    }
+    expect(venueDirectionsUrl(null, -9.1, 'walking')).toBeNull();
+    expect(venueDirectionsUrl(38.7, undefined, 'transit')).toBeNull();
+    expect(venueDirectionsUrl(38.7, -9.1, 'flying' as any)).toBeNull();
   });
 
   it('offers safe click-to-call only for public-looking Portuguese phone numbers', () => {

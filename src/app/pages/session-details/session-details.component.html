@@ -568,6 +568,25 @@
               </a>
               <small>{{ (hasVenueMapCoordinates() ? 'sessionDetail.mapPointNotEntrance'
                          : 'sessionDetail.openMapsHint') | t }}</small>
+              @if (hasVenueMapCoordinates()) {
+                <div class="session-route-planner" aria-label="{{ 'venue.visit.directionsTitle' | t }}">
+                  <strong>{{ 'venue.visit.directionsTitle' | t }}</strong>
+                  <div class="session-route-modes">
+                    @if (exactDirectionsUrl('driving'); as drivingUrl) {
+                      <a class="session-route-mode jynlo-action jynlo-action--neutral" [href]="drivingUrl"
+                         target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsDriving' | t }}</a>
+                    }
+                    @if (exactDirectionsUrl('walking'); as walkingUrl) {
+                      <a class="session-route-mode jynlo-action jynlo-action--neutral" [href]="walkingUrl"
+                         target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsWalking' | t }}</a>
+                    }
+                    @if (exactDirectionsUrl('transit'); as transitUrl) {
+                      <a class="session-route-mode jynlo-action jynlo-action--neutral" [href]="transitUrl"
+                         target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsTransit' | t }}</a>
+                    }
+                  </div>
+                </div>
+              }
             } @else if (session.canSeeExactAddress) {
               <p>{{ 'sessionDetail.locationUnavailable' | t }}</p>
             } @else {

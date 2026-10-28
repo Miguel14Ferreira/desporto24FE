@@ -1349,3 +1349,25 @@ h1 {
 .invite-choice-guide .jynlo-action{margin-top:auto;min-height:40px;text-align:center}
 .invite-choice-guest{border-color:#288f83!important;background:#0a3940!important}
 @media(max-width:670px){.invite-choice-guide{grid-template-columns:1fr}}
+
+/* Route planning is deliberately visible only for authorised session GPS. */
+.session-route-planner { margin-top: 14px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,.12); min-width: 0; }
+.session-route-planner > strong { display: block; font-size: .9rem; color: #eefefa; }
+.session-route-modes { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 10px; min-width: 0; }
+.session-route-mode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 0;
+  padding: 9px 13px;
+  font-size: .84rem;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+}
+.session-route-mode:focus-visible { outline: 2px solid #8eefd3; outline-offset: 3px; }
+@media (max-width: 390px) {
+  .session-route-modes { display: grid; grid-template-columns: 1fr; }
+  .session-route-mode { width: 100%; }
+}

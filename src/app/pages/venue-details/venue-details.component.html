@@ -136,7 +136,26 @@
                 {{ (hasConfirmedMapCoordinates ? 'venue.visit.openGoogleMap' : 'venue.detail.searchMap') | t }}
               </a>
             }
-            @if (!hasConfirmedMapCoordinates) {
+            @if (hasConfirmedMapCoordinates) {
+              <div class="venue-route-planner" aria-label="{{ 'venue.visit.directionsTitle' | t }}">
+                <strong>{{ 'venue.visit.directionsTitle' | t }}</strong>
+                <div class="venue-route-modes">
+                  @if (directionsUrl('driving'); as carUrl) {
+                    <a class="jynlo-action jynlo-action--neutral venue-route-mode" [href]="carUrl"
+                       target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsDriving' | t }}</a>
+                  }
+                  @if (directionsUrl('walking'); as walkingUrl) {
+                    <a class="jynlo-action jynlo-action--neutral venue-route-mode" [href]="walkingUrl"
+                       target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsWalking' | t }}</a>
+                  }
+                  @if (directionsUrl('transit'); as transitUrl) {
+                    <a class="jynlo-action jynlo-action--neutral venue-route-mode" [href]="transitUrl"
+                       target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsTransit' | t }}</a>
+                  }
+                </div>
+                <small class="venue-route-caveat">{{ 'venue.visit.directionsCaveat' | t }}</small>
+              </div>
+            } @else {
               <small class="venue-map-approximate-hint">{{ 'venue.detail.searchMapHint' | t }}</small>
             }
           </div>
