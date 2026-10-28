@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityStanding } from '../model/community-group';
-import { communityComparisonKey } from './community-player-comparison';
+import { CommunityComparePickerComponent } from './community-compare-picker.component';
 
 /** Read-only records, chart and player comparison for the existing community standings.
  * The parent retains ranking filters, tie rules, selected usernames and all persistence.
@@ -10,7 +9,7 @@ import { communityComparisonKey } from './community-player-comparison';
 @Component({
   selector: 'app-community-performance-insights',
   standalone: true,
-  imports: [FormsModule, TranslatePipe],
+  imports: [TranslatePipe, CommunityComparePickerComponent],
   templateUrl: './community-performance-insights.component.html',
   styleUrls: ['./community-performance-insights.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -27,11 +26,7 @@ export class CommunityPerformanceInsightsComponent {
   @Input() comparePlayerB?: CommunityStanding;
   @Output() compareAChange = new EventEmitter<string>();
   @Output() compareBChange = new EventEmitter<string>();
-
-  /** Every visible ranking entry gets a distinct key, even without an account or username. */
-  selectionKey(index: number): string {
-    return communityComparisonKey(index);
-  }
+  @Output() clearRequested = new EventEmitter<void>();
 
   /** Same percentage calculation as CommunitiesComponent.pointsBarWidth. */
   pointsBarWidth(row: CommunityStanding): number {
