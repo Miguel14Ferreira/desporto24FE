@@ -94,6 +94,17 @@ export interface SessionContext {
   seasonName: string | null;
 }
 
+/** Optional community membership after a verified, completed game. */
+export interface PostGameCommunitySuggestion {
+  id: number;
+  name: string;
+  requiresApproval: boolean;
+}
+export interface PostGameCommunityJoinResult {
+  communityId: number;
+  state: 'JOINED' | 'REQUESTED';
+}
+
 export interface SessionGuestRequest {
   id: number;
   name: string;
@@ -121,6 +132,16 @@ export class SessionService {
 
   context(id: number): Observable<SessionContext> {
     return this.http.get<SessionContext>(this.baseUrl + '/' + id + '/context');
+  }
+
+  postGameCommunities(id: number): Observable<PostGameCommunitySuggestion[]> {
+    return this.http.get<PostGameCommunitySuggestion[]>(
+      this.baseUrl + '/' + id + '/post-game-communities');
+  }
+
+  joinCommunityAfterGame(id: number, communityId: number): Observable<PostGameCommunityJoinResult> {
+    return this.http.post<PostGameCommunityJoinResult>(
+      this.baseUrl + '/' + id + '/post-game-communities/' + communityId + '/join', {});
   }
 
   issueGuestLink(id:number): Observable<{token:string}> {
