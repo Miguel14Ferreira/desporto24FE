@@ -330,6 +330,11 @@ export class CommunityGroupsService {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/features', request);
   }
 
+  updateSessionCreationPolicy(id: number, membersCanCreateSessions: boolean): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(
+      this.url + '/' + id + '/session-creation-policy', { membersCanCreateSessions });
+  }
+
   updateDefaultVenue(id: number, venueId: number | null): Observable<CommunityGroup> {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/default-venue', { venueId });
   }
