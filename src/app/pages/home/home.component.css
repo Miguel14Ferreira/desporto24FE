@@ -291,6 +291,10 @@
   color: #f8fafc; text-decoration: none;
 }
 a.preview-item:hover, a.preview-item:focus-visible { border-color: var(--d24-accent); }
+a.preview-venue { cursor: pointer; transition: border-color .16s ease, box-shadow .16s ease; }
+a.preview-venue:hover, a.preview-venue:focus-visible { box-shadow: 0 0 0 1px rgba(63,231,198,.23), 0 8px 26px rgba(0,12,22,.3); }
+a.preview-venue .preview-venue-action { font-size: .76rem; color: #83ebd5; font-weight: 750; justify-self: start; }
+@media (prefers-reduced-motion: reduce) { a.preview-venue { transition: none; } }
 .preview-item span { color: #cbd5e1; font-size: .84rem; overflow-wrap: anywhere; }
 .preview-item small { color: var(--d24-accent-soft); font-weight: 800; }
 .preview-item .preview-availability {
