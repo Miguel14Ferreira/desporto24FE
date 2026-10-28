@@ -3559,7 +3559,7 @@ export const EN: Record<string, string> = {
   'createSession.modeCompleteNote': 'Include yourself in the number already confirmed. No duplicate accounts or registrations will be created.',
   'createSession.communityShareKicker': 'Communities',
   'createSession.communityShareTitle': 'Session for my communities',
-  'createSession.communityShareHelp': 'Optional: select up to 5 communities you belong to. Without a selection, the session is public. Selecting communities limits registration to their members and enables recurrence and call-ups. Community rankings are unaffected.',
+  'createSession.communityShareHelp': 'Optional: select up to 5 communities you belong to. Without a selection, you can create a public or password-protected session. Selecting communities limits registration to their members and enables recurrence and call-ups. Community rankings are unaffected.',
   'createSession.communityShareLoading': 'Loading your communities…',
   'createSession.communityShareUnavailable': 'Could not load communities. You can still create the session without sharing.',
   'createSession.communityShareNone': 'You do not belong to any communities yet. You can create the session normally.',
