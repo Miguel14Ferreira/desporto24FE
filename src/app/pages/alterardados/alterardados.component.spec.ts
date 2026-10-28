@@ -386,4 +386,40 @@ describe('AlterardadosComponent', () => {
     expect(service.deleteAccount).toHaveBeenCalled();
     expect(logoutSpy).toHaveBeenCalled();
   });
+
+  it('uses premium gender and skill selectors without changing the persisted values on initial render', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    const gender=root.querySelector<HTMLElement>('app-jynlo-select[name="gender"]')!;
+    const skill=root.querySelector<HTMLElement>('app-jynlo-select[name="skillLevel"]')!;
+    expect(gender).not.toBeNull();
+    expect(skill).not.toBeNull();
+    expect(component.profile?.gender).toBeNull();
+    expect(component.profile?.skillLevel).toBeNull();
+
+    gender.querySelector<HTMLButtonElement>('.jynlo-select__trigger')!.click();
+    fixture.detectChanges();
+    const male=Array.from(gender.querySelectorAll<HTMLButtonElement>('.jynlo-select__option'))
+      .find(item=>item.textContent?.includes('Masculino'));
+    expect(male).toBeDefined();
+    male!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(component.profile?.gender).toBe('masculino');
+
+    skill.querySelector<HTMLButtonElement>('.jynlo-select__trigger')!.click();
+    fixture.detectChanges();
+    const advanced=Array.from(skill.querySelectorAll<HTMLButtonElement>('.jynlo-select__option'))
+      .find(item=>item.textContent?.includes('Avançado'));
+    expect(advanced).toBeDefined();
+    advanced!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(component.profile?.skillLevel).toBe('ADVANCED');
+    component.save();
+    expect(service.update).toHaveBeenCalledWith(jasmine.objectContaining({
+      country:'Portugal', gender:'masculino', skillLevel:'ADVANCED'
+    }));
+  });
 });

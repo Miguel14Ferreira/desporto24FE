@@ -91,4 +91,52 @@ describe('JynloSelectComponent (Angular forms integration)', () => {
     expect(trigger.disabled).toBeTrue();
     isolated.destroy();
   });
+
+  it('keeps a country unchanged until Enter confirms a filtered option, without submitting the form', async () => {
+    const root=fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.jynlo-select__trigger')!.click();
+    fixture.detectChanges();
+    const input=root.querySelector<HTMLInputElement>('.jynlo-select__search')!;
+    input.value='africa';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.country).toBe('Portugal');
+    const enter=new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true});
+    input.dispatchEvent(enter);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(enter.defaultPrevented).toBeTrue();
+    expect(fixture.componentInstance.country).toBe('África do Sul');
+  });
+
+  it('keeps the fixed menu within the viewport and opens above a low trigger', () => {
+    const root=fixture.nativeElement as HTMLElement;
+    const trigger=root.querySelector<HTMLButtonElement>('.jynlo-select__trigger')!;
+    const height=window.innerHeight;
+    spyOn(trigger,'getBoundingClientRect').and.returnValue({
+      left:24, right:324, top:height-75, bottom:height-28,
+      width:300, height:47, x:24, y:height-75,
+      toJSON:()=>({})
+    } as DOMRect);
+    trigger.click();
+    fixture.detectChanges();
+    const popover=root.querySelector<HTMLElement>('.jynlo-select__popover')!;
+    const selector=fixture.debugElement.children[0].componentInstance as JynloSelectComponent;
+    expect(selector.openAbove).toBeTrue();
+    expect(popover.style.bottom).not.toBe('');
+    expect(popover.style.left).toBe('24px');
+    expect(getComputedStyle(popover).position).toBe('fixed');
+  });
+
+  it('closes a dropdown that becomes disabled and preserves the persisted form value', async () => {
+    const root=fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.jynlo-select__trigger')!.click();
+    fixture.detectChanges();
+    fixture.componentInstance.disabled=true;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(root.querySelector('.jynlo-select__popover')).toBeNull();
+    expect(fixture.componentInstance.country).toBe('Portugal');
+  });
 });

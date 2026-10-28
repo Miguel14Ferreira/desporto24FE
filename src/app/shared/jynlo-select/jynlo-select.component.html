@@ -12,13 +12,18 @@
     <span class="jynlo-select__chevron" aria-hidden="true" [class.jynlo-select__chevron--open]="open">⌄</span>
   </button>
   @if (open) {
-    <div class="jynlo-select__popover">
+    <div class="jynlo-select__popover" [class.jynlo-select__popover--above]="openAbove"
+      [style.left.px]="popoverLeft" [style.width.px]="popoverWidth"
+      [style.top.px]="openAbove ? null : popoverTop"
+      [style.bottom.px]="openAbove ? popoverBottom : null"
+      [style.max-height.px]="popoverMaxHeight">
       @if (searchable) {
         <input #filterInput class="jynlo-select__search" type="search"
           [attr.aria-label]="ariaLabel || placeholder"
           [placeholder]="placeholder" [(ngModel)]="query"
           [ngModelOptions]="{standalone:true}"
-          (keydown)="searchKey($event)" autocomplete="off">
+          (keydown)="searchKey($event)" autocomplete="off" aria-autocomplete="list"
+          [attr.aria-controls]="listId">
       }
       <div class="jynlo-select__options" role="listbox" [id]="listId"
         [attr.aria-label]="ariaLabel || placeholder">
@@ -33,7 +38,7 @@
             }
           </button>
         } @empty {
-          <p class="jynlo-select__empty">—</p>
+          <p class="jynlo-select__empty" role="status">—</p>
         }
       </div>
     </div>
