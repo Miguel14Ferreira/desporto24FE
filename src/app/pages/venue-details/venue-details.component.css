@@ -559,4 +559,85 @@
   }
 }
 
+/*
+ * Consistent vertical rhythm across venue profiles.
+ * Each top-level block has its own space instead of inheriting colliding
+ * top/bottom margins from successive design iterations.
+ */
+.venue-detail-page .venue-detail-shell {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 2.8vw, 32px);
+}
+.venue-detail-page .venue-detail-shell > * {
+  min-width: 0;
+}
+.venue-detail-page .venue-detail-shell > :where(
+  .venue-header,
+  .venue-basic-info,
+  .venue-public-more,
+  .venue-rating-summary,
+  .venue-visit-section,
+  .venue-photos-section,
+  .venue-information-section,
+  .venue-sport-conditions-section,
+  .venue-amenities-section
+) {
+  margin-block: 0;
+}
 
+/* Helpful public information must breathe; it is not an inline, cramped CTA. */
+.venue-detail-page .venue-public-more {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 28px;
+  row-gap: 12px;
+  padding: 20px 24px;
+  border: 1px solid rgba(87, 219, 189, .26);
+  border-radius: 16px;
+  background: rgba(14, 57, 69, .72);
+  color: #d0eae8;
+  line-height: 1.55;
+}
+.venue-detail-page .venue-public-more p {
+  margin: 0;
+  font-size: .91rem;
+  max-width: 65ch;
+}
+.venue-detail-page .venue-public-more-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 42px;
+  padding: 10px 15px;
+  border: 1px solid rgba(121, 239, 203, .38);
+  border-radius: 10px;
+  color: #a0ffdf;
+  background: rgba(32, 114, 99, .16);
+  font-weight: 750;
+  text-decoration: none;
+  white-space: normal;
+  text-align: center;
+}
+.venue-detail-page .venue-public-more-link:hover {
+  background: rgba(54, 230, 183, .17);
+  border-color: #7deccd;
+}
+.venue-detail-page .venue-public-more-link:focus-visible {
+  outline: 2px solid #8ef2d6;
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .venue-detail-page .venue-detail-shell {
+    gap: 22px;
+  }
+  .venue-detail-page .venue-public-more {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    row-gap: 14px;
+  }
+  .venue-detail-page .venue-public-more-link {
+    max-width: 100%;
+  }
+}

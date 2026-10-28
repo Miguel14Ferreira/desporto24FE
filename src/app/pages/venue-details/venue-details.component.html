@@ -82,6 +82,13 @@
           }
         </div>
       </div>
+      @if (isPublicView) {
+        <aside class="venue-public-more" [attr.aria-label]="'venue.detail.publicMore' | t">
+          <p>{{ 'venue.detail.publicMore' | t }}</p>
+          <a class="venue-public-more-link" [routerLink]="['/menu/venues', venue.id]">{{ 'venue.detail.openFull' | t }} ↗</a>
+        </aside>
+      }
+
       @if (!ratingSummaryLoading && !ratingSummaryLoadError) {
         <section class="venue-rating-summary" aria-labelledby="venue-rating-heading">
           <h2 id="venue-rating-heading">{{ 'venue.detail.ratingHeading' | t }}</h2>
