@@ -977,7 +977,7 @@ describe('PublicSessionPreviewComponent', () => {
           return of([]);
         }
         if(url.endsWith('/guest-roster')) {
-          expect(body.token).toBe(token;
+          expect(body.token).toBe(token);
           return of({sessionId:42,communityId:7,players:[
             {id:21,name:'Afonso Salvador'},{id:22,name:'João Marques'}]});
         }
