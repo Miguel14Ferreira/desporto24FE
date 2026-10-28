@@ -565,7 +565,7 @@ export const EN: Record<string, string> = {
   'guestRsvp.noAccount': 'No account? You can still play',
   'guestRsvp.title': 'Who\'s playing?',
   'guestRsvp.chooseHelp': 'Choose your name in this community. No installation needed.',
-  'guestRsvp.selectPlayer': 'Historical player',
+  'guestRsvp.selectPlayer': 'Have you played with this group before?',
   'guestRsvp.choosePlaceholder': 'Select a player...',
   'guestRsvp.notListed': 'Can\'t find your name?',
   'guestRsvp.newNamePlaceholder': 'Enter your name to play',
