@@ -58,6 +58,28 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     expect(calls.state$.value).toBeNull();
   });
 
+  it('explains disabled provider and rechecks readiness after it is configured', () => {
+    expect(calls.availabilityStatus$.value).toBe('checking');
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:false});
+    expect(calls.available$.value).toBeFalse();
+    expect(calls.availabilityStatus$.value).toBe('notConfigured');
+    calls.refreshAvailability();
+    expect(calls.availabilityStatus$.value).toBe('checking');
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    expect(calls.available$.value).toBeTrue();
+    expect(calls.availabilityStatus$.value).toBe('ready');
+  });
+
+  it('distinguishes unauthorised availability requests from an unconfigured provider', () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability'))
+      .flush({}, {status:403,statusText:'Forbidden'});
+    expect(calls.available$.value).toBeFalse();
+    expect(calls.availabilityStatus$.value).toBe('requestFailed');
+    calls.refreshAvailability();
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:false});
+    expect(calls.availabilityStatus$.value).toBe('notConfigured');
+  });
+
   it('rejects outgoing calls before backend readiness is confirmed', async () => {
     http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:false});
     await calls.start('bea','voice');
