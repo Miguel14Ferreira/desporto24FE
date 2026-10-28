@@ -891,7 +891,7 @@ describe('Events2Component', () => {
 
     component.createSession();
     expect(sessionService.create).not.toHaveBeenCalled();
-    expect(component.errorMessage).toContain('Confirma');
+    expect(component.errorMessage).toContain('Compreendo');
     component.confirmActivateRankings = true;
     component.createSession();
     expect(sessionService.create).toHaveBeenCalledWith(
@@ -929,7 +929,7 @@ describe('Events2Component', () => {
     component.communities=[];
     component.communityId=12;
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.create-share-panel')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.create-share-panel[aria-labelledby="create-share-title"]')).toBeNull();
     component.toggleCommunityShare(12,true);
     expect(component.shareCommunityIds).toEqual([]);
   });
