@@ -246,3 +246,13 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
 @media (prefers-reduced-motion:reduce) {
   .group-invite-modal .group-friend,.group-friend-search-field {transition:none;}
 }
+
+/* Optional private-group avatars; additive to the updated member picker. */
+.group-circle img,.group-header-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.group-circle{overflow:hidden;flex-shrink:0}
+.group-header-info{display:flex;align-items:center;gap:12px;min-width:0}
+.group-header-info>div{min-width:0}
+.group-header-avatar{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;
+  border-radius:50%;overflow:hidden;background:#185760;font-size:1.45rem}
+.group-photo-input{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.group-header-button:disabled{opacity:.5;cursor:not-allowed}

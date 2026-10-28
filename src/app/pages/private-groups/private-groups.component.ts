@@ -10,6 +10,7 @@ import { PrivateGroup, PrivateGroupMessage, PrivateGroupService } from '../../se
 import { FriendSummary } from '../model/friend-summary';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { appTranslate as t } from '../../i18n/i18n.service';
+import { environment } from 'src/environment/environment';
 
 @Component({
   selector:'app-private-groups',
@@ -29,6 +30,7 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
   showCreate=false;
   showAdd=false;
   showRename=false;
+  photoUploading=false;
   removingUsername:string|null=null;
   renameTitle='';
   selectedNames=new Set<string>();
@@ -160,6 +162,34 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
     this.selectedNames=new Set();
     this.friendSearch='';
     this.showAdd=true;this.showCreate=false;this.showRename=false;this.groupError='';
+  }
+
+  photoUrl(group:PrivateGroup):string|null {
+    const url=group.photoUrl;
+    if(!url)return null;
+    if(url.startsWith('https://'))return url;
+    if(url.startsWith('/'))return environment.apiUrl+url;
+    return null;
+  }
+  uploadPhoto(event:Event):void {
+    const input=event.target as HTMLInputElement;
+    const file=input.files?.item(0);
+    input.value='';
+    const group=this.selected;
+    if(!file||!group||!this.isCreator||this.photoUploading)return;
+    const allowed=['image/jpeg','image/png','image/webp','image/gif'];
+    if(!allowed.includes(file.type)||file.size===0||file.size>5*1024*1024){
+      this.groupError=t('groups.photoInvalid');return;
+    }
+    this.photoUploading=true;this.groupError='';
+    this.api.uploadPhoto(group.id,file).subscribe({
+      next:updated=>{
+        this.photoUploading=false;
+        if(this.selected?.id===group.id)this.selected=updated;
+        this.groups=this.groups.map(item=>item.id===group.id?updated:item);
+      },
+      error:()=>{this.photoUploading=false;this.groupError=t('groups.photoError');}
+    });
   }
 
   openRename():void {
