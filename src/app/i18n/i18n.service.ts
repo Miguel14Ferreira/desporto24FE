@@ -570,7 +570,7 @@ const PT: Dictionary = {
   'guestRsvp.noAccount': 'Sem conta? Podes participar',
   'guestRsvp.title': 'Quem vai jogar?',
   'guestRsvp.chooseHelp': 'Escolhe o teu nome na comunidade. Não precisas de instalar nada.',
-  'guestRsvp.selectPlayer': 'Jogador histórico',
+  'guestRsvp.selectPlayer': 'Já jogaste com este grupo?',
   'guestRsvp.choosePlaceholder': 'Seleciona o jogador...',
   'guestRsvp.notListed': 'Não encontras o teu nome?',
   'guestRsvp.newNamePlaceholder': 'Escreve o teu nome para participar',
