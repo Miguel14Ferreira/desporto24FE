@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, map, Observable, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
+import { chatMediaPreviewKey } from '../../shared/chat-media-preview';
 import { JoinSessionResponse, PendingSessionInvite, SessionService } from '../../services/session.service';
 import { NotificationApiService, NotificationPreferences } from '../../services/notification-api.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -382,13 +383,10 @@ export class NotificationsComponent implements OnInit {
     // Direct chat stores GIPHY as a typed message; notification cards should
     // show a human-readable summary, including for existing saved alerts.
     // Never render the payload JSON or a third-party URL in the notification.
-    if (notification.message?.startsWith('[JYNLO:GIPHY:1]')
-        || (notification.type === 'CHAT_MESSAGE' && notification.message === '🎞️ GIF')) {
-      const username = notification.type === 'CHAT_MESSAGE'
-        ? notification.relatedUsername?.trim() : null;
-      return username
-        ? t('notification.chatGifPreviewWithSender', { username })
-        : t('notification.chatGifPreview');
+    const chatMediaKey = chatMediaPreviewKey(notification.message,
+      notification.type === 'CHAT_MESSAGE' ? notification.relatedUsername : null);
+    if (chatMediaKey) {
+      return t(chatMediaKey, { username: notification.relatedUsername?.trim() ?? '' });
     }
     if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
       // Never render meeting instructions from the alert itself. Always send
