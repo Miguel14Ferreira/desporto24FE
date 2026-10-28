@@ -45,6 +45,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   saving = false;
   error = '';
   feedback = '';
+  editing = true;
   private revision = 0;
   private subs = new Subscription();
   private searchRequest?: Subscription;
@@ -77,6 +78,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       this.error = '';
       this.feedback = '';
     }
+    if (this.previousCommunityId !== id) this.editing = !this.hasHabitualVenue;
     this.previousCommunityId = id;
   }
 
@@ -88,8 +90,63 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     return this.community?.myRole === 'OWNER' || this.community?.myRole === 'ADMIN';
   }
 
+  get hasHabitualVenue(): boolean {
+    return !!(this.community?.defaultVenueId || this.community?.habitualLocationSource);
+  }
+
+  openEditor(): void {
+    if (!this.canManage || this.saving || !this.hasHabitualVenue) return;
+    this.editing = true;
+    this.error = '';
+    this.feedback = '';
+    this.cdr.markForCheck();
+  }
+
+  cancelEdit(): void {
+    if (!this.canManage || this.saving || !this.hasHabitualVenue) return;
+    this.resetDraft();
+    this.editing = false;
+    this.cdr.markForCheck();
+  }
+
+  /** Discard stale search, detail, Maps and GPS state after saving or cancelling. */
+  private resetDraft(): void {
+    ++this.revision;
+    this.searchRequest?.unsubscribe();
+    this.searchRequest = undefined;
+    this.subs.unsubscribe();
+    this.subs = new Subscription();
+    this.locationMethod = 'venue';
+    this.query = '';
+    this.results = [];
+    this.expanded = null;
+    this.searchQuery = '';
+    this.searchAttempted = false;
+    this.searching = false;
+    this.detailLoading = false;
+    this.mapLink = '';
+    this.locationPoint = null;
+    this.pointMapPreviewUrl = null;
+    this.venueMapPreviewUrl = null;
+    this.resolvingMap = false;
+    this.locating = false;
+    this.resolvingAddress = false;
+    this.saving = false;
+    this.error = '';
+    this.feedback = '';
+  }
+
+  private finishSave(group: CommunityGroup): void {
+    this.community = group;
+    this.resetDraft();
+    // Once persisted, show only the usual venue summary until the user selects Change.
+    this.editing = !this.hasHabitualVenue;
+    this.venueSaved.emit(group);
+    this.cdr.markForCheck();
+  }
+
   chooseLocationMethod(method: 'venue' | 'maps' | 'gps'): void {
-    if (!this.canManage || this.saving || this.locationMethod === method) return;
+    if (!this.canManage || !this.editing || this.saving || this.locationMethod === method) return;
     ++this.revision; // stale Maps, GPS and catalogue requests cannot change the new mode.
     this.searchRequest?.unsubscribe();
     this.searchRequest = undefined;
@@ -253,10 +310,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       })).subscribe({
         next: group => {
           if (revision !== this.revision || this.community.id !== communityId) return;
-          this.community = group;
-          this.venueSaved.emit(group);
-          this.feedback = t('communities.habitualVenue.pointSaved');
-          this.cdr.markForCheck();
+          this.finishSave(group);
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
@@ -381,18 +435,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       })).subscribe({
         next: group => {
           if (revision !== this.revision || this.community.id !== communityId) return;
-          this.community = group;
-          this.venueSaved.emit(group);
-          this.locationPoint = null;
-          this.pointMapPreviewUrl = null;
-          this.expanded = null;
-          this.venueMapPreviewUrl = null;
-          this.results = [];
-          this.query = '';
-          this.feedback = id === null
-            ? t('communities.habitualVenue.venueRemoved')
-            : t('communities.habitualVenue.venueSaved');
-          this.cdr.markForCheck();
+          this.finishSave(group);
+          if (id === null) this.feedback = t('communities.habitualVenue.venueRemoved');
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
