@@ -469,25 +469,15 @@ export class NotificationsComponent implements OnInit {
   }
 
   canProtectAccount(notification: AppNotification): boolean {
-    if (notification.updateProfile) {
-      return true;
-    }
-
-    const subject = (notification.subject || '').toLocaleLowerCase();
-    const message = (notification.message || '').toLocaleLowerCase();
-    const content = subject + ' ' + message;
-
-    return content.includes('palavra-passe alterada')
-      || content.includes('password changed')
-      || content.includes('alteração de email')
-      || content.includes('email changed')
-      || content.includes('autenticação multifator')
-      || content.includes('multi-factor authentication')
-      || content.includes('perfil atualizado')
-      || content.includes('profile updated');
+    // Legacy profile-update notices set updateProfile=true even for sports,
+    // photos and biographies. Never offer a destructive account lock based on
+    // that flag, or on free-text message contents.
+    const subject = (notification.subject || '').trim().toLocaleLowerCase();
+    return /^(palavra-passe alterada|password changed|alteração de email|email changed|email address changed|autenticação multifator (?:ativada|desativada)|multi-factor authentication (?:enabled|disabled))\b/i.test(subject);
   }
 
   requestAccountBlock(): void {
+    if (!this.selected || !this.canProtectAccount(this.selected)) return;
     this.accountBlockConfirming = true;
     this.actionError = '';
   }
@@ -497,7 +487,8 @@ export class NotificationsComponent implements OnInit {
   }
 
   blockAccountAccess(): void {
-    if (!this.selected || this.actionLoadingId !== null) {
+    if (!this.selected || !this.canProtectAccount(this.selected)
+        || this.actionLoadingId !== null) {
       return;
     }
 
