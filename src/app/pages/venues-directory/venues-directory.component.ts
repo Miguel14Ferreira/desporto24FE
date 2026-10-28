@@ -10,11 +10,12 @@ import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location'
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { PORTUGAL_VENUE_REGIONS } from '../../shared/portugal-districts';
 import { Venue } from '../model/venue';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 @Component({
   selector: 'app-venues-directory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, VenueSportsBadgesComponent],
   templateUrl: './venues-directory.component.html',
   styleUrls: ['./venues-directory.component.css']
 })
