@@ -27,9 +27,8 @@
         </a>
         @if (venue.sports) {
           <div class="venue-hero-sports">
-            @for (sport of venueSports; track sport) {
-              <span>{{ sport.trim() }}</span>
-            }
+            <app-venue-sports-badges [sports]="venue.sports"
+              [limit]="6" [expandable]="true"></app-venue-sports-badges>
           </div>
         }
 
@@ -233,7 +232,8 @@
           @if (venue.sports) {
             <div>
               <span>{{ 'venue.detail.sports' | t }}</span>
-              <strong>{{ venue.sports }}</strong>
+              <app-venue-sports-badges [sports]="venue.sports"
+                [limit]="8" [expandable]="true"></app-venue-sports-badges>
             </div>
           }
           @if (venue.venueType) {
