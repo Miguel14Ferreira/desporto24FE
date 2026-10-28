@@ -67,7 +67,7 @@ describe('SessionDetailsComponent', () => {
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
+      ['detail', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.guestRequests.and.returnValue(of([]));
@@ -78,6 +78,7 @@ describe('SessionDetailsComponent', () => {
       waitlistPosition: null
     }));
     sessionService.leave.and.returnValue(of(void 0));
+    sessionService.cancel.and.returnValue(of(void 0));
     sessionService.complete.and.returnValue(of(void 0));
     sessionService.reportDidNotOccur.and.returnValue(of(void 0));
     sessionService.reportProblem.and.returnValue(of(void 0));
@@ -1280,6 +1281,42 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.membership-status')).toBeNull();
   });
 
+  it('allows only the creator to cancel from details with a confirmation', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
+    fixture.detectChanges();
+    const cancel = fixture.nativeElement.querySelector('.session-cancel-button') as HTMLButtonElement;
+    expect(cancel).not.toBeNull();
+    cancel.click();
+    fixture.detectChanges();
+    expect(sessionService.cancel).not.toHaveBeenCalled();
+    const confirmation = fixture.nativeElement.querySelector('.session-cancel-confirm');
+    expect(confirmation).not.toBeNull();
+    (confirmation.querySelector('.jynlo-action--danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(sessionService.cancel).toHaveBeenCalledOnceWith(7);
+    expect(component.session?.status).toBe('CANCELLED');
+    expect(fixture.nativeElement.querySelector('.session-cancel-confirm')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-cancel-button')).toBeNull();
+
+    (component as any).currentUsername = 'someone-else';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z' };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-cancel-button')).toBeNull();
+  });
+
+  it('retains the confirmation and shows an error if cancel fails', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z' };
+    sessionService.cancel.and.returnValue(throwError(() => new HttpErrorResponse({status: 503})));
+    component.requestCancelOwnSession();
+    component.confirmCancelOwnSession();
+    fixture.detectChanges();
+    expect(component.session?.status).toBe('OPEN');
+    expect(component.cancelSessionConfirmOpen).toBeTrue();
+    expect(component.actionError).toBeTruthy();
+  });
+
   it('offers a public share link only when the backend explicitly allows it', () => {
     component.session = { ...session, canSharePublicly: true };
     fixture.detectChanges();
@@ -1310,18 +1347,26 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
   });
 
-  it('never promotes private, community-only or other peoples games', () => {
+  it('shares restricted games with authenticated links but never public feed links', async () => {
     const route = TestBed.inject(ActivatedRoute);
-    spyOn(route.snapshot.queryParamMap, 'get').and.returnValue('1');
+    spyOn(route.snapshot.queryParamMap, 'get').and.callFake(key => key === 'created' ? '1' : null);
     (component as any).currentUsername = 'creator-user';
+    const copy = spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
     for (const detail of [
       { privateGame: true, canSharePublicly: false },
-      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false },
-      { canSharePublicly: false }
+      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false }
     ]) {
       component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', ...detail };
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+      const panel = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
+      expect(panel).not.toBeNull();
+      expect(component.publicShareUrl()).toBeNull();
+      const whatsapp = panel.querySelector('a[href^="https://wa.me/"]') as HTMLAnchorElement;
+      expect(decodeURIComponent(whatsapp.href)).toContain('/menu/events/7');
+      expect(panel.querySelector('a[href^="/menu/feed"]')).toBeNull();
+      expect(panel.textContent).toContain('jogadores autorizados');
+      await component.copyPublicShareLink();
+      expect(copy).toHaveBeenCalledWith(new URL('/menu/events/7', window.location.origin).href);
     }
     (component as any).currentUsername = 'someone-else';
     component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
@@ -1383,17 +1428,21 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
   });
 
-  it('never offers re-promotion for private, community-only, past, or other users games', () => {
+  it('lets organizers reopen restricted sharing, but blocks expired, cancelled or others games', () => {
     (component as any).currentUsername = 'creator-user';
     for (const detail of [
       { privateGame: true, canSharePublicly: false },
-      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false },
+      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false }
+    ]) {
+      component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', ...detail };
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.open-promotion-button')).not.toBeNull();
+    }
+    for (const detail of [
       { status: 'CANCELLED' as const, canSharePublicly: true },
       { gameDate: '2020-10-01T18:00:00Z', canSharePublicly: true }
     ]) {
-      component.session = {
-        ...session, gameDate: '2099-10-01T18:00:00Z', ...detail
-      };
+      component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', ...detail };
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.open-promotion-button')).toBeNull();
     }
