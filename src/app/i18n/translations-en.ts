@@ -585,7 +585,7 @@ export const EN: Record<string, string> = {
   'guestRsvp.rejected': 'Request declined',
   'guestRsvp.rejectedHelp': 'The organizer declined the request. Please contact them directly.',
   'guestRsvp.cancelled': 'Attendance cancelled',
-  'guestRsvp.cancelledHelp': 'This attendance was cancelled and the place is no longer reserved. Contact the organizer if you need more information.',
+  'guestRsvp.cancelledHelp': 'You no longer have a reserved place in this game. If you cancelled by mistake, you can rejoin while places are still available.',
   'guestRsvp.cancelledBySelfHelp': 'You cancelled your attendance for this game. Your place has been released for someone else.',
   'guestRsvp.checkStatus': 'Check status',
   'guestRsvp.linkAccount': 'Link attendance and history to my account',
