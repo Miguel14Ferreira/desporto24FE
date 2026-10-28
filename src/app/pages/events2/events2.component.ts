@@ -50,8 +50,13 @@ export class Events2Component implements OnInit, OnDestroy {
       : this.communities.filter(g => this.shareCommunityIds.includes(g.id));
   }
 
+  /** A shared session with two or more communities never affects any standings. */
+  get canMarkSeasonGame(): boolean {
+    return this.seasonCommunities.length === 1;
+  }
+
   get selectedSeasonCommunity(): CommunityGroup | undefined {
-    return this.seasonCommunities.find(g => g.id === this.seasonGameCommunityId);
+    return this.canMarkSeasonGame ? this.seasonCommunities[0] : undefined;
   }
 
   get seasonRankingsInactive(): boolean {
@@ -59,17 +64,12 @@ export class Events2Component implements OnInit, OnDestroy {
       || (this.seasonOverview === null && this.selectedSeasonCommunity?.rankingsEnabled === false);
   }
 
-  get canAdministerSeason(): boolean {
-    const role = this.selectedSeasonCommunity?.myRole;
-    return role === 'OWNER' || role === 'ADMIN';
-  }
-
   toggleSeasonGame(checked: boolean): void {
-    if (this.loading || (checked && !this.communitySessionSelected)) return;
+    if (this.loading || (checked && !this.canMarkSeasonGame)) return;
     this.seasonGame = checked;
     this.confirmActivateRankings = false;
     if (checked) {
-      this.selectSeasonDestination(this.seasonCommunities[0]?.id ?? null);
+      this.loadOnlyCommunitySeason();
     } else {
       this.seasonGameCommunityId = null;
       this.seasonOverview = null;
@@ -78,9 +78,9 @@ export class Events2Component implements OnInit, OnDestroy {
     }
   }
 
-  selectSeasonDestination(value: number | null): void {
-    const id = Number(value);
-    this.seasonGameCommunityId = this.seasonCommunities.some(g => g.id === id) ? id : null;
+  private loadOnlyCommunitySeason(): void {
+    const id = this.seasonCommunities[0]?.id;
+    this.seasonGameCommunityId = this.canMarkSeasonGame && id != null ? id : null;
     this.confirmActivateRankings = false;
     this.seasonOverview = null;
     const revision = ++this.seasonInfoRevision;
@@ -118,7 +118,12 @@ export class Events2Component implements OnInit, OnDestroy {
       this.password = '';
     } else if (!checked) {
       this.shareCommunityIds = this.shareCommunityIds.filter(groupId => groupId !== id);
-      if (this.seasonGameCommunityId === id) this.toggleSeasonGame(false);
+    }
+    // Changing from one group to zero/two+ must clear the old season destination.
+    // Going from two groups back to one stays opt-in; never auto-enable scoring.
+    if (this.seasonGame && (!this.canMarkSeasonGame
+        || this.seasonGameCommunityId !== this.seasonCommunities[0]?.id)) {
+      this.toggleSeasonGame(false);
     }
   }
 
@@ -404,8 +409,10 @@ export class Events2Component implements OnInit, OnDestroy {
         ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
         : {}),
       communityShareIds: this.communityId === null ? [...this.shareCommunityIds] : [],
-      seasonCompetitionCommunityId: this.seasonGame ? this.seasonGameCommunityId : null,
-      confirmActivateRankings: this.seasonGame && this.confirmActivateRankings,
+      seasonCompetitionCommunityId: this.seasonGame && this.canMarkSeasonGame
+        ? this.seasonCommunities[0].id : null,
+      confirmActivateRankings: this.seasonGame && this.canMarkSeasonGame
+        && this.confirmActivateRankings,
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
       privateGame: this.findPlayersMode ? false : this.privateGame,
       password: this.findPlayersMode ? null : (this.privateGame ? this.password.trim() : null),
@@ -1213,17 +1220,12 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     if (this.seasonGame) {
-      if (!this.communitySessionSelected
-          || this.seasonGameCommunityId === null
-          || !this.seasonCommunities.some(group => group.id === this.seasonGameCommunityId)) {
+      if (!this.canMarkSeasonGame
+          || this.seasonGameCommunityId !== this.seasonCommunities[0]?.id) {
         return t('createSession.seasonGameSelectCommunity');
       }
       if (this.seasonOverviewLoading || this.seasonOverviewError || !this.seasonOverview) {
         return t('createSession.seasonGameDataUnavailable');
-      }
-      if ((this.seasonRankingsInactive || this.seasonOverview.activeSeasonId === null)
-          && !this.canAdministerSeason) {
-        return t('createSession.seasonGameAdminRequired');
       }
       if (this.seasonRankingsInactive && !this.confirmActivateRankings) {
         return t('createSession.seasonGameConfirmActivation');
