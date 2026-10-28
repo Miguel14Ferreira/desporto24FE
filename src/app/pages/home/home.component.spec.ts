@@ -74,6 +74,9 @@ describe('HomeComponent public discovery', () => {
     expect(communitySection?.querySelector('h2')?.textContent?.trim()).toBeTruthy();
     expect(communityCta?.getAttribute('href')).toBe('/login/registerNewUser');
     expect(root.querySelectorAll('.hero-actions a[href="/login/registerNewUser"]').length).toBe(1);
+    // A discovery list must not end with a second registration advertisement.
+    expect(root.querySelector('.preview-cta')).toBeNull();
+    expect(root.querySelector('.public-discovery a[href="/login/registerNewUser"]')).toBeNull();
   });
 
   it('shows real upcoming public sessions and no private, closed or community-only activities', () => {
@@ -135,7 +138,7 @@ describe('HomeComponent public discovery', () => {
     expect(fixture.componentInstance.featuredSessions).toEqual([]);
     expect(fixture.componentInstance.featuredVenues).toEqual([]);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-state').length).toBe(2);
-    expect((fixture.nativeElement as HTMLElement).querySelector('.preview-cta')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.preview-cta')).toBeNull();
   });
 
   it('finds complete venues after an incomplete first page without downloading the whole catalogue', () => {
