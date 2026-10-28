@@ -1404,7 +1404,7 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
   });
 
-  it('opens sharing from My Sports Week only when the viewer owns a public game', () => {
+  it('opens appropriate creator sharing from My Sports Week without exposing private games publicly', () => {
     const route = TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(key => key === 'promote' ? '1' : null);
@@ -1418,7 +1418,10 @@ describe('SessionDetailsComponent', () => {
 
     component.session = { ...component.session, privateGame: true, canSharePublicly: false };
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+    const restricted = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
+    expect(restricted).not.toBeNull();
+    expect(restricted.querySelector('a[href^="/menu/feed"]')).toBeNull();
+    expect(component.publicShareUrl()).toBeNull();
 
     component.session = {
       ...session, canSharePublicly: true, gameDate: '2099-10-01T18:00:00Z'
