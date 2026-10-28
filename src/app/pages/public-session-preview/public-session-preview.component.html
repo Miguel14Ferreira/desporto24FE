@@ -64,6 +64,38 @@
           } @else {
             <p class="privacy-note">{{ 'publicSession.privacyNote' | t }}</p>
           }
+          @if (guestToken) {
+            <section class="guest-confirmed-roster" aria-labelledby="guest-confirmed-roster-title">
+              <div class="guest-confirmed-roster-header">
+                <div>
+                  <h2 id="guest-confirmed-roster-title">{{ 'sessionDetail.whosGoing' | t }}</h2>
+                  <p>{{ 'publicSession.confirmedRosterHelp' | t }}</p>
+                </div>
+                <button type="button" class="guest-confirmed-roster-refresh"
+                        [disabled]="confirmedPlayersLoading" (click)="loadConfirmedPlayers()">
+                  {{ 'chat.refresh' | t }}
+                </button>
+              </div>
+              @if (confirmedPlayersLoading && !confirmedPlayers.length) {
+                <p role="status">{{ 'sessionDetail.loadingParticipants' | t }}</p>
+              }
+              @if (confirmedPlayersError) {
+                <p class="guest-confirmed-roster-error" role="alert">{{ 'publicSession.confirmedRosterError' | t }}</p>
+              }
+              @if (confirmedPlayers.length) {
+                <div class="guest-confirmed-roster-chips">
+                  @for (player of confirmedPlayers; track player.key) {
+                    <span class="guest-confirmed-player" [class.guest-confirmed-player--account]="player.hasAccount">
+                      <strong>{{ player.hasAccount ? '@' + player.name : player.name }}</strong>
+                      <small>{{ (player.hasAccount ? 'guestAdmin.memberBadge' : 'guestAdmin.guestBadge') | t }}</small>
+                    </span>
+                  }
+                </div>
+              } @else if (!confirmedPlayersLoading && !confirmedPlayersError) {
+                <p class="guest-confirmed-roster-empty">{{ 'publicSession.confirmedRosterEmpty' | t }}</p>
+              }
+            </section>
+          }
         </div>
 
         <aside class="join-panel">
@@ -122,6 +154,11 @@
                     [disabled]="guestSending" (click)="checkGuestStatus()">
                     {{ 'guestRsvp.checkStatus' | t }}
                   </button>
+                }
+                @if ((guestStep === 'approved' || guestStep === 'linked') && guestConfirmedName) {
+                  <p class="guest-rsvp-confirmed-identity">
+                    {{ 'guestRsvp.confirmedAs' | t }} <strong>{{ guestConfirmedName }}</strong>
+                  </p>
                 }
                 @if (guestStep === 'approved') {
                   <div class="guest-rsvp-upgrade">
