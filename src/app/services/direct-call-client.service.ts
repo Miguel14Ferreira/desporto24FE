@@ -9,6 +9,7 @@ import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realti
 
 export type CallPhase = 'incoming' | 'dialing' | 'connecting' | 'active' | 'error';
 export type CallMedia = 'voice' | 'video';
+export type CallAvailabilityStatus = 'idle' | 'checking' | 'ready' | 'notConfigured' | 'requestFailed';
 export interface DirectCallState {
   id: string;
   peer: string;
@@ -37,6 +38,7 @@ interface CallSession {
 export class DirectCallClientService implements OnDestroy {
   readonly state$ = new BehaviorSubject<DirectCallState | null>(null);
   readonly available$ = new BehaviorSubject<boolean>(false);
+  readonly availabilityStatus$ = new BehaviorSubject<CallAvailabilityStatus>('idle');
   readonly mediaChanged$ = new BehaviorSubject<number>(0);
   room: Room | null = null;
   private readonly base = environment.apiUrl + '/api/calls/direct';
@@ -63,17 +65,30 @@ export class DirectCallClientService implements OnDestroy {
 
   /** Both the availability check and the call buttons fail closed. */
   refreshAvailability(): void {
-    if (this.checking || !this.username()) return;
+    if (this.checking) return;
+    const token = localStorage.getItem('t');
+    if (!token || !this.username()) {
+      this.available$.next(false);
+      this.availabilityStatus$.next('idle');
+      return;
+    }
     this.checking = true;
+    this.available$.next(false);
+    this.availabilityStatus$.next('checking');
     this.http.get<{enabled: boolean}>(this.base + '/availability')
       .pipe(timeout(8000)).subscribe({
         next: result => {
           this.checking = false;
-          this.available$.next(result.enabled === true);
+          if (localStorage.getItem('t') !== token) return;
+          const ready = result.enabled === true;
+          this.available$.next(ready);
+          this.availabilityStatus$.next(ready ? 'ready' : 'notConfigured');
         },
         error: () => {
           this.checking = false;
+          if (localStorage.getItem('t') !== token) return;
           this.available$.next(false);
+          this.availabilityStatus$.next('requestFailed');
         }
       });
   }
@@ -93,6 +108,7 @@ export class DirectCallClientService implements OnDestroy {
     if (!valid) {
       this.identityToken = null;
       this.available$.next(false);
+      this.availabilityStatus$.next('idle');
       this.dropCall();
       return;
     }
@@ -100,6 +116,7 @@ export class DirectCallClientService implements OnDestroy {
     if (token !== this.identityToken) {
       this.identityToken = token;
       this.available$.next(false);
+      this.availabilityStatus$.next('idle');
       this.refreshAvailability();
     }
     this.realtime.connect();
