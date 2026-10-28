@@ -22,6 +22,9 @@ interface SessionPublicPreview {
   priceAmount: number | null;
   status: 'OPEN' | 'FULL' | 'CANCELLED' | 'COMPLETED' | null;
   gamePhoto: string | null;
+  /** Only included in a validated signed invitation, never anonymous public GET. */
+  venueName?: string | null;
+  address?: string | null;
 }
 
 @Component({
@@ -140,7 +143,38 @@ export class PublicSessionPreviewComponent implements OnInit {
   }
 
   private receiptKey(): string {
-    return 'jynlo-guest-receipt:' + this.sessionId;
+    // A receipt belongs to one invitation link, not every invite for this session.
+    return 'jynlo-guest-receipt:' + this.sessionId + ':' + (this.guestToken || '').slice(0,18);
+  }
+
+  /** Existing visitors may still have a receipt in the pre-fix session-only key. */
+  private savedGuestReceipt(): string | null {
+    try {
+      const scoped = localStorage.getItem(this.receiptKey());
+      if (scoped) return scoped;
+      const legacyKey = 'jynlo-guest-receipt:' + this.sessionId;
+      const legacy = localStorage.getItem(legacyKey);
+      if (legacy && /^[A-Za-z0-9_-]{43}$/.test(legacy)) {
+        localStorage.setItem(this.receiptKey(), legacy);
+        localStorage.removeItem(legacyKey);
+      }
+      return legacy;
+    } catch { return null; }
+  }
+
+  /** Explicitly begin a new guest registration on a shared device/link. */
+  registerAnotherGuest(): void {
+    try {
+      localStorage.removeItem(this.receiptKey());
+      localStorage.removeItem('jynlo-guest-receipt:' + this.sessionId);
+    } catch {}
+    this.guestReceipt = '';
+    this.guestStep = 'choose';
+    this.guestPlayerId = null;
+    this.guestNewName = '';
+    this.guestNote = '';
+    this.guestError = '';
+    this.loadGuestRoster();
   }
 
   private loadGuestRoster(): void {
@@ -157,7 +191,7 @@ export class PublicSessionPreviewComponent implements OnInit {
         this.guestPlayers = data.players;
         this.guestCommunityId = data.communityId;
         try {
-          const receipt = localStorage.getItem(this.receiptKey());
+          const receipt = this.savedGuestReceipt();
           if (receipt && /^[A-Za-z0-9_-]{43}$/.test(receipt)) {
             this.guestReceipt = receipt;
             this.checkGuestStatus();
@@ -182,7 +216,10 @@ export class PublicSessionPreviewComponent implements OnInit {
       next: response => {
         this.guestReceipt = response.receipt;
         try {localStorage.setItem(this.receiptKey(),response.receipt);} catch {}
-        this.guestStep='pending';
+        this.guestStep=response.status==='APPROVED'?'approved':
+          response.status==='LINKED'?'linked':'pending';
+        // The server has already reserved the seat; refresh the actual capacity.
+        this.loadPreview();
       },
       error: () => {this.guestError='guestRsvp.requestError';}
     });
@@ -202,7 +239,11 @@ export class PublicSessionPreviewComponent implements OnInit {
           r.status==='REJECTED'?'rejected':
           r.status==='CANCELLED'?'cancelled':'pending';
       },
-      error:()=>{this.guestError='guestRsvp.statusError';}
+      error:()=>{
+        this.guestError='guestRsvp.statusError';
+        // A stale/invalid receipt cannot permanently trap this browser.
+        this.guestStep='choose';
+      }
     });
   }
 
@@ -240,7 +281,7 @@ export class PublicSessionPreviewComponent implements OnInit {
         // After optional sign-up, only a prior private approval receipt
         // authorizes transferring the guest seat to the real account.
         try {
-          const receipt = localStorage.getItem(this.receiptKey());
+          const receipt = this.savedGuestReceipt();
           if (receipt && /^[A-Za-z0-9_-]{43}$/.test(receipt)) {
             this.guestReceipt=receipt;
             this.checkGuestStatus();
@@ -397,11 +438,20 @@ export class PublicSessionPreviewComponent implements OnInit {
     return rawDate && Number.isFinite(Date.parse(rawDate)) ? rawDate : null;
   }
 
-  /** Public preview only exposes the municipality, never the protected street address. */
+  /** A signed guest link can reveal the real venue; public discovery remains city-only. */
   get cityMapsUrl(): string | null {
-    const city = this.session?.city?.trim();
-    return city ? 'https://www.google.com/maps/search/?api=1&query='
-      + encodeURIComponent(city + ', Portugal') : null;
+    const place = this.guestToken && this.session?.address?.trim()
+      ? this.session.address.trim()
+      : this.session?.city?.trim();
+    return place ? 'https://www.google.com/maps/search/?api=1&query='
+      + encodeURIComponent(place + ', Portugal') : null;
+  }
+
+  get exactInvitationLocation(): string | null {
+    if (!this.guestToken) return null;
+    const venue = this.session?.venueName?.trim();
+    const address = this.session?.address?.trim();
+    return [venue, address].filter(Boolean).join(' · ') || null;
   }
 
   get remainingPlaces(): number | null {
