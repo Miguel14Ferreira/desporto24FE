@@ -149,6 +149,22 @@
               </button>
             </div>
           </header>
+          @if (conversation.kind === 'direct' && composerAllowed && calls
+                && !(calls.available$ | async)) {
+            <div class="inbox-notice inbox-call-readiness" role="status">
+              <span>
+                {{ ((calls.availabilityStatus$ | async) === 'notConfigured'
+                     ? 'calls.notConfiguredHelp'
+                     : (calls.availabilityStatus$ | async) === 'checking'
+                       ? 'calls.checkingProvider'
+                       : 'calls.checkFailedHelp') | t }}
+              </span>
+              <button type="button" (click)="recheckCalls()"
+                      [disabled]="(calls.availabilityStatus$ | async) === 'checking'">
+                {{ 'calls.checkAgain' | t }}
+              </button>
+            </div>
+          }
           @if (messageSearchOpen) {
             <section app-inbox-history-search class="inbox-history-search"
               [attr.aria-label]="'inbox.searchMessages' | t"
