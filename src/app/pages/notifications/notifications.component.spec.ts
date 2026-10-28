@@ -202,6 +202,51 @@ describe('NotificationsComponent', () => {
     }
   });
 
+  it('shows a friendly GIF preview for existing raw GIPHY alerts in PT/EN and keeps chat navigation', () => {
+    const previous = localStorage.getItem('d24-language');
+    const payload='[JYNLO:GIPHY:1]'+JSON.stringify({
+      id:'XdUMQuuiaAEkOUtezd',
+      p:'https://giphy.com/gifs/animated-thumbs-up-joeyahlbum-XdUMQuuiaAEkOUtezd',
+      a:'joeyahlbum',c:''
+    });
+    const notice={...notificationFixture(),type:'CHAT_MESSAGE',
+      subject:'Nova mensagem de TMF14',relatedUsername:'TMF14',message:payload};
+    try {
+      localStorage.setItem('d24-language','pt');
+      component.notifications=[notice];
+      component.selected=notice;
+      fixture.detectChanges();
+      const page=fixture.nativeElement as HTMLElement;
+      expect(component.notificationMessage(notice)).toBe('Enviou-te um GIF 🎞️');
+      expect(page.textContent).toContain('Enviou-te um GIF');
+      expect(page.textContent).not.toContain('JYNLO:GIPHY:1');
+      expect(page.textContent).not.toContain('XdUMQuuiaAEkOUtezd');
+      expect(page.textContent).not.toContain('giphy.com');
+      component.openChat(notice);
+      expect(router.navigate).toHaveBeenCalledWith(['/menu/messages'],{
+        queryParams:{kind:'direct',id:'TMF14'}
+      });
+      localStorage.setItem('d24-language','en');
+      expect(component.notificationMessage(notice)).toBe('Sent you a GIF 🎞️');
+      expect(component.notificationMessage({...notice,message:'🎞️ GIF'}))
+        .toBe('Sent you a GIF 🎞️');
+      // Ordinary chat text is not modified or confused with GIF envelopes.
+      expect(component.notificationMessage({...notice,message:'Vamos jogar amanhã?'}))
+        .toBe('Vamos jogar amanhã?');
+    } finally {
+      if(previous===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',previous);
+    }
+  });
+
+  it('never shows malformed GIF envelope payloads in saved notifications', () => {
+    const notice={...notificationFixture(),type:'CHAT_MESSAGE',
+      relatedUsername:'TMF14',message:'[JYNLO:GIPHY:1]{broken-json}'};
+    expect(component.notificationMessage(notice)).not.toContain('{broken-json}');
+    expect(component.notificationMessage({...notice,type:'OTHER'}))
+      .toBe('[JYNLO:GIPHY:1]{broken-json}');
+  });
+
   it('opens chat notifications directly in the unified inbox', () => {
     const notice = { ...notificationFixture(), type: 'CHAT_MESSAGE', relatedUsername: 'ana' };
     component.openChat(notice);
