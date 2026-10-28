@@ -67,10 +67,12 @@ describe('SessionDetailsComponent', () => {
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'context', 'updateMeetingPoint', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
+      ['detail', 'context', 'postGameCommunities', 'joinCommunityAfterGame', 'updateMeetingPoint', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.context.and.returnValue(of({communities:[],seasonGame:false,seasonName:null}));
+    sessionService.postGameCommunities.and.returnValue(of([]));
+    sessionService.joinCommunityAfterGame.and.returnValue(of({communityId:22,state:'REQUESTED'}));
     sessionService.guestRequests.and.returnValue(of([]));
     sessionService.issueGuestLink.and.returnValue(of({token:'T'.repeat(43)}));
     sessionService.cancelGuestRequest.and.returnValue(of({id:30,name:'Convidado',status:'CANCELLED',note:'',teamCode:null}));
@@ -209,6 +211,55 @@ describe('SessionDetailsComponent', () => {
     fixture = TestBed.createComponent(SessionDetailsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('offers optional community membership only after completed, verified attendance', () => {
+    (component as any).currentUsername='player-one';
+    component.session={...session,status:'COMPLETED',joined:true};
+    sessionService.postGameCommunities.and.returnValue(of([
+      {id:22,name:'Futsal da Parede',requiresApproval:true},
+      {id:23,name:'Amigos do futebol',requiresApproval:false}
+    ]));
+    (component as any).loadPostGameCommunities(session.id);
+    fixture.detectChanges();
+    const card=fixture.nativeElement.querySelector('.session-post-game-community') as HTMLElement;
+    expect(card).not.toBeNull();
+    expect(card.textContent).toContain('Futsal da Parede');
+    expect(card.textContent).toContain('Amigos do futebol');
+    expect(card.querySelectorAll('.session-post-game-community-option').length).toBe(2);
+    expect(card.textContent).toContain('Pedir para aderir');
+    expect(card.textContent).toContain('Juntar-me à comunidade');
+  });
+
+  it('uses the backend action and closes only the selected community offer', () => {
+    (component as any).currentUsername='player-one';
+    component.session={...session,status:'COMPLETED',joined:true};
+    component.postGameCommunities=[
+      {id:22,name:'Futsal da Parede',requiresApproval:true},
+      {id:23,name:'Amigos do futebol',requiresApproval:false}
+    ];
+    sessionService.joinCommunityAfterGame.and.returnValue(of({communityId:22,state:'REQUESTED'}));
+    fixture.detectChanges();
+    const first=fixture.nativeElement.querySelector('.session-post-game-community-option button') as HTMLButtonElement;
+    first.click();
+    fixture.detectChanges();
+    expect(sessionService.joinCommunityAfterGame).toHaveBeenCalledOnceWith(session.id,22);
+    expect(component.postGameCommunities.map(x=>x.id)).toEqual([23]);
+    expect(component.postGameCommunityFeedback).toContain('Pedido enviado');
+  });
+
+  it('dismisses post-game community suggestion without making any membership request', () => {
+    (component as any).currentUsername='player-one';
+    component.session={...session,status:'COMPLETED',joined:true};
+    component.postGameCommunities=[{id:122,name:'Jogos semanais',requiresApproval:true}];
+    fixture.detectChanges();
+    const noThanks=fixture.nativeElement.querySelectorAll('.session-post-game-community-option button')[1] as HTMLButtonElement;
+    noThanks.click();
+    fixture.detectChanges();
+    expect(component.postGameCommunities).toEqual([]);
+    expect(sessionService.joinCommunityAfterGame).not.toHaveBeenCalled();
+    try { localStorage.removeItem('jynlo:postgame-community-dismiss:player-one:'+session.id+':122'); }
+    catch { /* Browser blocks storage in some test runners. */ }
   });
 
   it('returns to Discover with original filters without forwarding join action', () => {
