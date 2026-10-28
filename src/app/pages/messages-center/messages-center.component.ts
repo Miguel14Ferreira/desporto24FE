@@ -306,6 +306,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return this.calls?.available$.value === true;
   }
 
+  recheckCalls(): void {
+    this.calls?.refreshAvailability();
+  }
+
   startCall(conversation: InboxConversation, media: 'voice' | 'video'): void {
     if (conversation.kind !== 'direct' || !this.composerAllowed || !this.callsEnabled) return;
     void this.calls?.start(String(conversation.id), media);
@@ -326,6 +330,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.receiptSessionToken = token;
       this.currentUsername = (token ? this.jwt.decodeToken(token)?.sub : '') || '';
     } catch { this.currentUsername = ''; this.receiptSessionToken = null; }
+    // Provider settings can change while the user stays logged in.
+    if (this.currentUsername) this.recheckCalls();
     // sessionStorage is scoped to this browser tab and exact login token.
     // Restore the original text ONLY as a blocked, uncertain draft. Never
     // submit it again without an explicit user action.
