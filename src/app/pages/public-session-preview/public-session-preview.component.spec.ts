@@ -103,6 +103,33 @@ describe('PublicSessionPreviewComponent', () => {
     localStorage.removeItem('jynlo-guest-receipt:42:'+secret.slice(0,18));
   });
 
+  it('explains why an already confirmed historical guest cannot reserve a second place', () => {
+    const secret='Z'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:7,name:'Fresco'}]});
+      if(url.endsWith('/guest-confirmed-players')) return of([
+        {key:'account:1',name:'TMF14',hasAccount:true},
+        {key:'guest:40',name:'Fresco',hasAccount:false}
+      ]);
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        priceAmount:0,maxParticipants:10,participantCount:2,gamePhoto:null});
+      if(url.endsWith('/guest-requests')) return throwError(() => new HttpErrorResponse({status:409}));
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    component.selectGuestPlayer(7);
+    component.chooseGuest();
+    component.sendGuestRequest();
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('confirm');
+    expect(component.guestReceipt).toBe('');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-error')?.textContent)
+      .toContain('já tem presença confirmada');
+  });
+
   it('lets a shared-device user change the player instead of being stuck with an earlier receipt', () => {
     const secret='H'.repeat(43);
     routeQueryParamMap=convertToParamMap({guest:secret});
