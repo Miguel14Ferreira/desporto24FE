@@ -25,9 +25,9 @@
         }
 
         <div class="detail-content">
-          @if (showCreationSharePanel() || (promotionOpen && canOpenOrganizerShare())) {
-            <section class="session-created-share" [attr.aria-label]="(showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t">
-              <strong>{{ (showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t }}</strong>
+          @if (!canShareGuestInvites() && (showCreationSharePanel() || (promotionOpen && canOpenOrganizerShare()))) {
+            <section class="session-created-share" [attr.aria-label]="('sessionDetail.invitePlayers') | t">
+              <strong>{{ ('sessionDetail.invitePlayers') | t }}</strong>
               <p>{{ (canShareSession()
                   ? (showCreationSharePanel() ? 'sessionDetail.createdShareHint' : 'sessionDetail.promotionHint')
                   : 'sessionDetail.restrictedShareHint') | t }}</p>
@@ -72,6 +72,34 @@
               }
             </div>
           </div>
+
+          @if (sessionContext && (sessionContext.communities.length > 0 || sessionContext.seasonGame)) {
+            <section class="session-community-context" [attr.aria-label]="'sessionDetail.contextTitle' | t">
+              @if (sessionContext.communities.length > 0) {
+                <div class="session-community-context-row">
+                  <span class="session-context-label">{{ 'sessionDetail.communityLabels' | t }}</span>
+                  <div class="session-community-links">
+                    @for (community of sessionContext.communities; track community.id) {
+                      <a routerLink="/menu/communities"
+                         [queryParams]="{ community: community.id }">{{ community.name }}</a>
+                    }
+                  </div>
+                </div>
+              }
+              <div class="session-community-context-row">
+                <span class="session-context-label">{{ 'sessionDetail.seasonLabel' | t }}</span>
+                @if (sessionContext.seasonGame) {
+                  <strong class="season-game-yes">{{ 'sessionDetail.seasonYes' | t }}
+                    @if (sessionContext.seasonName) { · {{ sessionContext.seasonName }} }
+                  </strong>
+                } @else {
+                  <span>{{ 'sessionDetail.seasonNo' | t }}</span>
+                }
+              </div>
+            </section>
+          } @else if (sessionContextError && (session.communityId || session.audience === 'COMMUNITY_ONLY')) {
+            <p class="session-context-error" role="status">{{ sessionContextError }}</p>
+          }
 
           @if (session.joined) {
             <div id="session-membership" class="membership-status" role="status">
@@ -118,10 +146,15 @@
                                            : 'sessionDetail.overallRatingReopen') | t }}
               </button>
             }
-            @if (canOpenOrganizerShare() && !showCreationSharePanel()) {
+            @if (canShareGuestInvites()) {
+              <button type="button" class="share-session-action session-invite-toggle jynlo-action jynlo-action--primary"
+                      [attr.aria-expanded]="showInvitePanel()" (click)="toggleInvitePanel()">
+                {{ (showInvitePanel() ? 'sessionDetail.hideInvites' : 'sessionDetail.invitePlayers') | t }}
+              </button>
+            } @else if (canOpenOrganizerShare() && !showCreationSharePanel()) {
               <button type="button" class="share-session-action open-promotion-button jynlo-action jynlo-action--neutral"
                       [attr.aria-expanded]="promotionOpen" (click)="togglePromotionPanel()">
-                {{ (promotionOpen ? 'sessionDetail.hidePromotion' : 'sessionDetail.promoteGame') | t }}
+                {{ (promotionOpen ? 'sessionDetail.hideInvites' : 'sessionDetail.invitePlayers') | t }}
               </button>
             }
             @if (canShareSession() && !canOpenOrganizerShare()) {
@@ -150,6 +183,90 @@
                       (click)="requestCancelOwnSession()">{{ 'mySessions.cancelSession' | t }}</button>
             }
           </div>
+          @if (showInvitePanel()) {
+              <section class="guest-organizer-panel" [attr.aria-label]="'guestAdmin.title' | t">
+                <header>
+                  <span class="section-kicker">{{ 'guestAdmin.eyebrow' | t }}</span>
+                  <h2>{{ 'guestAdmin.title' | t }}</h2>
+                  <p>{{ 'guestAdmin.help' | t }}</p>
+                </header>
+                <div class="invite-choice-guide">
+                  <div class="invite-choice-member">
+                    <span class="section-kicker">{{ 'guestAdmin.registeredBadge' | t }}</span>
+                    <strong>{{ 'guestAdmin.registeredTitle' | t }}</strong>
+                    <p>{{ 'guestAdmin.registeredHelp' | t }}</p>
+                    @if (canFindPlayers()) {
+                      <button type="button" class="jynlo-action jynlo-action--neutral"
+                        (click)="openRegisteredInvitePicker()">
+                        {{ 'guestAdmin.registeredAction' | t }}
+                      </button>
+                    }
+                  </div>
+                  <div class="invite-choice-guest">
+                    <span class="section-kicker">{{ 'guestAdmin.guestBadge' | t }}</span>
+                    <strong>{{ 'guestAdmin.guestTitle' | t }}</strong>
+                    <p>{{ 'guestAdmin.guestHelp' | t }}</p>
+                  </div>
+                </div>
+                <div class="guest-organizer-actions">
+                  <button type="button" class="jynlo-action jynlo-action--primary"
+                    [disabled]="guestLinkWorking" (click)="createGuestLink()">
+                    {{ (guestLinkWorking ? 'guestAdmin.creating' : 'guestAdmin.generate') | t }}
+                  </button>
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="guestRequestsLoading" (click)="loadGuestRequests()">
+                    {{ 'guestAdmin.refresh' | t }}
+                  </button>
+                </div>
+                <p class="guest-organizer-hint">{{ 'guestAdmin.rotateWarning' | t }}</p>
+                @if (guestLinkUrl) {
+                  <div class="guest-organizer-link">
+                    <label for="guest-organizer-share-url">{{ 'guestAdmin.shareLink' | t }}</label>
+                    <input id="guest-organizer-share-url" type="text" readonly [value]="guestLinkUrl"
+                      #guestLinkField (click)="guestLinkField.select()"/>
+                    <div class="guest-organizer-actions">
+                      <button type="button" class="jynlo-action jynlo-action--neutral"
+                        (click)="copyGuestLink()">{{ 'guestAdmin.copy' | t }}</button>
+                      <a [href]="guestLinkWhatsAppUrl" target="_blank" rel="noopener noreferrer"
+                        class="jynlo-action jynlo-action--primary">{{ 'guestAdmin.whatsApp' | t }}</a>
+                    </div>
+                  </div>
+                }
+                @if (guestPanelError) {<p class="guest-organizer-error" role="alert">{{ guestPanelError }}</p>}
+                @if (guestPanelSuccess) {<p class="guest-organizer-success" role="status">{{ guestPanelSuccess }}</p>}
+                @if (guestRequestsLoading) {
+                  <p role="status">{{ 'guestAdmin.loading' | t }}</p>
+                } @else {
+                  @for (guest of guestRequests; track guest.id) {
+                    <div class="guest-organizer-row">
+                      <div>
+                        <strong>{{ guest.name }}</strong>
+                        <span>{{ ('guestAdmin.status.' + guest.status) | t }}</span>
+                        @if(guest.note){<small>{{ guest.note }}</small>}
+                        @if(guest.teamCode){<small>{{ 'guestAdmin.team' | t }} {{ guest.teamCode }}</small>}
+                      </div>
+                      @if (guest.status === 'PENDING') {
+                        <div class="guest-organizer-actions">
+                          <button type="button" class="jynlo-action jynlo-action--primary"
+                            [disabled]="guestRequestBusyId!==null"
+                            (click)="reviewGuest(guest,true)">{{ 'guestAdmin.approve' | t }}</button>
+                          <button type="button" class="jynlo-action jynlo-action--neutral"
+                            [disabled]="guestRequestBusyId!==null"
+                            (click)="reviewGuest(guest,false)">{{ 'guestAdmin.reject' | t }}</button>
+                        </div>
+                      } @else if (guest.status === 'APPROVED') {
+                        <div class="guest-organizer-actions">
+                          <button type="button" class="jynlo-action jynlo-action--neutral"
+                            [disabled]="guestRequestBusyId!==null"
+                            (click)="cancelApprovedGuest(guest)">{{ 'guestAdmin.cancel' | t }}</button>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+              </section>
+            }
+
           @if (cancelSessionConfirmOpen && canCancelOwnSession()) {
             <section class="session-cancel-confirm" role="dialog" aria-modal="false"
                      aria-labelledby="session-cancel-title">
@@ -683,87 +800,6 @@
               }
             </section>
           } @else if (isCreator()) {
-            @if (canShareGuestInvites()) {
-              <section class="guest-organizer-panel" [attr.aria-label]="'guestAdmin.title' | t">
-                <header>
-                  <span class="section-kicker">{{ 'guestAdmin.eyebrow' | t }}</span>
-                  <h2>{{ 'guestAdmin.title' | t }}</h2>
-                  <p>{{ 'guestAdmin.help' | t }}</p>
-                </header>
-                <div class="invite-choice-guide">
-                  <div class="invite-choice-member">
-                    <span class="section-kicker">{{ 'guestAdmin.registeredBadge' | t }}</span>
-                    <strong>{{ 'guestAdmin.registeredTitle' | t }}</strong>
-                    <p>{{ 'guestAdmin.registeredHelp' | t }}</p>
-                    <button type="button" class="jynlo-action jynlo-action--neutral"
-                      [disabled]="!canFindPlayers()" (click)="openRegisteredInvitePicker()">
-                      {{ 'guestAdmin.registeredAction' | t }}
-                    </button>
-                  </div>
-                  <div class="invite-choice-guest">
-                    <span class="section-kicker">{{ 'guestAdmin.guestBadge' | t }}</span>
-                    <strong>{{ 'guestAdmin.guestTitle' | t }}</strong>
-                    <p>{{ 'guestAdmin.guestHelp' | t }}</p>
-                  </div>
-                </div>
-                <div class="guest-organizer-actions">
-                  <button type="button" class="jynlo-action jynlo-action--primary"
-                    [disabled]="guestLinkWorking" (click)="createGuestLink()">
-                    {{ (guestLinkWorking ? 'guestAdmin.creating' : 'guestAdmin.generate') | t }}
-                  </button>
-                  <button type="button" class="jynlo-action jynlo-action--neutral"
-                    [disabled]="guestRequestsLoading" (click)="loadGuestRequests()">
-                    {{ 'guestAdmin.refresh' | t }}
-                  </button>
-                </div>
-                <p class="guest-organizer-hint">{{ 'guestAdmin.rotateWarning' | t }}</p>
-                @if (guestLinkUrl) {
-                  <div class="guest-organizer-link">
-                    <label for="guest-organizer-share-url">{{ 'guestAdmin.shareLink' | t }}</label>
-                    <input id="guest-organizer-share-url" type="text" readonly [value]="guestLinkUrl"
-                      #guestLinkField (click)="guestLinkField.select()"/>
-                    <div class="guest-organizer-actions">
-                      <button type="button" class="jynlo-action jynlo-action--neutral"
-                        (click)="copyGuestLink()">{{ 'guestAdmin.copy' | t }}</button>
-                      <a [href]="guestLinkWhatsAppUrl" target="_blank" rel="noopener noreferrer"
-                        class="jynlo-action jynlo-action--primary">{{ 'guestAdmin.whatsApp' | t }}</a>
-                    </div>
-                  </div>
-                }
-                @if (guestPanelError) {<p class="guest-organizer-error" role="alert">{{ guestPanelError }}</p>}
-                @if (guestPanelSuccess) {<p class="guest-organizer-success" role="status">{{ guestPanelSuccess }}</p>}
-                @if (guestRequestsLoading) {
-                  <p role="status">{{ 'guestAdmin.loading' | t }}</p>
-                } @else {
-                  @for (guest of guestRequests; track guest.id) {
-                    <div class="guest-organizer-row">
-                      <div>
-                        <strong>{{ guest.name }}</strong>
-                        <span>{{ ('guestAdmin.status.' + guest.status) | t }}</span>
-                        @if(guest.note){<small>{{ guest.note }}</small>}
-                        @if(guest.teamCode){<small>{{ 'guestAdmin.team' | t }} {{ guest.teamCode }}</small>}
-                      </div>
-                      @if (guest.status === 'PENDING') {
-                        <div class="guest-organizer-actions">
-                          <button type="button" class="jynlo-action jynlo-action--primary"
-                            [disabled]="guestRequestBusyId!==null"
-                            (click)="reviewGuest(guest,true)">{{ 'guestAdmin.approve' | t }}</button>
-                          <button type="button" class="jynlo-action jynlo-action--neutral"
-                            [disabled]="guestRequestBusyId!==null"
-                            (click)="reviewGuest(guest,false)">{{ 'guestAdmin.reject' | t }}</button>
-                        </div>
-                      } @else if (guest.status === 'APPROVED') {
-                        <div class="guest-organizer-actions">
-                          <button type="button" class="jynlo-action jynlo-action--neutral"
-                            [disabled]="guestRequestBusyId!==null"
-                            (click)="cancelApprovedGuest(guest)">{{ 'guestAdmin.cancel' | t }}</button>
-                        </div>
-                      }
-                    </div>
-                  }
-                }
-              </section>
-            }
             <section class="participation-panel">
               <div>
                 <h2>{{ 'sessionDetail.ownTitle' | t }}</h2>
