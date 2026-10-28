@@ -368,6 +368,66 @@ describe('SessionDetailsComponent', () => {
       .not.toContain('Rua Machado dos Santos');
   });
 
+  it('lets an authorised player navigate to a GPS-only venue with no postal address', () => {
+    component.session = {
+      ...session,
+      canSeeExactAddress: true,
+      address: null,
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN', address: '' } as any
+    };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.session-location-map') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(new URL(link.href).searchParams.get('query')).toBe('40.6668823,-8.7391574');
+    expect(link.textContent?.trim()).toBeTruthy();
+    expect(link.textContent).not.toContain('null');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('does not leak GPS-only coordinates to an unauthorised session viewer', () => {
+    component.session = {
+      ...session,
+      canSeeExactAddress: false,
+      address: null,
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN', address: '' } as any
+    };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .not.toContain('-8.7391574');
+  });
+
+  it('does not turn an OSM coordinate placeholder into a confirmed postal address', () => {
+    component.session = {
+      ...session,
+      canSeeExactAddress: true,
+      address: 'Coordenadas (morada por confirmar)',
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN', address: '' } as any
+    };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.session-location-map') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(new URL(link.href).searchParams.get('query')).toBe('40.6668823,-8.7391574');
+    expect(link.textContent).not.toContain('Coordenadas (morada por confirmar)');
+  });
+
+  it('preserves address-based Maps search when there is no venue GPS', () => {
+    component.session = { ...session, canSeeExactAddress: true,
+      address: 'Rua do Campo, 12', city: 'Lisboa', venue: null };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.session-location-map') as HTMLAnchorElement;
+    expect(new URL(link.href).searchParams.get('query')).toBe('Rua do Campo, 12, Lisboa');
+
+    component.session = { ...session, canSeeExactAddress: true, address: null, venue: null };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
+  });
+
   it('shares only concise game details and a public URL, without generic promotion', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
