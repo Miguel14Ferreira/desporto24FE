@@ -8,6 +8,7 @@ import { catchError, finalize, forkJoin, map, Observable, of, Subscription, Time
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionDetail } from '../model/session-detail';
 import { InboxApiService, InboxSummary } from '../../services/inbox-api.service';
+import { ConversationMuteService, MutedConversation, isConversationMuted } from '../../services/conversation-mute.service';
 
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityService } from '../../services/community.service';
@@ -65,6 +66,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   conversations: InboxConversation[] = [];
   selectedKey: string | null = null;
+  mutedConversations: MutedConversation[] = [];
+  muteLoading = false;
+  muteError = '';
   contactPreviewOpen = false;
   messages: InboxMessage[] = [];
   filter: InboxFilter = 'all';
@@ -292,9 +296,42 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     private readonly inboxApi: InboxApiService,
     @Optional() private readonly route: ActivatedRoute | null = null,
     @Optional() public readonly calls: DirectCallClientService | null = null,
-    @Optional() private readonly profilePeek: ProfileQuickViewService | null = null
+    @Optional() private readonly profilePeek: ProfileQuickViewService | null = null,
+    @Optional() private readonly conversationMutes: ConversationMuteService | null = null
   ) {
     this.typing = new ChatTypingTracker(realtime);
+  }
+
+  isMuted(conversation: InboxConversation): boolean {
+    return isConversationMuted(this.mutedConversations, conversation.kind, conversation.id);
+  }
+
+  toggleConversationMute(conversation: InboxConversation): void {
+    if (!this.conversationMutes || this.muteLoading) return;
+    this.muteLoading = true;
+    this.muteError = '';
+    const next = !this.isMuted(conversation);
+    this.conversationMutes.set(conversation.kind, conversation.id, next).subscribe({
+      next: () => {
+        this.muteLoading = false;
+        const others = this.mutedConversations.filter(item =>
+          !(item.kind === conversation.kind && item.id.toLowerCase() === String(conversation.id).toLowerCase()));
+        this.mutedConversations = next
+          ? [...others, {kind: conversation.kind, id: String(conversation.id).toLowerCase()}] : others;
+      },
+      error: () => {
+        this.muteLoading = false;
+        this.muteError = t('chat.muteFailed');
+      }
+    });
+  }
+
+  private loadConversationMutes(): void {
+    if (!this.conversationMutes) return;
+    this.conversationMutes.list().subscribe({
+      next: items => this.mutedConversations = items,
+      error: () => { this.muteError = t('chat.muteFailed'); }
+    });
   }
 
   openContact(username: string | null | undefined): void {
@@ -317,6 +354,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngOnInit(): void {
+    this.loadConversationMutes();
     // Angular reuses the component when only the query changes.
     if (this.route?.queryParamMap) {
       this.subscriptions.add(this.route.queryParamMap.subscribe(params =>

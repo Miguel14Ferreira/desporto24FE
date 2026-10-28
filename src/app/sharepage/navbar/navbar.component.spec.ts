@@ -8,6 +8,7 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
 import { NotificationApiService } from '../../services/notification-api.service';
 import { InboxApiService } from '../../services/inbox-api.service';
 import { PrivateGroupService } from '../../services/private-group.service';
+import { ConversationMuteService } from '../../services/conversation-mute.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('NavbarComponent', () => {
@@ -18,6 +19,7 @@ describe('NavbarComponent', () => {
   let notificationService: jasmine.SpyObj<NotificationApiService>;
   let inboxApi: jasmine.SpyObj<InboxApiService>;
   let privateGroups: jasmine.SpyObj<PrivateGroupService>;
+  let conversationMutes: jasmine.SpyObj<ConversationMuteService>;
   let communityEvents: Subject<any>;
   let sessionEvents: Subject<any>;
   let groupEvents: Subject<any>;
@@ -58,6 +60,8 @@ describe('NavbarComponent', () => {
     }));
     inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries']);
     inboxApi.summaries.and.returnValue(of([]));
+    conversationMutes = jasmine.createSpyObj<ConversationMuteService>('ConversationMuteService', ['list', 'set']);
+    conversationMutes.list.and.returnValue(of([]));
     privateGroups = jasmine.createSpyObj<PrivateGroupService>('PrivateGroupService', ['get']);
     privateGroups.get.and.returnValue(of({ id: 2, title: 'Grupo QA',
       members: [{ username: 'bea', displayName: 'Bea', profilePicUrl: null, admin: false }],
@@ -72,7 +76,8 @@ describe('NavbarComponent', () => {
         { provide: DirectChatRealtimeService, useValue: realtimeService },
         { provide: NotificationApiService, useValue: notificationService },
         { provide: InboxApiService, useValue: inboxApi },
-        { provide: PrivateGroupService, useValue: privateGroups }
+        { provide: PrivateGroupService, useValue: privateGroups },
+        { provide: ConversationMuteService, useValue: conversationMutes }
       ]
     }).compileComponents();
 
@@ -86,6 +91,42 @@ describe('NavbarComponent', () => {
   });
 
 
+
+
+  it('does not show private or group toasts for the individually muted conversation', fakeAsync(() => {
+    const previous = localStorage.getItem('t');
+    localStorage.setItem('t','mute-test-token');
+    try {
+      spyOn(document,'hasFocus').and.returnValue(true);
+      spyOnProperty(document,'visibilityState','get').and.returnValue('visible');
+      (authService as any).loggedInPerfilname = 'bea';
+      authService.hasSessionCandidate.and.returnValue(true);
+      (component as any).syncAuthenticatedState();
+      conversationMutes.list.and.returnValue(of([{kind:'community',id:'35'},{kind:'private',id:'2'},
+        {kind:'direct',id:'ana'}]));
+      inboxApi.summaries.and.returnValue(of([{
+        kind:'community', id:'35', latestMessageId:4, latestText:'Olá',
+        latestSender:'ana', latestAt:new Date().toISOString(), unreadCount:1
+      }]));
+      communityEvents.next({id:4, communityId:35, username:'ana',kind:'CHAT',
+        body:'Olá', createdAt:new Date().toISOString()});
+      groupEvents.next({id:2,groupId:2,sender:'ana',text:'Olá',
+        createdAt:new Date().toISOString()});
+      tick(300);
+      expect(component.groupToast).toBeUndefined();
+      notificationService.mine.and.returnValue(of([{
+        id:99,type:'CHAT_MESSAGE',read:false,relatedUsername:'ana',
+        message:'Olá',createdAt:new Date().toISOString()
+      } as any]));
+      incomingMessages.next({id:99,username1:'ana',username2:'bea',text:'Olá'});
+      tick(300);
+      expect(component.chatToast).toBeUndefined();
+    } finally {
+      component.ngOnDestroy();
+      if(previous===null)localStorage.removeItem('t');
+      else localStorage.setItem('t',previous);
+    }
+  }));
 
   it('shows authorized community messages in PT and opens the correct conversation', fakeAsync(() => {
     const previous = localStorage.getItem('t');

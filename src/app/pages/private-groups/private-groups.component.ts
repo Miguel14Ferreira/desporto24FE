@@ -7,6 +7,7 @@ import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { PrivateGroup, PrivateGroupMessage, PrivateGroupService } from '../../services/private-group.service';
+import { ConversationMuteService, MutedConversation, isConversationMuted } from '../../services/conversation-mute.service';
 import { FriendSummary } from '../model/friend-summary';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -41,6 +42,9 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
   busy=false;
   error='';
   groupError='';
+  mutedConversations: MutedConversation[] = [];
+  muteLoading = false;
+  muteError = '';
   hasMore=false;
   private currentRequest=0;
   private subscriptions=new Subscription();
@@ -48,11 +52,16 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
 
   constructor(private api:PrivateGroupService,private contact:CommunityService,
     private realtime:DirectChatRealtimeService,private auth:AuthenticationService,
-    private router:Router,private route:ActivatedRoute){
+    private router:Router,private route:ActivatedRoute,
+    private conversationMutes:ConversationMuteService){
     this.me=(auth.loggedInPerfilname||'').toLowerCase();
   }
 
   ngOnInit():void{
+    this.conversationMutes.list().subscribe({
+      next: items => this.mutedConversations = items,
+      error: () => this.muteError = t('chat.muteFailed')
+    });
     this.realtime.connect();
     this.subscriptions.add(this.realtime.groupMessages$.subscribe(message=>{
       if(this.selected?.id===message.groupId && !this.messages.some(old=>old.id===message.id)){
@@ -99,6 +108,24 @@ export class PrivateGroupsComponent implements OnInit,OnDestroy {
         }
       },
       error:()=>{if(initial){this.error=t('groups.loadError');this.loading=false;}}
+    });
+  }
+
+  get selectedMuted(): boolean {
+    return !!this.selected && isConversationMuted(this.mutedConversations, 'private', this.selected.id);
+  }
+
+  toggleMute():void{
+    if(!this.selected||this.muteLoading)return;
+    const id=this.selected.id,next=!this.selectedMuted;
+    this.muteLoading=true;this.muteError='';
+    this.conversationMutes.set('private',id,next).subscribe({
+      next:()=>{
+        this.muteLoading=false;
+        const rest=this.mutedConversations.filter(item=>!(item.kind==='private'&&item.id===String(id)));
+        this.mutedConversations=next?[...rest,{kind:'private',id:String(id)}]:rest;
+      },
+      error:()=>{this.muteLoading=false;this.muteError=t('chat.muteFailed');}
     });
   }
 
