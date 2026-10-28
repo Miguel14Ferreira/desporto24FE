@@ -85,13 +85,13 @@ describe('Unified Jynlo message center', () => {
       p: 'https://giphy.com/gifs/animated-thumbs-up-XdUMQuuiaAEkOUtezd',
       a: 'creator', c: ''
     });
-    expect(component.displayMessagePreview(envelope)).toBe('GIF');
-    expect(component.displayMessagePreview('[JYNLO:GIPHY:1]{bad-json}')).toBe('GIF');
+    expect(component.displayMessagePreview(envelope)).toBe('GIF 🎞️');
+    expect(component.displayMessagePreview('[JYNLO:GIPHY:1]{bad-json}')).toBe('GIF 🎞️');
     expect(component.displayMessagePreview('Olá! 👋')).toBe('Olá! 👋');
     expect(component.displayMessagePreview('📎 foto.png')).toBe('📎 foto.png');
     const malformed = {...message('direct:bea', 4), text: '[JYNLO:GIPHY:1]{bad-json}'};
     expect(component.showMessageBody(malformed)).toBeTrue();
-    expect(component.displayMessagePreview(malformed.text)).toBe('GIF');
+    expect(component.displayMessagePreview(malformed.text)).toBe('GIF 🎞️');
   });
 
   it('shares public Jynlo entities without leaking private sessions or groups', () => {
