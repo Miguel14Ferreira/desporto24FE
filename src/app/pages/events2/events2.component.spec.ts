@@ -869,7 +869,7 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).toBeNull();
   });
 
-  it('requires explicit consent from an admin when classifications are off', () => {
+  it('requires explicit consent from any member when classifications are off', () => {
     communityGroups.competition.and.returnValue(of({
       settings: { rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 },
       seasons: [], selectedSeasonId: null, activeSeasonId: null,
@@ -887,7 +887,7 @@ describe('Events2Component', () => {
     component.city = 'Lisboa';
     component.address = 'Rua do Campo';
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('classificação será ativada');
+    expect(fixture.nativeElement.textContent).toContain('serão ativadas');
     expect(fixture.nativeElement.querySelector('input[name="confirmActivateRankings"]')).not.toBeNull();
 
     component.createSession();
