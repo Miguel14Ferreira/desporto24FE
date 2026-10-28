@@ -8,7 +8,7 @@ export interface PrivateGroupMember {
 }
 export interface PrivateGroup {
   id: number; title: string; creatorUsername: string; createdAt: string;
-  members: PrivateGroupMember[];
+  members: PrivateGroupMember[]; photoUrl?: string | null;
 }
 export interface PrivateGroupMessage {
   id: number; groupId: number; sender: string; text: string; createdAt: string;
@@ -29,6 +29,10 @@ export class PrivateGroupService {
   }
   rename(id:number,title:string):Observable<PrivateGroup> {
     return this.http.patch<PrivateGroup>(this.base+'/'+id,{title});
+  }
+  uploadPhoto(id:number,file:File):Observable<PrivateGroup> {
+    const body=new FormData();body.append('photo',file,file.name);
+    return this.http.post<PrivateGroup>(this.base+'/'+id+'/photo',body);
   }
   removeMember(id:number,username:string):Observable<PrivateGroup> {
     return this.http.delete<PrivateGroup>(this.base+'/'+id+'/members/'+encodeURIComponent(username));
