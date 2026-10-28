@@ -2599,6 +2599,10 @@ export const EN: Record<string, string> = {
   'communities.playerA': 'Player A',
   'communities.playerB': 'Player B',
   'communities.selectPlayer': 'Select player',
+  'communities.clearCompare': 'Clear',
+  'communities.clearComparisonHelp': 'Clear the comparison and return to the standings',
+  'communities.searchPlayer': 'Search players…',
+  'communities.noPlayerFound': 'No players found',
   'communities.metric': 'Metric',
 
   'communityCreate.eyebrow': 'Communities',

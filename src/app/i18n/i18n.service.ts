@@ -2604,6 +2604,10 @@ const PT: Dictionary = {
   'communities.playerA': 'Jogador A',
   'communities.playerB': 'Jogador B',
   'communities.selectPlayer': 'Selecionar jogador',
+  'communities.clearCompare': 'Limpar',
+  'communities.clearComparisonHelp': 'Limpar a comparação e voltar à classificação',
+  'communities.searchPlayer': 'Pesquisar jogador…',
+  'communities.noPlayerFound': 'Nenhum jogador encontrado',
   'communities.metric': 'Métrica',
 
   'communityCreate.eyebrow': 'Comunidades',
