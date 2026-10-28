@@ -206,6 +206,14 @@ function normalize(sport: string): string {
   return sport.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 }
 
+/** World Skate 2026 (art. 51.5 / 115): these Finals B must remain readable
+ * in historical results, but are not valid choices when creating a new round.
+ */
+export function isDiscontinuedInlineFinalB(eventType: string | null | undefined): boolean {
+  return eventType === 'INLINE_TRACK_500D_FINAL_B'
+    || eventType === 'INLINE_ROAD_LAP_FINAL_B';
+}
+
 export function eventOptionsForSport(sport: string | null | undefined): readonly CommunityEventOption[] {
   return sport ? TYPES[normalize(sport)] ?? [] : [];
 }
