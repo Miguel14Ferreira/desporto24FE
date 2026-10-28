@@ -1,0 +1,109 @@
+<section class="community-venue-picker" aria-labelledby="community-habitual-venue-title">
+  <div class="community-venue-picker-heading">
+    <div>
+      <span class="section-kicker">{{ 'communities.habitualVenue.kicker' | t }}</span>
+      <h3 id="community-habitual-venue-title">{{ 'communities.habitualVenue.title' | t }}</h3>
+      <p>{{ 'communities.habitualVenue.hint' | t }}</p>
+    </div>
+  </div>
+
+  @if (community.defaultVenueId) {
+    <div class="community-venue-current">
+      <div>
+        <small>{{ 'communities.habitualVenue.current' | t }}</small>
+        <strong>{{ community.defaultVenueName || ('communities.habitualVenue.savedName' | t) }}</strong>
+      </div>
+      <a [routerLink]="['/menu/venues', community.defaultVenueId]" target="_blank" rel="noopener"
+         class="community-venue-text-link">{{ 'communities.habitualVenue.viewFull' | t }}</a>
+    </div>
+  } @else {
+    <p class="community-venue-empty">{{ 'communities.habitualVenue.none' | t }}</p>
+  }
+
+  @if (canManage) {
+    <form class="community-venue-search-row" (ngSubmit)="search()">
+      <label class="community-venue-search-field">
+        <span>{{ 'communities.habitualVenue.searchLabel' | t }}</span>
+        <input name="habitualVenueQuery" [(ngModel)]="query" type="search"
+               [disabled]="searching || saving" autocomplete="off"
+               [placeholder]="'communities.habitualVenue.searchPlaceholder' | t">
+      </label>
+      <button type="submit" class="community-venue-search-button"
+              [disabled]="searching || saving || !query.trim()">
+        {{ (searching ? 'communities.habitualVenue.searching' : 'communities.habitualVenue.search') | t }}
+      </button>
+    </form>
+
+    @if (community.defaultVenueId) {
+      <button type="button" class="community-venue-remove" (click)="save(null)"
+              [disabled]="saving">{{ 'communities.habitualVenue.remove' | t }}</button>
+    }
+    @if (error) { <p class="community-venue-error" role="alert">{{ error }}</p> }
+    @if (feedback) { <p class="community-venue-feedback" role="status">{{ feedback }}</p> }
+    @if (!searching && query.trim() && !results.length && !error && !detailLoading && !expanded) {
+      <p class="community-venue-empty">{{ 'communities.habitualVenue.searchHelp' | t }}</p>
+    }
+    @if (results.length) {
+      <div class="community-venue-results" role="group"
+           [attr.aria-label]="'communities.habitualVenue.results' | t">
+        @for (venue of results; track venue.id) {
+          <button type="button" class="community-venue-result"
+                  [class.selected]="expanded?.id === venue.id"
+                  [attr.aria-pressed]="expanded?.id === venue.id"
+                  [disabled]="saving" (click)="openDetails(venue.id)">
+            <span class="community-venue-result-name">{{ venue.name }}</span>
+            <span class="community-venue-result-place">{{ venue.city }}@if (venue.district && venue.district !== venue.city) { · {{ venue.district }}}</span>
+            <span class="community-venue-result-action">{{ 'communities.habitualVenue.viewDetails' | t }}</span>
+          </button>
+        }
+      </div>
+    }
+    @if (detailLoading) {
+      <p role="status">{{ 'communities.habitualVenue.loadingDetails' | t }}</p>
+    }
+    @if (expanded; as venue) {
+      <article class="community-venue-detail" aria-labelledby="community-venue-selected-name">
+        <div class="community-venue-detail-head">
+          <div>
+            <span class="section-kicker">{{ 'communities.habitualVenue.details' | t }}</span>
+            <h4 id="community-venue-selected-name">{{ venue.name }}</h4>
+          </div>
+          <span class="community-venue-detail-city">{{ venue.city }}</span>
+        </div>
+        <dl class="community-venue-detail-grid">
+          <div>
+            <dt>{{ 'communities.habitualVenue.location' | t }}</dt>
+            <dd>{{ venue.address?.trim() || ('venue.detail.postalAddressUnknown' | t) }}</dd>
+          </div>
+          @if (venue.sports) {
+            <div>
+              <dt>{{ 'events.sport' | t }}</dt>
+              <dd>{{ venue.sports }}</dd>
+            </div>
+          }
+          @if (venue.venueType) {
+            <div><dt>{{ 'communities.habitualVenue.type' | t }}</dt><dd>{{ venue.venueType }}</dd></div>
+          }
+          @if (venue.surfaceType) {
+            <div><dt>{{ 'communities.habitualVenue.surface' | t }}</dt><dd>{{ venue.surfaceType }}</dd></div>
+          }
+          @if (venue.contact) {
+            <div><dt>{{ 'venue.visit.contact' | t }}</dt><dd>{{ venue.contact }}</dd></div>
+          }
+        </dl>
+        <div class="community-venue-detail-actions">
+          <a [routerLink]="['/menu/venues', venue.id]" target="_blank" rel="noopener"
+             class="community-venue-detail-link">{{ 'communities.habitualVenue.viewFull' | t }}</a>
+          @if (mapUrl; as url) {
+            <a [href]="url" target="_blank" rel="noopener noreferrer"
+               class="community-venue-detail-link">{{ 'venue.visit.openGoogleMap' | t }}</a>
+          }
+          <button type="button" class="community-venue-confirm" [disabled]="saving"
+                  (click)="save(venue.id)">
+            {{ (saving ? 'communities.habitualVenue.saving' : 'communities.habitualVenue.set') | t }}
+          </button>
+        </div>
+      </article>
+    }
+  }
+</section>
