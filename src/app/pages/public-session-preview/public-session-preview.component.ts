@@ -76,6 +76,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   guestChangingIdentity = false;
   guestConfirmCancellation = false;
   guestCancelling = false;
+  guestCancelledBySelf = false;
   guestSavedBookings: {receipt:string;name:string}[] = [];
   memberJoining = false;
   memberJoinError = '';
@@ -171,6 +172,18 @@ export class PublicSessionPreviewComponent implements OnInit {
     return this.receiptKey() + ':bookings';
   }
 
+  /** Mark the exact receipt, not the shared WhatsApp invitation or player name. */
+  private ownCancellationKey(receipt:string): string {
+    return this.receiptKey() + ':self-cancelled:' + receipt.slice(0,18);
+  }
+
+  private wasCancelledHere(receipt:string): boolean {
+    try {
+      return !!receipt && /^[A-Za-z0-9_-]{43}$/.test(receipt)
+        && localStorage.getItem(this.ownCancellationKey(receipt)) === '1';
+    } catch { return false; }
+  }
+
   private loadSavedBookings(): void {
     try {
       const raw=JSON.parse(localStorage.getItem(this.bookingsKey()) || '[]');
@@ -193,6 +206,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   recoverGuestBooking(receipt:string): void {
     if(this.guestSending || !this.guestSavedBookings.some(entry=>entry.receipt===receipt)) return;
     this.guestReceipt=receipt;
+    this.guestCancelledBySelf=this.wasCancelledHere(receipt);
     try{localStorage.setItem(this.receiptKey(),receipt);}catch{}
     this.guestEditingIdentity=false;
     this.guestConfirmCancellation=false;
@@ -227,6 +241,7 @@ export class PublicSessionPreviewComponent implements OnInit {
     this.guestReceipt = '';
     this.guestConfirmedName = '';
     this.guestMeetingPoint = '';
+    this.guestCancelledBySelf = false;
     this.guestStep = 'choose';
     this.guestEditingIdentity = false;
     this.guestConfirmCancellation = false;
@@ -301,6 +316,8 @@ export class PublicSessionPreviewComponent implements OnInit {
       next: response => {
         if(response.status !== 'CANCELLED') {this.guestError='guestRsvp.cancelError';return;}
         this.guestStep='cancelled';
+        this.guestCancelledBySelf=true;
+        try{localStorage.setItem(this.ownCancellationKey(this.guestReceipt),'1');}catch{}
         this.guestSavedBookings=this.guestSavedBookings.filter(
           entry => entry.receipt !== this.guestReceipt);
         try{localStorage.setItem(this.bookingsKey(),JSON.stringify(this.guestSavedBookings));}catch{}
@@ -377,6 +394,7 @@ export class PublicSessionPreviewComponent implements OnInit {
           typeof response.meetingPointInstructions === 'string'
           ? response.meetingPointInstructions : '';
         this.guestReceipt = response.receipt;
+        this.guestCancelledBySelf=false;
         try {localStorage.setItem(this.receiptKey(),response.receipt);} catch {}
         this.guestStep=response.status==='APPROVED'?'approved':
           response.status==='LINKED'?'linked':'pending';
@@ -406,6 +424,10 @@ export class PublicSessionPreviewComponent implements OnInit {
       {receipt:this.guestReceipt}
     ).pipe(timeout(10000),finalize(()=>this.guestSending=false)).subscribe({
       next: r => {
+        // Re-reading the receipt must preserve the actor when known, including
+        // after a reload. The API currently gives no cancellation provenance.
+        this.guestCancelledBySelf=r.status==='CANCELLED'
+          && this.wasCancelledHere(this.guestReceipt);
         this.guestConfirmedName = r.playerName?.trim() || this.guestConfirmedName;
         if (r.status==='APPROVED' && this.guestConfirmedName) {
           this.rememberGuestBooking(this.guestReceipt,this.guestConfirmedName);
@@ -437,6 +459,7 @@ export class PublicSessionPreviewComponent implements OnInit {
           this.guestReceipt = '';
           this.guestConfirmedName = '';
           this.guestMeetingPoint = '';
+          this.guestCancelledBySelf = false;
           this.guestStep = 'choose';
           this.guestEditingIdentity = false;
           this.guestConfirmCancellation = false;
