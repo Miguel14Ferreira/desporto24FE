@@ -20,7 +20,7 @@
     "@angular/router": "^22.2.3",
     "@auth0/angular-jwt": "^5.2.0",
     "mime": "^3.0.0",
-    "mime-types": "^2.1.35",
+    "mime-types": "^3.0.2",
     "p-limit": "^4.0.0",
     "pretty-bytes": "^6.1.0",
     "rxjs": "~7.8.0",
