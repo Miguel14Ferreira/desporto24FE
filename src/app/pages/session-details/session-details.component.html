@@ -25,17 +25,21 @@
         }
 
         <div class="detail-content">
-          @if (showCreationSharePanel() || (promotionOpen && canPromoteSession())) {
+          @if (showCreationSharePanel() || (promotionOpen && canOpenOrganizerShare())) {
             <section class="session-created-share" [attr.aria-label]="(showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t">
               <strong>{{ (showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t }}</strong>
-              <p>{{ (showCreationSharePanel() ? 'sessionDetail.createdShareHint' : 'sessionDetail.promotionHint') | t }}</p>
+              <p>{{ (canShareSession()
+                  ? (showCreationSharePanel() ? 'sessionDetail.createdShareHint' : 'sessionDetail.promotionHint')
+                  : 'sessionDetail.restrictedShareHint') | t }}</p>
               <div class="session-created-actions">
                 <a class="jynlo-action jynlo-action--primary" [href]="whatsappShareUrl()"
                    target="_blank" rel="noopener noreferrer">{{ 'publicSession.shareWhatsApp' | t }}</a>
                 <button class="jynlo-action jynlo-action--neutral" type="button" (click)="copyPublicShareLink()"
                         [disabled]="sharingSession">{{ 'sessionDetail.copyLink' | t }}</button>
-                <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
-                   [queryParams]="{ shareSession: session.id }">{{ 'sessionDetail.publishFeed' | t }}</a>
+                @if (canShareSession()) {
+                  <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
+                     [queryParams]="{ shareSession: session.id }">{{ 'sessionDetail.publishFeed' | t }}</a>
+                }
                 @if (showCreationSharePanel()) {
                   <button class="jynlo-action jynlo-action--neutral" type="button"
                           (click)="dismissCreationShare()">{{ 'sessionDetail.continueDetails' | t }}</button>
@@ -45,7 +49,7 @@
               @if (shareFeedback) { <p class="share-feedback" role="status">{{ shareFeedback }}</p> }
               @if (manualShareUrl) {
                 <div class="manual-share-link">
-                  <label for="session-share-url">Ligação pública da sessão</label>
+                  <label for="session-share-url">{{ 'sessionDetail.sessionLink' | t }}</label>
                   <div class="manual-share-controls">
                     <input id="session-share-url" #shareLinkInput type="text" [value]="manualShareUrl"
                            readonly aria-label="Ligação pública da sessão para copiar">
@@ -114,13 +118,13 @@
                                            : 'sessionDetail.overallRatingReopen') | t }}
               </button>
             }
-            @if (canPromoteSession() && !showCreationSharePanel()) {
+            @if (canOpenOrganizerShare() && !showCreationSharePanel()) {
               <button type="button" class="share-session-action open-promotion-button jynlo-action jynlo-action--neutral"
                       [attr.aria-expanded]="promotionOpen" (click)="togglePromotionPanel()">
                 {{ (promotionOpen ? 'sessionDetail.hidePromotion' : 'sessionDetail.promoteGame') | t }}
               </button>
             }
-            @if (canShareSession() && !canPromoteSession()) {
+            @if (canShareSession() && !canOpenOrganizerShare()) {
               <button type="button" class="share-session-action jynlo-action jynlo-action--neutral"
                       [disabled]="sharingSession" (click)="shareSession()">
                 {{ sharingSession ? 'A partilhar...' : 'Partilhar sessão' }}
@@ -130,7 +134,7 @@
               }
               @if (manualShareUrl && !canPromoteSession()) {
                 <div class="manual-share-link">
-                  <label for="session-share-url">Ligação pública da sessão</label>
+                  <label for="session-share-url">{{ 'sessionDetail.sessionLink' | t }}</label>
                   <div class="manual-share-controls">
                     <input id="session-share-url" #shareLinkInput type="text"
                            [value]="manualShareUrl" readonly
@@ -140,7 +144,28 @@
                 </div>
               }
             }
+            @if (canCancelOwnSession()) {
+              <button type="button" class="jynlo-action jynlo-action--danger session-cancel-button"
+                      [disabled]="cancelSessionWorking"
+                      (click)="requestCancelOwnSession()">{{ 'mySessions.cancelSession' | t }}</button>
+            }
           </div>
+          @if (cancelSessionConfirmOpen && canCancelOwnSession()) {
+            <section class="session-cancel-confirm" role="dialog" aria-modal="false"
+                     aria-labelledby="session-cancel-title">
+              <h3 id="session-cancel-title">{{ 'mySessions.cancelTitle' | t }}</h3>
+              <p>{{ 'mySessions.cancelText' | t }}</p>
+              <div class="session-cancel-actions">
+                <button type="button" class="jynlo-action jynlo-action--neutral"
+                        [disabled]="cancelSessionWorking"
+                        (click)="dismissCancelOwnSession()">{{ 'common.cancel' | t }}</button>
+                <button type="button" class="jynlo-action jynlo-action--danger"
+                        [disabled]="cancelSessionWorking"
+                        (click)="confirmCancelOwnSession()">{{ (cancelSessionWorking
+                          ? 'mySessions.cancelling' : 'mySessions.confirmCancel') | t }}</button>
+              </div>
+            </section>
+          }
 
           @if (organizerPreparation(); as preparation) {
             <section class="organizer-preparation" aria-labelledby="organizer-preparation-title">
