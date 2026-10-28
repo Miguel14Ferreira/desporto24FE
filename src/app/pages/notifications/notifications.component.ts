@@ -27,14 +27,15 @@ export class NotificationsComponent implements OnInit {
   unreadCount = 0;
   selected?: AppNotification;
 
-  // Every backend notification kind plus legacy friends/profile/other alerts.
+  // Optional alerts only. Security-critical profile changes are always sent,
+  // while routine profile updates no longer generate inbox notifications.
   readonly preferenceTypes = [
     'COMMUNITY_INVITE', 'COMMUNITY_JOIN_REQUEST', 'COMMUNITY_JOIN_ACCEPTED',
     'COMMUNITY_JOIN_REJECTED', 'SESSION_INVITE', 'WAITLIST_PROMOTED',
     'SESSION_REMOVED', 'SESSION_CANCELLED', 'SESSION_MEETING_POINT_UPDATED',
     'SESSION_POST_GAME_REVIEW',
     'ATTENDANCE_DISPUTE_ACCEPTED', 'ATTENDANCE_DISPUTE_REJECTED',
-    'CHAT_MESSAGE', 'VENUE_EDIT_DECISION', 'FRIEND_REQUEST', 'PROFILE_UPDATE', 'OTHER'
+    'CHAT_MESSAGE', 'VENUE_EDIT_DECISION', 'FRIEND_REQUEST', 'OTHER'
   ] as const;
   preferencesOpen = false;
   preferencesLoading = false;
