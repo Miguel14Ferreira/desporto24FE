@@ -83,7 +83,7 @@
         </div>
       </div>
       @if (isPublicView) {
-        <aside class="venue-public-more" aria-label="Mais sobre o recinto">
+        <aside class="venue-public-more" [attr.aria-label]="'venue.detail.publicMore' | t">
           <p>{{ 'venue.detail.publicMore' | t }}</p>
           <a class="venue-public-more-link" [routerLink]="['/menu/venues', venue.id]">{{ 'venue.detail.openFull' | t }} ↗</a>
         </aside>
