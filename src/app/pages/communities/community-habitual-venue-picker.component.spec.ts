@@ -279,13 +279,14 @@ describe('Community habitual venue picker — interactive template', () => {
     }).compileComponents();
   });
 
-  it('lets an admin search a saved venue through the actual form', () => {
+  it('lets an admin search a saved venue through the actual form', async () => {
     const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
     fixture.componentInstance.community = {...community};
     fixture.detectChanges();
     const input = fixture.nativeElement.querySelector('input[name="habitualVenueQuery"]') as HTMLInputElement;
     input.value = 'Campo';
     input.dispatchEvent(new Event('input', {bubbles: true}));
+    await fixture.whenStable(); // ngModel synchronizes the view-to-model value asynchronously.
     fixture.detectChanges();
     const submit = fixture.nativeElement.querySelector('form button[type="submit"]') as HTMLButtonElement;
     expect(submit.disabled).toBeFalse();
@@ -297,7 +298,7 @@ describe('Community habitual venue picker — interactive template', () => {
     fixture.destroy();
   });
 
-  it('switches to Maps, resolves a point, then switches to GPS without stale coordinates', () => {
+  it('switches to Maps, resolves a point, then switches to GPS without stale coordinates', async () => {
     const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
     fixture.componentInstance.community = {...community};
     fixture.detectChanges();
@@ -309,6 +310,7 @@ describe('Community habitual venue picker — interactive template', () => {
     expect(input).toBeTruthy();
     input.value = 'https://www.google.com/maps?q=38.71,-9.13';
     input.dispatchEvent(new Event('input', {bubbles: true}));
+    await fixture.whenStable();
     fixture.detectChanges();
     const submit = fixture.nativeElement.querySelector('form button[type="submit"]') as HTMLButtonElement;
     submit.click();
