@@ -44,6 +44,11 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
   private embeddedMapSource = '';
   private trustedMapSource: SafeResourceUrl | null = null;
 
+  /** Public catalogue preview reuses this page but must not call protected APIs. */
+  get isPublicView(): boolean {
+    return this.route.snapshot?.data?.['publicVenueView'] === true;
+  }
+
   constructor(
     private route: ActivatedRoute,
     private venueService: VenueService,
@@ -105,8 +110,19 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
     this.sportConditions = [];
     this.ratingSummary = null;
     this.retryVenue();
-    this.loadPhotos(venueId);
-    this.loadSportConditions(venueId);
+    if (this.isPublicView) {
+      // These endpoints require authentication: guests should never receive 403s
+      // or be invited to upload content that the server will reject.
+      ++this.photosLoadVersion;
+      ++this.sportConditionsLoadVersion;
+      this.photosLoading = false;
+      this.sportConditionsLoading = false;
+      this.photosLoadError = false;
+      this.sportConditionsLoadError = false;
+    } else {
+      this.loadPhotos(venueId);
+      this.loadSportConditions(venueId);
+    }
     this.loadRatingSummary(venueId);
   }
 
@@ -275,12 +291,12 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
   }
 
   retryPhotos(): void {
-    if (!this.venue) return;
+    if (!this.venue || this.isPublicView) return;
     this.loadPhotos(this.venue.id);
   }
 
   retrySportConditions(): void {
-    if (!this.venue) return;
+    if (!this.venue || this.isPublicView) return;
     this.loadSportConditions(this.venue.id);
   }
 
@@ -288,7 +304,7 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
     const sport = this.sportConditionSport.trim();
     const conditions = this.sportConditionText.trim();
 
-    if (!this.venue || this.sportConditionSaving || !sport || !conditions) {
+    if (!this.venue || this.isPublicView || this.sportConditionSaving || !sport || !conditions) {
       this.sportConditionSaveError = true;
       return;
     }
@@ -376,7 +392,7 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
-    if (!file || !this.venue || this.photoUploading) {
+    if (!file || !this.venue || this.isPublicView || this.photoUploading) {
       input.value = '';
       return;
     }
