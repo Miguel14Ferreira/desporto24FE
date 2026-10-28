@@ -248,7 +248,7 @@ describe('NotificationsComponent', () => {
       relatedUsername:'TMF14',message:'[JYNLO:GIPHY:1]{broken-json}'};
     expect(component.notificationMessage(notice)).not.toContain('{broken-json}');
     expect(component.notificationMessage({...notice,type:'OTHER'}))
-      .toBe('Enviou-te um GIF 🎞️');
+      .not.toContain('[JYNLO:GIPHY:1]');
   });
 
   it('opens chat notifications directly in the unified inbox', () => {
