@@ -16,11 +16,35 @@
       <a [routerLink]="['/menu/venues', community.defaultVenueId]" target="_blank" rel="noopener"
          class="community-venue-text-link">{{ 'communities.habitualVenue.viewFull' | t }}</a>
     </div>
+  } @else if (community.habitualLocationSource) {
+    <div class="community-venue-current">
+      <div>
+        <small>{{ 'communities.habitualVenue.current' | t }}</small>
+        <strong>{{ community.habitualLocationSource === 'GPS'
+          ? ('createSession.locationMethod.gps' | t)
+          : ('createSession.locationMethod.maps' | t) }}</strong>
+        <span>{{ community.habitualAddress || community.habitualCity ||
+          (community.habitualLatitude + ', ' + community.habitualLongitude) }}</span>
+      </div>
+    </div>
   } @else {
     <p class="community-venue-empty">{{ 'communities.habitualVenue.none' | t }}</p>
   }
 
   @if (canManage) {
+    <div class="community-venue-location-methods" role="group"
+         [attr.aria-label]="'createSession.locationMethods' | t">
+      <button type="button" class="community-venue-method" [class.active]="locationMethod === 'venue'"
+              [attr.aria-pressed]="locationMethod === 'venue'" [disabled]="saving"
+              (click)="chooseLocationMethod('venue')">{{ 'createSession.locationMethod.venue' | t }}</button>
+      <button type="button" class="community-venue-method" [class.active]="locationMethod === 'maps'"
+              [attr.aria-pressed]="locationMethod === 'maps'" [disabled]="saving"
+              (click)="chooseLocationMethod('maps')">{{ 'createSession.locationMethod.maps' | t }}</button>
+      <button type="button" class="community-venue-method" [class.active]="locationMethod === 'gps'"
+              [attr.aria-pressed]="locationMethod === 'gps'" [disabled]="saving"
+              (click)="chooseLocationMethod('gps')">{{ 'createSession.locationMethod.gps' | t }}</button>
+    </div>
+    @if (locationMethod === 'venue') {
     <form class="community-venue-search-row" (ngSubmit)="search()">
       <label class="community-venue-search-field">
         <span>{{ 'communities.habitualVenue.searchLabel' | t }}</span>
@@ -34,16 +58,68 @@
       </button>
     </form>
 
-    @if (community.defaultVenueId) {
+    }
+    @if (locationMethod === 'maps') {
+      <form class="community-venue-search-row" (ngSubmit)="resolveMapLink()">
+        <label class="community-venue-search-field">
+          <span>{{ 'venue.mapLink.label' | t }}</span>
+          <input type="url" name="habitualMapLink" [(ngModel)]="mapLink"
+                 [disabled]="saving || resolvingMap"
+                 [placeholder]="'venue.mapLink.hint' | t">
+        </label>
+        <button type="submit" class="community-venue-search-button"
+                [disabled]="saving || resolvingMap || !mapLink.trim()">
+          {{ (resolvingMap ? 'communities.habitualVenue.resolving' : 'communities.habitualVenue.confirmPoint') | t }}
+        </button>
+      </form>
+    }
+    @if (locationMethod === 'gps') {
+      <p class="community-venue-empty">{{ 'createSession.gpsLocationHint' | t }}</p>
+      <button type="button" class="community-venue-search-button"
+              [disabled]="saving || locating" (click)="captureCurrentLocation()">
+        {{ (locating ? 'events.locating' : 'createSession.useLocation') | t }}
+      </button>
+    }
+    @if (locationMethod !== 'venue' && locationPoint) {
+      <div class="community-venue-detail">
+        <h4>{{ 'communities.habitualVenue.pointFound' | t }}</h4>
+        <p>{{ locationPoint.latitude }}, {{ locationPoint.longitude }}</p>
+        <div class="community-venue-point-fields">
+          <label>
+            <span>{{ 'common.location' | t }}</span>
+            <input type="text" name="habitualPointCity" [(ngModel)]="locationPoint.city"
+                   [disabled]="saving" maxlength="160">
+          </label>
+          <label>
+            <span>{{ 'createSession.address' | t }}</span>
+            <input type="text" name="habitualPointAddress" [(ngModel)]="locationPoint.address"
+                   [disabled]="saving" maxlength="350">
+          </label>
+        </div>
+        <p class="community-venue-empty">{{ 'communities.habitualVenue.pointHint' | t }}</p>
+        <div class="community-venue-detail-actions">
+          @if (mapPointUrl; as url) {
+            <a [href]="url" target="_blank" rel="noopener noreferrer"
+               class="community-venue-detail-link">{{ 'venue.visit.openGoogleMap' | t }}</a>
+          }
+          <button type="button" class="community-venue-confirm"
+                  [disabled]="saving" (click)="savePoint()">
+            {{ 'communities.habitualVenue.set' | t }}
+          </button>
+        </div>
+      </div>
+    }
+    @if (community.defaultVenueId || community.habitualLocationSource) {
       <button type="button" class="community-venue-remove" (click)="save(null)"
               [disabled]="saving">{{ 'communities.habitualVenue.remove' | t }}</button>
     }
     @if (error) { <p class="community-venue-error" role="alert">{{ error }}</p> }
     @if (feedback) { <p class="community-venue-feedback" role="status">{{ feedback }}</p> }
-    @if (!searching && query.trim() && !results.length && !error && !detailLoading && !expanded) {
+    @if (locationMethod === 'venue' && !searching && query.trim()
+         && !results.length && !error && !detailLoading && !expanded) {
       <p class="community-venue-empty">{{ 'communities.habitualVenue.searchHelp' | t }}</p>
     }
-    @if (results.length) {
+    @if (locationMethod === 'venue' && results.length) {
       <div class="community-venue-results" role="group"
            [attr.aria-label]="'communities.habitualVenue.results' | t">
         @for (venue of results; track venue.id) {
@@ -58,10 +134,10 @@
         }
       </div>
     }
-    @if (detailLoading) {
+    @if (locationMethod === 'venue' && detailLoading) {
       <p role="status">{{ 'communities.habitualVenue.loadingDetails' | t }}</p>
     }
-    @if (expanded; as venue) {
+    @if (locationMethod === 'venue' ? expanded : null; as venue) {
       <article class="community-venue-detail" aria-labelledby="community-venue-selected-name">
         <div class="community-venue-detail-head">
           <div>
