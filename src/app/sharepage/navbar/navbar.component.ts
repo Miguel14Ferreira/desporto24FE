@@ -227,6 +227,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             const first = this.seenToastIds.values().next().value;
             if (first !== undefined) this.seenToastIds.delete(first);
           }
+          this.groupToastLookup?.unsubscribe();
           this.dismissGroupToast();
           this.chatToast = notice;
           if (this.toastTimer) clearTimeout(this.toastTimer);
@@ -242,7 +243,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
       kind: 'community' | 'session' | 'private',
       message: CommunityTimelineEntry | SessionMessage | PrivateGroupMessage
     ): void {
-      if (!this.authenticated) return;
+      if (!this.authenticated
+          || (kind === 'community' && (message as CommunityTimelineEntry).kind !== 'CHAT')) return;
       const account = this.authService.loggedInPerfilname?.toLowerCase();
       const id = kind === 'community' ? (message as CommunityTimelineEntry).communityId
         : kind === 'session' ? (message as SessionMessage).sessionId
@@ -302,6 +304,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             const oldest = this.seenGroupToastKeys.values().next().value;
             if (oldest) this.seenGroupToastKeys.delete(oldest);
           }
+          this.toastLookup?.unsubscribe();
           this.dismissChatToast();
           this.groupToast = { kind, groupId: id, sender, text: body, mimeType, title };
           this.toastTimer = setTimeout(() => this.dismissGroupToast(), 6500);
