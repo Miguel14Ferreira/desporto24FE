@@ -397,6 +397,10 @@ describe('NotificationsComponent', () => {
     expect(component.actionSuccess).toContain('aceite');
   });
 
+  it('does not offer a misleading preference switch for retired profile-update alerts', () => {
+    expect(component.preferenceTypes).not.toContain('PROFILE_UPDATE' as any);
+  });
+
   it('should offer account protection for suspicious security notifications', () => {
     const securityNotification = securityNotificationFixture();
 
