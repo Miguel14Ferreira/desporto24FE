@@ -1086,6 +1086,7 @@ describe('PublicSessionPreviewComponent', () => {
           ? of({id:42,sport:'Futebol',city:'Lisboa',
               gameDate:new Date(Date.now()+3600_000).toISOString(),
               maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null})
+          : url.endsWith('/guest-confirmed-players') ? of([])
           : throwError(()=>new HttpErrorResponse({status:403})));
       const page=render();
       const navigation=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
