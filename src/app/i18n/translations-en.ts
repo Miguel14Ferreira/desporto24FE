@@ -4544,6 +4544,7 @@ export const EN: Record<string, string> = {
   'sessionDetail.organizerFull': 'The session is marked as full. The visible player count may still be updating.',
   'sessionDetail.organizerFindPlayers': 'Find players',
   'sessionDetail.whosGoingText': '{{count}} visible players, including confirmed guests.',
+  'sessionDetail.confirmedGuestsError': 'Could not refresh confirmed guests. Please try again.',
   'sessionDetail.loadingParticipants': 'Loading confirmed players...',
   'sessionDetail.noVisibleParticipants': 'There are no participants to show yet.',
   'sessionDetail.noParticipants': 'There are no active participants to manage yet.',

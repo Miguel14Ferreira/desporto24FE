@@ -67,13 +67,14 @@ describe('SessionDetailsComponent', () => {
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'context', 'postGameCommunities', 'joinCommunityAfterGame', 'updateMeetingPoint', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
+      ['detail', 'context', 'postGameCommunities', 'joinCommunityAfterGame', 'updateMeetingPoint', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'confirmedGuests', 'reviewGuestRequest', 'cancelGuestRequest']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.context.and.returnValue(of({communities:[],seasonGame:false,seasonName:null}));
     sessionService.postGameCommunities.and.returnValue(of([]));
     sessionService.joinCommunityAfterGame.and.returnValue(of({communityId:22,state:'REQUESTED'}));
     sessionService.guestRequests.and.returnValue(of([]));
+    sessionService.confirmedGuests.and.returnValue(of([]));
     sessionService.issueGuestLink.and.returnValue(of({token:'T'.repeat(43)}));
     sessionService.cancelGuestRequest.and.returnValue(of({id:30,name:'Convidado',status:'CANCELLED',note:'',teamCode:null}));
     sessionService.join.and.returnValue(of({
@@ -1535,6 +1536,47 @@ describe('SessionDetailsComponent', () => {
     expect(region.textContent).not.toContain('Pedido Antigo');
     expect(region.textContent).not.toContain('Conta criada');
     expect(region.querySelectorAll('a.session-player-chip--member').length).toBe(1);
+  });
+
+  it('shows confirmed guests to a joined non-organizer without organizer access', () => {
+    (component as any).currentUsername='monicagomes';
+    sessionService.detail.and.returnValue(of({...session,joined:true,participantCount:3}));
+    component.session={...session,creatorUsername:'creator-user',joined:true,participantCount:3};
+    component.sessionParticipants=[
+      {id:1,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T15:00:00Z'},
+      {id:2,username:'monicagomes',attendanceStatus:'PENDING',joinedAt:'2026-10-28T15:01:00Z'}
+    ];
+    sessionService.participants.and.returnValue(of(component.sessionParticipants));
+    sessionService.confirmedGuests.and.returnValue(of([
+      {id:40,name:'oal',teamCode:null}
+    ]));
+    component.refreshVisiblePlayers();
+    fixture.detectChanges();
+    const section=fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(section.textContent).toContain('3 jogadores visíveis');
+    expect(section.textContent).toContain('@monicagomes');
+    expect(section.textContent).toContain('oal');
+    expect(section.querySelectorAll('.session-player-chip--guest').length).toBe(1);
+    expect(section.querySelectorAll('a.session-player-chip--member').length).toBe(2);
+    expect(sessionService.confirmedGuests).toHaveBeenCalledWith(7);
+    expect(sessionService.guestRequests).not.toHaveBeenCalled();
+    expect(component.isCreator()).toBeFalse();
+  });
+
+  it('does not show guests to non-participants and preserves error visibility', () => {
+    (component as any).currentUsername='outsider';
+    sessionService.detail.and.returnValue(of({...session,joined:true}));
+    component.session={...session,creatorUsername:'creator-user',joined:false};
+    component.memberConfirmedGuests=[{id:20,name:'Private guest',teamCode:null}];
+    expect(component.confirmedGuestParticipants()).toEqual([]);
+    component.session={...session,creatorUsername:'creator-user',joined:true};
+    sessionService.confirmedGuests.and.returnValue(
+      throwError(()=>new HttpErrorResponse({status:403})));
+    component.refreshVisiblePlayers();
+    fixture.detectChanges();
+    const section=fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(section.textContent).toContain('Não foi possível atualizar os convidados confirmados');
+    expect(section.textContent).not.toContain('Private guest');
   });
 
   it('renders ten registered and confirmed guest players as matching profile chips', () => {
