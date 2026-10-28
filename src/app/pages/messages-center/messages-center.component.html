@@ -228,7 +228,13 @@
                 </div>
                 @if (!message.deletedAt && message.replyToMessageId && message.replyToText) {
                   <div class="inbox-message-quote">
-                    <strong>{{ message.replyToSender }}</strong>
+                    @if (message.replyToSender?.trim() && message.replyToSender?.toLowerCase() !== 'system') {
+                      <button type="button" class="inbox-sender-profile"
+                        [attr.aria-label]="('chat.viewProfile' | t) + ': ' + message.replyToSender"
+                        (click)="openContact(message.replyToSender)">{{ message.replyToSender }}</button>
+                    } @else {
+                      <strong>{{ message.replyToSender }}</strong>
+                    }
                     <span>{{ displayMessagePreview(message.replyToText) }}</span>
                   </div>
                 }

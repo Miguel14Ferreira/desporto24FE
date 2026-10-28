@@ -109,6 +109,18 @@ describe('Unified Jynlo message center', () => {
     expect(component.selectedAttachment).toBeNull();
   });
 
+  it('opens a quoted author with the existing private profile quick-view, never for blank names', () => {
+    const quick = jasmine.createSpyObj('ProfileQuickViewService', ['open', 'close']);
+    (component as any).profilePeek = quick;
+    component.openContact('bea');
+    expect(quick.open).toHaveBeenCalledOnceWith('bea');
+    expect(component.contactPreviewOpen).toBeTrue();
+
+    component.openContact('');
+    component.openContact(null);
+    expect(quick.open).toHaveBeenCalledTimes(1);
+  });
+
   it('closes contact information when switching to another private conversation', () => {
     const first = item('direct', 'bea'), second = item('direct', 'carla');
     component.conversations = [first, second];
