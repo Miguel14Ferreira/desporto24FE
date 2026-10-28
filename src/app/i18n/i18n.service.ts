@@ -606,6 +606,8 @@ const PT: Dictionary = {
   'guestRsvp.createAccount': 'Criar conta Jynlo (opcional)',
   'guestRsvp.noThanks': 'Não precisas de conta para manter esta presença.',
   'guestRsvp.requestError': 'Não foi possível enviar o pedido. Confirma os dados ou contacta o organizador.',
+  'guestRsvp.savedBookingsTitle': 'Inscrições deste dispositivo',
+  'guestRsvp.savedBookingsHelp': 'Já confirmaste alguém neste navegador? Escolhe o nome para consultar ou corrigir a inscrição.',
   'guestRsvp.changeOwnPlayer': 'Alterar o meu jogador',
   'guestRsvp.changePlayerTitle': 'Corrigir o nome do jogador',
   'guestRsvp.changePlayerHelp': 'A tua vaga continua reservada. Apenas o nome desta inscrição será alterado.',
