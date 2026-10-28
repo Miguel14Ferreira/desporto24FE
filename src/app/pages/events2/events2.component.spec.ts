@@ -860,7 +860,8 @@ describe('Events2Component', () => {
     component.toggleSeasonGame(true);
     fixture.detectChanges();
     expect(component.seasonGameCommunityId).toBe(12);
-    expect(fixture.nativeElement.querySelector('select[name="seasonGameCommunityId"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('select[name="seasonGameCommunityId"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('época de ACM');
     expect(fixture.nativeElement.textContent).toContain('Jogo de época');
     component.toggleCommunityShare(12, false);
     fixture.detectChanges();
@@ -868,7 +869,7 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).toBeNull();
   });
 
-  it('requires explicit consent from an admin when classifications are off', () => {
+  it('requires explicit consent from any member when classifications are off', () => {
     communityGroups.competition.and.returnValue(of({
       settings: { rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 },
       seasons: [], selectedSeasonId: null, activeSeasonId: null,
@@ -886,7 +887,7 @@ describe('Events2Component', () => {
     component.city = 'Lisboa';
     component.address = 'Rua do Campo';
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('classificação será ativada');
+    expect(fixture.nativeElement.textContent).toContain('serão ativadas');
     expect(fixture.nativeElement.querySelector('input[name="confirmActivateRankings"]')).not.toBeNull();
 
     component.createSession();
@@ -901,7 +902,7 @@ describe('Events2Component', () => {
       }), undefined);
   });
 
-  it('does not allow members to silently enable standings or create a season', () => {
+  it('allows an ordinary member to enable standings and create a default season with consent', () => {
     communityGroups.competition.and.returnValue(of({
       settings: { rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 },
       seasons: [], selectedSeasonId: null, activeSeasonId: null,
@@ -919,10 +920,49 @@ describe('Events2Component', () => {
     component.city = 'Lisboa';
     component.address = 'Rua do Campo';
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('input[name="confirmActivateRankings"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="confirmActivateRankings"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Época [ano do jogo]');
     component.createSession();
     expect(sessionService.create).not.toHaveBeenCalled();
-    expect(component.errorMessage).toContain('administrador');
+    component.confirmActivateRankings = true;
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [12], seasonCompetitionCommunityId: 12,
+        confirmActivateRankings: true
+      }), undefined);
+  });
+
+  it('hides season scoring when a second community is selected and never reactivates automatically', () => {
+    component.communities = [12, 13].map(id => ({
+      id, name: 'Grupo ' + id, myRole: 'MEMBER', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: true,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }));
+    component.toggleCommunityShare(12, true);
+    component.toggleSeasonGame(true);
+    expect(component.seasonGame).toBeTrue();
+    component.toggleCommunityShare(13, true);
+    fixture.detectChanges();
+    expect(component.seasonGame).toBeFalse();
+    expect(component.seasonGameCommunityId).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('não conta para a classificação');
+    component.sport = 'Futebol';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [12, 13], seasonCompetitionCommunityId: null,
+        confirmActivateRankings: false
+      }), undefined);
+    component.toggleCommunityShare(13, false);
+    fixture.detectChanges();
+    expect(component.canMarkSeasonGame).toBeTrue();
+    expect(component.seasonGame).toBeFalse();
+    expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).not.toBeNull();
   });
 
   it('keeps direct community-session creation separate from cross-posting', () => {
