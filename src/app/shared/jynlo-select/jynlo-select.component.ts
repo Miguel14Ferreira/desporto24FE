@@ -27,7 +27,10 @@ export class JynloSelectComponent implements ControlValueAccessor {
   @Input() searchable = false;
   @Input() invalid = false;
   @Input() required = false;
-  @Input() disabled = false;
+  // NgModel owns the [disabled] input and calls setDisabledState() through
+  // ControlValueAccessor. A second @Input('disabled') on this component can
+  // race the NgModel directive and incorrectly leave the trigger enabled.
+  disabled = false;
   @Input() accent: 'teal' | 'violet' = 'teal';
   @Output() picked = new EventEmitter<string>();
 
