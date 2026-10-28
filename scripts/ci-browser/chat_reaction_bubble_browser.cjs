@@ -113,6 +113,18 @@ async function context(browser,username,width){
         {username:'bea',displayName:'Bea',profilePicUrl:null,admin:false}]};
       groupWrites.push('created');return reply(route,200,group);
     }
+    if(CHECK_GROUPS && p==='/api/test-group-photo.png' && method==='GET'){
+      return route.fulfill({status:200,contentType:'image/png',headers:{
+        'access-control-allow-origin':'*'},body:Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Xlnci0AAAAASUVORK5CYII=','base64')});
+    }
+    if(CHECK_GROUPS && p==='/api/private-groups/77/photo' && method==='POST'){
+      if(username!=='ana')return reply(route,403,{message:'Only creator can update photo'});
+      assert.match((await req.headerValue('content-type'))||'',/multipart\\/form-data/);
+      group.photoUrl='https://api.d24sports.com/api/test-group-photo.png';
+      groupWrites.push('photo');
+      return reply(route,200,group);
+    }
     if(CHECK_GROUPS && p==='/api/private-groups/77/members' && method==='POST'){
       assert.deepEqual(req.postDataJSON(),{usernames:['carla']});
       group.members.push({username:'carla',displayName:'Carla',profilePicUrl:null,admin:false});
@@ -425,6 +437,12 @@ async function main(){
       await a.locator('.group-modal .group-submit').click();
       await a.locator('.group-chat-header h2').filter({hasText:'Futebol de sábado'}).waitFor();
       assert.deepEqual(groupWrites,['created','renamed']);
+      await a.locator('.group-photo-input').setInputFiles({name:'team.png',mimeType:'image/png',
+        buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Xlnci0AAAAASUVORK5CYII=','base64')});
+      await a.locator('.group-header-avatar img').waitFor();
+      await a.locator('.group-entry.current .group-circle img').waitFor();
+      assert.equal(groupWrites.at(-1),'photo');
+      await a.screenshot({path:path.join(OUT,'group-photo-updated.png')});
       await a.locator('.group-compose textarea').fill('Olá equipa!');
       await a.locator('.group-compose button').click();
       await a.locator('.group-bubble').first().waitFor();
@@ -435,7 +453,7 @@ async function main(){
       await carla.locator('input[type=checkbox]').check();
       await a.locator('.group-submit').click();
       await a.locator('.group-member-links a').filter({hasText:'Carla'}).waitFor();
-      assert.deepEqual(groupWrites,['created','renamed','ana:message','invited']);
+      assert.deepEqual(groupWrites,['created','renamed','photo','ana:message','invited']);
       await a.screenshot({path:path.join(OUT,'group-added-third-person.png')});
       await b.goto(SITE+'/menu/groups?id=77',{waitUntil:'domcontentloaded'});
       await b.locator('.group-chat-header').waitFor();
@@ -455,7 +473,7 @@ async function main(){
       await b.locator('[role="alertdialog"] .group-submit').click();
       await b.locator('.group-welcome').waitFor();
       assert.ok(!group.members.some(m=>m.username==='bea'));
-      assert.deepEqual(groupWrites,['created','renamed','ana:message','invited','removed:carla','removed:bea']);
+      assert.deepEqual(groupWrites,['created','renamed','photo','ana:message','invited','removed:carla','removed:bea']);
     }
     if(CHECK_PROFILE_INVITES){
       await a.setViewportSize({width:1440,height:900});
