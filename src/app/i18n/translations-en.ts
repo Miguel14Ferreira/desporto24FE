@@ -4135,6 +4135,8 @@ export const EN: Record<string, string> = {
   'calls.rateLimited': 'Too many call attempts. Wait a few seconds before trying again.',
   'calls.providerUnavailable': 'Calling is not configured or the provider is temporarily unavailable.',
   'calls.notConfiguredHelp': 'Voice and video calling is not enabled yet. Jynlo needs its video provider configured.',
+  'calls.providerCredentialsHelp': 'The calling provider rejected Jynlo’s authentication. LiveKit server credentials need updating.',
+  'calls.providerNetworkHelp': 'The calling provider could not be reached. Try checking again.',
   'calls.checkingProvider': 'Checking whether calls are available…',
   'calls.checkFailedHelp': 'Could not check calling availability. Verify your sign-in and internet connection.',
   'calls.checkAgain': 'Check again',

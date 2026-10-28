@@ -4142,6 +4142,8 @@ const PT: Dictionary = {
   'calls.rateLimited': 'Fizeste várias tentativas seguidas. Aguarda alguns segundos antes de tentar novamente.',
   'calls.providerUnavailable': 'O serviço de chamadas não está configurado ou está temporariamente indisponível.',
   'calls.notConfiguredHelp': 'As chamadas de voz e vídeo ainda não estão ativadas. É necessário configurar o serviço de vídeo da Jynlo.',
+  'calls.providerCredentialsHelp': 'O serviço de chamadas rejeitou a autenticação da Jynlo. É necessário corrigir as credenciais LiveKit no servidor.',
+  'calls.providerNetworkHelp': 'Não foi possível contactar o serviço de chamadas. Podes tentar verificar novamente.',
   'calls.checkingProvider': 'A verificar se as chamadas estão disponíveis…',
   'calls.checkFailedHelp': 'Não foi possível verificar as chamadas. Confirma a sessão e a ligação à internet.',
   'calls.checkAgain': 'Verificar novamente',

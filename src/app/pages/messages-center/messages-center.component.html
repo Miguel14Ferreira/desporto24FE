@@ -167,9 +167,13 @@
               <span>
                 {{ ((calls.availabilityStatus$ | async) === 'notConfigured'
                      ? 'calls.notConfiguredHelp'
-                     : (calls.availabilityStatus$ | async) === 'checking'
-                       ? 'calls.checkingProvider'
-                       : 'calls.checkFailedHelp') | t }}
+                     : (calls.availabilityStatus$ | async) === 'invalidCredentials'
+                       ? 'calls.providerCredentialsHelp'
+                       : (calls.availabilityStatus$ | async) === 'providerUnavailable'
+                         ? 'calls.providerNetworkHelp'
+                         : (calls.availabilityStatus$ | async) === 'checking'
+                           ? 'calls.checkingProvider'
+                           : 'calls.checkFailedHelp') | t }}
               </span>
               <button type="button" (click)="recheckCalls()"
                       [disabled]="(calls.availabilityStatus$ | async) === 'checking'">

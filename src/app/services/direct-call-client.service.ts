@@ -9,7 +9,8 @@ import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realti
 
 export type CallPhase = 'incoming' | 'dialing' | 'connecting' | 'active' | 'error';
 export type CallMedia = 'voice' | 'video';
-export type CallAvailabilityStatus = 'idle' | 'checking' | 'ready' | 'notConfigured' | 'requestFailed';
+export type CallAvailabilityStatus = 'idle' | 'checking' | 'ready' | 'notConfigured'
+  | 'invalidCredentials' | 'providerUnavailable' | 'requestFailed';
 export interface DirectCallState {
   id: string;
   peer: string;
@@ -54,6 +55,7 @@ export class DirectCallClientService implements OnDestroy {
   private readonly subscriptions = new Subscription();
   private identityToken: string | null = null;
   private ringTimer?: ReturnType<typeof setTimeout>;
+  private peerExitTimer?: ReturnType<typeof setTimeout>;
   private generation = 0;
   private checking = false;
   private recoveringPending = false;
@@ -97,14 +99,18 @@ export class DirectCallClientService implements OnDestroy {
     this.checking = true;
     this.available$.next(false);
     this.availabilityStatus$.next('checking');
-    this.http.get<{enabled: boolean}>(this.base + '/availability')
+    this.http.get<{enabled: boolean; status?: string}>(this.base + '/availability')
       .pipe(timeout(8000)).subscribe({
         next: result => {
           this.checking = false;
           if (localStorage.getItem('t') !== token) return;
           const ready = result.enabled === true;
           this.available$.next(ready);
-          this.availabilityStatus$.next(ready ? 'ready' : 'notConfigured');
+          const status: CallAvailabilityStatus = ready ? 'ready'
+            : result.status === 'invalidCredentials' ? 'invalidCredentials'
+            : result.status === 'providerUnavailable' ? 'providerUnavailable'
+            : 'notConfigured';
+          this.availabilityStatus$.next(status);
         },
         error: () => {
           this.checking = false;
@@ -140,11 +146,13 @@ export class DirectCallClientService implements OnDestroy {
       });
   }
 
+  private subjectFor(token: string | null): string {
+    try { return token ? String(this.jwt.decodeToken(token)?.sub || '').toLowerCase() : ''; }
+    catch { return ''; }
+  }
+
   private username(): string {
-    try {
-      const token = localStorage.getItem('t');
-      return token ? String(this.jwt.decodeToken(token)?.sub || '') : '';
-    } catch { return ''; }
+    return this.subjectFor(localStorage.getItem('t'));
   }
 
   ensureConnected(): void {
@@ -159,12 +167,20 @@ export class DirectCallClientService implements OnDestroy {
       this.dropCall();
       return;
     }
-    if (this.identityToken && token !== this.identityToken) this.dropCall();
+    if (this.identityToken && token !== this.identityToken
+        && this.subjectFor(token) !== this.subjectFor(this.identityToken)) {
+      this.dropCall();
+    }
     if (token !== this.identityToken) {
+      // Refreshing an access JWT for the same account must not hang up a
+      // LiveKit room or invalidate an in-flight outgoing call.
+      const ongoing = !!this.state$.value;
       this.identityToken = token;
-      this.available$.next(false);
-      this.availabilityStatus$.next('idle');
-      this.refreshAvailability();
+      if (!ongoing) {
+        this.available$.next(false);
+        this.availabilityStatus$.next('idle');
+        this.refreshAvailability();
+      }
     }
     this.realtime.connect();
   }
@@ -200,7 +216,8 @@ export class DirectCallClientService implements OnDestroy {
     try {
       const session = await firstValueFrom(this.http.post<CallSession>(
         this.base + '/' + encodeURIComponent(peer), {media}).pipe(timeout(10000)));
-      if (version !== this.generation || localStorage.getItem('t') !== callerToken) {
+      if (version !== this.generation
+          || this.subjectFor(localStorage.getItem('t')) !== this.subjectFor(callerToken)) {
         void this.http.post<void>(this.base + '/' + session.callId + '/end', {}).subscribe({error:()=>{}});
         return;
       }
@@ -291,6 +308,7 @@ export class DirectCallClientService implements OnDestroy {
     if (version !== this.generation) return;
     ++this.generation;
     this.clearRingTimer();
+    this.clearPeerExitTimer();
     const room=this.room;
     this.room=null; // suppress Disconnected callback triggered by our cleanup
     if (room) void room.disconnect();
@@ -309,10 +327,30 @@ export class DirectCallClientService implements OnDestroy {
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.TrackUnsubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.ParticipantConnected, () => {
-      if (this.room===room && version===this.generation) this.update({phase:'active'});
+      if (this.room===room && version===this.generation) {
+        this.clearPeerExitTimer();
+        this.update({phase:'active'});
+      }
     });
     room.on(RoomEvent.ParticipantDisconnected, () => {
-      if (this.room===room) this.failConnection(session,version,'calls.peerDisconnected');
+      if (this.room!==room || version!==this.generation) return;
+      // LiveKit also emits this event when a peer performs a full WebRTC
+      // reconnect. Don't terminate the server call before it rejoins.
+      this.clearPeerExitTimer();
+      this.update({phase:'connecting'});
+      this.peerExitTimer=setTimeout(() => {
+        this.peerExitTimer=undefined;
+        if (this.room===room && version===this.generation
+            && room.remoteParticipants.size===0)
+          this.failConnection(session,version,'calls.peerDisconnected');
+      },20_000);
+    });
+    room.on(RoomEvent.Reconnecting, () => {
+      if (this.room===room && version===this.generation) this.update({phase:'connecting'});
+    });
+    room.on(RoomEvent.Reconnected, () => {
+      if (this.room===room && version===this.generation && room.remoteParticipants.size>0)
+        this.update({phase:'active'});
     });
     room.on(RoomEvent.Disconnected, () => {
       if (this.room===room) this.failConnection(session,version,'calls.connectionLost');
@@ -391,6 +429,11 @@ export class DirectCallClientService implements OnDestroy {
     this.ringTimer=undefined;
   }
 
+  private clearPeerExitTimer(): void {
+    if (this.peerExitTimer) clearTimeout(this.peerExitTimer);
+    this.peerExitTimer=undefined;
+  }
+
   private update(patch: Partial<DirectCallState>): void {
     const state=this.state$.value;
     if (state) this.state$.next({...state,...patch});
@@ -399,6 +442,7 @@ export class DirectCallClientService implements OnDestroy {
   private dropCall(): void {
     ++this.generation;
     this.clearRingTimer();
+    this.clearPeerExitTimer();
     const room=this.room;
     this.room=null;
     if (room) room.disconnect();
