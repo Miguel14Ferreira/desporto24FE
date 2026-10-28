@@ -10,7 +10,7 @@
           <button class="jynlo-action jynlo-action--primary" type="button" (click)="retryVenue()">{{ 'common.retry' | t }}</button>
           <a class="jynlo-action jynlo-action--neutral"
              [routerLink]="isPublicView ? '/home' : '/menu/venues'"
-             [fragment]="isPublicView ? 'jynlo-public-discovery' : null"
+             [fragment]="isPublicView ? 'jynlo-public-discovery' : undefined"
              [queryParams]="isPublicView ? null : backToDirectoryQueryParams">
             {{ (isPublicView ? 'venue.detail.back' : 'venue.catalog.backToList') | t }}
           </a>
@@ -20,7 +20,7 @@
       <header class="venue-header">
         <a class="back-link venue-hero-back"
            [routerLink]="isPublicView ? '/home' : '/menu/venues'"
-           [fragment]="isPublicView ? 'jynlo-public-discovery' : null"
+           [fragment]="isPublicView ? 'jynlo-public-discovery' : undefined"
            [queryParams]="isPublicView ? null : backToDirectoryQueryParams">
           ← {{ (isPublicView ? 'venue.detail.back' : 'venue.catalog.backToList') | t }}
         </a>
