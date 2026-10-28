@@ -4752,6 +4752,7 @@ export const EN: Record<string, string> = {
   'notification.communityInviteSubject': 'Invitation to the {{community}} community',
   'notification.communityInviteMessage': '@{{username}} invited you to the {{community}} community. Open the invitation to accept or reject.',
   'notifications.openCommunityInvite': 'View invitation',
+  'notification.chatGifPreview': 'Sent you a GIF 🎞️',
   'notification.chatMessage': 'Message',
   'notification.friendRequest': 'Friend request',
   'notification.generic': 'Notification',
