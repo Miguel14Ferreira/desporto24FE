@@ -255,10 +255,7 @@
                     [disabled]="guestLinkWorking" (click)="createGuestLink()">
                     {{ (guestLinkWorking ? 'guestAdmin.creating' : 'guestAdmin.generate') | t }}
                   </button>
-                  <button type="button" class="jynlo-action jynlo-action--neutral"
-                    [disabled]="guestRequestsLoading" (click)="loadGuestRequests()">
-                    {{ 'guestAdmin.refresh' | t }}
-                  </button>
+
                 </div>
                 <p class="guest-organizer-hint">{{ 'guestAdmin.rotateWarning' | t }}</p>
                 @if (guestLinkUrl) {
@@ -295,12 +292,6 @@
                           <button type="button" class="jynlo-action jynlo-action--neutral"
                             [disabled]="guestRequestBusyId!==null"
                             (click)="reviewGuest(guest,false)">{{ 'guestAdmin.reject' | t }}</button>
-                        </div>
-                      } @else if (guest.status === 'APPROVED') {
-                        <div class="guest-organizer-actions">
-                          <button type="button" class="jynlo-action jynlo-action--neutral"
-                            [disabled]="guestRequestBusyId!==null"
-                            (click)="cancelApprovedGuest(guest)">{{ 'guestAdmin.cancel' | t }}</button>
                         </div>
                       }
                     </div>
@@ -1132,13 +1123,10 @@
                   <h2>{{ 'sessionDetail.whosGoing' | t }}</h2>
                   <p>{{ 'sessionDetail.whosGoingText' | t:{ count: visiblePlayerCount() } }}</p>
                 </div>
-                <button
-                  type="button"
-                  class="secondary-action jynlo-action jynlo-action--neutral"
-                  [disabled]="sessionParticipantsLoading"
-                  (click)="refreshVisiblePlayers()">
-                  {{ sessionParticipantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
-                </button>
+                <span class="session-roster-live" role="status">
+                  <span class="session-roster-live__dot" aria-hidden="true"></span>
+                  {{ 'sessionDetail.rosterAutoUpdate' | t }}
+                </span>
               </div>
 
               @if (sessionParticipantsLoading) {
@@ -1149,6 +1137,12 @@
               }
               @if (memberConfirmedGuestsError) {
                 <div class="action-message error-message" role="alert">{{ memberConfirmedGuestsError }}</div>
+              }
+              @if (guestRosterSuccess) {
+                <p class="session-roster-feedback session-roster-feedback--success" role="status">{{ guestRosterSuccess }}</p>
+              }
+              @if (guestRosterError) {
+                <p class="session-roster-feedback session-roster-feedback--error" role="alert">{{ guestRosterError }}</p>
               }
 
               @if (!sessionParticipantsLoading && !sessionParticipantsError) {
@@ -1171,11 +1165,30 @@
                           </a>
                         }
                         @for (guest of guestTeamParticipants('A'); track guest.id) {
-                          <span class="session-player-card session-player-card--guest">
+                          <div class="session-player-card session-player-card--guest">
                             <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
                             <span class="session-player-card__name">{{ guest.name }}</span>
                             <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
-                          </span>
+                            @if (canCancelGuestPresence(guest)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (guestCancellationPendingId === guest.id) {
+                                  <p>{{ 'guestAdmin.cancelConfirm' | t:{ name: guest.name } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="confirmGuestCancellation(guest)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="dismissGuestCancellation()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="guestRequestBusyId !== null"
+                                    (click)="requestGuestCancellation(guest)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
                         }
                       </div>
                     </div>
@@ -1195,11 +1208,30 @@
                           </a>
                         }
                         @for (guest of guestTeamParticipants('B'); track guest.id) {
-                          <span class="session-player-card session-player-card--guest">
+                          <div class="session-player-card session-player-card--guest">
                             <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
                             <span class="session-player-card__name">{{ guest.name }}</span>
                             <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
-                          </span>
+                            @if (canCancelGuestPresence(guest)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (guestCancellationPendingId === guest.id) {
+                                  <p>{{ 'guestAdmin.cancelConfirm' | t:{ name: guest.name } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="confirmGuestCancellation(guest)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="dismissGuestCancellation()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="guestRequestBusyId !== null"
+                                    (click)="requestGuestCancellation(guest)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
                         }
                       </div>
                     </div>
@@ -1219,11 +1251,30 @@
                           </a>
                     }
                     @for (guest of confirmedGuestParticipants(); track guest.id) {
-                      <span class="session-player-card session-player-card--guest">
+                      <div class="session-player-card session-player-card--guest">
                             <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
                             <span class="session-player-card__name">{{ guest.name }}</span>
                             <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
-                          </span>
+                            @if (canCancelGuestPresence(guest)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (guestCancellationPendingId === guest.id) {
+                                  <p>{{ 'guestAdmin.cancelConfirm' | t:{ name: guest.name } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="confirmGuestCancellation(guest)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="dismissGuestCancellation()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="guestRequestBusyId !== null"
+                                    (click)="requestGuestCancellation(guest)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
                     }
                     @if (visiblePlayerCount() === 0) {
                       <span class="session-participants-empty">{{ 'sessionDetail.noVisibleParticipants' | t }}</span>

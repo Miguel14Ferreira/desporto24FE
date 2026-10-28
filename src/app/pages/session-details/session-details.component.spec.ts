@@ -1596,7 +1596,7 @@ describe('SessionDetailsComponent', () => {
     expect(chips.length).toBe(10);
     expect(region.textContent).toContain('10 jogadores visíveis');
     expect(region.querySelectorAll('a.session-player-card--member').length).toBe(5);
-    expect(region.querySelectorAll('span.session-player-card--guest').length).toBe(5);
+    expect(region.querySelectorAll('.session-player-card--guest').length).toBe(5);
     expect(region.textContent).toContain('COM CONTA');
     expect(region.textContent).toContain('SEM CONTA');
     const links = region.querySelectorAll('a.session-player-card--member');
@@ -1627,7 +1627,7 @@ describe('SessionDetailsComponent', () => {
     expect(teams[0].querySelectorAll('.session-player-card').length).toBe(5);
     expect(teams[1].querySelectorAll('.session-player-card').length).toBe(5);
     expect(region.querySelectorAll('a.session-player-card--member').length).toBe(6);
-    expect(region.querySelectorAll('span.session-player-card--guest').length).toBe(4);
+    expect(region.querySelectorAll('.session-player-card--guest').length).toBe(4);
   });
 
   it('starts with guest-first invitations after creating a community game', () => {
@@ -3428,5 +3428,112 @@ describe('SessionDetailsComponent', () => {
     const maps = location.querySelector('a.session-location-map') as HTMLAnchorElement;
     expect(maps?.href).toContain('google.com/maps');
     expect(location.querySelector('.session-meeting-edit-button')).not.toBeNull();
+  });
+
+  it('keeps approved guest cancellations only in Who is going, requiring explicit confirmation', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user', joined:true,
+      audience:'COMMUNITY_ONLY', gameDate:'2099-10-01T18:00:00Z'
+    };
+    sessionService.detail.and.returnValue(of(component.session));
+    component.invitePanelOpen = true;
+    component.guestRequestsLoadedForSession = 7;
+    component.guestRequests = [
+      {id:30,name:'Fresco',status:'APPROVED',teamCode:null,note:''},
+      {id:31,name:'Barata',status:'CANCELLED',teamCode:null,note:''}
+    ];
+    component.sessionParticipants = [{
+      id:10,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T18:00:00Z'
+    }];
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const invites = root.querySelector('.guest-organizer-panel') as HTMLElement;
+    const roster = root.querySelector('#session-participants') as HTMLElement;
+    expect(invites).not.toBeNull();
+    expect(invites.querySelector('button.session-player-card__cancel')).toBeNull();
+    expect(invites.textContent).toContain('Barata');
+    expect(invites.textContent).not.toContain('Atualizar pedidos');
+    expect(roster.querySelector('button.secondary-action')).toBeNull();
+    const fresco = roster.querySelector('.session-player-card--guest') as HTMLElement;
+    expect(fresco.textContent).toContain('Fresco');
+    const request = fresco.querySelector('.session-player-card__cancel') as HTMLButtonElement;
+    expect(request).toBeTruthy();
+    request.click();
+    fixture.detectChanges();
+    expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
+    const confirmation = fresco.querySelector('.session-player-card__confirmation') as HTMLElement;
+    expect(fresco.querySelector('.session-player-card__guest-actions')?.textContent).toContain('Fresco');
+    (confirmation.querySelectorAll('button')[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
+
+    (fresco.querySelector('.session-player-card__cancel') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const submit = fresco.querySelector('.session-player-card__confirmation button') as HTMLButtonElement;
+    submit.click();
+    fixture.detectChanges();
+    expect(sessionService.cancelGuestRequest).toHaveBeenCalledOnceWith(7,30);
+    expect(component.guestRequests.find(g=>g.id===30)?.status).toBe('CANCELLED');
+    expect(roster.querySelector('.session-player-card--guest')).toBeNull();
+    expect(roster.textContent).toContain('Presença cancelada');
+  });
+
+  it('shows guest removal within confirmed teams but never to regular participants', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user',joined:true,
+      audience:'PUBLIC',gameDate:'2099-10-01T18:00:00Z'
+    };
+    component.confirmedTeams = true;
+    component.guestRequests=[{id:40,name:'Vasquinho',status:'APPROVED',note:'',teamCode:'A'}];
+    fixture.detectChanges();
+    const teamA = (fixture.nativeElement as HTMLElement).querySelector('.confirmed-teams > div') as HTMLElement;
+    expect(teamA.querySelectorAll('.session-player-card__cancel').length).toBe(1);
+    (component as any).currentUsername='other-user';
+    component.session={...component.session,joined:true};
+    component.memberConfirmedGuests=[{id:40,name:'Vasquinho',teamCode:'A'}];
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.session-player-card__cancel')).toBeNull();
+    expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
+  });
+
+  it('reconciles registered players and WhatsApp confirmations automatically without hiding cards', () => {
+    (component as any).currentUsername='creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user',joined:true,
+      audience:'COMMUNITY_ONLY',gameDate:'2099-10-01T18:00:00Z'
+    };
+    component.sessionParticipants = [{
+      id:11,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T18:00:00Z'
+    }];
+    component.guestRequests=[{id:33,name:'Fresco',status:'APPROVED',teamCode:null,note:''}];
+    const pending = new Subject<any[]>();
+    sessionService.participants.and.returnValue(pending.asObservable());
+    fixture.detectChanges();
+    component.loadSessionParticipants(true);
+    fixture.detectChanges();
+    let roster = (fixture.nativeElement as HTMLElement).querySelector('#session-participants') as HTMLElement;
+    expect(roster.querySelectorAll('.session-player-card').length).toBe(2);
+    expect(roster.querySelector('.session-participants-loading')).toBeNull();
+    pending.next([{
+      id:11,username:'creator-user',attendanceStatus:'PENDING',
+      joinedAt:'2026-10-28T18:00:00Z'
+    },{
+      id:12,username:'player-two',attendanceStatus:'PENDING',
+      joinedAt:'2026-10-28T18:01:00Z'
+    }]);
+    pending.complete();
+    fixture.detectChanges();
+    roster = (fixture.nativeElement as HTMLElement).querySelector('#session-participants') as HTMLElement;
+    expect(roster.querySelectorAll('.session-player-card').length).toBe(3);
+    expect(roster.textContent).toContain('@player-two');
+    expect(roster.textContent).toContain('Fresco');
+
+    sessionService.detail.and.returnValue(of(component.session));
+    const before = sessionService.detail.calls.count();
+    component.syncVisibleRoster();
+    expect(sessionService.detail.calls.count()).toBeGreaterThan(before);
+    expect(sessionService.guestRequests).toHaveBeenCalled();
   });
 });
