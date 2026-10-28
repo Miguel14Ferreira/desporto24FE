@@ -217,7 +217,8 @@ describe('NotificationsComponent', () => {
       component.selected=notice;
       fixture.detectChanges();
       const page=fixture.nativeElement as HTMLElement;
-      expect(component.notificationMessage(notice)).toBe('Enviou-te um GIF 🎞️');
+      expect(component.notificationMessage(notice)).toBe('TMF14 enviou-te um GIF 🎞️');
+      expect(component.notificationSubject(notice)).toBe('Nova mensagem de TMF14');
       expect(page.textContent).toContain('Enviou-te um GIF');
       expect(page.textContent).not.toContain('JYNLO:GIPHY:1');
       expect(page.textContent).not.toContain('XdUMQuuiaAEkOUtezd');
@@ -227,8 +228,11 @@ describe('NotificationsComponent', () => {
         queryParams:{kind:'direct',id:'TMF14'}
       });
       localStorage.setItem('d24-language','en');
-      expect(component.notificationMessage(notice)).toBe('Sent you a GIF 🎞️');
+      expect(component.notificationMessage(notice)).toBe('TMF14 sent you a GIF 🎞️');
+      expect(component.notificationSubject(notice)).toBe('New message from TMF14');
       expect(component.notificationMessage({...notice,message:'🎞️ GIF'}))
+        .toBe('TMF14 sent you a GIF 🎞️');
+      expect(component.notificationMessage({...notice,relatedUsername:null,message:'🎞️ GIF'}))
         .toBe('Sent you a GIF 🎞️');
       // Ordinary chat text is not modified or confused with GIF envelopes.
       expect(component.notificationMessage({...notice,message:'Vamos jogar amanhã?'}))
@@ -244,7 +248,7 @@ describe('NotificationsComponent', () => {
       relatedUsername:'TMF14',message:'[JYNLO:GIPHY:1]{broken-json}'};
     expect(component.notificationMessage(notice)).not.toContain('{broken-json}');
     expect(component.notificationMessage({...notice,type:'OTHER'}))
-      .toBe('[JYNLO:GIPHY:1]{broken-json}');
+      .toBe('Enviou-te um GIF 🎞️');
   });
 
   it('opens chat notifications directly in the unified inbox', () => {
