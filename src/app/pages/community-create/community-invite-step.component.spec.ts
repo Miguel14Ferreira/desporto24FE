@@ -91,6 +91,10 @@ describe('CommunityInviteStepComponent', () => {
     expect(update).toHaveBeenCalledWith(42, {
       rankingsEnabled: true, individualTournamentsEnabled: true, teamTournamentsEnabled: false
     });
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('no');
+    component.continueToCommunity();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
   });
 
@@ -110,6 +114,7 @@ describe('CommunityInviteStepComponent', () => {
     expect(update).toHaveBeenCalledWith(42, {
       rankingsEnabled: false, individualTournamentsEnabled: false, teamTournamentsEnabled: false
     });
+    expect(component.step).toBe('venue');
   });
 
   it('does not save without selecting an explicit path', () => {
@@ -147,7 +152,8 @@ describe('CommunityInviteStepComponent', () => {
 
     update.and.returnValue(of({ rankingsEnabled: true }));
     component.saveCompetitionAndContinue();
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('lets people decide later without changing settings', () => {
@@ -157,6 +163,23 @@ describe('CommunityInviteStepComponent', () => {
     component.continueAfterInvite();
     component.continueToCommunity();
     expect(update).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
+  it('asks about the habitual venue after deciding on competition options', () => {
+    const { component, router } = setup();
+    component.continueAfterInvite();
+    component.continueToVenue();
+    expect(component.step).toBe('venue');
+    expect(component.habitualVenueChoice).toBeNull();
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('yes');
+    expect(component.habitualVenueChoice).toBe('yes');
+    component.onHabitualVenueSaved({ id:42, name:'Futebol das Quintas',
+      myRole:'OWNER', defaultVenueId:57, defaultVenueName:'Campo Municipal' } as CommunityGroup);
+    expect(component.community?.defaultVenueId).toBe(57);
+    expect(component.habitualVenueSaved).toBeTrue();
+    component.continueToCommunity();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
   });
 
