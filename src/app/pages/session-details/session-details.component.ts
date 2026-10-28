@@ -187,6 +187,29 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.typing = new ChatTypingTracker(realtimeService);
   }
 
+
+  // Only a known, internal navigation source can change the back destination.
+  get backToPath(): string {
+    return this.route.snapshot.queryParamMap?.get('from') === 'discover'
+      ? '/menu/discover' : '/menu/events';
+  }
+
+  get backQueryParams(): { sport: string; city: string; player?: string } | null {
+    const params = this.route.snapshot.queryParamMap;
+    if (params?.get('from') !== 'discover') return null;
+    const player = params.get('player')?.trim();
+    return {
+      sport: params.get('sport') ?? '',
+      city: params.get('city') ?? '',
+      ...(player ? { player } : {})
+    };
+  }
+
+  get backLabelKey(): string {
+    return this.backToPath === '/menu/discover'
+      ? 'discover.backFromProfile' : 'sessionDetail.back';
+  }
+
   ngOnInit(): void {
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
     this.pendingChatScroll = this.route.snapshot.queryParamMap?.get('chat') === '1';

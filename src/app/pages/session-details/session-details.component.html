@@ -1,6 +1,6 @@
 <section class="detail-page jynlo-c1 jynlo-games jynlo-session-detail-premium">
   <div class="detail-shell">
-    <a class="back-link" routerLink="/menu/events">← {{ 'sessionDetail.back' | t }}</a>
+    <a class="back-link" [routerLink]="backToPath" [queryParams]="backQueryParams">← {{ backLabelKey | t }}</a>
 
     @if (loading) {
       <div class="state-card">{{ 'sessionDetail.loading' | t }}</div>

@@ -238,7 +238,9 @@
             <div class="result-list">
               @for (session of topSessions; track session.id) {
                 <a class="result-card session-card" [routerLink]="['/menu/events', session.id]"
-                   [queryParams]="sessionEntryAction(session) === 'details' ? null : { join: '1' }">
+                   [queryParams]="{ from: 'discover', sport: sport.trim(), city: location.trim(),
+                      player: playerName.trim() || null,
+                      join: sessionEntryAction(session) === 'details' ? null : '1' }">
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
                     <span>{{ session.city }} · {{ (sessionDisplayDate(session) | date:'dd/MM HH:mm') || ('publicSession.notSpecified' | t) }}</span>

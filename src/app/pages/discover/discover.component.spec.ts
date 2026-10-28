@@ -738,6 +738,30 @@ describe('DiscoverComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-empty-create')).toBeNull();
   });
 
+  it('preserves discovery filters on session links without an automatic join action', () => {
+    sessionService.discover.and.returnValue(of([{
+      id: 71, sport: 'Ténis', city: 'Sintra',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(), distanceKm: null,
+      participantCount: 1, maxParticipants: 4, priceAmount: 0,
+      privateGame: false, status: 'OPEN'
+    }]));
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.playerName = 'Ana';
+    component.search();
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('.session-card') as HTMLAnchorElement;
+    const url = new URL(link.getAttribute('href')!, 'https://jynlo.test');
+    expect(url.pathname).toBe('/menu/events/71');
+    expect(url.searchParams.get('from')).toBe('discover');
+    expect(url.searchParams.get('sport')).toBe('Ténis');
+    expect(url.searchParams.get('city')).toBe('Sintra');
+    expect(url.searchParams.get('player')).toBe('Ana');
+    expect(url.searchParams.get('join')).toBe('1');
+    expect(sessionService.discover).toHaveBeenCalled();
+  });
+
   it('shows a clear participation link with price and distance without joining automatically', () => {
     const session = {
       id: 31, sport: 'Padel', city: 'Lisboa',
@@ -750,7 +774,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.session-card');
-    expect(link?.getAttribute('href')).toBe('/menu/events/31?join=1');
+    expect(link?.getAttribute('href')).toBe('/menu/events/31?from=discover&sport=Padel&city=Lisboa&join=1');
     expect(link?.textContent).toContain('Ver e participar');
     expect(link?.textContent).toMatch(/5[,.]00\s*€/);
     expect(link?.textContent).toMatch(/3[,.]4\s*km/);
@@ -769,7 +793,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     let link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Já estás inscrito');
-    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    expect(link.getAttribute('href')).toBe('/menu/events/32?from=discover&sport=Padel&city=Lisboa');
     expect(link.textContent).toContain('Grátis');
     expect(link.textContent).not.toContain('Ver e participar');
 
@@ -778,7 +802,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     link = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Em lista de espera');
-    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    expect(link.getAttribute('href')).toBe('/menu/events/32?from=discover&sport=Padel&city=Lisboa');
     expect(link.textContent).not.toContain('Ver e participar');
   });
 
@@ -794,7 +818,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
-    expect(link.getAttribute('href')).toBe('/menu/events/33?join=1');
+    expect(link.getAttribute('href')).toBe('/menu/events/33?from=discover&sport=Padel&city=Lisboa&join=1');
     expect(link.textContent).toContain('Entrar na lista de espera');
     expect(link.textContent).toContain('Lotado');
     expect(link.textContent).not.toContain('1 vagas');
@@ -819,7 +843,7 @@ describe('DiscoverComponent', () => {
       return fixture.nativeElement.querySelector('.session-card') as HTMLAnchorElement;
     };
 
-    expect(renderCard({}).getAttribute('href')).toBe('/menu/events/34?join=1');
+    expect(renderCard({}).getAttribute('href')).toBe('/menu/events/34?from=discover&sport=Padel&city=Lisboa&join=1');
     expect(renderCard({ status: 'FULL', joinedByViewer: true }).textContent)
       .toContain('Já estás inscrito');
     expect(renderCard({ status: 'FULL', waitlistedByViewer: true }).textContent)
@@ -840,7 +864,7 @@ describe('DiscoverComponent', () => {
     ]) {
       const card = renderCard(overrides);
       expect(card.getAttribute('href')).withContext(JSON.stringify(overrides))
-        .toBe('/menu/events/34');
+        .toBe('/menu/events/34?from=discover&sport=Padel&city=Lisboa');
       expect(card.textContent).not.toContain('Entrar na lista de espera');
       if (overrides.gameDate === 'invalid') {
         expect(card.textContent).toContain('Por indicar');
