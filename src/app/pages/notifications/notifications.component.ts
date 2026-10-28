@@ -325,6 +325,15 @@ export class NotificationsComponent implements OnInit {
       return;
     }
 
+    if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
+      // A scoped navigation hint, never a private location in the URL.
+      // The session API checks current membership again after navigation.
+      this.router.navigate(['/menu/events', notification.sessionId], {
+        queryParams: { meetingPoint: '1' }
+      });
+      return;
+    }
+
     this.router.navigate(['/menu/events', notification.sessionId]);
   }
 

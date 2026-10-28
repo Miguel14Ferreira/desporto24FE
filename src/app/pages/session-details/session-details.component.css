@@ -1447,3 +1447,7 @@ h1 {
   .session-community-context-row .session-context-label {flex:auto}
   .session-community-links {flex:auto}
 }
+
+/* Notification deep-link focus is visible for keyboard/screen-reader users.
+   The private point is only rendered after an authorised session response. */
+.session-meeting-point:focus { outline: 2px solid #73e5c9; outline-offset: 3px; scroll-margin-block: 90px; }

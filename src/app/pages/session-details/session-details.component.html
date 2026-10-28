@@ -739,7 +739,8 @@
               <p class="session-meeting-edit-success" role="status">{{ meetingPointSuccess }}</p>
             }
             @if (session.canSeeExactAddress && session.meetingPointInstructions && !meetingPointEditing) {
-              <div class="session-meeting-point" aria-label="{{ 'sessionDetail.meetingPointTitle' | t }}">
+              <div id="session-meeting-point" class="session-meeting-point"
+                   tabindex="-1" aria-label="{{ 'sessionDetail.meetingPointTitle' | t }}">
                 <strong>{{ 'sessionDetail.meetingPointTitle' | t }}</strong>
                 <p>{{ session.meetingPointInstructions }}</p>
                 <small>{{ 'sessionDetail.meetingPointCaveat' | t }}</small>

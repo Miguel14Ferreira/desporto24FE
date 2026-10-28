@@ -306,6 +306,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private pendingJoinScroll = false;
   private pendingChatScroll = false;
   private pendingMembershipScroll = false;
+  private pendingMeetingPointScroll = false;
   private readonly jwtHelper = new JwtHelperService();
   private readonly router = inject(Router);
   private readonly readSync = inject(ChatReadSyncService);
@@ -351,6 +352,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
     this.pendingChatScroll = this.route.snapshot.queryParamMap?.get('chat') === '1';
     this.pendingMembershipScroll = this.route.snapshot.queryParamMap?.get('membership') === '1';
+    this.pendingMeetingPointScroll = this.route.snapshot.queryParamMap?.get('meetingPoint') === '1';
     this.promotionOpen = this.route.snapshot.queryParamMap?.get('promote') === '1';
     this.currentUsername = this.readCurrentUsername();
 
@@ -435,6 +437,20 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.pendingChatScroll = false;
       if (this.canAccessChat()) {
         document.getElementById('session-chat')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    if (this.pendingMeetingPointScroll) {
+      // Consume exactly once after a successful authorised detail fetch.
+      // Outdated alerts may refer to a note that has been removed, or a
+      // participant who left. Never focus or scroll to private content then.
+      this.pendingMeetingPointScroll = false;
+      if (this.session.canSeeExactAddress && this.session.meetingPointInstructions) {
+        const meetingPoint = document.getElementById('session-meeting-point');
+        if (meetingPoint) {
+          meetingPoint.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          meetingPoint.focus({ preventScroll: true });
+        }
       }
     }
 
