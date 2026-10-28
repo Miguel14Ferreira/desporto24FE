@@ -1018,6 +1018,35 @@ h1 {
   color: #94a3b8;
 }
 
+/* Accessible venue details affordance. Never bypass the session's server-
+   controlled exact-location visibility to reach public venue GPS. */
+.session-venue-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(125, 211, 252, .48);
+  text-underline-offset: .2em;
+  overflow-wrap: anywhere;
+}
+.session-venue-link:hover { color: #a2f7e2; text-decoration-color: currentColor; }
+.session-venue-link:focus-visible,
+.session-venue-details-action:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+  border-radius: .2rem;
+}
+.session-venue-details-action {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-top: .5rem;
+  color: #a2f7e2;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.session-venue-details-action:hover { color: #c4fff0; }
+
 .venue-surface,
 .venue-detail-tags span {
   border-radius: 999px;

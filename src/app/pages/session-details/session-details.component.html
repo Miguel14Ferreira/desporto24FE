@@ -453,8 +453,22 @@
               <div class="venue-detail-heading">
                 <div>
                   <span class="section-kicker">{{ 'venue.kicker' | t }}</span>
-                  <h2>{{ session.venue.name }}</h2>
+                  <h2>
+                    @if (session.canSeeExactAddress && session.venue.id > 0) {
+                      <a class="session-venue-link" [routerLink]="['/menu/venues', session.venue.id]">
+                        {{ session.venue.name }}
+                      </a>
+                    } @else {
+                      {{ session.venue.name }}
+                    }
+                  </h2>
                   <p>{{ session.venue.city }}</p>
+                  @if (session.canSeeExactAddress && session.venue.id > 0) {
+                    <a class="session-venue-details-action"
+                       [routerLink]="['/menu/venues', session.venue.id]">
+                      {{ 'home.preview.viewVenue' | t }} <span aria-hidden="true">↗</span>
+                    </a>
+                  }
                 </div>
                 @if (session.venue.surfaceType) {
                   <span class="venue-surface">{{ session.venue.surfaceType }}</span>
