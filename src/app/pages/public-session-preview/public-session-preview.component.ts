@@ -140,7 +140,20 @@ export class PublicSessionPreviewComponent implements OnInit {
   }
 
   private receiptKey(): string {
-    return 'jynlo-guest-receipt:' + this.sessionId;
+    // A receipt belongs to one invitation link, not every invite for this session.
+    return 'jynlo-guest-receipt:' + this.sessionId + ':' + (this.guestToken || '').slice(0,18);
+  }
+
+  /** Explicitly begin a new guest registration on a shared device/link. */
+  registerAnotherGuest(): void {
+    try { localStorage.removeItem(this.receiptKey()); } catch {}
+    this.guestReceipt = '';
+    this.guestStep = 'choose';
+    this.guestPlayerId = null;
+    this.guestNewName = '';
+    this.guestNote = '';
+    this.guestError = '';
+    this.loadGuestRoster();
   }
 
   private loadGuestRoster(): void {
@@ -182,7 +195,10 @@ export class PublicSessionPreviewComponent implements OnInit {
       next: response => {
         this.guestReceipt = response.receipt;
         try {localStorage.setItem(this.receiptKey(),response.receipt);} catch {}
-        this.guestStep='pending';
+        this.guestStep=response.status==='APPROVED'?'approved':
+          response.status==='LINKED'?'linked':'pending';
+        // The server has already reserved the seat; refresh the actual capacity.
+        this.loadPreview();
       },
       error: () => {this.guestError='guestRsvp.requestError';}
     });
@@ -202,7 +218,11 @@ export class PublicSessionPreviewComponent implements OnInit {
           r.status==='REJECTED'?'rejected':
           r.status==='CANCELLED'?'cancelled':'pending';
       },
-      error:()=>{this.guestError='guestRsvp.statusError';}
+      error:()=>{
+        this.guestError='guestRsvp.statusError';
+        // A stale/invalid receipt cannot permanently trap this browser.
+        this.guestStep='choose';
+      }
     });
   }
 
