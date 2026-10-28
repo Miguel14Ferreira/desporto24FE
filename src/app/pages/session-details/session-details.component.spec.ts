@@ -67,7 +67,7 @@ describe('SessionDetailsComponent', () => {
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'context', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
+      ['detail', 'context', 'updateMeetingPoint', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.context.and.returnValue(of({communities:[],seasonGame:false,seasonName:null}));
@@ -80,6 +80,9 @@ describe('SessionDetailsComponent', () => {
     }));
     sessionService.leave.and.returnValue(of(void 0));
     sessionService.cancel.and.returnValue(of(void 0));
+    sessionService.updateMeetingPoint.and.returnValue(of({
+      ...session, canSeeExactAddress: true, meetingPointInstructions: 'Novo portão'
+    }));
     sessionService.complete.and.returnValue(of(void 0));
     sessionService.reportDidNotOccur.and.returnValue(of(void 0));
     sessionService.reportProblem.and.returnValue(of(void 0));
@@ -383,6 +386,93 @@ describe('SessionDetailsComponent', () => {
 
     expect(sessionService.detail).toHaveBeenCalledWith(53);
     expect(component.errorMessage).toBe('');
+  });
+
+  it('lets only the organiser edit meeting instructions before kickoff', () => {
+    const future = new Date(Date.now() + 3600000).toISOString();
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, gameDate: future, canSeeExactAddress: true,
+      meetingPointInstructions: 'Entrada antiga'
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-meeting-edit-button')).not.toBeNull();
+    component.beginMeetingPointEdit();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('#session-meeting-point-input') as HTMLInputElement;
+    expect(input.value).toBe('Entrada antiga');
+    component.meetingPointDraft = '  Novo portão  ';
+    component.saveMeetingPoint();
+    expect(sessionService.updateMeetingPoint).toHaveBeenCalledOnceWith(7, 'Novo portão');
+    expect(component.meetingPointEditing).toBeFalse();
+    expect(component.session?.meetingPointInstructions).toBe('Novo portão');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-meeting-point')?.textContent)
+      .toContain('Novo portão');
+
+    (component as any).currentUsername = 'guest-user';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-meeting-edit-button')).toBeNull();
+    component.beginMeetingPointEdit();
+    expect(component.meetingPointEditing).toBeFalse();
+    expect(sessionService.updateMeetingPoint).toHaveBeenCalledTimes(1);
+  });
+
+  it('can clear a point without changing the mapped venue', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600000).toISOString(),
+      canSeeExactAddress: true, meetingPointInstructions: 'Porta A',
+      address: 'Rua do Pavilhão'
+    };
+    sessionService.updateMeetingPoint.and.returnValue(of({
+      ...component.session, meetingPointInstructions: null
+    }));
+    component.beginMeetingPointEdit();
+    component.meetingPointDraft = '   ';
+    component.saveMeetingPoint();
+    expect(sessionService.updateMeetingPoint).toHaveBeenCalledWith(7, null);
+    expect(component.session?.address).toBe('Rua do Pavilhão');
+    expect(component.session?.meetingPointInstructions).toBeNull();
+  });
+
+  it('keeps editing closed after kickoff, cancellation or completion', () => {
+    (component as any).currentUsername = 'creator-user';
+    for (const status of ['CANCELLED', 'COMPLETED', 'OPEN'] as const) {
+      component.session = {
+        ...session, status, meetingPointInstructions: 'Entrada antiga',
+        canSeeExactAddress: true, gameDate: new Date(Date.now() - 3600000).toISOString()
+      };
+      expect(component.canEditMeetingPoint()).toBeFalse();
+      component.beginMeetingPointEdit();
+      expect(component.meetingPointEditing).toBeFalse();
+    }
+    expect(sessionService.updateMeetingPoint).not.toHaveBeenCalled();
+  });
+
+  it('blocks invalid or duplicate point updates and preserves input on failure', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600000).toISOString(),
+      canSeeExactAddress: true, meetingPointInstructions: 'Porta A'
+    };
+    component.beginMeetingPointEdit();
+    component.meetingPointDraft = 'x'.repeat(241);
+    component.saveMeetingPoint();
+    expect(component.meetingPointError).toBeTruthy();
+    component.meetingPointDraft = 'Porta A';
+    component.saveMeetingPoint();
+    expect(sessionService.updateMeetingPoint).not.toHaveBeenCalled();
+
+    component.beginMeetingPointEdit();
+    component.meetingPointDraft = 'Porta B';
+    sessionService.updateMeetingPoint.and.returnValue(
+      throwError(() => new HttpErrorResponse({status: 503})));
+    component.saveMeetingPoint();
+    expect(component.meetingPointEditing).toBeTrue();
+    expect(component.meetingPointDraft).toBe('Porta B');
+    expect(component.meetingPointError).toBeTruthy();
+    expect(component.session?.meetingPointInstructions).toBe('Porta A');
   });
 
   it('renders meeting instructions only for session viewers with exact-location access', () => {

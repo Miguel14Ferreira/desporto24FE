@@ -185,6 +185,67 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   sharingSession = false;
   cancelSessionConfirmOpen = false;
   cancelSessionWorking = false;
+  meetingPointEditing = false;
+  meetingPointDraft = '';
+  meetingPointSaving = false;
+  meetingPointError = '';
+  meetingPointSuccess = '';
+
+  /** Edit only future, active sessions owned by the authenticated user. */
+  canEditMeetingPoint(): boolean {
+    if (!this.session || !this.isCreator()
+        || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) return false;
+    const kickoff = Date.parse(this.session.gameDate);
+    return Number.isFinite(kickoff) && kickoff > Date.now();
+  }
+
+  beginMeetingPointEdit(): void {
+    if (!this.canEditMeetingPoint() || this.meetingPointSaving) return;
+    this.meetingPointDraft = this.session?.meetingPointInstructions || '';
+    this.meetingPointError = '';
+    this.meetingPointSuccess = '';
+    this.meetingPointEditing = true;
+  }
+
+  discardMeetingPointEdit(): void {
+    if (this.meetingPointSaving) return;
+    this.meetingPointEditing = false;
+    this.meetingPointDraft = '';
+    this.meetingPointError = '';
+  }
+
+  saveMeetingPoint(): void {
+    if (!this.meetingPointEditing || !this.canEditMeetingPoint()
+        || !this.sessionId || this.meetingPointSaving) return;
+    if (this.meetingPointDraft.length > 240
+        || /[\u0000-\u001F\u007F]/.test(this.meetingPointDraft)) {
+      this.meetingPointError = t('sessionDetail.meetingPointInvalid');
+      return;
+    }
+    const instructions = this.meetingPointDraft.trim() || null;
+    if (instructions === (this.session?.meetingPointInstructions || null)) {
+      this.discardMeetingPointEdit();
+      return;
+    }
+    const sessionId = this.sessionId;
+    this.meetingPointSaving = true;
+    this.meetingPointError = '';
+    this.meetingPointSuccess = '';
+    this.sessionService.updateMeetingPoint(sessionId, instructions)
+      .pipe(timeout(10000), finalize(() => this.meetingPointSaving = false))
+      .subscribe({
+        next: detail => {
+          if (this.sessionId !== sessionId) return;
+          this.session = detail;
+          this.meetingPointEditing = false;
+          this.meetingPointDraft = '';
+          this.meetingPointSuccess = t('sessionDetail.meetingPointSaved');
+        },
+        error: error => {
+          this.meetingPointError = this.errorFrom(error, t('sessionDetail.meetingPointSaveError'));
+        }
+      });
+  }
 
   canCancelOwnSession(): boolean {
     return !!this.session && this.isCreator()
