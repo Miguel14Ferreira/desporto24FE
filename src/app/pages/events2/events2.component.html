@@ -56,6 +56,7 @@
             <span>{{ 'createSession.presets.name' | t }}</span>
             <input type="text" name="sessionPresetName" [(ngModel)]="presetName"
                    maxlength="70" autocomplete="off"
+                   (keydown.enter)="$event.preventDefault(); savePreset()"
                    [placeholder]="'createSession.presets.placeholder' | t"
                    [disabled]="loading || presetSaving || presetDeleting">
           </label>
