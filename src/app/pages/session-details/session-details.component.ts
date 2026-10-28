@@ -2070,12 +2070,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         || this.memberConfirmedGuestsLoading) return;
     const id=this.sessionId;
     this.memberConfirmedGuestsLoading=true;
-    this.memberConfirmedGuestsError='';
+    if (!silent) this.memberConfirmedGuestsError='';
     this.sessionService.confirmedGuests(id)
       .pipe(timeout(10000),finalize(()=>this.memberConfirmedGuestsLoading=false))
       .subscribe({
         next: rows => {
           if (this.session?.id !== id || !this.session.joined) return;
+          this.memberConfirmedGuestsError = '';
           this.memberConfirmedGuests=Array.isArray(rows)
             ? rows.filter(g=>Number.isSafeInteger(g?.id) && typeof g?.name==='string'
                 && (g.teamCode===null || g.teamCode==='A' || g.teamCode==='B'))
