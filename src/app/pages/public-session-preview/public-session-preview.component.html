@@ -271,12 +271,6 @@
                     </div>
                   }
                 }
-                @if (guestReceipt && !guestEditingIdentity && !guestConfirmCancellation) {
-                  <button type="button" class="guest-rsvp-back"
-                          (click)="registerAnotherGuest()" [disabled]="guestSending || guestLinking">
-                    {{ 'guestRsvp.differentPlayer' | t }}
-                  </button>
-                }
                 @if (guestStep === 'linked') {
                   <a class="guest-rsvp-primary" [routerLink]="returnUrl">
                     {{ 'guestRsvp.openSession' | t }}
