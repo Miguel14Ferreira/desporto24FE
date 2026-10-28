@@ -8,7 +8,7 @@ import { JynloSelectComponent } from './jynlo-select.component';
   imports: [FormsModule, JynloSelectComponent],
   template: `<app-jynlo-select name="country" [(ngModel)]="country"
     [options]="choices" [searchable]="true"
-    [disabled]="disabled"
+    [disabled]="disabled" [blocked]="disabled"
     ariaLabel="País" placeholder="Selecionar país"></app-jynlo-select>`
 })
 class SelectHost {
