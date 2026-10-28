@@ -26,7 +26,7 @@ describe('Events2Component', () => {
       seasons: [], selectedSeasonId: null, activeSeasonId: 3,
       rounds: [], standings: [], racketStandings: [], raceStandings: []
     }));
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'submitSuggestion', 'listPhotos', 'resolveMapLink', 'reverseLocation']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'submitSuggestion', 'listPhotos', 'resolveMapLink', 'reverseLocation', 'get']);
     venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     venueService.listPhotos.and.returnValue(of([]));
     venueService.reverseLocation.and.returnValue(of({
@@ -845,6 +845,54 @@ describe('Events2Component', () => {
         communityShareIds: [], recurrence: 'NONE',
         registrationOpeningMode: 'IMMEDIATE'
       }), undefined);
+  });
+
+  it('fills the sport and the habitual venue when one community is selected', () => {
+    venueService.get.and.returnValue(of({
+      id: 55, name: 'Pavilhão Municipal', city: 'Lisboa', district: 'Lisboa',
+      address: 'Rua do Pavilhão', sports: 'Futebol', latitude: 38.7, longitude: -9.2
+    } as Venue));
+    component.communities = [{
+      id: 12, name: 'ACM', sport: 'Futebol', sports: ['Futebol'],
+      defaultVenueId: 55, defaultVenueName: 'Pavilhão Municipal',
+      myRole: 'MEMBER', description: null, photoUrl: null, visibility: 'PRIVATE',
+      rankingsEnabled: false, ownerUsername: 'owner', memberCount: 1,
+      createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    fixture.detectChanges();
+    expect(component.sport).toBe('Futebol');
+    expect(component.selectedVenueId).toBe(55);
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua do Pavilhão');
+    expect(venueService.get).toHaveBeenCalledWith(55);
+  });
+
+  it('does not guess a sport or habitual venue when communities disagree', () => {
+    component.communities = [
+      {id: 12, name: 'Futebol', sport: 'Futebol', sports: ['Futebol'],
+       defaultVenueId: 55, myRole: 'MEMBER'},
+      {id: 13, name: 'Padel', sport: 'Padel', sports: ['Padel'],
+       defaultVenueId: 66, myRole: 'MEMBER'}
+    ] as any;
+    component.toggleCommunityShare(12, true);
+    expect(component.sport).toBe('Futebol');
+    component.toggleCommunityShare(13, true);
+    expect(component.sport).toBe('');
+    expect(component.selectedVenueId).toBeNull();
+    expect(venueService.get).not.toHaveBeenCalled();
+  });
+
+  it('keeps the sport manually chosen by the organiser when a community is selected', () => {
+    component.sport = 'Padel';
+    component.communities = [{
+      id: 12, name: 'ACM', sport: 'Futebol', sports: ['Futebol'],
+      myRole: 'MEMBER', description: null, photoUrl: null, visibility: 'PRIVATE',
+      rankingsEnabled: false, ownerUsername: 'owner', memberCount: 1,
+      createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    expect(component.sport).toBe('Padel');
   });
 
   it('shows the season game option only after selecting a community', () => {
