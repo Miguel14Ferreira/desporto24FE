@@ -45,6 +45,20 @@ describe('InboxHistorySearchComponent',()=>{
     root.querySelector<HTMLButtonElement>('.inbox-search-result-reply')!.click();
     expect(locate).toHaveBeenCalledOnceWith(hit);expect(reply).toHaveBeenCalledOnceWith(hit);
   });
+  it('formats GIF search results without changing the original result passed to actions',async()=>{
+    const original={...hit,text:'[JYNLO:GIPHY:1]{bad-json}'};
+    const f=await render({messageSearchResults:[original],
+      previewFormatter: value=>value.startsWith('[JYNLO:GIPHY:1]') ? 'GIF' : value});
+    const root=f.nativeElement as HTMLElement;
+    const result=root.querySelector('.inbox-history-search-result')!;
+    expect(result.textContent).toContain('GIF');
+    expect(result.textContent).not.toContain('JYNLO:GIPHY:1');
+    expect(result.textContent).not.toContain('{bad-json}');
+    const locate=jasmine.createSpy('locate');f.componentInstance.locateRequested.subscribe(locate);
+    root.querySelector<HTMLButtonElement>('.inbox-search-result-open')!.click();
+    expect(locate).toHaveBeenCalledOnceWith(original);
+    expect(original.text).toBe('[JYNLO:GIPHY:1]{bad-json}');
+  });
   it('keeps pagination, progress, error and empty results distinct',async()=>{
     const more=await render({messageSearchResults:[hit],messageSearchHasMore:true,messageSearchPage:2});
     const spy=jasmine.createSpy('more');more.componentInstance.searchRequested.subscribe(spy);
