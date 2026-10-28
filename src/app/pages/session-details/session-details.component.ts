@@ -2190,17 +2190,28 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return `Sessão de ${this.session?.sport ?? 'desporto'} no Desporto24.${creator}`;
   }
 
-  /** Only reveal the exact map pin when the API authorizes this address. */
+  /** Only share precise coordinates with people authorised by the session API.
+   * Many Jynlo venues have verified catalogue GPS but no postal address: a
+   * missing street must not disable their navigation link.
+   */
   exactGoogleMapsUrl(): string | null {
-    if (!this.session?.canSeeExactAddress || !this.session.address?.trim()) return null;
+    if (!this.session?.canSeeExactAddress) return null;
     const lat = this.session.venue?.latitude;
     const lon = this.session.venue?.longitude;
     const hasGps = typeof lat === 'number' && typeof lon === 'number'
       && Number.isFinite(lat) && Number.isFinite(lon)
       && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
-    const query = hasGps ? lat + ',' + lon
-      : this.session.address.trim() + ', ' + this.session.city;
+    const address = this.session.address?.trim();
+    if (!hasGps && !address) return null;
+    const query = hasGps ? lat + ',' + lon : address + ', ' + this.session.city;
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+  }
+
+  /** Never present an OSM GPS-only location as a confirmed postal address. */
+  exactLocationLabel(): string {
+    const address = this.session?.address?.trim();
+    return address && this.session?.venue?.locationStatus !== 'GPS_ONLY_ADDRESS_UNKNOWN'
+      ? address : t('sessionDetail.openMaps');
   }
 
   private calendarLocation(): string {
