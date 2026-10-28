@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityStanding } from '../model/community-group';
@@ -35,7 +35,7 @@ export class CommunityComparePickerComponent {
   @ViewChild('root') root?: ElementRef<HTMLElement>;
   @ViewChild('trigger') trigger?: ElementRef<HTMLButtonElement>;
   @ViewChild('search') search?: ElementRef<HTMLInputElement>;
-  @ViewChildren('optionButton') options!: import('@angular/core').QueryList<ElementRef<HTMLButtonElement>>;
+  @ViewChildren('optionButton') options!: QueryList<ElementRef<HTMLButtonElement>>;
 
   open = false;
   searchTerm = '';
