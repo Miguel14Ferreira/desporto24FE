@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { CommunityHabitualVenuePickerComponent } from './community-habitual-venue-picker.component';
 import { CommunityGroup } from '../model/community-group';
 import { Venue } from '../model/venue';
@@ -67,6 +67,24 @@ describe('Community habitual venue picker', () => {
     expect(groups.updateHabitualLocation).toHaveBeenCalledWith(
       42, 'MAPS', 38.71, -9.13, 'Lisboa', 'Rua da Bola');
     expect(groups.updateDefaultVenue).not.toHaveBeenCalled();
+  });
+
+  it('waits for reverse geocoding before saving a habitual Maps point', () => {
+    const {component, venues, groups} = setup();
+    const geocode = new Subject<any>();
+    venues.reverseLocation.and.returnValue(geocode.asObservable());
+    component.chooseLocationMethod('maps');
+    component.mapLink = 'https://www.google.com/maps?q=38.71,-9.13';
+    component.resolveMapLink();
+    expect(component.resolvingAddress).toBeTrue();
+    component.savePoint();
+    expect(groups.updateHabitualLocation).not.toHaveBeenCalled();
+    geocode.next({city: 'Lisboa', address: 'Rua da Bola'});
+    geocode.complete();
+    expect(component.resolvingAddress).toBeFalse();
+    component.savePoint();
+    expect(groups.updateHabitualLocation).toHaveBeenCalledWith(
+      42, 'MAPS', 38.71, -9.13, 'Lisboa', 'Rua da Bola');
   });
 
   it('supports a GPS location point without forcing a directory venue', () => {
