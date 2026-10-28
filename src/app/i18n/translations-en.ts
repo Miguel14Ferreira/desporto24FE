@@ -3574,6 +3574,8 @@ export const EN: Record<string, string> = {
   'communities.habitualVenue.errorGpsPermission': 'Unable to get your location. Check your device permissions.',
   'communities.habitualVenue.pointSaved': 'Usual location saved.',
   'communities.habitualVenue.errorSavePoint': 'Unable to save the usual location.',
+  'communities.habitualVenue.searchTimeout': 'The search took too long. Please retry or try a different name.',
+  'communities.habitualVenue.noResults': 'No venues matched that name. Try another search or choose Google Maps.',
   'communities.habitualVenue.errorSearch': 'Unable to search venues.',
   'communities.habitualVenue.errorDetails': 'Unable to load the venue details.',
   'communities.habitualVenue.venueRemoved': 'Usual venue removed.',
