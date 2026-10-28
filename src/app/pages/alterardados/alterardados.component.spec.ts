@@ -160,6 +160,8 @@ describe('AlterardadosComponent', () => {
   });
 
   it('uses the searchable country picker and keeps profile changes in the same form', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
     const root=fixture.nativeElement as HTMLElement;
     const selector=root.querySelector('app-jynlo-select[name="country"]');
     expect(selector).not.toBeNull();
