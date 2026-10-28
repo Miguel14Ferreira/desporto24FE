@@ -1442,19 +1442,18 @@ describe('PublicSessionPreviewComponent', () => {
       fixture.detectChanges();
       expect(page.querySelector('.guest-private-meeting-point')?.textContent)
         .toContain('Portão 2 junto ao café');
-      const refresh=page.querySelector('.guest-meeting-refresh') as HTMLButtonElement;
-      expect(refresh).not.toBeNull();
+      expect(page.querySelector('.guest-meeting-refresh')).toBeNull();
       (http.post as jasmine.Spy).and.returnValue(of({
         receipt,status:'APPROVED',meetingPointInstructions:'Entrada norte'
       }));
-      refresh.click();
+      component.checkGuestStatus();
       fixture.detectChanges();
       expect(page.querySelector('.guest-private-meeting-point')?.textContent).toContain('Entrada norte');
       expect(page.textContent).not.toContain('Portão 2 junto ao café');
       (http.post as jasmine.Spy).and.returnValue(of({
         receipt,status:'APPROVED',meetingPointInstructions:null
       }));
-      refresh.click();
+      component.checkGuestStatus();
       fixture.detectChanges();
       expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
     });
