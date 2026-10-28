@@ -87,6 +87,13 @@ export interface SessionTeamPlayer {
   displayName?: string;
 }
 
+/** Guest names only: never notes, receipt, or private contact details. */
+export interface SessionConfirmedGuest {
+  id: number;
+  name: string;
+  teamCode: 'A' | 'B' | null;
+}
+
 /** Metadata visible only to viewers authorized to open the session itself. */
 export interface SessionContext {
   communities: { id: number; name: string }[];
@@ -147,6 +154,11 @@ export class SessionService {
   issueGuestLink(id:number): Observable<{token:string}> {
     return this.http.post<{token:string}>(this.baseUrl+'/'+id+'/guest-link',{});
   }
+  /** Names and teams only. The server permits confirmed participants or creator. */
+  confirmedGuests(id:number): Observable<SessionConfirmedGuest[]> {
+    return this.http.get<SessionConfirmedGuest[]>(this.baseUrl+'/'+id+'/guest-confirmed-guests');
+  }
+
   guestRequests(id:number): Observable<SessionGuestRequest[]> {
     return this.http.get<SessionGuestRequest[]>(this.baseUrl+'/'+id+'/guest-requests');
   }
