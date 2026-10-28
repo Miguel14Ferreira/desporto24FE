@@ -154,13 +154,16 @@ describe('PublicSessionPreviewComponent', () => {
     fixture.detectChanges();
     const component=fixture.componentInstance;
     expect(component.guestStep).toBe('approved');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
     component.startChangingGuestIdentity();
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).querySelector('#guest-change-player-select')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
     component.selectGuestPlayer(17);
     component.changeGuestIdentity();
     fixture.detectChanges();
     expect(component.guestEditingIdentity).toBeFalse();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
     expect(component.guestConfirmedName).toBe('Zé Manel');
     expect(component.guestReceipt).toBe(receipt);
     expect(localStorage.getItem('jynlo-guest-receipt:42:'+secret.slice(0,18))).toBe(receipt);
@@ -184,10 +187,15 @@ describe('PublicSessionPreviewComponent', () => {
       return throwError(()=>new Error('Unexpected request '+url));
     }) as any);
     fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
     fixture.componentInstance.startChangingGuestIdentity();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
     fixture.componentInstance.setGuestNewName('Outro');
     fixture.componentInstance.cancelChangingGuestIdentity();
     fixture.detectChanges();
+    // Backing out of an unsaved edit keeps the original approved booking.
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
     expect(fixture.componentInstance.guestStep).toBe('approved');
     expect(fixture.componentInstance.guestReceipt).toBe(receipt);
     expect((http.post as jasmine.Spy).calls.allArgs().filter(
@@ -243,14 +251,17 @@ describe('PublicSessionPreviewComponent', () => {
     }) as any);
     fixture.detectChanges();
     const component=fixture.componentInstance;
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
     component.guestConfirmCancellation=true;
     fixture.detectChanges();
     expect(component.guestStep).toBe('approved');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
     expect((http.post as jasmine.Spy).calls.allArgs().some(
       args=>String(args[0]).endsWith('/guest-requests/cancel-self'))).toBeFalse();
     component.cancelOwnGuestReservation();
     fixture.detectChanges();
     expect(component.guestStep).toBe('cancelled');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
     expect(component.session?.participantCount).toBe(9);
     expect(component.guestSavedBookings).toEqual([]);
   });
