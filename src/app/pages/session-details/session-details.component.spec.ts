@@ -1540,6 +1540,7 @@ describe('SessionDetailsComponent', () => {
 
   it('shows confirmed guests to a joined non-organizer without organizer access', () => {
     (component as any).currentUsername='monicagomes';
+    sessionService.detail.and.returnValue(of({...session,joined:true,participantCount:3}));
     component.session={...session,creatorUsername:'creator-user',joined:true,participantCount:3};
     component.sessionParticipants=[
       {id:1,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T15:00:00Z'},
@@ -1563,6 +1564,7 @@ describe('SessionDetailsComponent', () => {
 
   it('does not show guests to non-participants and preserves error visibility', () => {
     (component as any).currentUsername='outsider';
+    sessionService.detail.and.returnValue(of({...session,joined:true}));
     component.session={...session,creatorUsername:'creator-user',joined:false};
     component.memberConfirmedGuests=[{id:20,name:'Private guest',teamCode:null}];
     expect(component.confirmedGuestParticipants()).toEqual([]);
