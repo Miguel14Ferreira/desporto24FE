@@ -605,7 +605,7 @@ export const EN: Record<string, string> = {
   'sessionDetail.hideInvites': 'Hide invitations',
   'guestAdmin.registeredBadge': 'WITH A JYNLO ACCOUNT',
   'guestAdmin.registeredTitle': 'Invite registered members',
-  'guestAdmin.registeredHelp': 'They receive an in-app invitation and respond with their own profile. No historical names to choose.',
+  'guestAdmin.registeredHelp': 'People with an account use the same invitation link to join with their own profile, without joining the community or choosing a historical name.',
   'guestAdmin.registeredAction': 'Select Jynlo players',
   'guestAdmin.guestBadge': 'NO ACCOUNT',
   'guestAdmin.guestTitle': 'Share on WhatsApp',
