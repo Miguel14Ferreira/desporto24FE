@@ -6,6 +6,7 @@ import { Events2Component } from './events2.component';
 import { LocationMethodSelectorComponent } from '../../shared/location-method-selector/location-method-selector.component';
 import { Venue } from '../model/venue';
 import { SessionService } from '../../services/session.service';
+import { SessionPresetService } from '../../services/session-preset.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { VenuePhoto, VenueService, VenueSuggestionPage } from '../../services/venue.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
@@ -14,12 +15,16 @@ describe('Events2Component', () => {
   let component: Events2Component;
   let fixture: ComponentFixture<Events2Component>;
   let sessionService: jasmine.SpyObj<SessionService>;
+  let presetService: jasmine.SpyObj<SessionPresetService>;
   let venueService: jasmine.SpyObj<VenueService>;
   let communityGroups: jasmine.SpyObj<CommunityGroupsService>;
   let router: Router;
 
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
+    presetService = jasmine.createSpyObj<SessionPresetService>(
+      'SessionPresetService', ['mine', 'create', 'update', 'remove']);
+    presetService.mine.and.returnValue(of([]));
     communityGroups = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine', 'get', 'competition']);
     communityGroups.mine.and.returnValue(of([]));
     communityGroups.competition.and.returnValue(of({
@@ -61,6 +66,7 @@ describe('Events2Component', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: SessionService, useValue: sessionService },
+        { provide: SessionPresetService, useValue: presetService },
         { provide: CommunityGroupsService, useValue: communityGroups },
         { provide: VenueService, useValue: venueService }
       ]
@@ -74,6 +80,76 @@ describe('Events2Component', () => {
     fixture.detectChanges();
   });
 
+
+  it('saves a reusable preset without a date, password, photo or registration time', () => {
+    component.sport = 'Futsal';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.gameDate = '2026-11-01T19:30';
+    component.registrationOpensAt = '2026-10-31T12:00';
+    component.password = 'do-not-save';
+    component.privateGame = true;
+    component.maxParticipants = 10;
+    component.presetName = 'Futsal habitual';
+    presetService.create.and.callFake((name, settings) => {
+      expect(name).toBe('Futsal habitual');
+      expect(settings.sport).toBe('Futsal');
+      expect(settings.maxParticipants).toBe(10);
+      expect(JSON.stringify(settings)).not.toContain('2026-11-01');
+      expect(JSON.stringify(settings)).not.toContain('2026-10-31');
+      expect(JSON.stringify(settings)).not.toContain('do-not-save');
+      return of({
+        id: 5, name, settings, createdAt: '2026-10-28T00:00:00Z',
+        updatedAt: '2026-10-28T00:00:00Z'
+      });
+    });
+    component.savePreset();
+    expect(presetService.create).toHaveBeenCalledTimes(1);
+    expect(component.selectedPresetId).toBe(5);
+    expect(component.presetMessage).toBeTruthy();
+  });
+
+  it('loads a preset but requires new date, registration opening and private password', () => {
+    component.sport = 'Futsal';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 10;
+    component.privateGame = true;
+    component.presetName = 'Sábado';
+    presetService.create.and.callFake((name, settings) => of({
+      id: 7, name, settings: {...settings, registrationOpeningMode: 'SCHEDULED'},
+      createdAt: '2026-10-28T00:00:00Z', updatedAt: '2026-10-28T00:00:00Z'
+    }));
+    component.savePreset();
+    component.gameDate = '2026-11-05T20:00';
+    component.registrationOpensAt = '2026-11-04T12:00';
+    component.password = 'old-secret';
+    component.applyPresetById(7);
+    expect(component.gameDate).toBe('');
+    expect(component.registrationOpensAt).toBe('');
+    expect(component.password).toBe('');
+    expect(component.privateGame).toBeTrue();
+    expect(component.maxParticipants).toBe(10);
+    expect(component.registrationOpeningMode).toBe('SCHEDULED');
+    expect(component.presetMessage).toBeTruthy();
+  });
+
+  it('requires two explicit clicks to delete a preset', () => {
+    component.sport = 'Futsal';
+    component.presetName = 'Futsal';
+    presetService.create.and.callFake((name, settings) => of({
+      id: 8, name, settings, createdAt: '', updatedAt: ''
+    }));
+    component.savePreset();
+    presetService.remove.and.returnValue(of(undefined));
+    component.deletePreset();
+    expect(component.presetConfirmDelete).toBeTrue();
+    expect(presetService.remove).not.toHaveBeenCalled();
+    component.deletePreset();
+    expect(presetService.remove).toHaveBeenCalledOnceWith(8);
+    expect(component.presets.length).toBe(0);
+    expect(component.selectedPresetId).toBeNull();
+  });
 
   it('selects singles or doubles only for sports that actually support both formats', () => {
     component.sport = 'Padel';

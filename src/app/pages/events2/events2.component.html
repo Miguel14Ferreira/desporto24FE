@@ -33,6 +33,63 @@
     }
 
     <form class="create-card" (ngSubmit)="createSession()">
+      <section class="create-preset-panel" aria-labelledby="create-preset-title">
+        <div class="create-preset-heading">
+          <div>
+            <span class="section-kicker">{{ 'createSession.presets.kicker' | t }}</span>
+            <h2 id="create-preset-title">{{ 'createSession.presets.title' | t }}</h2>
+            <p>{{ 'createSession.presets.hint' | t }}</p>
+          </div>
+        </div>
+        <div class="create-preset-fields">
+          <label>
+            <span>{{ 'createSession.presets.select' | t }}</span>
+            <select name="sessionPresetSelection" [ngModel]="selectedPresetId"
+                    (ngModelChange)="applyPresetById($event)" [disabled]="presetsLoading || presetSaving || loading">
+              <option [ngValue]="null">{{ 'createSession.presets.noSelection' | t }}</option>
+              @for (preset of presets; track preset.id) {
+                <option [ngValue]="preset.id">{{ preset.name }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>{{ 'createSession.presets.name' | t }}</span>
+            <input type="text" name="sessionPresetName" [(ngModel)]="presetName"
+                   maxlength="70" autocomplete="off"
+                   (keydown.enter)="$event.preventDefault(); savePreset()"
+                   [placeholder]="'createSession.presets.placeholder' | t"
+                   [disabled]="loading || presetSaving || presetDeleting">
+          </label>
+        </div>
+        <div class="create-preset-actions">
+          <button type="button" class="jynlo-action jynlo-action--primary"
+                  [disabled]="loading || presetSaving || presetDeleting || presetsLoading"
+                  (click)="savePreset()">{{ 'createSession.presets.saveNew' | t }}</button>
+          @if (selectedPresetId !== null) {
+            <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="loading || presetSaving || presetDeleting"
+                    (click)="savePreset(true)">{{ 'createSession.presets.update' | t }}</button>
+            <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="loading || presetSaving || presetDeleting"
+                    (click)="deletePreset()">{{ (presetConfirmDelete
+                      ? 'createSession.presets.confirmDelete'
+                      : 'createSession.presets.delete') | t }}</button>
+            @if (presetConfirmDelete) {
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                      (click)="presetConfirmDelete = false">{{ 'common.cancel' | t }}</button>
+            }
+          }
+        </div>
+        @if (presetsLoading) {
+          <p class="create-preset-message" role="status">{{ 'createSession.presets.loading' | t }}</p>
+        }
+        @if (presetMessage) {
+          <p class="create-preset-message" role="status">{{ presetMessage }}</p>
+        }
+        @if (presetError) {
+          <p class="create-preset-error" role="alert">{{ presetError }}</p>
+        }
+      </section>
       <section class="create-mode-panel" aria-labelledby="create-mode-title">
         <div class="create-mode-intro">
           <span class="section-kicker">{{ 'createSession.modeKicker' | t }}</span>
