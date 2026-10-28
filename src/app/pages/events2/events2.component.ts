@@ -8,6 +8,8 @@ import { debounceTime, finalize, retry, Subject, timeout } from 'rxjs';
 import { CreateSessionRequest } from '../model/create-session-request';
 import { CommunityGroup, CommunityCompetitionOverview } from '../model/community-group';
 import { SessionService } from '../../services/session.service';
+import { SessionPresetService } from '../../services/session-preset.service';
+import { SessionPreset, SessionPresetSettings } from '../model/session-preset';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue, VenueOwnershipType } from '../model/venue';
@@ -285,6 +287,224 @@ export class Events2Component implements OnInit, OnDestroy {
   loading = false;
   errorMessage = '';
 
+  // Presets belong to the account and never include passwords, dates or photos.
+  presets: SessionPreset[] = [];
+  selectedPresetId: number | null = null;
+  presetName = '';
+  presetsLoading = false;
+  presetSaving = false;
+  presetDeleting = false;
+  presetConfirmDelete = false;
+  presetMessage = '';
+  presetError = '';
+  private presetApplyRevision = 0;
+
+  loadPresets(): void {
+    this.presetsLoading = true;
+    this.presetService.mine().pipe(
+      timeout(10_000),
+      finalize(() => this.presetsLoading = false)
+    ).subscribe({
+      next: presets => { this.presets = presets; this.presetError = ''; },
+      error: () => { this.presetError = t('createSession.presets.loadError'); }
+    });
+  }
+
+  private currentPresetSettings(): SessionPresetSettings {
+    // Browser GPS position may become stale; save the method, not historical coordinates.
+    const saveMapPoint = this.selectedVenueId === null
+      && this.locationMethod === 'maps' && this.hasCoordinates;
+    return {
+      sport: this.sport.trim(),
+      playFormat: this.playFormat,
+      city: this.city.trim(),
+      address: this.address.trim(),
+      maxParticipants: Number(this.maxParticipants),
+      creationMode: this.creationMode,
+      confirmedPlayers: Number(this.confirmedPlayers ?? 1),
+      hasPrice: this.hasPrice,
+      priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
+      privateGame: !this.findPlayersMode && this.privateGame,
+      communityShareIds: this.communityId === null ? [...this.shareCommunityIds] : [],
+      communityId: this.communityId,
+      seasonGame: this.seasonGame && this.canMarkSeasonGame,
+      selectedVenueId: this.selectedVenueId,
+      locationMethod: this.locationMethod,
+      latitude: saveMapPoint ? this.latitude : null,
+      longitude: saveMapPoint ? this.longitude : null,
+      venueMapLink: saveMapPoint ? this.venueMapLink.trim() : '',
+      recurrence: this.recurrence,
+      recurrenceOccurrences: Number(this.recurrenceOccurrences),
+      weeklySessionsPerWeek: Number(this.weeklySessionsPerWeek),
+      registrationOpeningMode: this.registrationOpeningMode
+    };
+  }
+
+  savePreset(update = false): void {
+    if (this.presetSaving || this.loading || this.presetsLoading) return;
+    const name = this.presetName.trim();
+    if (!name || name.length > 70) {
+      this.presetError = t('createSession.presets.nameRequired');
+      return;
+    }
+    if (!this.sportSelected) {
+      this.presetError = t('createSession.presets.sportRequired');
+      return;
+    }
+    const settings = this.currentPresetSettings();
+    if (!Number.isInteger(settings.maxParticipants) || settings.maxParticipants < 2
+        || settings.maxParticipants > 100 || settings.confirmedPlayers < 1
+        || settings.confirmedPlayers > settings.maxParticipants) {
+      this.presetError = t('feedback.create.playersRange');
+      return;
+    }
+    if (update && this.selectedPresetId === null) return;
+    if (!update && this.presets.length >= 20) {
+      this.presetError = t('createSession.presets.limit');
+      return;
+    }
+    const action = update
+      ? this.presetService.update(this.selectedPresetId!, name, settings)
+      : this.presetService.create(name, settings);
+    this.presetSaving = true;
+    this.presetError = '';
+    this.presetMessage = '';
+    action.pipe(
+      timeout(10_000),
+      finalize(() => this.presetSaving = false)
+    ).subscribe({
+      next: saved => {
+        this.presets = [saved, ...this.presets.filter(item => item.id !== saved.id)];
+        this.selectedPresetId = saved.id;
+        this.presetName = saved.name;
+        this.presetConfirmDelete = false;
+        this.presetMessage = t(update ? 'createSession.presets.updated' : 'createSession.presets.saved');
+      },
+      error: () => { this.presetError = t('createSession.presets.saveError'); }
+    });
+  }
+
+  applyPresetById(id: number | null): void {
+    this.selectedPresetId = id;
+    this.presetConfirmDelete = false;
+    this.presetError = '';
+    this.presetMessage = '';
+    if (id === null || this.loading) return;
+    const preset = this.presets.find(item => item.id === id);
+    if (!preset) return;
+    const s = preset.settings;
+    const revision = ++this.presetApplyRevision;
+    this.presetName = preset.name;
+    // Stop pending community recommendations overwriting a deliberately chosen preset.
+    ++this.communityPrefillRevision;
+    this.autoCommunitySport = '';
+    this.autoCommunityPoint = null;
+    this.autoCommunityVenueId = null;
+    this.sport = s.sport;
+    this.confirmSportSelection();
+    if (!this.sportSelected) {
+      this.presetError = t('createSession.presets.sportUnavailable');
+      return;
+    }
+    this.playFormat = s.playFormat === 'PAIRS' && this.canChoosePlayFormat ? 'PAIRS' : 'INDIVIDUAL';
+    this.creationMode = s.creationMode === 'COMPLETE' ? 'COMPLETE' : 'START';
+    this.maxParticipants = s.maxParticipants;
+    this.confirmedPlayers = Math.max(1, Math.min(s.confirmedPlayers || 1, this.maxParticipants));
+    this.hasPrice = !!s.hasPrice;
+    this.priceAmount = this.hasPrice ? s.priceAmount : null;
+    this.privateGame = this.creationMode === 'START' && !!s.privateGame;
+    this.password = ''; // Never restore a password, even for a private preset.
+    if (this.communityId === null) {
+      const allowed = new Set(this.communities
+        .filter(g => !!g.myRole && this.canCreateForCommunity(g)).map(g => g.id));
+      const savedIds = (s.communityShareIds || []).length
+        ? s.communityShareIds : (s.communityId ? [s.communityId] : []);
+      this.shareCommunityIds = savedIds.filter(groupId => allowed.has(groupId)).slice(0, 5);
+      if (this.shareCommunityIds.length && this.privateGame) this.privateGame = false;
+      if (savedIds.length !== this.shareCommunityIds.length) {
+        this.presetMessage = t('createSession.presets.communityWarning');
+      }
+    } else if (s.communityId !== this.communityId) {
+      this.presetMessage = t('createSession.presets.communityWarning');
+    }
+    this.toggleSeasonGame(false);
+    if (s.seasonGame && this.canMarkSeasonGame) this.toggleSeasonGame(true);
+    this.recurrence = s.recurrence || 'NONE';
+    this.recurrenceOccurrences = s.recurrenceOccurrences || 4;
+    this.setWeeklySessionsPerWeek(s.weeklySessionsPerWeek || 1);
+    // A weekly template retains its recurrence pattern, not any previous dates.
+    this.gameDate = '';
+    this.additionalWeeklyGameDates = Array.from({length: this.weeklySessionsPerWeek - 1}, () => '');
+    this.registrationOpeningMode = s.registrationOpeningMode || 'IMMEDIATE';
+    this.registrationOpensAt = '';
+    this.clearPhoto();
+    this.city = s.city || '';
+    this.address = s.address || '';
+    this.locationMethod = s.locationMethod || 'venue';
+    this.venueMapLink = '';
+    this.clearLocation();
+    if (s.locationMethod === 'maps' && Number.isFinite(s.latitude)
+        && Number.isFinite(s.longitude) && s.latitude !== null && s.longitude !== null) {
+      this.locationMethod = 'maps';
+      this.locationSource = 'map';
+      this.latitude = s.latitude;
+      this.longitude = s.longitude;
+      this.locationCaptured = true;
+      this.venueMapLink = s.venueMapLink || '';
+      this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+        'https://www.google.com/maps?q=' + s.latitude + ',' + s.longitude + '&z=16&output=embed'
+      );
+    }
+    if (s.selectedVenueId) {
+      // Load the *current* venue record. Do not reuse stale details from a saved profile.
+      this.venueService.get(s.selectedVenueId).pipe(timeout(10_000)).subscribe({
+        next: venue => {
+          if (revision !== this.presetApplyRevision || this.selectedPresetId !== id) return;
+          const sports = (venue.sports || '').split(/[;,]/).map(item => item.trim().toLocaleLowerCase('pt'));
+          if (sports.some(Boolean) && !sports.includes(this.sport.trim().toLocaleLowerCase('pt'))) {
+            this.presetError = t('createSession.venueSportMismatch');
+            return;
+          }
+          this.newlyCreatedVenues = [...this.newlyCreatedVenues.filter(v => v.id !== venue.id), venue];
+          this.venues = [...this.venues.filter(v => v.id !== venue.id), venue];
+          this.venueDistrict = this.districts.find(d => d === venue.district) || this.allDistrictsOption;
+          this.venueSearch = venue.name + ' · ' + venue.city;
+          this.selectVenue(venue.id);
+        },
+        error: () => {
+          if (revision === this.presetApplyRevision) {
+            this.presetError = t('createSession.presets.venueUnavailable');
+          }
+        }
+      });
+    }
+    this.presetMessage = this.presetMessage || t('createSession.presets.applied');
+  }
+
+  deletePreset(): void {
+    if (this.selectedPresetId === null || this.presetSaving || this.presetDeleting) return;
+    if (!this.presetConfirmDelete) {
+      this.presetConfirmDelete = true;
+      return;
+    }
+    const id = this.selectedPresetId;
+    this.presetDeleting = true;
+    this.presetError = '';
+    this.presetService.remove(id).pipe(
+      timeout(10_000), finalize(() => this.presetDeleting = false)
+    ).subscribe({
+      next: () => {
+        ++this.presetApplyRevision;
+        this.presets = this.presets.filter(item => item.id !== id);
+        this.selectedPresetId = null;
+        this.presetName = '';
+        this.presetConfirmDelete = false;
+        this.presetMessage = t('createSession.presets.deleted');
+      },
+      error: () => { this.presetError = t('createSession.presets.deleteError'); }
+    });
+  }
+
   communityId: number | null = null;
   communityName = '';
   communitySports: string[] = [];
@@ -389,6 +609,7 @@ export class Events2Component implements OnInit, OnDestroy {
 
   constructor(
     private sessionService: SessionService,
+    private presetService: SessionPresetService,
     private communityService: CommunityGroupsService,
     private venueService: VenueService,
     private sanitizer: DomSanitizer,
@@ -413,6 +634,7 @@ export class Events2Component implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.minDate = this.toLocalDateTimeValue(new Date());
+    this.loadPresets();
 
     const params = this.route.snapshot.queryParamMap;
     const communityId = Number(params.get('community'));
