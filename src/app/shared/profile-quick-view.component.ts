@@ -9,10 +9,11 @@ import { CommunityProfile } from '../pages/model/community-profile';
 import { CommunityService } from '../services/community.service';
 import { ProfileQuickViewService } from '../services/profile-quick-view.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { VenueSportsBadgesComponent } from './venue-sports-badges/venue-sports-badges.component';
 
 @Component({
  selector:'app-profile-quick-view',standalone:true,
- imports:[CommonModule,RouterLink,TranslatePipe],
+ imports:[CommonModule,RouterLink,TranslatePipe,VenueSportsBadgesComponent],
  template:`
  @if (quick.username$ | async; as username) {
    <div class="contact-backdrop" (click)="close()" (keydown.escape)="close()">
@@ -46,7 +47,11 @@ import { TranslatePipe } from '../i18n/translate.pipe';
            <h2 id="contact-name">{{ person.nickname || person.fullName || person.username }}</h2>
            <p class="contact-handle">@{{ person.username }}</p>
            @if (person.location) { <p class="contact-meta">{{ person.location }}</p> }
-           @if (person.favoriteSports) { <p class="contact-meta">{{ person.favoriteSports }}</p> }
+           @if (person.favoriteSports) {
+             <app-venue-sports-badges class="contact-sports"
+               [sports]="person.favoriteSports" [limit]="4" [expandable]="true"
+               [compact]="true"></app-venue-sports-badges>
+           }
            @if (person.bio) { <p class="contact-bio">{{ person.bio }}</p> }
          </div>
          <div class="contact-actions">
@@ -90,6 +95,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
  h2{font-size:1.55rem;margin:6px 0 3px;overflow-wrap:anywhere}
  .contact-handle{color:#71dec8;margin:0 0 12px}
  .contact-meta{font-size:.85rem;color:#bcdbda;margin:4px}
+ .contact-sports{display:block;text-align:left;margin:10px auto;max-width:330px}
  .contact-bio{color:#e3efef;overflow-wrap:anywhere;font-size:.86rem;margin:14px 0}
  .contact-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:18px 20px;
    border-top:1px solid #ffffff19}
