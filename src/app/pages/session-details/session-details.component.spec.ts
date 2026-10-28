@@ -1066,6 +1066,78 @@ describe('SessionDetailsComponent', () => {
     expect(ics).toContain('LOCATION:Rua do Campo\\, 10');
   });
 
+  it('saves authorised GPS-only venue coordinates in all calendar providers', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, name: 'Pavilhão Marítimo', city: 'Aveiro',
+        address: '', latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN' } as any
+    };
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location'))
+      .toBe('40.6668823,-8.7391574');
+    expect(new URL(component.outlookCalendarUrl()!).searchParams.get('location'))
+      .toBe('40.6668823,-8.7391574');
+    expect(component.calendarIcsContent()).toContain(
+      'LOCATION:40.6668823\\,-8.7391574');
+  });
+
+  it('never exports venue coordinates or a private address to the calendar when locked', () => {
+    component.session = {
+      ...session, canSeeExactAddress: false,
+      address: 'Rua Secreta, 21',
+      venue: { id: 447, name: 'Recinto Privado', city: 'Lisboa',
+        latitude: 38.7223, longitude: -9.1393 } as any
+    };
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location')).toBe('Lisboa');
+    expect(new URL(component.outlookCalendarUrl()!).searchParams.get('location')).toBe('Lisboa');
+    expect(component.calendarIcsContent()).toContain('LOCATION:Lisboa');
+    expect(component.calendarIcsContent()).not.toContain('Rua Secreta');
+    expect(component.calendarIcsContent()).not.toContain('38.7223');
+  });
+
+  it('does not export a legacy GPS placeholder as a postal address', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true,
+      address: 'Coordenadas (morada por confirmar)',
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574 } as any
+    };
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location'))
+      .toBe('40.6668823,-8.7391574');
+    expect(component.calendarIcsContent()).not.toContain('morada por confirmar');
+  });
+
+  it('falls back to municipality for implausible GPS without a usable street address', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, latitude: 0, longitude: 0 } as any
+    };
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location')).toBe('Lisboa');
+    expect(component.calendarIcsContent()).toContain('LOCATION:Lisboa');
+  });
+
+  it('links a registered venue only after the session authorises exact location', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true,
+      venue: { id: 447, name: 'Pavilhão Central', city: 'Lisboa' } as any
+    };
+    fixture.detectChanges();
+    const venueLink = fixture.nativeElement.querySelector('.session-venue-link') as HTMLAnchorElement;
+    const detailsAction = fixture.nativeElement.querySelector('.session-venue-details-action') as HTMLAnchorElement;
+    expect(venueLink).not.toBeNull();
+    expect(detailsAction).not.toBeNull();
+    expect(venueLink.getAttribute('href')).toBe('/menu/venues/447');
+    expect(detailsAction.getAttribute('href')).toBe('/menu/venues/447');
+    expect(detailsAction.textContent).toContain('Ver recinto');
+
+    component.session = { ...session, canSeeExactAddress: false,
+      venue: { id: 447, name: 'Pavilhão Central', city: 'Lisboa' } as any };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-venue-link')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-venue-details-action')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.venue-detail-panel h2').textContent)
+      .toContain('Pavilhão Central');
+  });
+
   it('scrolls to the participant list without navigating away from the session', () => {
     component.session = {
       ...session,

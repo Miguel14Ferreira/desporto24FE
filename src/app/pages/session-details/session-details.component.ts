@@ -2237,14 +2237,32 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       ? address : t('sessionDetail.openMaps');
   }
 
+  /** Calendar exports must obey the same server-controlled visibility rule
+   * as the map link. If the venue has GPS but no postal address, preserve the
+   * coordinates for authorised attendees instead of degrading to city only.
+   * Coordinates identify a catalogue point, NOT a certified venue entrance.
+   */
   private calendarLocation(): string {
-    if (!this.session) {
-      return '';
-    }
+    const session = this.session;
+    if (!session) return '';
+    if (!session.canSeeExactAddress) return session.city;
 
-    return this.session.canSeeExactAddress && this.session.address
-      ? this.session.address
-      : this.session.city;
+    const address = session.address?.trim() ?? '';
+    // Legacy OSM placeholders must not be copied to calendar locations as
+    // if they were actual postal addresses.
+    const placeholder = /^(?:localização no mapa:|localizacao no mapa:|map location:|coordenadas\s*\()/i.test(address)
+      || /(?:morada por confirmar|address to be confirmed)/i.test(address);
+    if (address && !placeholder) return address;
+
+    const latitude = session.venue?.latitude;
+    const longitude = session.venue?.longitude;
+    const gps = typeof latitude === 'number' && typeof longitude === 'number'
+      && Number.isFinite(latitude) && Number.isFinite(longitude)
+      // Mainland, Azores and Madeira; exclude (0,0) and stray coordinates.
+      && ((latitude >= 36.8 && latitude <= 42.3 && longitude >= -9.7 && longitude <= -6.0)
+        || (latitude >= 36.5 && latitude <= 40.2 && longitude >= -31.5 && longitude <= -24.5)
+        || (latitude >= 32.5 && latitude <= 33.5 && longitude >= -17.5 && longitude <= -16.0));
+    return gps ? latitude + ',' + longitude : session.city;
   }
 
   private calendarStartUtc(): string {
