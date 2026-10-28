@@ -218,12 +218,16 @@
 
           <label>
             <span>{{ 'common.gender' | t }}</span>
-            <select name="gender" [(ngModel)]="profile.gender" [disabled]="saving">
-              <option [ngValue]="null">{{ 'profile.gender.none' | t }}</option>
-              <option value="masculino">{{ 'register.male' | t }}</option>
-              <option value="feminino">{{ 'register.female' | t }}</option>
-              <option value="outro">{{ 'register.other' | t }}</option>
-            </select>
+            <app-jynlo-select name="gender" [(ngModel)]="profile.gender"
+              [options]="[
+                {value: '', label: ('profile.gender.none' | t)},
+                {value: 'masculino', label: ('register.male' | t)},
+                {value: 'feminino', label: ('register.female' | t)},
+                {value: 'outro', label: ('register.other' | t)}
+              ]"
+              [ariaLabel]="'common.gender' | t" [placeholder]="'profile.gender.none' | t"
+              [disabled]="saving" [blocked]="saving">
+            </app-jynlo-select>
           </label>
 
           <div class="full-width sport-selector">
@@ -278,15 +282,17 @@
 
           <label>
             <span>{{ 'profile.skillLevel' | t }}</span>
-            <select
-              name="skillLevel"
-              [(ngModel)]="profile.skillLevel"
-              [disabled]="saving">
-              <option [ngValue]="null">{{ 'profile.skillLevel.none' | t }}</option>
-              <option value="BEGINNER">{{ 'profile.level.BEGINNER' | t }}</option>
-              <option value="INTERMEDIATE">{{ 'profile.level.INTERMEDIATE' | t }}</option>
-              <option value="ADVANCED">{{ 'profile.level.ADVANCED' | t }}</option>
-            </select>
+            <app-jynlo-select name="skillLevel" [(ngModel)]="profile.skillLevel"
+              [options]="[
+                {value: '', label: ('profile.skillLevel.none' | t)},
+                {value: 'BEGINNER', label: ('profile.level.BEGINNER' | t)},
+                {value: 'INTERMEDIATE', label: ('profile.level.INTERMEDIATE' | t)},
+                {value: 'ADVANCED', label: ('profile.level.ADVANCED' | t)}
+              ]"
+              [ariaLabel]="'profile.skillLevel' | t"
+              [placeholder]="'profile.skillLevel.none' | t"
+              [disabled]="saving" [blocked]="saving">
+            </app-jynlo-select>
           </label>
 
           <label>
