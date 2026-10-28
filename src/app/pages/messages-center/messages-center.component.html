@@ -181,6 +181,7 @@
               [composerAllowed]="composerAllowed"
               [sending]="sending" [deliveryUncertain]="deliveryUncertain"
               [dateFormatter]="conversationListFormatters.date"
+              [previewFormatter]="conversationListFormatters.preview"
               (termChanged)="messageSearchTerm = $event; onMessageSearchTermChange()"
               (searchRequested)="submitMessageSearch($event)"
               (locateRequested)="viewMessageSearchResult($event)"
@@ -284,7 +285,7 @@
                   <app-giphy-embed [id]="giphy.id" [pageUrl]="giphy.pageUrl"
                     [caption]="giphy.caption" [creator]="giphy.creator"></app-giphy-embed>
                 } @else if (showMessageBody(message)) {
-                  <p>{{ message.text }}</p>
+                  <p>{{ displayMessagePreview(message.text) }}</p>
                 }
                 @if (!message.deletedAt && message.attachmentName) {
                   <div class="inbox-attachment">
