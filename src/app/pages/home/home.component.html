@@ -143,7 +143,9 @@
             @for (venue of featuredVenues; track venue.id) {
               <article class="preview-item preview-venue">
                 <strong>{{ venue.name }}</strong>
-                <span>{{ venue.city }} · {{ venue.sports }}</span>
+                <span class="preview-venue-city">{{ venue.city }}</span>
+                <app-venue-sports-badges [sports]="venue.sports" [limit]="3"
+                  [compact]="true"></app-venue-sports-badges>
               </article>
             }
           }
