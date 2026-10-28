@@ -730,14 +730,16 @@
                   } @else {
                     <fieldset class="community-session-policy-options" [disabled]="sessionPolicySaving">
                       <legend>{{ 'communities.sessionPolicy.choose' | t }}</legend>
-                      <label [class.selected]="sessionPolicyDraft">
-                        <input type="radio" name="communitySessionPermission" [value]="true" [(ngModel)]="sessionPolicyDraft">
-                        {{ 'communities.sessionPolicy.everyone' | t }}
-                      </label>
-                      <label [class.selected]="!sessionPolicyDraft">
-                        <input type="radio" name="communitySessionPermission" [value]="false" [(ngModel)]="sessionPolicyDraft">
-                        {{ 'communities.sessionPolicy.admins' | t }}
-                      </label>
+                      <div class="community-session-policy-choice-grid">
+                        <label [class.selected]="sessionPolicyDraft">
+                          <input type="radio" name="communitySessionPermission" [value]="true" [(ngModel)]="sessionPolicyDraft">
+                          <span class="community-session-policy-choice-copy">{{ 'communities.sessionPolicy.everyone' | t }}</span>
+                        </label>
+                        <label [class.selected]="!sessionPolicyDraft">
+                          <input type="radio" name="communitySessionPermission" [value]="false" [(ngModel)]="sessionPolicyDraft">
+                          <span class="community-session-policy-choice-copy">{{ 'communities.sessionPolicy.admins' | t }}</span>
+                        </label>
+                      </div>
                     </fieldset>
                     <div class="community-session-policy-actions">
                       <button type="button" class="jynlo-action jynlo-action--primary" [disabled]="sessionPolicySaving"
