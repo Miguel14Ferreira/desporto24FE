@@ -5,6 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityCreateComponent } from '../community-create/community-create.component';
+import { CommunityHabitualVenuePickerComponent } from './community-habitual-venue-picker.component';
 import { CommunityInviteStepComponent } from '../community-create/community-invite-step.component';
 import { CommunitiesComponent } from './communities.component';
 import { CommunityDiscoveryPitchComponent } from './community-discovery-pitch.component';
@@ -52,6 +53,7 @@ const routes: Routes = [
   ],
   imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe, ChatReactionsComponent, KartingPodiumComponent, KartingPalmaresComponent, KartingRaceTableComponent,
     CompetitionGuideComponent, CompetitionFormatChooserComponent, CommunityDiscoveryPitchComponent, CommunityPerformanceInsightsComponent, CommunityTabsComponent, CommunitySessionCardComponent, CommunityOverviewStatsComponent, CommunityLeaderHighlightComponent, CommunityFeatureSettingsComponent, CommunityWhatsAppShareComponent, CommunitySportManagementComponent, CommunityActiveSeasonCardComponent, CommunitySeasonTrophiesComponent, CommunityStatLeadersComponent, CommunityStatsTableComponent, CommunityRankingTableComponent, CommunityPendingInvitesComponent, CommunitySwitchComponent, CommunityCompetitionSettingsComponent, CommunityRankingVisibilityComponent, CommunitySeasonCreateFormComponent, CommunitySeasonFilterComponent, CommunityPhotoCoverComponent,
-    TournamentClassificationNoteComponent, RaceStandingsCardComponent]
+    TournamentClassificationNoteComponent, RaceStandingsCardComponent,
+    CommunityHabitualVenuePickerComponent]
 })
 export class CommunitiesModule {}
