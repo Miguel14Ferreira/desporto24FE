@@ -847,6 +847,52 @@ describe('Events2Component', () => {
       }), undefined);
   });
 
+  it('prefills a saved Maps point and still allows the organiser to pick another location', () => {
+    component.communities = [{
+      id: 12, name: 'ACM', sport: 'Futebol', sports: ['Futebol'],
+      habitualLocationSource: 'MAPS', habitualLatitude: 38.73,
+      habitualLongitude: -9.18, habitualCity: 'Lisboa',
+      habitualAddress: 'Rua do Campo',
+      myRole: 'MEMBER', description: null, photoUrl: null, visibility: 'PRIVATE',
+      rankingsEnabled: false, ownerUsername: 'owner', memberCount: 1,
+      createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    expect(component.locationMethod).toBe('maps');
+    expect(component.latitude).toBe(38.73);
+    expect(component.longitude).toBe(-9.18);
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua do Campo');
+
+    component.chooseLocationMethod('venue');
+    expect(component.locationMethod).toBe('venue');
+    expect(component.locationCaptured).toBeFalse();
+    component.city = 'Porto'; // Manual choices must not be overwritten.
+    component.toggleCommunityShare(12, false);
+    component.toggleCommunityShare(12, true);
+    expect(component.city).toBe('Porto');
+    expect(component.locationMethod).toBe('venue');
+  });
+
+  it('does not preselect conflicting habitual points for different communities', () => {
+    component.communities = [12, 13].map((id, i) => ({
+      id, name: 'Grupo ' + id, sport: 'Futebol', sports: ['Futebol'],
+      habitualLocationSource: 'GPS' as const,
+      habitualLatitude: 38.7 + i, habitualLongitude: -9.2,
+      habitualCity: 'Lisboa', habitualAddress: 'Rua A',
+      myRole: 'MEMBER' as const, description: null, photoUrl: null,
+      visibility: 'PRIVATE' as const, rankingsEnabled: false,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01',
+      members: []
+    }));
+    component.toggleCommunityShare(12, true);
+    expect(component.locationMethod).toBe('gps');
+    component.toggleCommunityShare(13, true);
+    expect(component.locationMethod).toBe('venue');
+    expect(component.latitude).toBeNull();
+    expect(component.city).toBe('');
+  });
+
   it('fills the sport and the habitual venue when one community is selected', () => {
     venueService.get.and.returnValue(of({
       id: 55, name: 'Pavilhão Municipal', city: 'Lisboa', district: 'Lisboa',
