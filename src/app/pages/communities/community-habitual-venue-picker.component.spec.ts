@@ -38,9 +38,10 @@ describe('Community habitual venue picker', () => {
       )
     };
     const cdr = { markForCheck: jasmine.createSpy('markForCheck') };
-    const component = new CommunityHabitualVenuePickerComponent(venues as any, groups as any, cdr as any);
+    const zone = { run: jasmine.createSpy('run').and.callFake((callback: () => unknown) => callback()) };
+    const component = new CommunityHabitualVenuePickerComponent(venues as any, groups as any, cdr as any, zone as any);
     component.community = {...group};
-    return {component, venues, groups, cdr};
+    return {component, venues, groups, cdr, zone};
   }
 
   it('opens a catalogue venue detail without silently making it the default', () => {
@@ -99,6 +100,75 @@ describe('Community habitual venue picker', () => {
     expect(component.error).toBeTruthy();
     component.ngOnDestroy();
   }));
+
+  it('refreshes the view after Maps resolves, geocoding finishes and saving succeeds', () => {
+    const {component, cdr, groups} = setup();
+    component.chooseLocationMethod('maps');
+    component.mapLink = 'https://www.google.com/maps?q=38.71,-9.13';
+    cdr.markForCheck.calls.reset();
+    component.resolveMapLink();
+    expect(component.locationPoint?.source).toBe('MAPS');
+    expect(component.resolvingMap).toBeFalse();
+    expect(component.resolvingAddress).toBeFalse();
+    expect(cdr.markForCheck).toHaveBeenCalled();
+    cdr.markForCheck.calls.reset();
+    component.savePoint();
+    expect(groups.updateHabitualLocation).toHaveBeenCalled();
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it('refreshes the view when opening a venue and after selecting it', () => {
+    const {component, cdr} = setup();
+    component.query = 'Campo';
+    component.search();
+    cdr.markForCheck.calls.reset();
+    component.openDetails(55);
+    expect(component.expanded?.id).toBe(55);
+    expect(component.detailLoading).toBeFalse();
+    expect(cdr.markForCheck).toHaveBeenCalled();
+    cdr.markForCheck.calls.reset();
+    component.save(55);
+    expect(component.community.defaultVenueId).toBe(55);
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it('re-enters Angular after an asynchronous browser GPS success', () => {
+    const {component, zone, cdr} = setup();
+    if (!navigator.geolocation) {
+      pending('Browser geolocation API unavailable in this test environment');
+      return;
+    }
+    const position = {coords: {latitude: 38.71, longitude: -9.13, accuracy: 8}} as GeolocationPosition;
+    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((success: PositionCallback) => {
+      success(position);
+    });
+    component.chooseLocationMethod('gps');
+    cdr.markForCheck.calls.reset();
+    component.captureCurrentLocation();
+    expect(zone.run).toHaveBeenCalled();
+    expect(component.locating).toBeFalse();
+    expect(component.locationPoint?.source).toBe('GPS');
+    expect(component.locationPoint?.city).toBe('Lisboa');
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it('re-enters Angular and shows a permission error after GPS failure', () => {
+    const {component, zone, cdr} = setup();
+    if (!navigator.geolocation) {
+      pending('Browser geolocation API unavailable in this test environment');
+      return;
+    }
+    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((
+      _success: PositionCallback, error?: PositionErrorCallback
+    ) => { error?.({ code: 1, message: 'denied' } as GeolocationPositionError); });
+    component.chooseLocationMethod('gps');
+    cdr.markForCheck.calls.reset();
+    component.captureCurrentLocation();
+    expect(zone.run).toHaveBeenCalled();
+    expect(component.locating).toBeFalse();
+    expect(component.error).toBeTruthy();
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
 
   it('resolves and saves a Google Maps point without creating a fake catalog venue', () => {
     const {component, venues, groups} = setup();
