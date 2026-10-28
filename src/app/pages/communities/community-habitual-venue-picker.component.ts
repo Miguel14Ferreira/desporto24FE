@@ -236,7 +236,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
-          this.error = 'Não foi possível pesquisar os recintos.';
+          this.error = t('communities.habitualVenue.errorSearch');
         }
       });
     this.subs.add(sub);
