@@ -5,7 +5,7 @@ import { finalize, timeout } from 'rxjs';
 
 import { RegistrationRequest } from '../model/registration-request';
 import { AuthenticationService } from '../../services/authethication.service';
-import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { COUNTRY_CALLING_CODES, COUNTRY_SELECT_CHOICES, countryNameFromLabel } from '../../shared/country-calling-codes';
 import { ActivatedRoute } from '@angular/router';
 import { registrationSessionId, registrationCommunityId, rememberRegistrationDestination } from '../../shared/registration-return-url';
 
@@ -31,6 +31,7 @@ export class CreateaccountComponent {
   readonly minBirthDate = this.dateYearsAgo(120);
 
   readonly countryOptions = COUNTRY_CALLING_CODES;
+  readonly countrySelectChoices = COUNTRY_SELECT_CHOICES;
 
   showPassword = false;
   photo?: File;

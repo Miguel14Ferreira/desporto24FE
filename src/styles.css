@@ -101,6 +101,38 @@ select option {
   color: #f8fafc;
 }
 
+/*
+ * App-wide premium SELECT foundation. Existing <select> bindings, ngValue,
+ * native keyboard behavior and validation remain unchanged. Browser-native
+ * option popups cannot be fully themed, so long searchable lists use the
+ * reusable <app-jynlo-select> instead (country and future migrations).
+ */
+select:not([multiple]):not([size]):not(.jynlo-select-native-exempt) {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid rgba(88,229,209,.34);
+  border-radius: .83rem;
+  color: #f2fffc;
+  color-scheme: dark;
+  padding-right: 2.6rem;
+  background-color: #092534;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2358e5d1' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .77rem center;
+  background-size: 1.08rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+select:not([multiple]):not([size]):not(.jynlo-select-native-exempt):hover:not(:disabled) {
+  border-color: rgba(88,229,209,.75);
+  background-color: #103446;
+}
+select:not([multiple]):not([size]):not(.jynlo-select-native-exempt):focus-visible {
+  border-color: #58e5d1;
+  box-shadow: 0 0 0 3px rgba(88,229,209,.15);
+  outline: 2px solid rgba(88,229,209,.5);
+}
+select:not([multiple]):not([size]):disabled {opacity:.62;cursor:not-allowed;}
+
 /* Jynlo action system — shared pill shape, independent semantic palettes. */
 .jynlo-action {
   --jynlo-action-text: #cbd5e1;

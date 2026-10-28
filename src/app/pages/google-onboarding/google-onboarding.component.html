@@ -67,14 +67,13 @@
 
         <label>
           <span>{{ 'common.country' | t }} *</span>
-          <select
-            name="country"
-            [(ngModel)]="country"
-            [disabled]="loading">
-            @for (item of countryOptions; track item.label) {
-              <option [value]="countryName(item.label)">{{ countryName(item.label) }}</option>
-            }
-          </select>
+          <app-jynlo-select
+            name="country" [(ngModel)]="country"
+            [options]="countrySelectChoices" [searchable]="true"
+            [ariaLabel]="'common.country' | t"
+            [placeholder]="'register.select' | t"
+            [required]="true" [disabled]="loading" [blocked]="loading"
+          ></app-jynlo-select>
         </label>
 
         <div class="full-width phone-field">

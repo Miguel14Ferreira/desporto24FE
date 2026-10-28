@@ -159,6 +159,29 @@ describe('AlterardadosComponent', () => {
     expect(service.revokeOtherDeviceSessions).not.toHaveBeenCalled();
   });
 
+  it('uses the searchable country picker and keeps profile changes in the same form', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    const selector=root.querySelector('app-jynlo-select[name="country"]');
+    expect(selector).not.toBeNull();
+    expect(selector?.querySelector('.jynlo-select__value')?.textContent).toContain('Portugal');
+    selector!.querySelector<HTMLButtonElement>('.jynlo-select__trigger')!.click();
+    fixture.detectChanges();
+    const input=selector!.querySelector<HTMLInputElement>('.jynlo-select__search')!;
+    input.value='angola';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    fixture.detectChanges();
+    const choices=selector!.querySelectorAll<HTMLButtonElement>('.jynlo-select__option');
+    expect(choices.length).toBe(1);
+    choices[0].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(component.profile?.country).toBe('Angola');
+    component.save();
+    expect(service.update).toHaveBeenCalledWith(jasmine.objectContaining({country:'Angola'}));
+  });
+
   it('should create and load the authenticated profile', () => {
     expect(component).toBeTruthy();
     expect(service.get).toHaveBeenCalled();
