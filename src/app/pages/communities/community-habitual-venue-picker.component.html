@@ -31,7 +31,17 @@
     <p class="community-venue-empty">{{ 'communities.habitualVenue.none' | t }}</p>
   }
 
-  @if (canManage) {
+  @if (canManage && !editing && hasHabitualVenue) {
+    <button type="button" class="community-venue-edit" (click)="openEditor()">
+      {{ 'communities.habitualVenue.change' | t }}
+    </button>
+  }
+  @if (canManage && editing) {
+    @if (hasHabitualVenue) {
+      <button type="button" class="community-venue-cancel" [disabled]="saving" (click)="cancelEdit()">
+        {{ 'communities.habitualVenue.cancelChange' | t }}
+      </button>
+    }
     <app-location-method-selector
       [value]="locationMethod" [disabled]="saving"
       (valueChange)="chooseLocationMethod($event)"></app-location-method-selector>
