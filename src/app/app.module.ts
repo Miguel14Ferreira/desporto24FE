@@ -27,6 +27,7 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { TranslatePipe } from './i18n/translate.pipe';
 import { DirectCallOverlayComponent } from './shared/direct-call-overlay.component';
 import { ProfileQuickViewComponent } from './shared/profile-quick-view.component';
+import { VenueSportsBadgesComponent } from './shared/venue-sports-badges/venue-sports-badges.component';
 import { LegalPageComponent } from './pages/legal-page/legal-page.component';
 
 @NgModule({ declarations: [
@@ -57,6 +58,8 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         ReactiveFormsModule,
         BrowserAnimationsModule,
         TranslatePipe,
+    VenueSportsBadgesComponent,
         DirectCallOverlayComponent,
-        ProfileQuickViewComponent], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
+        ProfileQuickViewComponent,
+        VenueSportsBadgesComponent], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }
