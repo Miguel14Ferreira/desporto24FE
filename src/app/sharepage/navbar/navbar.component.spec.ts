@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
 import { NavbarComponent } from './navbar.component';
@@ -35,9 +36,10 @@ describe('NavbarComponent', () => {
 
     notificationChanges = new Subject<void>();
     notificationService = jasmine.createSpyObj<NotificationApiService>(
-      'NotificationApiService', ['unreadCount'], { changes$: notificationChanges.asObservable() }
+      'NotificationApiService', ['unreadCount', 'mine'], { changes$: notificationChanges.asObservable() }
     );
     notificationService.unreadCount.and.returnValue(of(0));
+    notificationService.mine.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       declarations: [NavbarComponent],
@@ -58,6 +60,77 @@ describe('NavbarComponent', () => {
   afterEach(() => {
     document.title = originalTabTitle;
   });
+
+
+  it('shows only confirmed, eligible incoming media alerts and opens the right chat', fakeAsync(() => {
+    const oldToken = localStorage.getItem('t');
+    localStorage.setItem('t', 'qa-notification-token');
+    try {
+      spyOn(document, 'hasFocus').and.returnValue(true);
+      spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
+      (authService as any).loggedInPerfilname = 'bea';
+      authService.hasSessionCandidate.and.returnValue(true);
+      (component as any).syncAuthenticatedState();
+      const incoming = { id: 82, username1: 'ana', username2: 'bea',
+        text: '📎 private-filename.jpg', attachmentMimeType: 'image/jpeg' };
+      const alert = { id: 404, type: 'CHAT_MESSAGE', read: false,
+        relatedUsername: 'ana', message: '🖼️ Fotografia',
+        createdAt: new Date().toISOString() };
+      notificationService.mine.and.returnValue(of([alert as any]));
+      const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      incomingMessages.next(incoming);
+      tick(300);
+      fixture.detectChanges();
+      const toast = fixture.nativeElement.querySelector('.jynlo-chat-toast') as HTMLElement;
+      expect(toast?.textContent).toContain('Nova mensagem de ana');
+      expect(toast?.textContent).toContain('ana enviou-te uma fotografia');
+      expect(toast?.textContent).not.toContain('private-filename');
+      expect(toast?.querySelector('.jynlo-chat-toast__open')).toBeTruthy();
+      component.openChatToast();
+      expect(navigate).toHaveBeenCalledWith(['/menu/messages'], {
+        queryParams: { kind: 'direct', id: 'ana' }
+      });
+      expect(component.chatToast).toBeUndefined();
+      incomingMessages.next(incoming);
+      tick(300);
+      expect(component.chatToast).toBeUndefined();
+      expect(notificationService.mine).toHaveBeenCalledTimes(2);
+    } finally {
+      component.ngOnDestroy();
+      if (oldToken === null) localStorage.removeItem('t');
+      else localStorage.setItem('t', oldToken);
+    }
+  }));
+
+  it('does not show muted or unconfirmed notices and rejects edits, echoes and stale accounts', fakeAsync(() => {
+    const oldToken = localStorage.getItem('t');
+    localStorage.setItem('t', 'qa-notification-token');
+    try {
+      spyOn(document, 'hasFocus').and.returnValue(true);
+      spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
+      (authService as any).loggedInPerfilname = 'bea';
+      authService.hasSessionCandidate.and.returnValue(true);
+      (component as any).syncAuthenticatedState();
+      const msg = { id: 90, username1: 'ana', username2: 'bea', text: 'Olá!' };
+      notificationService.mine.and.returnValue(of([]));
+      incomingMessages.next(msg); tick(300);
+      expect(component.chatToast).toBeUndefined();
+      incomingMessages.next({...msg, editedAt: new Date().toISOString()}); tick(300);
+      incomingMessages.next({...msg, username1: 'bea', username2: 'ana'}); tick(300);
+      expect(notificationService.mine).toHaveBeenCalledTimes(1);
+      const incomingAlert = {id: 90, type: 'CHAT_MESSAGE', relatedUsername: 'ana',
+        message: 'Olá!', read: false, createdAt: new Date().toISOString()};
+      notificationService.mine.and.returnValue(of([incomingAlert as any]));
+      (authService as any).loggedInPerfilname = 'outro';
+      incomingMessages.next(msg); tick(300);
+      expect(component.chatToast).toBeUndefined();
+      expect(notificationService.mine).toHaveBeenCalledTimes(1);
+    } finally {
+      component.ngOnDestroy();
+      if (oldToken === null) localStorage.removeItem('t');
+      else localStorage.setItem('t', oldToken);
+    }
+  }));
 
   it('keeps the essential actions in the main nav and secondary actions in the menu', () => {
     component.authenticated = true;
