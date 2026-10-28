@@ -590,7 +590,7 @@ const PT: Dictionary = {
   'guestRsvp.rejected': 'Pedido não aprovado',
   'guestRsvp.rejectedHelp': 'O organizador não aprovou este pedido. Contacta-o diretamente para esclarecer.',
   'guestRsvp.cancelled': 'Presença cancelada',
-  'guestRsvp.cancelledHelp': 'Esta presença foi cancelada e a vaga deixou de estar reservada. Se precisares de esclarecimentos, contacta o organizador.',
+  'guestRsvp.cancelledHelp': 'Já não tens uma vaga reservada neste jogo. Se cancelaste por engano, podes voltar a marcar presença enquanto houver lugares.',
   'guestRsvp.cancelledBySelfHelp': 'Cancelaste a tua presença neste jogo. A tua vaga foi libertada para outra pessoa.',
   'guestRsvp.checkStatus': 'Verificar resposta',
   'guestRsvp.linkAccount': 'Associar presença e histórico à minha conta',

@@ -1396,7 +1396,8 @@ describe('PublicSessionPreviewComponent', () => {
       fixture.detectChanges();
       expect(component.guestStep).toBe('cancelled');
       expect(page.textContent).toContain('Presença cancelada');
-      expect(page.textContent).toContain('Esta presença foi cancelada');
+      expect(page.textContent).toContain('Já não tens uma vaga reservada neste jogo');
+      expect(page.textContent).toContain('Se cancelaste por engano');
       expect(page.textContent).not.toContain('O organizador cancelou');
       expect(page.textContent).not.toContain('Cancelaste a tua presença');
       expect(component.guestCancelledBySelf).toBeFalse();
