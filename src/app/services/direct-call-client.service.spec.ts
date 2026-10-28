@@ -80,6 +80,48 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     expect(calls.availabilityStatus$.value).toBe('notConfigured');
   });
 
+  it('recovers a missed incoming ringing event without creating a second call', () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    calls.recoverPendingCall();
+    const request = http.expectOne(r => r.url.endsWith('/api/calls/direct/pending'));
+    expect(request.request.method).toBe('GET');
+    request.flush({callId:'recovered-uuid',caller:'bea',peer:'ana',media:'video',
+      expiresAt:new Date(Date.now()+60_000).toISOString()});
+    expect(calls.state$.value?.phase).toBe('incoming');
+    expect(calls.state$.value?.peer).toBe('bea');
+    calls.recoverPendingCall();
+    http.expectNone(r => r.url.endsWith('/api/calls/direct/pending'));
+    calls.decline();
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/recovered-uuid/decline')).flush(null);
+  });
+
+  it('ignores pending invitations for another account and expired calls', () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    calls.recoverPendingCall();
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/pending'))
+      .flush({callId:'wrong-user',caller:'bea',peer:'carla',media:'voice',
+        expiresAt:new Date(Date.now()+60_000).toISOString()});
+    expect(calls.state$.value).toBeNull();
+    calls.recoverPendingCall();
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/pending'))
+      .flush({callId:'expired',caller:'bea',peer:'ana',media:'voice',
+        expiresAt:new Date(Date.now()-5_000).toISOString()});
+    expect(calls.state$.value).toBeNull();
+  });
+
+  it('retries a missed invitation without concurrent requests or phantom calls', () => {
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    calls.recoverPendingCall();
+    calls.recoverPendingCall();
+    const req=http.match(r => r.url.endsWith('/api/calls/direct/pending'));
+    expect(req.length).toBe(1);
+    req[0].flush({}, {status:503,statusText:'Unavailable'});
+    expect(calls.state$.value).toBeNull();
+    calls.recoverPendingCall();
+    http.expectOne(r => r.url.endsWith('/api/calls/direct/pending')).flush(null);
+    expect(calls.state$.value).toBeNull();
+  });
+
   it('rejects outgoing calls before backend readiness is confirmed', async () => {
     http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:false});
     await calls.start('bea','voice');
