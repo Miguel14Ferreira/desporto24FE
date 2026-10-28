@@ -94,7 +94,7 @@ describe('HomeComponent public discovery', () => {
     }));
     expect(component.featuredSessions.map(value => value.id)).toEqual([1, 6]);
     expect(component.featuredVenues.map(value => value.id)).toEqual([10]);
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item').length).toBe(2);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item:not(.preview-venue)').length).toBe(2);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-venue').length).toBe(1);
   });
 
