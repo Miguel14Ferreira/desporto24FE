@@ -752,6 +752,51 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).toBeNull();
   });
 
+  it('blocks sharing sessions into admin-only communities for ordinary members', async () => {
+    const group = (id: number, role: 'MEMBER' | 'ADMIN', membersCanCreateSessions: boolean) => ({
+      id, name: 'Grupo ' + id, myRole: role, membersCanCreateSessions,
+      description: null, sport: 'Futebol', photoUrl: null, visibility: 'PRIVATE',
+      rankingsEnabled: false, ownerUsername: 'owner', memberCount: 1,
+      createdAt: '2026-01-01', members: []
+    } as any);
+    component.communities = [group(12, 'MEMBER', false), group(13, 'ADMIN', false), group(14, 'MEMBER', true)];
+    expect(component.canCreateForCommunity(component.communities[0])).toBeFalse();
+    expect(component.canCreateForCommunity(component.communities[1])).toBeTrue();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('.create-share-community input') as NodeListOf<HTMLInputElement>;
+    expect(options.length).toBe(3);
+    expect(options[0].disabled).toBeTrue();
+    expect(options[1].disabled).toBeFalse();
+    component.toggleCommunityShare(12, true);
+    expect(component.shareCommunityIds).toEqual([]);
+    component.toggleCommunityShare(13, true);
+    component.toggleCommunityShare(14, true);
+    expect(component.shareCommunityIds).toEqual([13, 14]);
+
+    // A stale client cannot force an admin-only community into its payload.
+    component.shareCommunityIds = [12];
+    expect((component as any).validate()).toContain('administradores');
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+  });
+
+  it('shows why a direct community session is unavailable to a non-admin', () => {
+    component.communityId = 12;
+    component.directCommunity = {
+      id: 12, myRole: 'MEMBER', membersCanCreateSessions: false
+    } as any;
+    fixture.detectChanges();
+    expect(component.communityCreationBlocked).toBeTrue();
+    expect((component as any).validate()).toContain('administradores');
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    component.directCommunity!.myRole = 'ADMIN';
+    expect(component.communityCreationBlocked).toBeFalse();
+  });
+
   it('selects up to five own communities and creates one public session for them', () => {
     component.communities = [12, 13, 14, 15, 16, 17].map(id => ({
       id, name:'Comunidade '+id, myRole:'MEMBER', description:null, sport:'Futebol',

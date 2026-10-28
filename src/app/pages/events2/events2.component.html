@@ -63,6 +63,9 @@
           </div>
         }
       </section>
+      @if (communityCreationBlocked) {
+        <p role="alert" class="create-share-status">{{ 'communities.sessionPolicy.blocked' | t }}</p>
+      }
       @if (!communityId) {
         <section class="create-share-panel" aria-labelledby="create-share-title">
           <div>
@@ -83,10 +86,13 @@
                   <input type="checkbox" [name]="'shareCommunity' + group.id"
                     [ngModel]="shareCommunityIds.includes(group.id)"
                     (ngModelChange)="toggleCommunityShare(group.id, $event)"
-                    [disabled]="loading || (!shareCommunityIds.includes(group.id) && shareCommunityIds.length >= 5)">
+                    [disabled]="loading || !canCreateForCommunity(group)
+                      || (!shareCommunityIds.includes(group.id) && shareCommunityIds.length >= 5)">
                   <span>
                     <strong>{{ group.name }}</strong>
-                    <small>{{ 'createSession.communityShareMember' | t }}</small>
+                    <small>{{ (canCreateForCommunity(group)
+                        ? 'createSession.communityShareMember'
+                        : 'communities.sessionPolicy.shareBlocked') | t }}</small>
                   </span>
                 </label>
               }
@@ -978,7 +984,7 @@
 
       <div class="form-actions">
         <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
-        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || venueSaving || venueMapLinkLoading || gpsAddressLoading">
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || venueSaving || venueMapLinkLoading || gpsAddressLoading || communityCreationBlocked">
           {{ loading ? ('createSession.creating' | t) : ('mySessions.create' | t) }}
         </button>
       </div>

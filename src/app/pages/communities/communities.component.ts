@@ -1378,6 +1378,46 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private standingArchiveDetailRequestVersion = 0;
   private pendingArchiveDeepLinkCommunityId: number | null = null;
 
+  sessionPolicyEditing = false;
+  sessionPolicySaving = false;
+  sessionPolicyDraft = true;
+  sessionPolicyFeedback = '';
+  sessionPolicyError = '';
+
+  editSessionPolicy(): void {
+    if (!this.selected || !this.canManage() || this.sessionPolicySaving) return;
+    this.sessionPolicyDraft = this.selected.membersCanCreateSessions !== false;
+    this.sessionPolicyFeedback = '';
+    this.sessionPolicyError = '';
+    this.sessionPolicyEditing = true;
+  }
+
+  cancelSessionPolicy(): void {
+    if (!this.sessionPolicySaving) this.sessionPolicyEditing = false;
+  }
+
+  saveSessionPolicy(): void {
+    if (!this.selected || !this.canManage() || !this.sessionPolicyEditing || this.sessionPolicySaving) return;
+    const id = this.selected.id;
+    this.sessionPolicySaving = true;
+    this.sessionPolicyError = '';
+    this.sessionPolicyFeedback = '';
+    this.communityService.updateSessionCreationPolicy(id, this.sessionPolicyDraft)
+      .pipe(timeout(10_000), finalize(() => this.sessionPolicySaving = false))
+      .subscribe({
+        next: updated => {
+          if (this.selected?.id !== id) return;
+          this.selected = updated;
+          this.replaceCommunity(updated);
+          this.sessionPolicyEditing = false;
+          this.sessionPolicyFeedback = t('communities.sessionPolicy.saved');
+        },
+        error: () => {
+          if (this.selected?.id === id) this.sessionPolicyError = t('communities.sessionPolicy.error');
+        }
+      });
+  }
+
   onHabitualVenueSaved(group: CommunityGroup): void {
     if (this.selected?.id !== group.id) return;
     this.selected = group;
@@ -1982,6 +2022,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.presentationLoading = false;
     this.editingSports = false;
     this.sportsMessage = '';
+    this.sessionPolicyEditing = false;
+    this.sessionPolicyFeedback = '';
+    this.sessionPolicyError = '';
     this.featuresEditing = false;
     this.featuresFeedback = '';
     this.featuresError = '';
