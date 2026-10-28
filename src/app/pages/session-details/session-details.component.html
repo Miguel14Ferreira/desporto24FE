@@ -1080,13 +1080,13 @@
               <div class="session-participants-header">
                 <div>
                   <h2>{{ 'sessionDetail.whosGoing' | t }}</h2>
-                  <p>{{ 'sessionDetail.whosGoingText' | t:{ count: sessionParticipants.length } }}</p>
+                  <p>{{ 'sessionDetail.whosGoingText' | t:{ count: visiblePlayerCount() } }}</p>
                 </div>
                 <button
                   type="button"
                   class="secondary-action jynlo-action jynlo-action--neutral"
                   [disabled]="sessionParticipantsLoading"
-                  (click)="loadSessionParticipants()">
+                  (click)="refreshVisiblePlayers()">
                   {{ sessionParticipantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
                 </button>
               </div>
@@ -1129,7 +1129,13 @@
                   <div class="session-participant-list">
                     @for (participant of sessionParticipants; track participant.id) {
                       <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
-                    } @empty {
+                    }
+                    @for (guest of confirmedGuestParticipants(); track guest.id) {
+                      <span class="team-guest-label">{{ guest.name }}
+                        <small> · {{ 'guestAdmin.guestBadge' | t }}</small>
+                      </span>
+                    }
+                    @if (visiblePlayerCount() === 0) {
                       <span class="session-participants-empty">{{ 'sessionDetail.noVisibleParticipants' | t }}</span>
                     }
                   </div>
