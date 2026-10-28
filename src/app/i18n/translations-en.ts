@@ -601,6 +601,8 @@ export const EN: Record<string, string> = {
   'guestRsvp.createAccount': 'Create Jynlo account (optional)',
   'guestRsvp.noThanks': 'You can keep your attendance without an account.',
   'guestRsvp.requestError': 'Could not send request. Check your information or contact the organizer.',
+  'guestRsvp.alreadyConfirmed': 'This player is already confirmed. See Who’s going; to register someone else, go back and choose a different name.',
+  'guestRsvp.conflict': 'Could not reserve another place. This player may already be registered or the game may be full. Check Who’s going and choose a different name.
   'guestRsvp.statusError': 'Could not check status right now.',
   'guestRsvp.invalidLink': 'This guest link is unavailable. Ask the organizer for a new link.',
   'sessionDetail.contextTitle': 'Game communities and season',
@@ -801,6 +803,10 @@ export const EN: Record<string, string> = {
   'profile.favoriteSports': 'Favourite sports',
   'profile.favoriteSportsSearch': 'Search for a sport from the list...',
   'profile.favoriteSportsHint': 'You can only add sports available in the list.',
+  'profile.favoriteSportsSelected': '{{count}} selected sports (unsaved).',
+  'profile.favoriteSportsAdded': 'Sport added to your selection. Save your profile to apply.',
+  'profile.favoriteSportsRemoved': 'Sport removed from your selection. Save your profile to apply.',
+  'profile.favoriteSportsNotFound': 'Choose a sport from the available list.']
   'profile.skillLevel': 'Level',
   'profile.skillLevel.none': 'Prefer not to say',
   'profile.level.BEGINNER': 'Beginner',
