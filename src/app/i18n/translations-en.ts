@@ -683,6 +683,8 @@ export const EN: Record<string, string> = {
   'publicSession.viewAreaOnMaps': 'View area on Google Maps',
   'sessionDetail.openMaps': 'Open address in Google Maps',
   'sessionDetail.openMapsHint': 'Open location in Google Maps',
+  'sessionDetail.mapPointNotEntrance': 'The GPS pin is a reference point for the venue, not necessarily the entrance. Confirm access with the organiser.',
+  'sessionDetail.locationUnavailable': 'Exact location is not available yet. Confirm the meeting point with the organiser before the session.',
   'publicSession.shareMessage': 'Come play with us on Jynlo!',
   'publicSession.shareWhatsApp': 'Share on WhatsApp',
   'publicSession.whatsappSportCity': 'Want to play {{sport}} in {{city}}? Join us on Jynlo!',

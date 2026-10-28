@@ -7,7 +7,7 @@ import { VenuePhoto, VenueRatingSummary, VenueService, VenueSportCondition } fro
 import { Venue } from '../model/venue';
 import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
-import { venueHasMainlandCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
+import { venueHasPortugueseCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
 import { venueOfficialContactPage, venueOfficialContactPageNeedsIdentityCheck } from '../../shared/venue-official-contact-source';
 
 @Component({
@@ -210,8 +210,9 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
     return (this.venue?.sports || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean);
   }
 
+  /** Plausible national site GPS, NOT a certified public entrance. */
   get hasConfirmedMapCoordinates(): boolean {
-    return venueHasMainlandCoordinates(this.venue?.latitude, this.venue?.longitude);
+    return venueHasPortugueseCoordinates(this.venue?.latitude, this.venue?.longitude);
   }
 
   /** Hide OSM coordinate placeholders instead of calling them postal addresses. */

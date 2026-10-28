@@ -464,6 +464,58 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
   });
 
+  it('rejects (0,0) GPS pins and distinguishes missing from locked locations', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, latitude: 0, longitude: 0 } as any
+    };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .toContain('Localização exata ainda não disponível');
+  });
+
+  it('shows a reference GPS point for authorised island session players', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, name: 'Pavilhão da Ilha', city: 'Ponta Delgada',
+        latitude: 37.741, longitude: -25.675,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN' } as any
+    };
+    fixture.detectChanges();
+    const url = component.exactGoogleMapsUrl();
+    expect(new URL(url!).searchParams.get('query')).toBe('37.741,-25.675');
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location'))
+      .toBe('37.741,-25.675');
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .toContain('não é necessariamente a entrada');
+  });
+
+  it('does not search Maps using old placeholder coordinates as street text', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true,
+      address: 'Coordenadas (morada por confirmar)',
+      venue: { id: 447, latitude: 0, longitude: 0 } as any
+    };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(component.exactLocationLabel()).not.toContain('morada por confirmar');
+    expect(component.calendarIcsContent()).toContain('LOCATION:Lisboa');
+  });
+
+  it('does not expose Madeira venue coordinates in private session calendar links', () => {
+    component.session = {
+      ...session, canSeeExactAddress: false, address: 'Rua Privada 9',
+      venue: { id: 447, latitude: 32.648, longitude: -16.908 } as any
+    };
+    fixture.detectChanges();
+    expect(component.hasVenueMapCoordinates()).toBeFalse();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent).not.toContain('-16.908');
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location')).toBe('Lisboa');
+  });
+
   it('shares only concise game details and a public URL, without generic promotion', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {

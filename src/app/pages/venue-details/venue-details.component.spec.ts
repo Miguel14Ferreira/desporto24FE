@@ -214,6 +214,20 @@ describe('VenueDetailsComponent', () => {
     expect(component.mapUrl).toContain('/maps/search/?api=1&query=');
   });
 
+  it('maps island venues with a full GPS pin and OSM embedded map', () => {
+    const sanitizer = jasmine.createSpyObj<DomSanitizer>('DomSanitizer',
+      ['bypassSecurityTrustResourceUrl']);
+    sanitizer.bypassSecurityTrustResourceUrl.and.callFake(value => value as any);
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService, null, sanitizer);
+    for (const [latitude, longitude] of [[37.741, -25.675], [32.648, -16.908]]) {
+      component.venue = { ...createVenue(), latitude, longitude, address: 'Morada por confirmar' };
+      expect(component.hasConfirmedMapCoordinates).toBeTrue();
+      expect(component.mapUrl).toBe('https://www.google.com/maps?q=' + latitude + ',' + longitude);
+      expect(component.embeddedMapUrl).toBeTruthy();
+      expect(component.postalAddress).toBeNull();
+    }
+  });
+
   it('hides generated GPS-only placeholders and still links to the mapped coordinates', () => {
     const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
     component.venue = {

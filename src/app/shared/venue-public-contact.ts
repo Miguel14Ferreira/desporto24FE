@@ -14,6 +14,20 @@ export function venueHasMainlandCoordinates(
     && longitude >= -9.65 && longitude <= -6.05;
 }
 
+/** Plausible facility site coordinates for mainland Portugal, the Azores
+ * and Madeira. A geographical bound is not proof of a public entrance.
+ */
+export function venueHasPortugueseCoordinates(
+  latitude: number | null | undefined,
+  longitude: number | null | undefined
+): boolean {
+  if (typeof latitude !== 'number' || typeof longitude !== 'number'
+      || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
+  return venueHasMainlandCoordinates(latitude, longitude)
+    || (latitude >= 36.5 && latitude <= 40.2 && longitude >= -31.5 && longitude <= -24.5)
+    || (latitude >= 32.5 && latitude <= 33.5 && longitude >= -17.5 && longitude <= -16.0);
+}
+
 /**
  * A public venue contact is not necessarily a phone number (it may be an
  * email address, website or description). Never dial unvalidated text.
@@ -42,7 +56,7 @@ export function venueTelephoneUrl(contact: string | null | undefined): string | 
  * A modest bbox shows the immediate surroundings without a second API/key.
  */
 export function venueOsmEmbedUrl(latitude: number, longitude: number): string | null {
-  if (!venueHasMainlandCoordinates(latitude, longitude)) {
+  if (!venueHasPortugueseCoordinates(latitude, longitude)) {
     return null;
   }
   const radius = 0.004;

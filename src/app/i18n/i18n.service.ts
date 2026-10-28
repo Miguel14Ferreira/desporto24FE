@@ -688,6 +688,8 @@ const PT: Dictionary = {
   'publicSession.viewAreaOnMaps': 'Ver localidade no Google Maps',
   'sessionDetail.openMaps': 'Abrir morada no Google Maps',
   'sessionDetail.openMapsHint': 'Abrir localização no Google Maps',
+  'sessionDetail.mapPointNotEntrance': 'O ponto GPS indica a localização de referência do recinto, não é necessariamente a entrada. Confirma o acesso com o organizador.',
+  'sessionDetail.locationUnavailable': 'Localização exata ainda não disponível. Confirma o ponto de encontro com o organizador antes da sessão.',
   'publicSession.shareMessage': 'Vem jogar connosco na Jynlo!',
   'publicSession.shareWhatsApp': 'Partilhar no WhatsApp',
   'publicSession.whatsappSportCity': 'Bora jogar {{sport}} em {{city}}? Junta-te a nós na Jynlo!',

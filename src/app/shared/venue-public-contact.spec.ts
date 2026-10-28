@@ -1,4 +1,4 @@
-import { venueHasMainlandCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from './venue-public-contact';
+import { venueHasMainlandCoordinates, venueHasPortugueseCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from './venue-public-contact';
 
 describe('public venue map/contact links', () => {
   it('embeds valid coordinates with an OSM marker and small surrounding area', () => {
@@ -25,6 +25,24 @@ describe('public venue map/contact links', () => {
     expect(venueHasMainlandCoordinates(32.65, -16.9)).toBeFalse();
     expect(venueHasMainlandCoordinates(38.7, -5.5)).toBeFalse();
     expect(venueHasMainlandCoordinates(null, -9.1)).toBeFalse();
+  });
+
+  it('uses the same plausible national GPS guard for island venues', () => {
+    for (const [latitude, longitude] of [
+      [38.7223, -9.1393], [41.8, -6.77], [37.741, -25.675],
+      [39.47, -31.22], [32.648, -16.908], [33.06, -16.34]
+    ]) {
+      expect(venueHasPortugueseCoordinates(latitude, longitude)).toBeTrue();
+      expect(venueOsmEmbedUrl(latitude, longitude))
+        .withContext('map for ' + latitude + ',' + longitude).toContain('marker=');
+    }
+    for (const [latitude, longitude] of [
+      [0, 0], [38.72, -5.5], [34, -8], [43, -8],
+      [NaN, -9], [38.7, Infinity]
+    ]) {
+      expect(venueHasPortugueseCoordinates(latitude, longitude)).toBeFalse();
+      expect(venueOsmEmbedUrl(latitude, longitude)).toBeNull();
+    }
   });
 
   it('offers safe click-to-call only for public-looking Portuguese phone numbers', () => {

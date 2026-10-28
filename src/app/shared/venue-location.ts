@@ -1,5 +1,20 @@
 import { Venue, VenueLocationStatus } from '../pages/model/venue';
 
+/** An old OSM placeholder is not a usable postal address. */
+export function venueUsableAddress(value: string | null | undefined): string | null {
+  const address = typeof value === 'string' ? value.trim() : '';
+  if (!address) return null;
+  const lowered = address.toLocaleLowerCase('pt-PT');
+  const unknown = lowered.startsWith('localização no mapa:')
+    || lowered.startsWith('localizacao no mapa:')
+    || lowered.startsWith('map location:')
+    || lowered.startsWith('coordenadas (morada por confirmar)')
+    || lowered.startsWith('coordenadas (')
+    || lowered.includes('morada por confirmar')
+    || lowered.includes('address to be confirmed');
+  return unknown ? null : address;
+}
+
 /** Informative location status, not proof of facility operation or public access. */
 export function venueLocationStatus(venue: Venue): VenueLocationStatus {
   if (venue.locationStatus === 'GPS_ONLY_ADDRESS_UNKNOWN'
@@ -10,17 +25,7 @@ export function venueLocationStatus(venue: Venue): VenueLocationStatus {
 
   // Old API responses may have no locationStatus; avoid displaying OSM
   // coordinate placeholders as postal addresses during staggered deployments.
-  const address = typeof venue.address === 'string' ? venue.address.trim() : '';
-  const lowered = address.toLocaleLowerCase('pt-PT');
-  const placeholder = !address
-      || lowered.startsWith('localização no mapa:')
-      || lowered.startsWith('localizacao no mapa:')
-      || lowered.startsWith('coordenadas (morada por confirmar)')
-      || lowered.includes('morada por confirmar')
-      || lowered.includes('address to be confirmed')
-      || lowered.startsWith('map location:');
-
-  if (!placeholder) return 'ADDRESS_PROVIDED_UNVERIFIED';
+  if (venueUsableAddress(venue.address)) return 'ADDRESS_PROVIDED_UNVERIFIED';
   const lat = venue.latitude;
   const lon = venue.longitude;
   return lat !== null && lat !== undefined && Number.isFinite(lat) && Math.abs(lat) <= 90
@@ -35,6 +40,5 @@ export function isVenueGpsOnly(venue: Venue): boolean {
 
 export function venuePostalAddress(venue: Venue): string | null {
   if (venueLocationStatus(venue) !== 'ADDRESS_PROVIDED_UNVERIFIED') return null;
-  const address = typeof venue.address === 'string' ? venue.address.trim() : '';
-  return address || null;
+  return venueUsableAddress(venue.address);
 }
