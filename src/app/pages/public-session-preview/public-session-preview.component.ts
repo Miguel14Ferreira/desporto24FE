@@ -76,6 +76,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   guestChangingIdentity = false;
   guestConfirmCancellation = false;
   guestCancelling = false;
+  guestRejoining = false;
   guestCancelledBySelf = false;
   guestSavedBookings: {receipt:string;name:string}[] = [];
   memberJoining = false;
@@ -307,6 +308,56 @@ export class PublicSessionPreviewComponent implements OnInit {
         this.loadGuestRoster();
       },
       error:()=>{this.guestError='guestRsvp.cancelError';}
+    });
+  }
+
+  /**
+   * Rebook the same person after they cancelled, using the existing atomic
+   * guest-registration endpoint. Never bypass the session capacity/identity
+   * checks; keep the original receipt on any failed rebooking.
+   */
+  rejoinCancelledGuest(): void {
+    if (!this.sessionId || !this.guestToken || !this.guestReceipt
+        || this.guestStep !== 'cancelled' || this.guestRejoining || this.guestLoading) return;
+    const name = this.guestConfirmedName.trim();
+    if (name.length < 2 || name.length > 80) {
+      this.guestError='guestRsvp.rejoinError';
+      return;
+    }
+    const normalized=(value:string) => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'').trim().toLocaleLowerCase('pt-PT').replace(/\s+/g,' ');
+    const historical=this.guestPlayers.find(p=>normalized(p.name)===normalized(name));
+    this.guestRejoining=true;
+    this.guestError='';
+    this.http.post<{receipt:string;status:string;playerName?:string;meetingPointInstructions?:string|null}>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests',
+      {linkToken:this.guestToken,playerId:historical?.id ?? null,
+       newName:historical?null:name,note:''}
+    ).pipe(timeout(10000),finalize(()=>this.guestRejoining=false)).subscribe({
+      next: response => {
+        if(response.status!=='APPROVED'||!response.receipt){
+          this.guestError='guestRsvp.rejoinError';
+          return;
+        }
+        this.guestReceipt=response.receipt;
+        this.guestConfirmedName=response.playerName?.trim() || name;
+        this.guestCancelledBySelf=false;
+        this.guestMeetingPoint=typeof response.meetingPointInstructions==='string'
+          ?response.meetingPointInstructions:'';
+        this.guestStep='approved';
+        this.guestConfirmCancellation=false;
+        this.guestEditingIdentity=false;
+        this.rememberGuestBooking(response.receipt,this.guestConfirmedName);
+        try {localStorage.setItem(this.receiptKey(),response.receipt);}catch{}
+        this.loadPreview();
+        this.loadConfirmedPlayers();
+        this.loadGuestRoster();
+      },
+      error: (error: unknown) => {
+        this.guestError=error instanceof HttpErrorResponse && error.status===409
+          ? 'guestRsvp.rejoinNoPlaces' : 'guestRsvp.rejoinError';
+        this.loadPreview();
+      }
     });
   }
 

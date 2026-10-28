@@ -162,6 +162,16 @@
                          : guestStep === 'cancelled' ?
                            (guestCancelledBySelf ? 'guestRsvp.cancelledBySelfHelp' : 'guestRsvp.cancelledHelp')
                          : 'guestRsvp.pendingHelp') | t }}</p>
+                @if (guestStep === 'cancelled') {
+                  <div class="guest-rejoin-actions">
+                    <p class="guest-rsvp-hint">{{ 'guestRsvp.rejoinHelp' | t }}</p>
+                    <button type="button" class="guest-rsvp-primary guest-rejoin-button"
+                      [disabled]="guestRejoining || guestLoading || !guestConfirmedName"
+                      (click)="rejoinCancelledGuest()">
+                      {{ (guestRejoining ? 'guestRsvp.rejoining' : 'guestRsvp.rejoin') | t }}
+                    </button>
+                  </div>
+                }
                 @if (guestStep === 'pending') {
                   <button type="button" class="guest-rsvp-primary"
                     [disabled]="guestSending" (click)="checkGuestStatus()">
