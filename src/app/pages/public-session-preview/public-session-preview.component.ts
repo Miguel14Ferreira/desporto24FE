@@ -239,10 +239,25 @@ export class PublicSessionPreviewComponent implements OnInit {
           r.status==='REJECTED'?'rejected':
           r.status==='CANCELLED'?'cancelled':'pending';
       },
-      error:()=>{
-        this.guestError='guestRsvp.statusError';
-        // A stale/invalid receipt cannot permanently trap this browser.
-        this.guestStep='choose';
+      error: (error: unknown) => {
+        // A revoked or unknown receipt must not block a different guest on
+        // a shared invitation link, particularly after that guest logs in.
+        const invalidReceipt = error instanceof HttpErrorResponse
+          && [400, 404, 410].includes(error.status);
+        if (invalidReceipt) {
+          try {
+            localStorage.removeItem(this.receiptKey());
+            localStorage.removeItem('jynlo-guest-receipt:' + this.sessionId);
+          } catch { /* Storage may be disabled. */ }
+          this.guestReceipt = '';
+          this.guestStep = 'choose';
+          this.guestError = '';
+          return;
+        }
+        // A timeout, outage or rate limit does not revoke a valid reservation:
+        // keep its receipt and offer another status check, never re-register.
+        this.guestStep = 'pending';
+        this.guestError = 'guestRsvp.statusError';
       }
     });
   }

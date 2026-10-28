@@ -125,6 +125,79 @@ describe('PublicSessionPreviewComponent', () => {
     expect(localStorage.getItem('jynlo-guest-receipt:42:'+secret.slice(0,18))).toBeNull();
   });
 
+  it('removes an unknown saved receipt so an anonymous visitor can choose again', () => {
+    const secret='I'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem(key,'S'.repeat(43));
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:7,name:'Jogador disponível'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        maxParticipants:8,participantCount:2,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status'))
+        return throwError(()=>new HttpErrorResponse({status:404,statusText:'Not Found'}));
+      return throwError(()=>new Error('Unexpected route '+url));
+    }) as any);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('choose');
+    expect(fixture.componentInstance.guestReceipt).toBe('');
+    expect(localStorage.getItem(key)).toBeNull();
+    expect(fixture.componentInstance.guestPlayers.map(p=>p.name)).toEqual(['Jogador disponível']);
+    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-player-select')).not.toBeNull();
+  });
+
+  it('allows a signed-in player to participate when a previous shared guest receipt is invalid', () => {
+    const secret='J'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    authenticationService.isLoggedIn.and.returnValue(true);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem(key,'S'.repeat(43));
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        maxParticipants:8,participantCount:2,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status'))
+        return throwError(()=>new HttpErrorResponse({status:404,statusText:'Not Found'}));
+      return throwError(()=>new Error('Unexpected route '+url));
+    }) as any);
+    fixture.detectChanges();
+    const page=fixture.nativeElement as HTMLElement;
+    expect(localStorage.getItem(key)).toBeNull();
+    expect(fixture.componentInstance.guestReceipt).toBe('');
+    expect(page.querySelector('.guest-rsvp')).toBeNull();
+    expect(page.querySelector('.join-panel .primary-action')?.textContent)
+      .toContain('Participar com a minha conta');
+    expect(fixture.componentInstance.guestPlayers).toEqual([]);
+  });
+
+  it('keeps the reservation and offers status retry on temporary API failure', () => {
+    const secret='K'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem(key,'S'.repeat(43));
+    let unavailable=true;
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        maxParticipants:8,participantCount:2,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status')) return unavailable
+        ? throwError(()=>new HttpErrorResponse({status:503,statusText:'Unavailable'}))
+        : of({status:'APPROVED'});
+      return throwError(()=>new Error('Unexpected route '+url));
+    }) as any);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('pending');
+    expect(localStorage.getItem(key)).toBe('S'.repeat(43));
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-primary')).not.toBeNull();
+    unavailable=false;
+    fixture.componentInstance.checkGuestStatus();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('approved');
+    expect(localStorage.getItem(key)).toBe('S'.repeat(43));
+  });
+
   it('localizes the session photo description without changing its source', () => {
     const i18n = TestBed.inject(I18nService);
     i18n.setLanguage('en');
