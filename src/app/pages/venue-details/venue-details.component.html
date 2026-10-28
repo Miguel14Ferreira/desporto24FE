@@ -82,13 +82,6 @@
           }
         </div>
       </div>
-      @if (isPublicView) {
-        <div class="venue-public-more">
-          <span>{{ 'venue.detail.publicMore' | t }}</span>
-          <a [routerLink]="['/menu/venues', venue.id]">{{ 'venue.detail.openFull' | t }} ↗</a>
-        </div>
-      }
-
       @if (!ratingSummaryLoading && !ratingSummaryLoadError) {
         <section class="venue-rating-summary" aria-labelledby="venue-rating-heading">
           <h2 id="venue-rating-heading">{{ 'venue.detail.ratingHeading' | t }}</h2>
