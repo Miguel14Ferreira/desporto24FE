@@ -41,6 +41,13 @@
            </div>
          </div>
          <div class="group-header-actions">
+           <button class="group-header-button" type="button" [disabled]="muteLoading"
+             [attr.aria-label]="(selectedMuted ? 'chat.unmuteConversation' : 'chat.muteConversation') | t"
+             [attr.title]="(selectedMuted ? 'chat.unmuteConversation' : 'chat.muteConversation') | t"
+             (click)="toggleMute()">
+             {{ selectedMuted ? '🔕' : '🔔' }}
+             {{ (selectedMuted ? 'chat.unmuteConversation' : 'chat.muteConversation') | t }}
+           </button>
            @if (isCreator) {
              <input #groupPhotoInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
                class="group-photo-input" [attr.aria-label]="'groups.changePhoto' | t"
@@ -58,6 +65,7 @@
            }
          </div>
        </header>
+       @if(muteError){<p class="group-error" role="alert">{{muteError}}</p>}
        <div class="group-member-links" [attr.aria-label]="'groups.members' | t">
          @for (m of group.members; track m.username) {
            <div class="group-member-chip">
