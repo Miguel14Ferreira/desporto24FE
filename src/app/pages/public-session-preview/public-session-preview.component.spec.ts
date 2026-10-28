@@ -44,6 +44,8 @@ describe('PublicSessionPreviewComponent', () => {
     TestBed.inject(I18nService).setLanguage('pt');
     localStorage.removeItem('d24-language');
     localStorage.removeItem('jynlo-guest-receipt:42');
+    Object.keys(localStorage).filter(key => key.startsWith('jynlo-guest-receipt:42:'))
+      .forEach(key => localStorage.removeItem(key));
   });
 
   function render(overrides: Record<string, unknown> = {}): HTMLElement {
@@ -69,6 +71,59 @@ describe('PublicSessionPreviewComponent', () => {
       remainingPlaces: fixture.componentInstance.remainingPlaces
     }, locale);
   }
+
+  it('confirms an anonymous player instantly, reserves a place and offers account creation', () => {
+    const secret='G'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:7,name:'Amigo Histórico'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        address:'Rua Machado dos Santos, 112',venueName:'Clube Nacional de Ginástica',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        priceAmount:4.50,maxParticipants:10,participantCount:1,gamePhoto:null});
+      if(url.endsWith('/guest-requests')) return of({receipt:'R'.repeat(43),status:'APPROVED'});
+      return of({});
+    }) as any);
+    const page=fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+    const location=page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(location.textContent).toContain('Clube Nacional de Ginástica');
+    expect(location.textContent).toContain('Rua Machado dos Santos');
+    expect(decodeURIComponent(location.href)).toContain('Rua Machado dos Santos');
+    fixture.componentInstance.selectGuestPlayer(7);
+    fixture.componentInstance.chooseGuest();
+    fixture.detectChanges();
+    expect(page.querySelector('.guest-rsvp-hint')?.textContent).toContain('vaga fica reservada');
+    fixture.componentInstance.sendGuestRequest();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('approved');
+    expect(page.querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    expect(page.textContent).toContain('Presença confirmada');
+    expect(page.textContent).toContain('Criar conta Jynlo');
+    localStorage.removeItem('jynlo-guest-receipt:42:'+secret.slice(0,18));
+  });
+
+  it('lets a shared-device user change the player instead of being stuck with an earlier receipt', () => {
+    const secret='H'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem('jynlo-guest-receipt:42:'+secret.slice(0,18),'R'.repeat(43));
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:7,name:'Convidado'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'FULL',
+        priceAmount:0,maxParticipants:10,participantCount:10,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED'});
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('approved');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Presença confirmada');
+    fixture.componentInstance.registerAnotherGuest();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestReceipt).toBe('');
+    expect(fixture.componentInstance.guestStep).toBe('choose');
+    expect(localStorage.getItem('jynlo-guest-receipt:42:'+secret.slice(0,18))).toBeNull();
+  });
 
   it('localizes the session photo description without changing its source', () => {
     const i18n = TestBed.inject(I18nService);
@@ -888,7 +943,7 @@ describe('PublicSessionPreviewComponent', () => {
       expect(requestCall[1].playerId).toBe(22);
       expect(requestCall[1].newName).toBeNull();
       expect(component.guestStep).toBe('pending');
-      expect(localStorage.getItem('jynlo-guest-receipt:42')).toBe(receipt);
+      expect(localStorage.getItem('jynlo-guest-receipt:42:'+token.slice(0,18))).toBe(receipt);
     });
     it('offers optional registration only after organizer approval, not after sending', () => {
       const page=renderGuest();
