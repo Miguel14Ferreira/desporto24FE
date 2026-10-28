@@ -95,6 +95,9 @@
               <p class="create-share-selected" role="status">
                 {{ 'createSession.communityShareSelected' | t:{count: shareCommunityIds.length} }}
               </p>
+              <p class="create-share-members-note" role="status">
+                {{ 'createSession.communityShareMembersOnly' | t }}
+              </p>
             }
           }
         </section>
@@ -190,7 +193,7 @@
         </div>
       }
 
-      @if (communityId) {
+      @if (communitySessionSelected) {
         <div class="form-grid">
           <label>
             <span>{{ 'createSession.recurrence' | t }}</span>
@@ -271,7 +274,7 @@
         }
       }
 
-      @if (communityId) {
+      @if (communitySessionSelected) {
         <section class="venue-section" aria-label="Convocatória">
           <div class="venue-heading">
             <div>
