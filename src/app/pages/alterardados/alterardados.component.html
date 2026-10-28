@@ -160,18 +160,15 @@
 
           <label>
             <span>{{ 'common.country' | t }} *</span>
-            <select
-              name="country"
-              [(ngModel)]="profile.country"
-              required
-              [disabled]="saving"
-              [attr.aria-invalid]="fieldErrors.country ? 'true' : 'false'"
-              (change)="clearFieldError('country')">
-              <option value="">{{ 'register.select' | t }}</option>
-              @for (item of countryOptions; track item.label) {
-                <option [value]="countryName(item.label)">{{ countryName(item.label) }}</option>
-              }
-            </select>
+            <app-jynlo-select
+              name="country" [(ngModel)]="profile.country"
+              [options]="countrySelectChoices" [searchable]="true"
+              [ariaLabel]="'common.country' | t"
+              [placeholder]="'register.select' | t"
+              [required]="true" [disabled]="saving"
+              [invalid]="!!fieldErrors.country"
+              (picked)="clearFieldError('country')"
+            ></app-jynlo-select>
             @if (fieldErrors.country) {
               <small class="field-error">{{ fieldErrors.country }}</small>
             }
