@@ -1,5 +1,8 @@
 import { of, Subject } from 'rxjs';
-import { fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { VenueService } from '../../services/venue.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
 import { CommunityHabitualVenuePickerComponent } from './community-habitual-venue-picker.component';
 import { CommunityGroup } from '../model/community-group';
 import { Venue } from '../model/venue';
@@ -38,9 +41,10 @@ describe('Community habitual venue picker', () => {
       )
     };
     const cdr = { markForCheck: jasmine.createSpy('markForCheck') };
-    const component = new CommunityHabitualVenuePickerComponent(venues as any, groups as any, cdr as any);
+    const zone = { run: jasmine.createSpy('run').and.callFake((callback: () => unknown) => callback()) };
+    const component = new CommunityHabitualVenuePickerComponent(venues as any, groups as any, cdr as any, zone as any);
     component.community = {...group};
-    return {component, venues, groups, cdr};
+    return {component, venues, groups, cdr, zone};
   }
 
   it('opens a catalogue venue detail without silently making it the default', () => {
@@ -99,6 +103,75 @@ describe('Community habitual venue picker', () => {
     expect(component.error).toBeTruthy();
     component.ngOnDestroy();
   }));
+
+  it('refreshes the view after Maps resolves, geocoding finishes and saving succeeds', () => {
+    const {component, cdr, groups} = setup();
+    component.chooseLocationMethod('maps');
+    component.mapLink = 'https://www.google.com/maps?q=38.71,-9.13';
+    cdr.markForCheck.calls.reset();
+    component.resolveMapLink();
+    expect(component.locationPoint?.source).toBe('MAPS');
+    expect(component.resolvingMap).toBeFalse();
+    expect(component.resolvingAddress).toBeFalse();
+    expect(cdr.markForCheck).toHaveBeenCalled();
+    cdr.markForCheck.calls.reset();
+    component.savePoint();
+    expect(groups.updateHabitualLocation).toHaveBeenCalled();
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it('refreshes the view when opening a venue and after selecting it', () => {
+    const {component, cdr} = setup();
+    component.query = 'Campo';
+    component.search();
+    cdr.markForCheck.calls.reset();
+    component.openDetails(55);
+    expect(component.expanded?.id).toBe(55);
+    expect(component.detailLoading).toBeFalse();
+    expect(cdr.markForCheck).toHaveBeenCalled();
+    cdr.markForCheck.calls.reset();
+    component.save(55);
+    expect(component.community.defaultVenueId).toBe(55);
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it('re-enters Angular after an asynchronous browser GPS success', () => {
+    const {component, zone, cdr} = setup();
+    if (!navigator.geolocation) {
+      pending('Browser geolocation API unavailable in this test environment');
+      return;
+    }
+    const position = {coords: {latitude: 38.71, longitude: -9.13, accuracy: 8}} as GeolocationPosition;
+    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((success: PositionCallback) => {
+      success(position);
+    });
+    component.chooseLocationMethod('gps');
+    cdr.markForCheck.calls.reset();
+    component.captureCurrentLocation();
+    expect(zone.run).toHaveBeenCalled();
+    expect(component.locating).toBeFalse();
+    expect(component.locationPoint?.source).toBe('GPS');
+    expect(component.locationPoint?.city).toBe('Lisboa');
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it('re-enters Angular and shows a permission error after GPS failure', () => {
+    const {component, zone, cdr} = setup();
+    if (!navigator.geolocation) {
+      pending('Browser geolocation API unavailable in this test environment');
+      return;
+    }
+    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((
+      _success: PositionCallback, error?: PositionErrorCallback
+    ) => { error?.({ code: 1, message: 'denied' } as GeolocationPositionError); });
+    component.chooseLocationMethod('gps');
+    cdr.markForCheck.calls.reset();
+    component.captureCurrentLocation();
+    expect(zone.run).toHaveBeenCalled();
+    expect(component.locating).toBeFalse();
+    expect(component.error).toBeTruthy();
+    expect(cdr.markForCheck).toHaveBeenCalled();
+  });
 
   it('resolves and saves a Google Maps point without creating a fake catalog venue', () => {
     const {component, venues, groups} = setup();
@@ -164,5 +237,98 @@ describe('Community habitual venue picker', () => {
     component.chooseLocationMethod('maps');
     expect(component.results).toEqual([]);
     expect(component.expanded).toBeNull();
+  });
+});
+
+describe('Community habitual venue picker — interactive template', () => {
+  const community = {id: 42, name: 'Clube de Futebol', sport: 'Futebol', sports: ['Futebol'],
+    myRole: 'OWNER', defaultVenueId: null} as CommunityGroup;
+  const venue = {id: 55, name: 'Campo Municipal', city: 'Lisboa', district: 'Lisboa',
+    address: 'Rua da Bola', sports: 'Futebol', latitude: 38.71, longitude: -9.13} as Venue;
+  const venues = {
+    suggest: jasmine.createSpy('suggest').and.returnValue(of({venues: [venue], page: 0, hasMore: false})),
+    get: jasmine.createSpy('get').and.returnValue(of(venue)),
+    resolveMapLink: jasmine.createSpy('resolveMapLink').and.returnValue(of({
+      latitude: 38.71, longitude: -9.13, resolvedUrl: 'https://www.google.com/maps'
+    })),
+    reverseLocation: jasmine.createSpy('reverseLocation').and.returnValue(of({
+      city: 'Lisboa', address: 'Rua da Bola', distanceMeters: 5, provider: 'OSM'
+    }))
+  };
+  const groups = {
+    updateDefaultVenue: jasmine.createSpy('updateDefaultVenue').and.returnValue(of({
+      ...community, defaultVenueId: 55, defaultVenueName: 'Campo Municipal'
+    })),
+    updateHabitualLocation: jasmine.createSpy('updateHabitualLocation').and.returnValue(of({
+      ...community, habitualLocationSource: 'MAPS', habitualLatitude: 38.71,
+      habitualLongitude: -9.13, habitualCity: 'Lisboa', habitualAddress: 'Rua da Bola'
+    }))
+  };
+
+  beforeEach(async () => {
+    venues.suggest.calls.reset();
+    venues.resolveMapLink.calls.reset();
+    groups.updateHabitualLocation.calls.reset();
+    await TestBed.configureTestingModule({
+      imports: [CommunityHabitualVenuePickerComponent],
+      providers: [
+        provideRouter([]),
+        {provide: VenueService, useValue: venues},
+        {provide: CommunityGroupsService, useValue: groups}
+      ]
+    }).compileComponents();
+  });
+
+  it('lets an admin search a saved venue through the actual form', async () => {
+    const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
+    fixture.componentInstance.community = {...community};
+    fixture.detectChanges();
+    await fixture.whenStable(); // Flush initial template-driven form value initialization.
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('input[name="habitualVenueQuery"]') as HTMLInputElement;
+    input.value = 'Campo';
+    input.dispatchEvent(new Event('input', {bubbles: true}));
+    await fixture.whenStable(); // ngModel synchronizes the view-to-model value asynchronously.
+    fixture.detectChanges();
+    const submit = fixture.nativeElement.querySelector('form button[type="submit"]') as HTMLButtonElement;
+    expect(submit.disabled).toBeFalse();
+    submit.click();
+    fixture.detectChanges();
+    expect(venues.suggest).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.community-venue-result-name')?.textContent)
+      .toContain('Campo Municipal');
+    fixture.destroy();
+  });
+
+  it('switches to Maps, resolves a point, then switches to GPS without stale coordinates', async () => {
+    const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
+    fixture.componentInstance.community = {...community};
+    fixture.detectChanges();
+    await fixture.whenStable(); // Flush initial template-driven form value initialization.
+    fixture.detectChanges();
+    const buttons = fixture.nativeElement.querySelectorAll('app-location-method-selector button');
+    expect(buttons.length).toBe(3);
+    (buttons[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable(); // Flush newly mounted Maps ngModel initialization before typing.
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('input[name="habitualMapLink"]') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    input.value = 'https://www.google.com/maps?q=38.71,-9.13';
+    input.dispatchEvent(new Event('input', {bubbles: true}));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const submit = fixture.nativeElement.querySelector('form button[type="submit"]') as HTMLButtonElement;
+    submit.click();
+    fixture.detectChanges();
+    expect(venues.resolveMapLink).toHaveBeenCalled();
+    expect(fixture.componentInstance.locationPoint?.source).toBe('MAPS');
+    expect(fixture.nativeElement.querySelector('.community-venue-confirm')).toBeTruthy();
+    (buttons[2] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.locationMethod).toBe('gps');
+    expect(fixture.componentInstance.locationPoint).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="habitualMapLink"]')).toBeNull();
+    fixture.destroy();
   });
 });

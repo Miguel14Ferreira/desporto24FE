@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { finalize, Subscription, take, timeout } from 'rxjs';
@@ -75,7 +75,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   }
 
   constructor(private venues: VenueService, private groups: CommunityGroupsService,
-              private readonly cdr: ChangeDetectorRef) {}
+              private readonly cdr: ChangeDetectorRef, private readonly ngZone: NgZone) {}
 
   get canManage(): boolean {
     return this.community?.myRole === 'OWNER' || this.community?.myRole === 'ADMIN';
@@ -101,6 +101,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.resolvingAddress = false;
     this.error = '';
     this.feedback = '';
+    this.cdr.markForCheck();
   }
 
   resolveMapLink(): void {
@@ -110,22 +111,29 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.resolvingMap = true;
     this.locationPoint = null;
     this.error = '';
+    this.cdr.markForCheck();
     const sub = this.venues.resolveMapLink(this.mapLink.trim())
       .pipe(timeout(12000), finalize(() => {
-        if (revision === this.revision) this.resolvingMap = false;
+        if (revision === this.revision) {
+          this.resolvingMap = false;
+          this.cdr.markForCheck();
+        }
       })).subscribe({
         next: point => {
           if (revision !== this.revision || this.community.id !== communityId
               || this.locationMethod !== 'maps') return;
           if (!this.validPoint(point.latitude, point.longitude)) {
             this.error = t('communities.habitualVenue.errorMapPoint');
+            this.cdr.markForCheck();
             return;
           }
           this.useCoordinates('MAPS', point.latitude, point.longitude, revision);
+          this.cdr.markForCheck();
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
           this.error = t('communities.habitualVenue.errorMapLink');
+          this.cdr.markForCheck();
         }
       });
     this.subs.add(sub);
@@ -135,29 +143,34 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     if (!this.canManage || this.saving || this.locating || this.locationMethod !== 'gps') return;
     if (!navigator.geolocation) {
       this.error = t('communities.habitualVenue.errorGpsUnsupported');
+      this.cdr.markForCheck();
       return;
     }
     const revision = ++this.revision, communityId = this.community.id;
     this.locating = true;
     this.locationPoint = null;
     this.error = '';
+    this.cdr.markForCheck();
     navigator.geolocation.getCurrentPosition(
-      position => {
+      position => this.ngZone.run(() => {
         if (revision !== this.revision || this.community.id !== communityId
             || this.locationMethod !== 'gps') return;
         this.locating = false;
         const { latitude, longitude } = position.coords;
         if (!this.validPoint(latitude, longitude)) {
           this.error = t('communities.habitualVenue.errorGpsInvalid');
+          this.cdr.markForCheck();
           return;
         }
         this.useCoordinates('GPS', latitude, longitude, revision, position.coords.accuracy);
-      },
-      () => {
+        this.cdr.markForCheck();
+      }),
+      () => this.ngZone.run(() => {
         if (revision !== this.revision || this.community.id !== communityId) return;
         this.locating = false;
         this.error = t('communities.habitualVenue.errorGpsPermission');
-      },
+        this.cdr.markForCheck();
+      }),
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   }
@@ -172,9 +185,13 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.locationPoint = {source, latitude, longitude, city: '', address: ''};
     const communityId = this.community.id;
     this.resolvingAddress = true;
+    this.cdr.markForCheck();
     const sub = this.venues.reverseLocation(latitude, longitude, accuracy)
       .pipe(timeout(20000), finalize(() => {
-        if (revision === this.revision && this.community.id === communityId) this.resolvingAddress = false;
+        if (revision === this.revision && this.community.id === communityId) {
+          this.resolvingAddress = false;
+          this.cdr.markForCheck();
+        }
       })).subscribe({
         next: result => {
           if (revision !== this.revision || communityId !== this.community.id
@@ -182,8 +199,15 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
           // Addresses from reverse geocoding are suggestions, not verified postal facts.
           if (!this.locationPoint.city.trim()) this.locationPoint.city = result.city ?? '';
           if (!this.locationPoint.address.trim()) this.locationPoint.address = result.address ?? '';
+          this.cdr.markForCheck();
         },
-        error: () => { /* Coordinates can still be saved without a postal address. */ }
+        error: () => {
+          // Reverse-geocoding is optional. Keep the pin and allow manual address editing.
+          if (revision === this.revision && this.community.id === communityId) {
+            this.feedback = t('createSession.gpsAddressUnknown');
+            this.cdr.markForCheck();
+          }
+        }
       });
     this.subs.add(sub);
   }
@@ -201,17 +225,22 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       point.latitude, point.longitude, point.city.trim() || null,
       point.address.trim() || null)
       .pipe(timeout(10000), finalize(() => {
-        if (revision === this.revision) this.saving = false;
+        if (revision === this.revision) {
+          this.saving = false;
+          this.cdr.markForCheck();
+        }
       })).subscribe({
         next: group => {
           if (revision !== this.revision || this.community.id !== communityId) return;
           this.community = group;
           this.venueSaved.emit(group);
           this.feedback = t('communities.habitualVenue.pointSaved');
+          this.cdr.markForCheck();
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
           this.error = t('communities.habitualVenue.errorSavePoint');
+          this.cdr.markForCheck();
         }
       });
     this.subs.add(sub);
@@ -287,15 +316,20 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.error = '';
     this.feedback = '';
     const sub = this.venues.get(id).pipe(timeout(10000), finalize(() => {
-      if (revision === this.revision) this.detailLoading = false;
+      if (revision === this.revision) {
+        this.detailLoading = false;
+        this.cdr.markForCheck();
+      }
     })).subscribe({
       next: venue => {
         if (revision !== this.revision || this.community.id !== communityId || venue.id !== id) return;
         this.expanded = venue;
+        this.cdr.markForCheck();
       },
       error: () => {
         if (revision !== this.revision || this.community.id !== communityId) return;
         this.error = t('communities.habitualVenue.errorDetails');
+        this.cdr.markForCheck();
       }
     });
     this.subs.add(sub);
@@ -332,10 +366,12 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
           this.feedback = id === null
             ? t('communities.habitualVenue.venueRemoved')
             : t('communities.habitualVenue.venueSaved');
+          this.cdr.markForCheck();
         },
         error: () => {
           if (revision !== this.revision || this.community.id !== communityId) return;
           this.error = t('communities.habitualVenue.errorSaveVenue');
+          this.cdr.markForCheck();
         }
       });
     this.subs.add(sub);
