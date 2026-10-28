@@ -175,6 +175,66 @@
                   </button>
                 }
                 @if (guestStep === 'approved') {
+                  <div class="guest-reservation-actions">
+                    @if (!guestEditingIdentity) {
+                      <button type="button" class="guest-rsvp-back guest-change-player-button"
+                        [disabled]="guestSending || guestLinking || guestCancelling"
+                        (click)="startChangingGuestIdentity()">
+                        {{ 'guestRsvp.changeOwnPlayer' | t }}
+                      </button>
+                    } @else {
+                      <div class="guest-change-panel">
+                        <h3>{{ 'guestRsvp.changePlayerTitle' | t }}</h3>
+                        <p class="guest-rsvp-hint">{{ 'guestRsvp.changePlayerHelp' | t }}</p>
+                        <label for="guest-change-player-select">{{ 'guestRsvp.selectPlayer' | t }}</label>
+                        <select id="guest-change-player-select" [ngModel]="guestPlayerId"
+                          (ngModelChange)="selectGuestPlayer($event)" [disabled]="guestChangingIdentity">
+                          <option [ngValue]="null">{{ 'guestRsvp.choosePlaceholder' | t }}</option>
+                          @for (person of guestPlayers; track person.id) {
+                            <option [ngValue]="person.id">{{ person.name }}</option>
+                          }
+                        </select>
+                        <label for="guest-change-new-name">{{ 'guestRsvp.notListed' | t }}</label>
+                        <input id="guest-change-new-name" type="text" maxlength="80"
+                          [ngModel]="guestNewName" (ngModelChange)="setGuestNewName($event)"
+                          [disabled]="guestChangingIdentity"
+                          [placeholder]="'guestRsvp.newNamePlaceholder' | t" />
+                        @if (guestError) {
+                          <p class="guest-rsvp-error" role="alert">{{ guestError | t }}</p>
+                        }
+                        <button type="button" class="guest-rsvp-primary"
+                          [disabled]="guestChangingIdentity || (!guestPlayerId && guestNewName.trim().length < 2)"
+                          (click)="changeGuestIdentity()">
+                          {{ (guestChangingIdentity ? 'guestRsvp.changingPlayer' : 'guestRsvp.savePlayerChange') | t }}
+                        </button>
+                        <button type="button" class="guest-rsvp-back" [disabled]="guestChangingIdentity"
+                          (click)="cancelChangingGuestIdentity()">
+                          {{ 'common.cancel' | t }}
+                        </button>
+                      </div>
+                    }
+                    @if (!guestEditingIdentity) {
+                      @if (!guestConfirmCancellation) {
+                        <button type="button" class="guest-cancel-link"
+                          [disabled]="guestCancelling || guestLinking"
+                          (click)="guestConfirmCancellation = true">
+                          {{ 'guestRsvp.cancelMySeat' | t }}
+                        </button>
+                      } @else {
+                        <div class="guest-cancel-confirm">
+                          <p>{{ 'guestRsvp.cancelMySeatHelp' | t }}</p>
+                          <button type="button" class="guest-cancel-danger"
+                            [disabled]="guestCancelling" (click)="cancelOwnGuestReservation()">
+                            {{ (guestCancelling ? 'guestRsvp.cancelling' : 'guestRsvp.confirmCancelSeat') | t }}
+                          </button>
+                          <button type="button" class="guest-rsvp-back" [disabled]="guestCancelling"
+                            (click)="guestConfirmCancellation = false">
+                            {{ 'guestRsvp.keepMySeat' | t }}
+                          </button>
+                        </div>
+                      }
+                    }
+                  </div>
                   <div class="guest-rsvp-upgrade">
                     <h3>{{ 'guestRsvp.createAccountTitle' | t }}</h3>
                     <p>{{ 'guestRsvp.createAccountHelp' | t }}</p>
@@ -196,7 +256,7 @@
                     <p>{{ 'guestRsvp.noThanks' | t }}</p>
                   </div>
                 }
-                @if (guestReceipt) {
+                @if (guestReceipt && !guestEditingIdentity && !guestConfirmCancellation) {
                   <button type="button" class="guest-rsvp-back"
                           (click)="registerAnotherGuest()" [disabled]="guestSending || guestLinking">
                     {{ 'guestRsvp.differentPlayer' | t }}
