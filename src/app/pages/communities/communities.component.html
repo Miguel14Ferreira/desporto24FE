@@ -708,6 +708,50 @@
                   (cancelRequested)="cancelSportsEdit()"
                 ></app-community-sport-management>
 
+                <section class="community-session-policy" aria-labelledby="community-session-policy-title">
+                  <div class="community-session-policy-heading">
+                    <div>
+                      <span class="section-kicker">{{ 'communities.sessionPolicy.kicker' | t }}</span>
+                      <h3 id="community-session-policy-title">{{ 'communities.sessionPolicy.title' | t }}</h3>
+                      <p>{{ 'communities.sessionPolicy.hint' | t }}</p>
+                    </div>
+                    @if (canManage() && !sessionPolicyEditing) {
+                      <button type="button" class="jynlo-action jynlo-action--neutral" (click)="editSessionPolicy()">
+                        {{ 'communities.sessionPolicy.edit' | t }}
+                      </button>
+                    }
+                  </div>
+                  @if (!sessionPolicyEditing) {
+                    <p class="community-session-policy-value">
+                      {{ (selected.membersCanCreateSessions === false
+                          ? 'communities.sessionPolicy.admins'
+                          : 'communities.sessionPolicy.everyone') | t }}
+                    </p>
+                  } @else {
+                    <fieldset class="community-session-policy-options" [disabled]="sessionPolicySaving">
+                      <legend>{{ 'communities.sessionPolicy.choose' | t }}</legend>
+                      <label [class.selected]="sessionPolicyDraft">
+                        <input type="radio" name="communitySessionPermission" [value]="true" [(ngModel)]="sessionPolicyDraft">
+                        {{ 'communities.sessionPolicy.everyone' | t }}
+                      </label>
+                      <label [class.selected]="!sessionPolicyDraft">
+                        <input type="radio" name="communitySessionPermission" [value]="false" [(ngModel)]="sessionPolicyDraft">
+                        {{ 'communities.sessionPolicy.admins' | t }}
+                      </label>
+                    </fieldset>
+                    <div class="community-session-policy-actions">
+                      <button type="button" class="jynlo-action jynlo-action--primary" [disabled]="sessionPolicySaving"
+                        (click)="saveSessionPolicy()">
+                        {{ (sessionPolicySaving ? 'communities.sessionPolicy.saving' : 'communities.sessionPolicy.save') | t }}
+                      </button>
+                      <button type="button" class="jynlo-action jynlo-action--neutral" [disabled]="sessionPolicySaving"
+                        (click)="cancelSessionPolicy()">{{ 'communities.sessionPolicy.cancel' | t }}</button>
+                    </div>
+                  }
+                  @if (sessionPolicyFeedback) { <p role="status" class="community-session-policy-feedback">{{ sessionPolicyFeedback }}</p> }
+                  @if (sessionPolicyError) { <p role="alert" class="community-session-policy-error">{{ sessionPolicyError }}</p> }
+                </section>
+
                 <section class="season-dashboard">
                   <app-community-habitual-venue-picker [community]="selected"
                     (venueSaved)="onHabitualVenueSaved($event)"></app-community-habitual-venue-picker>
@@ -847,12 +891,12 @@
                     <span class="section-kicker">{{ 'communities.sessionsKicker' | t }}</span>
                     <h3>{{ 'communities.sessionsTitle' | t }}</h3>
                   </div>
-                  <a
-                    class="primary-action button-link small jynlo-action jynlo-action--primary jynlo-action--compact"
-                    routerLink="/menu/createEvent"
-                    [queryParams]="{ community: selected.id }">
-                    {{ 'communities.createSession' | t }}
-                  </a>
+                  @if (selected.membersCanCreateSessions !== false || canManage()) {
+                    <a class="primary-action button-link small jynlo-action jynlo-action--primary jynlo-action--compact"
+                      routerLink="/menu/createEvent" [queryParams]="{ community: selected.id }">
+                      {{ 'communities.createSession' | t }}
+                    </a>
+                  }
                 </div>
 
                 @if (sessionResultSuccess) {
