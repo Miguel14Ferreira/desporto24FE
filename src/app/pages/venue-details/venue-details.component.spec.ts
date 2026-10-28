@@ -59,7 +59,7 @@ describe('VenueDetailsComponent', () => {
     createdAt: '2026-09-29T20:00:00Z'
   });
 
-  it('shows a clean public venue profile without a redundant sign-in banner', async () => {
+  it('keeps the useful public venue information panel with a distinct action', async () => {
     const route = { snapshot: {
       data: { publicVenueView: true },
       paramMap: convertToParamMap({ id: '7' }),
@@ -85,12 +85,22 @@ describe('VenueDetailsComponent', () => {
     expect(root.querySelector('.venue-basic-info')).not.toBeNull();
     expect(root.querySelector('.venue-visit-section')).not.toBeNull();
     expect(root.querySelector('.venue-information-section')).not.toBeNull();
-    expect(root.querySelector('.venue-public-more')).toBeNull();
-    expect(root.querySelector('a[href="/menu/venues/7"]')).toBeNull();
+    const info = root.querySelector<HTMLElement>('.venue-public-more');
+    expect(info).not.toBeNull();
+    expect(info?.tagName).toBe('ASIDE');
+    expect(info?.querySelector('p')?.textContent).toContain('fotografias');
+    expect(info?.querySelector('a.venue-public-more-link')?.getAttribute('href')).toBe('/menu/venues/7');
+    // A shared vertical rhythm keeps the address cards separate from this message.
+    const basicInfo = root.querySelector<HTMLElement>('.venue-basic-info');
+    const shell = root.querySelector<HTMLElement>('.venue-detail-shell');
+    expect(basicInfo?.nextElementSibling).toBe(info);
+    expect(getComputedStyle(shell!).display).toBe('flex');
+    expect(getComputedStyle(shell!).flexDirection).toBe('column');
+    expect(getComputedStyle(info!).paddingTop).not.toBe('0px');
     expect(root.querySelector('.venue-photos-section')).toBeNull();
     expect(root.querySelector('.venue-sport-conditions-section')).toBeNull();
-    expect(root.textContent).not.toContain('Abrir detalhes completos');
-    expect(root.textContent).not.toContain('Para fotografias e contributos');
+    expect(root.textContent).toContain('Abrir detalhes completos');
+    expect(root.textContent).toContain('Para fotografias e contributos');
     expect(api.listPhotos).not.toHaveBeenCalled();
     expect(api.listSportConditions).not.toHaveBeenCalled();
     fixture.destroy();
