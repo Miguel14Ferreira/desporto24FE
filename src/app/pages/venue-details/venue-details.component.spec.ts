@@ -57,6 +57,56 @@ describe('VenueDetailsComponent', () => {
     createdAt: '2026-09-29T20:00:00Z'
   });
 
+  it('opens a full venue from a public link without authentication-only requests', () => {
+    const route = { snapshot: {
+      data: { publicVenueView: true },
+      paramMap: { get: (key: string) => key === 'id' ? '7' : null },
+      queryParamMap: convertToParamMap({})
+    }} as unknown as ActivatedRoute;
+    const api = jasmine.createSpyObj<VenueService>('VenueService',
+      ['get', 'getRatingSummary', 'listPhotos', 'listSportConditions', 'addPhoto', 'addSportCondition']);
+    api.get.and.returnValue(of(createVenue()));
+    api.getRatingSummary.and.returnValue(of({ venueId: 7, ratingCount: 0, averageScore: null }));
+    const component = new VenueDetailsComponent(route, api);
+    component.ngOnInit();
+
+    expect(component.isPublicView).toBeTrue();
+    expect(component.venue?.name).toBe('Pavilhão Central');
+    expect(component.loading).toBeFalse();
+    expect(component.photosLoading).toBeFalse();
+    expect(component.sportConditionsLoading).toBeFalse();
+    expect(api.get).toHaveBeenCalledOnceWith(7);
+    expect(api.getRatingSummary).toHaveBeenCalledOnceWith(7);
+    expect(api.listPhotos).not.toHaveBeenCalled();
+    expect(api.listSportConditions).not.toHaveBeenCalled();
+    component.retryPhotos();
+    component.retrySportConditions();
+    expect(api.listPhotos).not.toHaveBeenCalled();
+    expect(api.listSportConditions).not.toHaveBeenCalled();
+    component.ngOnDestroy();
+  });
+
+  it('preserves private venue functionality when the route has no public flag', () => {
+    const route = { snapshot: {
+      data: {},
+      paramMap: { get: (key: string) => key === 'id' ? '7' : null },
+      queryParamMap: convertToParamMap({})
+    }} as unknown as ActivatedRoute;
+    const api = jasmine.createSpyObj<VenueService>('VenueService',
+      ['get', 'getRatingSummary', 'listPhotos', 'listSportConditions']);
+    api.get.and.returnValue(of(createVenue()));
+    api.getRatingSummary.and.returnValue(of({ venueId: 7, ratingCount: 0, averageScore: null }));
+    api.listPhotos.and.returnValue(of([]));
+    api.listSportConditions.and.returnValue(of([]));
+    const component = new VenueDetailsComponent(route, api);
+    component.ngOnInit();
+
+    expect(component.isPublicView).toBeFalse();
+    expect(api.listPhotos).toHaveBeenCalledOnceWith(7);
+    expect(api.listSportConditions).toHaveBeenCalledOnceWith(7);
+    component.ngOnDestroy();
+  });
+
   it('offers an embedded map and verified-looking contact without needing Google credentials', () => {
     const sanitizer = jasmine.createSpyObj<DomSanitizer>('DomSanitizer', ['bypassSecurityTrustResourceUrl']);
     sanitizer.bypassSecurityTrustResourceUrl.and.callFake(url => ({ changingThisBreaksApplicationSecurity: url }) as any);
