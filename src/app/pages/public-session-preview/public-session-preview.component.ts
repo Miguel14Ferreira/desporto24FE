@@ -147,9 +147,27 @@ export class PublicSessionPreviewComponent implements OnInit {
     return 'jynlo-guest-receipt:' + this.sessionId + ':' + (this.guestToken || '').slice(0,18);
   }
 
+  /** Existing visitors may still have a receipt in the pre-fix session-only key. */
+  private savedGuestReceipt(): string | null {
+    try {
+      const scoped = localStorage.getItem(this.receiptKey());
+      if (scoped) return scoped;
+      const legacyKey = 'jynlo-guest-receipt:' + this.sessionId;
+      const legacy = localStorage.getItem(legacyKey);
+      if (legacy && /^[A-Za-z0-9_-]{43}$/.test(legacy)) {
+        localStorage.setItem(this.receiptKey(), legacy);
+        localStorage.removeItem(legacyKey);
+      }
+      return legacy;
+    } catch { return null; }
+  }
+
   /** Explicitly begin a new guest registration on a shared device/link. */
   registerAnotherGuest(): void {
-    try { localStorage.removeItem(this.receiptKey()); } catch {}
+    try {
+      localStorage.removeItem(this.receiptKey());
+      localStorage.removeItem('jynlo-guest-receipt:' + this.sessionId);
+    } catch {}
     this.guestReceipt = '';
     this.guestStep = 'choose';
     this.guestPlayerId = null;
@@ -173,7 +191,7 @@ export class PublicSessionPreviewComponent implements OnInit {
         this.guestPlayers = data.players;
         this.guestCommunityId = data.communityId;
         try {
-          const receipt = localStorage.getItem(this.receiptKey());
+          const receipt = this.savedGuestReceipt();
           if (receipt && /^[A-Za-z0-9_-]{43}$/.test(receipt)) {
             this.guestReceipt = receipt;
             this.checkGuestStatus();
@@ -263,7 +281,7 @@ export class PublicSessionPreviewComponent implements OnInit {
         // After optional sign-up, only a prior private approval receipt
         // authorizes transferring the guest seat to the real account.
         try {
-          const receipt = localStorage.getItem(this.receiptKey());
+          const receipt = this.savedGuestReceipt();
           if (receipt && /^[A-Za-z0-9_-]{43}$/.test(receipt)) {
             this.guestReceipt=receipt;
             this.checkGuestStatus();
