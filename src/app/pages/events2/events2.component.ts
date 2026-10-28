@@ -87,7 +87,7 @@ export class Events2Component implements OnInit, OnDestroy {
     this.seasonOverviewError = false;
     if (this.seasonGameCommunityId === null) return;
     this.seasonOverviewLoading = true;
-    this.communityService.competition(id).pipe(timeout(10_000)).subscribe({
+    this.communityService.competition(this.seasonGameCommunityId).pipe(timeout(10_000)).subscribe({
       next: overview => {
         if (revision !== this.seasonInfoRevision) return;
         this.seasonOverview = overview;
