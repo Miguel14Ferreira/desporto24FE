@@ -8,9 +8,9 @@ import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime
 import { DirectChatMessage } from 'src/app/pages/model/direct-chat';
 import { AppNotification } from 'src/app/pages/model/app-notification';
 import { chatMediaPreviewKind, chatMediaPreviewForAttachment, chatMediaPreviewKey } from 'src/app/shared/chat-media-preview';
-import { Subscription, auditTime, filter, retry, timeout, forkJoin } from 'rxjs';
-import { InboxApiService } from 'src/app/services/inbox-api.service';
-import { PrivateGroupService } from 'src/app/services/private-group.service';
+import { Subscription, auditTime, filter, retry, timeout, forkJoin, map, Observable } from 'rxjs';
+import { InboxApiService, InboxSummary } from 'src/app/services/inbox-api.service';
+import { PrivateGroupService, PrivateGroup } from 'src/app/services/private-group.service';
 import { SessionMessage } from 'src/app/pages/model/session-message';
 import { CommunityTimelineEntry } from 'src/app/services/community-timeline.service';
 import { PrivateGroupMessage } from 'src/app/services/private-group.service';
@@ -274,14 +274,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
       const token = localStorage.getItem('t');
       if (!token) return;
       this.groupToastLookup?.unsubscribe();
-      const prefs = this.notificationService.preferences();
-      const verification = kind === 'private'
-        ? forkJoin({ preferences: prefs, group: this.privateGroups.get(id) })
-        : forkJoin({ preferences: prefs, summaries: this.inboxApi.summaries([
-          { kind, id: String(id) }
-        ]) });
-      this.groupToastLookup = verification.pipe(timeout(8_000)).subscribe({
-        next: result => {
+      const check: Observable<{group: PrivateGroup} | {summaries: InboxSummary[]}> =
+        kind === 'private'
+          ? this.privateGroups.get(id).pipe(map(group => ({ group })))
+          : this.inboxApi.summaries([{ kind, id: String(id) }])
+              .pipe(map(summaries => ({ summaries })));
+      this.groupToastLookup = forkJoin({
+        preferences: this.notificationService.preferences(), check
+      }).pipe(timeout(8_000)).subscribe({
+        next: ({ preferences, check }) => {
           if (!this.authenticated || localStorage.getItem('t') !== token
               || this.authService.loggedInPerfilname?.toLowerCase() !== account
               || !recentGroupChatEvent(message.createdAt)
@@ -289,14 +290,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
               || this.router.url.startsWith('/menu/messages')
               || this.router.url.startsWith('/menu/notifications')
               || this.router.url.startsWith('/menu/groups')
-              || !allowsGroupChatToast(result.preferences)) return;
+              || !allowsGroupChatToast(preferences)) return;
           let title: string | undefined;
-          if ('group' in result) {
+          if ('group' in check) {
             // The private group GET rechecks membership after the socket event.
-            if (result.group.id !== id || !result.group.members.some(
+            if (check.group.id !== id || !check.group.members.some(
               member => member.username.toLowerCase() === account)) return;
-            title = result.group.title;
-          } else if (!confirmsGroupUnread(result.summaries[0],
+            title = check.group.title;
+          } else if (!confirmsGroupUnread(check.summaries[0],
               kind as 'community' | 'session', id, messageId, sender)) return;
           if (this.seenGroupToastKeys.has(key)) return;
           this.seenGroupToastKeys.add(key);
