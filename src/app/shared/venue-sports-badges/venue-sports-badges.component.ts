@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 
-/** Sport names arrive as a legacy semicolon/comma-separated string from the API. */
+/** Sport names arrive as a legacy semicolon/comma/pipe-separated string from APIs. */
 export function parseVenueSports(value: string | null | undefined): string[] {
   if (!value?.trim()) return [];
   const seen = new Set<string>();
-  return value.split(/[;,]+/).map(sport => sport.trim()).filter(sport => {
+  return value.split(/[;,|]+/).map(sport => sport.trim()).filter(sport => {
     if (!sport) return false;
     const key = sport.toLocaleLowerCase('pt-PT');
     if (seen.has(key)) return false;
