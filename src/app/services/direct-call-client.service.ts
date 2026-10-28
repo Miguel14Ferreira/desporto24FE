@@ -28,6 +28,14 @@ interface CallSession {
   token: string;
   expiresAt: string;
 }
+/** The authenticated pending call response contains no LiveKit credentials. */
+interface PendingCallInvitation {
+  callId: string;
+  caller: string;
+  peer: string;
+  media: CallMedia;
+  expiresAt: string;
+}
 
 /**
  * One active private call per browser. Transport is LiveKit WebRTC; the
@@ -48,6 +56,11 @@ export class DirectCallClientService implements OnDestroy {
   private ringTimer?: ReturnType<typeof setTimeout>;
   private generation = 0;
   private checking = false;
+  private recoveringPending = false;
+  private pendingTimer?: ReturnType<typeof setInterval>;
+  private readonly onForeground = (): void => {
+    if (document.visibilityState === 'visible') this.recoverPendingCall();
+  };
 
   constructor(private readonly http: HttpClient,
               private readonly realtime: DirectChatRealtimeService,
@@ -57,6 +70,15 @@ export class DirectCallClientService implements OnDestroy {
       .subscribe(() => this.ensureConnected()));
     this.ensureConnected();
     window.addEventListener('storage', this.onStorage);
+    window.addEventListener('focus', this.onForeground);
+    document.addEventListener('visibilitychange', this.onForeground);
+    // Recover RINGING invitations even if the socket dropped the event.
+    this.pendingTimer = setInterval(() => this.recoverPendingCall(), 8_000);
+    if (this.realtime.connected$) {
+      this.subscriptions.add(this.realtime.connected$.subscribe(connected => {
+        if (connected) this.recoverPendingCall();
+      }));
+    }
   }
 
   private readonly onStorage = (event: StorageEvent): void => {
@@ -90,6 +112,31 @@ export class DirectCallClientService implements OnDestroy {
           this.available$.next(false);
           this.availabilityStatus$.next('requestFailed');
         }
+      });
+  }
+
+  /** Read-only recovery: never starts a second call or exposes room tokens. */
+  recoverPendingCall(): void {
+    if (this.recoveringPending || this.state$.value || !this.available$.value
+        || document.visibilityState === 'hidden') return;
+    const username = this.username().toLowerCase();
+    const token = localStorage.getItem('t');
+    if (!username || !token) return;
+    this.recoveringPending = true;
+    this.http.get<PendingCallInvitation | null>(this.base + '/pending')
+      .pipe(timeout(8000)).subscribe({
+        next: invite => {
+          this.recoveringPending = false;
+          if (localStorage.getItem('t') !== token || !this.available$.value
+              || this.state$.value || !invite
+              || typeof invite.callId !== 'string'
+              || typeof invite.caller !== 'string'
+              || typeof invite.peer !== 'string'
+              || invite.peer.toLowerCase() !== username
+              || !['voice', 'video'].includes(invite.media)) return;
+          this.onEvent({...invite,status:'RINGING',actor:invite.caller});
+        },
+        error: () => { this.recoveringPending = false; }
       });
   }
 
@@ -316,6 +363,9 @@ export class DirectCallClientService implements OnDestroy {
 
   ngOnDestroy(): void {
     window.removeEventListener('storage',this.onStorage);
+    window.removeEventListener('focus',this.onForeground);
+    document.removeEventListener('visibilitychange',this.onForeground);
+    if (this.pendingTimer) clearInterval(this.pendingTimer);
     this.subscriptions.unsubscribe();
     this.dropCall();
   }
