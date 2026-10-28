@@ -1,5 +1,6 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
 import { NotificationApiService } from 'src/app/services/notification-api.service';
@@ -25,6 +26,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private notificationTimer?: ReturnType<typeof setInterval>;
   private unreadRequest?: Subscription;
   private readonly subscriptions = new Subscription();
+  private readonly baseTabTitle = 'Jynlo — Join the game.';
 
   constructor(
     private elementRef: ElementRef<HTMLElement>,
@@ -32,6 +34,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private authService: AuthenticationService,
     private notificationService: NotificationApiService,
     private realtimeService: DirectChatRealtimeService,
+    private browserTitle: Title,
     public i18n: I18nService
   ) { }
 
@@ -89,6 +92,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.realtimeService.disconnect();
         this.unreadRequest?.unsubscribe();
         this.unreadNotifications = 0;
+        this.updateBrowserTabTitle();
         if (this.notificationTimer) {
           clearInterval(this.notificationTimer);
           this.notificationTimer = undefined;
@@ -121,13 +125,34 @@ export class NavbarComponent implements OnInit, OnDestroy {
         )
         .subscribe({
           next: count => {
-            if (this.authenticated) this.unreadNotifications = count;
+            if (!this.authenticated || !Number.isFinite(count) || count < 0) return;
+            // The same authoritative unread count drives both nav badge and tab.
+            this.unreadNotifications = Math.floor(count);
+            this.updateBrowserTabTitle();
           },
           // A transient request failure is not evidence that all alerts were read.
           error: () => {}
         });
     }
     
+    /** Browser tab displays only the user's unread, in-app notifications. */
+    private updateBrowserTabTitle(): void {
+      const count = this.authenticated ? this.unreadNotifications : 0;
+      const badge = count > 99 ? '99+' : String(count);
+      const title = count > 0
+        ? `Jynlo (${badge}) — Join the game.`
+        : this.baseTabTitle;
+      if (this.browserTitle.getTitle() !== title) {
+        this.browserTitle.setTitle(title);
+      }
+    }
+
+    // A user may have read notifications in a different tab.
+    @HostListener('window:focus')
+    refreshUnreadWhenFocused(): void {
+      if (this.authenticated) this.loadUnreadNotifications();
+    }
+
     DarkMode(){
       this.dark = true;
       localStorage.setItem('theme',this.escuro);
