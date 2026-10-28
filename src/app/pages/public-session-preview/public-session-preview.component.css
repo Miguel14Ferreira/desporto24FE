@@ -309,3 +309,18 @@ h1 {
  .guest-confirmed-roster-refresh{width:100%}
  .guest-confirmed-player{flex:1 1 145px;justify-content:space-between}
 }
+
+/* The organiser's arrival instructions are only rendered for a validated
+   APPROVED/LINKED guest receipt, never from the shareable invitation token. */
+.guest-private-meeting-point {
+  min-width:0;display:grid;gap:8px;padding:14px;
+  border:1px solid rgba(79,226,188,.5);border-radius:13px;
+  background:rgba(17,83,76,.47);
+}
+.guest-private-meeting-point h3 {margin:0;color:#e7fff6;font-size:1rem}
+.guest-rsvp .guest-private-meeting-point p {
+  margin:0;color:#fff;line-height:1.55;font-weight:750;
+  overflow-wrap:anywhere;white-space:pre-wrap;
+}
+.guest-private-meeting-point small {color:#bddbd9;line-height:1.5}
+.guest-meeting-refresh {max-width:100%;min-height:42px;white-space:normal}

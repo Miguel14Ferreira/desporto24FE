@@ -59,6 +59,8 @@ export class PublicSessionPreviewComponent implements OnInit {
   confirmedPlayersLoading = false;
   confirmedPlayersError = false;
   guestConfirmedName = '';
+  /** Only returned to this guest after their private RSVP receipt is approved. */
+  guestMeetingPoint = '';
   guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' | 'linked' | 'cancelled' = 'choose';
   guestPlayerId: number | null = null;
   guestNewName = '';
@@ -180,6 +182,7 @@ export class PublicSessionPreviewComponent implements OnInit {
     } catch {}
     this.guestReceipt = '';
     this.guestConfirmedName = '';
+    this.guestMeetingPoint = '';
     this.guestStep = 'choose';
     this.guestPlayerId = null;
     this.guestNewName = '';
@@ -237,7 +240,7 @@ export class PublicSessionPreviewComponent implements OnInit {
         this.guestSending || !this.guestPlayerName) return;
     this.guestSending = true;
     this.guestError = '';
-    this.http.post<{receipt:string;status:string;playerName?:string}>(
+    this.http.post<{receipt:string;status:string;playerName?:string;meetingPointInstructions?:string|null}>(
       environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests',
       {linkToken:this.guestToken,playerId:this.guestPlayerId,
        newName:this.guestPlayerId===null?this.guestNewName.trim():null,
@@ -245,6 +248,9 @@ export class PublicSessionPreviewComponent implements OnInit {
     ).pipe(timeout(10000),finalize(() => this.guestSending=false)).subscribe({
       next: response => {
         this.guestConfirmedName = response.playerName?.trim() || this.guestPlayerName;
+        this.guestMeetingPoint = response.status === 'APPROVED' &&
+          typeof response.meetingPointInstructions === 'string'
+          ? response.meetingPointInstructions : '';
         this.guestReceipt = response.receipt;
         try {localStorage.setItem(this.receiptKey(),response.receipt);} catch {}
         this.guestStep=response.status==='APPROVED'?'approved':
@@ -260,12 +266,17 @@ export class PublicSessionPreviewComponent implements OnInit {
     if (!this.sessionId || !this.guestReceipt || this.guestSending) return;
     this.guestSending=true;
     this.guestError='';
-    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'|'CANCELLED';playerName?:string}>(
+    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'|'CANCELLED';playerName?:string;meetingPointInstructions?:string|null}>(
       environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/status',
       {receipt:this.guestReceipt}
     ).pipe(timeout(10000),finalize(()=>this.guestSending=false)).subscribe({
       next: r => {
         this.guestConfirmedName = r.playerName?.trim() || this.guestConfirmedName;
+        // The receipt response is authoritative: never cache private arrival
+        // instructions, and clear them if removed or the attendance is revoked.
+        this.guestMeetingPoint = (r.status === 'APPROVED' || r.status === 'LINKED')
+          && typeof r.meetingPointInstructions === 'string'
+          ? r.meetingPointInstructions : '';
         this.guestStep=r.status==='LINKED'?'linked':
           r.status==='APPROVED'?'approved':
           r.status==='REJECTED'?'rejected':
@@ -283,13 +294,17 @@ export class PublicSessionPreviewComponent implements OnInit {
           } catch { /* Storage may be disabled. */ }
           this.guestReceipt = '';
           this.guestConfirmedName = '';
+          this.guestMeetingPoint = '';
           this.guestStep = 'choose';
           this.guestError = '';
           return;
         }
         // A timeout, outage or rate limit does not revoke a valid reservation:
         // keep its receipt and offer another status check, never re-register.
-        this.guestStep = 'pending';
+        if (this.guestStep !== 'approved' && this.guestStep !== 'linked') {
+          this.guestStep = 'pending';
+        }
+        this.guestMeetingPoint = '';
         this.guestError = 'guestRsvp.statusError';
       }
     });

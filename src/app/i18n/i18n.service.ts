@@ -566,6 +566,7 @@ const PT: Dictionary = {
   'publicSession.confirmedRosterEmpty': 'Ainda não há jogadores confirmados.',
   'publicSession.confirmedRosterError': 'Não foi possível atualizar os jogadores. Tenta novamente.',
   'guestRsvp.confirmedAs': 'A tua presença está registada como:',
+  'guestRsvp.refreshMeetingPoint': 'Atualizar ponto de encontro',
   'publicSession.invitationLocationHint': 'Esta localização foi partilhada pelo organizador através de um convite. Confirma o ponto de encontro antes de sair.',
   'guestRsvp.noAccount': 'Sem conta? Podes participar',
   'guestRsvp.title': 'Quem vai jogar?',

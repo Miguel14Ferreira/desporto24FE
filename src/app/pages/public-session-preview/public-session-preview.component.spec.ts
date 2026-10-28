@@ -1160,6 +1160,65 @@ describe('PublicSessionPreviewComponent', () => {
       expect(page.querySelectorAll('.guest-rsvp').length).toBe(1);
     });
 
+    it('reveals and refreshes private meeting instructions only after a confirmed guest receipt', () => {
+      const page=renderGuest();
+      const component=fixture.componentInstance;
+      expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
+      component.guestReceipt=receipt;
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',playerName:'Jogador A',
+        meetingPointInstructions:'Portão 2 junto ao café'
+      }));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')?.textContent)
+        .toContain('Portão 2 junto ao café');
+      const refresh=page.querySelector('.guest-meeting-refresh') as HTMLButtonElement;
+      expect(refresh).not.toBeNull();
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',meetingPointInstructions:'Entrada norte'
+      }));
+      refresh.click();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')?.textContent).toContain('Entrada norte');
+      expect(page.textContent).not.toContain('Portão 2 junto ao café');
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',meetingPointInstructions:null
+      }));
+      refresh.click();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
+    });
+
+    it('hides guest arrival notes if the verified receipt is revoked or invalid', () => {
+      const page=renderGuest();
+      const component=fixture.componentInstance;
+      component.guestReceipt=receipt;
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',meetingPointInstructions:'Portão privado'
+      }));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')).not.toBeNull();
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'CANCELLED',meetingPointInstructions:'must not render'
+      }));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',meetingPointInstructions:'New instructions'
+      }));
+      component.checkGuestStatus();
+      (http.post as jasmine.Spy).and.returnValue(
+        throwError(()=>new HttpErrorResponse({status:404})));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(component.guestReceipt).toBe('');
+      expect(component.guestMeetingPoint).toBe('');
+      expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
+    });
+
     it('recovers the confirmed historical name after reopening an invitation', () => {
       const secret='N'.repeat(43),receipt='R'.repeat(43);
       const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
