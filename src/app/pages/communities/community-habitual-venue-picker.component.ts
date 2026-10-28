@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { finalize, Subscription, timeout } from 'rxjs';
+import { finalize, Subscription, take, timeout } from 'rxjs';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityGroup } from '../model/community-group';
 import { Venue } from '../model/venue';
@@ -35,12 +35,15 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   results: Venue[] = [];
   expanded: Venue | null = null;
   searching = false;
+  searchAttempted = false;
+  searchQuery = '';
   detailLoading = false;
   saving = false;
   error = '';
   feedback = '';
   private revision = 0;
   private subs = new Subscription();
+  private searchRequest?: Subscription;
   private previousCommunityId: number | null = null;
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -59,7 +62,10 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       this.resolvingAddress = false;
       this.results = [];
       this.expanded = null;
+      this.searchRequest = undefined;
       this.searching = false;
+      this.searchAttempted = false;
+      this.searchQuery = '';
       this.detailLoading = false;
       this.saving = false;
       this.error = '';
@@ -68,7 +74,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.previousCommunityId = id;
   }
 
-  constructor(private venues: VenueService, private groups: CommunityGroupsService) {}
+  constructor(private venues: VenueService, private groups: CommunityGroupsService,
+              private readonly cdr: ChangeDetectorRef) {}
 
   get canManage(): boolean {
     return this.community?.myRole === 'OWNER' || this.community?.myRole === 'ADMIN';
@@ -77,6 +84,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   chooseLocationMethod(method: 'venue' | 'maps' | 'gps'): void {
     if (!this.canManage || this.saving || this.locationMethod === method) return;
     ++this.revision; // stale Maps, GPS and catalogue requests cannot change the new mode.
+    this.searchRequest?.unsubscribe();
+    this.searchRequest = undefined;
     this.locationMethod = method;
     this.results = [];
     this.expanded = null;
@@ -84,6 +93,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.mapLink = '';
     this.locationPoint = null;
     this.searching = false;
+    this.searchAttempted = false;
+    this.searchQuery = '';
     this.detailLoading = false;
     this.resolvingMap = false;
     this.locating = false;
@@ -212,34 +223,57 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   }
 
   search(): void {
-    if (!this.canManage || this.searching || this.saving || this.locationMethod !== 'venue') return;
+    if (!this.canManage || this.saving || this.locationMethod !== 'venue') return;
     const query = this.query.trim();
-    if (!query) return;
+    if (!query || (this.searching && query === this.searchQuery)) return;
+
+    // A new query cancels the previous HTTP request immediately. Old responses
+    // must never replace newer results or leave the form stuck in loading state.
     const revision = ++this.revision;
     const communityId = this.community.id;
+    this.searchRequest?.unsubscribe();
+    this.searchRequest = undefined;
+    this.searchQuery = query;
+    this.searchAttempted = false;
     this.error = '';
     this.feedback = '';
     this.results = [];
     this.expanded = null;
     this.detailLoading = false;
     this.searching = true;
+
     const sports = this.community.sports?.length ? this.community.sports
       : this.community.sport ? [this.community.sport] : [];
-    const sub = this.venues.suggest(query, undefined, sports.length === 1 ? sports[0] : undefined, 0)
-      .pipe(timeout(10000), finalize(() => {
-        if (revision === this.revision) this.searching = false;
-      }))
-      .subscribe({
+    const request = this.venues.suggest(query, undefined,
+      sports.length === 1 ? sports[0] : undefined, 0)
+      .pipe(
+        timeout({ first: 8000 }),
+        take(1),
+        finalize(() => {
+          if (revision !== this.revision || this.community.id !== communityId) return;
+          this.searching = false;
+          this.cdr.markForCheck();
+        })
+      ).subscribe({
         next: result => {
-          if (revision !== this.revision || this.community.id !== communityId) return;
-          this.results = result.venues;
+          if (revision !== this.revision || this.community.id !== communityId
+              || this.locationMethod !== 'venue') return;
+          this.results = Array.isArray(result?.venues) ? result.venues : [];
+          this.searchAttempted = true;
+          this.cdr.markForCheck();
         },
-        error: () => {
-          if (revision !== this.revision || this.community.id !== communityId) return;
-          this.error = t('communities.habitualVenue.errorSearch');
+        error: (reason: unknown) => {
+          if (revision !== this.revision || this.community.id !== communityId
+              || this.locationMethod !== 'venue') return;
+          this.searchAttempted = true;
+          this.error = (reason as {name?: string})?.name === 'TimeoutError'
+            ? t('communities.habitualVenue.searchTimeout')
+            : t('communities.habitualVenue.errorSearch');
+          this.cdr.markForCheck();
         }
       });
-    this.subs.add(sub);
+    this.searchRequest = request;
+    this.subs.add(request);
   }
 
   openDetails(id: number): void {
@@ -309,6 +343,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
 
   ngOnDestroy(): void {
     ++this.revision;
+    this.searchRequest?.unsubscribe();
     this.subs.unsubscribe();
   }
 }
