@@ -243,6 +243,35 @@ describe('NotificationsComponent', () => {
     }
   });
 
+  it('localizes photo, voice, PDF and file alerts without exposing names', () => {
+    const previous = localStorage.getItem('d24-language');
+    const base = {...notificationFixture(), type: 'CHAT_MESSAGE', relatedUsername: 'TMF14'};
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.notificationMessage({...base, message:'🖼️ Fotografia'}))
+        .toBe('TMF14 enviou-te uma fotografia 🖼️');
+      expect(component.notificationMessage({...base, message:'🎤 Mensagem de voz'}))
+        .toBe('TMF14 enviou-te uma mensagem de voz 🎤');
+      expect(component.notificationMessage({...base, message:'📄 Documento'}))
+        .toBe('TMF14 enviou-te um documento 📄');
+      expect(component.notificationMessage({...base, message:'📎 Anexo'}))
+        .toBe('TMF14 enviou-te um ficheiro 📎');
+      localStorage.setItem('d24-language', 'en');
+      expect(component.notificationMessage({...base, message:'🖼️ Fotografia'}))
+        .toBe('TMF14 sent you a photo 🖼️');
+      expect(component.notificationMessage({...base, message:'🎤 Mensagem de voz'}))
+        .toBe('TMF14 sent you a voice message 🎤');
+      expect(component.notificationMessage({...base, message:'📄 Documento'}))
+        .toBe('TMF14 sent you a document 📄');
+      expect(component.notificationMessage({...base, message:'📎 Anexo'}))
+        .toBe('TMF14 sent you a file 📎');
+      expect(component.notificationMessage({...base, message:'Olá! 😀'})).toBe('Olá! 😀');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
   it('never shows malformed GIF envelope payloads in saved notifications', () => {
     const notice={...notificationFixture(),type:'CHAT_MESSAGE',
       relatedUsername:'TMF14',message:'[JYNLO:GIPHY:1]{broken-json}'};

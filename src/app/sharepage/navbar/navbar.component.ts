@@ -5,6 +5,9 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
 import { NotificationApiService } from 'src/app/services/notification-api.service';
 import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime.service';
+import { DirectChatMessage } from 'src/app/pages/model/direct-chat';
+import { AppNotification } from 'src/app/pages/model/app-notification';
+import { chatMediaPreviewKind, chatMediaPreviewForAttachment, chatMediaPreviewKey } from 'src/app/shared/chat-media-preview';
 import { Subscription, auditTime, filter, retry, timeout } from 'rxjs';
 
 @Component({
@@ -25,6 +28,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
   loggingOut = false;
   private notificationTimer?: ReturnType<typeof setInterval>;
   private unreadRequest?: Subscription;
+  private toastLookup?: Subscription;
+  private toastTimer?: ReturnType<typeof setTimeout>;
+  private toastAccount: string | null = null;
+  private readonly seenToastIds = new Set<number>();
+  chatToast?: AppNotification;
   private readonly subscriptions = new Subscription();
   private readonly baseTabTitle = 'Jynlo — Join the game.';
 
@@ -57,8 +65,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
       // may be disabled, already read, or suppressed by the server.
       // Coalesce bursts and ask the authoritative, preference-filtered endpoint.
       this.subscriptions.add(
-        this.realtimeService.messages$.pipe(auditTime(300)).subscribe(() => {
-          if (this.authenticated) this.loadUnreadNotifications();
+        this.realtimeService.messages$.pipe(auditTime(300)).subscribe(message => {
+          if (!this.authenticated) return;
+          this.loadUnreadNotifications();
+          this.maybeShowChatToast(message);
         })
       );
 
@@ -74,6 +84,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
       this.subscriptions.unsubscribe();
       this.unreadRequest?.unsubscribe();
+      this.toastLookup?.unsubscribe();
+      this.dismissChatToast();
       if (this.notificationTimer) {
         clearInterval(this.notificationTimer);
       }
@@ -84,6 +96,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.authenticated = this.authService.hasSessionCandidate();
       this.admin = this.authenticated
         && this.authService.hasAnyRole('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
+      const account = this.authenticated
+        ? this.authService.loggedInPerfilname?.toLowerCase() ?? null : null;
+      if (account !== this.toastAccount) {
+        this.toastAccount = account;
+        this.seenToastIds.clear();
+        this.toastLookup?.unsubscribe();
+        this.dismissChatToast();
+      }
 
       if (!this.authenticated) {
         // The navbar persists across SPA logout -> login navigation. A previous
@@ -135,6 +155,76 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
     }
     
+    /** In-app alert only after the authenticated API confirms an unmuted,
+     * unread, newly persisted notification. Never trust raw WebSocket text as
+     * proof of notification visibility or expose private media URLs. */
+    private maybeShowChatToast(message: DirectChatMessage): void {
+      const account = this.authService.loggedInPerfilname?.toLowerCase();
+      if (!account || typeof message?.id !== 'number' || !Number.isSafeInteger(message.id) || message.id <= 0
+          || message.username2?.toLowerCase() !== account
+          || message.username1?.toLowerCase() === account
+          || message.editedAt || message.deletedAt
+          || document.visibilityState !== 'visible' || !document.hasFocus()
+          || this.router.url.startsWith('/menu/messages')
+          || this.router.url.startsWith('/menu/notifications')) return;
+      const token = localStorage.getItem('t');
+      if (!token) return;
+      const sender = message.username1.toLowerCase();
+      const attachmentKind = chatMediaPreviewForAttachment(message.attachmentMimeType);
+      const messageKind = attachmentKind ?? chatMediaPreviewKind(message.text);
+      this.toastLookup?.unsubscribe();
+      this.toastLookup = this.notificationService.mine().pipe(timeout(8_000)).subscribe({
+        next: notices => {
+          if (!this.authenticated || localStorage.getItem('t') !== token
+              || this.authService.loggedInPerfilname?.toLowerCase() !== account
+              || document.visibilityState !== 'visible' || !document.hasFocus()
+              || this.router.url.startsWith('/menu/messages')
+              || this.router.url.startsWith('/menu/notifications')) return;
+          const now = Date.now();
+          const notice = notices.filter(n =>
+            n.type === 'CHAT_MESSAGE' && !n.read && n.relatedUsername?.toLowerCase() === sender
+            && Number.isSafeInteger(n.id) && !this.seenToastIds.has(n.id)
+            && Number.isFinite(Date.parse(n.createdAt))
+            && now - Date.parse(n.createdAt) >= -3000
+            && now - Date.parse(n.createdAt) < 20_000
+            && (messageKind ? chatMediaPreviewKind(n.message) === messageKind
+              : n.message === message.text)
+          ).sort((a, b) => b.id - a.id)[0];
+          if (!notice) return;
+          this.seenToastIds.add(notice.id);
+          if (this.seenToastIds.size > 100) {
+            const first = this.seenToastIds.values().next().value;
+            if (first !== undefined) this.seenToastIds.delete(first);
+          }
+          this.chatToast = notice;
+          if (this.toastTimer) clearTimeout(this.toastTimer);
+          this.toastTimer = setTimeout(() => this.dismissChatToast(), 6500);
+        },
+        error: () => { /* A failed confirmation must never show an unverified alert. */ }
+      });
+    }
+
+    toastMessage(notice: AppNotification): string {
+      const key = chatMediaPreviewKey(notice.message, notice.relatedUsername);
+      return key
+        ? this.i18n.translate(key, { username: notice.relatedUsername?.trim() ?? '' })
+        : notice.message;
+    }
+
+    openChatToast(): void {
+      const peer = this.chatToast?.relatedUsername;
+      this.dismissChatToast();
+      if (peer) void this.router.navigate(['/menu/messages'], {
+        queryParams: { kind: 'direct', id: peer }
+      });
+    }
+
+    dismissChatToast(): void {
+      this.chatToast = undefined;
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toastTimer = undefined;
+    }
+
     /** Browser tab displays only the user's unread, in-app notifications. */
     private updateBrowserTabTitle(): void {
       const count = this.authenticated ? this.unreadNotifications : 0;
