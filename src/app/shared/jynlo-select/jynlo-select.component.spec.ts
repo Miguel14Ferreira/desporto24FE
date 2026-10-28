@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { By } from '@angular/platform-browser';
 import { JynloSelectComponent } from './jynlo-select.component';
 
 @Component({
@@ -70,18 +69,26 @@ describe('JynloSelectComponent (Angular forms integration)', () => {
     expect(fixture.componentInstance.country).toBe('Portugal');
   });
 
-  it('respects disabled state and never opens a choice panel', async () => {
-    // Exercise the CVA hook directly. NgModel's asynchronous disabled input
-    // can vary with Angular test scheduling, but the child must enforce it.
-    const select=fixture.debugElement.query(By.directive(JynloSelectComponent))
-      .componentInstance as JynloSelectComponent;
-    select.setDisabledState(true);
-    fixture.detectChanges();
-    const root=fixture.nativeElement as HTMLElement;
+  it('disables the trigger and choices through the component input and CVA contract', () => {
+    // Isolate presentation from NgModel async scheduling: both consumers and
+    // form controls may disable the component independently.
+    const isolated=TestBed.createComponent(JynloSelectComponent);
+    isolated.componentRef.setInput('blocked',true);
+    isolated.detectChanges();
+    const root=isolated.nativeElement as HTMLElement;
     const trigger=root.querySelector<HTMLButtonElement>('.jynlo-select__trigger')!;
+    expect(isolated.componentInstance.disabled).toBeTrue();
     expect(trigger.disabled).toBeTrue();
     trigger.click();
-    fixture.detectChanges();
+    isolated.detectChanges();
     expect(root.querySelector('.jynlo-select__popover')).toBeNull();
+
+    isolated.componentRef.setInput('blocked',false);
+    isolated.detectChanges();
+    isolated.componentInstance.setDisabledState(true);
+    isolated.detectChanges();
+    expect(isolated.componentInstance.disabled).toBeTrue();
+    expect(trigger.disabled).toBeTrue();
+    isolated.destroy();
   });
 });
