@@ -165,7 +165,8 @@
                 {{ profile.location || ('common.notProvided' | t) }}
               </small>
               @if (profile.favoriteSports) {
-                <small class="profile-sports">{{ profile.favoriteSports }}</small>
+                <app-venue-sports-badges class="profile-sports-badges" [sports]="profile.favoriteSports"
+                  [limit]="2" [compact]="true"></app-venue-sports-badges>
               }
               @if (profile.skillLevel) {
                 <small>{{ ('profile.level.' + profile.skillLevel) | t }}</small>
@@ -214,7 +215,11 @@
               @if (selectedProfile.location || selectedProfile.favoriteSports) {
                 <div class="profile-headline-details">
                   @if (selectedProfile.location) { <span>⌖ {{ selectedProfile.location }}</span> }
-                  @if (selectedProfile.favoriteSports) { <span>◈ {{ selectedProfile.favoriteSports }}</span> }
+                  @if (selectedProfile.favoriteSports) {
+                    <app-venue-sports-badges class="profile-headline-sports"
+                      [sports]="selectedProfile.favoriteSports" [limit]="4"
+                      [compact]="true"></app-venue-sports-badges>
+                  }
                 </div>
               }
 
@@ -389,7 +394,8 @@
               <div class="profile-meta-card">
                 <span class="profile-stat-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"></path></svg></span>
                 <div class="profile-meta-copy"><span>{{ 'profileData.favoriteSports' | t }}</span>
-                  <strong>{{ selectedProfile.favoriteSports }}</strong></div>
+                  <app-venue-sports-badges [sports]="selectedProfile.favoriteSports"
+                    [limit]="6" [expandable]="true"></app-venue-sports-badges></div>
               </div>
             }
             @if (selectedProfile.skillLevel) {
