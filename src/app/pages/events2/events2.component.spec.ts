@@ -752,7 +752,7 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).toBeNull();
   });
 
-  it('blocks sharing sessions into admin-only communities for ordinary members', () => {
+  it('blocks sharing sessions into admin-only communities for ordinary members', async () => {
     const group = (id: number, role: 'MEMBER' | 'ADMIN', membersCanCreateSessions: boolean) => ({
       id, name: 'Grupo ' + id, myRole: role, membersCanCreateSessions,
       description: null, sport: 'Futebol', photoUrl: null, visibility: 'PRIVATE',
@@ -760,6 +760,10 @@ describe('Events2Component', () => {
       createdAt: '2026-01-01', members: []
     } as any);
     component.communities = [group(12, 'MEMBER', false), group(13, 'ADMIN', false), group(14, 'MEMBER', true)];
+    expect(component.canCreateForCommunity(component.communities[0])).toBeFalse();
+    expect(component.canCreateForCommunity(component.communities[1])).toBeTrue();
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
     const options = fixture.nativeElement.querySelectorAll('.create-share-community input') as NodeListOf<HTMLInputElement>;
     expect(options.length).toBe(3);
