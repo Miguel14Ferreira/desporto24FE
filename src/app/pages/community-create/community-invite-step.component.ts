@@ -104,8 +104,18 @@ export class CommunityInviteStepComponent implements OnInit {
       this.continueToCommunity();
       return;
     }
-    this.habitualVenueChoice = this.community.defaultVenueId ? 'yes' : null;
+    this.habitualVenueChoice = this.hasHabitualLocation() ? 'yes' : null;
     this.step = 'venue';
+  }
+
+  hasHabitualLocation(): boolean {
+    const group = this.community;
+    if (!group) return false;
+    if (group.defaultVenueId != null && group.defaultVenueId > 0) return true;
+    return (group.habitualLocationSource === 'GPS' || group.habitualLocationSource === 'MAPS')
+      && group.habitualLatitude != null && group.habitualLongitude != null
+      && Number.isFinite(group.habitualLatitude) && Number.isFinite(group.habitualLongitude)
+      && Math.abs(group.habitualLatitude) <= 90 && Math.abs(group.habitualLongitude) <= 180;
   }
 
   backToCompetition(): void {
@@ -120,8 +130,8 @@ export class CommunityInviteStepComponent implements OnInit {
   onHabitualVenueSaved(group: CommunityGroup): void {
     if (this.communityId !== group.id) return;
     this.community = group;
-    this.habitualVenueChoice = 'yes';
-    this.habitualVenueSaved = true;
+    this.habitualVenueChoice = this.hasHabitualLocation() ? 'yes' : null;
+    this.habitualVenueSaved = this.hasHabitualLocation();
   }
 
   chooseActivity(activity: 'individual' | 'teams' | 'statistics'): void {
