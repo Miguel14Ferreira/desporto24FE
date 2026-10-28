@@ -120,7 +120,7 @@ async function context(browser,username,width){
     }
     if(CHECK_GROUPS && p==='/api/private-groups/77/photo' && method==='POST'){
       if(username!=='ana')return reply(route,403,{message:'Only creator can update photo'});
-      assert.match((await req.headerValue('content-type'))||'',/multipart\\/form-data/);
+      assert.match((await req.headerValue('content-type'))||'',/multipart\/form-data/);
       group.photoUrl='https://api.d24sports.com/api/test-group-photo.png';
       groupWrites.push('photo');
       return reply(route,200,group);
