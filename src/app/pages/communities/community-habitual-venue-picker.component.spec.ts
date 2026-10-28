@@ -310,6 +310,8 @@ describe('Community habitual venue picker — interactive template', () => {
     expect(buttons.length).toBe(3);
     (buttons[1] as HTMLButtonElement).click();
     fixture.detectChanges();
+    await fixture.whenStable(); // Flush newly mounted Maps ngModel initialization before typing.
+    fixture.detectChanges();
     const input = fixture.nativeElement.querySelector('input[name="habitualMapLink"]') as HTMLInputElement;
     expect(input).toBeTruthy();
     input.value = 'https://www.google.com/maps?q=38.71,-9.13';
