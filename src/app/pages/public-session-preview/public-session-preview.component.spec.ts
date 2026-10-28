@@ -87,6 +87,8 @@ describe('PublicSessionPreviewComponent', () => {
     const page=fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
     const location=page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(page.querySelector('label[for="guest-player-select"]')?.textContent?.trim())
+      .toBe('Já jogaste com este grupo?');
     expect(location.textContent).toContain('Clube Nacional de Ginástica');
     expect(location.textContent).toContain('Rua Machado dos Santos');
     expect(decodeURIComponent(location.href)).toContain('Rua Machado dos Santos');
@@ -158,6 +160,9 @@ describe('PublicSessionPreviewComponent', () => {
     component.startChangingGuestIdentity();
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).querySelector('#guest-change-player-select')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement)
+      .querySelector('label[for="guest-change-player-select"]')?.textContent?.trim())
+      .toBe('Já jogaste com este grupo?');
     expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
     component.selectGuestPlayer(17);
     component.changeGuestIdentity();
