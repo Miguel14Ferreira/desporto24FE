@@ -9,7 +9,8 @@ import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realti
 
 export type CallPhase = 'incoming' | 'dialing' | 'connecting' | 'active' | 'error';
 export type CallMedia = 'voice' | 'video';
-export type CallAvailabilityStatus = 'idle' | 'checking' | 'ready' | 'notConfigured' | 'requestFailed';
+export type CallAvailabilityStatus = 'idle' | 'checking' | 'ready' | 'notConfigured'
+  | 'invalidCredentials' | 'providerUnavailable' | 'requestFailed';
 export interface DirectCallState {
   id: string;
   peer: string;
@@ -98,14 +99,18 @@ export class DirectCallClientService implements OnDestroy {
     this.checking = true;
     this.available$.next(false);
     this.availabilityStatus$.next('checking');
-    this.http.get<{enabled: boolean}>(this.base + '/availability')
+    this.http.get<{enabled: boolean; status?: string}>(this.base + '/availability')
       .pipe(timeout(8000)).subscribe({
         next: result => {
           this.checking = false;
           if (localStorage.getItem('t') !== token) return;
           const ready = result.enabled === true;
           this.available$.next(ready);
-          this.availabilityStatus$.next(ready ? 'ready' : 'notConfigured');
+          const status: CallAvailabilityStatus = ready ? 'ready'
+            : result.status === 'invalidCredentials' ? 'invalidCredentials'
+            : result.status === 'providerUnavailable' ? 'providerUnavailable'
+            : 'notConfigured';
+          this.availabilityStatus$.next(status);
         },
         error: () => {
           this.checking = false;
