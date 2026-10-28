@@ -75,6 +75,12 @@
       <div class="community-venue-detail">
         <h4>{{ 'communities.habitualVenue.pointFound' | t }}</h4>
         <p>{{ locationPoint.latitude }}, {{ locationPoint.longitude }}</p>
+        @if (pointMapPreviewUrl) {
+          <div class="community-venue-map-preview">
+            <iframe [src]="pointMapPreviewUrl" [title]="'venue.mapLink.previewTitle' | t"
+                    loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        }
         <div class="community-venue-point-fields">
           <label>
             <span>{{ 'common.location' | t }}</span>
@@ -165,6 +171,12 @@
             <div><dt>{{ 'venue.visit.contact' | t }}</dt><dd>{{ venue.contact }}</dd></div>
           }
         </dl>
+        @if (venueMapPreviewUrl) {
+          <div class="community-venue-map-preview">
+            <iframe [src]="venueMapPreviewUrl" [title]="'venue.mapLink.previewTitle' | t"
+                    loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        }
         <div class="community-venue-detail-actions">
           <a [routerLink]="['/menu/venues', venue.id]" target="_blank" rel="noopener"
              class="community-venue-detail-link">{{ 'communities.habitualVenue.viewFull' | t }}</a>
