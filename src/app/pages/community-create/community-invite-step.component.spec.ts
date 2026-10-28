@@ -80,7 +80,7 @@ describe('CommunityInviteStepComponent', () => {
 
   it('lets organizer combine individual leagues and regular statistics', () => {
     const { component, groups, router } = setup();
-    const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(component.community));
     (groups as any).updateFeatures = update;
     component.continueAfterInvite();
     component.chooseActivity('individual');
@@ -100,7 +100,7 @@ describe('CommunityInviteStepComponent', () => {
 
   it('supports all four paths, including sessions-only and team tournaments', () => {
     const { component, groups } = setup();
-    const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(component.community));
     (groups as any).updateFeatures = update;
     component.continueAfterInvite();
     component.chooseActivity('teams');
@@ -150,7 +150,7 @@ describe('CommunityInviteStepComponent', () => {
     expect(component.competitionSaving).toBeFalse();
     expect(component.step).toBe('competition');
 
-    update.and.returnValue(of({ rankingsEnabled: true }));
+    update.and.returnValue(of(component.community));
     component.saveCompetitionAndContinue();
     expect(component.step).toBe('venue');
     expect(router.navigate).not.toHaveBeenCalled();
@@ -161,8 +161,12 @@ describe('CommunityInviteStepComponent', () => {
     const update = jasmine.createSpy('updateFeatures');
     (component as any).groups.updateFeatures = update;
     component.continueAfterInvite();
-    component.continueToCommunity();
+    component.continueToVenue();
     expect(update).not.toHaveBeenCalled();
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('no');
+    component.continueToCommunity();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
   });
 
