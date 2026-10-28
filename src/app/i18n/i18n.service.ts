@@ -254,6 +254,8 @@ const PT: Dictionary = {
   'venue.catalog.error': 'Não foi possível carregar os recintos. Verifica a ligação e tenta novamente.',
   'venue.catalog.empty': 'Não encontramos recintos com estes filtros.',
   'venue.catalog.emptyHint': 'Experimenta outro distrito, desporto ou pesquisa.',
+  'venue.sportsBadge.more': 'Ver mais {{count}}',
+  'venue.sportsBadge.less': 'Mostrar menos',
   'venue.catalog.sportUnknown': 'Modalidade por confirmar',
   'venue.catalog.viewDetails': 'Ver recinto',
   'venue.catalog.pagination': 'Navegação entre páginas de recintos',
