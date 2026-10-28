@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, finalize, retry, Subject, timeout } from 'rxjs';
 
 import { CreateSessionRequest } from '../model/create-session-request';
-import { CommunityGroup } from '../model/community-group';
+import { CommunityGroup, CommunityCompetitionOverview } from '../model/community-group';
 import { SessionService } from '../../services/session.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { VenuePhoto, VenueService } from '../../services/venue.service';
@@ -35,6 +35,71 @@ export class Events2Component implements OnInit, OnDestroy {
   shareCommunityIds: number[] = [];
   communitiesLoading = false;
   communitiesLoadError = false;
+  directCommunity: CommunityGroup | null = null;
+  seasonGame = false;
+  seasonGameCommunityId: number | null = null;
+  confirmActivateRankings = false;
+  seasonOverview: CommunityCompetitionOverview | null = null;
+  seasonOverviewLoading = false;
+  seasonOverviewError = false;
+  private seasonInfoRevision = 0;
+
+  get seasonCommunities(): CommunityGroup[] {
+    return this.communityId !== null
+      ? this.directCommunity ? [this.directCommunity] : []
+      : this.communities.filter(g => this.shareCommunityIds.includes(g.id));
+  }
+
+  get selectedSeasonCommunity(): CommunityGroup | undefined {
+    return this.seasonCommunities.find(g => g.id === this.seasonGameCommunityId);
+  }
+
+  get seasonRankingsInactive(): boolean {
+    return this.seasonOverview?.settings.rankingsEnabled === false
+      || (this.seasonOverview === null && this.selectedSeasonCommunity?.rankingsEnabled === false);
+  }
+
+  get canAdministerSeason(): boolean {
+    const role = this.selectedSeasonCommunity?.myRole;
+    return role === 'OWNER' || role === 'ADMIN';
+  }
+
+  toggleSeasonGame(checked: boolean): void {
+    if (this.loading || !this.communitySessionSelected) return;
+    this.seasonGame = checked;
+    this.confirmActivateRankings = false;
+    if (checked) {
+      this.selectSeasonDestination(this.seasonCommunities[0]?.id ?? null);
+    } else {
+      this.seasonGameCommunityId = null;
+      this.seasonOverview = null;
+      this.seasonOverviewLoading = false;
+      ++this.seasonInfoRevision;
+    }
+  }
+
+  selectSeasonDestination(value: number | null): void {
+    const id = Number(value);
+    this.seasonGameCommunityId = this.seasonCommunities.some(g => g.id === id) ? id : null;
+    this.confirmActivateRankings = false;
+    this.seasonOverview = null;
+    const revision = ++this.seasonInfoRevision;
+    this.seasonOverviewError = false;
+    if (this.seasonGameCommunityId === null) return;
+    this.seasonOverviewLoading = true;
+    this.communityService.competition(id).pipe(timeout(10_000)).subscribe({
+      next: overview => {
+        if (revision !== this.seasonInfoRevision) return;
+        this.seasonOverview = overview;
+        this.seasonOverviewLoading = false;
+      },
+      error: () => {
+        if (revision !== this.seasonInfoRevision) return;
+        this.seasonOverviewError = true;
+        this.seasonOverviewLoading = false;
+      }
+    });
+  }
 
   selectCreationMode(mode: 'START' | 'COMPLETE'): void {
     if (this.loading) return;
@@ -53,6 +118,7 @@ export class Events2Component implements OnInit, OnDestroy {
       this.password = '';
     } else if (!checked) {
       this.shareCommunityIds = this.shareCommunityIds.filter(groupId => groupId !== id);
+      if (this.seasonGameCommunityId === id) this.toggleSeasonGame(false);
     }
   }
 
@@ -283,6 +349,7 @@ export class Events2Component implements OnInit, OnDestroy {
         .subscribe({
         next: community => {
           this.communityName = community.name;
+          this.directCommunity = community;
           const list = community.sports?.length ? community.sports
             : (community.sport ? [community.sport] : []);
           // Older communities expose just `sport`; multi-sport ones must not
@@ -337,6 +404,8 @@ export class Events2Component implements OnInit, OnDestroy {
         ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
         : {}),
       communityShareIds: this.communityId === null ? [...this.shareCommunityIds] : [],
+      seasonCompetitionCommunityId: this.seasonGame ? this.seasonGameCommunityId : null,
+      confirmActivateRankings: this.seasonGame && this.confirmActivateRankings,
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
       privateGame: this.findPlayersMode ? false : this.privateGame,
       password: this.findPlayersMode ? null : (this.privateGame ? this.password.trim() : null),
@@ -1141,6 +1210,24 @@ export class Events2Component implements OnInit, OnDestroy {
     const players = Number(this.maxParticipants);
     if (!Number.isInteger(players) || players < 2 || players > 100) {
       return t('feedback.create.playersRange');
+    }
+
+    if (this.seasonGame) {
+      if (!this.communitySessionSelected
+          || this.seasonGameCommunityId === null
+          || !this.seasonCommunities.some(group => group.id === this.seasonGameCommunityId)) {
+        return t('createSession.seasonGameSelectCommunity');
+      }
+      if (this.seasonOverviewLoading || this.seasonOverviewError || !this.seasonOverview) {
+        return t('createSession.seasonGameDataUnavailable');
+      }
+      if ((this.seasonRankingsInactive || this.seasonOverview.activeSeasonId === null)
+          && !this.canAdministerSeason) {
+        return t('createSession.seasonGameAdminRequired');
+      }
+      if (this.seasonRankingsInactive && !this.confirmActivateRankings) {
+        return t('createSession.seasonGameConfirmActivation');
+      }
     }
 
     if (this.shareCommunityIds.length && this.privateGame) {
