@@ -175,7 +175,7 @@
             {{ 'communityInviteStep.decideLater' | t }}
           </button>
           <button type="button" class="primary-action jynlo-action jynlo-action--primary"
-                  [disabled]="!habitualVenueChoice"
+                  [disabled]="!habitualVenueChoice || (habitualVenueChoice === 'yes' && !community?.defaultVenueId)"
                   (click)="continueToCommunity()">
             {{ 'communityInviteStep.finishSetup' | t }}
           </button>
