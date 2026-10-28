@@ -266,3 +266,46 @@ h1 {
   outline:2px solid #83ffe7;outline-offset:3px
 }
 @media(max-width:420px){.guest-rsvp{padding:13px}.join-panel{padding:1rem}}
+
+
+/* Organizer-issued signed invitations alone can display confirmed players.
+   Match the compact participant chips in the authenticated session view. */
+.guest-confirmed-roster{
+  display:grid;gap:12px;margin-top:22px;padding:clamp(14px,2.3vw,20px);
+  min-width:0;border:1px solid rgba(56,202,194,.34);border-radius:16px;
+  background:linear-gradient(135deg,rgba(11,61,70,.53),rgba(10,39,54,.52));
+}
+.guest-confirmed-roster-header{display:flex;align-items:start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.guest-confirmed-roster-header h2{font-size:1.08rem;line-height:1.3;margin:0 0 4px}
+.guest-confirmed-roster-header p,.guest-confirmed-roster-empty{color:#bdd6dd;font-size:.84rem;line-height:1.55;margin:0}
+.guest-confirmed-roster-refresh{
+  border:1px solid rgba(127,224,227,.4);border-radius:999px;
+  padding:8px 14px;background:rgba(27,88,100,.55);color:#e4fdfd;
+  font:inherit;font-size:.82rem;font-weight:800;cursor:pointer;
+}
+.guest-confirmed-roster-refresh:disabled{opacity:.55;cursor:wait}
+.guest-confirmed-roster-refresh:focus-visible{outline:2px solid #8affea;outline-offset:3px}
+.guest-confirmed-roster-chips{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.guest-confirmed-player{
+  display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap;
+  max-width:100%;min-width:0;padding:7px 9px;border:1px solid rgba(77,208,188,.35);
+  border-radius:12px;background:rgba(20,88,85,.5);line-height:1.4;color:#ecfffa;
+}
+.guest-confirmed-player--account{border-color:rgba(104,190,239,.36);background:rgba(28,76,104,.48)}
+.guest-confirmed-player strong{font-size:.84rem;overflow-wrap:anywhere;min-width:0}
+.guest-confirmed-player small{
+  padding:3px 8px;border-radius:999px;color:#75fbdc;background:rgba(28,233,185,.12);
+  font-size:.64rem;font-weight:850;letter-spacing:.035em;line-height:1.25;
+}
+.guest-confirmed-player--account small{color:#b4e5ff;background:rgba(71,166,228,.17)}
+.guest-confirmed-roster-error{font-size:.84rem;color:#ffbdc0}
+.guest-rsvp .guest-rsvp-confirmed-identity{
+  padding:10px 12px;border:1px solid rgba(72,232,192,.4);
+  border-radius:10px;background:rgba(45,223,182,.10);color:#dffef5;overflow-wrap:anywhere;
+}
+.guest-rsvp-confirmed-identity strong{display:block;color:#fff;font-size:1.02rem;margin-top:3px}
+@media(max-width:460px){
+ .guest-confirmed-roster-header{align-items:stretch}
+ .guest-confirmed-roster-refresh{width:100%}
+ .guest-confirmed-player{flex:1 1 145px;justify-content:space-between}
+}
