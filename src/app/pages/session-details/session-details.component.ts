@@ -16,7 +16,7 @@ import { venueUsableAddress } from '../../shared/venue-location';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionContext, PostGameCommunitySuggestion, SessionTeamSuggestion, SessionTeamScoreSource, SessionGuestRequest } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionContext, PostGameCommunitySuggestion, SessionTeamSuggestion, SessionTeamScoreSource, SessionGuestRequest, SessionConfirmedGuest } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
@@ -238,6 +238,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   guestPanelError = '';
   guestPanelSuccess = '';
   guestRequests: SessionGuestRequest[] = [];
+  /** Read-only confirmed guest identities for logged-in attendees. */
+  memberConfirmedGuests: SessionConfirmedGuest[] = [];
+  memberConfirmedGuestsLoading = false;
+  memberConfirmedGuestsError = '';
   guestRequestsLoading = false;
   guestRequestBusyId: number | null = null;
   guestRequestsLoadedForSession: number | null = null;
@@ -449,10 +453,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.registrationClock = Date.now();
           // Keep the organiser's visible guest list and remaining capacity fresh
           // after attendees confirm via WhatsApp on a different device.
-          if (this.canShareGuestInvites() && !this.loading
-              && !this.guestRequestsLoading && !document.hidden) {
-            this.loadGuestRequests();
-            this.loadSession(false);
+          if (!this.loading && !document.hidden && this.session) {
+            if (this.canShareGuestInvites() && !this.guestRequestsLoading) {
+              this.loadGuestRequests();
+              this.loadSession(false);
+            } else if (this.session.joined && !this.isCreator()
+                       && !this.memberConfirmedGuestsLoading) {
+              this.loadMemberConfirmedGuests();
+            }
           }
         }), 15000);
     });
@@ -2037,10 +2045,37 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return code === 'A' ? this.teamAParticipants : this.teamBParticipants;
   }
 
+  private loadMemberConfirmedGuests(): void {
+    if (!this.sessionId || !this.session?.joined || this.isCreator()
+        || this.memberConfirmedGuestsLoading) return;
+    const id=this.sessionId;
+    this.memberConfirmedGuestsLoading=true;
+    this.memberConfirmedGuestsError='';
+    this.sessionService.confirmedGuests(id)
+      .pipe(timeout(10000),finalize(()=>this.memberConfirmedGuestsLoading=false))
+      .subscribe({
+        next: rows => {
+          if (this.session?.id !== id || !this.session.joined) return;
+          this.memberConfirmedGuests=Array.isArray(rows)
+            ? rows.filter(g=>Number.isSafeInteger(g?.id) && typeof g?.name==='string'
+                && (g.teamCode===null || g.teamCode==='A' || g.teamCode==='B'))
+            : [];
+        },
+        error: () => {
+          if (this.session?.id !== id) return;
+          this.memberConfirmedGuestsError=t('sessionDetail.confirmedGuestsError');
+        }
+      });
+  }
+
   /** Confirmed guests are real reserved places, even before they create accounts. */
   confirmedGuestParticipants(): SessionGuestRequest[] {
-    return this.isCreator()
-      ? this.guestRequests.filter(g => g.status === 'APPROVED') : [];
+    if (this.isCreator()) return this.guestRequests.filter(g => g.status === 'APPROVED');
+    if (!this.session?.joined) return [];
+    return this.memberConfirmedGuests.map(guest=>({
+      id:guest.id,name:guest.name,teamCode:guest.teamCode,
+      status:'APPROVED' as const,note:''
+    }));
   }
 
   visiblePlayerCount(): number {
@@ -2050,14 +2085,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   refreshVisiblePlayers(): void {
     this.loadSessionParticipants();
     if (this.isCreator()) this.loadGuestRequests();
+    else this.loadMemberConfirmedGuests();
     // The confirmed count in the detail header also includes external people.
     this.loadSession(false);
   }
 
   guestTeamParticipants(code: 'A' | 'B'): SessionGuestRequest[] {
-    return this.isCreator()
-      ? this.guestRequests.filter(guest => guest.status === 'APPROVED' && guest.teamCode === code)
-      : [];
+    return this.confirmedGuestParticipants().filter(guest=>guest.teamCode===code);
   }
 
   hasConfirmedTeams(): boolean {
@@ -2604,10 +2638,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           }
 
           if (session.joined || this.isCreator()) {
-            // The existing backend endpoint authorizes the creator independently
-            // of membership. Do not require the organiser to reserve a playing spot.
+            // Creator has organizer guest controls; ordinary members get only a
+            // minimal approved-guest display roster from a separately guarded API.
             this.loadSessionParticipants();
+            if (session.joined && !this.isCreator()) this.loadMemberConfirmedGuests();
           } else {
+            this.memberConfirmedGuests=[];
+            this.memberConfirmedGuestsError='';
             this.sessionParticipants = [];
             this.teamAParticipants = [];
             this.teamBParticipants = [];
