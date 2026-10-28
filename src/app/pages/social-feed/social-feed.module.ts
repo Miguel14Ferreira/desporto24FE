@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { SocialFeedComponent } from './social-feed.component';
 import { SocialStoriesComponent } from './social-stories.component';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 // Load this screen only when its route is opened, not on the public home page.
 @NgModule({
@@ -14,6 +15,7 @@ import { SocialStoriesComponent } from './social-stories.component';
     FormsModule,
     ReactiveFormsModule,
     TranslatePipe,
+    VenueSportsBadgesComponent,
     SocialStoriesComponent,
     RouterModule.forChild([{ path: '', component: SocialFeedComponent }])
   ]

@@ -7,6 +7,8 @@ describe('Venue sports badges', () => {
       .toEqual(['Futebol', 'Futsal', 'Ginástica', 'Ténis']);
     expect(parseVenueSports(null)).toEqual([]);
     expect(parseVenueSports('  ;  ')).toEqual([]);
+    expect(parseVenueSports('Futebol|Futsal; Natação, Pilates | Futsal'))
+      .toEqual(['Futebol', 'Futsal', 'Natação', 'Pilates']);
   });
 
   beforeEach(async () => {

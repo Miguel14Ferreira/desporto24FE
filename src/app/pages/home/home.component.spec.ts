@@ -10,6 +10,7 @@ import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SessionSummary } from '../model/session-summary';
 import { Venue } from '../model/venue';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 describe('HomeComponent public discovery', () => {
   let sessions: jasmine.SpyObj<SessionService>;
@@ -35,7 +36,7 @@ describe('HomeComponent public discovery', () => {
 
     await TestBed.configureTestingModule({
       declarations: [HomeComponent],
-      imports: [CommonModule, TranslatePipe, RouterModule.forRoot([])],
+      imports: [CommonModule, TranslatePipe, VenueSportsBadgesComponent, RouterModule.forRoot([])],
       providers: [
         { provide: SessionService, useValue: sessions },
         { provide: VenueService, useValue: venues }
@@ -95,6 +96,21 @@ describe('HomeComponent public discovery', () => {
     expect(component.featuredVenues.map(value => value.id)).toEqual([10]);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item').length).toBe(2);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-venue').length).toBe(1);
+  });
+
+  it('renders the public venue sports as compact tags instead of semicolon strings', () => {
+    venues.suggest.and.returnValue(of({
+      venues: [venue(10, 'Futebol;Futsal;Ginástica;Judo;Natação')],
+      page: 0, hasMore: false
+    }));
+    const fixture = render();
+    const card: HTMLElement = fixture.nativeElement.querySelector('.preview-venue');
+    expect(card.querySelector('.preview-venue-city')?.textContent?.trim()).toBe('Cascais');
+    expect(Array.from(card.querySelectorAll('.venue-sports-chip')).map(node => node.textContent?.trim()))
+      .toEqual(['Futebol', 'Futsal', 'Ginástica']);
+    expect(card.querySelector('.venue-sports-counter')?.textContent?.trim()).toBe('+2');
+    expect(card.textContent).not.toContain(';');
+    fixture.destroy();
   });
 
   it('does not invent sessions or venues when the public catalogue is empty', () => {

@@ -10,6 +10,7 @@ import { CommunityGroupsService } from '../../services/community-groups.service'
 import { SessionService } from '../../services/session.service';
 import { SocialGraphService } from '../../services/social-graph.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 describe('PerfisComponent', () => {
   let component: PerfisComponent;
@@ -86,7 +87,7 @@ describe('PerfisComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [PerfisComponent],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, VenueSportsBadgesComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: CommunityService, useValue: service },
