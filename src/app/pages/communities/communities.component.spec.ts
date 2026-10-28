@@ -1729,6 +1729,26 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.canBrowseHistoricalArchives).toBeTrue();
   });
 
+  it('allows admins to configure member session creation without modifying past games', () => {
+    const group = { id: 7, name: 'Grupo', membersCanCreateSessions: true, myRole: 'OWNER' } as any;
+    component.selected = group;
+    component.communities = [group];
+    (component.canManage as jasmine.Spy).and.returnValue(true);
+    const save = jasmine.createSpy('updateSessionCreationPolicy').and.returnValue(
+      of({ ...group, membersCanCreateSessions: false }));
+    (component as any).communityService = { updateSessionCreationPolicy: save };
+    component.editSessionPolicy();
+    expect(component.sessionPolicyDraft).toBeTrue();
+    component.sessionPolicyDraft = false;
+    component.saveSessionPolicy();
+    expect(save).toHaveBeenCalledOnceWith(7, false);
+    expect(component.selected?.membersCanCreateSessions).toBeFalse();
+    expect(component.sessionPolicyEditing).toBeFalse();
+    (component.canManage as jasmine.Spy).and.returnValue(false);
+    component.editSessionPolicy();
+    expect(component.sessionPolicyEditing).toBeFalse();
+  });
+
   it('allows manager to configure independent modules and saves without clearing history', () => {
     const original = { id: 7, rankingsEnabled: true,
       individualTournamentsEnabled: true, teamTournamentsEnabled: false } as any;
