@@ -141,6 +141,9 @@ export class PublicSessionPreviewComponent implements OnInit {
     if (!this.guestSending) {
       this.guestStep = 'choose';
       this.guestError = '';
+      // An invite can be reused, but a player already booked must never be
+      // offered as a new anonymous seat on that invitation.
+      this.loadGuestRoster();
     }
   }
 
@@ -258,7 +261,17 @@ export class PublicSessionPreviewComponent implements OnInit {
         // The server has already reserved the seat; refresh the actual capacity.
         this.loadPreview();
       },
-      error: () => {this.guestError='guestRsvp.requestError';}
+      error: (error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 409) {
+          const booked = this.confirmedPlayers.some(player =>
+            !player.hasAccount && player.name.trim().toLocaleLowerCase('pt')
+              === this.guestPlayerName.trim().toLocaleLowerCase('pt'));
+          this.guestError = booked ? 'guestRsvp.alreadyConfirmed' : 'guestRsvp.conflict';
+          this.loadPreview();
+        } else {
+          this.guestError = 'guestRsvp.requestError';
+        }
+      }
     });
   }
 
