@@ -999,3 +999,33 @@ h1 {
   .week-recruit-field input { width: 100%; }
   .week-recruit-cta { width: 100%; }
 }
+
+/* Readable discovery links and activity rows on narrow viewports. */
+.feed-suggested-person {
+  align-items: flex-start;
+  gap: var(--jynlo-space-sm, .75rem);
+}
+.feed-suggested-person-details {
+  gap: .25rem;
+  max-width: 100%;
+}
+.feed-suggested-person-details strong,
+.feed-suggested-person-details small {
+  white-space: normal;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .feed-suggested-session {
+    flex-wrap: wrap;
+    row-gap: var(--jynlo-space-sm, .75rem);
+  }
+  .feed-suggested-details {
+    flex: 1 1 100%;
+    overflow-wrap: anywhere;
+  }
+  .feed-suggested-link-label {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

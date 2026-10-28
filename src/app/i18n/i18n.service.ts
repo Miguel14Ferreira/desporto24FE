@@ -1018,6 +1018,8 @@ const PT: Dictionary = {
   'notFound.home': 'Voltar ao início',
   'notFound.dashboard': 'Voltar ao painel',
 
+  'profile.relationshipChecking': 'A verificar a amizade…',
+  'profile.relationshipCheckFailed': 'Não foi possível verificar a amizade.',
   'common.retry': 'Tentar novamente',
   'common.search': 'Pesquisar',
   'common.searching': 'A pesquisar...',

@@ -241,7 +241,7 @@
             </div>
           </div>
 
-          <div class="detail-actions">
+          <div class="detail-actions jynlo-action-cluster">
             @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
               <button
                 type="button"
@@ -263,12 +263,8 @@
               <span>{{ 'community.ownProfile' | t }}</span>
             } @else if (selectedBlocked) {
               <span>{{ 'community.blockedStatus' | t }}</span>
-            } @else if (friendshipLoading) {
-              <span class="friend-status" role="status">A verificar amizade…</span>
-            } @else if (friendshipError) {
-              <span class="friend-status" role="alert">Não foi possível verificar a amizade.</span>
-              <button type="button" class="jynlo-action jynlo-action--neutral"
-                (click)="loadFriendshipStatus(selectedProfile.username)">Tentar novamente</button>
+            } @else if (friendshipLoading || friendshipError) {
+              <!-- Hide friend actions until the current relationship is confirmed. -->
             } @else if (isFriend(selectedProfile)) {
               <button type="button" class="friend-status jynlo-action jynlo-action--neutral" disabled>✓ {{ 'friends.title' | t }}</button>
               <a
@@ -300,6 +296,16 @@
               </button>
             }
           </div>
+          @if (friendshipLoading) {
+            <p class="profile-relationship-feedback jynlo-status-line" role="status"
+               aria-live="polite">{{ 'profile.relationshipChecking' | t }}</p>
+          } @else if (friendshipError) {
+            <div class="profile-relationship-feedback profile-relationship-feedback--error jynlo-status-line" role="alert">
+              <span>{{ 'profile.relationshipCheckFailed' | t }}</span>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="loadFriendshipStatus(selectedProfile.username)">{{ 'common.retry' | t }}</button>
+            </div>
+          }
           </div>
 
           @if (invitePanelOpen && !selectedBlocked && !isOwnProfile(selectedProfile)) {

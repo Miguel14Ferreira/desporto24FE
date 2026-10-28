@@ -1059,3 +1059,137 @@ h1 {
   .community-page .profile-detail .profile-meta{grid-template-columns:1fr}
   .profile-invite-option-icon{display:none}
 }
+
+/* Layout consistency pass: the back link is a block-level action, not inline-flex.
+   Inline vertical margins did not separate it from the profile card. */
+.community-page.profile-page-open a.back-to-search {
+  display: flex !important;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 var(--jynlo-space-xl);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Avoid fixed-width action columns and clipped relationship messages. */
+.community-page.profile-page-open .profile-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  column-gap: clamp(24px, 3.2vw, 48px);
+  row-gap: 14px;
+  align-items: center;
+}
+.community-page.profile-page-open .detail-heading,
+.community-page.profile-page-open .profile-identity {
+  min-width: 0;
+}
+.community-page.profile-page-open .detail-actions {
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-end;
+  align-content: center;
+  gap: 12px;
+}
+.community-page.profile-page-open .detail-actions > .jynlo-action,
+.community-page.profile-page-open .detail-actions > .friend-status,
+.community-page.profile-page-open .detail-actions > .profile-invite-trigger {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.community-page.profile-page-open .profile-relationship-feedback {
+  grid-column: 2;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid rgba(95, 194, 186, .3);
+  border-radius: 12px;
+  background: rgba(15, 66, 78, .8);
+  color: #c4e8e5;
+  text-align: left;
+  line-height: 1.5;
+}
+.community-page.profile-page-open .profile-relationship-feedback--error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-color: rgba(252, 165, 165, .32);
+  color: #ffd5d5;
+}
+.community-page.profile-page-open .profile-relationship-feedback--error > span {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.community-page.profile-page-open .profile-relationship-feedback--error > button {
+  flex: 0 1 auto;
+  white-space: normal;
+  max-width: 100%;
+}
+
+/* No negative offset between the invitation panel and header actions. */
+.community-page.profile-page-open .profile-invite-panel {
+  margin: var(--jynlo-space-lg) 0 var(--jynlo-space-xl);
+}
+.community-page.profile-page-open .profile-invite-header {
+  flex-wrap: wrap;
+  row-gap: var(--jynlo-space-md);
+}
+.community-page.profile-page-open .profile-invite-tabs {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.community-page.profile-page-open .profile-invite-option {
+  min-width: 0;
+}
+.community-page.profile-page-open .profile-invite-option > button {
+  max-width: 100%;
+  white-space: normal;
+}
+@media (max-width: 1220px) {
+  .community-page.profile-page-open .profile-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--jynlo-space-lg);
+  }
+  .community-page.profile-page-open .detail-actions {
+    justify-content: flex-start;
+  }
+  .community-page.profile-page-open .profile-relationship-feedback {
+    grid-column: 1;
+  }
+}
+@media (max-width: 650px) {
+  .community-page.profile-page-open a.back-to-search { margin-bottom: var(--jynlo-space-lg); }
+  .community-page.profile-page-open .profile-hero { gap: var(--jynlo-space-md); }
+  .community-page.profile-page-open .detail-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--jynlo-space-sm);
+  }
+  .community-page.profile-page-open .detail-actions > .jynlo-action,
+  .community-page.profile-page-open .detail-actions > .friend-status,
+  .community-page.profile-page-open .detail-actions > .profile-invite-trigger {
+    width: 100%;
+  }
+  .community-page.profile-page-open .profile-relationship-feedback {
+    padding: 12px;
+  }
+  .community-page.profile-page-open .profile-invite-panel {
+    margin: var(--jynlo-space-lg) 0;
+  }
+}
+@media (max-width: 390px) {
+  .community-page.profile-page-open .detail-actions {
+    grid-template-columns: 1fr;
+  }
+  .community-page.profile-page-open .profile-invite-option {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .community-page.profile-page-open .profile-invite-option button {
+    width: 100%;
+  }
+}

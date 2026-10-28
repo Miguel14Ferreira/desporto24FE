@@ -26,6 +26,12 @@
   --d24-danger: #fecaca;
   --d24-success: #bbf7d0;
   --d24-radius: 1rem;
+  /* Shared spacing rhythm: opt in on pages; do not override all layouts globally. */
+  --jynlo-space-xs: .5rem;
+  --jynlo-space-sm: .75rem;
+  --jynlo-space-md: 1rem;
+  --jynlo-space-lg: 1.5rem;
+  --jynlo-space-xl: 2rem;
   --d24-shadow: 0 24px 60px rgba(0, 0, 0, .24);
   --primary-color: var(--d24-bg);
   --secundary-color: var(--d24-text-subtle);
@@ -117,7 +123,10 @@ select option {
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
-  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
@@ -160,8 +169,9 @@ select option {
   vertical-align: middle !important;
   box-sizing: border-box;
   min-height: 40px !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  /* Default no outer margin, but let a page's spacing rules take precedence. */
+  margin-top: 0;
+  margin-bottom: 0;
   padding: .58rem .92rem !important;
   border: 1px solid var(--jynlo-action-border) !important;
   border-radius: 999px !important;
@@ -243,3 +253,37 @@ select option {
 /* Community cover imagery is framed by the 16:10 editor. Never override
    object-fit with !important: that would hide the user's saved adjustments. */
 
+
+/*
+ * Reusable layout primitives for profile, feed and future Jynlo screens.
+ * Do not clip controls or truncate status text to make a row fit.
+ * These are opt-in classes to avoid unintended changes to legacy layouts.
+ */
+.jynlo-flow-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jynlo-space-lg);
+  min-width: 0;
+}
+.jynlo-action-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--jynlo-space-sm);
+  min-width: 0;
+}
+.jynlo-action-cluster > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.jynlo-status-line {
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .jynlo-flow-stack { gap: var(--jynlo-space-md); }
+  .jynlo-action-cluster { gap: var(--jynlo-space-sm); }
+}

@@ -757,6 +757,44 @@ describe('PerfisComponent', () => {
     expect(request.textContent).toContain(t('community.requestPending'));
   });
 
+  it('separates the relationship loading message from action buttons without clipping', () => {
+    const pending = new Subject<{ friends: boolean; pendingRequest: boolean }>();
+    service.friendshipStatus.and.returnValue(pending);
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const status = root.querySelector<HTMLElement>('.profile-relationship-feedback[role="status"]');
+    const actions = root.querySelector<HTMLElement>('.profile-hero > .detail-actions');
+    expect(status).not.toBeNull();
+    expect(actions).not.toBeNull();
+    expect(actions?.contains(status!)).toBeFalse();
+    expect(status?.textContent?.trim()).toBe(t('profile.relationshipChecking'));
+    expect(getComputedStyle(status!).whiteSpace).toBe('normal');
+    expect(getComputedStyle(status!).overflowWrap).toBe('anywhere');
+    expect(root.querySelector('.profile-invite-trigger')).toBeTruthy();
+
+    pending.error({ status: 503 });
+    fixture.detectChanges();
+    const error = root.querySelector<HTMLElement>('.profile-relationship-feedback[role="alert"]');
+    expect(error?.textContent).toContain(t('profile.relationshipCheckFailed'));
+    expect(error?.querySelector('button')?.textContent?.trim()).toBe(t('common.retry'));
+    expect(root.querySelector('.detail-actions button.primary-action')).toBeNull();
+  });
+
+  it('lays out the back action separately from the full profile card', () => {
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const back = root.querySelector<HTMLElement>('a.back-to-search');
+    const card = root.querySelector<HTMLElement>('.profile-detail');
+    expect(back).not.toBeNull();
+    expect(card).not.toBeNull();
+    expect(getComputedStyle(back!).display).toBe('flex');
+    expect(parseFloat(getComputedStyle(back!).marginBottom)).toBeGreaterThan(0);
+    expect(card?.contains(back!)).toBeFalse();
+  });
+
   it('fails closed while status is loading or failed, rather than displaying add-friend', () => {
     const pending = new Subject<{ friends: boolean; pendingRequest: boolean }>();
     service.friendshipStatus.and.returnValue(pending);
