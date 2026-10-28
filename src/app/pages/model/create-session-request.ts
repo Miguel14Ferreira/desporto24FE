@@ -14,6 +14,8 @@ export interface CreateSessionRequest {
   longitude: number | null;
   communityId?: number | null;
   communityShareIds?: number[];
+  seasonCompetitionCommunityId?: number | null;
+  confirmActivateRankings?: boolean;
   venueId?: number | null;
   recurrence?: 'NONE' | 'WEEKLY' | 'BIWEEKLY';
   recurrenceOccurrences?: number | null;
