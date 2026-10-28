@@ -972,8 +972,12 @@ describe('PublicSessionPreviewComponent', () => {
             gameDate:new Date(Date.now()+3600_000).toISOString(),
             maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
         }
-        if(url.endsWith('/guest-roster')) {
+        if(url.endsWith('/guest-confirmed-players')) {
           expect(body.token).toBe(token);
+          return of([]);
+        }
+        if(url.endsWith('/guest-roster')) {
+          expect(body.token).toBe(token;
           return of({sessionId:42,communityId:7,players:[
             {id:21,name:'Afonso Salvador'},{id:22,name:'João Marques'}]});
         }
@@ -992,7 +996,7 @@ describe('PublicSessionPreviewComponent', () => {
       expect(page.querySelector('.guest-rsvp')).toBeTruthy();
       expect(fixture.componentInstance.guestPlayers.length).toBe(2);
       expect(fixture.componentInstance.guestCommunityId).toBe(7);
-      expect(http.post).toHaveBeenCalledTimes(2);
+      expect(http.post).toHaveBeenCalledTimes(3);
       expect(page.querySelector('.guest-rsvp-primary:disabled')).toBeTruthy();
     });
     it('lets guests go back and correct their chosen player before submitting', () => {
@@ -1041,8 +1045,9 @@ describe('PublicSessionPreviewComponent', () => {
       const page=render({sport:'Futebol'});
       expect(fixture.componentInstance.isAuthenticated).toBeTrue();
       expect(fixture.componentInstance.guestPlayers).toEqual([]);
-      expect(http.post).toHaveBeenCalledTimes(1);
-      expect((http.post as jasmine.Spy).calls.mostRecent().args[0]).toContain('/guest-preview');
+      expect(http.post).toHaveBeenCalledTimes(2);
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        args => String(args[0]).endsWith('/guest-preview'))).toBeTrue();
       expect(page.querySelector('.guest-rsvp')).toBeNull();
       const join=page.querySelector('.join-panel .primary-action') as HTMLButtonElement;
       expect(join.tagName).toBe('BUTTON');
@@ -1058,6 +1063,7 @@ describe('PublicSessionPreviewComponent', () => {
         if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Lisboa',
           gameDate:new Date(Date.now()+3600_000).toISOString(),
           maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if(url.endsWith('/guest-confirmed-players')) return of([]);
         if(url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
         throw new Error('Unexpected '+url);
       });
@@ -1111,7 +1117,7 @@ describe('PublicSessionPreviewComponent', () => {
       expect(fixture.componentInstance.guestStep).toBe('approved');
       expect(page.querySelector('.guest-rsvp')).toBeTruthy();
       expect(page.querySelector('.guest-rsvp-upgrade button')).toBeTruthy();
-      expect(http.post).toHaveBeenCalledTimes(2);
+      expect(http.post).toHaveBeenCalledTimes(3);
       expect((http.post as jasmine.Spy).calls.allArgs().some(
         args=>String(args[0]).endsWith('/guest-requests/status'))).toBeTrue();
     });
@@ -1126,6 +1132,52 @@ describe('PublicSessionPreviewComponent', () => {
       expect(component.guestStep).toBe('cancelled');
       expect(page.textContent).toContain('Presença cancelada');
       expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
+    });
+
+    it('shows ten confirmed identities only to a signed invite and distinguishes accounts', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string) => {
+        if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:10,priceAmount:0,status:'FULL',gamePhoto:null});
+        if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if(url.endsWith('/guest-confirmed-players')) return of([
+          ...Array.from({length:5}, (_,i)=>({key:'account:'+i,name:'jynlo'+i,hasAccount:true})),
+          ...Array.from({length:5}, (_,i)=>({key:'guest:'+i,name:'Convidado '+i,hasAccount:false}))
+        ]);
+        return of({});
+      });
+      const page=render();
+      const panel=page.querySelector('.guest-confirmed-roster') as HTMLElement;
+      expect(panel).not.toBeNull();
+      expect(panel.querySelectorAll('.guest-confirmed-player').length).toBe(10);
+      expect(panel.querySelectorAll('.guest-confirmed-player--account').length).toBe(5);
+      expect(panel.textContent).toContain('Convidado 4');
+      expect(panel.textContent).toContain('@jynlo4');
+      expect(panel.textContent).toContain('COM CONTA');
+      expect(panel.textContent).toContain('SEM CONTA');
+      expect(page.querySelectorAll('.guest-rsvp').length).toBe(1);
+    });
+
+    it('recovers the confirmed historical name after reopening an invitation', () => {
+      const secret='N'.repeat(43),receipt='R'.repeat(43);
+      const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+      localStorage.setItem(key,receipt);
+      routeQueryParamMap=convertToParamMap({guest:secret});
+      (http.post as jasmine.Spy).and.callFake((url:string) => {
+        if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if(url.endsWith('/guest-confirmed-players')) return of([{key:'guest:40',name:'Fresco',hasAccount:false}]);
+        if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:'Fresco'});
+        return of({});
+      });
+      const page=render();
+      expect(fixture.componentInstance.guestStep).toBe('approved');
+      expect(page.querySelector('.guest-rsvp-confirmed-identity')?.textContent).toContain('Fresco');
+      expect(page.querySelector('.guest-confirmed-roster')?.textContent).toContain('Fresco');
+      expect(localStorage.getItem(key)).toBe(receipt);
     });
 
     it('never treats an invalid guest link as a public roster permission', () => {
