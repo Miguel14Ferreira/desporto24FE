@@ -96,8 +96,6 @@ import {
 import { CommunityService } from '../../services/community.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { SessionService } from '../../services/session.service';
-import { VenueService } from '../../services/venue.service';
-import { Venue } from '../model/venue';
 import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
@@ -124,7 +122,6 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   readonly typing = new ChatTypingTracker(this.realtimeService);
   private readonly readSync = inject(ChatReadSyncService);
   private readonly tournamentCatalog = inject(CommunityTournamentsService);
-  private readonly venuesService = inject(VenueService);
   private readonly chatSubscriptions = new Subscription();
   private readonly jwtHelper = new JwtHelperService();
 
@@ -1378,65 +1375,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private standingArchiveDetailRequestVersion = 0;
   private pendingArchiveDeepLinkCommunityId: number | null = null;
 
-  habitualVenueQuery = '';
-  habitualVenueResults: Venue[] = [];
-  habitualVenueSearching = false;
-  habitualVenueSaving = false;
-  habitualVenueError = '';
-  habitualVenueMessage = '';
-  private habitualVenueLookupRevision = 0;
-
-  searchHabitualVenues(): void {
-    if (!this.selected || !this.canManage() || !this.habitualVenueQuery.trim()
-        || this.habitualVenueSearching || this.habitualVenueSaving) return;
-    const communityId = this.selected.id;
-    const revision = ++this.habitualVenueLookupRevision;
-    this.habitualVenueSearching = true;
-    this.habitualVenueError = '';
-    const sports = this.communitySports(this.selected);
-    this.venuesService.suggest(this.habitualVenueQuery.trim(), undefined,
-        sports.length === 1 ? sports[0] : undefined, 0)
-      .pipe(timeout(10_000), finalize(() => {
-        if (revision === this.habitualVenueLookupRevision) this.habitualVenueSearching = false;
-      })).subscribe({
-        next: page => {
-          if (revision !== this.habitualVenueLookupRevision
-              || this.selected?.id !== communityId) return;
-          this.habitualVenueResults = page.venues;
-        },
-        error: () => {
-          if (revision !== this.habitualVenueLookupRevision
-              || this.selected?.id !== communityId) return;
-          this.habitualVenueResults = [];
-          this.habitualVenueError = 'Não foi possível pesquisar os recintos.';
-        }
-      });
-  }
-
-  saveHabitualVenue(venueId: number | null): void {
-    if (!this.selected || !this.canManage() || this.habitualVenueSaving) return;
-    const communityId = this.selected.id;
-    this.habitualVenueSaving = true;
-    this.habitualVenueError = '';
-    this.habitualVenueMessage = '';
-    this.communityService.updateDefaultVenue(communityId, venueId)
-      .pipe(timeout(10_000), finalize(() => this.habitualVenueSaving = false))
-      .subscribe({
-        next: group => {
-          if (this.selected?.id !== communityId) return;
-          this.selected = group;
-          this.replaceCommunity(group);
-          this.habitualVenueResults = [];
-          this.habitualVenueQuery = '';
-          this.habitualVenueMessage = venueId === null
-            ? 'Recinto habitual removido.'
-            : 'Recinto habitual guardado.';
-        },
-        error: () => {
-          if (this.selected?.id === communityId)
-            this.habitualVenueError = 'Não foi possível guardar o recinto habitual.';
-        }
-      });
+  onHabitualVenueSaved(group: CommunityGroup): void {
+    if (this.selected?.id !== group.id) return;
+    this.selected = group;
+    this.replaceCommunity(group);
   }
 
   featuresEditing = false;
@@ -2037,11 +1979,6 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.presentationLoading = false;
     this.editingSports = false;
     this.sportsMessage = '';
-    this.habitualVenueQuery = '';
-    this.habitualVenueResults = [];
-    this.habitualVenueError = '';
-    this.habitualVenueMessage = '';
-    ++this.habitualVenueLookupRevision;
     this.featuresEditing = false;
     this.featuresFeedback = '';
     this.featuresError = '';
