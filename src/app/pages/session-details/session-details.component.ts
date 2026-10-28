@@ -2063,6 +2063,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         },
         error: () => {
           if (this.session?.id !== id) return;
+          this.memberConfirmedGuests=[];
           this.memberConfirmedGuestsError=t('sessionDetail.confirmedGuestsError');
         }
       });
