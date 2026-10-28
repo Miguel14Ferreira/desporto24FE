@@ -101,6 +101,48 @@
             <p class="session-context-error" role="status">{{ sessionContextError }}</p>
           }
 
+          @if (postGameCommunities.length > 0) {
+            <section class="session-post-game-community" aria-labelledby="post-game-community-title">
+              <div class="session-post-game-community-heading">
+                <span class="section-kicker">{{ 'sessionDetail.postGameCommunity.kicker' | t }}</span>
+                <h2 id="post-game-community-title">{{ 'sessionDetail.postGameCommunity.title' | t }}</h2>
+                <p>{{ 'sessionDetail.postGameCommunity.help' | t }}</p>
+              </div>
+              <div class="session-post-game-community-choices">
+                @for (group of postGameCommunities; track group.id) {
+                  <div class="session-post-game-community-option">
+                    <div class="session-post-game-community-copy">
+                      <strong>{{ group.name }}</strong>
+                      <span>{{ (group.requiresApproval
+                        ? 'sessionDetail.postGameCommunity.approval'
+                        : 'sessionDetail.postGameCommunity.open') | t }}</span>
+                    </div>
+                    <div class="session-post-game-community-actions">
+                      <button type="button" class="jynlo-action jynlo-action--primary"
+                              [disabled]="postGameCommunityBusyId !== null"
+                              (click)="joinPostGameCommunity(group)">
+                        {{ (group.requiresApproval
+                          ? 'sessionDetail.postGameCommunity.request'
+                          : 'sessionDetail.postGameCommunity.join') | t }}
+                      </button>
+                      <button type="button" class="jynlo-action jynlo-action--neutral"
+                              [disabled]="postGameCommunityBusyId !== null"
+                              (click)="dismissPostGameCommunity(group.id)">
+                        {{ 'sessionDetail.postGameCommunity.notNow' | t }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+          @if (postGameCommunityFeedback) {
+            <p class="session-post-game-community-success" role="status">{{ postGameCommunityFeedback }}</p>
+          }
+          @if (postGameCommunityError) {
+            <p class="session-post-game-community-error" role="alert">{{ postGameCommunityError }}</p>
+          }
+
           @if (session.joined) {
             <div id="session-membership" class="membership-status" role="status">
               <strong>{{ 'sessionDetail.joinedTitle' | t }}</strong>
