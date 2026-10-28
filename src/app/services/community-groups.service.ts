@@ -330,6 +330,10 @@ export class CommunityGroupsService {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/features', request);
   }
 
+  updateDefaultVenue(id: number, venueId: number | null): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/default-venue', { venueId });
+  }
+
   updateSports(id: number, sports: string[]): Observable<CommunityGroup> {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/sports', { sports });
   }

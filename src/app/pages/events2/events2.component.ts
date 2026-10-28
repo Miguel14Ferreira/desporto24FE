@@ -36,6 +36,64 @@ export class Events2Component implements OnInit, OnDestroy {
   communitiesLoading = false;
   communitiesLoadError = false;
   directCommunity: CommunityGroup | null = null;
+  private autoCommunitySport = '';
+  private autoCommunityVenueId: number | null = null;
+  private communityPrefillRevision = 0;
+
+  /** Apply defaults only when consistent across EVERY chosen community.
+   * Manual sports, venues and locations always take priority. */
+  private reconcileCommunityDefaults(): void {
+    const revision = ++this.communityPrefillRevision;
+    const groups = this.seasonCommunities;
+    const sports = groups.map(group => group.sports?.length ? group.sports
+      : (group.sport ? [group.sport] : []));
+    const sport = groups.length && sports.every(list => list.length === 1)
+        && sports.every(list => list[0] === sports[0][0])
+      ? sports[0][0] : '';
+    if (!this.sport.trim() || this.sport === this.autoCommunitySport) {
+      if (this.sport !== sport) {
+        this.sport = sport;
+        this.confirmSportSelection();
+      }
+      this.autoCommunitySport = sport;
+    }
+    const venueIds = groups.map(group => group.defaultVenueId ?? null);
+    const venueId = groups.length && venueIds[0] !== null
+        && venueIds.every(id => id === venueIds[0])
+      ? venueIds[0] : null;
+    const isAutoVenue = this.selectedVenueId !== null
+      && this.selectedVenueId === this.autoCommunityVenueId;
+    if (isAutoVenue && this.selectedVenueId !== venueId) this.selectVenue(null);
+    if (!venueId || !this.sportSelected || this.locationMethod !== 'venue'
+        || (this.selectedVenueId !== null && !isAutoVenue)
+        || (this.selectedVenueId === null && (this.city.trim() || this.address.trim()))) {
+      this.autoCommunityVenueId = null;
+      return;
+    }
+    if (this.selectedVenueId === venueId) return;
+    this.venueService.get(venueId).pipe(timeout(10_000)).subscribe({
+      next: venue => {
+        if (revision !== this.communityPrefillRevision
+            || this.locationMethod !== 'venue'
+            || this.selectedVenueId !== null
+            || this.city.trim() || this.address.trim()) return;
+        const allowedSports = (venue.sports || '').split(/[;,]/)
+          .map(item => item.trim().toLocaleLowerCase('pt')).filter(Boolean);
+        if (allowedSports.length
+            && !allowedSports.includes(this.sport.trim().toLocaleLowerCase('pt'))) return;
+        if (!this.newlyCreatedVenues.some(item => item.id === venue.id)) {
+          this.newlyCreatedVenues = [...this.newlyCreatedVenues, venue];
+        }
+        if (!this.venues.some(item => item.id === venue.id)) this.venues = [...this.venues, venue];
+        this.venueDistrict = this.districts.find(d => d === venue.district)
+          || this.allDistrictsOption;
+        this.venueSearch = venue.name + ' · ' + venue.city;
+        this.selectVenue(venue.id);
+        this.autoCommunityVenueId = venue.id;
+      },
+      error: () => { /* A missing habitual venue must never block the organiser. */ }
+    });
+  }
   seasonGame = false;
   seasonGameCommunityId: number | null = null;
   confirmActivateRankings = false;
@@ -119,6 +177,7 @@ export class Events2Component implements OnInit, OnDestroy {
     } else if (!checked) {
       this.shareCommunityIds = this.shareCommunityIds.filter(groupId => groupId !== id);
     }
+    this.reconcileCommunityDefaults();
     // Changing from one group to zero/two+ must clear the old season destination.
     // Going from two groups back to one stays opt-in; never auto-enable scoring.
     if (this.seasonGame && (!this.canMarkSeasonGame
@@ -361,10 +420,7 @@ export class Events2Component implements OnInit, OnDestroy {
           // silently pick the first modality on behalf of the organiser.
           this.communitySports = [...new Set(list.filter(value => this.sportsCatalog.includes(value)))];
           this.communitySportLoaded = true;
-          if (!this.sport.trim() && this.communitySports.length === 1) {
-            this.sport = this.communitySports[0];
-            if (this.sportSelected) this.loadVenues();
-          }
+          this.reconcileCommunityDefaults();
         },
         error: () => {
           this.errorMessage = t('feedback.communities.openError');
