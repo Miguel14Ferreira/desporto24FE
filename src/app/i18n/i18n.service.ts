@@ -607,7 +607,7 @@ const PT: Dictionary = {
   'guestRsvp.noThanks': 'Não precisas de conta para manter esta presença.',
   'guestRsvp.requestError': 'Não foi possível enviar o pedido. Confirma os dados ou contacta o organizador.',
   'guestRsvp.alreadyConfirmed': 'Este jogador já tem presença confirmada. Vê-o em «Quem vai»; para outra pessoa, volta e escolhe outro nome.',
-  'guestRsvp.conflict': 'Não foi possível reservar outra vaga. O jogador pode já estar inscrito ou a lotação ter mudado. Verifica «Quem vai» e escolhe outro nome.
+  'guestRsvp.conflict': 'Não foi possível reservar outra vaga. O jogador pode já estar inscrito ou a lotação ter mudado. Verifica «Quem vai» e escolhe outro nome.',
   'guestRsvp.statusError': 'Não foi possível consultar o estado neste momento.',
   'guestRsvp.invalidLink': 'A ligação para convidados não está disponível. Pede uma nova ao organizador.',
   'sessionDetail.contextTitle': 'Comunidade e época do jogo',
@@ -811,7 +811,7 @@ const PT: Dictionary = {
   'profile.favoriteSportsSelected': '{{count}} desportos selecionados (por guardar).',
   'profile.favoriteSportsAdded': 'Desporto adicionado à seleção. Guarda o perfil para aplicar.',
   'profile.favoriteSportsRemoved': 'Desporto removido da seleção. Guarda o perfil para aplicar.',
-  'profile.favoriteSportsNotFound': 'Seleciona um desporto disponível na lista.']
+  'profile.favoriteSportsNotFound': 'Seleciona um desporto disponível na lista.']',
   'profile.skillLevel': 'Nível',
   'profile.skillLevel.none': 'Não indicar',
   'profile.level.BEGINNER': 'Iniciante',
