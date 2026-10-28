@@ -87,6 +87,13 @@ export interface SessionTeamPlayer {
   displayName?: string;
 }
 
+/** Metadata visible only to viewers authorized to open the session itself. */
+export interface SessionContext {
+  communities: { id: number; name: string }[];
+  seasonGame: boolean;
+  seasonName: string | null;
+}
+
 export interface SessionGuestRequest {
   id: number;
   name: string;
@@ -111,6 +118,10 @@ export class SessionService {
   private readonly baseUrl = environment.apiUrl + '/api/sessions';
 
   constructor(private http: HttpClient) {}
+
+  context(id: number): Observable<SessionContext> {
+    return this.http.get<SessionContext>(this.baseUrl + '/' + id + '/context');
+  }
 
   issueGuestLink(id:number): Observable<{token:string}> {
     return this.http.post<{token:string}>(this.baseUrl+'/'+id+'/guest-link',{});

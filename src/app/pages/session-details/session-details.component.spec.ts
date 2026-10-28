@@ -67,9 +67,10 @@ describe('SessionDetailsComponent', () => {
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
+      ['detail', 'context', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'reviewGuestRequest', 'cancelGuestRequest']
     );
     sessionService.detail.and.returnValue(of(session));
+    sessionService.context.and.returnValue(of({communities:[],seasonGame:false,seasonName:null}));
     sessionService.guestRequests.and.returnValue(of([]));
     sessionService.issueGuestLink.and.returnValue(of({token:'T'.repeat(43)}));
     sessionService.cancelGuestRequest.and.returnValue(of({id:30,name:'Convidado',status:'CANCELLED',note:'',teamCode:null}));
@@ -1337,172 +1338,98 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionError).toBeTruthy();
   });
 
-  it('offers a public share link only when the backend explicitly allows it', () => {
-    component.session = { ...session, canSharePublicly: true };
+  it('starts with guest-first invitations after creating a community game', () => {
+    const route=TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap,'get').and.callFake(key=>key==='created'?'1':null);
+    (component as any).currentUsername='creator-user';
+    component.session={...session,gameDate:'2099-10-01T18:00:00Z',
+      audience:'COMMUNITY_ONLY',communityId:12,canSharePublicly:false};
     fixture.detectChanges();
-
-    const button = fixture.nativeElement.querySelector('.share-session-action') as HTMLButtonElement;
-    expect(button).not.toBeNull();
-    expect(button.textContent).toContain('Partilhar sessão');
-    expect(component.publicShareUrl()).toBe(new URL('/sessions/7', window.location.origin).href);
-  });
-
-  it('offers opt-in sharing after the creator makes a public game', async () => {
-    const route = TestBed.inject(ActivatedRoute);
-    spyOn(route.snapshot.queryParamMap, 'get').and.callFake(key => key === 'created' ? '1' : null);
-    (component as any).currentUsername = 'creator-user';
-    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
-    fixture.detectChanges();
-    const panel = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
+    expect(component.showInvitePanel()).toBeTrue();
+    const panel=fixture.nativeElement.querySelector('.guest-organizer-panel') as HTMLElement;
     expect(panel).not.toBeNull();
-    const whatsapp = panel.querySelector('a[href^="https://wa.me/"]') as HTMLAnchorElement;
-    expect(decodeURIComponent(whatsapp.href)).toContain('/sessions/7');
-    const feedLink = panel.querySelector('a[href^="/menu/feed"]') as HTMLAnchorElement;
-    expect(feedLink.getAttribute('href')).toContain('shareSession=7');
-    const copy = spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
-    await component.copyPublicShareLink();
-    expect(copy).toHaveBeenCalledWith(new URL('/sessions/7', window.location.origin).href);
-    panel.querySelectorAll('button')[1].click();
-    fixture.detectChanges();
+    expect(panel.textContent).toContain('Convidar jogadores');
+    expect(panel.textContent).toContain('SEM CONTA');
+    expect(panel.textContent).toContain('COM CONTA JYNLO');
     expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-  });
-
-  it('shares restricted games with authenticated links but never public feed links', async () => {
-    const route = TestBed.inject(ActivatedRoute);
-    spyOn(route.snapshot.queryParamMap, 'get').and.callFake(key => key === 'created' ? '1' : null);
-    (component as any).currentUsername = 'creator-user';
-    const copy = spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
-    for (const detail of [
-      { privateGame: true, canSharePublicly: false },
-      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false }
-    ]) {
-      component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', ...detail };
-      fixture.detectChanges();
-      const panel = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
-      expect(panel).not.toBeNull();
-      expect(component.publicShareUrl()).toBeNull();
-      const whatsapp = panel.querySelector('a[href^="https://wa.me/"]') as HTMLAnchorElement;
-      expect(decodeURIComponent(whatsapp.href)).toContain('/menu/events/7');
-      expect(panel.querySelector('a[href^="/menu/feed"]')).toBeNull();
-      expect(panel.textContent).toContain('jogadores autorizados');
-      await component.copyPublicShareLink();
-      expect(copy).toHaveBeenCalledWith(new URL('/menu/events/7', window.location.origin).href);
-    }
-    (component as any).currentUsername = 'someone-else';
-    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-  });
-
-  it('lets the organizer reopen WhatsApp, link and Feed options on a later visit', async () => {
-    (component as any).currentUsername = 'creator-user';
-    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-    const toggle = fixture.nativeElement.querySelector('.open-promotion-button') as HTMLButtonElement;
-    expect(toggle).not.toBeNull();
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.nativeElement.textContent).not.toContain('Divulgar jogo');
+    expect(component.publicShareUrl()).toBeNull();
+    const toggle=fixture.nativeElement.querySelector('.session-invite-toggle') as HTMLButtonElement;
     toggle.click();
     fixture.detectChanges();
-
-    const panel = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
-    expect(panel.textContent).toContain('Divulgar jogo');
-    expect(panel.querySelector('a[href^="https://wa.me/"]')).not.toBeNull();
-    expect((panel.querySelector('a[href^="/menu/feed"]') as HTMLAnchorElement)
-      .getAttribute('href')).toContain('shareSession=7');
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-
-    const copy = spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.reject(new Error('Denied')));
-    await component.copyPublicShareLink();
+    expect(fixture.nativeElement.querySelector('.guest-organizer-panel')).toBeNull();
+    (fixture.nativeElement.querySelector('.session-invite-toggle') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(copy).toHaveBeenCalled();
-    expect((panel.querySelector('#session-share-url') as HTMLInputElement).value)
-      .toBe(new URL('/sessions/7', window.location.origin).href);
-    toggle.click();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.guest-organizer-panel')).not.toBeNull();
   });
 
-  it('opens appropriate creator sharing from My Sports Week without exposing private games publicly', () => {
-    const route = TestBed.inject(ActivatedRoute);
-    spyOn(route.snapshot.queryParamMap, 'get')
-      .and.callFake(key => key === 'promote' ? '1' : null);
-    component.ngOnInit();
-    (component as any).currentUsername = 'creator-user';
-    component.session = {
-      ...session, canSharePublicly: true, gameDate: '2099-10-01T18:00:00Z'
-    };
+  it('generates signed WhatsApp and copy invitations for crossposted games', async () => {
+    (component as any).currentUsername='creator-user';
+    component.session={...session,gameDate:'2099-10-01T18:00:00Z',
+      audience:'COMMUNITY_ONLY',communityId:null,canSharePublicly:false};
+    component.invitePanelOpen=true;
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).not.toBeNull();
-
-    component.session = { ...component.session, privateGame: true, canSharePublicly: false };
-    fixture.detectChanges();
-    const restricted = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
-    expect(restricted).not.toBeNull();
-    expect(restricted.querySelector('a[href^="/menu/feed"]')).toBeNull();
+    expect(component.canShareGuestInvites()).toBeTrue();
     expect(component.publicShareUrl()).toBeNull();
-
-    component.session = {
-      ...session, canSharePublicly: true, gameDate: '2099-10-01T18:00:00Z'
-    };
-    (component as any).currentUsername = 'different-user';
+    component.createGuestLink();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+    expect(sessionService.issueGuestLink).toHaveBeenCalledWith(7);
+    const url=component.guestLinkUrl;
+    expect(url).toContain('/sessions/7?guest=');
+    expect(decodeURIComponent(component.guestLinkWhatsAppUrl)).toContain(url);
+    const clipboard=spyOn(navigator.clipboard,'writeText').and.returnValue(Promise.resolve());
+    await component.copyGuestLink();
+    expect(clipboard).toHaveBeenCalledWith(url);
   });
 
-  it('lets organizers reopen restricted sharing, but blocks expired, cancelled or others games', () => {
-    (component as any).currentUsername = 'creator-user';
-    for (const detail of [
-      { privateGame: true, canSharePublicly: false },
-      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false }
-    ]) {
-      component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', ...detail };
+  it('renders actual shared community names and season competition state', () => {
+    component.session={...session,audience:'COMMUNITY_ONLY',communityId:null};
+    component.sessionContext={
+      communities:[{id:12,name:'Colégio Pio'},{id:14,name:'ACM'}],
+      seasonGame:true,seasonName:'Época 2026/27'};
+    fixture.detectChanges();
+    const panel=fixture.nativeElement.querySelector('.session-community-context') as HTMLElement;
+    expect(panel.textContent).toContain('Colégio Pio');
+    expect(panel.textContent).toContain('ACM');
+    expect(panel.textContent).toContain('Jogo da época');
+    expect(panel.textContent).toContain('Época 2026/27');
+    expect(panel.querySelectorAll('.session-community-links a').length).toBe(2);
+    component.sessionContext={communities:[{id:12,name:'Colégio Pio'}],
+      seasonGame:false,seasonName:null};
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-community-context').textContent)
+      .toContain('Não conta para a época');
+  });
+
+  it('does not expose guest invitations to non-creators or closed/private games', () => {
+    (component as any).currentUsername='creator-user';
+    for(const detail of [
+      {gameDate:'2020-10-01T18:00:00Z',status:'OPEN' as const,privateGame:false},
+      {gameDate:'2099-10-01T18:00:00Z',status:'CANCELLED' as const,privateGame:false},
+      {gameDate:'2099-10-01T18:00:00Z',status:'OPEN' as const,privateGame:true}
+    ]){
+      component.session={...session,audience:'COMMUNITY_ONLY',...detail};
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.open-promotion-button')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.session-invite-toggle')).toBeNull();
     }
-    for (const detail of [
-      { status: 'CANCELLED' as const, canSharePublicly: true },
-      { gameDate: '2020-10-01T18:00:00Z', canSharePublicly: true }
-    ]) {
-      component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', ...detail };
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.open-promotion-button')).toBeNull();
-    }
-    (component as any).currentUsername = 'someone-else';
-    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
+    (component as any).currentUsername='someone-else';
+    component.session={...session,audience:'COMMUNITY_ONLY',gameDate:'2099-10-01T18:00:00Z'};
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.open-promotion-button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-invite-toggle')).toBeNull();
   });
 
-  it('does not offer public sharing when the backend has not provided permission', () => {
+  it('only offers a restricted internal share for private games', () => {
+    const route=TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap,'get').and.callFake(key=>key==='created'?'1':null);
+    (component as any).currentUsername='creator-user';
+    component.session={...session,gameDate:'2099-10-01T18:00:00Z',
+      audience:'PUBLIC',privateGame:true,canSharePublicly:false};
     fixture.detectChanges();
-
-    expect(component.publicShareUrl()).toBeNull();
-    expect(fixture.nativeElement.querySelector('.share-session-action')).toBeNull();
-  });
-
-  it('does not offer public sharing for private or community-only sessions', () => {
-    for (const detail of [
-      { privateGame: true, canSharePublicly: false },
-      { audience: 'COMMUNITY_ONLY' as const, communityId: 12, canSharePublicly: false },
-      { audience: 'PUBLIC' as const, canSharePublicly: false }
-    ]) {
-      component.session = { ...session, ...detail };
-      fixture.detectChanges();
-      expect(component.publicShareUrl()).toBeNull();
-      expect(fixture.nativeElement.querySelector('.share-session-action')).toBeNull();
-    }
-  });
-
-  it('allows sharing a community session explicitly made public by the backend', () => {
-    component.session = {
-      ...session, audience: 'PUBLIC', communityId: 12, canSharePublicly: true
-    };
-    fixture.detectChanges();
-
-    expect(component.publicShareUrl()).toBe(new URL('/sessions/7', window.location.origin).href);
-    expect(fixture.nativeElement.querySelector('.share-session-action')).not.toBeNull();
+    const panel=fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
+    expect(panel).not.toBeNull();
+    expect(panel.textContent).toContain('Convidar jogadores');
+    expect(panel.querySelector('a[href^="/menu/feed"]')).toBeNull();
+    expect(component.organizerShareUrl()).toContain('/menu/events/7');
   });
 
   it('shows the organiser confirmed players and remaining slots before a future game', () => {

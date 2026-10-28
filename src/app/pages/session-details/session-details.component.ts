@@ -16,7 +16,7 @@ import { venueUsableAddress } from '../../shared/venue-location';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion, SessionTeamScoreSource, SessionGuestRequest } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionContext, SessionTeamSuggestion, SessionTeamScoreSource, SessionGuestRequest } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
@@ -38,6 +38,41 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     timeStyle: 'short'
   });
   session?: SessionDetail;
+  sessionContext: SessionContext | null = null;
+  sessionContextLoading = false;
+  sessionContextError = '';
+  invitePanelOpen = false;
+
+  private loadSessionContext(sessionId: number): void {
+    this.sessionContextLoading = true;
+    this.sessionContextError = '';
+    this.sessionService.context(sessionId).pipe(
+      timeout(10_000),
+      finalize(() => { if (this.session?.id === sessionId) this.sessionContextLoading = false; })
+    ).subscribe({
+      next: context => {
+        if (this.session?.id === sessionId) this.sessionContext = context;
+      },
+      error: () => {
+        if (this.session?.id === sessionId) this.sessionContextError = t('sessionDetail.communityContextError');
+      }
+    });
+  }
+
+  showInvitePanel(): boolean {
+    return this.canShareGuestInvites() && (this.showCreationSharePanel() || this.invitePanelOpen);
+  }
+
+  toggleInvitePanel(): void {
+    if (!this.canShareGuestInvites()) return;
+    if (this.showInvitePanel()) {
+      this.creationShareDismissed = true;
+      this.invitePanelOpen = false;
+    } else {
+      this.invitePanelOpen = true;
+    }
+  }
+
   messages: SessionMessage[] = [];
   replyingToSessionMessage: SessionMessage | null = null;
   creatorReliability?: ReliabilitySummary;
@@ -1862,7 +1897,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   canShareGuestInvites(): boolean {
-    return !!this.session && this.isCreator() && !!this.session.communityId
+    return !!this.session && this.isCreator()
       && (this.session.audience === 'PUBLIC' || this.session.audience === 'COMMUNITY_ONLY')
       && !this.session.privateGame
       && (this.session.status === 'OPEN' || this.session.status === 'FULL')
@@ -2371,6 +2406,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       .subscribe({
         next: session => {
           this.session = session;
+          if (!this.sessionContext && !this.sessionContextLoading) this.loadSessionContext(session.id);
           if (this.canShareGuestInvites()
               && this.guestRequestsLoadedForSession !== session.id) {
             this.guestRequestsLoadedForSession = session.id;
