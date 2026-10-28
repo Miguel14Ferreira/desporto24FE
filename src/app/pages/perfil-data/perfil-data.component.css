@@ -115,7 +115,7 @@ h1 { font-size: clamp(2.1rem, 5vw, 3.5rem); }
 
 .reliability-card {
   margin-top: 1.2rem;
-  padding-top: 1.2rem;
+  padding: clamp(1.15rem, 2.6vw, 1.65rem);
   border-top: 1px solid rgba(255,255,255,.08);
 }
 
@@ -150,7 +150,7 @@ h1 { font-size: clamp(2.1rem, 5vw, 3.5rem); }
 .activity-section,
 .account-section {
   margin-top: 1.2rem;
-  padding-top: 1.2rem;
+  padding: clamp(1.15rem, 2.6vw, 1.65rem);
   border-top: 1px solid rgba(255,255,255,.08);
 }
 
@@ -355,3 +355,7 @@ h1 { font-size: clamp(2.1rem, 5vw, 3.5rem); }
   font-size: .74rem;
   font-weight: 850;
 }
+
+/* Premium bordered sections need padding on every side, including mobile. */
+.profile-page :is(.bio-card,.activity-section,.reliability-card,.account-section) { min-width: 0; box-sizing: border-box; }
+.profile-page :is(.section-heading,.section-kicker,h3) { min-width: 0; overflow-wrap: anywhere; }

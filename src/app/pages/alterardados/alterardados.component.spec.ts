@@ -291,6 +291,38 @@ describe('AlterardadosComponent', () => {
     expect(component.profileCompletion.missing.length).toBeGreaterThan(0);
   });
 
+  it('adds a selected sport by clicking a suggestion and visibly acknowledges the change', () => {
+    component.sportQuery = 'Fute';
+    component.updateSportSuggestions();
+    fixture.detectChanges();
+    const list = fixture.nativeElement.querySelector('.sport-suggestions') as HTMLElement;
+    const choice = Array.from(list.querySelectorAll('button')).find(
+      item => item.textContent?.includes('Futebol')) as HTMLButtonElement;
+    expect(choice).toBeTruthy();
+    choice.click();
+    fixture.detectChanges();
+    expect(component.selectedSports).toContain('Futebol');
+    expect(component.profile?.favoriteSports).toContain('Futebol');
+    expect(fixture.nativeElement.querySelector('.sport-chips')?.textContent).toContain('Futebol');
+    expect(fixture.nativeElement.querySelector('.sport-selection-feedback')?.textContent)
+      .toContain('Guarda o perfil');
+    expect(fixture.nativeElement.querySelector('.sport-selection-count')?.textContent)
+      .toContain('2 desportos');
+  });
+
+  it('keeps selected sports in the update payload and removes a sport when requested', () => {
+    component.addSport('Futebol');
+    component.save();
+    expect(service.update).toHaveBeenCalledWith(jasmine.objectContaining({
+      favoriteSports: jasmine.stringMatching(/Futebol/)
+    }));
+    component.removeSport('Futebol');
+    fixture.detectChanges();
+    expect(component.selectedSports).not.toContain('Futebol');
+    expect(fixture.nativeElement.querySelector('.sport-selection-feedback')?.textContent)
+      .toContain('removido');
+  });
+
   it('should expose an icon for sports', () => {
     expect(component.iconForSport('Futebol')).toBe('⚽');
     expect(component.iconForSport('Padel')).toBe('🎾');

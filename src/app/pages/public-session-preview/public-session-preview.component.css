@@ -43,8 +43,8 @@
 
 .session-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) minmax(370px, 43%);
+  gap: clamp(1rem, 2.4vw, 2rem);
   align-items: start;
 }
 
@@ -210,8 +210,8 @@ h1 {
 .retry-action:hover { background: #dbeafe; }
 .retry-action:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
 
-@media (max-width: 800px) {
-  .session-layout { grid-template-columns: 1fr; }
+@media (max-width: 850px) {
+  .session-layout { grid-template-columns: minmax(0, 1fr); }
   .public-header { margin-bottom: 2rem; }
 }
 

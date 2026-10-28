@@ -660,3 +660,18 @@ textarea { resize: vertical; }
   color: #fecaca;
   line-height: 1.5;
 }
+
+
+/* Sports selection must visibly confirm local changes before Save. */
+.sport-selector { min-width: 0; }
+.sport-selection-count { margin: 0; color: #b9dce3; font-size: .79rem; line-height: 1.45; }
+.sport-selection-feedback {
+  margin: .1rem 0; padding: .65rem .85rem;
+  border: 1px solid rgba(41, 227, 195, .38);
+  border-radius: 10px; background: rgba(41, 227, 195, .09);
+  color: #c7fff3; font-size: .81rem; line-height: 1.5;
+}
+.sport-chips { min-width: 0; }
+.sport-chip { max-width: 100%; overflow-wrap: anywhere; }
+.sport-chip:focus-visible,
+.sport-suggestions button:focus-visible { outline: 2px solid #83ffe7; outline-offset: 3px; }

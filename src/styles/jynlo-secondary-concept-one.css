@@ -169,9 +169,12 @@ body .edit-page.jynlo-c1 .photo-panel {
   background: var(--jynlo-ui-surface-raised);
 }
 body .edit-page.jynlo-c1 .photo-preview {
-  width: clamp(120px, 16vw, 190px);
-  height: clamp(120px, 16vw, 190px);
-  border-radius: 1.35rem;
+  --avatar-side: clamp(116px, 13vw, 148px);
+  width: var(--avatar-side);
+  height: var(--avatar-side);
+  flex: 0 0 var(--avatar-side);
+  aspect-ratio: 1 / 1;
+  border-radius: 1.15rem;
   border: 2px solid rgba(65, 233, 176, .26);
   overflow: hidden;
 }
@@ -220,9 +223,11 @@ body .create-community-page.jynlo-c1 .creation-note { border-color: var(--jynlo-
     align-items: flex-start;
   }
   body .create-community-page.jynlo-c1 .community-photo-preview { width: min(100%, 325px); }
-  body .edit-page.jynlo-c1 .photo-preview { width: 140px; height: 140px; }
+  body .edit-page.jynlo-c1 .photo-preview { --avatar-side: 124px; }
 }
 @media (prefers-reduced-motion: reduce) {
   body .dashboard-page.jynlo-c1 .hero-action,
   body .friends-page.jynlo-c1 .friend-card { transform: none; transition: none; }
 }
+
+body .edit-page.jynlo-c1 .photo-preview img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
