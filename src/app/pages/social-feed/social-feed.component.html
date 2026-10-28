@@ -547,7 +547,8 @@
                     <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
                     <small>@{{ profile.username }}</small>
                     @if (profile.favoriteSports) {
-                      <small>{{ profile.favoriteSports }}</small>
+                      <app-venue-sports-badges [sports]="profile.favoriteSports"
+                        [limit]="2" [compact]="true"></app-venue-sports-badges>
                     }
                   </span>
                 </a>
