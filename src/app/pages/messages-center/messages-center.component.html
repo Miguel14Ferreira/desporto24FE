@@ -114,6 +114,14 @@
             </div>
             }
             <div class="inbox-heading-actions">
+              <button type="button" class="inbox-search-toggle inbox-mute-toggle"
+                  [disabled]="muteLoading"
+                  [class.is-muted]="isMuted(conversation)"
+                  [attr.aria-label]="(isMuted(conversation) ? 'chat.unmuteConversation' : 'chat.muteConversation') | t"
+                  [attr.title]="(isMuted(conversation) ? 'chat.unmuteConversation' : 'chat.muteConversation') | t"
+                  (click)="toggleConversationMute(conversation)">
+                <span aria-hidden="true">{{ isMuted(conversation) ? '🔕' : '🔔' }}</span>
+              </button>
               @if(conversation.kind==='direct' && composerAllowed){
                 <a routerLink="/menu/groups" [queryParams]="{from:conversation.id}"
                    class="inbox-call-trigger inbox-group-create"
@@ -149,6 +157,10 @@
               </button>
             </div>
           </header>
+          @if (muteError) { <p class="inbox-notice" role="alert">{{ muteError }}</p> }
+          @if (isMuted(conversation)) {
+            <p class="inbox-notice" role="status">🔕 {{ 'chat.muted' | t }}</p>
+          }
           @if (conversation.kind === 'direct' && composerAllowed && calls
                 && !(calls.available$ | async)) {
             <div class="inbox-notice inbox-call-readiness" role="status">
