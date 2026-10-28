@@ -15,6 +15,7 @@ import { SessionMessage } from 'src/app/pages/model/session-message';
 import { CommunityTimelineEntry } from 'src/app/services/community-timeline.service';
 import { PrivateGroupMessage } from 'src/app/services/private-group.service';
 import { GroupChatToast, allowsGroupChatToast, confirmsGroupUnread, recentGroupChatEvent } from 'src/app/shared/group-chat-notice';
+import { ConversationMuteService, isConversationMuted } from 'src/app/services/conversation-mute.service';
 
 @Component({
     selector: 'app-navbar',
@@ -53,6 +54,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private realtimeService: DirectChatRealtimeService,
     private inboxApi: InboxApiService,
     private privateGroups: PrivateGroupService,
+    private conversationMutes: ConversationMuteService,
     private browserTitle: Title,
     public i18n: I18nService
   ) { }
@@ -204,13 +206,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
       const attachmentKind = chatMediaPreviewForAttachment(message.attachmentMimeType);
       const messageKind = attachmentKind ?? chatMediaPreviewKind(message.text);
       this.toastLookup?.unsubscribe();
-      this.toastLookup = this.notificationService.mine().pipe(timeout(8_000)).subscribe({
-        next: notices => {
+      this.toastLookup = forkJoin({
+        notices: this.notificationService.mine(),
+        mutes: this.conversationMutes.list()
+      }).pipe(timeout(8_000)).subscribe({
+        next: ({ notices, mutes }) => {
           if (!this.authenticated || localStorage.getItem('t') !== token
               || this.authService.loggedInPerfilname?.toLowerCase() !== account
               || document.visibilityState !== 'visible' || !document.hasFocus()
               || this.router.url.startsWith('/menu/messages')
               || this.router.url.startsWith('/menu/notifications')) return;
+          if (isConversationMuted(mutes, 'direct', sender)) return;
           const now = Date.now();
           const notice = notices.filter(n =>
             n.type === 'CHAT_MESSAGE' && !n.read && n.relatedUsername?.toLowerCase() === sender
@@ -280,9 +286,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
           : this.inboxApi.summaries([{ kind, id: String(id) }])
               .pipe(map(summaries => ({ summaries })));
       this.groupToastLookup = forkJoin({
-        preferences: this.notificationService.preferences(), check
+        preferences: this.notificationService.preferences(),
+        mutes: this.conversationMutes.list(), check
       }).pipe(timeout(8_000)).subscribe({
-        next: ({ preferences, check }) => {
+        next: ({ preferences, mutes, check }) => {
           if (!this.authenticated || localStorage.getItem('t') !== token
               || this.authService.loggedInPerfilname?.toLowerCase() !== account
               || !recentGroupChatEvent(message.createdAt)
@@ -290,7 +297,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
               || this.router.url.startsWith('/menu/messages')
               || this.router.url.startsWith('/menu/notifications')
               || this.router.url.startsWith('/menu/groups')
-              || !allowsGroupChatToast(preferences)) return;
+              || !allowsGroupChatToast(preferences)
+              || isConversationMuted(mutes, kind, id)) return;
           let title: string | undefined;
           if ('group' in check) {
             // The private group GET rechecks membership after the socket event.
