@@ -31,7 +31,8 @@ export class NotificationsComponent implements OnInit {
   readonly preferenceTypes = [
     'COMMUNITY_INVITE', 'COMMUNITY_JOIN_REQUEST', 'COMMUNITY_JOIN_ACCEPTED',
     'COMMUNITY_JOIN_REJECTED', 'SESSION_INVITE', 'WAITLIST_PROMOTED',
-    'SESSION_REMOVED', 'SESSION_CANCELLED', 'SESSION_POST_GAME_REVIEW',
+    'SESSION_REMOVED', 'SESSION_CANCELLED', 'SESSION_MEETING_POINT_UPDATED',
+    'SESSION_POST_GAME_REVIEW',
     'ATTENDANCE_DISPUTE_ACCEPTED', 'ATTENDANCE_DISPUTE_REJECTED',
     'CHAT_MESSAGE', 'VENUE_EDIT_DECISION', 'FRIEND_REQUEST', 'PROFILE_UPDATE', 'OTHER'
   ] as const;
@@ -342,6 +343,9 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationSubject(notification: AppNotification): string {
+    if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
+      return t('notification.meetingPointChangedSubject');
+    }
     if (notification.type === 'VENUE_EDIT_DECISION') {
       return t(notification.subject.includes('aprovada')
         ? 'notification.venueEditApprovedSubject' : 'notification.venueEditRejectedSubject');
@@ -362,6 +366,11 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationMessage(notification: AppNotification): string {
+    if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
+      // Never render meeting instructions from the alert itself. Always send
+      // players to session details where the API re-checks membership.
+      return t('notification.meetingPointChangedMessage');
+    }
     if (notification.type === 'VENUE_EDIT_DECISION') {
       const parts = notification.message.match(/^A tua proposta para "(.+)" foi (aprovada|rejeitada)\.(?: Justificação: ([\s\S]*))?$/);
       if (parts) {
@@ -610,6 +619,8 @@ export class NotificationsComponent implements OnInit {
         return t('notification.session');
       case 'SESSION_CANCELLED':
         return t('notification.sessionCancelled');
+      case 'SESSION_MEETING_POINT_UPDATED':
+        return t('notification.meetingPointChangedType');
       case 'SESSION_POST_GAME_REVIEW':
         return t('notification.postGameReview');
       case 'SESSION_INVITE':

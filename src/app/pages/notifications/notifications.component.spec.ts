@@ -338,6 +338,40 @@ describe('NotificationsComponent', () => {
     });
   });
 
+  it('shows a private meeting-point change alert in both languages without disclosing its text', () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    const notice = {
+      ...notificationFixture(), id: 321, sessionId: 12,
+      type: 'SESSION_MEETING_POINT_UPDATED',
+      subject: 'Ponto de encontro atualizado',
+      message: 'O organizador alterou as indicações de chegada. Abre a sessão para consultares a informação atual.'
+    };
+    try {
+      component.notifications = [notice];
+      component.selected = notice;
+      localStorage.setItem('d24-language', 'pt');
+      fixture.detectChanges();
+      expect(component.typeLabel(notice)).toBe('Ponto de encontro');
+      expect(component.notificationSubject(notice)).toBe('Ponto de encontro atualizado');
+      expect(component.notificationMessage(notice)).toContain('Abre a sessão');
+      const detail = fixture.nativeElement as HTMLElement;
+      expect(detail.textContent).not.toContain('Portão secreto');
+      const button = Array.from(detail.querySelectorAll('button'))
+        .find(el => el.textContent?.includes('Ver ponto de encontro')) as HTMLButtonElement;
+      expect(button).toBeDefined();
+      button.click();
+      expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12]);
+
+      localStorage.setItem('d24-language', 'en');
+      expect(component.typeLabel(notice)).toBe('Meeting point');
+      expect(component.notificationSubject(notice)).toBe('Meeting point updated');
+      expect(component.notificationMessage(notice)).toContain('Open the session');
+    } finally {
+      if (previousLanguage === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previousLanguage);
+    }
+  });
+
   it('keeps ordinary session notifications pointing to session details', () => {
     component.openSession({ ...notificationFixture(), type: 'SESSION_CANCELLED' });
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12]);
