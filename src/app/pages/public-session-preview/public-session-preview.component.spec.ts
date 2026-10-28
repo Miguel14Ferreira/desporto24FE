@@ -195,6 +195,66 @@ describe('PublicSessionPreviewComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Barata');
   });
 
+  it('does not discard the original player receipt when using the same WhatsApp link again', () => {
+    const secret='T'.repeat(43), receipt='U'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem('jynlo-guest-receipt:42:'+secret.slice(0,18),receipt);
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:17,name:'Fresco'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        priceAmount:0,maxParticipants:10,participantCount:7,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:'Barata'});
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    expect(component.guestStep).toBe('approved');
+    component.registerAnotherGuest();
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('choose');
+    expect(component.guestSavedBookings.map(row=>row.name)).toContain('Barata');
+    const choice=(fixture.nativeElement as HTMLElement).querySelector('.guest-saved-booking') as HTMLButtonElement;
+    expect(choice.textContent).toContain('Barata');
+    choice.click();
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('approved');
+    expect(component.guestReceipt).toBe(receipt);
+  });
+
+  it('requires a separate confirmation before cancelling and only sends the private receipt', () => {
+    const secret='Y'.repeat(43), receipt='X'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem('jynlo-guest-receipt:42:'+secret.slice(0,18),receipt);
+    let participants=10;
+    http.post.and.callFake(((url:string,body:any) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:participants===10?'FULL':'OPEN',
+        priceAmount:0,maxParticipants:10,participantCount:participants,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:'Barata'});
+      if(url.endsWith('/guest-requests/cancel-self')) {
+        expect(body).toEqual({receipt});
+        participants=9;return of({status:'CANCELLED',playerName:'Barata'});
+      }
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    component.guestConfirmCancellation=true;
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('approved');
+    expect((http.post as jasmine.Spy).calls.allArgs().some(
+      args=>String(args[0]).endsWith('/guest-requests/cancel-self'))).toBeFalse();
+    component.cancelOwnGuestReservation();
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('cancelled');
+    expect(component.session?.participantCount).toBe(9);
+    expect(component.guestSavedBookings).toEqual([]);
+  });
+
   it('lets a shared-device user change the player instead of being stuck with an earlier receipt', () => {
     const secret='H'.repeat(43);
     routeQueryParamMap=convertToParamMap({guest:secret});
