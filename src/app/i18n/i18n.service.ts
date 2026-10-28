@@ -4753,6 +4753,7 @@ const PT: Dictionary = {
   'notification.communityInviteSubject': 'Convite para a comunidade {{community}}',
   'notification.communityInviteMessage': '@{{username}} convidou-te para a comunidade {{community}}. Abre o convite para aceitar ou rejeitar.',
   'notifications.openCommunityInvite': 'Ver convite',
+  'notification.chatGifPreview': 'Enviou-te um GIF 🎞️',
   'notification.chatMessage': 'Mensagem',
   'notification.friendRequest': 'Pedido de amizade',
   'notification.generic': 'Notificação',
