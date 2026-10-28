@@ -811,7 +811,7 @@ const PT: Dictionary = {
   'profile.favoriteSportsSelected': '{{count}} desportos selecionados (por guardar).',
   'profile.favoriteSportsAdded': 'Desporto adicionado à seleção. Guarda o perfil para aplicar.',
   'profile.favoriteSportsRemoved': 'Desporto removido da seleção. Guarda o perfil para aplicar.',
-  'profile.favoriteSportsNotFound': 'Seleciona um desporto disponível na lista.']',
+  'profile.favoriteSportsNotFound': 'Seleciona um desporto disponível na lista.',
   'profile.skillLevel': 'Nível',
   'profile.skillLevel.none': 'Não indicar',
   'profile.level.BEGINNER': 'Iniciante',
