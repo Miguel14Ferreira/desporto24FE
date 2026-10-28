@@ -283,6 +283,8 @@ describe('Community habitual venue picker — interactive template', () => {
     const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
     fixture.componentInstance.community = {...community};
     fixture.detectChanges();
+    await fixture.whenStable(); // Flush initial template-driven form value initialization.
+    fixture.detectChanges();
     const input = fixture.nativeElement.querySelector('input[name="habitualVenueQuery"]') as HTMLInputElement;
     input.value = 'Campo';
     input.dispatchEvent(new Event('input', {bubbles: true}));
@@ -301,6 +303,8 @@ describe('Community habitual venue picker — interactive template', () => {
   it('switches to Maps, resolves a point, then switches to GPS without stale coordinates', async () => {
     const fixture = TestBed.createComponent(CommunityHabitualVenuePickerComponent);
     fixture.componentInstance.community = {...community};
+    fixture.detectChanges();
+    await fixture.whenStable(); // Flush initial template-driven form value initialization.
     fixture.detectChanges();
     const buttons = fixture.nativeElement.querySelectorAll('app-location-method-selector button');
     expect(buttons.length).toBe(3);
