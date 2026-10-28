@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, forwardRef, HostListener, Input, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, forwardRef, HostListener, Input, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface JynloSelectOption {
@@ -48,17 +48,22 @@ export class JynloSelectComponent implements ControlValueAccessor {
   open = false;
   query = '';
 
+  constructor(private readonly cdr: ChangeDetectorRef) {}
+
   private change: (value: string) => void = () => {};
   private touched: () => void = () => {};
 
   writeValue(value: unknown): void {
     this.value = typeof value === 'string' ? value : (value == null ? '' : String(value));
+    // Angular Forms invokes CVA callbacks outside input change detection.
+    this.cdr.markForCheck();
   }
   registerOnChange(fn: (value: string) => void): void { this.change = fn; }
   registerOnTouched(fn: () => void): void { this.touched = fn; }
   setDisabledState(disabled: boolean): void {
     this.disabledByForms = disabled;
     if (this.disabled) this.close();
+    this.cdr.markForCheck();
   }
 
   get selected(): JynloSelectOption | undefined {
