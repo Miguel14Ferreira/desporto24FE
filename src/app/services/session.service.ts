@@ -208,6 +208,12 @@ export class SessionService {
     return this.http.get<SessionDetail>(this.baseUrl + '/' + id);
   }
 
+  /** Private organiser-only update; the backend enforces ownership and timing. */
+  updateMeetingPoint(id: number, instructions: string | null): Observable<SessionDetail> {
+    return this.http.patch<SessionDetail>(this.baseUrl + '/' + id + '/meeting-point',
+      { meetingPointInstructions: instructions });
+  }
+
   join(id: number, password?: string): Observable<JoinSessionResponse> {
     return this.http.post<JoinSessionResponse>(
       this.baseUrl + '/' + id + '/join',

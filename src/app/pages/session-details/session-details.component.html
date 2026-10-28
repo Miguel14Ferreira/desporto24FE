@@ -703,7 +703,42 @@
 
           <section class="address-panel">
             <h2>{{ 'sessionDetail.location' | t }}</h2>
-            @if (session.canSeeExactAddress && session.meetingPointInstructions) {
+            @if (canEditMeetingPoint() && !meetingPointEditing) {
+              <button class="session-meeting-edit-button jynlo-action jynlo-action--neutral"
+                type="button" (click)="beginMeetingPointEdit()">
+                {{ (session.meetingPointInstructions
+                    ? 'sessionDetail.meetingPointEdit' : 'sessionDetail.meetingPointAdd') | t }}
+              </button>
+            }
+            @if (meetingPointEditing && canEditMeetingPoint()) {
+              <div class="session-meeting-edit" role="group"
+                   [attr.aria-label]="'sessionDetail.meetingPointTitle' | t">
+                <label for="session-meeting-point-input">{{ 'createSession.meetingPointLabel' | t }}</label>
+                <input id="session-meeting-point-input" type="text"
+                       [(ngModel)]="meetingPointDraft" maxlength="240" autocomplete="off"
+                       [disabled]="meetingPointSaving"
+                       [placeholder]="'createSession.meetingPointPlaceholder' | t">
+                <small>{{ 'sessionDetail.meetingPointPrivacyHint' | t }}</small>
+                @if (meetingPointError) {
+                  <p class="session-meeting-edit-error" role="alert">{{ meetingPointError }}</p>
+                }
+                <div class="session-meeting-edit-actions">
+                  <button class="jynlo-action jynlo-action--primary" type="button"
+                          [disabled]="meetingPointSaving"
+                          (click)="saveMeetingPoint()">
+                    {{ (meetingPointSaving ? 'sessionDetail.meetingPointSaving' : 'common.save') | t }}
+                  </button>
+                  <button class="jynlo-action jynlo-action--neutral" type="button"
+                          [disabled]="meetingPointSaving" (click)="discardMeetingPointEdit()">
+                    {{ 'common.cancel' | t }}
+                  </button>
+                </div>
+              </div>
+            }
+            @if (meetingPointSuccess && !meetingPointEditing) {
+              <p class="session-meeting-edit-success" role="status">{{ meetingPointSuccess }}</p>
+            }
+            @if (session.canSeeExactAddress && session.meetingPointInstructions && !meetingPointEditing) {
               <div class="session-meeting-point" aria-label="{{ 'sessionDetail.meetingPointTitle' | t }}">
                 <strong>{{ 'sessionDetail.meetingPointTitle' | t }}</strong>
                 <p>{{ session.meetingPointInstructions }}</p>

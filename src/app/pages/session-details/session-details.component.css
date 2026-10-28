@@ -1397,6 +1397,27 @@ h1 {
 .session-meeting-point p { margin:0;color:#f0fffc;line-height:1.55;overflow-wrap:anywhere; }
 .session-meeting-point small { color:#b5cfd3;line-height:1.4; }
 
+/* Inline organiser note editor; stacked mobile buttons never overlap the map. */
+.session-meeting-edit-button { display:inline-flex;max-width:100%;min-height:42px;
+  align-items:center;justify-content:center;white-space:normal;margin:0 0 12px; }
+.session-meeting-edit { display:grid;gap:10px;min-width:0;margin:0 0 15px;
+  padding:clamp(13px,2vw,18px);border:1px solid rgba(69,209,174,.33);
+  border-radius:13px;background:rgba(11,60,69,.38); }
+.session-meeting-edit label { color:#d0f6ea;font-size:.9rem;font-weight:750; }
+.session-meeting-edit input { box-sizing:border-box;max-width:100%;min-width:0;width:100%;
+  min-height:45px;padding:10px 13px;border:1px solid #548f99;border-radius:10px;
+  background:#082a39;color:#f5fffc;font:inherit; }
+.session-meeting-edit input:focus-visible { outline:2px solid #65e1c7;outline-offset:2px; }
+.session-meeting-edit small { color:#b4cbd0;line-height:1.5; }
+.session-meeting-edit-actions { display:flex;flex-wrap:wrap;align-items:center;gap:10px; }
+.session-meeting-edit-actions button { min-height:43px;white-space:normal;min-width:0; }
+.session-meeting-edit-error { margin:0;color:#ffc6c6;line-height:1.45; }
+.session-meeting-edit-success { color:#acf3d7;margin:0 0 12px;line-height:1.45; }
+@media (max-width:430px) {
+  .session-meeting-edit-actions { display:grid;grid-template-columns:1fr; }
+  .session-meeting-edit-actions button { width:100%; }
+}
+
 
 /* Context of the session is first-class, not a buried attribute. */
 .session-community-context {
