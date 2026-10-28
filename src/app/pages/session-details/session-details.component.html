@@ -1140,6 +1140,9 @@
               @if (sessionParticipantsError) {
                 <div class="action-message error-message" role="alert">{{ sessionParticipantsError }}</div>
               }
+              @if (memberConfirmedGuestsError) {
+                <div class="action-message error-message" role="alert">{{ memberConfirmedGuestsError }}</div>
+              }
 
               @if (!sessionParticipantsLoading && !sessionParticipantsError) {
                 @if (hasConfirmedTeams()) {
