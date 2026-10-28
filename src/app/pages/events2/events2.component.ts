@@ -38,6 +38,8 @@ export class Events2Component implements OnInit, OnDestroy {
   directCommunity: CommunityGroup | null = null;
   private autoCommunitySport = '';
   private autoCommunityVenueId: number | null = null;
+  private autoCommunityPoint: { source: 'maps' | 'gps'; latitude: number;
+    longitude: number; city: string; address: string } | null = null;
   private communityPrefillRevision = 0;
 
   /** Apply defaults only when consistent across EVERY chosen community.
@@ -56,6 +58,50 @@ export class Events2Component implements OnInit, OnDestroy {
         this.confirmSportSelection();
       }
       this.autoCommunitySport = sport;
+    }
+    // Automatically suggested Maps/GPS points are also replaceable.
+    // Never replace a manually changed coordinate, location method or address.
+    const savedPoint = this.autoCommunityPoint;
+    const autoStillIntact = !!savedPoint
+      && this.locationMethod === savedPoint.source
+      && this.locationSource === (savedPoint.source === 'maps' ? 'map' : 'gps')
+      && this.latitude === savedPoint.latitude
+      && this.longitude === savedPoint.longitude
+      && this.city === savedPoint.city && this.address === savedPoint.address;
+    if (autoStillIntact) {
+      this.clearLocation();
+      this.city = '';
+      this.address = '';
+      this.locationMethod = 'venue';
+    }
+    this.autoCommunityPoint = null;
+    const points = groups.map(group =>
+      group.habitualLocationSource && group.habitualLatitude != null && group.habitualLongitude != null
+        ? group : null);
+    const agreedPoint = points.length && points[0] !== null
+      && points.every(group => group !== null
+        && group.habitualLocationSource === points[0]?.habitualLocationSource
+        && group.habitualLatitude === points[0]?.habitualLatitude
+        && group.habitualLongitude === points[0]?.habitualLongitude)
+      ? points[0] : null;
+    if (agreedPoint && this.sportSelected && this.locationMethod === 'venue'
+        && this.selectedVenueId === null && !this.hasCoordinates
+        && !this.city.trim() && !this.address.trim()) {
+      const source = agreedPoint.habitualLocationSource === 'GPS' ? 'gps' : 'maps';
+      const latitude = agreedPoint.habitualLatitude!;
+      const longitude = agreedPoint.habitualLongitude!;
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)
+          && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
+        this.locationMethod = source;
+        this.locationSource = source === 'gps' ? 'gps' : 'map';
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.locationCaptured = true;
+        this.city = agreedPoint.habitualCity ?? '';
+        this.address = agreedPoint.habitualAddress ?? '';
+        this.autoCommunityPoint = {source, latitude, longitude,
+          city: this.city, address: this.address};
+      }
     }
     const venueIds = groups.map(group => group.defaultVenueId ?? null);
     const venueId = groups.length && venueIds[0] !== null

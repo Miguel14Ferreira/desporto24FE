@@ -708,52 +708,9 @@
                   (cancelRequested)="cancelSportsEdit()"
                 ></app-community-sport-management>
 
-                <section class="season-dashboard" aria-labelledby="community-habitual-venue-title">
-                  <div class="section-heading">
-                    <div>
-                      <span class="section-kicker">{{ 'communities.habitualVenue.kicker' | t }}</span>
-                      <h3 id="community-habitual-venue-title">{{ 'communities.habitualVenue.title' | t }}</h3>
-                      <p>{{ 'communities.habitualVenue.hint' | t }}</p>
-                    </div>
-                  </div>
-                  @if (selected.defaultVenueId) {
-                    <p><strong>{{ selected.defaultVenueName || ('communities.habitualVenue.savedName' | t) }}</strong></p>
-                  } @else {
-                    <p>{{ 'communities.habitualVenue.none' | t }}</p>
-                  }
-                  @if (canManage()) {
-                    <div class="row-actions">
-                      <label>
-                        <span>{{ 'communities.habitualVenue.searchLabel' | t }}</span>
-                        <input type="search" name="habitualVenueQuery"
-                          [(ngModel)]="habitualVenueQuery"
-                          [disabled]="habitualVenueSearching || habitualVenueSaving"
-                          [placeholder]="'communities.habitualVenue.searchPlaceholder' | t">
-                      </label>
-                      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                        [disabled]="habitualVenueSearching || habitualVenueSaving || !habitualVenueQuery.trim()"
-                        (click)="searchHabitualVenues()">{{ 'communities.habitualVenue.search' | t }}</button>
-                      @if (selected.defaultVenueId) {
-                        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                          [disabled]="habitualVenueSaving" (click)="saveHabitualVenue(null)">
-                          {{ 'communities.habitualVenue.remove' | t }}
-                        </button>
-                      }
-                    </div>
-                    @if (habitualVenueSearching) { <p role="status">{{ 'communities.habitualVenue.searching' | t }}</p> }
-                    @if (habitualVenueError) { <p role="alert">{{ habitualVenueError }}</p> }
-                    @if (habitualVenueMessage) { <p role="status">{{ habitualVenueMessage }}</p> }
-                    @if (habitualVenueResults.length) {
-                      <div class="row-actions" role="group" aria-label="Escolher recinto habitual">
-                        @for (venue of habitualVenueResults; track venue.id) {
-                          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                            [disabled]="habitualVenueSaving" (click)="saveHabitualVenue(venue.id)">
-                            {{ venue.name }} · {{ venue.city }}
-                          </button>
-                        }
-                      </div>
-                    }
-                  }
+                <section class="season-dashboard">
+                  <app-community-habitual-venue-picker [community]="selected"
+                    (venueSaved)="onHabitualVenueSaved($event)"></app-community-habitual-venue-picker>
                 </section>
 
                 @if (competition?.settings?.rankingsEnabled && leader()) {

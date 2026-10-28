@@ -334,6 +334,12 @@ export class CommunityGroupsService {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/default-venue', { venueId });
   }
 
+  updateHabitualLocation(id: number, source: 'MAPS' | 'GPS', latitude: number,
+                         longitude: number, city: string | null, address: string | null): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/habitual-location',
+      { source, latitude, longitude, city, address });
+  }
+
   updateSports(id: number, sports: string[]): Observable<CommunityGroup> {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/sports', { sports });
   }

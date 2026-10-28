@@ -80,7 +80,7 @@ describe('CommunityInviteStepComponent', () => {
 
   it('lets organizer combine individual leagues and regular statistics', () => {
     const { component, groups, router } = setup();
-    const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(component.community));
     (groups as any).updateFeatures = update;
     component.continueAfterInvite();
     component.chooseActivity('individual');
@@ -91,12 +91,16 @@ describe('CommunityInviteStepComponent', () => {
     expect(update).toHaveBeenCalledWith(42, {
       rankingsEnabled: true, individualTournamentsEnabled: true, teamTournamentsEnabled: false
     });
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('no');
+    component.continueToCommunity();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
   });
 
   it('supports all four paths, including sessions-only and team tournaments', () => {
     const { component, groups } = setup();
-    const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(component.community));
     (groups as any).updateFeatures = update;
     component.continueAfterInvite();
     component.chooseActivity('teams');
@@ -110,6 +114,7 @@ describe('CommunityInviteStepComponent', () => {
     expect(update).toHaveBeenCalledWith(42, {
       rankingsEnabled: false, individualTournamentsEnabled: false, teamTournamentsEnabled: false
     });
+    expect(component.step).toBe('venue');
   });
 
   it('does not save without selecting an explicit path', () => {
@@ -145,9 +150,10 @@ describe('CommunityInviteStepComponent', () => {
     expect(component.competitionSaving).toBeFalse();
     expect(component.step).toBe('competition');
 
-    update.and.returnValue(of({ rankingsEnabled: true }));
+    update.and.returnValue(of(component.community));
     component.saveCompetitionAndContinue();
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('lets people decide later without changing settings', () => {
@@ -155,8 +161,29 @@ describe('CommunityInviteStepComponent', () => {
     const update = jasmine.createSpy('updateFeatures');
     (component as any).groups.updateFeatures = update;
     component.continueAfterInvite();
-    component.continueToCommunity();
+    component.continueToVenue();
     expect(update).not.toHaveBeenCalled();
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('no');
+    component.continueToCommunity();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
+  it('asks about the habitual venue after deciding on competition options', () => {
+    const { component, router } = setup();
+    component.continueAfterInvite();
+    component.continueToVenue();
+    expect(component.step).toBe('venue');
+    expect(component.habitualVenueChoice).toBeNull();
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('yes');
+    expect(component.habitualVenueChoice).toBe('yes');
+    component.onHabitualVenueSaved({ id:42, name:'Futebol das Quintas',
+      myRole:'OWNER', defaultVenueId:57, defaultVenueName:'Campo Municipal' } as CommunityGroup);
+    expect(component.community?.defaultVenueId).toBe(57);
+    expect(component.habitualVenueSaved).toBeTrue();
+    component.continueToCommunity();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
   });
 
