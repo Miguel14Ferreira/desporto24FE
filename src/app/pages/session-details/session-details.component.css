@@ -1371,3 +1371,22 @@ h1 {
   .session-route-modes { display: grid; grid-template-columns: 1fr; }
   .session-route-mode { width: 100%; }
 }
+
+/* Creator-only session cancellation, contained below the sharing/actions toolbar. */
+.session-cancel-confirm {
+  display: grid;
+  gap: 12px;
+  padding: clamp(15px,2.5vw,22px);
+  margin: 18px 0;
+  border: 1px solid rgba(244,124,124,.5);
+  border-radius: 14px;
+  background: rgba(83,28,38,.27);
+}
+.session-cancel-confirm h3,.session-cancel-confirm p {margin:0;line-height:1.5}
+.session-cancel-confirm h3 {font-size:1.05rem;color:#ffe0df}
+.session-cancel-actions {display:flex;flex-wrap:wrap;gap:10px}
+.session-cancel-button {margin-inline-start:auto}
+@media(max-width:650px){
+  .session-cancel-button {margin-inline-start:0}
+  .session-cancel-actions button {flex:1 1 130px}
+}
