@@ -160,6 +160,20 @@
                     {{ 'guestRsvp.confirmedAs' | t }} <strong>{{ guestConfirmedName }}</strong>
                   </p>
                 }
+                @if (guestStep === 'approved' || guestStep === 'linked') {
+                  @if (guestMeetingPoint && (details.status === 'OPEN' || details.status === 'FULL')) {
+                    <section class="guest-private-meeting-point"
+                             aria-labelledby="guest-private-meeting-title">
+                      <h3 id="guest-private-meeting-title">{{ 'sessionDetail.meetingPointTitle' | t }}</h3>
+                      <p>{{ guestMeetingPoint }}</p>
+                      <small>{{ 'sessionDetail.meetingPointCaveat' | t }}</small>
+                    </section>
+                  }
+                  <button type="button" class="guest-rsvp-back guest-meeting-refresh"
+                          [disabled]="guestSending" (click)="checkGuestStatus()">
+                    {{ 'guestRsvp.refreshMeetingPoint' | t }}
+                  </button>
+                }
                 @if (guestStep === 'approved') {
                   <div class="guest-rsvp-upgrade">
                     <h3>{{ 'guestRsvp.createAccountTitle' | t }}</h3>
