@@ -216,27 +216,6 @@ export class PublicSessionPreviewComponent implements OnInit {
     } catch { return null; }
   }
 
-  /** Explicitly begin a new guest registration on a shared device/link. */
-  registerAnotherGuest(): void {
-    if(this.guestReceipt) this.rememberGuestBooking(
-      this.guestReceipt,this.guestConfirmedName || this.guestPlayerName);
-    try {
-      localStorage.removeItem(this.receiptKey());
-      localStorage.removeItem('jynlo-guest-receipt:' + this.sessionId);
-    } catch {}
-    this.guestReceipt = '';
-    this.guestConfirmedName = '';
-    this.guestMeetingPoint = '';
-    this.guestStep = 'choose';
-    this.guestEditingIdentity = false;
-    this.guestConfirmCancellation = false;
-    this.guestPlayerId = null;
-    this.guestNewName = '';
-    this.guestNote = '';
-    this.guestError = '';
-    this.loadGuestRoster();
-  }
-
   /** Correct the identity attached to THIS guest receipt: never create a new seat. */
   startChangingGuestIdentity(): void {
     if (this.guestStep !== 'approved' || !this.guestReceipt) return;
