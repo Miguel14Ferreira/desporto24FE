@@ -83,4 +83,18 @@
     <button type="button" class="jynlo-chat-toast__close"
       [attr.aria-label]="'chat.toastDismiss' | t" (click)="dismissChatToast()">×</button>
   </aside>
+} @else if (authenticated && groupToast; as notice) {
+  <aside class="jynlo-chat-toast" role="status" aria-live="polite"
+    [attr.aria-label]="groupToastTitle(notice)">
+    <span class="jynlo-chat-toast__icon" aria-hidden="true">✉</span>
+    <div class="jynlo-chat-toast__content">
+      <strong>{{ groupToastTitle(notice) }}</strong>
+      <p>{{ groupToastMessage(notice) }}</p>
+      <button type="button" class="jynlo-chat-toast__open" (click)="openGroupToast()">
+        {{ 'chat.toastOpen' | t }}
+      </button>
+    </div>
+    <button type="button" class="jynlo-chat-toast__close"
+      [attr.aria-label]="'chat.toastDismiss' | t" (click)="dismissGroupToast()">×</button>
+  </aside>
 }

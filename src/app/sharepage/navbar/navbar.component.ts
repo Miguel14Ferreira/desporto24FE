@@ -8,7 +8,13 @@ import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime
 import { DirectChatMessage } from 'src/app/pages/model/direct-chat';
 import { AppNotification } from 'src/app/pages/model/app-notification';
 import { chatMediaPreviewKind, chatMediaPreviewForAttachment, chatMediaPreviewKey } from 'src/app/shared/chat-media-preview';
-import { Subscription, auditTime, filter, retry, timeout } from 'rxjs';
+import { Subscription, auditTime, filter, retry, timeout, forkJoin, map, Observable } from 'rxjs';
+import { InboxApiService, InboxSummary } from 'src/app/services/inbox-api.service';
+import { PrivateGroupService, PrivateGroup } from 'src/app/services/private-group.service';
+import { SessionMessage } from 'src/app/pages/model/session-message';
+import { CommunityTimelineEntry } from 'src/app/services/community-timeline.service';
+import { PrivateGroupMessage } from 'src/app/services/private-group.service';
+import { GroupChatToast, allowsGroupChatToast, confirmsGroupUnread, recentGroupChatEvent } from 'src/app/shared/group-chat-notice';
 
 @Component({
     selector: 'app-navbar',
@@ -29,6 +35,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private notificationTimer?: ReturnType<typeof setInterval>;
   private unreadRequest?: Subscription;
   private toastLookup?: Subscription;
+  private groupToastLookup?: Subscription;
+  private readonly seenGroupToastKeys = new Set<string>();
+  groupToast?: GroupChatToast;
   private toastTimer?: ReturnType<typeof setTimeout>;
   private toastAccount: string | null = null;
   private readonly seenToastIds = new Set<number>();
@@ -42,6 +51,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private authService: AuthenticationService,
     private notificationService: NotificationApiService,
     private realtimeService: DirectChatRealtimeService,
+    private inboxApi: InboxApiService,
+    private privateGroups: PrivateGroupService,
     private browserTitle: Title,
     public i18n: I18nService
   ) { }
@@ -72,6 +83,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
         })
       );
 
+      // Community and session read counts are server-owned. Private group
+      // authorization uses its own current-member endpoint.
+      this.subscriptions.add(
+        this.realtimeService.communityMessages$.pipe(auditTime(300)).subscribe(message =>
+          this.maybeShowGroupToast('community', message))
+      );
+      this.subscriptions.add(
+        this.realtimeService.sessionMessages$.pipe(auditTime(300)).subscribe(message =>
+          this.maybeShowGroupToast('session', message))
+      );
+      this.subscriptions.add(
+        this.realtimeService.groupMessages$.pipe(auditTime(300)).subscribe(message =>
+          this.maybeShowGroupToast('private', message))
+      );
+
       // A read, delete, friend-request action or saved preference changes the
       // server's unread count without a route change or socket event.
       this.subscriptions.add(
@@ -85,7 +111,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.subscriptions.unsubscribe();
       this.unreadRequest?.unsubscribe();
       this.toastLookup?.unsubscribe();
+      this.groupToastLookup?.unsubscribe();
       this.dismissChatToast();
+      this.dismissGroupToast();
       if (this.notificationTimer) {
         clearInterval(this.notificationTimer);
       }
@@ -101,8 +129,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
       if (account !== this.toastAccount) {
         this.toastAccount = account;
         this.seenToastIds.clear();
+        this.seenGroupToastKeys.clear();
         this.toastLookup?.unsubscribe();
+        this.groupToastLookup?.unsubscribe();
         this.dismissChatToast();
+        this.dismissGroupToast();
       }
 
       if (!this.authenticated) {
@@ -196,12 +227,123 @@ export class NavbarComponent implements OnInit, OnDestroy {
             const first = this.seenToastIds.values().next().value;
             if (first !== undefined) this.seenToastIds.delete(first);
           }
+          this.groupToastLookup?.unsubscribe();
+          this.dismissGroupToast();
           this.chatToast = notice;
           if (this.toastTimer) clearTimeout(this.toastTimer);
           this.toastTimer = setTimeout(() => this.dismissChatToast(), 6500);
         },
         error: () => { /* A failed confirmation must never show an unverified alert. */ }
       });
+    }
+
+    /** Verify current membership, preferences and unread state before showing
+     * an ephemeral group hint. No group messages are saved as notification rows. */
+    private maybeShowGroupToast(
+      kind: 'community' | 'session' | 'private',
+      message: CommunityTimelineEntry | SessionMessage | PrivateGroupMessage
+    ): void {
+      if (!this.authenticated
+          || (kind === 'community' && (message as CommunityTimelineEntry).kind !== 'CHAT')) return;
+      const account = this.authService.loggedInPerfilname?.toLowerCase();
+      const id = kind === 'community' ? (message as CommunityTimelineEntry).communityId
+        : kind === 'session' ? (message as SessionMessage).sessionId
+        : (message as PrivateGroupMessage).groupId;
+      const sender = kind === 'community' ? (message as CommunityTimelineEntry).username
+        : kind === 'session' ? (message as SessionMessage).senderUsername
+        : (message as PrivateGroupMessage).sender;
+      const body = kind === 'private' ? (message as PrivateGroupMessage).text
+        : (message as CommunityTimelineEntry | SessionMessage).body;
+      const mimeType = kind === 'private' ? null
+        : (message as CommunityTimelineEntry | SessionMessage).attachmentMimeType;
+      const messageId = message?.id;
+      const editedAt = kind === 'private' ? null
+        : (message as CommunityTimelineEntry | SessionMessage).editedAt;
+      const deletedAt = kind === 'private' ? null
+        : (message as CommunityTimelineEntry | SessionMessage).deletedAt;
+      const key = kind + ':' + id + ':' + messageId;
+      if (!account || !sender || sender.toLowerCase() === account
+          || !Number.isSafeInteger(id) || id <= 0
+          || !Number.isSafeInteger(messageId) || messageId <= 0
+          || editedAt || deletedAt || this.seenGroupToastKeys.has(key)
+          || !recentGroupChatEvent(message?.createdAt)
+          || document.visibilityState !== 'visible' || !document.hasFocus()
+          || this.router.url.startsWith('/menu/messages')
+          || this.router.url.startsWith('/menu/notifications')
+          || this.router.url.startsWith('/menu/groups')) return;
+      const token = localStorage.getItem('t');
+      if (!token) return;
+      this.groupToastLookup?.unsubscribe();
+      const check: Observable<{group: PrivateGroup} | {summaries: InboxSummary[]}> =
+        kind === 'private'
+          ? this.privateGroups.get(id).pipe(map(group => ({ group })))
+          : this.inboxApi.summaries([{ kind, id: String(id) }])
+              .pipe(map(summaries => ({ summaries })));
+      this.groupToastLookup = forkJoin({
+        preferences: this.notificationService.preferences(), check
+      }).pipe(timeout(8_000)).subscribe({
+        next: ({ preferences, check }) => {
+          if (!this.authenticated || localStorage.getItem('t') !== token
+              || this.authService.loggedInPerfilname?.toLowerCase() !== account
+              || !recentGroupChatEvent(message.createdAt)
+              || document.visibilityState !== 'visible' || !document.hasFocus()
+              || this.router.url.startsWith('/menu/messages')
+              || this.router.url.startsWith('/menu/notifications')
+              || this.router.url.startsWith('/menu/groups')
+              || !allowsGroupChatToast(preferences)) return;
+          let title: string | undefined;
+          if ('group' in check) {
+            // The private group GET rechecks membership after the socket event.
+            if (check.group.id !== id || !check.group.members.some(
+              member => member.username.toLowerCase() === account)) return;
+            title = check.group.title;
+          } else if (!confirmsGroupUnread(check.summaries[0],
+              kind as 'community' | 'session', id, messageId, sender)) return;
+          if (this.seenGroupToastKeys.has(key)) return;
+          this.seenGroupToastKeys.add(key);
+          if (this.seenGroupToastKeys.size > 100) {
+            const oldest = this.seenGroupToastKeys.values().next().value;
+            if (oldest) this.seenGroupToastKeys.delete(oldest);
+          }
+          this.toastLookup?.unsubscribe();
+          this.dismissChatToast();
+          this.groupToast = { kind, groupId: id, sender, text: body, mimeType, title };
+          this.toastTimer = setTimeout(() => this.dismissGroupToast(), 6500);
+        },
+        error: () => { /* No verified access or opt-in: do not reveal content. */ }
+      });
+    }
+
+    groupToastTitle(notice: GroupChatToast): string {
+      const key = notice.kind === 'community' ? 'chat.groupToast.community'
+        : notice.kind === 'session' ? 'chat.groupToast.session' : 'chat.groupToast.private';
+      return this.i18n.translate(key, {
+        sender: notice.sender, group: notice.title || this.i18n.translate('chat.groupToast.unnamed')
+      });
+    }
+
+    groupToastMessage(notice: GroupChatToast): string {
+      const kind = chatMediaPreviewForAttachment(notice.mimeType) || chatMediaPreviewKind(notice.text);
+      return kind ? this.i18n.translate('chat.mediaPreview.' + kind) : notice.text;
+    }
+
+    openGroupToast(): void {
+      const notice = this.groupToast;
+      this.dismissGroupToast();
+      if (!notice) return;
+      if (notice.kind === 'private') {
+        void this.router.navigate(['/menu/groups'], { queryParams: { id: notice.groupId } });
+      } else {
+        void this.router.navigate(['/menu/messages'], {
+          queryParams: { kind: notice.kind, id: String(notice.groupId) }
+        });
+      }
+    }
+
+    dismissGroupToast(): void {
+      this.groupToast = undefined;
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toastTimer = undefined;
     }
 
     toastMessage(notice: AppNotification): string {
