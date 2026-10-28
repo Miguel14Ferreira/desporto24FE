@@ -312,7 +312,9 @@
                       ? 'notifications.reviewSession'
                       : selected.type === 'WAITLIST_PROMOTED'
                         ? 'notifications.viewParticipationStatus'
-                        : 'notifications.openSession') | t }}
+                        : selected.type === 'SESSION_MEETING_POINT_UPDATED'
+                          ? 'notifications.viewMeetingPoint'
+                          : 'notifications.openSession') | t }}
                   </button>
                 }
 
