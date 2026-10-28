@@ -64,7 +64,10 @@
           <dl class="admin-venue-info">
             <div><dt>{{ 'venue.detail.city' | t }}</dt><dd>{{ suggestion.venue.city }} / {{ suggestion.venue.district || '—' }}</dd></div>
             <div><dt>{{ 'venue.admin.address' | t }}</dt><dd>{{ suggestion.venue.address || '—' }}</dd></div>
-            <div><dt>{{ 'venue.admin.sports' | t }}</dt><dd>{{ suggestion.venue.sports || '—' }}</dd></div>
+            <div><dt>{{ 'venue.admin.sports' | t }}</dt><dd>@if (suggestion.venue.sports) {
+              <app-venue-sports-badges [sports]="suggestion.venue.sports"
+                [limit]="6" [expandable]="true"></app-venue-sports-badges>
+            } @else { — }</dd></div>
             <div><dt>{{ 'venue.admin.coordinates' | t }}</dt><dd>{{ suggestion.venue.latitude ?? '—' }}, {{ suggestion.venue.longitude ?? '—' }}</dd></div>
             <div><dt>{{ 'venue.admin.submitter' | t }}</dt><dd>@{{ suggestion.submittedByUsername }}</dd></div>
             <div><dt>{{ 'venue.detail.addedAt' | t }}</dt><dd>{{ suggestion.submittedAt | date:'medium' }}</dd></div>
