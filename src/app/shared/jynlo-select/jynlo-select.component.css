@@ -19,15 +19,17 @@
 .jynlo-select__placeholder {color:#b5ced6;font-weight:600;}
 .jynlo-select__chevron {flex:none;font-size:1.5rem;line-height:1;color:var(--pick-accent);transition:transform .15s;}
 .jynlo-select__chevron--open {transform:rotate(180deg);}
-.jynlo-select__popover {position:absolute;z-index:100;top:calc(100% + 5px);left:0;right:0;
+/* Fixed viewport alignment prevents clipping by overflow-hidden cards, modals and grids. */
+.jynlo-select__popover {position:fixed;z-index:10050;
   background:#0a2230;border:1px solid rgba(var(--pick-glow),.46);
   border-radius:1rem;padding:.55rem;box-shadow:0 18px 48px rgba(0,0,0,.48);
-  min-width:min(230px, 90vw); }
+  min-width:0;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;
+  animation:jynlo-select-appear .13s ease-out; }
 .jynlo-select__search {display:block;box-sizing:border-box;width:100%;min-height:42px;
   background:#071b28;color:#f8fafc;border:1px solid #395b6a;border-radius:.67rem;
   padding:.57rem .7rem;font:inherit;font-size:.85rem;}
 .jynlo-select__search::placeholder {color:#91b2bf;}
-.jynlo-select__options {display:grid;gap:2px;max-height:min(310px,48vh);overflow-y:auto;
+ .jynlo-select__options {display:grid;gap:2px;min-height:0;max-height:min(310px,48vh);overflow-y:auto;
   overscroll-behavior:contain;scrollbar-color:#4c7680 #112e3c;scrollbar-width:thin;
   margin-top:.35rem;}
 .jynlo-select__option {display:flex;align-items:center;gap:.65rem;min-height:40px;
@@ -44,5 +46,7 @@
 .jynlo-select--invalid .jynlo-select__trigger {border-color:#fca5a5;}
 .jynlo-select--disabled {opacity:.6;}
 .jynlo-select__trigger:disabled {cursor:not-allowed;}
-@media (max-width:650px) { .jynlo-select__popover {max-width:100%;min-width:0;}
+@keyframes jynlo-select-appear {from {opacity:0;transform:translateY(-4px)} to {opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce) { .jynlo-select__popover {animation:none} }
+@media (max-width:650px) { .jynlo-select__popover {min-width:0;}
   .jynlo-select__options {max-height:min(280px,43vh);} }
