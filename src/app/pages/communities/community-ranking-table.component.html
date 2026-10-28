@@ -20,12 +20,20 @@
               <button type="button" class="ranking-player ranking-player--interactive"
                 [attr.title]="(row.username ? 'communities.identity.openProfileHint' : 'historicalStats.hint') | t"
                 (click)="openPlayer(row)">
-                <strong>{{ row.fullName || row.username }}</strong>
-                @if (row.username) {
-                  <span>@{{ row.username }}</span>
-                } @else {
-                  <span>{{ 'communities.identity.unlinked' | t }}</span>
-                }
+                <span class="ranking-player__avatar" aria-hidden="true">
+                  <span>{{ initials(row) }}</span>
+                  @if (avatarUrl(row); as photo) {
+                    <img [src]="photo" alt="" loading="lazy" (error)="avatarFailed($event)">
+                  }
+                </span>
+                <span class="ranking-player__identity">
+                  <strong>{{ row.fullName || row.username }}</strong>
+                  @if (row.username) {
+                    <span>@{{ row.username }}</span>
+                  } @else {
+                    <span>{{ 'communities.identity.unlinked' | t }}</span>
+                  }
+                </span>
               </button>
             </td>
             <td>{{ row.games }}</td>
