@@ -42,7 +42,12 @@ describe('Community habitual venue picker', () => {
     };
     const cdr = { markForCheck: jasmine.createSpy('markForCheck') };
     const zone = { run: jasmine.createSpy('run').and.callFake((callback: () => unknown) => callback()) };
-    const component = new CommunityHabitualVenuePickerComponent(venues as any, groups as any, cdr as any, zone as any);
+    const sanitizer = {
+      bypassSecurityTrustResourceUrl: jasmine.createSpy('bypassSecurityTrustResourceUrl')
+        .and.callFake((url: string) => url)
+    };
+    const component = new CommunityHabitualVenuePickerComponent(
+      venues as any, groups as any, cdr as any, zone as any, sanitizer as any);
     component.community = {...group};
     return {component, venues, groups, cdr, zone};
   }
@@ -171,6 +176,42 @@ describe('Community habitual venue picker', () => {
     expect(component.locating).toBeFalse();
     expect(component.error).toBeTruthy();
     expect(cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it('builds the same embedded map as game sessions after a GPS fix and clears it on switching', () => {
+    const {component} = setup();
+    component.chooseLocationMethod('gps');
+    component['useCoordinates']('GPS', 38.768168, -9.312765, 1, 10);
+    expect(component.pointMapPreviewUrl as string)
+      .toBe('https://www.google.com/maps?q=38.768168,-9.312765&z=17&output=embed');
+    component.chooseLocationMethod('maps');
+    expect(component.pointMapPreviewUrl).toBeNull();
+  });
+
+  it('previews Maps coordinates and never trusts invalid catalogue coordinates', () => {
+    const {component, venues} = setup();
+    component.chooseLocationMethod('maps');
+    component.mapLink = 'https://www.google.com/maps?q=38.71,-9.13';
+    component.resolveMapLink();
+    expect(component.pointMapPreviewUrl as string)
+      .toBe('https://www.google.com/maps?q=38.71,-9.13&z=16&output=embed');
+    component.chooseLocationMethod('venue');
+    component.query = 'campo';
+    component.search();
+    venues.get.and.returnValue(of({id: 55, latitude: null, longitude: null} as Venue));
+    component.openDetails(55);
+    expect(component.venueMapPreviewUrl).toBeNull();
+  });
+
+  it('previews catalogue venue coordinates and clears them after choosing another source', () => {
+    const {component} = setup();
+    component.query = 'campo';
+    component.search();
+    component.openDetails(55);
+    expect(component.venueMapPreviewUrl as string)
+      .toBe('https://www.google.com/maps?q=38.71,-9.13&z=16&output=embed');
+    component.chooseLocationMethod('gps');
+    expect(component.venueMapPreviewUrl).toBeNull();
   });
 
   it('resolves and saves a Google Maps point without creating a fake catalog venue', () => {
@@ -324,10 +365,15 @@ describe('Community habitual venue picker — interactive template', () => {
     expect(venues.resolveMapLink).toHaveBeenCalled();
     expect(fixture.componentInstance.locationPoint?.source).toBe('MAPS');
     expect(fixture.nativeElement.querySelector('.community-venue-confirm')).toBeTruthy();
+    const frame = fixture.nativeElement.querySelector('.community-venue-map-preview iframe') as HTMLIFrameElement;
+    expect(frame).toBeTruthy();
+    expect(frame.getAttribute('src')).toContain('q=38.71,-9.13');
+    expect(frame.getAttribute('src')).toContain('output=embed');
     (buttons[2] as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(fixture.componentInstance.locationMethod).toBe('gps');
     expect(fixture.componentInstance.locationPoint).toBeNull();
+    expect(fixture.nativeElement.querySelector('.community-venue-map-preview')).toBeNull();
     expect(fixture.nativeElement.querySelector('input[name="habitualMapLink"]')).toBeNull();
     fixture.destroy();
   });

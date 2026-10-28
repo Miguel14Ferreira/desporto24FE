@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize, Subscription, take, timeout } from 'rxjs';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityGroup } from '../model/community-group';
@@ -31,6 +32,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   resolvingAddress = false;
   locationPoint: {source: 'MAPS' | 'GPS'; latitude: number; longitude: number;
                   city: string; address: string} | null = null;
+  pointMapPreviewUrl: SafeResourceUrl | null = null;
+  venueMapPreviewUrl: SafeResourceUrl | null = null;
   query = '';
   results: Venue[] = [];
   expanded: Venue | null = null;
@@ -56,6 +59,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       this.query = '';
       this.mapLink = '';
       this.locationPoint = null;
+      this.pointMapPreviewUrl = null;
+      this.venueMapPreviewUrl = null;
       this.locationMethod = 'venue';
       this.resolvingMap = false;
       this.locating = false;
@@ -75,7 +80,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   }
 
   constructor(private venues: VenueService, private groups: CommunityGroupsService,
-              private readonly cdr: ChangeDetectorRef, private readonly ngZone: NgZone) {}
+              private readonly cdr: ChangeDetectorRef, private readonly ngZone: NgZone,
+              private readonly sanitizer: DomSanitizer) {}
 
   get canManage(): boolean {
     return this.community?.myRole === 'OWNER' || this.community?.myRole === 'ADMIN';
@@ -89,9 +95,11 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.locationMethod = method;
     this.results = [];
     this.expanded = null;
+    this.venueMapPreviewUrl = null;
     this.query = '';
     this.mapLink = '';
     this.locationPoint = null;
+    this.pointMapPreviewUrl = null;
     this.searching = false;
     this.searchAttempted = false;
     this.searchQuery = '';
@@ -110,6 +118,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     const revision = ++this.revision, communityId = this.community.id;
     this.resolvingMap = true;
     this.locationPoint = null;
+    this.pointMapPreviewUrl = null;
     this.error = '';
     this.cdr.markForCheck();
     const sub = this.venues.resolveMapLink(this.mapLink.trim())
@@ -149,6 +158,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     const revision = ++this.revision, communityId = this.community.id;
     this.locating = true;
     this.locationPoint = null;
+    this.pointMapPreviewUrl = null;
     this.error = '';
     this.cdr.markForCheck();
     navigator.geolocation.getCurrentPosition(
@@ -180,9 +190,19 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
   }
 
+  /** Mirrors the embed used in game-session creation. Only validated numbers reach the trusted URL. */
+  private mapPreview(latitude: number | null, longitude: number | null, zoom = 16): SafeResourceUrl | null {
+    if (latitude === null || longitude === null || !this.validPoint(latitude, longitude)) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      'https://www.google.com/maps?q=' + latitude + ',' + longitude
+      + '&z=' + zoom + '&output=embed'
+    );
+  }
+
   private useCoordinates(source: 'MAPS' | 'GPS', latitude: number,
                          longitude: number, revision: number, accuracy?: number): void {
     this.locationPoint = {source, latitude, longitude, city: '', address: ''};
+    this.pointMapPreviewUrl = this.mapPreview(latitude, longitude, source === 'GPS' ? 17 : 16);
     const communityId = this.community.id;
     this.resolvingAddress = true;
     this.cdr.markForCheck();
@@ -268,6 +288,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.feedback = '';
     this.results = [];
     this.expanded = null;
+    this.venueMapPreviewUrl = null;
     this.detailLoading = false;
     this.searching = true;
 
@@ -313,6 +334,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
     this.searching = false;
     this.detailLoading = true;
     this.expanded = null;
+    this.venueMapPreviewUrl = null;
     this.error = '';
     this.feedback = '';
     const sub = this.venues.get(id).pipe(timeout(10000), finalize(() => {
@@ -324,6 +346,7 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
       next: venue => {
         if (revision !== this.revision || this.community.id !== communityId || venue.id !== id) return;
         this.expanded = venue;
+        this.venueMapPreviewUrl = this.mapPreview(venue.latitude, venue.longitude);
         this.cdr.markForCheck();
       },
       error: () => {
@@ -360,7 +383,9 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
           this.community = group;
           this.venueSaved.emit(group);
           this.locationPoint = null;
+          this.pointMapPreviewUrl = null;
           this.expanded = null;
+          this.venueMapPreviewUrl = null;
           this.results = [];
           this.query = '';
           this.feedback = id === null
