@@ -26,7 +26,7 @@
               @if (cityMapsUrl; as mapUrl) {
                 <a class="public-location-link" [href]="mapUrl" target="_blank" rel="noopener noreferrer"
                    [attr.aria-label]="'publicSession.viewAreaOnMaps' | t">
-                  <strong>{{ details.city }}</strong> <span aria-hidden="true">↗</span>
+                  <strong>{{ exactInvitationLocation || details.city }}</strong> <span aria-hidden="true">↗</span>
                 </a>
               } @else {
                 <strong>{{ 'publicSession.notSpecified' | t }}</strong>
@@ -59,7 +59,11 @@
               </div>
             }
           </div>
-          <p class="privacy-note">{{ 'publicSession.privacyNote' | t }}</p>
+          @if (exactInvitationLocation) {
+            <p class="privacy-note">{{ 'publicSession.invitationLocationHint' | t }}</p>
+          } @else {
+            <p class="privacy-note">{{ 'publicSession.privacyNote' | t }}</p>
+          }
         </div>
 
         <aside class="join-panel">
