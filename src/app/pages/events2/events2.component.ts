@@ -320,7 +320,6 @@ export class Events2Component implements OnInit, OnDestroy {
       playFormat: this.playFormat,
       city: this.city.trim(),
       address: this.address.trim(),
-      meetingPointInstructions: this.meetingPointInstructions.trim() || null,
       maxParticipants: Number(this.maxParticipants),
       creationMode: this.creationMode,
       confirmedPlayers: Number(this.confirmedPlayers ?? 1),
@@ -740,6 +739,7 @@ export class Events2Component implements OnInit, OnDestroy {
             longitude: this.longitude!.toFixed(6)
           })
         : ''),
+      meetingPointInstructions: this.meetingPointInstructions.trim() || null,
       maxParticipants: Number(this.maxParticipants),
       ...(this.findPlayersMode
         ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
