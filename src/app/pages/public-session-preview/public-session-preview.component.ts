@@ -72,6 +72,10 @@ export class PublicSessionPreviewComponent implements OnInit {
   guestCommunityId: number | null = null;
   guestLinked = false;
   guestLinking = false;
+  guestEditingIdentity = false;
+  guestChangingIdentity = false;
+  guestConfirmCancellation = false;
+  guestCancelling = false;
   memberJoining = false;
   memberJoinError = '';
 
@@ -187,11 +191,87 @@ export class PublicSessionPreviewComponent implements OnInit {
     this.guestConfirmedName = '';
     this.guestMeetingPoint = '';
     this.guestStep = 'choose';
+    this.guestEditingIdentity = false;
+    this.guestConfirmCancellation = false;
     this.guestPlayerId = null;
     this.guestNewName = '';
     this.guestNote = '';
     this.guestError = '';
     this.loadGuestRoster();
+  }
+
+  /** Correct the identity attached to THIS guest receipt: never create a new seat. */
+  startChangingGuestIdentity(): void {
+    if (this.guestStep !== 'approved' || !this.guestReceipt) return;
+    this.guestEditingIdentity = true;
+    this.guestConfirmCancellation = false;
+    this.guestPlayerId = null;
+    this.guestNewName = '';
+    this.guestError = '';
+    this.loadGuestRoster();
+  }
+
+  cancelChangingGuestIdentity(): void {
+    if (this.guestChangingIdentity) return;
+    this.guestEditingIdentity = false;
+    this.guestPlayerId = null;
+    this.guestNewName = '';
+    this.guestError = '';
+  }
+
+  changeGuestIdentity(): void {
+    if (!this.sessionId || !this.guestReceipt || !this.guestEditingIdentity
+        || this.guestChangingIdentity || this.guestStep !== 'approved'
+        || (!this.guestPlayerId && (this.guestNewName.trim().length < 2
+            || this.guestNewName.trim().length > 80))) return;
+    const name = this.guestPlayerName;
+    this.guestChangingIdentity = true;
+    this.guestError = '';
+    this.http.post<{status:string;playerName:string;receipt:string}>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/change-player',
+      {receipt:this.guestReceipt,playerId:this.guestPlayerId,
+       newName:this.guestPlayerId===null?this.guestNewName.trim():null}
+    ).pipe(timeout(10000),finalize(()=>this.guestChangingIdentity=false)).subscribe({
+      next: response => {
+        if(response.status!=='APPROVED') {this.guestError='guestRsvp.changeError';return;}
+        this.guestConfirmedName = response.playerName?.trim() || name;
+        this.guestEditingIdentity = false;
+        this.guestPlayerId = null;
+        this.guestNewName = '';
+        this.loadConfirmedPlayers();
+        this.loadPreview();
+        this.loadGuestRoster();
+      },
+      error: (error: unknown) => {
+        this.guestError=error instanceof HttpErrorResponse && error.status===409
+          ? 'guestRsvp.changeConflict' : 'guestRsvp.changeError';
+        // Never delete the receipt or abandon the reserved seat after a failure.
+        this.loadConfirmedPlayers();
+      }
+    });
+  }
+
+  cancelOwnGuestReservation(): void {
+    if (!this.sessionId || !this.guestReceipt || this.guestStep!=='approved'
+        || !this.guestConfirmCancellation || this.guestCancelling) return;
+    this.guestCancelling=true;
+    this.guestError='';
+    this.http.post<{status:string;playerName?:string}>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/cancel-self',
+      {receipt:this.guestReceipt}
+    ).pipe(timeout(10000),finalize(()=>this.guestCancelling=false)).subscribe({
+      next: response => {
+        if(response.status !== 'CANCELLED') {this.guestError='guestRsvp.cancelError';return;}
+        this.guestStep='cancelled';
+        this.guestConfirmCancellation=false;
+        this.guestEditingIdentity=false;
+        this.guestMeetingPoint='';
+        this.loadConfirmedPlayers();
+        this.loadPreview();
+        this.loadGuestRoster();
+      },
+      error:()=>{this.guestError='guestRsvp.cancelError';}
+    });
   }
 
   /** This endpoint checks the signed invitation before revealing participant names. */
@@ -290,6 +370,10 @@ export class PublicSessionPreviewComponent implements OnInit {
         this.guestMeetingPoint = (r.status === 'APPROVED' || r.status === 'LINKED')
           && typeof r.meetingPointInstructions === 'string'
           ? r.meetingPointInstructions : '';
+        if(r.status!=='APPROVED') {
+          this.guestEditingIdentity=false;
+          this.guestConfirmCancellation=false;
+        }
         this.guestStep=r.status==='LINKED'?'linked':
           r.status==='APPROVED'?'approved':
           r.status==='REJECTED'?'rejected':
@@ -309,6 +393,8 @@ export class PublicSessionPreviewComponent implements OnInit {
           this.guestConfirmedName = '';
           this.guestMeetingPoint = '';
           this.guestStep = 'choose';
+          this.guestEditingIdentity = false;
+          this.guestConfirmCancellation = false;
           this.guestError = '';
           return;
         }
