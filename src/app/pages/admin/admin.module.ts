@@ -11,6 +11,7 @@ import { AdminIdeasComponent } from '../admin-ideas/admin-ideas.component';
 import { AdminPlayersComponent } from '../admin-players/admin-players.component';
 import { AdminUserReportsComponent } from '../admin-user-reports/admin-user-reports.component';
 import { AdminVenueSuggestionsComponent } from '../admin-venue-suggestions/admin-venue-suggestions.component';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
@@ -39,7 +40,8 @@ const routes: Routes = [
     CommonModule,
     FormsModule,
     RouterModule.forChild(routes),
-    TranslatePipe
+    TranslatePipe,
+    VenueSportsBadgesComponent
   ]
 })
 export class AdminModule {}
