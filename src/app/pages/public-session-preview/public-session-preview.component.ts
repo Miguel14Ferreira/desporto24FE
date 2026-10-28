@@ -27,6 +27,12 @@ interface SessionPublicPreview {
   address?: string | null;
 }
 
+interface ConfirmedSessionPlayer {
+  key: string;
+  name: string;
+  hasAccount: boolean;
+}
+
 @Component({
   selector: 'app-public-session-preview',
   standalone: true,
@@ -49,6 +55,10 @@ export class PublicSessionPreviewComponent implements OnInit {
   /** Guest invitations are scoped to a random organizer-issued link. */
   guestToken: string | null = null;
   guestPlayers: {id:number;name:string}[] = [];
+  confirmedPlayers: ConfirmedSessionPlayer[] = [];
+  confirmedPlayersLoading = false;
+  confirmedPlayersError = false;
+  guestConfirmedName = '';
   guestStep: 'choose' | 'confirm' | 'pending' | 'approved' | 'rejected' | 'linked' | 'cancelled' = 'choose';
   guestPlayerId: number | null = null;
   guestNewName = '';
@@ -169,12 +179,32 @@ export class PublicSessionPreviewComponent implements OnInit {
       localStorage.removeItem('jynlo-guest-receipt:' + this.sessionId);
     } catch {}
     this.guestReceipt = '';
+    this.guestConfirmedName = '';
     this.guestStep = 'choose';
     this.guestPlayerId = null;
     this.guestNewName = '';
     this.guestNote = '';
     this.guestError = '';
     this.loadGuestRoster();
+  }
+
+  /** This endpoint checks the signed invitation before revealing participant names. */
+  loadConfirmedPlayers(): void {
+    if (!this.sessionId || !this.guestToken || this.confirmedPlayersLoading) return;
+    this.confirmedPlayersLoading = true;
+    this.confirmedPlayersError = false;
+    this.http.post<ConfirmedSessionPlayer[]>(
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-confirmed-players',
+      {token: this.guestToken}
+    ).pipe(timeout(10000),finalize(()=>this.confirmedPlayersLoading=false)).subscribe({
+      next: rows => {
+        // Never treat malformed API data as legitimate identities.
+        this.confirmedPlayers = Array.isArray(rows) ? rows.filter(
+          row => typeof row?.key === 'string' && typeof row?.name === 'string'
+            && typeof row?.hasAccount === 'boolean') : [];
+      },
+      error: () => { this.confirmedPlayersError = true; }
+    });
   }
 
   private loadGuestRoster(): void {
@@ -207,13 +237,14 @@ export class PublicSessionPreviewComponent implements OnInit {
         this.guestSending || !this.guestPlayerName) return;
     this.guestSending = true;
     this.guestError = '';
-    this.http.post<{receipt:string;status:string}>(
+    this.http.post<{receipt:string;status:string;playerName?:string}>(
       environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests',
       {linkToken:this.guestToken,playerId:this.guestPlayerId,
        newName:this.guestPlayerId===null?this.guestNewName.trim():null,
        note:this.guestNote.trim()}
     ).pipe(timeout(10000),finalize(() => this.guestSending=false)).subscribe({
       next: response => {
+        this.guestConfirmedName = response.playerName?.trim() || this.guestPlayerName;
         this.guestReceipt = response.receipt;
         try {localStorage.setItem(this.receiptKey(),response.receipt);} catch {}
         this.guestStep=response.status==='APPROVED'?'approved':
@@ -229,11 +260,12 @@ export class PublicSessionPreviewComponent implements OnInit {
     if (!this.sessionId || !this.guestReceipt || this.guestSending) return;
     this.guestSending=true;
     this.guestError='';
-    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'|'CANCELLED'}>(
+    this.http.post<{status:'PENDING'|'APPROVED'|'REJECTED'|'LINKED'|'CANCELLED';playerName?:string}>(
       environment.apiUrl + '/api/sessions/' + this.sessionId + '/guest-requests/status',
       {receipt:this.guestReceipt}
     ).pipe(timeout(10000),finalize(()=>this.guestSending=false)).subscribe({
       next: r => {
+        this.guestConfirmedName = r.playerName?.trim() || this.guestConfirmedName;
         this.guestStep=r.status==='LINKED'?'linked':
           r.status==='APPROVED'?'approved':
           r.status==='REJECTED'?'rejected':
@@ -250,6 +282,7 @@ export class PublicSessionPreviewComponent implements OnInit {
             localStorage.removeItem('jynlo-guest-receipt:' + this.sessionId);
           } catch { /* Storage may be disabled. */ }
           this.guestReceipt = '';
+          this.guestConfirmedName = '';
           this.guestStep = 'choose';
           this.guestError = '';
           return;
@@ -423,6 +456,7 @@ export class PublicSessionPreviewComponent implements OnInit {
           return;
         }
         this.session = session;
+        if (this.guestToken) this.loadConfirmedPlayers();
       },
       error: (error: unknown) => {
         const unavailable = error instanceof HttpErrorResponse
