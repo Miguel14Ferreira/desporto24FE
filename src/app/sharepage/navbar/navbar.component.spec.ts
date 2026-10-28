@@ -15,8 +15,10 @@ describe('NavbarComponent', () => {
   let notificationService: jasmine.SpyObj<NotificationApiService>;
   let incomingMessages: Subject<any>;
   let notificationChanges: Subject<void>;
+  let originalTabTitle: string;
 
   beforeEach(async () => {
+    originalTabTitle = document.title;
     authService = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService',
       ['hasSessionCandidate', 'hasAnyRole', 'terminarSessao', 'logOut']
@@ -51,6 +53,10 @@ describe('NavbarComponent', () => {
     fixture = TestBed.createComponent(NavbarComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    document.title = originalTabTitle;
   });
 
   it('keeps the essential actions in the main nav and secondary actions in the menu', () => {
@@ -192,6 +198,71 @@ describe('NavbarComponent', () => {
     expect(button).toBeTruthy();
     expect(button.disabled).toBeFalse();
     expect(component.loggingOut).toBeFalse();
+  });
+
+  it('shows an unread notification count in the browser tab and clears it after reading', () => {
+    notificationService.unreadCount.and.returnValues(of(7), of(6), of(0));
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    expect(component.unreadNotifications).toBe(7);
+    expect(document.title).toBe('Jynlo (7) — Join the game.');
+
+    notificationChanges.next();
+    expect(document.title).toBe('Jynlo (6) — Join the game.');
+
+    notificationChanges.next();
+    expect(component.unreadNotifications).toBe(0);
+    expect(document.title).toBe('Jynlo — Join the game.');
+  });
+
+  it('uses the same 99+ cap for the browser tab as the navigation badge', () => {
+    notificationService.unreadCount.and.returnValue(of(158));
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    fixture.detectChanges();
+    expect(component.unreadNotifications).toBe(158);
+    expect(document.title).toBe('Jynlo (99+) — Join the game.');
+    expect(fixture.nativeElement.querySelector('.notification-badge')?.textContent).toContain('99+');
+  });
+
+  it('clears the tab count on logout and ignores later notification changes', () => {
+    notificationService.unreadCount.and.returnValue(of(4));
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    expect(document.title).toBe('Jynlo (4) — Join the game.');
+
+    authService.hasSessionCandidate.and.returnValue(false);
+    (component as any).syncAuthenticatedState();
+    expect(document.title).toBe('Jynlo — Join the game.');
+    notificationChanges.next();
+    expect(document.title).toBe('Jynlo — Join the game.');
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the confirmed tab count after a network error or old response', () => {
+    const pending = new Subject<number>();
+    notificationService.unreadCount.and.returnValues(
+      of(3), pending.asObservable(), throwError(() => new Error('Offline'))
+    );
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    expect(document.title).toBe('Jynlo (3) — Join the game.');
+
+    component.loadUnreadNotifications();
+    component.loadUnreadNotifications();
+    pending.next(99);
+    pending.complete();
+    expect(component.unreadNotifications).toBe(3);
+    expect(document.title).toBe('Jynlo (3) — Join the game.');
+  });
+
+  it('refreshes the tab count when returning from another browser tab', () => {
+    notificationService.unreadCount.and.returnValues(of(5), of(1));
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    expect(document.title).toBe('Jynlo (5) — Join the game.');
+    window.dispatchEvent(new Event('focus'));
+    expect(document.title).toBe('Jynlo (1) — Join the game.');
   });
 
   it('updates the badge immediately on confirmed changes without navigating', () => {
