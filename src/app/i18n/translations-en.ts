@@ -806,7 +806,7 @@ export const EN: Record<string, string> = {
   'profile.favoriteSportsSelected': '{{count}} selected sports (unsaved).',
   'profile.favoriteSportsAdded': 'Sport added to your selection. Save your profile to apply.',
   'profile.favoriteSportsRemoved': 'Sport removed from your selection. Save your profile to apply.',
-  'profile.favoriteSportsNotFound': 'Choose a sport from the available list.']',
+  'profile.favoriteSportsNotFound': 'Choose a sport from the available list.',
   'profile.skillLevel': 'Level',
   'profile.skillLevel.none': 'Prefer not to say',
   'profile.level.BEGINNER': 'Beginner',
