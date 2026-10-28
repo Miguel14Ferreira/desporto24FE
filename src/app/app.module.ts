@@ -29,6 +29,7 @@ import { DirectCallOverlayComponent } from './shared/direct-call-overlay.compone
 import { ProfileQuickViewComponent } from './shared/profile-quick-view.component';
 import { VenueSportsBadgesComponent } from './shared/venue-sports-badges/venue-sports-badges.component';
 import { LegalPageComponent } from './pages/legal-page/legal-page.component';
+import { JynloSelectComponent } from './shared/jynlo-select/jynlo-select.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -58,6 +59,7 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         ReactiveFormsModule,
         BrowserAnimationsModule,
         TranslatePipe,
+    JynloSelectComponent,
     VenueSportsBadgesComponent,
         DirectCallOverlayComponent,
         ProfileQuickViewComponent,
