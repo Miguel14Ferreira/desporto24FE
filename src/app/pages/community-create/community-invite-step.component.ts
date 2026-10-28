@@ -158,7 +158,7 @@ export class CommunityInviteStepComponent implements OnInit {
     }).pipe(timeout(10_000), finalize(() => this.competitionSaving = false))
       .subscribe({
         next: group => {
-          this.community = group;
+          if (group?.id === this.communityId) this.community = group;
           this.continueToVenue();
         },
         error: () => this.competitionError = t('communityInviteStep.competitionSaveError')
