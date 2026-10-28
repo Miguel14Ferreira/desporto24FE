@@ -561,6 +561,13 @@
 
           <section class="address-panel">
             <h2>{{ 'sessionDetail.location' | t }}</h2>
+            @if (session.canSeeExactAddress && session.meetingPointInstructions) {
+              <div class="session-meeting-point" aria-label="{{ 'sessionDetail.meetingPointTitle' | t }}">
+                <strong>{{ 'sessionDetail.meetingPointTitle' | t }}</strong>
+                <p>{{ session.meetingPointInstructions }}</p>
+                <small>{{ 'sessionDetail.meetingPointCaveat' | t }}</small>
+              </div>
+            }
             @if (exactGoogleMapsUrl(); as mapsUrl) {
               <a class="session-location-map" [href]="mapsUrl" target="_blank" rel="noopener noreferrer"
                  [attr.aria-label]="'sessionDetail.openMaps' | t">

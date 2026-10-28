@@ -1371,3 +1371,9 @@ h1 {
   .session-route-modes { display: grid; grid-template-columns: 1fr; }
   .session-route-mode { width: 100%; }
 }
+
+.session-meeting-point { display:grid;gap:6px;margin:0 0 15px;padding:14px 16px;min-width:0;
+  border:1px solid rgba(69,209,174,.34);border-radius:12px;background:rgba(15,98,82,.17); }
+.session-meeting-point strong { color:#b1ffdf;font-size:.95rem; }
+.session-meeting-point p { margin:0;color:#f0fffc;line-height:1.55;overflow-wrap:anywhere; }
+.session-meeting-point small { color:#b5cfd3;line-height:1.4; }

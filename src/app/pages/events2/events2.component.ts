@@ -29,6 +29,7 @@ export class Events2Component implements OnInit, OnDestroy {
   gameDate = '';
   city = '';
   address = '';
+  meetingPointInstructions = '';
   maxParticipants = 4;
   // The organiser already has one reserved Jynlo place.
   confirmedPlayers: number | null = 1;
@@ -319,6 +320,7 @@ export class Events2Component implements OnInit, OnDestroy {
       playFormat: this.playFormat,
       city: this.city.trim(),
       address: this.address.trim(),
+      meetingPointInstructions: this.meetingPointInstructions.trim() || null,
       maxParticipants: Number(this.maxParticipants),
       creationMode: this.creationMode,
       confirmedPlayers: Number(this.confirmedPlayers ?? 1),
@@ -1510,6 +1512,10 @@ export class Events2Component implements OnInit, OnDestroy {
     if (this.shareCommunityIds.some(id =>
         this.communities.some(group => group.id === id && !this.canCreateForCommunity(group)))) {
       return t('communities.sessionPolicy.shareBlocked');
+    }
+    if (this.meetingPointInstructions.length > 240
+        || /[\u0000-\u001F\u007F]/.test(this.meetingPointInstructions)) {
+      return t('createSession.meetingPointInvalid');
     }
     if (!this.sportSelected) {
       return 'Seleciona um desporto da lista.';

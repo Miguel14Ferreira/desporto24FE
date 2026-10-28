@@ -5,6 +5,8 @@ export interface SessionDetail extends SessionSummary {
   creatorUsername: string | null;
   address: string | null;
   canSeeExactAddress: boolean;
+  /** Visible only when canSeeExactAddress is true. */
+  meetingPointInstructions?: string | null;
   joined: boolean;
   waitlisted: boolean;
   waitlistPosition: number | null;

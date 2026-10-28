@@ -383,6 +383,26 @@ describe('SessionDetailsComponent', () => {
     expect(component.errorMessage).toBe('');
   });
 
+  it('renders meeting instructions only for session viewers with exact-location access', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true,
+      meetingPointInstructions: 'Portão lateral, junto ao campo'
+    };
+    fixture.detectChanges();
+    const info = fixture.nativeElement.querySelector('.session-meeting-point') as HTMLElement;
+    expect(info).not.toBeNull();
+    expect(info.textContent).toContain('Portão lateral, junto ao campo');
+
+    component.session = {
+      ...session, canSeeExactAddress: false,
+      meetingPointInstructions: 'Portão lateral, junto ao campo'
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-meeting-point')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .not.toContain('Portão lateral');
+  });
+
   it('opens only an authorised exact address in Google Maps', () => {
     component.session = {
       ...session, address: 'Rua Machado dos Santos, Parede',
