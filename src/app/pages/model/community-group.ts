@@ -31,6 +31,8 @@ export interface CommunityGroup {
   rankingsEnabled: boolean;
   individualTournamentsEnabled?: boolean;
   teamTournamentsEnabled?: boolean;
+  /** Defaults to true for pre-existing community responses. */
+  membersCanCreateSessions?: boolean;
   ownerUsername: string;
   myRole: CommunityRole | null;
   memberCount: number;
