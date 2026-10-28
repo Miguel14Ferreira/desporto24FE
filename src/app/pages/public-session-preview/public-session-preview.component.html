@@ -159,7 +159,8 @@
                           guestStep === 'cancelled' ? 'guestRsvp.cancelled' : 'guestRsvp.pending') | t }}</h2>
                 <p>{{ (guestStep === 'linked' ? 'guestRsvp.linkedHelp' : guestStep === 'approved' ? 'guestRsvp.approvedHelp'
                          : guestStep === 'rejected' ? 'guestRsvp.rejectedHelp'
-                         : guestStep === 'cancelled' ? 'guestRsvp.cancelledHelp'
+                         : guestStep === 'cancelled' ?
+                           (guestCancelledBySelf ? 'guestRsvp.cancelledBySelfHelp' : 'guestRsvp.cancelledHelp')
                          : 'guestRsvp.pendingHelp') | t }}</p>
                 @if (guestStep === 'pending') {
                   <button type="button" class="guest-rsvp-primary"
