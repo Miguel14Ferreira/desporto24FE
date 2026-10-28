@@ -789,7 +789,7 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
     component.createSession();
     expect(sessionService.create).not.toHaveBeenCalled();
-    component.directCommunity.myRole = 'ADMIN';
+    component.directCommunity!.myRole = 'ADMIN';
     expect(component.communityCreationBlocked).toBeFalse();
   });
 
