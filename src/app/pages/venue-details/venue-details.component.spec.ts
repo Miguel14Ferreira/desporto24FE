@@ -228,6 +228,21 @@ describe('VenueDetailsComponent', () => {
     }
   });
 
+  it('offers travel modes only for valid catalogue GPS, never speculative address routes', () => {
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
+    component.venue = createVenue();
+    for (const mode of ['driving', 'walking', 'transit'] as const) {
+      const url = new URL(component.directionsUrl(mode)!);
+      expect(url.pathname).toBe('/maps/dir/');
+      expect(url.searchParams.get('destination')).toBe('38.7223,-9.1393');
+      expect(url.searchParams.get('travelmode')).toBe(mode);
+    }
+    component.venue = { ...createVenue(), latitude: null, longitude: null };
+    expect(component.directionsUrl('walking')).toBeNull();
+    component.venue = { ...createVenue(), latitude: 0, longitude: 0 };
+    expect(component.directionsUrl('driving')).toBeNull();
+  });
+
   it('hides generated GPS-only placeholders and still links to the mapped coordinates', () => {
     const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
     component.venue = {

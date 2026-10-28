@@ -7,7 +7,7 @@ import { VenuePhoto, VenueRatingSummary, VenueService, VenueSportCondition } fro
 import { Venue } from '../model/venue';
 import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
-import { venueHasPortugueseCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
+import { venueHasPortugueseCoordinates, venueDirectionsUrl, VenueTravelMode, venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
 import { venueOfficialContactPage, venueOfficialContactPageNeedsIdentityCheck } from '../../shared/venue-official-contact-source';
 
 @Component({
@@ -252,6 +252,14 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
       .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
       .join(', ');
     return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
+  }
+
+  /** Only offers route planning when a plausible catalogue GPS point exists.
+   * A reference point must not be described as a verified public entrance.
+   */
+  directionsUrl(mode: VenueTravelMode): string | null {
+    if (!this.venue) return null;
+    return venueDirectionsUrl(this.venue.latitude, this.venue.longitude, mode);
   }
 
   /** The iframe always points to our own numeric OSM URL, never a submitted link. */

@@ -28,6 +28,24 @@ export function venueHasPortugueseCoordinates(
     || (latitude >= 32.5 && latitude <= 33.5 && longitude >= -17.5 && longitude <= -16.0);
 }
 
+
+/** Maps URLs open the provider's route planner from the device's preferred
+ * starting point. No app-side geolocation, inferred journey or claimed door.
+ */
+export type VenueTravelMode = 'driving' | 'walking' | 'transit';
+
+export function venueDirectionsUrl(
+  latitude: number | null | undefined,
+  longitude: number | null | undefined,
+  mode: VenueTravelMode
+): string | null {
+  if (!venueHasPortugueseCoordinates(latitude, longitude)
+      || !(['driving', 'walking', 'transit'] as string[]).includes(mode)) return null;
+  const destination = encodeURIComponent(latitude + ',' + longitude);
+  return 'https://www.google.com/maps/dir/?api=1&destination='
+    + destination + '&travelmode=' + mode;
+}
+
 /**
  * A public venue contact is not necessarily a phone number (it may be an
  * email address, website or description). Never dial unvalidated text.

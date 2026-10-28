@@ -11,7 +11,7 @@ import { FriendSummary } from '../model/friend-summary';
 import { SessionDetail } from '../model/session-detail';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { compactSessionShareMessage } from '../../shared/session-share-message';
-import { venueHasPortugueseCoordinates } from '../../shared/venue-public-contact';
+import { venueHasPortugueseCoordinates, venueDirectionsUrl, VenueTravelMode } from '../../shared/venue-public-contact';
 import { venueUsableAddress } from '../../shared/venue-location';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
@@ -2220,6 +2220,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return !!this.session?.canSeeExactAddress
       && venueHasPortugueseCoordinates(this.session.venue?.latitude,
                                       this.session.venue?.longitude);
+  }
+
+  /** No route link for viewers without exact-location permission. Even when
+   * authorised, a venue GPS point is not a certified building entrance.
+   */
+  exactDirectionsUrl(mode: VenueTravelMode): string | null {
+    if (!this.hasVenueMapCoordinates()) return null;
+    return venueDirectionsUrl(this.session?.venue?.latitude, this.session?.venue?.longitude, mode);
   }
 
   /** Only share precise coordinates with people authorised by the session API.

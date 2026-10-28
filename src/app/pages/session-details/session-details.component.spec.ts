@@ -421,6 +421,43 @@ describe('SessionDetailsComponent', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
+  it('offers driving, walking and transit only to viewers authorised to see venue GPS', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN', address: '' } as any
+    };
+    fixture.detectChanges();
+    const links = Array.from(fixture.nativeElement.querySelectorAll(
+      '.session-route-mode')) as HTMLAnchorElement[];
+    expect(links.length).toBe(3);
+    expect(links.map(a => new URL(a.href).searchParams.get('travelmode')))
+      .toEqual(['driving', 'walking', 'transit']);
+    links.forEach(a => {
+      const url = new URL(a.href);
+      expect(url.searchParams.get('destination')).toBe('40.6668823,-8.7391574');
+      expect(url.searchParams.has('origin')).toBeFalse();
+      expect(a.rel).toContain('noopener');
+      expect(a.target).toBe('_blank');
+    });
+
+    component.session = { ...component.session, canSeeExactAddress: false };
+    fixture.detectChanges();
+    expect(component.exactDirectionsUrl('driving')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-route-planner')).toBeNull();
+  });
+
+  it('does not show false turn-by-turn directions for unknown or invalid GPS', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: 'Rua do Campo 10',
+      venue: { id: 447, latitude: 0, longitude: 0 } as any
+    };
+    fixture.detectChanges();
+    expect(component.exactDirectionsUrl('walking')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-route-mode')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).not.toBeNull();
+  });
+
   it('does not leak GPS-only coordinates to an unauthorised session viewer', () => {
     component.session = {
       ...session,
