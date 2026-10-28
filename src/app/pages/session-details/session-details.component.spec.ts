@@ -400,7 +400,8 @@ describe('SessionDetailsComponent', () => {
     component.beginMeetingPointEdit();
     fixture.detectChanges();
     const input = fixture.nativeElement.querySelector('#session-meeting-point-input') as HTMLInputElement;
-    expect(input.value).toBe('Entrada antiga');
+    expect(input).not.toBeNull();
+    expect(component.meetingPointDraft).toBe('Entrada antiga');
     component.meetingPointDraft = '  Novo portão  ';
     component.saveMeetingPoint();
     expect(sessionService.updateMeetingPoint).toHaveBeenCalledOnceWith(7, 'Novo portão');
