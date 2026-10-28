@@ -1013,6 +1013,8 @@ export const EN: Record<string, string> = {
   'notFound.home': 'Back to home',
   'notFound.dashboard': 'Back to dashboard',
 
+  'profile.relationshipChecking': 'Checking friendship…',
+  'profile.relationshipCheckFailed': 'Could not check friendship status.',
   'common.retry': 'Try again',
   'common.search': 'Search',
   'common.searching': 'Searching...',
