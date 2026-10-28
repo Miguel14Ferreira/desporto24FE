@@ -98,6 +98,21 @@ describe('HomeComponent public discovery', () => {
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-venue').length).toBe(1);
   });
 
+  it('renders the public venue sports as compact tags instead of semicolon strings', () => {
+    venues.suggest.and.returnValue(of({
+      venues: [venue(10, 'Futebol;Futsal;Ginástica;Judo;Natação')],
+      page: 0, hasMore: false
+    }));
+    const fixture = render();
+    const card: HTMLElement = fixture.nativeElement.querySelector('.preview-venue');
+    expect(card.querySelector('.preview-venue-city')?.textContent?.trim()).toBe('Cascais');
+    expect(Array.from(card.querySelectorAll('.venue-sports-chip')).map(node => node.textContent?.trim()))
+      .toEqual(['Futebol', 'Futsal', 'Ginástica']);
+    expect(card.querySelector('.venue-sports-counter')?.textContent?.trim()).toBe('+2');
+    expect(card.textContent).not.toContain(';');
+    fixture.destroy();
+  });
+
   it('does not invent sessions or venues when the public catalogue is empty', () => {
     const fixture = render();
     expect(fixture.componentInstance.featuredSessions).toEqual([]);
