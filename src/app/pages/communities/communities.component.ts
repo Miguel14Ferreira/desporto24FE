@@ -2524,7 +2524,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   canRecordCommunitySession(session: SessionSummary): boolean {
     return this.canManage()
-      && (session.communityId === undefined || session.communityId === this.selected?.id)
+      && (session.communityId == null || session.communityId === this.selected?.id)
+      && (session.seasonCommunityId == null || session.seasonCommunityId === this.selected?.id)
       && !!this.competition?.settings?.rankingsEnabled
       && session.status !== 'CANCELLED'
       && Number.isFinite(Date.parse(session.gameDate))
