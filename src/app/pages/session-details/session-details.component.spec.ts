@@ -440,7 +440,7 @@ describe('SessionDetailsComponent', () => {
     expect(component.errorMessage).toBe('');
   });
 
-  it('lets only the organiser edit meeting instructions before kickoff', () => {
+  it('does not expose meeting-point editing to organisers or guests, preserving existing directions', () => {
     const future = new Date(Date.now() + 3600000).toISOString();
     (component as any).currentUsername = 'creator-user';
     component.session = {
@@ -448,27 +448,18 @@ describe('SessionDetailsComponent', () => {
       meetingPointInstructions: 'Entrada antiga'
     };
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-meeting-edit-button')).not.toBeNull();
-    component.beginMeetingPointEdit();
-    fixture.detectChanges();
-    const input = fixture.nativeElement.querySelector('#session-meeting-point-input') as HTMLInputElement;
-    expect(input).not.toBeNull();
-    expect(component.meetingPointDraft).toBe('Entrada antiga');
-    component.meetingPointDraft = '  Novo portão  ';
-    component.saveMeetingPoint();
-    expect(sessionService.updateMeetingPoint).toHaveBeenCalledOnceWith(7, 'Novo portão');
-    expect(component.meetingPointEditing).toBeFalse();
-    expect(component.session?.meetingPointInstructions).toBe('Novo portão');
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-meeting-point')?.textContent)
-      .toContain('Novo portão');
+    const location = fixture.nativeElement.querySelector('.address-panel') as HTMLElement;
+    expect(location.querySelector('.session-meeting-edit-button')).toBeNull();
+    expect(location.querySelector('#session-meeting-point-input')).toBeNull();
+    expect(location.querySelector('.session-meeting-edit')).toBeNull();
+    expect(location.querySelector('.session-meeting-point')?.textContent).toContain('Entrada antiga');
+    expect(sessionService.updateMeetingPoint).not.toHaveBeenCalled();
 
     (component as any).currentUsername = 'guest-user';
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-meeting-edit-button')).toBeNull();
-    component.beginMeetingPointEdit();
-    expect(component.meetingPointEditing).toBeFalse();
-    expect(sessionService.updateMeetingPoint).toHaveBeenCalledTimes(1);
+    expect(location.querySelector('.session-meeting-edit-button')).toBeNull();
+    expect(location.querySelector('#session-meeting-point-input')).toBeNull();
+    expect(sessionService.updateMeetingPoint).not.toHaveBeenCalled();
   });
 
   it('can clear a point without changing the mapped venue', () => {
@@ -3416,7 +3407,7 @@ describe('SessionDetailsComponent', () => {
     expect(panel.textContent).toContain('2 jogadores');
   });
 
-  it('keeps location navigation and organiser edit action in distinct visual regions', () => {
+  it('keeps location navigation without a meeting-point edit action', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {...session,canSeeExactAddress:true,
       address:'Rua da Paz 10, Lisboa',meetingPointInstructions:null,
@@ -3427,7 +3418,8 @@ describe('SessionDetailsComponent', () => {
     expect(location.querySelector('.session-location-detail')).not.toBeNull();
     const maps = location.querySelector('a.session-location-map') as HTMLAnchorElement;
     expect(maps?.href).toContain('google.com/maps');
-    expect(location.querySelector('.session-meeting-edit-button')).not.toBeNull();
+    expect(location.querySelector('.session-meeting-edit-button')).toBeNull();
+    expect(location.querySelector('.session-meeting-edit')).toBeNull();
   });
 
   it('keeps approved guest cancellations only in Who is going, requiring explicit confirmation', () => {
