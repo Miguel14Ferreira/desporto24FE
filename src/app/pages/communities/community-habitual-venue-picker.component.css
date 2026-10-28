@@ -7,6 +7,9 @@
 .community-venue-current small{color:#abd7d8}
 .community-venue-current strong{color:#eefffd;overflow-wrap:anywhere}
 .community-venue-text-link{color:#98f4dc;font-weight:750;text-decoration:underline;text-underline-offset:3px}
+.community-venue-edit,.community-venue-cancel{justify-self:start;border:1px solid #397c81;background:#0d3443;color:#baf5e9;border-radius:10px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer}
+.community-venue-edit:hover,.community-venue-cancel:hover:not(:disabled){background:#154e55;border-color:#36cbb4}
+.community-venue-cancel:disabled{opacity:.5;cursor:not-allowed}
 .community-venue-search-row{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:0}
 .community-venue-search-field{display:grid;flex:1 1 260px;max-width:520px;gap:7px;min-width:0}
 .community-venue-search-field>span{font-size:.86rem;color:#d5eced;font-weight:750}
