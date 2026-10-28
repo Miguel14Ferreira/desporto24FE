@@ -27,14 +27,15 @@ export class NotificationsComponent implements OnInit {
   unreadCount = 0;
   selected?: AppNotification;
 
-  // Every backend notification kind plus legacy friends/profile/other alerts.
+  // Optional alerts only. Security-critical profile changes are always sent,
+  // while routine profile updates no longer generate inbox notifications.
   readonly preferenceTypes = [
     'COMMUNITY_INVITE', 'COMMUNITY_JOIN_REQUEST', 'COMMUNITY_JOIN_ACCEPTED',
     'COMMUNITY_JOIN_REJECTED', 'SESSION_INVITE', 'WAITLIST_PROMOTED',
     'SESSION_REMOVED', 'SESSION_CANCELLED', 'SESSION_MEETING_POINT_UPDATED',
     'SESSION_POST_GAME_REVIEW',
     'ATTENDANCE_DISPUTE_ACCEPTED', 'ATTENDANCE_DISPUTE_REJECTED',
-    'CHAT_MESSAGE', 'VENUE_EDIT_DECISION', 'FRIEND_REQUEST', 'PROFILE_UPDATE', 'OTHER'
+    'CHAT_MESSAGE', 'VENUE_EDIT_DECISION', 'FRIEND_REQUEST', 'OTHER'
   ] as const;
   preferencesOpen = false;
   preferencesLoading = false;
@@ -469,25 +470,15 @@ export class NotificationsComponent implements OnInit {
   }
 
   canProtectAccount(notification: AppNotification): boolean {
-    if (notification.updateProfile) {
-      return true;
-    }
-
-    const subject = (notification.subject || '').toLocaleLowerCase();
-    const message = (notification.message || '').toLocaleLowerCase();
-    const content = subject + ' ' + message;
-
-    return content.includes('palavra-passe alterada')
-      || content.includes('password changed')
-      || content.includes('alteração de email')
-      || content.includes('email changed')
-      || content.includes('autenticação multifator')
-      || content.includes('multi-factor authentication')
-      || content.includes('perfil atualizado')
-      || content.includes('profile updated');
+    // Legacy profile-update notices set updateProfile=true even for sports,
+    // photos and biographies. Never offer a destructive account lock based on
+    // that flag, or on free-text message contents.
+    const subject = (notification.subject || '').trim().toLocaleLowerCase();
+    return /^(palavra-passe alterada|password changed|alteração de email|email changed|email address changed|autenticação multifator (?:ativada|desativada)|multi-factor authentication (?:enabled|disabled))\b/i.test(subject);
   }
 
   requestAccountBlock(): void {
+    if (!this.selected || !this.canProtectAccount(this.selected)) return;
     this.accountBlockConfirming = true;
     this.actionError = '';
   }
@@ -497,7 +488,8 @@ export class NotificationsComponent implements OnInit {
   }
 
   blockAccountAccess(): void {
-    if (!this.selected || this.actionLoadingId !== null) {
+    if (!this.selected || !this.canProtectAccount(this.selected)
+        || this.actionLoadingId !== null) {
       return;
     }
 

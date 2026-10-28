@@ -397,21 +397,31 @@ describe('NotificationsComponent', () => {
     expect(component.actionSuccess).toContain('aceite');
   });
 
+  it('does not offer a misleading preference switch for retired profile-update alerts', () => {
+    expect(component.preferenceTypes).not.toContain('PROFILE_UPDATE' as any);
+  });
+
   it('should offer account protection for suspicious security notifications', () => {
     const securityNotification = securityNotificationFixture();
 
     expect(component.canProtectAccount(securityNotification)).toBeTrue();
   });
 
-  it('should offer account protection on profile update notifications', () => {
-    const profileUpdate = {
-      ...securityNotificationFixture(),
-      subject: 'Perfil atualizado',
-      message: 'Foram atualizados dados do teu perfil.',
-      updateProfile: true
-    };
-
-    expect(component.canProtectAccount(profileUpdate)).toBeTrue();
+  it('never offers account blocking on old routine profile notices', () => {
+    for (const subject of ['Perfil atualizado', 'Profile updated']) {
+      const profileUpdate = {
+        ...securityNotificationFixture(),
+        subject,
+        message: 'Foram atualizados os seguintes dados do teu perfil: Desportos favoritos.',
+        updateProfile: true
+      };
+      expect(component.canProtectAccount(profileUpdate)).toBeFalse();
+      component.selected = profileUpdate;
+      component.requestAccountBlock();
+      expect(component.accountBlockConfirming).toBeFalse();
+      component.blockAccountAccess();
+      expect(service.blockOwnAccount).not.toHaveBeenCalled();
+    }
   });
 
   it('should offer account protection on password change notifications', () => {
@@ -423,6 +433,26 @@ describe('NotificationsComponent', () => {
     };
 
     expect(component.canProtectAccount(passwordChange)).toBeTrue();
+  });
+
+  it('offers account protection for email changes even in legacy profile notices', () => {
+    const emailChange = {
+      ...securityNotificationFixture(),
+      subject: 'Alteração de email',
+      message: 'O endereço de email associado à tua conta foi alterado.',
+      updateProfile: true
+    };
+    expect(component.canProtectAccount(emailChange)).toBeTrue();
+  });
+
+  it('does not treat a security keyword buried in an ordinary message as proof', () => {
+    const ordinary = {
+      ...securityNotificationFixture(),
+      subject: 'Perfil atualizado',
+      message: 'Para ajuda, procura a secção de alteração de email.',
+      updateProfile: true
+    };
+    expect(component.canProtectAccount(ordinary)).toBeFalse();
   });
 
   it('should not expose account blocking for unrelated notifications', () => {
