@@ -11,6 +11,8 @@ import { FriendSummary } from '../model/friend-summary';
 import { SessionDetail } from '../model/session-detail';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { compactSessionShareMessage } from '../../shared/session-share-message';
+import { venueHasPortugueseCoordinates } from '../../shared/venue-public-contact';
+import { venueUsableAddress } from '../../shared/venue-location';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
@@ -2213,6 +2215,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return `Sessão de ${this.session?.sport ?? 'desporto'} no Desporto24.${creator}`;
   }
 
+  /** GPS can identify a venue site without certifying its public entrance. */
+  hasVenueMapCoordinates(): boolean {
+    return !!this.session?.canSeeExactAddress
+      && venueHasPortugueseCoordinates(this.session.venue?.latitude,
+                                      this.session.venue?.longitude);
+  }
+
   /** Only share precise coordinates with people authorised by the session API.
    * Many Jynlo venues have verified catalogue GPS but no postal address: a
    * missing street must not disable their navigation link.
@@ -2221,10 +2230,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     if (!this.session?.canSeeExactAddress) return null;
     const lat = this.session.venue?.latitude;
     const lon = this.session.venue?.longitude;
-    const hasGps = typeof lat === 'number' && typeof lon === 'number'
-      && Number.isFinite(lat) && Number.isFinite(lon)
-      && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
-    const address = this.session.address?.trim();
+    const hasGps = this.hasVenueMapCoordinates();
+    const address = venueUsableAddress(this.session.address);
     if (!hasGps && !address) return null;
     const query = hasGps ? lat + ',' + lon : address + ', ' + this.session.city;
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
@@ -2232,7 +2239,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   /** Never present an OSM GPS-only location as a confirmed postal address. */
   exactLocationLabel(): string {
-    const address = this.session?.address?.trim();
+    const address = venueUsableAddress(this.session?.address);
     return address && this.session?.venue?.locationStatus !== 'GPS_ONLY_ADDRESS_UNKNOWN'
       ? address : t('sessionDetail.openMaps');
   }
@@ -2247,22 +2254,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     if (!session) return '';
     if (!session.canSeeExactAddress) return session.city;
 
-    const address = session.address?.trim() ?? '';
-    // Legacy OSM placeholders must not be copied to calendar locations as
-    // if they were actual postal addresses.
-    const placeholder = /^(?:localização no mapa:|localizacao no mapa:|map location:|coordenadas\s*\()/i.test(address)
-      || /(?:morada por confirmar|address to be confirmed)/i.test(address);
-    if (address && !placeholder) return address;
+    const address = venueUsableAddress(session.address);
+    if (address) return address;
 
     const latitude = session.venue?.latitude;
     const longitude = session.venue?.longitude;
-    const gps = typeof latitude === 'number' && typeof longitude === 'number'
-      && Number.isFinite(latitude) && Number.isFinite(longitude)
-      // Mainland, Azores and Madeira; exclude (0,0) and stray coordinates.
-      && ((latitude >= 36.8 && latitude <= 42.3 && longitude >= -9.7 && longitude <= -6.0)
-        || (latitude >= 36.5 && latitude <= 40.2 && longitude >= -31.5 && longitude <= -24.5)
-        || (latitude >= 32.5 && latitude <= 33.5 && longitude >= -17.5 && longitude <= -16.0));
-    return gps ? latitude + ',' + longitude : session.city;
+    return venueHasPortugueseCoordinates(latitude, longitude)
+      ? latitude + ',' + longitude : session.city;
   }
 
   private calendarStartUtc(): string {

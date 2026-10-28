@@ -566,7 +566,10 @@
                  [attr.aria-label]="'sessionDetail.openMaps' | t">
                 {{ exactLocationLabel() }} <span aria-hidden="true">↗</span>
               </a>
-              <small>{{ 'sessionDetail.openMapsHint' | t }}</small>
+              <small>{{ (hasVenueMapCoordinates() ? 'sessionDetail.mapPointNotEntrance'
+                         : 'sessionDetail.openMapsHint') | t }}</small>
+            } @else if (session.canSeeExactAddress) {
+              <p>{{ 'sessionDetail.locationUnavailable' | t }}</p>
             } @else {
               <p>{{ 'sessionDetail.addressLocked' | t }}</p>
             }
