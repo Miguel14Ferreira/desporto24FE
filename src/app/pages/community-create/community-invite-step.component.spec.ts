@@ -187,6 +187,32 @@ describe('CommunityInviteStepComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
   });
 
+  it('allows finishing after saving a habitual Maps point without a catalogue venue', () => {
+    const { component } = setup();
+    component.continueAfterInvite();
+    component.continueToVenue();
+    component.setHabitualVenueChoice('yes');
+    component.onHabitualVenueSaved({ ...component.community!,
+      defaultVenueId: null, habitualLocationSource: 'MAPS',
+      habitualLatitude: 38.71, habitualLongitude: -9.13 } as CommunityGroup);
+    expect(component.hasHabitualLocation()).toBeTrue();
+    expect(component.habitualVenueChoice).toBe('yes');
+    expect(component.habitualVenueSaved).toBeTrue();
+  });
+
+  it('recognizes GPS at latitude zero and clears a removed habitual point', () => {
+    const { component } = setup();
+    component.continueAfterInvite();
+    component.continueToVenue();
+    component.onHabitualVenueSaved({ ...component.community!,
+      habitualLocationSource: 'GPS', habitualLatitude: 0, habitualLongitude: -9.13 } as CommunityGroup);
+    expect(component.hasHabitualLocation()).toBeTrue();
+    component.onHabitualVenueSaved({ ...component.community!,
+      habitualLocationSource: null, habitualLatitude: null, habitualLongitude: null } as CommunityGroup);
+    expect(component.hasHabitualLocation()).toBeFalse();
+    expect(component.habitualVenueChoice).toBeNull();
+  });
+
   it('continues to the new community even when its details could not be loaded', () => {
     const { component, groups, router } = setup();
     groups.get.and.returnValue(throwError(() => new Error('unavailable')));
