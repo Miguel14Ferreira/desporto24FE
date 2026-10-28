@@ -46,7 +46,8 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
 
   /** Public catalogue preview reuses this page but must not call protected APIs. */
   get isPublicView(): boolean {
-    return this.route.snapshot?.data?.['publicVenueView'] === true;
+    return this.route.snapshot?.data?.['publicVenueView'] === true
+      || this.route.snapshot?.parent?.data?.['publicVenueView'] === true;
   }
 
   constructor(
