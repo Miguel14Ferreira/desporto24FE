@@ -561,6 +561,7 @@ export const EN: Record<string, string> = {
   'publicSession.confirmedRosterEmpty': 'No players are confirmed yet.',
   'publicSession.confirmedRosterError': 'Could not refresh confirmed players. Try again.',
   'guestRsvp.confirmedAs': 'Your attendance is confirmed as:',
+  'guestRsvp.refreshMeetingPoint': 'Refresh meeting point',
   'publicSession.invitationLocationHint': 'The organizer shared this location through a private invitation. Confirm the meeting point before setting off.',
   'guestRsvp.noAccount': 'No account? You can still play',
   'guestRsvp.title': 'Who\'s playing?',
