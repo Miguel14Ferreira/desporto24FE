@@ -102,7 +102,7 @@
           }
         </section>
       }
-      @if (communitySessionSelected) {
+      @if (canMarkSeasonGame) {
         <section class="create-share-panel" aria-labelledby="create-season-game-title">
           <div>
             <span class="section-kicker">{{ 'createSession.seasonGameKicker' | t }}</span>
@@ -115,15 +115,9 @@
             <span><strong>{{ 'createSession.seasonGameToggle' | t }}</strong></span>
           </label>
           @if (seasonGame) {
-            <label>
-              <span>{{ 'createSession.seasonGameCommunity' | t }}</span>
-              <select name="seasonGameCommunityId" [ngModel]="seasonGameCommunityId"
-                (ngModelChange)="selectSeasonDestination($event)" [disabled]="loading">
-                @for (group of seasonCommunities; track group.id) {
-                  <option [ngValue]="group.id">{{ group.name }}</option>
-                }
-              </select>
-            </label>
+            <p class="create-share-members-note" role="status">
+              {{ 'createSession.seasonGameAutomaticCommunity' | t:{name: selectedSeasonCommunity?.name ?? ''} }}
+            </p>
             @if (seasonOverviewLoading) {
               <p role="status">{{ 'createSession.communityShareLoading' | t }}</p>
             } @else if (seasonOverviewError) {
@@ -133,15 +127,11 @@
                 <p class="create-share-members-note" role="note">
                   {{ 'createSession.seasonGameActivationExplained' | t }}
                 </p>
-                @if (canAdministerSeason) {
-                  <label class="create-share-community">
-                    <input type="checkbox" name="confirmActivateRankings"
-                      [(ngModel)]="confirmActivateRankings" [disabled]="loading">
-                    <span>{{ 'createSession.seasonGameConfirmActivation' | t }}</span>
-                  </label>
-                } @else {
-                  <p role="alert">{{ 'createSession.seasonGameAdminRequired' | t }}</p>
-                }
+                <label class="create-share-community">
+                  <input type="checkbox" name="confirmActivateRankings"
+                    [(ngModel)]="confirmActivateRankings" [disabled]="loading">
+                  <span>{{ 'createSession.seasonGameConfirmActivation' | t }}</span>
+                </label>
               } @else {
                 <p class="create-share-members-note" role="status">
                   {{ 'createSession.seasonGameExistingStandings' | t }}
@@ -151,9 +141,6 @@
                 <p class="create-share-members-note" role="note">
                   {{ 'createSession.seasonGameNewSeason' | t }}
                 </p>
-                @if (!canAdministerSeason) {
-                  <p role="alert">{{ 'createSession.seasonGameAdminRequired' | t }}</p>
-                }
               } @else {
                 <p class="create-share-members-note">
                   {{ 'createSession.seasonGameActiveSeason' | t }}
@@ -162,6 +149,10 @@
             }
           }
         </section>
+      } @else if (seasonCommunities.length > 1) {
+        <p class="create-share-members-note" role="note">
+          {{ 'createSession.seasonGameMultipleCommunities' | t }}
+        </p>
       }
       <div class="form-grid">
         @if (communityId && communitySportLoaded && communitySports.length) {
