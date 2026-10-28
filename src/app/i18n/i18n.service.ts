@@ -2322,6 +2322,7 @@ const PT: Dictionary = {
   'communities.eventType.throw': 'Lançamentos',
   'communities.eventType.participationOnly': 'Neste tipo de prova ainda é possível registar participantes, mas não calcular resultados ou classificação. A pontuação específica será adicionada numa próxima fase.',
   'feedback.communities.roundEventTypeRequired': 'Seleciona o tipo de prova antes de guardar a jornada.',
+  'feedback.communities.inlineFinalBDiscontinued': 'O regulamento World Skate 2026 eliminou a Final B dos 500 m +D e Sprint de uma volta. Seleciona uma fase válida.',
   'communities.selectRoundSport': 'Selecionar modalidade',
   'communities.race.recordTitle': 'Registo de corrida',
   'communities.race.championshipKicker': 'CAMPEONATOS DE CORRIDA',

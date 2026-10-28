@@ -27,6 +27,23 @@ describe('CommunitiesComponent public session eligibility', () => {
 
 
 
+  it('hides discontinued 2026 speed-skating Final B only when creating new rounds', () => {
+    Object.defineProperty(component, 'canRecordInlineSpeedWithoutRankings',
+      { configurable: true, value: false });
+    const codes = component.eventOptions('Patinagem de Velocidade').map(x => x.code);
+    expect(codes).toContain('INLINE_TRACK_500D_FINAL_A');
+    expect(codes).toContain('INLINE_ROAD_LAP_FINAL_A');
+    expect(codes).not.toContain('INLINE_TRACK_500D_FINAL_B');
+    expect(codes).not.toContain('INLINE_ROAD_LAP_FINAL_B');
+
+    // An old form may still be open when the page is updated; reject it before API calls.
+    component.selected = { id: 27, name: 'Patinagem', sport: 'Patinagem de Velocidade' } as any;
+    component.roundEventTypeDraft = 'INLINE_TRACK_500D_FINAL_B';
+    component.roundSaving = false;
+    component.createRound();
+    expect(component.errorMessage).toBe(t('feedback.communities.inlineFinalBDiscontinued'));
+  });
+
   it('retains community detail routing and hides the mine selector in detail mode', () => {
     (component as any).isDetailMode = true;
     expect(component.detailMode()).toBeTrue();

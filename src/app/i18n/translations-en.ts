@@ -2317,6 +2317,7 @@ export const EN: Record<string, string> = {
   'communities.eventType.throw': 'Throws',
   'communities.eventType.participationOnly': 'Participants can be recorded for this event, but results and standings cannot yet be calculated. Event-specific scoring is planned for a later release.',
   'feedback.communities.roundEventTypeRequired': 'Choose an event type before saving the round.',
+  'feedback.communities.inlineFinalBDiscontinued': 'World Skate 2026 removed Final B from 500 m +D and One Lap Sprint. Choose a supported round instead.',
   'communities.selectRoundSport': 'Select a sport',
   'communities.race.recordTitle': 'Race record',
   'communities.race.championshipKicker': 'RACE CHAMPIONSHIPS',
