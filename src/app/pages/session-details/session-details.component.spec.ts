@@ -2501,7 +2501,7 @@ describe('SessionDetailsComponent', () => {
     const section = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
     expect(section).not.toBeNull();
     expect(section.textContent).toContain('@player-one');
-    expect(section.textContent).toContain('perfis de jogadores visíveis');
+    expect(section.textContent).toContain('jogadores visíveis');
     const summary = fixture.nativeElement.querySelector('.organizer-preparation') as HTMLElement;
     const button = Array.from(summary.querySelectorAll('button'))
       .find((candidate: any) => candidate.textContent.includes('Quem vai')) as HTMLButtonElement;
@@ -2536,7 +2536,7 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
 
     expect(sessionService.participants).toHaveBeenCalledTimes(1);
-    expect(section.textContent).toContain('1 perfis de jogadores visíveis');
+    expect(section.textContent).toContain('1 jogadores visíveis');
     expect(section.textContent).not.toContain('A carregar jogadores confirmados');
   });
 
