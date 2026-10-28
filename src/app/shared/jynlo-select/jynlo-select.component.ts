@@ -32,7 +32,13 @@ export class JynloSelectComponent implements ControlValueAccessor, OnDestroy {
   private disabledByForms = false;
   // Explicitly separate the presentation state from NgModel's [disabled]
   // directive input, which may win the shared binding on a custom element.
-  @Input() blocked = false;
+  private _blocked = false;
+  @Input() set blocked(value: boolean) {
+    this._blocked = value;
+    // [blocked] can change before Angular Forms invokes setDisabledState.
+    if (this.disabled) this.close();
+  }
+  get blocked(): boolean { return this._blocked; }
   get disabled(): boolean { return this.blocked || this.disabledByForms; }
   @Input() accent: 'teal' | 'violet' = 'teal';
   @Output() picked = new EventEmitter<string>();
