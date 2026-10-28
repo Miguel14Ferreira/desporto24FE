@@ -145,7 +145,7 @@
                     <p>{{ 'guestRsvp.noThanks' | t }}</p>
                   </div>
                 }
-                @if (guestReceipt && guestStep !== 'pending') {
+                @if (guestReceipt) {
                   <button type="button" class="guest-rsvp-back"
                           (click)="registerAnotherGuest()" [disabled]="guestSending || guestLinking">
                     {{ 'guestRsvp.differentPlayer' | t }}
