@@ -28,5 +28,7 @@ export function chatMediaPreviewKey(
 ): string | null {
   const kind = chatMediaPreviewKind(raw);
   if (!kind) return null;
+  if (kind === 'gif') return username?.trim()
+    ? 'notification.chatGifPreviewWithSender' : 'notification.chatGifPreview';
   return 'notification.chatMedia.' + kind + (username?.trim() ? '.withSender' : '');
 }
