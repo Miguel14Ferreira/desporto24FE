@@ -1429,6 +1429,26 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionError).toBeTruthy();
   });
 
+  it('shows confirmed guest names and counts them in Who is going without inventing accounts', () => {
+    (component as any).currentUsername='creator-user';
+    component.session={...session,joined:true};
+    component.sessionParticipants=[{id:11,username:'creator-user',attendanceStatus:'PENDING',
+      joinedAt:'2026-10-28T15:00:00Z'}];
+    component.guestRequests=[
+      {id:40,name:'Ferreirinha',status:'APPROVED',note:'',teamCode:null},
+      {id:41,name:'Pedido Antigo',status:'PENDING',note:'',teamCode:null},
+      {id:42,name:'Conta criada',status:'LINKED',note:'',teamCode:null}
+    ];
+    fixture.detectChanges();
+    const region=fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(region).not.toBeNull();
+    expect(region.textContent).toContain('Ferreirinha');
+    expect(region.textContent).toContain('2 jogadores visíveis');
+    expect(region.textContent).not.toContain('Pedido Antigo');
+    expect(region.textContent).not.toContain('Conta criada');
+    expect(region.querySelectorAll('a.session-profile-link').length).toBe(1);
+  });
+
   it('starts with guest-first invitations after creating a community game', () => {
     const route=TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap,'get').and.callFake(key=>key==='created'?'1':null);
