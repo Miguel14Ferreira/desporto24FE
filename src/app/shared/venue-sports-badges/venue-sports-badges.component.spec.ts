@@ -60,11 +60,11 @@ describe('Venue sports badges', () => {
     const fixture = TestBed.createComponent(VenueSportsBadgesComponent);
     fixture.componentInstance.limit = 1;
     fixture.componentInstance.expandable = true;
-    fixture.componentInstance.sports = 'Futebol;Futsal;Judo';
+    fixture.componentRef.setInput('sports', 'Futebol;Futsal;Judo');
     fixture.detectChanges();
     (fixture.nativeElement.querySelector('.venue-sports-more') as HTMLButtonElement).click();
     fixture.detectChanges();
-    fixture.componentInstance.sports = 'Natação';
+    fixture.componentRef.setInput('sports', 'Natação');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.venue-sports-chip').length).toBe(1);
     expect(fixture.nativeElement.querySelector('.venue-sports-chip')?.textContent.trim()).toBe('Natação');
