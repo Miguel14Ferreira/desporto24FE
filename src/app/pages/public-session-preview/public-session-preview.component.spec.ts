@@ -234,7 +234,7 @@ describe('PublicSessionPreviewComponent', () => {
         gameDate:new Date(Date.now()+3600_000).toISOString(),status:participants===10?'FULL':'OPEN',
         priceAmount:0,maxParticipants:10,participantCount:participants,gamePhoto:null});
       if(url.endsWith('/guest-confirmed-players')) return of([]);
-      if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:'Barata'});
+      if(url.endsWith('/guest-requests/status')) return of({status:participants===10?'APPROVED':'CANCELLED',playerName:'Barata'});
       if(url.endsWith('/guest-requests/cancel-self')) {
         expect(body).toEqual({receipt});
         participants=9;return of({status:'CANCELLED',playerName:'Barata'});
