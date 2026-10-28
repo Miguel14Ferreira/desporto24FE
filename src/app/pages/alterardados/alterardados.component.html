@@ -165,7 +165,7 @@
               [options]="countrySelectChoices" [searchable]="true"
               [ariaLabel]="'common.country' | t"
               [placeholder]="'register.select' | t"
-              [required]="true" [disabled]="saving"
+              [required]="true" [disabled]="saving" [blocked]="saving"
               [invalid]="!!fieldErrors.country"
               (picked)="clearFieldError('country')"
             ></app-jynlo-select>
