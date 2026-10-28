@@ -1534,7 +1534,7 @@ describe('SessionDetailsComponent', () => {
     expect(region.textContent).toContain('2 jogadores visíveis');
     expect(region.textContent).not.toContain('Pedido Antigo');
     expect(region.textContent).not.toContain('Conta criada');
-    expect(region.querySelectorAll('a.session-profile-link').length).toBe(1);
+    expect(region.querySelectorAll('a.session-player-chip--member').length).toBe(1);
   });
 
   it('renders ten registered and confirmed guest players as matching profile chips', () => {
