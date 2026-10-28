@@ -1537,6 +1537,57 @@ describe('SessionDetailsComponent', () => {
     expect(region.querySelectorAll('a.session-profile-link').length).toBe(1);
   });
 
+  it('renders ten registered and confirmed guest players as matching profile chips', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, creatorUsername: 'creator-user', joined: true };
+    component.sessionParticipants = Array.from({length: 5}, (_, index) => ({
+      id: index + 1, username: index === 0 ? 'creator-user' : 'jynlo-player-' + index,
+      attendanceStatus: 'PENDING' as const, joinedAt: '2026-10-28T15:00:00Z'
+    }));
+    component.guestRequests = Array.from({length: 5}, (_, index) => ({
+      id: index + 100, name: 'Convidado ' + (index + 1),
+      status: 'APPROVED' as const, note: '', teamCode: null
+    }));
+    fixture.detectChanges();
+    const region = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const chips = region.querySelectorAll('.session-participant-list > .session-player-chip');
+    expect(chips.length).toBe(10);
+    expect(region.textContent).toContain('10 jogadores visíveis');
+    expect(region.querySelectorAll('a.session-player-chip--member').length).toBe(5);
+    expect(region.querySelectorAll('span.session-player-chip--guest').length).toBe(5);
+    expect(region.textContent).toContain('COM CONTA');
+    expect(region.textContent).toContain('SEM CONTA');
+    const links = region.querySelectorAll('a.session-player-chip--member');
+    expect(links[0].getAttribute('href')).toContain('/menu/perfis/creator-user');
+  });
+
+  it('preserves the same identity chips in two confirmed teams of five', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, creatorUsername: 'creator-user', joined: true };
+    const registered = Array.from({length: 6}, (_, index) => ({
+      id: index + 1, username: index === 0 ? 'creator-user' : 'jynlo-player-' + index,
+      attendanceStatus: 'PENDING' as const, joinedAt: '2026-10-28T15:00:00Z',
+      teamCode: (index < 3 ? 'A' : 'B') as 'A' | 'B'
+    }));
+    component.sessionParticipants = registered;
+    component.teamAParticipants = registered.slice(0, 3);
+    component.teamBParticipants = registered.slice(3);
+    component.guestRequests = Array.from({length: 4}, (_, index) => ({
+      id: index + 100, name: 'Convidado ' + (index + 1),
+      status: 'APPROVED' as const, note: '',
+      teamCode: (index < 2 ? 'A' : 'B') as 'A' | 'B'
+    }));
+    component.confirmedTeams = true;
+    fixture.detectChanges();
+    const region = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const teams = region.querySelectorAll('.confirmed-teams > div');
+    expect(teams.length).toBe(2);
+    expect(teams[0].querySelectorAll('.session-player-chip').length).toBe(5);
+    expect(teams[1].querySelectorAll('.session-player-chip').length).toBe(5);
+    expect(region.querySelectorAll('a.session-player-chip--member').length).toBe(6);
+    expect(region.querySelectorAll('span.session-player-chip--guest').length).toBe(4);
+  });
+
   it('starts with guest-first invitations after creating a community game', () => {
     const route=TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap,'get').and.callFake(key=>key==='created'?'1':null);
