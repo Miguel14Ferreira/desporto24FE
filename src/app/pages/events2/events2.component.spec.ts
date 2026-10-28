@@ -869,6 +869,10 @@ describe('Events2Component', () => {
   });
 
   it('does not guess a sport or habitual venue when communities disagree', () => {
+    venueService.get.and.returnValue(of({
+      id: 55, name: 'Campo A', city: 'Lisboa', district: 'Lisboa',
+      address: 'Rua A', sports: 'Futebol', latitude: null, longitude: null
+    } as Venue));
     component.communities = [
       {id: 12, name: 'Futebol', sport: 'Futebol', sports: ['Futebol'],
        defaultVenueId: 55, myRole: 'MEMBER'},
@@ -880,7 +884,8 @@ describe('Events2Component', () => {
     component.toggleCommunityShare(13, true);
     expect(component.sport).toBe('');
     expect(component.selectedVenueId).toBeNull();
-    expect(venueService.get).not.toHaveBeenCalled();
+    // The first group's suggestion is removed when a second, incompatible group joins.
+    expect(venueService.get).toHaveBeenCalledWith(55);
   });
 
   it('keeps the sport manually chosen by the organiser when a community is selected', () => {
