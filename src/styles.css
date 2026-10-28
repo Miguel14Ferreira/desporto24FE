@@ -123,7 +123,10 @@ select option {
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
-  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
