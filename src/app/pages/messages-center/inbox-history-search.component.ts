@@ -27,6 +27,7 @@ export class InboxHistorySearchComponent {
   @Input() sending = false;
   @Input() deliveryUncertain = false;
   @Input() dateFormatter: (date: string) => string = value => value;
+  @Input() previewFormatter: (text: string) => string = value => value;
   @Output() termChanged = new EventEmitter<string>();
   @Output() searchRequested = new EventEmitter<number>();
   @Output() locateRequested = new EventEmitter<InboxMessage>();
