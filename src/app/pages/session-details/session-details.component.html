@@ -550,7 +550,7 @@
             @if (exactGoogleMapsUrl(); as mapsUrl) {
               <a class="session-location-map" [href]="mapsUrl" target="_blank" rel="noopener noreferrer"
                  [attr.aria-label]="'sessionDetail.openMaps' | t">
-                {{ session.address }} <span aria-hidden="true">↗</span>
+                {{ exactLocationLabel() }} <span aria-hidden="true">↗</span>
               </a>
               <small>{{ 'sessionDetail.openMapsHint' | t }}</small>
             } @else {
