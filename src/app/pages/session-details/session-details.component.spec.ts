@@ -476,6 +476,43 @@ describe('SessionDetailsComponent', () => {
     expect(component.session?.meetingPointInstructions).toBe('Porta A');
   });
 
+  it('focuses an authorised meeting point from a notification deep-link', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true, value: convertToParamMap({ meetingPoint: '1' })
+    });
+    (component as any).currentUsername = 'player-one';
+    const note = 'Junto à entrada norte';
+    component.session = { ...session, canSeeExactAddress: true, meetingPointInstructions: note };
+    (component as any).pendingMeetingPointScroll = true;
+    fixture.detectChanges();
+    const anchor = fixture.nativeElement.querySelector('#session-meeting-point') as HTMLElement;
+    expect(anchor).not.toBeNull();
+    expect(anchor.getAttribute('tabindex')).toBe('-1');
+    expect((component as any).pendingMeetingPointScroll).toBeFalse();
+    expect(document.activeElement).toBe(anchor);
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(anchor);
+  });
+
+  it('does not reveal or focus private meeting points for expired permissions', () => {
+    (component as any).pendingMeetingPointScroll = true;
+    component.session = {
+      ...session, canSeeExactAddress: false, meetingPointInstructions: 'Porta privada'
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#session-meeting-point')).toBeNull();
+    expect((component as any).pendingMeetingPointScroll).toBeFalse();
+
+    component.session = {
+      ...session, canSeeExactAddress: true, meetingPointInstructions: null
+    };
+    (component as any).pendingMeetingPointScroll = true;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#session-meeting-point')).toBeNull();
+    expect((component as any).pendingMeetingPointScroll).toBeFalse();
+  });
+
   it('renders meeting instructions only for session viewers with exact-location access', () => {
     component.session = {
       ...session, canSeeExactAddress: true,

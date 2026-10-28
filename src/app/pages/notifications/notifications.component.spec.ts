@@ -360,7 +360,9 @@ describe('NotificationsComponent', () => {
         .find(el => el.textContent?.includes('Ver ponto de encontro')) as HTMLButtonElement;
       expect(button).toBeDefined();
       button.click();
-      expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12]);
+      expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12], {
+        queryParams: { meetingPoint: '1' }
+      });
 
       localStorage.setItem('d24-language', 'en');
       expect(component.typeLabel(notice)).toBe('Meeting point');
