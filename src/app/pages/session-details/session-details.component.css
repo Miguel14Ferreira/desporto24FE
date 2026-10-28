@@ -1396,3 +1396,33 @@ h1 {
 .session-meeting-point strong { color:#b1ffdf;font-size:.95rem; }
 .session-meeting-point p { margin:0;color:#f0fffc;line-height:1.55;overflow-wrap:anywhere; }
 .session-meeting-point small { color:#b5cfd3;line-height:1.4; }
+
+
+/* Context of the session is first-class, not a buried attribute. */
+.session-community-context {
+  display: grid; gap: 12px; min-width: 0;
+  margin: 0 0 20px; padding: clamp(14px,2vw,19px);
+  border-radius: 14px; border: 1px solid rgba(94,199,193,.38);
+  background: linear-gradient(115deg,rgba(14,74,78,.42),rgba(9,43,59,.44));
+}
+.session-community-context-row {display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px 16px;min-width:0}
+.session-community-context-row .session-context-label {
+  flex:0 0 115px; color:#a9dfdd; font-size:.82rem; font-weight:750;
+  letter-spacing:.03em; text-transform:uppercase;
+}
+.session-community-links {display:flex;flex:1 1 220px;flex-wrap:wrap;gap:8px;min-width:0}
+.session-community-links a {display:inline-flex;max-width:100%;padding:7px 12px;
+  border:1px solid rgba(49,225,188,.53);border-radius:999px;
+  color:#d7fff2;background:rgba(31,126,120,.22);font-weight:750;
+  text-decoration:none;overflow-wrap:anywhere}
+.session-community-links a:hover {background:rgba(38,167,150,.35)}
+.session-community-context-row strong.season-game-yes {color:#8ef6d9;min-width:0;overflow-wrap:anywhere}
+.session-community-context-row > span:last-child {color:#c8d9df}
+.session-context-error {color:#ffcebe;line-height:1.5}
+.session-invite-toggle {min-width:0;white-space:normal}
+.guest-organizer-panel {margin:18px 0 24px}
+@media(max-width:650px) {
+  .session-community-context-row {display:grid;gap:7px}
+  .session-community-context-row .session-context-label {flex:auto}
+  .session-community-links {flex:auto}
+}
