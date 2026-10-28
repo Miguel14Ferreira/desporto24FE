@@ -8,7 +8,7 @@ import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
 import { DeviceSession, MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { SPORTS_CATALOG, sportIcon } from '../../shared/sports-catalog';
-import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { COUNTRY_CALLING_CODES, COUNTRY_SELECT_CHOICES, countryNameFromLabel } from '../../shared/country-calling-codes';
 import { calculateProfileCompletion } from '../../shared/profile-completion';
 
 @Component({
@@ -55,6 +55,7 @@ export class AlterardadosComponent implements OnInit {
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly iconForSport = sportIcon;
   readonly countryOptions = COUNTRY_CALLING_CODES;
+  readonly countrySelectChoices = COUNTRY_SELECT_CHOICES;
   private toastTimer?: ReturnType<typeof setTimeout>;
 
   readonly maxBirthDate = this.dateYearsAgo(18);
