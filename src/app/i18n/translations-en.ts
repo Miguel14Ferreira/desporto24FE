@@ -249,6 +249,8 @@ export const EN: Record<string, string> = {
   'venue.catalog.error': 'Could not load venues. Check your connection and try again.',
   'venue.catalog.empty': 'No venues matched your filters.',
   'venue.catalog.emptyHint': 'Try another district, sport or search.',
+  'venue.sportsBadge.more': 'Show {{count}} more',
+  'venue.sportsBadge.less': 'Show less',
   'venue.catalog.sportUnknown': 'Sport not yet confirmed',
   'venue.catalog.viewDetails': 'View venue',
   'venue.catalog.pagination': 'Venue results pagination',
