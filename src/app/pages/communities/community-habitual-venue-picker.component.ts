@@ -191,8 +191,8 @@ export class CommunityHabitualVenuePickerComponent implements OnChanges, OnDestr
   }
 
   /** Mirrors the embed used in game-session creation. Only validated numbers reach the trusted URL. */
-  private mapPreview(latitude: number, longitude: number, zoom = 16): SafeResourceUrl | null {
-    if (!this.validPoint(latitude, longitude)) return null;
+  private mapPreview(latitude: number | null, longitude: number | null, zoom = 16): SafeResourceUrl | null {
+    if (latitude === null || longitude === null || !this.validPoint(latitude, longitude)) return null;
     return this.sanitizer.bypassSecurityTrustResourceUrl(
       'https://www.google.com/maps?q=' + latitude + ',' + longitude
       + '&z=' + zoom + '&output=embed'
