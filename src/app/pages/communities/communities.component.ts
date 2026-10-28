@@ -17,7 +17,7 @@ import { historicalMatchReviewFlags } from './community-historical-match-review'
 import { importDiagnosticLabel as localizedImportDiagnostic, importHttpErrorLabel } from './community-import-diagnostic';
 import { sportForRound, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
-  isInlineSpeedTimedEvent, CommunityEventType } from './community-round-event-type';
+  isInlineSpeedTimedEvent, isDiscontinuedInlineFinalB, CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { breakingBattleError } from './community-breaking-battle';
 import { trackSprintHeatError, trackSprintPlacesError } from './community-track-sprint-results';
@@ -798,7 +798,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   eventOptions(sport: string | null) {
-    const all = eventOptionsForSport(sport);
+    // The historical codes stay in the registry for old records and labels,
+    // but 2026 World Skate 500 m +D / One Lap no longer have Final B.
+    const all = eventOptionsForSport(sport).filter(option =>
+      !isDiscontinuedInlineFinalB(option.code));
     if (!this.canRecordInlineSpeedWithoutRankings) return all;
     // Standalone sprint recording must not offer a different sport, a 200m TT
     // or the former Final B. Those are not World Skate 2026 progression heats.
@@ -4801,6 +4804,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   createRound(): void {
     if (!this.selected || !this.canManage() || this.roundSaving) {
+      return;
+    }
+    if (isDiscontinuedInlineFinalB(this.newRoundEventType)) {
+      this.errorMessage = t('feedback.communities.inlineFinalBDiscontinued');
       return;
     }
     if (this.canRecordInlineSpeedWithoutRankings
