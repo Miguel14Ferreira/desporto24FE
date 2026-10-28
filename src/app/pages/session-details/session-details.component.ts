@@ -16,7 +16,7 @@ import { venueUsableAddress } from '../../shared/venue-location';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionContext, SessionTeamSuggestion, SessionTeamScoreSource, SessionGuestRequest } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionContext, PostGameCommunitySuggestion, SessionTeamSuggestion, SessionTeamScoreSource, SessionGuestRequest } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
@@ -42,6 +42,73 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   sessionContextLoading = false;
   sessionContextError = '';
   invitePanelOpen = false;
+
+  /** After a completed game, offer membership only if the backend verifies attendance. */
+  postGameCommunities: PostGameCommunitySuggestion[] = [];
+  postGameCommunitiesLoading = false;
+  postGameCommunityBusyId: number | null = null;
+  postGameCommunityFeedback = '';
+  postGameCommunityError = '';
+  private loadedPostGameCommunitySessionId: number | null = null;
+
+  private postGameDismissKey(communityId: number): string {
+    return 'jynlo:postgame-community-dismiss:' +
+      (this.currentUsername || 'anonymous').toLowerCase() + ':' +
+      (this.session?.id || 0) + ':' + communityId;
+  }
+
+  private wasPostGameCommunityDismissed(communityId: number): boolean {
+    try { return localStorage.getItem(this.postGameDismissKey(communityId)) === '1'; }
+    catch { return false; }
+  }
+
+  dismissPostGameCommunity(communityId: number): void {
+    try { localStorage.setItem(this.postGameDismissKey(communityId), '1'); }
+    catch { /* Private browsing can disable storage; the card still closes. */ }
+    this.postGameCommunities = this.postGameCommunities.filter(group => group.id !== communityId);
+  }
+
+  private loadPostGameCommunities(sessionId: number): void {
+    if (this.loadedPostGameCommunitySessionId === sessionId || this.postGameCommunitiesLoading) return;
+    this.loadedPostGameCommunitySessionId = sessionId;
+    this.postGameCommunitiesLoading = true;
+    this.sessionService.postGameCommunities(sessionId).pipe(
+      timeout(10_000), finalize(() => this.postGameCommunitiesLoading = false)
+    ).subscribe({
+      next: groups => {
+        if (this.session?.id !== sessionId) return;
+        this.postGameCommunities = groups.filter(group => !this.wasPostGameCommunityDismissed(group.id));
+      },
+      // Fail closed: attendance is verified by the API. An ineligible player
+      // must not see this promotion or an unexplained red error.
+      error: () => { this.postGameCommunities = []; }
+    });
+  }
+
+  joinPostGameCommunity(group: PostGameCommunitySuggestion): void {
+    if (!this.session || this.postGameCommunityBusyId !== null
+        || !this.postGameCommunities.some(item => item.id === group.id)) return;
+    this.postGameCommunityBusyId = group.id;
+    this.postGameCommunityError = '';
+    this.postGameCommunityFeedback = '';
+    this.sessionService.joinCommunityAfterGame(this.session.id, group.id).pipe(
+      timeout(10_000), finalize(() => this.postGameCommunityBusyId = null)
+    ).subscribe({
+      next: result => {
+        this.postGameCommunities = this.postGameCommunities.filter(item => item.id !== group.id);
+        this.postGameCommunityFeedback = t(result.state === 'REQUESTED'
+          ? 'sessionDetail.postGameCommunity.requested' : 'sessionDetail.postGameCommunity.joined');
+      },
+      error: error => {
+        if (error instanceof HttpErrorResponse && (error.status === 403 || error.status === 409)) {
+          // Member, already requested, or no longer eligible. Do not keep offering.
+          this.postGameCommunities = this.postGameCommunities.filter(item => item.id !== group.id);
+        } else {
+          this.postGameCommunityError = t('sessionDetail.postGameCommunity.error');
+        }
+      }
+    });
+  }
 
   private loadSessionContext(sessionId: number): void {
     this.sessionContextLoading = true;
@@ -2510,6 +2577,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         next: session => {
           this.session = session;
           if (!this.sessionContext && !this.sessionContextLoading) this.loadSessionContext(session.id);
+          if (session.status === 'COMPLETED' && session.joined && !this.isCreator()) {
+            this.loadPostGameCommunities(session.id);
+          } else {
+            this.postGameCommunities = [];
+          }
           if (this.canShareGuestInvites()
               && this.guestRequestsLoadedForSession !== session.id) {
             this.guestRequestsLoadedForSession = session.id;
