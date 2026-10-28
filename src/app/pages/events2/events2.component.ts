@@ -56,6 +56,11 @@ export class Events2Component implements OnInit, OnDestroy {
     }
   }
 
+  /** A direct community session and a multi-community session share one creation flow. */
+  get communitySessionSelected(): boolean {
+    return this.communityId !== null || this.shareCommunityIds.length > 0;
+  }
+
   privateGame = false;
   password = '';
 
@@ -339,16 +344,16 @@ export class Events2Component implements OnInit, OnDestroy {
       longitude: this.hasCoordinates ? this.longitude : null,
       communityId: this.communityId,
       venueId: this.selectedVenueId,
-      recurrence: this.communityId ? this.recurrence : 'NONE',
-      recurrenceOccurrences: this.communityId && this.recurrence !== 'NONE'
+      recurrence: this.communitySessionSelected ? this.recurrence : 'NONE',
+      recurrenceOccurrences: this.communitySessionSelected && this.recurrence !== 'NONE'
         ? Number(this.recurrenceOccurrences)
         : null,
-      additionalWeeklyGameDates: this.communityId && this.recurrence === 'WEEKLY'
+      additionalWeeklyGameDates: this.communitySessionSelected && this.recurrence === 'WEEKLY'
         ? this.additionalWeeklyGameDates.map(value => new Date(value).toISOString()) : [],
-      recurrenceTimeZone: this.communityId && this.recurrence !== 'NONE'
+      recurrenceTimeZone: this.communitySessionSelected && this.recurrence !== 'NONE'
         ? Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' : null,
-      registrationOpeningMode: this.communityId ? this.registrationOpeningMode : 'IMMEDIATE',
-      registrationOpensAt: this.communityId && this.registrationOpeningMode === 'SCHEDULED'
+      registrationOpeningMode: this.communitySessionSelected ? this.registrationOpeningMode : 'IMMEDIATE',
+      registrationOpensAt: this.communitySessionSelected && this.registrationOpeningMode === 'SCHEDULED'
         ? new Date(this.registrationOpensAt).toISOString()
         : null
     };
@@ -1153,7 +1158,7 @@ export class Events2Component implements OnInit, OnDestroy {
       }
     }
 
-    if (this.communityId && this.recurrence === 'WEEKLY') {
+    if (this.communitySessionSelected && this.recurrence === 'WEEKLY') {
       const count = Number(this.weeklySessionsPerWeek);
       if (!Number.isInteger(count) || count < 1 || count > 7
           || this.additionalWeeklyGameDates.length !== count - 1) {
@@ -1174,7 +1179,7 @@ export class Events2Component implements OnInit, OnDestroy {
       }
     }
 
-    if (this.communityId && this.registrationOpeningMode === 'SCHEDULED') {
+    if (this.communitySessionSelected && this.registrationOpeningMode === 'SCHEDULED') {
       const opening = Date.parse(this.registrationOpensAt);
       const kickoff = Date.parse(this.gameDate);
       if (!this.registrationOpensAt || !Number.isFinite(opening)
@@ -1183,7 +1188,7 @@ export class Events2Component implements OnInit, OnDestroy {
       }
     }
 
-    if (this.communityId && this.recurrence !== 'NONE') {
+    if (this.communitySessionSelected && this.recurrence !== 'NONE') {
       const occurrences = Number(this.recurrenceOccurrences);
       if (!Number.isInteger(occurrences) || occurrences < 2
           || occurrences > 52) {
