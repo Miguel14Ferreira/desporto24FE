@@ -1,4 +1,6 @@
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { VenueDetailsModule } from './venue-details.module';
 import { DomSanitizer } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 
@@ -55,6 +57,43 @@ describe('VenueDetailsComponent', () => {
     informationSource: 'COMMUNITY',
     createdByUsername: 'miguel',
     createdAt: '2026-09-29T20:00:00Z'
+  });
+
+  it('shows a clean public venue profile without a redundant sign-in banner', async () => {
+    const route = { snapshot: {
+      data: { publicVenueView: true },
+      paramMap: convertToParamMap({ id: '7' }),
+      queryParamMap: convertToParamMap({})
+    }} as unknown as ActivatedRoute;
+    const api = jasmine.createSpyObj<VenueService>('VenueService',
+      ['get', 'getRatingSummary', 'listPhotos', 'listSportConditions']);
+    api.get.and.returnValue(of(createVenue()));
+    api.getRatingSummary.and.returnValue(of({ venueId: 7, ratingCount: 0, averageScore: null }));
+
+    await TestBed.configureTestingModule({
+      imports: [VenueDetailsModule, RouterModule.forRoot([])],
+      providers: [
+        { provide: ActivatedRoute, useValue: route },
+        { provide: VenueService, useValue: api }
+      ]
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(VenueDetailsComponent);
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+
+    expect(root.querySelector('.venue-basic-info')).not.toBeNull();
+    expect(root.querySelector('.venue-visit-section')).not.toBeNull();
+    expect(root.querySelector('.venue-information-section')).not.toBeNull();
+    expect(root.querySelector('.venue-public-more')).toBeNull();
+    expect(root.querySelector('a[href="/menu/venues/7"]')).toBeNull();
+    expect(root.querySelector('.venue-photos-section')).toBeNull();
+    expect(root.querySelector('.venue-sport-conditions-section')).toBeNull();
+    expect(root.textContent).not.toContain('Abrir detalhes completos');
+    expect(root.textContent).not.toContain('Para fotografias e contributos');
+    expect(api.listPhotos).not.toHaveBeenCalled();
+    expect(api.listSportConditions).not.toHaveBeenCalled();
+    fixture.destroy();
   });
 
   it('opens a full venue from a public link without authentication-only requests', () => {
