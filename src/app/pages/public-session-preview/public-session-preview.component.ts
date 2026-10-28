@@ -22,6 +22,9 @@ interface SessionPublicPreview {
   priceAmount: number | null;
   status: 'OPEN' | 'FULL' | 'CANCELLED' | 'COMPLETED' | null;
   gamePhoto: string | null;
+  /** Only included in a validated signed invitation, never anonymous public GET. */
+  venueName?: string | null;
+  address?: string | null;
 }
 
 @Component({
@@ -417,11 +420,20 @@ export class PublicSessionPreviewComponent implements OnInit {
     return rawDate && Number.isFinite(Date.parse(rawDate)) ? rawDate : null;
   }
 
-  /** Public preview only exposes the municipality, never the protected street address. */
+  /** A signed guest link can reveal the real venue; public discovery remains city-only. */
   get cityMapsUrl(): string | null {
-    const city = this.session?.city?.trim();
-    return city ? 'https://www.google.com/maps/search/?api=1&query='
-      + encodeURIComponent(city + ', Portugal') : null;
+    const place = this.guestToken && this.session?.address?.trim()
+      ? this.session.address.trim()
+      : this.session?.city?.trim();
+    return place ? 'https://www.google.com/maps/search/?api=1&query='
+      + encodeURIComponent(place + ', Portugal') : null;
+  }
+
+  get exactInvitationLocation(): string | null {
+    if (!this.guestToken) return null;
+    const venue = this.session?.venueName?.trim();
+    const address = this.session?.address?.trim();
+    return [venue, address].filter(Boolean).join(' · ') || null;
   }
 
   get remainingPlaces(): number | null {
