@@ -120,8 +120,12 @@
               </p>
             }
             <div class="venue-directory-tags">
-              @for (item of sports(venue); track item) { <span>{{ item }}</span> }
-              @if (!venue.sports) { <span>{{ 'venue.catalog.sportUnknown' | t }}</span> }
+              @if (venue.sports) {
+                <app-venue-sports-badges [sports]="venue.sports" [limit]="3"
+                  [compact]="true"></app-venue-sports-badges>
+              } @else {
+                <span>{{ 'venue.catalog.sportUnknown' | t }}</span>
+              }
             </div>
             <div class="venue-directory-card-link">{{ 'venue.catalog.viewDetails' | t }} <span aria-hidden="true">→</span></div>
           </a>

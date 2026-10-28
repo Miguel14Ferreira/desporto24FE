@@ -158,7 +158,8 @@
           @if (venue.sports) {
             <div>
               <dt>{{ 'events.sport' | t }}</dt>
-              <dd>{{ venue.sports }}</dd>
+              <dd><app-venue-sports-badges [sports]="venue.sports"
+                    [limit]="6" [expandable]="true"></app-venue-sports-badges></dd>
             </div>
           }
           @if (venue.venueType) {
