@@ -799,7 +799,7 @@ describe('Events2Component', () => {
 
     expect(fixture.nativeElement.querySelector('input[name="recurrenceOccurrences"]')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('input[name="registrationOpensAt"]')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('apenas membros');
+    expect(fixture.nativeElement.textContent).toContain('Exclusiva para membros');
 
     component.createSession();
     expect(sessionService.create).toHaveBeenCalledWith(
