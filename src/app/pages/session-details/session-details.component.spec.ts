@@ -3463,7 +3463,7 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
     expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
     const confirmation = fresco.querySelector('.session-player-card__confirmation') as HTMLElement;
-    expect(confirmation.textContent).toContain('Fresco');
+    expect(fresco.querySelector('.session-player-card__guest-actions')?.textContent).toContain('Fresco');
     (confirmation.querySelectorAll('button')[1] as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
