@@ -221,6 +221,78 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     expect(calls.state$.value).toBeNull();
   });
 
+  it('preserves a call when the same account receives a refreshed access token', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room = {
+      on: jasmine.createSpy('on').and.callFake(() => room),
+      connect: jasmine.createSpy('connect').and.resolveTo(),
+      disconnect: jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants: new Map(),
+      localParticipant: {setMicrophoneEnabled: jasmine.createSpy('microphone').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const firstToken = localStorage.getItem('t')!;
+    const starting = calls.start('bea','voice');
+    const request = http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea'));
+    const rotated = firstToken + '-refreshed';
+    (localStorage.getItem as jasmine.Spy).and.callFake((key:string)=>key==='t'?rotated:null);
+    calls.ensureConnected();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    request.flush({callId:'still-active',peer:'bea',media:'voice',
+      serverUrl:'wss://livekit.example.test',token:'fixture',
+      expiresAt:new Date(Date.now()+60000).toISOString()});
+    await starting;
+    expect(room.connect).toHaveBeenCalled();
+    expect(room.disconnect).not.toHaveBeenCalled();
+    expect(calls.state$.value?.id).toBe('still-active');
+    http.expectNone(r=>r.url.endsWith('/api/calls/direct/still-active/end'));
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/still-active/end')).flush(null);
+  });
+
+  it('does not terminate the call during a peer full-WebRTC reconnection', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners = new Map<string,()=>void>();
+    const peers = new Map<string,object>([['peer',{identity:'peer'}]]);
+    const room = {
+      on: jasmine.createSpy('on').and.callFake((event:string, cb:()=>void)=>{
+        listeners.set(event,cb);return room;
+      }),
+      connect: jasmine.createSpy('connect').and.resolveTo(),
+      disconnect: jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants: peers,
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea'))
+      .flush({callId:'rejoin',peer:'bea',media:'voice',
+        serverUrl:'wss://livekit.example.test',token:'fixture',
+        expiresAt:new Date(Date.now()+60000).toISOString()});
+    await starting;
+    peers.clear();
+    listeners.get('participantDisconnected')?.();
+    expect(calls.state$.value?.phase).toBe('connecting');
+    http.expectNone(r=>r.url.endsWith('/api/calls/direct/rejoin/end'));
+    peers.set('peer',{identity:'peer'});
+    listeners.get('participantConnected')?.();
+    expect(calls.state$.value?.phase).toBe('active');
+    http.expectNone(r=>r.url.endsWith('/api/calls/direct/rejoin/end'));
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/rejoin/end')).flush(null);
+  });
+
+  it('reports real provider readiness separately from absent settings', () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability'))
+      .flush({enabled:false,status:'invalidCredentials'});
+    expect(calls.available$.value).toBeFalse();
+    expect(calls.availabilityStatus$.value).toBe('invalidCredentials');
+    calls.refreshAvailability();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability'))
+      .flush({enabled:false,status:'providerUnavailable'});
+    expect(calls.availabilityStatus$.value).toBe('providerUnavailable');
+  });
+
   it('handles a backend call conflict with an actionable error instead of showing a phantom call', async () => {
     http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     const sending=calls.start('bea','video');
