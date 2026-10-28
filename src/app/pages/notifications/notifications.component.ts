@@ -353,6 +353,9 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationSubject(notification: AppNotification): string {
+    if (notification.type === 'CHAT_MESSAGE' && notification.relatedUsername?.trim()) {
+      return t('notification.chatSubject', { username: notification.relatedUsername.trim() });
+    }
     if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
       return t('notification.meetingPointChangedSubject');
     }
@@ -379,10 +382,13 @@ export class NotificationsComponent implements OnInit {
     // Direct chat stores GIPHY as a typed message; notification cards should
     // show a human-readable summary, including for existing saved alerts.
     // Never render the payload JSON or a third-party URL in the notification.
-    if (notification.type === 'CHAT_MESSAGE'
-        && (notification.message.startsWith('[JYNLO:GIPHY:1]')
-            || notification.message === '🎞️ GIF')) {
-      return t('notification.chatGifPreview');
+    if (notification.message?.startsWith('[JYNLO:GIPHY:1]')
+        || (notification.type === 'CHAT_MESSAGE' && notification.message === '🎞️ GIF')) {
+      const username = notification.type === 'CHAT_MESSAGE'
+        ? notification.relatedUsername?.trim() : null;
+      return username
+        ? t('notification.chatGifPreviewWithSender', { username })
+        : t('notification.chatGifPreview');
     }
     if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
       // Never render meeting instructions from the alert itself. Always send

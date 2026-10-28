@@ -79,6 +79,21 @@ describe('Unified Jynlo message center', () => {
     (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
   });
 
+  it('formats valid and malformed GIF envelopes without leaking metadata in any chat preview', () => {
+    const envelope = '[JYNLO:GIPHY:1]' + JSON.stringify({
+      id: 'XdUMQuuiaAEkOUtezd',
+      p: 'https://giphy.com/gifs/animated-thumbs-up-XdUMQuuiaAEkOUtezd',
+      a: 'creator', c: ''
+    });
+    expect(component.displayMessagePreview(envelope)).toBe('GIF');
+    expect(component.displayMessagePreview('[JYNLO:GIPHY:1]{bad-json}')).toBe('GIF');
+    expect(component.displayMessagePreview('Olá! 👋')).toBe('Olá! 👋');
+    expect(component.displayMessagePreview('📎 foto.png')).toBe('📎 foto.png');
+    const malformed = {...message('direct:bea', 4), text: '[JYNLO:GIPHY:1]{bad-json}'};
+    expect(component.showMessageBody(malformed)).toBeTrue();
+    expect(component.displayMessagePreview(malformed.text)).toBe('GIF');
+  });
+
   it('shares public Jynlo entities without leaking private sessions or groups', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];

@@ -25,7 +25,7 @@
                         <strong>{{ result.sender }}</strong>
                         <time>{{ dateFormatter(result.createdAt) }}</time>
                       </div>
-                      <p>{{ result.text }}</p>
+                      <p>{{ previewFormatter(result.text) }}</p>
                       <button type="button" class="inbox-search-result-open"
                         [attr.aria-pressed]="selectedSearchResultId === result.id"
                         (click)="locateRequested.emit(result)">
