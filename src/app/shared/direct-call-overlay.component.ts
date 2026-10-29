@@ -234,7 +234,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .call-quality.is-poor{color:#ffd3aa;border-color:#b16b46}
     .call-videos{position:relative;flex:1 1 auto;min-height:150px;max-height:min(55dvh,480px);
       overflow:hidden;background:#081b28;border-radius:16px;margin-bottom:10px;}
-    .call-videos video:first-child{display:block;width:100%;height:100%;min-height:150px;
+    .call-videos video:first-of-type{display:block;width:100%;height:100%;min-height:150px;
       max-height:min(55dvh,480px);object-fit:cover;background:#0a1d29;}
     .call-videos video:nth-of-type(2){position:absolute;right:12px;bottom:12px;
       width:clamp(76px,18%,142px);height:clamp(90px,22%,165px);min-height:100px;
@@ -286,7 +286,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .call-swap{position:absolute;top:10px;right:10px;z-index:5;background:#092b38de;
       border:1px solid #66a9a0;color:#e1fffa;border-radius:10px;padding:7px 11px;cursor:pointer;font-size:.78rem}
     .call-swap:disabled{opacity:.4;cursor:default}
-    .call-videos--swapped video:first-child{position:absolute;right:12px;bottom:12px;
+    .call-videos--swapped video:first-of-type{position:absolute;right:12px;bottom:12px;
       width:clamp(76px,18%,142px);height:clamp(90px,22%,165px);min-height:100px;
       border-radius:12px;z-index:3;border:1px solid #9be8d8}
     .call-videos--swapped video:nth-of-type(2){position:relative;inset:auto;display:block;
@@ -295,7 +295,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .call-voice-surface.is-active .call-avatar-large{box-shadow:0 0 0 10px #40dfbd22}
     .call-panel{width:min(100%,1020px);height:min(710px,calc(100dvh - 20px))}
     .call-videos{flex:1 1 0;min-height:0;max-height:none}
-    .call-videos video:first-child{min-height:0;max-height:none}
+    .call-videos video:first-of-type{min-height:0;max-height:none}
     .call-voice-surface{flex:1 1 0;min-height:75px}
     .call-footer{position:relative}
     .call-device-panel{position:absolute;right:0;bottom:calc(100% + 6px);
@@ -307,7 +307,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
       .call-backdrop{padding:6px}
       .call-panel{max-height:calc(100dvh - 12px);padding:12px;border-radius:15px}
       .call-videos{min-height:0;max-height:none}
-      .call-videos video:first-child{max-height:none}
+      .call-videos video:first-of-type{max-height:none}
       .call-info{margin:5px 0 0}
       .call-metrics{margin:6px 0}
       .call-device-panel{grid-template-columns:1fr;max-height:34dvh}
@@ -317,7 +317,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     }
     @media(max-height:620px){
       .call-videos{max-height:none;min-height:0}
-      .call-videos video:first-child{max-height:none;min-height:0}
+      .call-videos video:first-of-type{max-height:none;min-height:0}
       .call-avatar{width:38px;height:38px}
       .call-voice-surface{min-height:75px}
     }
