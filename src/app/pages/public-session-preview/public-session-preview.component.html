@@ -94,13 +94,20 @@
               }
             </section>
           }
-          <app-public-session-chat
-            [sessionId]="details.id"
-            [authenticated]="isAuthenticated"
-            [guestConfirmed]="guestStep === 'approved' || guestStep === 'linked'"
-            [returnUrl]="participationReturnUrl"
-            [startsAt]="details.gameDate">
-          </app-public-session-chat>
+          @defer (on viewport) {
+            <app-public-session-chat
+              [sessionId]="details.id"
+              [authenticated]="isAuthenticated"
+              [guestConfirmed]="guestStep === 'approved' || guestStep === 'linked'"
+              [returnUrl]="participationReturnUrl"
+              [startsAt]="details.gameDate">
+            </app-public-session-chat>
+          } @placeholder {
+            <div class="invite-chat-placeholder">
+              <strong>{{ 'publicSession.sessionChat' | t }}</strong>
+              <span>{{ 'publicSession.sessionChatHelp' | t }}</span>
+            </div>
+          }
         </div>
 
         <aside class="join-panel">
