@@ -25,8 +25,10 @@
               <span class="fact-label">{{ 'common.location' | t }}</span>
               @if (cityMapsUrl; as mapUrl) {
                 <a class="public-location-link" [href]="mapUrl" target="_blank" rel="noopener noreferrer"
+                   [attr.title]="completeInvitationAddress || details.city || ''"
                    [attr.aria-label]="'publicSession.viewAreaOnMaps' | t">
-                  <strong>{{ exactInvitationLocation || details.city }}</strong> <span aria-hidden="true">↗</span>
+                  <strong>{{ exactInvitationLocation || details.city }}</strong>
+                  <span class="public-location-map">{{ 'publicSession.openMap' | t }} <span aria-hidden="true">↗</span></span>
                 </a>
               } @else {
                 <strong>{{ 'publicSession.notSpecified' | t }}</strong>
@@ -71,10 +73,6 @@
                   <h2 id="guest-confirmed-roster-title">{{ 'sessionDetail.whosGoing' | t }}</h2>
                   <p>{{ 'publicSession.confirmedRosterHelp' | t }}</p>
                 </div>
-                <button type="button" class="guest-confirmed-roster-refresh"
-                        [disabled]="confirmedPlayersLoading" (click)="loadConfirmedPlayers()">
-                  {{ 'chat.refresh' | t }}
-                </button>
               </div>
               @if (confirmedPlayersLoading && !confirmedPlayers.length) {
                 <p role="status">{{ 'sessionDetail.loadingParticipants' | t }}</p>
@@ -96,6 +94,13 @@
               }
             </section>
           }
+          <app-public-session-chat
+            [sessionId]="details.id"
+            [authenticated]="isAuthenticated"
+            [guestConfirmed]="guestStep === 'approved' || guestStep === 'linked'"
+            [returnUrl]="participationReturnUrl"
+            [startsAt]="details.gameDate">
+          </app-public-session-chat>
         </div>
 
         <aside class="join-panel">
