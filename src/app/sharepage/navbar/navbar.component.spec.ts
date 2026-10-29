@@ -4,6 +4,7 @@ import { of, Subject, throwError } from 'rxjs';
 
 import { NavbarComponent } from './navbar.component';
 import { AuthenticationService } from '../../services/authethication.service';
+import { MyProfileService } from '../../services/my-profile.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { NotificationApiService } from '../../services/notification-api.service';
 import { InboxApiService } from '../../services/inbox-api.service';
@@ -15,6 +16,7 @@ describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
   let authService: jasmine.SpyObj<AuthenticationService>;
+  let myProfileService: jasmine.SpyObj<MyProfileService>;
   let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
   let notificationService: jasmine.SpyObj<NotificationApiService>;
   let inboxApi: jasmine.SpyObj<InboxApiService>;
@@ -35,6 +37,8 @@ describe('NavbarComponent', () => {
     );
     authService.hasSessionCandidate.and.returnValue(false);
     authService.terminarSessao.and.returnValue(of(undefined));
+    myProfileService = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get']);
+    myProfileService.get.and.returnValue(of({username:'bea',nickname:'Bea',fullName:'Beatriz',profilePicUrl:null} as any));
 
     incomingMessages = new Subject<any>();
     communityEvents = new Subject<any>();
@@ -73,6 +77,7 @@ describe('NavbarComponent', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: AuthenticationService, useValue: authService },
+        { provide: MyProfileService, useValue: myProfileService },
         { provide: DirectChatRealtimeService, useValue: realtimeService },
         { provide: NotificationApiService, useValue: notificationService },
         { provide: InboxApiService, useValue: inboxApi },
@@ -613,4 +618,101 @@ describe('NavbarComponent', () => {
     expect(realtimeService.connect).not.toHaveBeenCalled();
     expect(realtimeService.disconnect).toHaveBeenCalled();
   });
+  it('shows the active account username in the navigation and full identity in the dropdown', () => {
+    (authService as any).loggedInPerfilname = 'bea';
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    fixture.detectChanges();
+    const trigger: HTMLElement = fixture.nativeElement.querySelector('.account-identity-trigger');
+    expect(trigger).not.toBeNull();
+    expect(trigger.textContent).toContain('Conta ativa');
+    expect(trigger.textContent).toContain('@bea');
+    expect(trigger.getAttribute('aria-label')).toContain('@bea');
+    expect(fixture.nativeElement.querySelector('.account-identity-avatar')?.textContent?.trim()).toBe('B');
+    expect(fixture.nativeElement.querySelector('.account-menu__identity')?.textContent).toContain('Bea');
+    expect(myProfileService.get).toHaveBeenCalledTimes(1);
+
+    const details: HTMLDetailsElement = fixture.nativeElement.querySelector('.account-menu');
+    details.open = true;
+    fixture.detectChanges();
+    expect(details.textContent).toContain('Trocar de conta');
+    expect(details.querySelector('a[href="/menu/dadosPerfil"]')?.textContent).toContain('Ver o meu perfil');
+    expect(details.querySelector('.language-switch')).not.toBeNull();
+  });
+
+  it('shows a real profile photo when available, otherwise the username initials', () => {
+    myProfileService.get.and.returnValue(of({
+      username:'bea',nickname:'Beatriz Martins',
+      fullName:'Beatriz Martins',profilePicUrl:'/media/profiles/bea.png'
+    } as any));
+    (authService as any).loggedInPerfilname = 'bea';
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    fixture.detectChanges();
+    const image = fixture.nativeElement.querySelector('.account-identity-trigger img') as HTMLImageElement;
+    expect(image).not.toBeNull();
+    expect(image.getAttribute('src')).toContain('/media/profiles/bea.png');
+    expect(image.alt).toBe('');
+    expect(fixture.nativeElement.querySelector('.account-menu__identity-copy')?.textContent)
+      .toContain('Beatriz Martins');
+  });
+
+  it('clears the previous account immediately and rejects stale profile responses', () => {
+    const old = new Subject<any>();
+    myProfileService.get.and.returnValues(old.asObservable(), of({
+      username:'miguel_alt',nickname:'Outro perfil',fullName:null,
+      profilePicUrl:'/media/profiles/alternate.png'
+    } as any));
+    (authService as any).loggedInPerfilname = 'bea';
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.account-identity-trigger')?.textContent).toContain('@bea');
+
+    (authService as any).loggedInPerfilname = 'miguel_alt';
+    (component as any).syncAuthenticatedState();
+    old.next({username:'bea',nickname:'Conta antiga',profilePicUrl:'/media/profiles/old.png'});
+    fixture.detectChanges();
+    const trigger: HTMLElement = fixture.nativeElement.querySelector('.account-identity-trigger');
+    expect(trigger.textContent).toContain('@miguel_alt');
+    expect(trigger.textContent).not.toContain('@bea');
+    expect(fixture.nativeElement.querySelector('.account-menu__identity-copy')?.textContent).toContain('Outro perfil');
+    expect(fixture.nativeElement.querySelector('.account-menu__identity-copy')?.textContent).not.toContain('Conta antiga');
+    expect(myProfileService.get).toHaveBeenCalledTimes(2);
+
+    authService.hasSessionCandidate.and.returnValue(false);
+    (component as any).syncAuthenticatedState();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.account-menu')).toBeNull();
+    expect(component.accountProfile).toBeNull();
+  });
+
+  it('keeps the identity visible when profile retrieval fails, without leaking previous data', () => {
+    myProfileService.get.and.returnValue(throwError(() => new Error('Offline')));
+    (authService as any).loggedInPerfilname = 'alternate';
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.account-identity-trigger')?.textContent).toContain('@alternate');
+    expect(fixture.nativeElement.querySelector('.account-identity-avatar')?.textContent?.trim()).toBe('A');
+    expect(component.accountProfile).toBeNull();
+  });
+
+  it('switches account by invalidating the active session through the existing safe logout', () => {
+    (authService as any).loggedInPerfilname = 'bea';
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    fixture.detectChanges();
+    const details: HTMLDetailsElement = fixture.nativeElement.querySelector('.account-menu');
+    details.open = true;
+    const button: HTMLButtonElement = details.querySelector('.account-menu__switch')!;
+    expect(button.disabled).toBeFalse();
+    button.click();
+    expect(authService.terminarSessao).toHaveBeenCalledTimes(1);
+    expect(authService.logOut).toHaveBeenCalledTimes(1);
+    expect(component.loggingOut).toBeTrue();
+    expect(details.open).toBeFalse();
+  });
+
+
 });
