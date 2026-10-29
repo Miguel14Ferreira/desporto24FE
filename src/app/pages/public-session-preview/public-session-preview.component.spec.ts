@@ -1131,6 +1131,41 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.retry-action')).toBeNull();
   });
 
+
+  it('spaces temporary-error actions as separate accessible controls', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    const panel = page.querySelector<HTMLElement>('.error-state');
+    const actions = panel?.querySelector<HTMLElement>('.error-actions');
+    const retry = actions?.querySelector<HTMLButtonElement>('button.retry-action');
+    const home = actions?.querySelector<HTMLAnchorElement>('a.error-home-action');
+
+    expect(panel?.getAttribute('role')).toBe('alert');
+    expect(actions?.children.length).toBe(2);
+    expect(retry?.type).toBe('button');
+    expect(home?.getAttribute('href')).toBe('/home');
+    expect(getComputedStyle(actions!).display).toBe('flex');
+    expect(parseFloat(getComputedStyle(actions!).gap)).toBeGreaterThanOrEqual(10);
+    expect(getComputedStyle(retry!).marginTop).toBe('0px');
+    expect(getComputedStyle(retry!).marginBottom).toBe('0px');
+    expect(parseFloat(getComputedStyle(home!).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(retry!).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(panel?.querySelector('.error-description')?.textContent)
+      .toContain('Não foi possível carregar a sessão');
+  });
+
+  it('keeps the return-home action properly spaced when retry is not allowed', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    const actions = page.querySelector<HTMLElement>('.error-state .error-actions');
+    expect(actions?.children.length).toBe(1);
+    expect(actions?.querySelector('.retry-action')).toBeNull();
+    expect(actions?.querySelector('a.error-home-action')?.getAttribute('href')).toBe('/home');
+    expect(parseFloat(getComputedStyle(actions!).marginTop)).toBeGreaterThanOrEqual(8);
+  });
+
   it('shows a retry action when the preview API is temporarily unavailable', () => {
     http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
     fixture.detectChanges();
