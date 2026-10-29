@@ -34,7 +34,7 @@ describe('PublicSessionPreviewComponent', () => {
     routeQueryParamMap = convertToParamMap({});
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get', 'post']);
     authenticationService = jasmine.createSpyObj<AuthenticationService>(
-      'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate']
+      'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate', 'login', 'saveToken']
     );
     authenticationService.isLoggedIn.and.returnValue(false);
     authenticationService.hasSessionCandidate.and.returnValue(false);
@@ -64,6 +64,8 @@ describe('PublicSessionPreviewComponent', () => {
     TestBed.inject(I18nService).setLanguage('pt');
     localStorage.removeItem('d24-language');
     localStorage.removeItem('jynlo-guest-receipt:42');
+    Object.keys(sessionStorage).filter(key => key.startsWith('jynlo-invite-rsvp:'))
+      .forEach(key => sessionStorage.removeItem(key));
     Object.keys(localStorage).filter(key => key.startsWith('jynlo-guest-receipt:42:'))
       .forEach(key => localStorage.removeItem(key));
   });
@@ -1284,8 +1286,93 @@ describe('PublicSessionPreviewComponent', () => {
         }
         return throwError(()=>new Error('Unexpected route '+url));
       });
-      return render({sport:'Futebol'});
+      const page = render({sport:'Futebol'});
+      fixture.componentInstance.startInvitation();
+      fixture.componentInstance.chooseInvitationIdentity(false);
+      fixture.detectChanges();
+      return page;
     }
+
+    it('starts with one confirmation button and does not auto-register on link opening', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string) => {
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      const page=render();
+      expect(page.querySelector('.invitation-first-confirm')).not.toBeNull();
+      expect(page.querySelector('#guest-new-name')).toBeNull();
+      expect(page.textContent).not.toContain('Já tens conta Jynlo?');
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        call=>String(call[0]).endsWith('/guest-join-account')
+          || String(call[0]).endsWith('/guest-requests'))).toBeFalse();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(page.textContent).toContain('Já tens conta Jynlo?');
+      expect(page.querySelector('.invitation-have-account')).not.toBeNull();
+      expect(page.querySelector('.invitation-no-account')).not.toBeNull();
+    });
+
+    it('confirms a new anonymous name in one server call without an intermediate confirmation page', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string, body:any) => {
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        if (url.endsWith('/guest-requests')) {
+          expect(body).toEqual(jasmine.objectContaining({linkToken:token,newName:'Joana Silva',playerId:null}));
+          return of({receipt,status:'APPROVED',playerName:'Joana Silva'});
+        }
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      const page=render();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (page.querySelector('.invitation-no-account') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      fixture.componentInstance.setGuestNewName('Joana Silva');
+      fixture.detectChanges();
+      (page.querySelector('#guest-participate .guest-rsvp-primary') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.guestStep).toBe('approved');
+      expect(page.textContent).toContain('Joana Silva');
+      expect(page.querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+      expect((http.post as jasmine.Spy).calls.allArgs().filter(c=>
+        String(c[0]).endsWith('/guest-requests')).length).toBe(1);
+    });
+
+    it('does not register on login failure and does not persist a hidden auto-join', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      authenticationService.login.and.returnValue(throwError(()=>new Error('invalid credentials')));
+      const page=render();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const c=fixture.componentInstance;
+      c.invitationLoginUsername='ana';
+      c.invitationLoginPassword='incorrect';
+      c.loginInsideInvitation();
+      fixture.detectChanges();
+      expect(c.isAuthenticated).toBeFalse();
+      expect(c.invitationLoginError).toBe('inviteCenter.inlineLoginError');
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
+    });
+
     it('loads the name list only when holding a valid organizer-issued invite token', () => {
       const page=renderGuest();
       expect(page.querySelector('.guest-rsvp')).toBeTruthy();
