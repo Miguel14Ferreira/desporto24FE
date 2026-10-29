@@ -402,30 +402,31 @@ describe('DiscoverComponent', () => {
     }
   });
 
-  it('offers recruiting players through a public session when no people match', () => {
-    expect(component.people).toEqual([]);
+  it('keeps the Jogadores tab focused on finding profiles rather than creating sessions', () => {
+    component.setCategory('people');
     fixture.detectChanges();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('#explore-people');
+    expect(panel).not.toBeNull();
+    expect(panel.textContent).toContain('Não encontrámos jogadores com estes critérios');
+    expect(panel.querySelector('.people-empty-recruit')).toBeNull();
+    expect(panel.querySelector('a[href*="/menu/createEvent"]')).toBeNull();
 
-    const recruit: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.people-empty-recruit');
-    expect(recruit?.getAttribute('href'))
-      .toBe('/menu/createEvent?intent=findPlayers&sport=Padel&city=Lisboa');
-    expect(recruit?.textContent).toContain('Encontrar jogadores');
+    const heading: HTMLElement = fixture.nativeElement.querySelector('.explore-results-heading');
+    expect(heading.hasAttribute('hidden')).toBeTrue();
+    expect(panel.querySelector('.pillar-heading h2')?.textContent).toContain('Pessoas para conhecer');
+    const directory: HTMLAnchorElement = panel.querySelector('a[href^="/menu/perfis?"]')!;
+    expect(directory.textContent).toContain('Ver todos os jogadores');
+    expect(directory.getAttribute('href')).toBe('/menu/perfis?from=discover&sport=Padel&city=Lisboa');
   });
 
-  it('passes changed discovery filters to the existing Find Players mode', () => {
-    component.onSportChange('Ténis');
-    component.onLocationChange('Sintra');
-    component.search();
+  it('does not duplicate the people heading in the focused tab while keeping other headings', () => {
+    component.setCategory('people');
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.explore-results-heading').hasAttribute('hidden')).toBeTrue();
 
-    let recruit: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.people-empty-recruit');
-    expect(recruit?.getAttribute('href'))
-      .toBe('/menu/createEvent?intent=findPlayers&sport=T%C3%A9nis&city=Sintra');
-
-    component.clear();
+    component.setCategory('venues');
     fixture.detectChanges();
-    recruit = fixture.nativeElement.querySelector('.people-empty-recruit');
-    expect(recruit?.getAttribute('href')).toBe('/menu/createEvent?intent=findPlayers');
+    expect(fixture.nativeElement.querySelector('.explore-results-heading').hasAttribute('hidden')).toBeFalse();
   });
 
   it('explains unmatched name searches without suggesting a recruiting session', () => {
@@ -533,7 +534,7 @@ describe('DiscoverComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(4);
 
     const toggle = (): HTMLButtonElement => fixture.nativeElement.querySelector('.people-toggle');
-    expect(toggle().textContent).toContain('Ver todos os jogadores');
+    expect(toggle().textContent).toContain('Mostrar mais jogadores');
     toggle().click();
     fixture.detectChanges();
 
