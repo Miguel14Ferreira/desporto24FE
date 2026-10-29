@@ -61,7 +61,6 @@ import { JynloSelectComponent } from './shared/jynlo-select/jynlo-select.compone
         TranslatePipe,
     JynloSelectComponent,
     VenueSportsBadgesComponent,
-        DirectCallOverlayComponent,
         ProfileQuickViewComponent,
         VenueSportsBadgesComponent], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }
