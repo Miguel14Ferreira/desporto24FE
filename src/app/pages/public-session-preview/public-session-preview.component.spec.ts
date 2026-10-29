@@ -108,6 +108,9 @@ describe('PublicSessionPreviewComponent', () => {
     }) as any);
     const page=fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
+    fixture.componentInstance.startInvitation();
+    fixture.componentInstance.chooseInvitationIdentity(false);
+    fixture.detectChanges();
     const location=page.querySelector('.public-location-link') as HTMLAnchorElement;
     expect(page.querySelector('#guest-player-select')).toBeNull();
     expect(page.querySelector('label[for="guest-new-name"]')?.textContent?.trim())
@@ -441,7 +444,7 @@ describe('PublicSessionPreviewComponent', () => {
     expect(localStorage.getItem(key)).toBeNull();
     expect(fixture.componentInstance.guestPlayers.map(p=>p.name)).toEqual(['Jogador disponível']);
     expect((fixture.nativeElement as HTMLElement).querySelector('#guest-player-select')).toBeNull();
-    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-new-name')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.invitation-first-confirm')).not.toBeNull();
   });
 
   it('allows a signed-in player to participate when a previous shared guest receipt is invalid', () => {
@@ -1688,7 +1691,8 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.header-login')).toBeNull();
     expect(page.querySelector('.join-panel .secondary-action:not(.whatsapp-share-action)')).toBeNull();
     expect(page.querySelector('#guest-player-select')).toBeNull();
-    expect(page.querySelector('#guest-new-name')).not.toBeNull();
+    expect(page.querySelector('.invitation-first-confirm')).not.toBeNull();
+    expect(page.querySelector('#guest-new-name')).toBeNull();
     expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
     expect(http.post).toHaveBeenCalledTimes(3);
   });
