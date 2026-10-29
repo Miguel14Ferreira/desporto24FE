@@ -126,7 +126,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                 }
                 @if (calls.canShareScreen) {
                   <button type="button" [disabled]="calls.busyMedia$ | async"
-                    (click)="calls.setScreenShare(!(calls.screenShareEnabled$ | async))"
+                    (click)="calls.setScreenShare(!calls.screenShareEnabled$.value)"
                     [attr.aria-pressed]="calls.screenShareEnabled$ | async">
                     <span aria-hidden="true">▧</span>
                     {{ ((calls.screenShareEnabled$ | async) ? 'calls.stopSharing' : 'calls.shareScreen') | t }}
