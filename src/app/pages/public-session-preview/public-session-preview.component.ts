@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
@@ -10,6 +10,7 @@ import { AuthenticationService } from '../../services/authethication.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { I18nService } from '../../i18n/i18n.service';
 import { compactSessionShareMessage } from '../../shared/session-share-message';
+import { PublicSessionChatComponent } from './public-session-chat.component';
 
 interface SessionPublicPreview {
   id: number;
@@ -36,12 +37,12 @@ interface ConfirmedSessionPlayer {
 @Component({
   selector: 'app-public-session-preview',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe, PublicSessionChatComponent],
   templateUrl: './public-session-preview.component.html',
   styleUrls: ['./public-session-preview.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
 })
-export class PublicSessionPreviewComponent implements OnInit {
+export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   session: SessionPublicPreview | null = null;
   loading = true;
   errorMessageKey = '';
@@ -81,6 +82,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   guestSavedBookings: {receipt:string;name:string}[] = [];
   memberJoining = false;
   memberJoinError = '';
+  private rosterRefreshTimer?: ReturnType<typeof setInterval>;
 
   get guestRegistrationReturnUrl(): string | null {
     return this.sessionId && this.guestToken
@@ -511,7 +513,8 @@ export class PublicSessionPreviewComponent implements OnInit {
     private readonly router: Router,
     private readonly http: HttpClient,
     private readonly authenticationService: AuthenticationService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -549,6 +552,21 @@ export class PublicSessionPreviewComponent implements OnInit {
       }
     }
     this.loadPreview();
+    if (this.guestToken) {
+      // Periodic roster refresh should not hold Angular's testability zone
+      // open indefinitely (or block stable screens awaiting async operations).
+      this.zone.runOutsideAngular(() => {
+        this.rosterRefreshTimer = setInterval(() => {
+          if (document.visibilityState !== 'hidden' && this.guestToken) {
+            this.zone.run(() => this.loadConfirmedPlayers());
+          }
+        }, 15000);
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.rosterRefreshTimer) clearInterval(this.rosterRefreshTimer);
   }
 
   // Keep the join/waitlist section in view after sign-in or registration.
@@ -707,11 +725,19 @@ export class PublicSessionPreviewComponent implements OnInit {
       + encodeURIComponent(place + ', Portugal') : null;
   }
 
+  /** Compact location label. The detailed street address stays in the Maps link. */
   get exactInvitationLocation(): string | null {
     if (!this.guestToken) return null;
     const venue = this.session?.venueName?.trim();
-    const address = this.session?.address?.trim();
-    return [venue, address].filter(Boolean).join(' · ') || null;
+    const city = this.session?.city?.trim();
+    if (venue && city && !venue.toLocaleLowerCase('pt-PT').includes(city.toLocaleLowerCase('pt-PT')))
+      return venue + ' · ' + city;
+    return venue || city || null;
+  }
+
+  get completeInvitationAddress(): string | null {
+    if (!this.guestToken) return null;
+    return this.session?.address?.trim() || null;
   }
 
   get remainingPlaces(): number | null {

@@ -1,13 +1,25 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component, Input } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { PublicSessionPreviewComponent } from './public-session-preview.component';
+import { PublicSessionChatComponent } from './public-session-chat.component';
 import { AuthenticationService } from '../../services/authethication.service';
 import { I18nService } from '../../i18n/i18n.service';
 import { compactSessionShareMessage } from '../../shared/session-share-message';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+
+@Component({selector:'app-public-session-chat',standalone:true,template:''})
+class SessionChatStubComponent {
+  @Input() sessionId = 0;
+  @Input() authenticated = false;
+  @Input() guestConfirmed = false;
+  @Input() returnUrl: string | null = null;
+  @Input() startsAt: string | null = null;
+}
 
 describe('PublicSessionPreviewComponent', () => {
   let fixture: ComponentFixture<PublicSessionPreviewComponent>;
@@ -25,10 +37,17 @@ describe('PublicSessionPreviewComponent', () => {
     );
     authenticationService.isLoggedIn.and.returnValue(false);
     authenticationService.hasSessionCandidate.and.returnValue(false);
+    TestBed.overrideComponent(PublicSessionPreviewComponent, {
+      remove: { imports: [PublicSessionChatComponent] },
+      add: { imports: [SessionChatStubComponent] }
+    });
     await TestBed.configureTestingModule({
       imports: [PublicSessionPreviewComponent, RouterTestingModule],
       providers: [
         { provide: HttpClient, useValue: http },
+        { provide: DirectChatRealtimeService, useValue: {
+          sessionMessages$: new Subject(), connect: jasmine.createSpy('connect')
+        } }, 
         { provide: AuthenticationService, useValue: authenticationService },
         { provide: ActivatedRoute, useValue: {
           snapshot: { get paramMap() { return routeParamMap; },
@@ -90,8 +109,11 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('label[for="guest-player-select"]')?.textContent?.trim())
       .toBe('Já jogaste com este grupo?');
     expect(location.textContent).toContain('Clube Nacional de Ginástica');
-    expect(location.textContent).toContain('Rua Machado dos Santos');
+    expect(location.textContent).not.toContain('Rua Machado dos Santos');
+    expect(location.textContent).toContain('Parede');
+    expect(location.textContent).toContain('Ver morada no mapa');
     expect(decodeURIComponent(location.href)).toContain('Rua Machado dos Santos');
+    expect(location.title).toContain('Rua Machado dos Santos');
     fixture.componentInstance.selectGuestPlayer(7);
     fixture.componentInstance.chooseGuest();
     fixture.detectChanges();
