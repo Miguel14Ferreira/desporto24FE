@@ -25,3 +25,22 @@
 .invite-chat-error {font-size:.83rem;margin:0;color:#ffd0d0}
 .invite-chat :is(a,button,textarea):focus-visible {outline:2px solid #91ffdf;outline-offset:3px}
 @media(max-width:450px){.invite-chat-compose{grid-template-columns:1fr}.invite-chat-compose button{width:100%}}
+
+
+.invite-chat-access-state {
+  display:grid;justify-items:start;gap:12px;
+  padding:13px;border:1px solid rgba(108,198,201,.25);
+  border-radius:12px;background:rgba(9,38,53,.7);
+}
+.invite-chat-access-state .invite-chat-locked {padding:0;background:transparent;}
+.invite-chat-retry {
+  appearance:none;min-height:40px;padding:9px 15px;
+  border:1px solid rgba(80,222,192,.55);border-radius:10px;
+  background:rgba(27,132,120,.18);color:#bbfff0;
+  font:inherit;font-size:.85rem;font-weight:750;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease;
+}
+.invite-chat-retry:hover:not(:disabled) {
+  background:rgba(35,159,138,.3);border-color:#76ebd1;
+}
+.invite-chat-retry:disabled {opacity:.5;cursor:wait;}
