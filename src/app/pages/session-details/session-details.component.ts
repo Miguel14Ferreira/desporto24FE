@@ -14,6 +14,7 @@ import { compactSessionShareMessage } from '../../shared/session-share-message';
 import { venueHasPortugueseCoordinates, venueDirectionsUrl, VenueTravelMode } from '../../shared/venue-public-contact';
 import { venueUsableAddress } from '../../shared/venue-location';
 import { playerAvatarInitials, playerAvatarUrl } from '../../shared/player-avatar';
+import { suggestedMinimumPlayers } from '../../shared/session-minimum-players';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
@@ -1426,6 +1427,30 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       });
   }
 
+  /** Only another registered player can be removed; the owner keeps organiser control. */
+  canCancelRegisteredPresence(participant: SessionParticipant): boolean {
+    return this.isCreator()
+      && !!this.session
+      && (this.session.status === 'OPEN' || this.session.status === 'FULL')
+      && this.canRemoveParticipant(participant);
+  }
+
+  minimumToPlay(): number {
+    if (!this.session) return 0;
+    const minimum = this.session.minParticipants;
+    return Number.isSafeInteger(minimum) && minimum! >= 2
+      && minimum! <= this.session.maxParticipants
+      ? minimum! : suggestedMinimumPlayers(this.session.sport, this.session.maxParticipants);
+  }
+
+  visibleConfirmedForMinimum(): number {
+    return this.session?.participantCount ?? 0;
+  }
+
+  MathMax(a: number, b: number): number {
+    return Math.max(a, b);
+  }
+
   canRemoveParticipant(participant: SessionParticipant): boolean {
     if (!this.session?.creatorUsername) {
       return false;
@@ -1458,6 +1483,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       !this.sessionId
       || !this.isCreator()
       || !this.canRemoveParticipant(participant)
+      || this.pendingRemovalId !== participant.id
       || this.removeLoadingId !== null
       || this.attendanceBulkUpdating
       || this.futureExclusionUpdatingId !== null
@@ -1484,6 +1510,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
           this.participantManagementSuccess =
             t('feedback.session.removed', { username: participant.username });
+          this.loadSession(false);
         },
         error: error => {
           this.participantManagementError = this.errorFrom(
