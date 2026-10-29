@@ -662,8 +662,13 @@ export class Events2Component implements OnInit, OnDestroy {
     return this.venueOptions.map(venue => ({
       value: String(venue.id),
       label: venue.name + ' · ' + venue.city,
-      description: [venue.address, venue.district && venue.district !== venue.city
-        ? venue.district : ''].filter(Boolean).join(' · ')
+      description: [
+        venue.address || (venue.latitude != null && venue.longitude != null
+          ? t('venue.gpsOnlyAddress') : ''),
+        venue.district && venue.district !== venue.city ? venue.district : '',
+        venue.informationSource === 'OPENSTREETMAP'
+          ? t('venue.detail.sourceOpenStreetMap') : ''
+      ].filter(Boolean).join(' · ')
     }));
   }
 
