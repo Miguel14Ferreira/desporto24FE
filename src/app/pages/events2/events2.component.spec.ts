@@ -2578,4 +2578,111 @@ describe('Events2Component', () => {
     expect(sessionService.create).not.toHaveBeenCalled();
     expect(component.errorMessage).toContain('mínimo');
   });
+
+  it('lets the organiser choose game frequency through the premium selector', () => {
+    component.communityId = 7;
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="recurrence"]'
+    ) as HTMLElement;
+    expect(select).not.toBeNull();
+    (select.querySelector('button[role="combobox"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(options.length).toBe(3);
+    expect(options[1].textContent).toContain('Todas as semanas');
+    options[1].click();
+    fixture.detectChanges();
+    expect(component.recurrence).toBe('WEEKLY');
+    expect(select.querySelector('.jynlo-select__value')?.textContent).toContain('Todas as semanas');
+    expect(fixture.nativeElement.querySelector('input[name="recurrenceOccurrences"]')).not.toBeNull();
+  });
+
+  it('keeps weekly count numeric when selected from the premium dropdown', () => {
+    component.communityId = 7;
+    component.recurrence = 'WEEKLY';
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="weeklySessionsPerWeek"]'
+    ) as HTMLElement;
+    (select.querySelector('button[role="combobox"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(options.length).toBe(7);
+    options[2].click();
+    fixture.detectChanges();
+    expect(component.weeklySessionsPerWeek).toBe(3);
+    expect(component.additionalWeeklyGameDates.length).toBe(2);
+  });
+
+  it('preserves selected district and supports searchable accent-insensitive matching', () => {
+    component.locationMethod = 'venue';
+    component.venueDistrict = 'Lisboa';
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="venueDistrict"]'
+    ) as HTMLElement;
+    expect(select).not.toBeNull();
+    expect(select.querySelector('.jynlo-select__value')?.textContent).toContain('Lisboa');
+    (select.querySelector('button[role="combobox"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const search = select.querySelector('input[type="search"]') as HTMLInputElement;
+    expect(search).not.toBeNull();
+    search.value = 'evora';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const buttons = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(buttons.length).toBe(1);
+    expect(buttons[0].textContent).toContain('Évora');
+    buttons[0].click();
+    fixture.detectChanges();
+    expect(component.venueDistrict).toBe('Évora');
+  });
+
+  it('preserves the difference between unset, false and true for venue facilities', () => {
+    component.locationMethod = 'venue';
+    component.showVenueCreator = true;
+    component.venueToilets = null;
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="venueToilets"]'
+    ) as HTMLElement;
+    expect(select).not.toBeNull();
+    const trigger = select.querySelector('button[role="combobox"]') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    let options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(options.length).toBe(3);
+    options[2].click();
+    fixture.detectChanges();
+    expect(component.venueToilets).toBeFalse();
+    trigger.click();
+    fixture.detectChanges();
+    options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    options[1].click();
+    fixture.detectChanges();
+    expect(component.venueToilets).toBeTrue();
+    trigger.click();
+    fixture.detectChanges();
+    options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    options[0].click();
+    fixture.detectChanges();
+    expect(component.venueToilets).toBeNull();
+  });
+
+  it('disables the custom dropdown during form submission', () => {
+    component.communityId = 7;
+    component.loading = true;
+    fixture.detectChanges();
+    const disabled = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="recurrence"] button[role="combobox"]'
+    ) as HTMLButtonElement;
+    expect(disabled.disabled).toBeTrue();
+    disabled.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="recurrence"] .jynlo-select__popover'
+    )).toBeNull();
+  });
+
 });
