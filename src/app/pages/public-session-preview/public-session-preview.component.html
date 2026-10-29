@@ -503,7 +503,7 @@
         <p class="error-description">{{ errorMessageKey | t }}</p>
         <div class="error-actions">
           @if (canRetry) {
-            <button type="button" class="retry-action jynlo-action jynlo-action--neutral"
+            <button type="button" class="retry-action"
               (click)="retryLoad()">{{ 'publicSession.retry' | t }}</button>
           }
           <a class="error-home-action" routerLink="/home">{{ 'publicSession.backHome' | t }}</a>
