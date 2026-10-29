@@ -41,33 +41,6 @@
 
 .header-login:hover, .secondary-action:hover { text-decoration: underline; }
 
-.invite-account-banner {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 1rem; flex-wrap: wrap;
-  margin: -1.5rem 0 1.5rem; padding: 1rem 1.2rem;
-  border: 1px solid rgba(125, 211, 252, .36); border-radius: 1rem;
-  background: linear-gradient(120deg, rgba(11, 60, 71, .96), rgba(10, 35, 55, .95));
-  box-shadow: 0 12px 34px rgba(0, 0, 0, .16);
-}
-.invite-account-banner-copy { min-width: 0; flex: 1 1 240px; }
-.invite-account-banner-copy strong { color: #dcfffa; font-weight: 850; }
-.invite-account-banner-copy p { margin: .3rem 0 0; color: #c2dce5; font-size: .86rem; line-height: 1.5; }
-.invite-account-banner-actions {
-  display: flex; align-items: stretch; gap: .65rem; flex-wrap: wrap;
-}
-.invite-account-banner-actions a {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-height: 44px; box-sizing: border-box; border-radius: .75rem;
-  padding: .68rem 1rem; font-weight: 800; text-align: center; text-decoration: none;
-}
-.invite-account-signin { background: #7cf6df; color: #062a30; border: 1px solid #7cf6df; }
-.invite-account-guest { background: rgba(125, 211, 252, .08); border: 1px solid rgba(125, 211, 252, .4); color: #dcf8ff; }
-.invite-account-banner-actions a:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-@media (max-width: 540px) {
-  .invite-account-banner { align-items: stretch; margin-top: -1.4rem; }
-  .invite-account-banner-actions { display: grid; width: 100%; grid-template-columns: 1fr; }
-}
-
 .session-layout {
   display: grid;
   /* Session details get ~60% of the desktop width; RSVP stays comfortable. */
