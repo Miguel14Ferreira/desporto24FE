@@ -1526,7 +1526,7 @@ describe('SessionDetailsComponent', () => {
     expect(region.textContent).toContain('2 jogadores visíveis');
     expect(region.textContent).not.toContain('Pedido Antigo');
     expect(region.textContent).not.toContain('Conta criada');
-    expect(region.querySelectorAll('a.session-player-card--member').length).toBe(1);
+    expect(region.querySelectorAll('a.session-player-card__profile').length).toBe(1);
   });
 
   it('shows confirmed guests to a joined non-organizer without organizer access', () => {
@@ -1548,7 +1548,7 @@ describe('SessionDetailsComponent', () => {
     expect(section.textContent).toContain('@monicagomes');
     expect(section.textContent).toContain('oal');
     expect(section.querySelectorAll('.session-player-card--guest').length).toBe(1);
-    expect(section.querySelectorAll('a.session-player-card--member').length).toBe(2);
+    expect(section.querySelectorAll('a.session-player-card__profile').length).toBe(2);
     expect(sessionService.confirmedGuests).toHaveBeenCalledWith(7);
     expect(sessionService.guestRequests).not.toHaveBeenCalled();
     expect(component.isCreator()).toBeFalse();
@@ -1586,11 +1586,11 @@ describe('SessionDetailsComponent', () => {
     const chips = region.querySelectorAll('.session-participant-list > .session-player-card');
     expect(chips.length).toBe(10);
     expect(region.textContent).toContain('10 jogadores visíveis');
-    expect(region.querySelectorAll('a.session-player-card--member').length).toBe(5);
+    expect(region.querySelectorAll('a.session-player-card__profile').length).toBe(5);
     expect(region.querySelectorAll('.session-player-card--guest').length).toBe(5);
     expect(region.textContent).toContain('COM CONTA');
     expect(region.textContent).toContain('SEM CONTA');
-    const links = region.querySelectorAll('a.session-player-card--member');
+    const links = region.querySelectorAll('a.session-player-card__profile');
     expect(links[0].getAttribute('href')).toContain('/menu/perfis/creator-user');
   });
 
@@ -1617,7 +1617,7 @@ describe('SessionDetailsComponent', () => {
     expect(teams.length).toBe(2);
     expect(teams[0].querySelectorAll('.session-player-card').length).toBe(5);
     expect(teams[1].querySelectorAll('.session-player-card').length).toBe(5);
-    expect(region.querySelectorAll('a.session-player-card--member').length).toBe(6);
+    expect(region.querySelectorAll('a.session-player-card__profile').length).toBe(6);
     expect(region.querySelectorAll('.session-player-card--guest').length).toBe(4);
   });
 
@@ -3397,7 +3397,7 @@ describe('SessionDetailsComponent', () => {
     const panel = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
     const cards = panel.querySelectorAll('.session-player-card');
     expect(cards.length).toBe(2);
-    const linked = panel.querySelector('a.session-player-card--member') as HTMLAnchorElement;
+    const linked = panel.querySelector('a.session-player-card__profile') as HTMLAnchorElement;
     expect(linked).not.toBeNull();
     expect(linked.querySelector('img')?.getAttribute('src'))
       .toBe('https://cdn.example.test/player.jpg');
@@ -3527,5 +3527,50 @@ describe('SessionDetailsComponent', () => {
     component.syncVisibleRoster();
     expect(sessionService.detail.calls.count()).toBeGreaterThan(before);
     expect(sessionService.guestRequests).toHaveBeenCalled();
+  });
+
+  it('offers registered player cancellation from Who is going only to the organiser', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user', joined:true,
+      status:'OPEN', gameDate:'2099-10-01T18:00:00Z'
+    };
+    component.sessionParticipants = [
+      {id:15,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T18:00:00Z'},
+      {id:16,username:'player-two',attendanceStatus:'PENDING',joinedAt:'2026-10-28T18:00:00Z'}
+    ];
+    fixture.detectChanges();
+    const roster=fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const cards=roster.querySelectorAll('.session-player-card--member');
+    expect(cards.length).toBe(2);
+    expect(cards[0].querySelector('.session-player-card__cancel')).toBeNull();
+    const cancel=cards[1].querySelector('.session-player-card__cancel') as HTMLButtonElement;
+    expect(cancel).toBeTruthy();
+    cancel.click();
+    fixture.detectChanges();
+    expect(sessionService.removeParticipant).not.toHaveBeenCalled();
+    const confirm=cards[1].querySelector('.confirm-remove-action') as HTMLButtonElement;
+    expect(confirm).toBeTruthy();
+    confirm.click();
+    fixture.detectChanges();
+    expect(sessionService.removeParticipant).toHaveBeenCalledOnceWith(7,16);
+    expect(roster.querySelectorAll('.session-player-card--member').length).toBe(1);
+  });
+
+  it('warns when a football session has too few confirmed players to play', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, sport:'Futsal',maxParticipants:10,minParticipants:6,participantCount:4,
+      joined:true,gameDate:'2099-10-01T18:00:00Z'
+    };
+    fixture.detectChanges();
+    const badge=fixture.nativeElement.querySelector('.session-minimum-indicator') as HTMLElement;
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toContain('4/6');
+    expect(badge.textContent).toContain('Faltam 2');
+    expect(badge.classList.contains('session-minimum-indicator--ready')).toBeFalse();
+    component.session={...component.session,participantCount:6};
+    fixture.detectChanges();
+    expect(badge.classList.contains('session-minimum-indicator--ready')).toBeTrue();
   });
 });
