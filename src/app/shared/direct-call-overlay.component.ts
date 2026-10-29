@@ -15,6 +15,48 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
   imports: [CommonModule, TranslatePipe],
   template: `
     @if (calls.state$ | async; as call) {
+      @if (call.phase === 'incoming') {
+        <!-- Call notifications are global but non-modal: never block navigation
+             until the recipient explicitly accepts. -->
+        <section class="call-incoming-float" role="alertdialog" aria-modal="false"
+          [attr.aria-label]="'calls.incoming' | t" (keydown.escape)="calls.decline()">
+          <div class="call-incoming-card">
+            <header class="call-incoming-topline">
+              <strong>JYNLO</strong>
+              <span class="call-incoming-pulse" aria-hidden="true"></span>
+              <span>{{ 'calls.incoming' | t }}</span>
+            </header>
+            <div class="call-incoming-person">
+              <div class="call-incoming-avatar" aria-hidden="true">
+                {{ call.peer.slice(0,1).toUpperCase() }}
+              </div>
+              <div class="call-incoming-person-copy">
+                <h2>{{ call.peer }}</h2>
+                <p>{{ (call.media === 'video' ? 'calls.video' : 'calls.voice') | t }}</p>
+              </div>
+            </div>
+            @if (calls.ringtoneBlocked$ | async) {
+              <div class="call-incoming-audio">
+                <p role="status">{{ 'calls.ringtoneBlocked' | t }}</p>
+                <button type="button" (click)="calls.allowRingtone()">
+                  {{ 'calls.enableRingtone' | t }}
+                </button>
+              </div>
+            }
+            <div class="call-incoming-actions">
+              <button type="button" class="call-incoming-decline"
+                (click)="calls.decline()">
+                <span aria-hidden="true">✕</span> {{ 'calls.decline' | t }}
+              </button>
+              <button type="button" class="call-incoming-accept"
+                (click)="calls.accept()">
+                <span aria-hidden="true">{{ call.media === 'video' ? '▣' : '✓' }}</span>
+                {{ 'calls.accept' | t }}
+              </button>
+            </div>
+          </div>
+        </section>
+      } @else {
       <section class="call-backdrop" role="dialog" aria-modal="true"
           [attr.aria-label]="'calls.title' | t" (keydown.escape)="dismiss()">
         <div class="call-panel" tabindex="-1">
@@ -203,10 +245,130 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
           <span class="call-refresh" aria-hidden="true">{{ calls.mediaChanged$ | async }}</span>
         </div>
       </section>
+      }
     }
   `,
   styles: [`
     :host{display:contents}
+    /* Persistent, route-independent, non-modal incoming invitation.
+       The rest of the website remains clickable until the user answers. */
+    .call-incoming-float {
+      position: fixed;
+      z-index: 6200;
+      top: calc(76px + env(safe-area-inset-top, 0px));
+      right: max(18px, env(safe-area-inset-right, 0px));
+      width: min(390px, calc(100vw - 30px));
+      max-height: calc(100dvh - 95px);
+      pointer-events: none;
+      overflow: visible;
+    }
+    .call-incoming-card {
+      box-sizing: border-box;
+      width: 100%;
+      max-height: inherit;
+      padding: 17px;
+      overflow-y: auto;
+      pointer-events: auto;
+      background: linear-gradient(145deg, #103b42 0%, #0a2431 74%);
+      border: 1px solid rgba(69, 228, 180, .7);
+      border-radius: 19px;
+      color: #ecfff9;
+      box-shadow: 0 24px 65px rgba(0, 10, 20, .55), 0 0 0 4px rgba(69, 228, 180, .08);
+      animation: call-incoming-enter .19s ease-out both;
+    }
+    .call-incoming-topline {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #9fead3;
+      font-size: .73rem;
+      font-weight: 750;
+    }
+    .call-incoming-topline strong { margin-right: auto; color: #51efbc; font-size: .7rem; letter-spacing: .12em; }
+    .call-incoming-pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #41e4a8;
+      box-shadow: 0 0 0 4px rgba(65, 228, 168, .15);
+      animation: call-incoming-pulse 1.8s infinite;
+    }
+    .call-incoming-person { display: flex; align-items: center; gap: 12px; margin: 17px 0 20px; }
+    .call-incoming-avatar {
+      display: grid;
+      flex: 0 0 54px;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      border: 1px solid #60c7ac;
+      border-radius: 50%;
+      background: #275a58;
+      color: #eafff6;
+      font-size: 1.3rem;
+      font-weight: 850;
+    }
+    .call-incoming-person-copy { min-width: 0; }
+    .call-incoming-person h2 { margin: 0 0 4px; font-size: 1.17rem; overflow-wrap: anywhere; }
+    .call-incoming-person p { margin: 0; color: #b9d8d6; font-size: .85rem; }
+    .call-incoming-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .call-incoming-actions button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      color: #fff;
+      font: inherit;
+      font-size: .84rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .call-incoming-decline { background: #803d48; border-color: #bf6b76 !important; }
+    .call-incoming-accept { background: #147d5c; border-color: #35e2aa !important; }
+    .call-incoming-actions button:hover { filter: brightness(1.14); }
+    .call-incoming-actions button:focus-visible,
+    .call-incoming-audio button:focus-visible { outline: 3px solid #83ffdf; outline-offset: 3px; }
+    .call-incoming-audio {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 9px 10px;
+      margin: 0 0 13px;
+      border: 1px solid rgba(245, 195, 118, .35);
+      border-radius: 10px;
+      background: rgba(93, 68, 34, .26);
+    }
+    .call-incoming-audio p { flex: 1; margin: 0; color: #f5deb2; font-size: .72rem; }
+    .call-incoming-audio button {
+      border: 1px solid #e0b971;
+      border-radius: 8px;
+      padding: 7px;
+      background: transparent;
+      color: #ffe4a9;
+      cursor: pointer;
+      font: inherit;
+      font-size: .74rem;
+    }
+    @keyframes call-incoming-enter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes call-incoming-pulse { 50% { box-shadow: 0 0 0 8px rgba(65, 228, 168, 0); } }
+    @media (max-width: 600px) {
+      .call-incoming-float {
+        top: auto;
+        left: max(12px, env(safe-area-inset-left, 0px));
+        right: max(12px, env(safe-area-inset-right, 0px));
+        bottom: max(14px, env(safe-area-inset-bottom, 0px));
+        width: auto;
+        max-height: calc(100dvh - 40px);
+      }
+      .call-incoming-card { padding: 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .call-incoming-card, .call-incoming-pulse { animation: none; }
+    }
     .call-backdrop{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;
       padding:clamp(8px,2vh,24px);background:rgba(0,13,23,.9);backdrop-filter:blur(8px);}
     .call-panel{box-sizing:border-box;width:min(100%,900px);max-height:calc(100dvh - 20px);
