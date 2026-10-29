@@ -92,6 +92,24 @@ describe('Lazy English translations', () => {
     expect(appTranslate('session.join')).toBe('Juntar-me à sessão');
   });
 
+  it('makes non-competitive session classification clear in both languages', async () => {
+    await preloadEnglishTranslations();
+
+    for (const language of ['pt', 'en'] as const) {
+      const service = new I18nService();
+      service.setLanguage(language);
+
+      expect(service.translate('sessionDetail.seasonLabel'))
+        .toBe(language === 'pt' ? 'Classificação' : 'Standings');
+      expect(service.translate('sessionDetail.seasonNo'))
+        .toBe(language === 'pt' ? 'Não ativada para esta sessão' : 'Not enabled for this session');
+      expect(appTranslate('sessionDetail.seasonNo')).toBe(service.translate('sessionDetail.seasonNo'));
+      // The alternative label for competitive season games must remain intact.
+      expect(service.translate('sessionDetail.seasonYes'))
+        .toBe(language === 'pt' ? 'Jogo da época' : 'Season game');
+    }
+  });
+
   it('keeps pipe-backed and direct translations consistent when the locale preference changes', async () => {
     await preloadEnglishTranslations();
     const service = new I18nService();
