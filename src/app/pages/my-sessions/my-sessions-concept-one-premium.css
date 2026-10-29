@@ -102,7 +102,8 @@
 .jynlo-sessions-premium .upcoming-meta span {font-size:.75rem;color:#b1ccd5}
 .jynlo-sessions-premium .upcoming-meta strong {color:#f1ffff;overflow-wrap:anywhere}
 .jynlo-sessions-premium .upcoming-card .card-actions {margin-top:auto;gap:.7rem}
-.jynlo-sessions-premium .history-filters {display:grid;grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr));gap:.75rem;margin-bottom:1rem}
+.jynlo-sessions-premium .history-filters {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;margin-bottom:1rem}
+.jynlo-sessions-premium .history-filter.search {grid-column:span 2}
 .jynlo-sessions-premium .history-filter {display:flex;flex-direction:column;min-width:0;gap:.45rem;color:#c5e0e6;font-size:.82rem;font-weight:750}
 .jynlo-sessions-premium .history-filter input,.jynlo-sessions-premium .history-filter select {min-width:0;max-width:100%;width:100%;box-sizing:border-box;min-height:44px;border:1px solid rgba(116,192,199,.39);border-radius:11px;padding:.62rem .8rem;color:#f3fbfd;background:#0d2637;font:inherit}
 .jynlo-sessions-premium .history-filter option {color:#f3fbfd;background:#0d2637}
@@ -130,4 +131,6 @@
   .jynlo-sessions-premium .history-status {max-width:46%}
   .jynlo-sessions-premium .history-actions {width:100%;justify-content:flex-start}
   .jynlo-sessions-premium .history-actions .jynlo-action {flex:1;text-align:center}
+  .jynlo-sessions-premium .history-filters {grid-template-columns:minmax(0,1fr)}
+  .jynlo-sessions-premium .history-filter.search {grid-column:auto}
 }

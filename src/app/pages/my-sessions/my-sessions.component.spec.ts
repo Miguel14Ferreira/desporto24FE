@@ -4,6 +4,7 @@ import { defer, of, throwError } from 'rxjs';
 import { MySessionsComponent } from './my-sessions.component';
 import { ReliabilityService } from '../../services/reliability.service';
 import { SessionService } from '../../services/session.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('MySessionsComponent', () => {
@@ -11,6 +12,7 @@ describe('MySessionsComponent', () => {
   let fixture: ComponentFixture<MySessionsComponent>;
   let sessionService: jasmine.SpyObj<SessionService>;
   let reliabilityService: jasmine.SpyObj<ReliabilityService>;
+  let communityGroupsService: jasmine.SpyObj<CommunityGroupsService>;
 
   const createdSession = {
     id: 11,
@@ -47,6 +49,9 @@ describe('MySessionsComponent', () => {
       ['attendanceHistory', 'createDispute']
     );
 
+    communityGroupsService = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine']);
+    communityGroupsService.mine.and.returnValue(of([{id: 52, name: 'Lisboa Padel'}] as any));
+
     sessionService.mine.and.returnValue(of({
       created: [createdSession],
       joined: [],
@@ -64,7 +69,8 @@ describe('MySessionsComponent', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: SessionService, useValue: sessionService },
-        { provide: ReliabilityService, useValue: reliabilityService }
+        { provide: ReliabilityService, useValue: reliabilityService },
+        { provide: CommunityGroupsService, useValue: communityGroupsService }
       ]
     }).compileComponents();
 
@@ -480,6 +486,70 @@ describe('MySessionsComponent', () => {
     expect(root.querySelector('a[href="/menu/events/51?membership=1"]')).toBeTruthy();
     expect(root.querySelector('.waitlist-badge')?.closest('.session-card')?.querySelector('button')).toBeTruthy();
     expect(root.querySelector('.attendance-card button.dispute-action')).toBeTruthy();
+  });
+
+
+  it('filters history by inclusive local date range and community without mutating the API data', () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 5);
+    d.setHours(12, 0, 0, 0);
+    const localDay = (date: Date) =>
+      [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')].join('-');
+    const earlier = new Date(d);
+    earlier.setDate(earlier.getDate() - 2);
+    const later = new Date(d);
+    later.setDate(later.getDate() + 2);
+    const original = [
+      {...createdSession, id: 201, gameDate: d.toISOString(), status:'COMPLETED', communityId:52},
+      {...createdSession, id: 202, gameDate: earlier.toISOString(), status:'COMPLETED', communityId:52},
+      {...createdSession, id: 203, gameDate: d.toISOString(), status:'CANCELLED', communityId:98},
+      {...createdSession, id: 204, gameDate: later.toISOString(), status:'COMPLETED'}
+    ];
+    component.data = {...component.data, created:original};
+    component.selectTab('history');
+    component.historyFrom = localDay(d);
+    component.historyTo = localDay(d);
+    component.historyCommunityId = '52';
+    fixture.detectChanges();
+    expect(component.historyCommunityIds).toEqual([52, 98]);
+    expect(component.communityLabel(52)).toBe('Lisboa Padel');
+    expect(component.filteredHistory.map(s => s.id)).toEqual([201]);
+    expect(fixture.nativeElement.querySelectorAll('.history-row')).toHaveSize(1);
+    expect(fixture.nativeElement.querySelector('input[name="historyFrom"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('select[name="historyCommunityId"]')).toBeTruthy();
+    component.resetHistoryFilters();
+    expect(component.historyFrom).toBe('');
+    expect(component.historyTo).toBe('');
+    expect(component.historyCommunityId).toBe('');
+    expect(component.data.created.map(s => s.id)).toEqual([201, 202, 203, 204]);
+  });
+
+  it('does not repeat organised sessions in joined, waitlist or attendance sections', () => {
+    const external = {...createdSession, id: 309};
+    component.data = {
+      created: [createdSession],
+      joined: [createdSession, external],
+      waitlisted: [createdSession, {...createdSession, id: 310}]
+    };
+    component.attendanceHistory = [
+      {...noShow, participantId: 99, sessionId: createdSession.id},
+      noShow
+    ];
+    component.selectTab('participation');
+    fixture.detectChanges();
+    expect(component.joinedOtherSessions.map(s => s.id)).toEqual([309]);
+    expect(component.waitlistedOtherSessions.map(s => s.id)).toEqual([310]);
+    expect(component.externalAttendanceHistory.map(s => s.sessionId)).toEqual([12]);
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('.session-card')).toHaveSize(2);
+    expect(root.querySelectorAll('.attendance-card')).toHaveSize(1);
+    expect(root.querySelector('#tab-participation')?.textContent).toContain('2');
+  });
+
+  it('translates participation statuses and preserves community fallback labels', () => {
+    expect(component.attendanceLabel(noShow)).toBe('Faltou');
+    expect(component.communityLabel(999)).toContain('#999');
   });
 
 });
