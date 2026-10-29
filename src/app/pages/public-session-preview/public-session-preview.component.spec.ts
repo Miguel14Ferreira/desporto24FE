@@ -585,9 +585,9 @@ describe('PublicSessionPreviewComponent', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
     const text = new URL(link.href).searchParams.get('text')!;
     expect(text).toBe(shareText('pt-PT') + '\n' + publicUrl);
-    expect(text).toContain('🎾 Padel');
-    expect(text).toContain('📍 Lisboa');
-    expect(text).toContain('👥 2 vagas');
+    expect(text).toContain('Padel');
+    expect(text).toContain('Local: Lisboa');
+    expect(text).toContain('Vagas: 2 disponíveis');
     expect(text).not.toContain('Junta-te a nós na Jynlo');
 
     i18n.setLanguage('en');

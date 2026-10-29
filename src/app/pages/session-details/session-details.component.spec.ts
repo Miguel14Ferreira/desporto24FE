@@ -755,9 +755,9 @@ describe('SessionDetailsComponent', () => {
     const link = component.whatsappShareUrl()!;
     expect(link).not.toBeNull();
     const text = new URL(link).searchParams.get('text')!;
-    expect(text).toContain('🎾 Padel');
-    expect(text).toContain('📍 Lisboa');
-    expect(text).toContain('👥 2 vagas');
+    expect(text).toContain('Padel');
+    expect(text).toContain('Local: Lisboa');
+    expect(text).toContain('Vagas: 2 disponíveis');
     expect(text).toContain('/sessions/7');
     expect(text).not.toContain('Vem jogar connosco na Jynlo!');
   });
