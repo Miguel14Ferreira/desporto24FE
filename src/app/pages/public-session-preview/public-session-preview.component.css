@@ -415,14 +415,14 @@ h1 {
 .invite-chat-placeholder span{color:#b6d6dd;font-size:.83rem}
 
 /* Public error: clear action spacing and mobile stacking. */
-.public-session-page .error-state{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:clamp(24px,3vw,36px)}
-.public-session-page .error-state h1{margin:0;font-size:clamp(1.9rem,4vw,3rem);line-height:1.15;overflow-wrap:anywhere}
-.public-session-page .error-state .error-description{margin:0;max-width:68ch;color:#cbd5e1;line-height:1.6;overflow-wrap:anywhere}
-.public-session-page .error-actions{display:flex;align-items:stretch;flex-wrap:wrap;gap:12px;width:100%;min-width:0;margin-top:12px}
-.public-session-page .error-actions>:is(button,a){box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:46px;min-width:0;max-width:100%;margin:0;padding:11px 18px;border-radius:12px;font:inherit;font-size:.9rem;font-weight:800;line-height:1.35;text-decoration:none;text-align:center;white-space:normal;overflow-wrap:anywhere}
-.public-session-page .error-actions>.retry-action{border:1px solid #47e0c4;background:#3ce7c8;color:#08323b;cursor:pointer}
-.public-session-page .error-actions>.retry-action:hover{background:#82f9df}
-.public-session-page .error-actions>.error-home-action{border:1px solid #68cdcb70;background:#2b677733;color:#e1faf6}
-.public-session-page .error-actions>.error-home-action:hover{border-color:#64e2d0;background:#3182865c;color:#fff}
-.public-session-page .error-actions>:is(button,a):focus-visible{outline:2px solid #83ffe7;outline-offset:3px}
-@media(max-width:500px){.public-session-page .error-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}.public-session-page .error-actions>:is(button,a){width:100%}}
+.error-state{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:clamp(24px,3vw,36px)}
+.error-state h1{margin:0;font-size:clamp(1.9rem,4vw,3rem);line-height:1.15;overflow-wrap:anywhere}
+.error-state .error-description{margin:0;max-width:68ch;color:#cbd5e1;line-height:1.6;overflow-wrap:anywhere}
+.error-actions{display:flex;align-items:stretch;flex-wrap:wrap;gap:12px;width:100%;min-width:0;margin-top:12px}
+.error-actions>:is(button,a){box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:46px;min-width:0;max-width:100%;margin:0;padding:11px 18px;border-radius:12px;font:inherit;font-size:.9rem;font-weight:800;line-height:1.35;text-decoration:none;text-align:center;white-space:normal;overflow-wrap:anywhere}
+.error-actions>.retry-action{border:1px solid #47e0c4;background:#3ce7c8;color:#08323b;cursor:pointer}
+.error-actions>.retry-action:hover{background:#82f9df}
+.error-actions>.error-home-action{border:1px solid #68cdcb70;background:#2b677733;color:#e1faf6}
+.error-actions>.error-home-action:hover{border-color:#64e2d0;background:#3182865c;color:#fff}
+.error-actions>:is(button,a):focus-visible{outline:2px solid #83ffe7;outline-offset:3px}
+@media(max-width:500px){.error-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}.error-actions>:is(button,a){width:100%}}
