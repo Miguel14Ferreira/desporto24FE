@@ -17,6 +17,7 @@ class SessionChatStubComponent {
   @Input() sessionId = 0;
   @Input() authenticated = false;
   @Input() guestConfirmed = false;
+  @Input() guestReceipt: string | null = null;
   @Input() returnUrl: string | null = null;
   @Input() startsAt: string | null = null;
 }

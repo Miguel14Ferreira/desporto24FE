@@ -13,10 +13,10 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
 /**
  * Session chat in signed/public invitations.
  *
- * The invitation and its guest receipt are NOT chat credentials. Only the
- * authenticated creator or ACTIVE participant may read/send; the existing
- * SessionChatService authorizes every GET/POST on the backend. In particular
- * never fetch chat messages for an anonymous visitor or use a guest token.
+ * Organizer invitation alone never grants chat access. Signed-in confirmed
+ * players use the existing protected API. Anonymous confirmed guests use only
+ * their individual private RSVP receipt on POST-only, server-authorized calls.
+ * Do not put receipts in URLs, logs or public realtime subscriptions.
  */
 @Component({
   selector: 'app-public-session-chat',
@@ -29,6 +29,7 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   @Input({required:true}) sessionId!: number;
   @Input() authenticated = false;
   @Input() guestConfirmed = false;
+  @Input() guestReceipt: string | null = null;
   @Input() returnUrl: string | null = null;
   @Input() startsAt: string | null = null;
 
@@ -45,6 +46,7 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   private readonly subscriptions = new Subscription();
   private interval?: ReturnType<typeof setInterval>;
   private currentId: number | null = null;
+  private currentAccessKey: string | null = null;
   private checking = false;
   private disposed = false;
 
@@ -67,7 +69,7 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
     }));
     this.zone.runOutsideAngular(() => {
       this.interval = setInterval(() => {
-        if (!this.disposed && this.authenticated && document.visibilityState !== 'hidden') {
+        if (!this.disposed && this.hasChatCredential && document.visibilityState !== 'hidden') {
           this.zone.run(() => this.loadMessages(false));
         }
       }, 15000);
@@ -77,6 +79,14 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
 
   ngOnChanges(_changes: SimpleChanges): void {
     if (this.interval) this.initForSession();
+  }
+
+  get guestMode(): boolean {
+    return this.guestConfirmed && /^[A-Za-z0-9_-]{43}$/.test(this.guestReceipt || '');
+  }
+
+  get hasChatCredential(): boolean {
+    return this.authenticated || this.guestMode;
   }
 
   get chatOpen(): boolean {
@@ -90,19 +100,25 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
 
   private initForSession(): void {
     if (this.disposed) return;
-    if (!this.authenticated || !Number.isSafeInteger(this.sessionId) || this.sessionId <= 0) {
+    const accessKey = this.guestMode ? 'guest:' + this.guestReceipt :
+      this.authenticated ? 'member' : null;
+    if (!accessKey || !Number.isSafeInteger(this.sessionId) || this.sessionId <= 0) {
       this.stopMessageRequest();
       this.currentId = null;
+      this.currentAccessKey = null;
       this.allowed = false;
       this.messages = [];
       this.readError = '';
       this.loginRequired = false;
+      // A revoked receipt must also invalidate the already-rendered composer.
+      this.cdr.markForCheck();
       return;
     }
-    if (this.currentId !== this.sessionId) {
+    if (this.currentId !== this.sessionId || this.currentAccessKey !== accessKey) {
       // Changing invitations must not be blocked by an old outstanding request.
       this.stopMessageRequest();
       this.currentId = this.sessionId;
+      this.currentAccessKey = accessKey;
       this.allowed = false;
       this.messages = [];
       this.readError = '';
@@ -120,14 +136,16 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   retryChatAccess(): void {
-    if (!this.authenticated || !this.chatOpen || this.checking) return;
+    if (!this.hasChatCredential || !this.chatOpen || this.checking) return;
     this.loadMessages(true);
   }
 
   loadMessages(indicateLoading = false): void {
-    if (!this.authenticated || !this.chatOpen || !this.currentId || this.checking
+    if (!this.hasChatCredential || !this.chatOpen || !this.currentId || this.checking
         || (this.loginRequired && !indicateLoading)) return;
     const requestId = this.currentId;
+    const accessKey = this.currentAccessKey;
+    const isGuest = this.guestMode;
     this.checking = true;
     if (indicateLoading) {
       this.loading = true;
@@ -135,8 +153,12 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
     }
     // If network or auth refresh hangs, timeout(10000) always resolves the
     // first-screen loading state. Never imply access before an authorised GET.
-    this.messageRequest = this.http.get<SessionMessage[]>(environment.apiUrl + '/api/sessions/' +
-      requestId + '/messages').pipe(timeout(10000),finalize(() => {
+    const read$ = isGuest
+      ? this.http.post<SessionMessage[]>(environment.apiUrl + '/api/sessions/' +
+          requestId + '/messages/guest-chat/read', {receipt: this.guestReceipt})
+      : this.http.get<SessionMessage[]>(environment.apiUrl + '/api/sessions/' +
+          requestId + '/messages');
+    this.messageRequest = read$.pipe(timeout(10000),finalize(() => {
         // Timeout/interceptor callbacks may run outside the change-detection
         // zone. Without a forced check the UI can remain on "checking access"
         // even after loading=false and the request has ended.
@@ -147,7 +169,8 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
         });
       })).subscribe({
       next: rows => {
-        if (this.disposed || requestId !== this.currentId || !this.authenticated) return;
+        if (this.disposed || requestId !== this.currentId ||
+            accessKey !== this.currentAccessKey) return;
         this.zone.run(() => {
         this.allowed = true;
         this.loginRequired = false;
@@ -156,12 +179,13 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
           ? rows.filter(m => m && m.sessionId === requestId && Number.isSafeInteger(m.id))
               .sort((a,b) => a.id - b.id)
           : [];
-        this.realtime.connect();
+        if (!isGuest) this.realtime.connect();
         this.cdr.markForCheck();
         });
       },
       error: (error: unknown) => {
-        if (this.disposed || requestId !== this.currentId) return;
+        if (this.disposed || requestId !== this.currentId ||
+            accessKey !== this.currentAccessKey) return;
         this.zone.run(() => {
         if (error instanceof HttpErrorResponse && [401,403,404].includes(error.status)) {
           // Never reveal messages to an unauthorised invite holder.
@@ -182,22 +206,30 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
     const body = this.messageText.trim();
     if (!this.canSend || !body || body.length > 2000) return;
     const id = this.currentId;
-    if (!id) return;
+    const accessKey = this.currentAccessKey;
+    if (!id || !accessKey) return;
     this.sending = true;
     this.sendError = '';
-    this.http.post<SessionMessage>(environment.apiUrl + '/api/sessions/' +
-      id + '/messages', {body}).pipe(timeout(10000),finalize(() => {
+    const isGuest = this.guestMode;
+    const url = environment.apiUrl + '/api/sessions/' + id + '/messages';
+    const send$ = isGuest
+      ? this.http.post<SessionMessage>(url + '/guest-chat/send',
+          {receipt: this.guestReceipt, body})
+      : this.http.post<SessionMessage>(url, {body});
+    send$.pipe(timeout(10000),finalize(() => {
         this.sending = false;
       })).subscribe({
       next: row => {
-        if (this.disposed || id !== this.currentId) return;
+        if (this.disposed || id !== this.currentId ||
+            accessKey !== this.currentAccessKey) return;
         if (this.messageText.trim() === body) this.messageText = '';
         if (row && row.sessionId === id && !this.messages.some(m => m.id === row.id)) {
           this.messages = [...this.messages, row].sort((a,b) => a.id - b.id);
         }
       },
       error: (error: unknown) => {
-        if (this.disposed || id !== this.currentId) return;
+        if (this.disposed || id !== this.currentId ||
+            accessKey !== this.currentAccessKey) return;
         if (error instanceof HttpErrorResponse && [401,403,404].includes(error.status)) {
           this.allowed = false;
           this.messages = [];

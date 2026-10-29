@@ -11,7 +11,7 @@
 
   @if (!chatOpen) {
     <p class="invite-chat-locked" role="status">{{ 'publicSession.chatClosed' | t }}</p>
-  } @else if (!authenticated) {
+  } @else if (!hasChatCredential) {
     <p class="invite-chat-locked" role="status">
       {{ (guestConfirmed ? 'publicSession.chatGuestUpgrade' : 'publicSession.chatConfirmFirst') | t }}
     </p>
@@ -55,7 +55,7 @@
       @for (message of messages; track message.id) {
         <article class="invite-chat-message">
           <div class="invite-chat-message-heading">
-            <strong>{{ '@' + message.senderUsername }}</strong>
+            <strong>{{ message.senderGuest ? message.senderUsername : '@' + message.senderUsername }}</strong>
             <time [attr.datetime]="message.createdAt">{{ message.createdAt | date:'HH:mm' }}</time>
           </div>
           <p>{{ message.deletedAt ? ('chat.messageDeleted' | t) : message.body }}</p>

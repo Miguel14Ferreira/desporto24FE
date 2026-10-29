@@ -41,7 +41,7 @@ describe('Public invitation session chat access', () => {
     expect(http.get).not.toHaveBeenCalled();
     expect(http.post).not.toHaveBeenCalled();
     expect(page.allowed).toBeFalse();
-    expect(fixture.nativeElement.textContent).toContain('A tua presença está confirmada');
+    expect(fixture.nativeElement.textContent).toContain('recupera o comprovativo privado');
     expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
   });
 
@@ -205,5 +205,65 @@ describe('Public invitation session chat access', () => {
     expect(page.allowed).toBeTrue();
     expect(page.loading).toBeFalse();
     expect(page.messages).toEqual([]);
+  });
+
+  it('does not read with an invitation link or an unapproved guest receipt', () => {
+    page.guestConfirmed = false;
+    page.guestReceipt = 'a'.repeat(43);
+    fixture.detectChanges();
+    expect(http.get).not.toHaveBeenCalled();
+    expect(http.post).not.toHaveBeenCalled();
+    expect(page.allowed).toBeFalse();
+  });
+
+  it('reads and posts as confirmed guest using only private JSON receipt', () => {
+    const receipt = 'b'.repeat(43);
+    page.guestConfirmed = true;
+    page.guestReceipt = receipt;
+    const guestMessage = {...sample, senderUsername:'André (Borralho)', senderGuest:true};
+    http.post.and.returnValues(of([guestMessage]) as any,
+      of({...guestMessage,id:6,body:'Estou a chegar'}) as any);
+    fixture.detectChanges();
+    expect(http.get).not.toHaveBeenCalled();
+    expect(http.post).toHaveBeenCalledWith(
+      jasmine.stringMatching(/\/api\/sessions\/42\/messages\/guest-chat\/read$/),
+      {receipt});
+    expect(page.allowed).toBeTrue();
+    expect(realtime.connect).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('André (Borralho)');
+    expect(fixture.nativeElement.textContent).not.toContain('@André');
+    page.messageText='Estou a chegar';
+    page.sendMessage();
+    expect(http.post).toHaveBeenCalledWith(
+      jasmine.stringMatching(/\/api\/sessions\/42\/messages\/guest-chat\/send$/),
+      {receipt,body:'Estou a chegar'});
+    expect(page.messages.length).toBe(2);
+  });
+
+  it('clears guest messages immediately when receipt approval is revoked', () => {
+    page.guestConfirmed=true;
+    page.guestReceipt='c'.repeat(43);
+    http.post.and.returnValue(of([sample]) as any);
+    fixture.detectChanges();
+    expect(page.allowed).toBeTrue();
+    fixture.componentRef.setInput('guestConfirmed', false);
+    fixture.componentRef.setInput('guestReceipt', null);
+    fixture.detectChanges();
+    expect(page.allowed).toBeFalse();
+    expect(page.messages).toEqual([]);
+    expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
+    page.messageText='Não enviar';
+    page.sendMessage();
+    expect(http.post).toHaveBeenCalledTimes(1);
+  });
+
+  it('guest receipt of another session is never accepted by frontend as authorization', () => {
+    page.guestConfirmed=true;
+    page.guestReceipt='d'.repeat(43);
+    http.post.and.returnValue(throwError(() => new HttpErrorResponse({status:403})));
+    fixture.detectChanges();
+    expect(page.allowed).toBeFalse();
+    expect(page.messages).toEqual([]);
+    expect(realtime.connect).not.toHaveBeenCalled();
   });
 });
