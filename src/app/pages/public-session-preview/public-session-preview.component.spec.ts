@@ -1350,6 +1350,73 @@ describe('PublicSessionPreviewComponent', () => {
         String(c[0]).endsWith('/guest-requests')).length).toBe(1);
     });
 
+
+    it('signs in inline, confirms the real account once and opens its session details', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        if (url.endsWith('/guest-member-presence')) return of({status:'NONE',canCancel:false});
+        if (url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      authenticationService.login.and.returnValue(of({token:'test-token',mfaRequired:false} as any));
+      const navigation=spyOn(TestBed.inject(Router),'navigateByUrl').and.resolveTo(true);
+      const page=render();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(c=>
+        String(c[0]).endsWith('/guest-join-account'))).toBeFalse();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const component=fixture.componentInstance;
+      component.invitationLoginUsername='jynloteste';
+      component.invitationLoginPassword='pass';
+      component.loginInsideInvitation();
+      expect(authenticationService.login).toHaveBeenCalledOnceWith('jynloteste','pass');
+      expect(authenticationService.saveToken).toHaveBeenCalledOnceWith('test-token');
+      expect((http.post as jasmine.Spy).calls.allArgs().filter(c=>
+        String(c[0]).endsWith('/guest-join-account')).length).toBe(1);
+      expect(navigation).toHaveBeenCalledWith('/menu/events/42');
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
+    });
+
+    it('preserves explicit auto-confirm intent through MFA and only for this invitation', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      authenticationService.login.and.returnValue(of({
+        mfaRequired:true,challengeId:'challenge-123',challengeExpiresAt:'2099-10-29T15:00:00Z'
+      } as any));
+      const navigate=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      const page=render();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const component=fixture.componentInstance;
+      component.invitationLoginUsername='jynloteste';
+      component.invitationLoginPassword='pass';
+      component.loginInsideInvitation();
+      expect(navigate).toHaveBeenCalledWith(['/login/MFAauthentication']);
+      expect(sessionStorage.getItem('mfa-return-url')).toBe('/sessions/42?guest='+token);
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).not.toBeNull();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(c=>
+        String(c[0]).endsWith('/guest-join-account'))).toBeFalse();
+      sessionStorage.removeItem('mfa-return-url');
+      sessionStorage.removeItem('mfa-challenge-id');
+      sessionStorage.removeItem('mfa-expires-at');
+    });
+
     it('does not register on login failure and does not persist a hidden auto-join', () => {
       routeQueryParamMap=convertToParamMap({guest:token});
       (http.post as jasmine.Spy).and.callFake((url:string)=>{
