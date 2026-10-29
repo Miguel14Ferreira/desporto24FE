@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Subject, of, throwError } from 'rxjs';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 import { PublicSessionChatComponent } from './public-session-chat.component';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { SessionMessage } from '../model/session-message';
@@ -110,5 +110,100 @@ describe('Public invitation session chat access', () => {
     expect(http.post).toHaveBeenCalledTimes(1);
     expect(page.messageText).toBe('A caminho');
     expect(page.sendError).toBe('publicSession.chatSendError');
+  });
+
+  it('stops checking after a slow server and provides a working retry', fakeAsync(() => {
+    page.authenticated = true;
+    let requests = 0;
+    http.get.and.callFake(() => ++requests === 1 ? NEVER as any : of([sample]) as any);
+    fixture.detectChanges();
+    expect(page.loading).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('A verificar acesso ao chat');
+    tick(10001);
+    fixture.detectChanges();
+    expect(page.loading).toBeFalse();
+    expect(page.allowed).toBeFalse();
+    const error = fixture.nativeElement.querySelector('.invite-chat-error') as HTMLElement;
+    expect(page.readError).toBe('publicSession.chatLoadError');
+    expect(error).withContext('Chat state: '+ JSON.stringify({
+      loading: page.loading, readError: page.readError, loginRequired: page.loginRequired,
+      open: page.chatOpen, html: fixture.nativeElement.textContent.slice(0,500)
+    })).not.toBeNull();
+    expect(error.textContent).toContain('Não foi possível atualizar o chat');
+    const retry = fixture.nativeElement.querySelector('.invite-chat-retry') as HTMLButtonElement;
+    expect(retry.disabled).toBeFalse();
+    retry.click();
+    fixture.detectChanges();
+    expect(http.get).toHaveBeenCalledTimes(2);
+    expect(page.allowed).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('Até logo!');
+  }));
+
+  it('shows sign-in on expired auth instead of claiming an enrolled player is absent', () => {
+    page.authenticated = true;
+    page.returnUrl = '/sessions/42?guest=token';
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({status: 401})));
+    fixture.detectChanges();
+    expect(page.loading).toBeFalse();
+    expect(page.loginRequired).toBeTrue();
+    expect(page.allowed).toBeFalse();
+    const signIn = fixture.nativeElement.querySelector('.invite-chat-join') as HTMLAnchorElement;
+    expect(signIn).not.toBeNull();
+    expect(signIn.textContent).toContain('Iniciar sessão');
+    expect(signIn.getAttribute('href')).toContain('returnUrl=');
+    expect(fixture.nativeElement.querySelector('.invite-chat-messages')).toBeNull();
+  });
+
+  it('does not grant chat access for a rejected user until the API approves retry', () => {
+    page.authenticated = true;
+    http.get.and.returnValues(
+      throwError(() => new HttpErrorResponse({status: 403})), of([sample]) as any
+    );
+    fixture.detectChanges();
+    expect(page.allowed).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.invite-chat-messages')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Confirma a tua presença');
+    (fixture.nativeElement.querySelector('.invite-chat-retry') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(page.allowed).toBeTrue();
+    expect(page.messages).toEqual([sample]);
+  });
+
+  it('keeps authorised messages visible when a background refresh fails', () => {
+    page.authenticated = true;
+    http.get.and.returnValues(
+      of([sample]) as any, throwError(() => new HttpErrorResponse({status: 503})),
+      of([sample]) as any
+    );
+    fixture.detectChanges();
+    page.loadMessages(false);
+    fixture.detectChanges();
+    expect(page.allowed).toBeTrue();
+    expect(page.messages).toEqual([sample]);
+    expect(page.readError).toBe('publicSession.chatLoadError');
+    expect(fixture.nativeElement.querySelector('.invite-chat-error'))
+      .withContext('Chat state: ' + JSON.stringify({
+        readError: page.readError, allowed: page.allowed,
+        html: fixture.nativeElement.textContent.slice(0,500)
+      })).not.toBeNull();
+    page.retryChatAccess();
+    fixture.detectChanges();
+    expect(page.readError).toBe('');
+    expect(page.messages).toEqual([sample]);
+  });
+
+  it('cancels a pending access check when the invitation session changes', () => {
+    page.authenticated = true;
+    http.get.and.returnValues(NEVER as any, of([]) as any);
+    fixture.detectChanges();
+    expect(page.loading).toBeTrue();
+    page.sessionId = 43;
+    page.ngOnChanges({});
+    fixture.detectChanges();
+    expect(http.get).toHaveBeenCalledTimes(2);
+    expect(http.get.calls.mostRecent().args[0]).toContain('/sessions/43/messages');
+    expect(page.allowed).toBeTrue();
+    expect(page.loading).toBeFalse();
+    expect(page.messages).toEqual([]);
   });
 });

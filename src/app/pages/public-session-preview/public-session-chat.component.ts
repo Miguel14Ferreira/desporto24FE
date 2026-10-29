@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -39,6 +39,9 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   sending = false;
   sendError = '';
   readError = '';
+  /** A pending login candidate is not proof that the chat API accepted a token. */
+  loginRequired = false;
+  private messageRequest?: Subscription;
   private readonly subscriptions = new Subscription();
   private interval?: ReturnType<typeof setInterval>;
   private currentId: number | null = null;
@@ -48,7 +51,8 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   constructor(
     private readonly http: HttpClient,
     private readonly realtime: DirectChatRealtimeService,
-    private readonly zone: NgZone
+    private readonly zone: NgZone,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -87,53 +91,89 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   private initForSession(): void {
     if (this.disposed) return;
     if (!this.authenticated || !Number.isSafeInteger(this.sessionId) || this.sessionId <= 0) {
+      this.stopMessageRequest();
       this.currentId = null;
       this.allowed = false;
       this.messages = [];
       this.readError = '';
+      this.loginRequired = false;
       return;
     }
     if (this.currentId !== this.sessionId) {
+      // Changing invitations must not be blocked by an old outstanding request.
+      this.stopMessageRequest();
       this.currentId = this.sessionId;
       this.allowed = false;
       this.messages = [];
       this.readError = '';
       this.messageText = '';
+      this.loginRequired = false;
     }
+    this.loadMessages(!this.allowed);
+  }
+
+  private stopMessageRequest(): void {
+    this.messageRequest?.unsubscribe();
+    this.messageRequest = undefined;
+    this.checking = false;
+    this.loading = false;
+  }
+
+  retryChatAccess(): void {
+    if (!this.authenticated || !this.chatOpen || this.checking) return;
     this.loadMessages(true);
   }
 
   loadMessages(indicateLoading = false): void {
-    if (!this.authenticated || !this.chatOpen || !this.currentId || this.checking) return;
+    if (!this.authenticated || !this.chatOpen || !this.currentId || this.checking
+        || (this.loginRequired && !indicateLoading)) return;
     const requestId = this.currentId;
     this.checking = true;
-    if (indicateLoading) this.loading = true;
-    this.http.get<SessionMessage[]>(environment.apiUrl + '/api/sessions/' +
+    if (indicateLoading) {
+      this.loading = true;
+      this.readError = '';
+    }
+    // If network or auth refresh hangs, timeout(10000) always resolves the
+    // first-screen loading state. Never imply access before an authorised GET.
+    this.messageRequest = this.http.get<SessionMessage[]>(environment.apiUrl + '/api/sessions/' +
       requestId + '/messages').pipe(timeout(10000),finalize(() => {
-        this.checking = false;
-        this.loading = false;
+        // Timeout/interceptor callbacks may run outside the change-detection
+        // zone. Without a forced check the UI can remain on "checking access"
+        // even after loading=false and the request has ended.
+        this.zone.run(() => {
+          this.checking = false;
+          this.loading = false;
+          this.cdr.markForCheck();
+        });
       })).subscribe({
       next: rows => {
         if (this.disposed || requestId !== this.currentId || !this.authenticated) return;
+        this.zone.run(() => {
         this.allowed = true;
+        this.loginRequired = false;
         this.readError = '';
         this.messages = Array.isArray(rows)
           ? rows.filter(m => m && m.sessionId === requestId && Number.isSafeInteger(m.id))
               .sort((a,b) => a.id - b.id)
           : [];
         this.realtime.connect();
+        this.cdr.markForCheck();
+        });
       },
       error: (error: unknown) => {
         if (this.disposed || requestId !== this.currentId) return;
+        this.zone.run(() => {
         if (error instanceof HttpErrorResponse && [401,403,404].includes(error.status)) {
-          // Attendance was cancelled, the caller is not enrolled, or the game
-          // is no longer available. Do not keep previously loaded chat visible.
+          // Never reveal messages to an unauthorised invite holder.
           this.allowed = false;
           this.messages = [];
-          this.readError = '';
+          this.loginRequired = error.status === 401;
+          this.readError = error.status === 404 ? 'publicSession.chatUnavailable' : '';
         } else {
           this.readError = 'publicSession.chatLoadError';
         }
+        this.cdr.markForCheck();
+        });
       }
     });
   }
@@ -180,6 +220,7 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   ngOnDestroy(): void {
     this.disposed = true;
     if (this.interval) clearInterval(this.interval);
+    this.stopMessageRequest();
     this.subscriptions.unsubscribe();
   }
 }

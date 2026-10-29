@@ -21,12 +21,34 @@
       </a>
     }
   } @else if (loading && !allowed) {
-    <p class="invite-chat-locked" role="status">{{ 'publicSession.chatLoading' | t }}</p>
+    <p class="invite-chat-locked" role="status" aria-live="polite">{{ 'publicSession.chatLoading' | t }}</p>
+  } @else if (loginRequired) {
+    <div class="invite-chat-access-state">
+      <p class="invite-chat-locked" role="alert">{{ 'publicSession.chatLoginRequired' | t }}</p>
+      <a class="invite-chat-join" routerLink="/login"
+         [queryParams]="returnUrl ? {returnUrl: returnUrl} : null">
+        {{ 'publicSession.chatSignIn' | t }}
+      </a>
+    </div>
+  } @else if (readError && !allowed) {
+    <div class="invite-chat-access-state">
+      <p class="invite-chat-error" role="alert">{{ readError | t }}</p>
+      <button class="invite-chat-retry" type="button" [disabled]="loading"
+              (click)="retryChatAccess()">{{ 'publicSession.chatRetry' | t }}</button>
+    </div>
   } @else if (!allowed) {
-    <p class="invite-chat-locked" role="status">{{ 'publicSession.chatConfirmFirst' | t }}</p>
+    <div class="invite-chat-access-state">
+      <p class="invite-chat-locked" role="status">{{ 'publicSession.chatConfirmFirst' | t }}</p>
+      <button class="invite-chat-retry" type="button" [disabled]="loading"
+              (click)="retryChatAccess()">{{ 'publicSession.chatRetry' | t }}</button>
+    </div>
   } @else {
     @if (readError) {
-      <p class="invite-chat-error" role="alert">{{ readError | t }}</p>
+      <div class="invite-chat-access-state">
+        <p class="invite-chat-error" role="alert">{{ readError | t }}</p>
+        <button type="button" class="invite-chat-retry" [disabled]="loading"
+                (click)="retryChatAccess()">{{ 'publicSession.chatRetry' | t }}</button>
+      </div>
     }
     <div class="invite-chat-messages" role="log" aria-live="polite"
          [attr.aria-label]="'publicSession.sessionChat' | t">
