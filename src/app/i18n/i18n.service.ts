@@ -3649,7 +3649,10 @@ const PT: Dictionary = {
   'createSession.backCommunity': 'Voltar à comunidade',
   'createSession.dateTime': 'Data e hora',
   'createSession.minimumPlayers': 'Mínimo para realizar o jogo',
-  'createSession.minimumPlayersHint': 'Pode ser inferior à lotação. A Jynlo avisa se não houver jogadores suficientes e não permite validar resultados de época abaixo deste mínimo.',
+  'createSession.capacityAsMinimum': 'Exigir os {{count}} jogadores para a sessão acontecer',
+  'createSession.capacityAsMinimumHint': 'Se esta opção estiver ativa, a sessão só se realiza quando a lotação estiver completa.',
+  'createSession.minimumPlayersHint': 'Caso contrário, define o número mínimo. Se não estiverem confirmados até ao início, a sessão não se realiza.',
+
   'createSession.minimumPlayersInvalid': 'O mínimo deve estar entre 2 e a lotação da sessão.',
   'createSession.maxPlayers': 'Máximo de jogadores',
   'createSession.playFormat': 'Formato de jogo',
