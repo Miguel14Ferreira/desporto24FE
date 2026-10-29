@@ -1,5 +1,7 @@
 <app-navbar></app-navbar>
 <router-outlet></router-outlet>
 <app-footer></app-footer>
-<app-direct-call-overlay></app-direct-call-overlay>
+@defer (on immediate) {
+  <app-direct-call-overlay></app-direct-call-overlay>
+}
 <app-profile-quick-view></app-profile-quick-view>
