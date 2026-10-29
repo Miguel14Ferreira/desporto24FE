@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, Optional } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, catchError, finalize, forkJoin, map, of, retry, timeout } from 'rxjs';
 
@@ -8,10 +9,13 @@ import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
+import { venueHasPortugueseCoordinates, venueOsmEmbedUrl } from '../../shared/venue-public-contact';
 import { CommunityProfile } from '../model/community-profile';
 import { environment } from 'src/environment/environment';
 import { SessionSummary } from '../model/session-summary';
 import { Venue } from '../model/venue';
+
+type ExploreCategory = 'all' | 'venues' | 'sessions' | 'people' | 'communities';
 
 @Component({
   selector: 'app-discover',
@@ -21,6 +25,55 @@ import { Venue } from '../model/venue';
   standalone: false
 })
 export class DiscoverComponent implements OnInit {
+  activeTab: ExploreCategory = 'all';
+  readonly quickSports = ['Padel', 'Futebol', 'Ténis'];
+  selectedMapVenueId: number | null = null;
+  private cachedVenueMapSource = '';
+  private cachedTrustedVenueMap: SafeResourceUrl | null = null;
+
+  get mapAvailableVenues(): Venue[] {
+    return this.venues.filter(venue => venueHasPortugueseCoordinates(venue.latitude, venue.longitude)).slice(0, 8);
+  }
+
+  get focusedMapVenue(): Venue | null {
+    const mapped = this.mapAvailableVenues;
+    return mapped.find(venue => venue.id === this.selectedMapVenueId) || mapped[0] || null;
+  }
+
+  get focusedVenueMapUrl(): SafeResourceUrl | null {
+    const venue = this.focusedMapVenue;
+    if (!venue || !this.sanitizer) return null;
+    const source = venueOsmEmbedUrl(venue.latitude!, venue.longitude!);
+    if (!source) return null;
+    if (source !== this.cachedVenueMapSource) {
+      this.cachedVenueMapSource = source;
+      this.cachedTrustedVenueMap = this.sanitizer.bypassSecurityTrustResourceUrl(source);
+    }
+    return this.cachedTrustedVenueMap;
+  }
+
+  selectMapVenue(id: number): void {
+    if (this.mapAvailableVenues.some(venue => venue.id === id)) this.selectedMapVenueId = id;
+  }
+
+
+  setCategory(category: ExploreCategory): void {
+    this.activeTab = category;
+  }
+
+  showSection(category: 'venues' | 'sessions' | 'people'): boolean {
+    if (this.activeTab === category) return true;
+    if (this.activeTab !== 'all') return false;
+    if (category === 'venues') return !this.venuesLoadError;
+    if (category === 'sessions') return !this.sessionsLoadError && this.sessions.length > 0;
+    return !this.peopleLoadError && this.people.length > 0;
+  }
+
+  selectQuickSport(value: string): void {
+    this.onSportChange(this.sport.trim() === value ? '' : value);
+    this.search();
+  }
+
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly venueEnvironmentTranslationKey = venueEnvironmentTranslationKey;
 
@@ -69,7 +122,8 @@ export class DiscoverComponent implements OnInit {
     private venueService: VenueService,
     private sessionService: SessionService,
     private communityService: CommunityService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    @Optional() private readonly sanitizer: DomSanitizer | null
   ) {}
 
   ngOnInit(): void {

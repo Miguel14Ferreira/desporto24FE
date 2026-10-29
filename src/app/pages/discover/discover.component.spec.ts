@@ -1068,4 +1068,64 @@ describe('DiscoverComponent', () => {
 
     expect(component.venuesLoadError).toBeFalse();
   });
+  it('focuses the selected category without reloading data or removing the other sections', () => {
+    const calls = venueService.suggest.calls.count();
+    const sessionsPanel: HTMLElement = fixture.nativeElement.querySelector('#explore-sessions');
+    const venuesPanel: HTMLElement = fixture.nativeElement.querySelector('#explore-venues');
+    const peoplePanel: HTMLElement = fixture.nativeElement.querySelector('#explore-people');
+
+    expect(component.activeTab).toBe('all');
+    expect(sessionsPanel.hasAttribute('hidden')).toBeTrue();
+    component.setCategory('sessions');
+    fixture.detectChanges();
+    expect(sessionsPanel.hasAttribute('hidden')).toBeFalse();
+    expect(venuesPanel.hasAttribute('hidden')).toBeTrue();
+    expect(peoplePanel.hasAttribute('hidden')).toBeTrue();
+    expect(venueService.suggest.calls.count()).toBe(calls);
+
+    component.setCategory('people');
+    fixture.detectChanges();
+    expect(peoplePanel.hasAttribute('hidden')).toBeFalse();
+    component.setCategory('all');
+    fixture.detectChanges();
+    expect(venuesPanel.hasAttribute('hidden')).toBeFalse();
+  });
+
+  it('uses sport quick picks as real search filters and allows toggling them off', () => {
+    const calls = venueService.suggest.calls.count();
+    component.selectQuickSport('Futebol');
+    expect(component.sport).toBe('Futebol');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Futebol', 0);
+    component.selectQuickSport('Futebol');
+    expect(component.sport).toBe('');
+    expect(venueService.suggest.calls.count()).toBe(calls + 2);
+  });
+
+  it('shows the community entry only in the community category', () => {
+    expect(fixture.nativeElement.querySelector('.explore-community-entry')).toBeNull();
+    component.setCategory('communities');
+    fixture.detectChanges();
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('.explore-community-entry a');
+    expect(link.getAttribute('href')).toBe('/menu/communities');
+    expect(fixture.nativeElement.querySelector('#explore-venues').hasAttribute('hidden')).toBeTrue();
+  });
+
+  it('shows a real venue map only for validated GPS locations and keeps the selection in sync', () => {
+    component.venues = [
+      { id: 100, name: 'Recinto A', city: 'Lisboa', latitude: 38.72, longitude: -9.14 },
+      { id: 101, name: 'Sem coordenadas', city: 'Lisboa', latitude: null, longitude: null },
+      { id: 102, name: 'Recinto B', city: 'Porto', latitude: 41.15, longitude: -8.61 }
+    ] as any;
+    component.setCategory('venues');
+    fixture.detectChanges();
+    expect(component.mapAvailableVenues.length).toBe(2);
+    const map: HTMLElement = fixture.nativeElement.querySelector('.explore-map-panel');
+    expect(map).not.toBeNull();
+    expect(map.querySelectorAll('.explore-map-pick').length).toBe(2);
+    component.selectMapVenue(102);
+    fixture.detectChanges();
+    expect(component.focusedMapVenue?.id).toBe(102);
+    expect(map.querySelector('a[href="/menu/venues/102"]')).not.toBeNull();
+  });
+
 });
