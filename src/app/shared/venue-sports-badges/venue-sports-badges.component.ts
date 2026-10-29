@@ -1,4 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
+import { I18nService } from '../../i18n/i18n.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { venueCatalogueDisplayLabel } from '../venue-catalogue-display';
 
@@ -78,7 +80,23 @@ export function parseVenueSports(value: string | null | undefined): string[] {
     }
   `]
 })
-export class VenueSportsBadgesComponent {
+export class VenueSportsBadgesComponent implements OnInit, OnDestroy {
+  private readonly destroyed = new Subject<void>();
+
+  constructor(private readonly i18n: I18nService,
+    private readonly changeDetector: ChangeDetectorRef) {}
+
+  ngOnInit(): void {
+    this.i18n.languageChanges$.pipe(takeUntil(this.destroyed)).subscribe(() => {
+      this.changeDetector.markForCheck();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed.next();
+    this.destroyed.complete();
+  }
+
   displaySport(sport: string): string {
     return venueCatalogueDisplayLabel(sport, 'sport');
   }
