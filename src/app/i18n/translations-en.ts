@@ -4290,7 +4290,7 @@ export const EN: Record<string, string> = {
   'profileInvite.loadError': 'Could not load your available choices. Please try again.',
   'profileInvite.sendError': 'Could not send the invitation. Check your permissions and try again.',
   'profileInvite.noCommunities': 'You do not manage any communities this person can be invited to.',
-  'profileInvite.noSessions': 'You do not have any upcoming public sessions available for invitation.',
+  'profileInvite.noSessions': 'You do not have upcoming sessions you organise that can receive invitations.',
   'profileInvite.about': 'About the player',
   'profile.contactInfo': 'Profile information',
   'profile.openFullProfile': 'View full profile',

@@ -159,9 +159,11 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   get availableInviteSessions(): SessionSummary[] {
     const now = Date.now();
+    // The /mine.created endpoint is scoped to sessions organised by this user.
+    // Invitations are allowed for private and community-only sessions as well;
+    // past and closed sessions are never offered.
     return this.inviteSessions.filter(session =>
-      !session.privateGame && session.audience !== 'COMMUNITY_ONLY'
-      && !['CANCELLED', 'COMPLETED'].includes(session.status?.toUpperCase() || '')
+      !['CANCELLED', 'COMPLETED'].includes(session.status?.toUpperCase() || '')
       && Number.isFinite(Date.parse(session.gameDate))
       && Date.parse(session.gameDate) > now);
   }

@@ -4297,7 +4297,7 @@ const PT: Dictionary = {
   'profileInvite.loadError': 'Não foi possível carregar as tuas opções. Tenta novamente.',
   'profileInvite.sendError': 'Não foi possível enviar o convite. Confirma as permissões e tenta novamente.',
   'profileInvite.noCommunities': 'Não tens comunidades que possas gerir e para as quais esta pessoa ainda não seja membro.',
-  'profileInvite.noSessions': 'Não tens sessões públicas futuras que possas convidar esta pessoa a participar.',
+  'profileInvite.noSessions': 'Não tens sessões futuras organizadas por ti para as quais possas enviar convites.',
   'profileInvite.about': 'Sobre o jogador',
   'profile.contactInfo': 'Informações do perfil',
   'profile.openFullProfile': 'Ver perfil completo',
