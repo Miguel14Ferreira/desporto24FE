@@ -26,6 +26,9 @@ interface SessionPublicPreview {
   /** Only included in a validated signed invitation, never anonymous public GET. */
   venueName?: string | null;
   address?: string | null;
+  /** Provided only by a verified organizer-issued guest invitation. */
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface ConfirmedSessionPlayer {
@@ -716,8 +719,23 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     return rawDate && Number.isFinite(Date.parse(rawDate)) ? rawDate : null;
   }
 
-  /** A signed guest link can reveal the real venue; public discovery remains city-only. */
+  /** A GPS point is authoritative ONLY in an organizer-signed invitation. */
+  get hasExactInvitationPin(): boolean {
+    if (!this.guestToken) return false;
+    const lat = this.session?.latitude;
+    const lon = this.session?.longitude;
+    return typeof lat === 'number' && typeof lon === 'number'
+      && Number.isFinite(lat) && Number.isFinite(lon)
+      && Math.abs(lat) <= 90 && Math.abs(lon) <= 180
+      && !(lat === 0 && lon === 0);
+  }
+
+  /** Coordinates take precedence over geocoder guesses; public previews stay city-only. */
   get cityMapsUrl(): string | null {
+    if (this.hasExactInvitationPin) {
+      const point = this.session!.latitude + ',' + this.session!.longitude;
+      return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(point);
+    }
     const place = this.guestToken && this.session?.address?.trim()
       ? this.session.address.trim()
       : this.session?.city?.trim();
