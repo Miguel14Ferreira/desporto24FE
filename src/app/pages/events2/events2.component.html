@@ -43,14 +43,15 @@
           <div class="create-preset-fields">
             <label>
               <span>{{ 'createSession.presets.select' | t }}</span>
-              <select name="sessionPresetSelection" [ngModel]="selectedPresetId"
-                      (ngModelChange)="applyPresetById($event)"
-                      [disabled]="presetsLoading || presetSaving || presetDeleting || loading">
-                <option [ngValue]="null">{{ 'createSession.presets.noSelection' | t }}</option>
-                @for (preset of presets; track preset.id) {
-                  <option [ngValue]="preset.id">{{ preset.name }}</option>
-                }
-              </select>
+              <app-jynlo-select name="sessionPresetSelection" class="create-premium-select"
+                [options]="presetChoices" [ngModel]="selectedPresetChoice"
+                (ngModelChange)="selectPresetChoice($event)"
+                [searchable]="true"
+                [placeholder]="'createSession.presets.noSelection' | t"
+                [ariaLabel]="'createSession.presets.select' | t"
+                [blocked]="presetsLoading || presetSaving || presetDeleting || loading"
+                [disabled]="presetsLoading || presetSaving || presetDeleting || loading">
+              </app-jynlo-select>
             </label>
             @if (selectedPresetId !== null) {
               <label>
@@ -246,10 +247,11 @@
         @if (canChoosePlayFormat) {
           <label class="session-play-format-field">
             <span>{{ 'createSession.playFormat' | t }}</span>
-            <select name="playFormat" [(ngModel)]="playFormat" [disabled]="loading">
-              <option value="INDIVIDUAL">{{ 'createSession.playFormatIndividual' | t }}</option>
-              <option value="PAIRS">{{ 'createSession.playFormatPairs' | t }}</option>
-            </select>
+            <app-jynlo-select name="playFormat" class="create-premium-select"
+              [options]="playFormatChoices" [(ngModel)]="playFormat"
+              [ariaLabel]="'createSession.playFormat' | t"
+              [blocked]="loading" [disabled]="loading">
+            </app-jynlo-select>
             @if (playFormat === 'PAIRS') {
               <small>{{ 'createSession.playFormatPairsHint' | t }}</small>
             }
@@ -327,28 +329,23 @@
         <div class="form-grid">
           <label>
             <span>{{ 'createSession.recurrence' | t }}</span>
-            <select
-              name="recurrence"
-              [(ngModel)]="recurrence"
-              [disabled]="loading">
-              <option value="NONE">{{ 'createSession.recurrenceNone' | t }}</option>
-              <option value="WEEKLY">{{ 'createSession.recurrenceWeekly' | t }}</option>
-              <option value="BIWEEKLY">{{ 'createSession.recurrenceBiweekly' | t }}</option>
-            </select>
+            <app-jynlo-select name="recurrence" class="create-premium-select"
+              [options]="recurrenceChoices" [(ngModel)]="recurrence"
+              [ariaLabel]="'createSession.recurrence' | t"
+              [blocked]="loading" [disabled]="loading">
+            </app-jynlo-select>
             <small>{{ 'createSession.recurrenceHint' | t }}</small>
           </label>
 
           @if (recurrence === 'WEEKLY') {
             <label>
               <span>{{ 'createSession.weeklySessionsPerWeek' | t }}</span>
-              <select name="weeklySessionsPerWeek"
-                [ngModel]="weeklySessionsPerWeek"
-                (ngModelChange)="setWeeklySessionsPerWeek($event)"
-                [disabled]="loading">
-                @for (count of weeklySessionCountOptions; track count) {
-                  <option [ngValue]="count">{{ 'createSession.weeklySessionOption' | t:{ count: count } }}</option>
-                }
-              </select>
+              <app-jynlo-select name="weeklySessionsPerWeek" class="create-premium-select"
+                [options]="weeklyCountChoices" [ngModel]="weeklySessionsPerWeek.toString()"
+                (ngModelChange)="setWeeklySessionsPerWeek(+$event)"
+                [ariaLabel]="'createSession.weeklySessionsPerWeek' | t"
+                [blocked]="loading" [disabled]="loading">
+              </app-jynlo-select>
               <small>{{ 'createSession.weeklySessionsPerWeekHint' | t }}</small>
             </label>
           }
@@ -415,11 +412,11 @@
           <div class="form-grid">
             <label>
               <span>{{ 'createSession.callupMode' | t }}</span>
-              <select name="registrationOpeningMode" [(ngModel)]="registrationOpeningMode" [disabled]="loading">
-                <option value="IMMEDIATE">{{ 'createSession.callupImmediate' | t }}</option>
-                <option value="SCHEDULED">{{ 'createSession.callupScheduled' | t }}</option>
-                <option value="MANUAL">{{ 'createSession.callupManual' | t }}</option>
-              </select>
+              <app-jynlo-select name="registrationOpeningMode" class="create-premium-select"
+                [options]="openingModeChoices" [(ngModel)]="registrationOpeningMode"
+                [ariaLabel]="'createSession.callupMode' | t"
+                [blocked]="loading" [disabled]="loading">
+              </app-jynlo-select>
             </label>
             @if (registrationOpeningMode === 'SCHEDULED') {
               <label>
@@ -477,14 +474,13 @@
         @if (locationMethod === 'venue') {
         <label class="venue-select-field">
           <span>{{ 'venue.district' | t }}</span>
-          <select name="venueDistrict" [ngModel]="venueDistrict"
-                  (ngModelChange)="onDistrictChanged($event)" [disabled]="loading || venueSaving">
-            <option value="">{{ 'venue.districtPlaceholder' | t }}</option>
-            @for (district of districts; track district) {
-              <option [value]="district">{{ district }}</option>
-            }
-            <option [value]="allDistrictsOption">{{ 'venue.searchAllDistricts' | t }}</option>
-          </select>
+          <app-jynlo-select name="venueDistrict" class="create-premium-select"
+            [options]="districtChoices" [ngModel]="venueDistrict"
+            (ngModelChange)="onDistrictChanged($event)"
+            [searchable]="true" [placeholder]="'venue.districtPlaceholder' | t"
+            [ariaLabel]="'venue.district' | t"
+            [blocked]="loading || venueSaving" [disabled]="loading || venueSaving">
+          </app-jynlo-select>
           <small class="venue-current-location">{{ 'venue.districtHint' | t }}</small>
         </label>
 
@@ -784,14 +780,12 @@
 
               <label>
                 <span>{{ 'venue.ownership' | t }}</span>
-                <select
-                  name="venueOwnershipType"
-                  [(ngModel)]="venueOwnershipType"
-                  [disabled]="venueSaving">
-                  <option [ngValue]="null">{{ 'venue.ownership.none' | t }}</option>
-                  <option [ngValue]="'PUBLIC'">{{ 'venue.ownership.public' | t }}</option>
-                  <option [ngValue]="'PRIVATE'">{{ 'venue.ownership.private' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueOwnershipType" class="create-premium-select"
+                  [options]="ownershipChoices" [ngModel]="venueOwnershipType ?? ''"
+                  (ngModelChange)="venueOwnershipType = $event || null"
+                  [ariaLabel]="'venue.ownership' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
 
               <label>
@@ -860,63 +854,57 @@
               </label>
               <label>
                 <span>{{ 'venue.toilets' | t }}</span>
-                <select
-                  name="venueToilets"
-                  [(ngModel)]="venueToilets">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueToilets" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueToilets)"
+                  (ngModelChange)="venueToilets = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.toilets' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.lockers' | t }}</span>
-                <select
-                  name="venueLockers"
-                  [(ngModel)]="venueLockers">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueLockers" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueLockers)"
+                  (ngModelChange)="venueLockers = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.lockers' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.accessible' | t }}</span>
-                <select
-                  name="venueAccessible"
-                  [(ngModel)]="venueAccessible">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueAccessible" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueAccessible)"
+                  (ngModelChange)="venueAccessible = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.accessible' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.firstAid' | t }}</span>
-                <select
-                  name="venueFirstAid"
-                  [(ngModel)]="venueFirstAid">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueFirstAid" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueFirstAid)"
+                  (ngModelChange)="venueFirstAid = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.firstAid' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.aed' | t }}</span>
-                <select
-                  name="venueAed"
-                  [(ngModel)]="venueAed">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueAed" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueAed)"
+                  (ngModelChange)="venueAed = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.aed' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.cafe' | t }}</span>
-                <select
-                  name="venueCafe"
-                  [(ngModel)]="venueCafe">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueCafe" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueCafe)"
+                  (ngModelChange)="venueCafe = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.cafe' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <input type="checkbox" name="venueParking" [(ngModel)]="venueParking">
