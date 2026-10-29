@@ -3573,4 +3573,42 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
     expect(badge.classList.contains('session-minimum-indicator--ready')).toBeTrue();
   });
+
+  it('aligns session chat and invite actions on the same baseline without old top margins', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user', joined:true, privateGame:false,
+      audience:'COMMUNITY_ONLY', status:'OPEN', gameDate:'2099-10-01T18:00:00Z'
+    };
+    fixture.detectChanges();
+    const toolbar = fixture.nativeElement.querySelector('.session-top-actions') as HTMLElement;
+    expect(toolbar).not.toBeNull();
+    const chat = toolbar.querySelector('a[href*="/menu/messages"]') as HTMLElement;
+    const invite = toolbar.querySelector('.session-invite-toggle') as HTMLElement;
+    expect(chat).not.toBeNull();
+    expect(invite).not.toBeNull();
+    const chatStyle = getComputedStyle(chat);
+    const inviteStyle = getComputedStyle(invite);
+    expect(chatStyle.marginTop).toBe('0px');
+    expect(inviteStyle.marginTop).toBe('0px');
+    expect(chatStyle.minHeight).toBe(inviteStyle.minHeight);
+    expect(chatStyle.display).toBe('inline-flex');
+    expect(inviteStyle.display).toBe('inline-flex');
+    expect(chat.getBoundingClientRect().top).toBeCloseTo(invite.getBoundingClientRect().top, 0);
+  });
+
+  it('uses real name initials rather than parentheses on the guest avatar', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {...session,joined:true};
+    component.guestRequests = [{
+      id: 121, name:'André (Borralho)', status:'APPROVED', note:'',teamCode:null
+    }];
+    fixture.detectChanges();
+    const card = fixture.nativeElement.querySelector(
+      '#session-participants .session-player-card--guest') as HTMLElement;
+    expect(card).not.toBeNull();
+    expect(card.querySelector('.session-player-card__avatar')?.textContent?.trim()).toBe('A');
+    // Historical label is never rewritten as a real user's account name.
+    expect(card.querySelector('.session-player-card__name')?.textContent).toContain('André (Borralho)');
+  });
 });
