@@ -141,13 +141,19 @@ h1 {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: .9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem .9rem;
   margin-top: 1.2rem;
 }
 
-.form-grid label {
-  display: grid;
+/* Keep both columns top-aligned even when only one field has helper text. */
+.form-grid > label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-width: 0;
   gap: .4rem;
 }
 
@@ -193,6 +199,20 @@ textarea {
 .phone-row select {
   height: 52px;
   box-sizing: border-box;
+}
+
+/* Native inputs, password fields and the premium selects now share a 50px
+   control height. The select trigger already has min-height: 50px. */
+.form-grid > label > input,
+.form-grid > label .password-field input {
+  height: 50px;
+  min-height: 50px;
+  box-sizing: border-box;
+}
+
+.form-grid > label > .password-field {
+  height: 50px;
+  min-width: 0;
 }
 
 .password-field button {
