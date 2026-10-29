@@ -1,7 +1,5 @@
 <app-navbar></app-navbar>
 <router-outlet></router-outlet>
 <app-footer></app-footer>
-@defer (on immediate) {
-  <app-direct-call-overlay></app-direct-call-overlay>
-}
+<ng-container #callOverlayOutlet></ng-container>
 <app-profile-quick-view></app-profile-quick-view>
