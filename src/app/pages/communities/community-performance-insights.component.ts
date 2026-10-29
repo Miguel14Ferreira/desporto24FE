@@ -26,7 +26,7 @@ export class CommunityPerformanceInsightsComponent {
   @Input() comparePlayerB?: CommunityStanding;
   @Output() compareAChange = new EventEmitter<string>();
   @Output() compareBChange = new EventEmitter<string>();
-  @Output() clearRequested = new EventEmitter<void>();
+  @Output() clearRequested = new EventEmitter<'A' | 'B'>();
 
   /** Same percentage calculation as CommunitiesComponent.pointsBarWidth. */
   pointsBarWidth(row: CommunityStanding): number {

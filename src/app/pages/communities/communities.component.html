@@ -4824,7 +4824,7 @@
                     [comparePlayerB]="comparePlayerB()"
                     (compareAChange)="compareSelectionA = $event"
                     (compareBChange)="compareSelectionB = $event"
-                    (clearRequested)="clearPlayerComparison()"
+                    (clearRequested)="clearPlayerComparison($event)"
                   ></app-community-performance-insights>
 
                   <app-community-stats-table [rows]="rankingParticipants"></app-community-stats-table>
