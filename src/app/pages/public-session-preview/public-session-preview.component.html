@@ -154,12 +154,63 @@
                     {{ (invitationLoginBusy ? 'guestRsvp.linking' : 'inviteCenter.loginAndConfirm') | t }}
                   </button>
                 </form>
-                <button type="button" class="guest-rsvp-back invitation-other-login"
-                  (click)="openFullLogin()">{{ 'inviteCenter.moreLoginOptions' | t }}</button>
+                <div class="invite-auth-divider" role="separator">
+                  <span>{{ 'inviteCenter.orGoogle' | t }}</span>
+                </div>
+                <div class="invite-google-auth">
+                  <div id="invite-google-signin-button" class="invite-google-button"></div>
+                  @if (invitationGoogleLoading) {
+                    <p role="status">{{ 'inviteCenter.googleLoading' | t }}</p>
+                  }
+                  @if (invitationGoogleError) {
+                    <p role="alert" class="guest-rsvp-error">{{ invitationGoogleError | t }}</p>
+                  }
+                  @if (invitationGoogleOnboardingRequired) {
+                    <div class="invite-google-onboarding">
+                      <p>{{ 'inviteCenter.googleOnboardingHelp' | t }}</p>
+                      <button type="button" class="guest-rsvp-back" (click)="completeInvitationGoogleOnboarding()">
+                        {{ 'inviteCenter.googleOnboardingAction' | t }}
+                      </button>
+                    </div>
+                  }
+                </div>
                 <button type="button" class="guest-rsvp-back"
-                  [disabled]="invitationLoginBusy" (click)="invitationStage='identify'">
+                  [disabled]="invitationLoginBusy || invitationGoogleLoading"
+                  (click)="invitationStage='identify'">
                   {{ 'guestRsvp.back' | t }}
                 </button>
+              } @else if (guestStep === 'choose' && invitationStage === 'mfa') {
+                <h2>{{ 'inviteCenter.mfaTitle' | t }}</h2>
+                <p>{{ 'inviteCenter.mfaHelp' | t }}</p>
+                @if (invitationMfaCountdown) {
+                  <p class="invite-mfa-countdown" role="status">
+                    {{ (invitationMfaExpired ? 'inviteCenter.mfaExpired' : 'inviteCenter.mfaExpiresIn') | t }}
+                    <strong>{{ invitationMfaCountdown }}</strong>
+                  </p>
+                }
+                <form class="invitation-inline-login invite-mfa-form" (ngSubmit)="confirmInvitationMfa()">
+                  <label for="invite-mfa-code">{{ 'inviteCenter.mfaCode' | t }}</label>
+                  <input id="invite-mfa-code" type="text" inputmode="numeric"
+                    autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}"
+                    [(ngModel)]="invitationMfaCode" name="inviteMfaCode" required
+                    [disabled]="invitationMfaBusy || invitationMfaExpired" />
+                  @if (invitationMfaError) {
+                    <p role="alert" class="guest-rsvp-error">{{ invitationMfaError | t }}</p>
+                  }
+                  @if (invitationMfaFeedback) {
+                    <p role="status" class="invite-mfa-feedback">{{ invitationMfaFeedback | t }}</p>
+                  }
+                  <button type="submit" class="guest-rsvp-primary"
+                    [disabled]="invitationMfaBusy || invitationMfaExpired || !invitationMfaCode.trim()">
+                    {{ (invitationMfaBusy ? 'inviteCenter.mfaVerifying' : 'inviteCenter.mfaConfirm') | t }}
+                  </button>
+                </form>
+                <button type="button" class="guest-rsvp-back invite-mfa-resend"
+                  [disabled]="invitationMfaResending || invitationMfaBusy" (click)="resendInvitationMfa()">
+                  {{ (invitationMfaResending ? 'inviteCenter.mfaResending' : 'inviteCenter.mfaResend') | t }}
+                </button>
+                <button type="button" class="guest-rsvp-back" [disabled]="invitationMfaBusy || invitationMfaResending"
+                  (click)="cancelInvitationMfa()">{{ 'guestRsvp.back' | t }}</button>
               } @else if (guestStep === 'choose') {
                 <button type="button" class="guest-rsvp-back"
                   (click)="invitationStage='identify'">{{ 'guestRsvp.back' | t }}</button>
