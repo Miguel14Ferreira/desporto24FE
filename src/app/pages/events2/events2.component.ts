@@ -653,6 +653,39 @@ export class Events2Component implements OnInit, OnDestroy {
   }
 
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly sportChoices: JynloSelectOption[] = SPORTS_CATALOG.map(sport => ({
+    value: sport, label: sport
+  }));
+
+  /** Server IDs are the only permitted selection values; names are not unique. */
+  get venueSearchChoices(): JynloSelectOption[] {
+    return this.venueOptions.map(venue => ({
+      value: String(venue.id),
+      label: venue.name + ' · ' + venue.city,
+      description: [
+        venue.address || (venue.latitude != null && venue.longitude != null
+          ? t('venue.gpsOnlyAddress') : ''),
+        venue.district && venue.district !== venue.city ? venue.district : '',
+        venue.informationSource === 'OPENSTREETMAP'
+          ? t('venue.detail.sourceOpenStreetMap') : ''
+      ].filter(Boolean).join(' · ')
+    }));
+  }
+
+  onSportChoice(value: string): void {
+    if (this.sport === value) return;
+    this.sport = value;
+    this.confirmSportSelection();
+  }
+
+  onVenueSelected(value: string): void {
+    if (!value) {
+      this.selectVenue(null);
+      return;
+    }
+    this.chooseVenueFromResults(Number(value));
+  }
+
   // Only sports explicitly supported for both singles and doubles offer this selector.
   private readonly doublesSports = new Set([
     'Padel', 'Ténis', 'Ténis de praia', 'Ténis de mesa', 'Badminton', 'Pickleball'

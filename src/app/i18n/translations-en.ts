@@ -3864,6 +3864,7 @@ export const EN: Record<string, string> = {
   'venue.sportFilterPlaceholder': 'Type a sport...',
   'venue.search': 'Search venue',
   'venue.searchPlaceholder': 'Venue name',
+  'venue.noResults': 'No venues found. Try another name or search nationwide.',
   'venue.searching': 'Searching venues...',
   'venue.showMore': 'Show more venues',
   'venue.resultsLabel': 'Matching venues · choose your location',
