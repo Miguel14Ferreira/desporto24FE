@@ -760,7 +760,7 @@ describe('PerfisComponent', () => {
   it('places a friend request next to invite without showing a false friendship badge', () => {
     routeParams.next(convertToParamMap({ username: 'ana' }));
     fixture.detectChanges();
-    const actions = fixture.nativeElement.querySelector<HTMLElement>('.profile-primary-actions');
+    const actions = fixture.nativeElement.querySelector('.profile-primary-actions') as HTMLElement | null;
     expect(actions?.querySelector('button.profile-request-action')).toBeTruthy();
     expect(actions?.querySelector('button.profile-invite-trigger')).toBeTruthy();
     expect(actions?.children.length).toBe(2);
