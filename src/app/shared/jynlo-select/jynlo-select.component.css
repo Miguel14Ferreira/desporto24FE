@@ -1,5 +1,5 @@
 :host { display:block; min-width:0; width:100%; }
-.jynlo-select { position:relative; min-width:0; width:100%; --pick-accent:#58e5d1; --pick-glow:88,229,209; }
+.jynlo-select { position:relative; min-width:0; width:100%; --pick-accent:#40e6ad; --pick-glow:64,230,173; }
 .jynlo-select--violet { --pick-accent:#a5b4fc; --pick-glow:165,180,252; }
 .jynlo-select__trigger { display:flex; align-items:center; justify-content:space-between;
   gap:.7rem; box-sizing:border-box; width:100%; min-width:0; min-height:50px;
