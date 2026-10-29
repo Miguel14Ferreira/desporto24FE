@@ -2,6 +2,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, V
 import { Router } from '@angular/router';
 
 import { AuthenticationService } from './services/authethication.service';
+import { NativeSelectEnhancementService } from './shared/jynlo-select/native-select-enhancement.service';
 import { PilotAnalyticsService } from './services/pilot-analytics.service';
 import { OnlinePresenceService } from './services/online-presence.service';
 import { appTranslate as t } from './i18n/i18n.service';
@@ -24,7 +25,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private authenticationService: AuthenticationService,
     private pilotAnalyticsService: PilotAnalyticsService,
-    private onlinePresence: OnlinePresenceService
+    private onlinePresence: OnlinePresenceService,
+    private nativeSelectEnhancement: NativeSelectEnhancementService
   ) {}
 
   ngOnInit(): void {
@@ -62,6 +64,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // Enhance all native single-select dropdowns, including lazy routed pages.
+    // The real select stays in the DOM, preserving ngModel / ngValue / validators.
+    this.nativeSelectEnhancement.start();
     // Do not include the meeting UI and its styles in the initial Angular
     // bundle. Load immediately after boot, so incoming call invitations still
     // have a global route-independent surface.
@@ -77,6 +82,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.disposed=true;
     this.onlinePresence.stop();
+    this.nativeSelectEnhancement.stop();
   }
 
   private navigateToLoginAfterConfirmation(params: URLSearchParams): void {
