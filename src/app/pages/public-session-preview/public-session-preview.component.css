@@ -263,6 +263,16 @@ h1 {
 }
 .guest-rsvp .guest-rsvp-hint{color:#b4dce2;font-size:.77rem}
 .guest-rsvp .guest-rsvp-error{color:#ffb9ba}
+.invitation-inline-login {display:grid;gap:.7rem;min-width:0}
+.invitation-inline-login label {font-size:.86rem;font-weight:800;color:#e2f3f7}
+.invitation-inline-login input {
+  width:100%;min-width:0;min-height:45px;box-sizing:border-box;padding:.75rem .9rem;
+  border:1px solid rgba(125,211,252,.45);border-radius:.8rem;
+  background:rgba(5,29,43,.72);color:#fff;font:inherit;
+}
+.invitation-inline-login input:focus-visible {outline:3px solid #7dd3fc;outline-offset:2px}
+.invitation-have-account,.invitation-no-account,.invitation-first-confirm {width:100%;min-height:48px}
+.invitation-other-login {margin-top:.35rem}
 .member-rsvp {
   display:grid;gap:.75rem;padding:1.2rem;margin:.95rem 0 0;border:1px solid rgba(46,216,181,.38);
   border-radius:1rem;background:linear-gradient(125deg,rgba(7,53,63,.72),rgba(8,28,45,.7));

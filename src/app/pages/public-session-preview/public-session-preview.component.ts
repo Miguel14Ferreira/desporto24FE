@@ -91,7 +91,113 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   memberCancelConfirm = false;
   memberCancelling = false;
   memberCancelledBySelf = false;
+  invitationStage: 'start'|'identify'|'login'|'name' = 'start';
+  invitationLoginUsername = '';
+  invitationLoginPassword = '';
+  invitationLoginBusy = false;
+  invitationLoginError = '';
   private rosterRefreshTimer?: ReturnType<typeof setInterval>;
+
+  startInvitation(): void {
+    if (!this.guestToken || !this.canRequestParticipation || this.guestReceipt) return;
+    if (this.isAuthenticated) {
+      if (this.memberPresence === 'NONE') this.joinWithAccount();
+      return;
+    }
+    this.invitationStage = 'identify';
+  }
+
+  chooseInvitationIdentity(hasAccount: boolean): void {
+    if (!this.guestToken || this.isAuthenticated || this.guestReceipt) return;
+    this.invitationStage = hasAccount ? 'login' : 'name';
+    this.invitationLoginError = '';
+  }
+
+  /** Name entry reserves the seat immediately; no redundant second confirmation. */
+  confirmGuestName(): void {
+    if (this.invitationStage !== 'name' || this.guestStep !== 'choose') return;
+    if (this.guestPlayerName.trim().length < 2 || this.guestPlayerName.trim().length > 80) return;
+    this.guestStep = 'confirm';
+    this.sendGuestRequest();
+  }
+
+  /** A link never authorizes automatic RSVP. Only a recent, explicit login
+   * intention in the same tab can do that, for that exact invitation. */
+  private autoJoinKey(): string {
+    return 'jynlo-invite-rsvp:' + this.sessionId + ':' + (this.guestToken || '').slice(0,18);
+  }
+  private markAutoJoinIntent(): void {
+    try { sessionStorage.setItem(this.autoJoinKey(), String(Date.now())); } catch {}
+  }
+  private consumeAutoJoinIntent(): boolean {
+    let created = 0;
+    try {
+      created = Number(sessionStorage.getItem(this.autoJoinKey()));
+      sessionStorage.removeItem(this.autoJoinKey());
+    } catch { return false; }
+    return Number.isFinite(created) && created > 0 && Date.now() - created < 600000;
+  }
+
+  /** Full login remains available for Google and MFA. */
+  openFullLogin(): void {
+    if (!this.guestRegistrationReturnUrl || this.isAuthenticated) return;
+    this.markAutoJoinIntent();
+    this.router.navigate(['/login'], {queryParams:{returnUrl:this.guestRegistrationReturnUrl}});
+  }
+
+  loginInsideInvitation(): void {
+    const username = this.invitationLoginUsername.trim();
+    if (!this.guestToken || this.isAuthenticated || this.invitationLoginBusy ||
+        !username || !this.invitationLoginPassword || !this.guestRegistrationReturnUrl) return;
+    this.invitationLoginBusy = true;
+    this.invitationLoginError = '';
+    this.markAutoJoinIntent();
+    this.authenticationService.login(username, this.invitationLoginPassword)
+      .pipe(timeout(10000), finalize(() => {
+        this.invitationLoginBusy = false;
+        this.invitationLoginPassword = '';
+      })).subscribe({
+        next: result => {
+          if (result.mfaRequired) {
+            if (!result.challengeId) {
+              this.consumeAutoJoinIntent();
+              this.invitationLoginError = 'inviteCenter.inlineLoginError';
+              return;
+            }
+            try {
+              sessionStorage.setItem('mfa-challenge-id', result.challengeId);
+              sessionStorage.setItem('mfa-return-url', this.guestRegistrationReturnUrl!);
+              if (result.challengeExpiresAt)
+                sessionStorage.setItem('mfa-expires-at', result.challengeExpiresAt);
+              else sessionStorage.removeItem('mfa-expires-at');
+            } catch {
+              this.consumeAutoJoinIntent();
+              this.invitationLoginError = 'inviteCenter.inlineLoginError';
+              return;
+            }
+            this.router.navigate(['/login/MFAauthentication']);
+            return;
+          }
+          if (!result.token) {
+            this.consumeAutoJoinIntent();
+            this.invitationLoginError = 'inviteCenter.inlineLoginError';
+            return;
+          }
+          this.authenticationService.saveToken(result.token);
+          this.isAuthenticated = true;
+          this.memberPresence = 'UNKNOWN';
+          this.loadMemberPresence();
+        },
+        error: () => {
+          this.consumeAutoJoinIntent();
+          this.invitationLoginError = 'inviteCenter.inlineLoginError';
+        }
+      });
+  }
+
+  private openMemberDetails(): void {
+    if (this.returnUrl) this.router.navigateByUrl(this.returnUrl);
+  }
 
   get guestRegistrationReturnUrl(): string | null {
     return this.sessionId && this.guestToken
@@ -125,7 +231,7 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   joinWithAccount(): void {
     if (!this.isAuthenticated || !this.guestToken || !this.sessionId
         || this.guestReceipt || this.memberJoining || this.memberPresence!=='NONE'
-        || this.memberPresenceError || this.memberPresenceLoading || !this.canRequestParticipation) return;
+        || this.memberPresenceError || !this.canRequestParticipation) return;
     this.memberJoining = true;
     this.memberJoinError = '';
     const id = this.sessionId;
@@ -135,13 +241,12 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     ).pipe(timeout(10000),finalize(()=>this.memberJoining=false)).subscribe({
       next: result => {
         if (result.state === 'PARTICIPANT' || result.state === 'WAITLISTED') {
-          // Keep the user on the invitation: show actual confirmed state and
-          // cancellation, rather than redirecting to an unrelated screen.
           this.memberPresence=result.state;
           this.memberCancelledBySelf=false;
           this.memberCancelConfirm=false;
-          this.loadPreview();
+          this.consumeAutoJoinIntent();
           this.loadConfirmedPlayers();
+          this.openMemberDetails();
         } else {
           this.memberJoinError='guestRsvp.memberJoinError';
         }
@@ -169,11 +274,19 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
           if (result.status !== 'PARTICIPANT' && result.status !== 'WAITLISTED') {
             this.memberCancelConfirm = false;
           }
+          if (this.consumeAutoJoinIntent()) {
+            if (result.status === 'NONE' && this.canRequestParticipation) this.joinWithAccount();
+            else if (result.status === 'PARTICIPANT' || result.status === 'WAITLISTED'
+              || result.status === 'ORGANIZER') this.openMemberDetails();
+          }
         } else {
           this.memberPresenceError = true;
         }
       },
-      error: () => {this.memberPresenceError = true;}
+      error: () => {
+        this.memberPresenceError = true;
+        this.consumeAutoJoinIntent();
+      }
     });
   }
 
