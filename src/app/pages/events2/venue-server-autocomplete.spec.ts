@@ -101,8 +101,13 @@ describe('Create session venue server autocomplete', () => {
     tick(1);
     expect(venues.suggest).toHaveBeenCalledWith('Pavilhão', '', 'Padel', 0, 'Porto');
     fixture.detectChanges();
-    expect((fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement).disabled)
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    expect((host.querySelector('button[role="combobox"]') as HTMLButtonElement).disabled)
       .toBeFalse();
+    (host.querySelector('button[role="combobox"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    tick();
+    expect((host.querySelector('input[type="search"]') as HTMLInputElement).disabled).toBeFalse();
     pending.next(page([venue(4, 'Pavilhão')]));
     pending.complete();
     expect(component.venueOptions.map(v => v.id)).toEqual([4]);
@@ -175,8 +180,11 @@ describe('Create session venue server autocomplete', () => {
     component.loadVenues();
     fixture.detectChanges();
 
-    const results = fixture.nativeElement.querySelectorAll(
-      'button.venue-result-option'
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    (host.querySelector('.jynlo-select__trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const results = host.querySelectorAll(
+      'button[role="option"]'
     ) as NodeListOf<HTMLButtonElement>;
     expect(results.length).toBe(2);
     expect(results[0].textContent).toContain('Pavilhão Municipal');
@@ -200,15 +208,18 @@ describe('Create session venue server autocomplete', () => {
     component.loadVenues();
     fixture.detectChanges();
 
-    const result = fixture.nativeElement.querySelector('button.venue-result-option') as HTMLButtonElement;
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    (host.querySelector('.jynlo-select__trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const result = host.querySelector('button[role="option"]') as HTMLButtonElement;
     expect(result).not.toBeNull();
     expect(result.textContent).toContain('morada por confirmar');
     expect(result.textContent).toContain('OpenStreetMap');
     expect(result.textContent).not.toContain('null');
     result.click();
-    expect(component.selectedVenueId).toBe(2026);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('button.venue-result-option')).toBeNull();
+    expect(component.selectedVenueId).toBe(2026);
+    expect(host.querySelector('button[role="option"]')).toBeNull();
   });
 
   it('does not leave outdated search-result buttons active during debounce', fakeAsync(() => {
@@ -222,7 +233,8 @@ describe('Create session venue server autocomplete', () => {
     component.onVenueSearchChanged('Campo Novo');
     expect(component.venues).toEqual([]);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('button.venue-result-option')).toBeNull();
+    expect(fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="venueSearch"] button[role="option"]')).toBeNull();
     tick(300);
     expect(component.venues.map(v => v.id)).toEqual([11]);
   }));
