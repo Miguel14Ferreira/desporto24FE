@@ -123,7 +123,11 @@ describe('Public invitation session chat access', () => {
     expect(page.loading).toBeFalse();
     expect(page.allowed).toBeFalse();
     const error = fixture.nativeElement.querySelector('.invite-chat-error') as HTMLElement;
-    expect(error).not.toBeNull();
+    expect(page.readError).toBe('publicSession.chatLoadError');
+    expect(error).withContext('Chat state: '+ JSON.stringify({
+      loading: page.loading, readError: page.readError, loginRequired: page.loginRequired,
+      open: page.chatOpen, html: fixture.nativeElement.textContent.slice(0,500)
+    })).not.toBeNull();
     expect(error.textContent).toContain('Não foi possível atualizar o chat');
     const retry = fixture.nativeElement.querySelector('.invite-chat-retry') as HTMLButtonElement;
     expect(retry.disabled).toBeFalse();
@@ -175,7 +179,12 @@ describe('Public invitation session chat access', () => {
     fixture.detectChanges();
     expect(page.allowed).toBeTrue();
     expect(page.messages).toEqual([sample]);
-    expect(fixture.nativeElement.querySelector('.invite-chat-error')).not.toBeNull();
+    expect(page.readError).toBe('publicSession.chatLoadError');
+    expect(fixture.nativeElement.querySelector('.invite-chat-error'))
+      .withContext('Chat state: ' + JSON.stringify({
+        readError: page.readError, allowed: page.allowed,
+        html: fixture.nativeElement.textContent.slice(0,500)
+      })).not.toBeNull();
     page.retryChatAccess();
     fixture.detectChanges();
     expect(page.readError).toBe('');
