@@ -32,7 +32,6 @@ export class Events2Component implements OnInit, OnDestroy {
   address = '';
   meetingPointInstructions = '';
   maxParticipants = 4;
-  /** Null tracks the sport-aware default until the organiser edits the number. */
   /** When enabled, the full capacity becomes the required minimum. */
   capacityIsMinimum = false;
   selectedMinimumPlayers: number | null = null;
@@ -437,6 +436,9 @@ export class Events2Component implements OnInit, OnDestroy {
     this.playFormat = s.playFormat === 'PAIRS' && this.canChoosePlayFormat ? 'PAIRS' : 'INDIVIDUAL';
     this.creationMode = s.creationMode === 'COMPLETE' ? 'COMPLETE' : 'START';
     this.maxParticipants = s.maxParticipants;
+    // Legacy presets do not store attendance thresholds; do not leak the prior selection.
+    this.capacityIsMinimum = false;
+    this.selectedMinimumPlayers = null;
     this.confirmedPlayers = Math.max(1, Math.min(s.confirmedPlayers || 1, this.maxParticipants));
     this.hasPrice = !!s.hasPrice;
     this.priceAmount = this.hasPrice ? s.priceAmount : null;
