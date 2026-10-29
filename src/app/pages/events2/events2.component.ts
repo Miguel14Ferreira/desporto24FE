@@ -15,6 +15,7 @@ import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue, VenueOwnershipType } from '../model/venue';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { suggestedMinimumPlayers } from '../../shared/session-minimum-players';
+import { JynloSelectOption } from '../../shared/jynlo-select/jynlo-select.component';
 import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/portugal-districts';
 
 @Component({
@@ -573,6 +574,83 @@ export class Events2Component implements OnInit, OnDestroy {
 
   registrationOpeningMode: 'IMMEDIATE' | 'SCHEDULED' | 'MANUAL' = 'IMMEDIATE';
   registrationOpensAt = '';
+
+  /** Bind our existing form select without changing API enum, number or nullable boolean values. */
+  get presetChoices(): JynloSelectOption[] {
+    return [
+      {value: '', label: t('createSession.presets.noSelection')},
+      ...this.presets.map(preset => ({value: String(preset.id), label: preset.name}))
+    ];
+  }
+
+  get selectedPresetChoice(): string {
+    return this.selectedPresetId === null ? '' : String(this.selectedPresetId);
+  }
+
+  selectPresetChoice(value: string): void {
+    this.applyPresetById(value === '' ? null : Number(value));
+  }
+
+  get playFormatChoices(): JynloSelectOption[] {
+    return [
+      {value: 'INDIVIDUAL', label: t('createSession.playFormatIndividual')},
+      {value: 'PAIRS', label: t('createSession.playFormatPairs')}
+    ];
+  }
+
+  get recurrenceChoices(): JynloSelectOption[] {
+    return [
+      {value: 'NONE', label: t('createSession.recurrenceNone')},
+      {value: 'WEEKLY', label: t('createSession.recurrenceWeekly')},
+      {value: 'BIWEEKLY', label: t('createSession.recurrenceBiweekly')}
+    ];
+  }
+
+  get weeklyCountChoices(): JynloSelectOption[] {
+    return this.weeklySessionCountOptions.map(count => ({
+      value: String(count), label: t('createSession.weeklySessionOption', {count})
+    }));
+  }
+
+  get openingModeChoices(): JynloSelectOption[] {
+    return [
+      {value: 'IMMEDIATE', label: t('createSession.callupImmediate')},
+      {value: 'SCHEDULED', label: t('createSession.callupScheduled')},
+      {value: 'MANUAL', label: t('createSession.callupManual')}
+    ];
+  }
+
+  get districtChoices(): JynloSelectOption[] {
+    return [
+      {value: '', label: t('venue.districtPlaceholder')},
+      ...this.districts.map(district => ({value: district, label: district})),
+      {value: this.allDistrictsOption, label: t('venue.searchAllDistricts')}
+    ];
+  }
+
+  get ownershipChoices(): JynloSelectOption[] {
+    return [
+      {value: '', label: t('venue.ownership.none')},
+      {value: 'PUBLIC', label: t('venue.ownership.public')},
+      {value: 'PRIVATE', label: t('venue.ownership.private')}
+    ];
+  }
+
+  get amenityChoices(): JynloSelectOption[] {
+    return [
+      {value: '', label: t('venue.boolean.none')},
+      {value: 'true', label: t('venue.boolean.yes')},
+      {value: 'false', label: t('venue.boolean.no')}
+    ];
+  }
+
+  amenityChoice(value: boolean | null): string {
+    return value === null ? '' : String(value);
+  }
+
+  parseAmenityChoice(value: string): boolean | null {
+    return value === '' ? null : value === 'true';
+  }
 
   readonly sportsCatalog = SPORTS_CATALOG;
   // Only sports explicitly supported for both singles and doubles offer this selector.
