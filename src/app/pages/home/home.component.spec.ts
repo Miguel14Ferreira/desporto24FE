@@ -61,6 +61,30 @@ describe('HomeComponent public discovery', () => {
     expect(root.querySelectorAll('a.preview-item').length).toBe(0);
   });
 
+  it('keeps public discovery filters and actions level without the Bootstrap label margin', () => {
+    const fixture = render();
+    const form = (fixture.nativeElement as HTMLElement).querySelector('.preview-search') as HTMLFormElement;
+    const labels = Array.from(form.querySelectorAll('label')) as HTMLLabelElement[];
+    const inputs = Array.from(form.querySelectorAll('input[type="search"]')) as HTMLInputElement[];
+    const buttons = Array.from(form.querySelectorAll('.preview-search-actions button')) as HTMLButtonElement[];
+
+    expect(labels.length).toBe(2);
+    expect(inputs.length).toBe(2);
+    expect(buttons.length).toBe(2);
+    labels.forEach(label => expect(getComputedStyle(label).marginBottom).toBe('0px'));
+    [...inputs, ...buttons].forEach(control => {
+      expect(getComputedStyle(control).height).toBe('50px');
+      expect(getComputedStyle(control).boxSizing).toBe('border-box');
+    });
+
+    // At desktop width, the actions and both inputs share a bottom edge.
+    if (getComputedStyle(form).gridTemplateColumns.split(' ').length === 3) {
+      const edges = [...inputs, ...buttons].map(control => control.getBoundingClientRect().bottom);
+      expect(Math.max(...edges) - Math.min(...edges)).toBeLessThan(1);
+    }
+    fixture.destroy();
+  });
+
   it('makes public sessions discoverable without signing up and explains communities', () => {
     const fixture = render();
     const root = fixture.nativeElement as HTMLElement;

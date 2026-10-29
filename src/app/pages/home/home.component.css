@@ -252,7 +252,9 @@
   gap: .75rem;
   margin-top: 1.2rem;
 }
-.preview-search label { display: grid; min-width: 0; gap: .4rem; }
+/* Bootstrap labels carry a default .5rem bottom margin, which leaves
+   the buttons lower than the neighbouring search inputs. */
+.preview-search label { display: grid; min-width: 0; gap: .4rem; margin-bottom: 0; }
 .preview-search label > span { color: #cbd5e1; font-size: .85rem; font-weight: 700; }
 .preview-search input {
   width: 100%;
