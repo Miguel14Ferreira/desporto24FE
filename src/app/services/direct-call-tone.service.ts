@@ -71,7 +71,7 @@ export class DirectCallToneService implements OnDestroy {
   private ensureContext(): AudioContext | null {
     if (this.context) return this.context;
     try {
-      const w = window as Window & {webkitAudioContext?: typeof AudioContext};
+      const w = window as Window & {AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext};
       const Audio = w.AudioContext || w.webkitAudioContext;
       if (!Audio) return null;
       this.context = new Audio();
