@@ -225,39 +225,33 @@ describe('Events2Component', () => {
     expect(getComputedStyle(banner!).marginBottom).toBe(expected);
   });
 
-  it('styles the community recurrence selector like the other session inputs', () => {
+  it('styles the recurrence selector with the premium trigger without changing its options', () => {
     component.communityId = 7;
     fixture.detectChanges();
 
     const select = fixture.nativeElement.querySelector(
       'app-jynlo-select[name="recurrence"]'
-    ) as HTMLSelectElement | null;
-    const sportInput = fixture.nativeElement.querySelector(
-      'input[name="sport"]'
-    ) as HTMLInputElement | null;
-
-    expect(select).not.toBeNull();
+    ) as HTMLElement;
+    const trigger = select?.querySelector('.jynlo-select__trigger') as HTMLButtonElement;
+    const sportInput = fixture.nativeElement.querySelector('input[name="sport"]') as HTMLInputElement;
+    expect(trigger).not.toBeNull();
     expect(sportInput).not.toBeNull();
-    if (!select || !sportInput) return;
-
-    const selectStyle = getComputedStyle(select);
-    const inputStyle = getComputedStyle(sportInput);
-    expect(selectStyle.borderRadius).toBe(inputStyle.borderRadius);
-    expect(selectStyle.backgroundColor).toBe(inputStyle.backgroundColor);
-    expect(selectStyle.paddingTop).toBe(inputStyle.paddingTop);
-    expect(selectStyle.paddingBottom).toBe(inputStyle.paddingBottom);
-    expect(Math.abs(select.getBoundingClientRect().width
-      - sportInput.getBoundingClientRect().width)).toBeLessThan(2);
-
-    expect(Array.from(select.options).map(option => option.value)).toEqual([
+    expect(trigger.getAttribute('role')).toBe('combobox');
+    const style = getComputedStyle(trigger);
+    expect(style.borderRadius).not.toBe('0px');
+    expect(style.backgroundImage).toContain('linear-gradient');
+    expect(style.borderColor).not.toBe('transparent');
+    expect(Math.abs(trigger.getBoundingClientRect().width -
+      sportInput.getBoundingClientRect().width)).toBeLessThan(2);
+    const selectInstance = fixture.debugElement.query(By.css(
+      'app-jynlo-select[name="recurrence"]'
+    )).componentInstance as JynloSelectComponent;
+    expect(selectInstance.options.map(option => option.value)).toEqual([
       'NONE', 'WEEKLY', 'BIWEEKLY'
     ]);
-    // Changing the bound recurrence still opens the occurrences field.
     component.recurrence = 'WEEKLY';
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector(
-      'input[name="recurrenceOccurrences"]'
-    )).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="recurrenceOccurrences"]')).not.toBeNull();
   });
 
   it('explains one weekly game and warns that immediate opening opens all planned games', () => {
@@ -2579,8 +2573,10 @@ describe('Events2Component', () => {
     expect(component.errorMessage).toContain('mínimo');
   });
 
-  it('lets the organiser choose game frequency through the premium selector', () => {
+  it('lets the organiser choose game frequency through the premium selector', fakeAsync(() => {
     component.communityId = 7;
+    fixture.detectChanges();
+    tick();
     fixture.detectChanges();
     const select = fixture.nativeElement.querySelector(
       'app-jynlo-select[name="recurrence"]'
@@ -2596,11 +2592,13 @@ describe('Events2Component', () => {
     expect(component.recurrence).toBe('WEEKLY');
     expect(select.querySelector('.jynlo-select__value')?.textContent).toContain('Todas as semanas');
     expect(fixture.nativeElement.querySelector('input[name="recurrenceOccurrences"]')).not.toBeNull();
-  });
+  }));
 
-  it('keeps weekly count numeric when selected from the premium dropdown', () => {
+  it('keeps weekly count numeric when selected from the premium dropdown', fakeAsync(() => {
     component.communityId = 7;
     component.recurrence = 'WEEKLY';
+    fixture.detectChanges();
+    tick();
     fixture.detectChanges();
     const select = fixture.nativeElement.querySelector(
       'app-jynlo-select[name="weeklySessionsPerWeek"]'
@@ -2613,7 +2611,7 @@ describe('Events2Component', () => {
     fixture.detectChanges();
     expect(component.weeklySessionsPerWeek).toBe(3);
     expect(component.additionalWeeklyGameDates.length).toBe(2);
-  });
+  }));
 
   it('preserves selected district and supports searchable accent-insensitive matching', () => {
     component.locationMethod = 'venue';
@@ -2639,10 +2637,12 @@ describe('Events2Component', () => {
     expect(component.venueDistrict).toBe('Évora');
   });
 
-  it('preserves the difference between unset, false and true for venue facilities', () => {
+  it('preserves the difference between unset, false and true for venue facilities', fakeAsync(() => {
     component.locationMethod = 'venue';
     component.showVenueCreator = true;
     component.venueToilets = null;
+    fixture.detectChanges();
+    tick();
     fixture.detectChanges();
     const select = fixture.nativeElement.querySelector(
       'app-jynlo-select[name="venueToilets"]'
@@ -2668,7 +2668,7 @@ describe('Events2Component', () => {
     options[0].click();
     fixture.detectChanges();
     expect(component.venueToilets).toBeNull();
-  });
+  }));
 
   it('disables the custom dropdown during form submission', () => {
     component.communityId = 7;
