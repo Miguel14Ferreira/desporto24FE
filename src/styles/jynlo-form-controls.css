@@ -1,0 +1,173 @@
+/*
+ * JYNLO · Premium Green Form Foundation
+ *
+ * A single, presentation-only layer for existing Angular forms (including
+ * login, Google onboarding, profiles, creation, filters and administration).
+ * Keep the original elements, dimensions, validation, bindings and events.
+ *
+ * States: muted green at rest, clearer green on hover/focus, error remains
+ * red, disabled/readonly remain intentionally subdued.
+ *
+ * To preserve a specialised control's appearance, add the class
+ * "jynlo-form-exempt" to that control. Do not use for checkboxes/file inputs.
+ */
+:root {
+  --jynlo-field-green: #40e6ad;
+  --jynlo-field-border: rgba(64, 230, 173, .46);
+  --jynlo-field-border-hover: rgba(64, 230, 173, .78);
+  --jynlo-field-bg: #0a3038;
+  --jynlo-field-bg-hover: #103d42;
+  --jynlo-field-focus-ring: rgba(64, 230, 173, .17);
+  --jynlo-field-placeholder: #a5c7cb;
+}
+
+/* Explicitly list text-like input types. File, color, checkbox, radio,
+   hidden, range and button controls must NOT receive input-box styling. */
+body :is(
+  input:not([type]),
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  textarea,
+  select:not([multiple]):not([size])
+):not(
+  :disabled,
+  [readonly],
+  [aria-invalid="true"],
+  .is-invalid,
+  .ng-invalid.ng-touched,
+  .jynlo-form-exempt,
+  .jynlo-native-select__search,
+  .jynlo-select__search
+) {
+  /* Only two visual properties need precedence over old page-scoped CSS.
+     No padding, layout, height, font or browser behaviour is changed. */
+  border-color: var(--jynlo-field-border) !important;
+  background-color: var(--jynlo-field-bg) !important;
+  color-scheme: dark;
+  caret-color: var(--jynlo-field-green);
+}
+
+body :is(
+  input:not([type]),
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  textarea,
+  select:not([multiple]):not([size])
+):not(
+  :disabled,
+  [readonly],
+  [aria-invalid="true"],
+  .is-invalid,
+  .ng-invalid.ng-touched,
+  .jynlo-form-exempt,
+  .jynlo-native-select__search,
+  .jynlo-select__search
+):hover:not(:focus) {
+  border-color: var(--jynlo-field-border-hover) !important;
+  background-color: var(--jynlo-field-bg-hover) !important;
+}
+
+body :is(
+  input:not([type]),
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  textarea,
+  select:not([multiple]):not([size])
+):not(
+  :disabled,
+  [readonly],
+  [aria-invalid="true"],
+  .is-invalid,
+  .ng-invalid.ng-touched,
+  .jynlo-form-exempt,
+  .jynlo-native-select__search,
+  .jynlo-select__search
+):focus {
+  border-color: var(--jynlo-field-green) !important;
+  background-color: var(--jynlo-field-bg-hover) !important;
+  box-shadow: 0 0 0 3px var(--jynlo-field-focus-ring) !important;
+  outline: 2px solid rgba(64, 230, 173, .55);
+  outline-offset: 2px;
+}
+
+/* Placeholder contrast works across browser-native inputs and textareas. */
+body :is(input, textarea):not(.jynlo-form-exempt)::placeholder {
+  color: var(--jynlo-field-placeholder);
+  opacity: .9;
+}
+
+/* All check/radio/range indicators use the brand green when active but
+   retain native semantics and dimensions, including consent controls. */
+body :is(
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"]
+):not(.jynlo-form-exempt) {
+  accent-color: var(--jynlo-field-green);
+}
+
+/* Chromium autofill must not flash an unrelated yellow/blue fill. */
+body :is(input[type="text"], input[type="email"], input[type="password"],
+  input[type="tel"], input[type="url"], input[type="search"])
+  :not(.jynlo-form-exempt):-webkit-autofill {
+  -webkit-text-fill-color: #f2fffc;
+  -webkit-box-shadow: 0 0 0 1000px var(--jynlo-field-bg) inset;
+  transition: background-color 9999s ease-out;
+}
+
+/* Preserve visible validation warnings, including server-driven errors. */
+body :is(input, select, textarea):is(
+  [aria-invalid="true"], .is-invalid, .ng-invalid.ng-touched
+):not(.jynlo-form-exempt) {
+  border-color: rgba(248, 113, 113, .8) !important;
+  caret-color: #fda4af;
+}
+body :is(input, select, textarea):is(
+  [aria-invalid="true"], .is-invalid, .ng-invalid.ng-touched
+):focus {
+  outline-color: #fb7185;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, .16) !important;
+}
+
+/* Let the OS control legibility in forced-colour accessibility mode. */
+@media (forced-colors: active) {
+  body :is(input, select, textarea) {
+    border-color: CanvasText !important;
+    background-color: Canvas !important;
+    color-scheme: normal;
+  }
+  body :is(input, select, textarea):focus {
+    outline: 2px solid Highlight;
+    box-shadow: none !important;
+  }
+}
