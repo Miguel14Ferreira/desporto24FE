@@ -1694,3 +1694,55 @@ h1 {
 @media(max-width:620px){
   .session-player-card--member .session-player-card__profile {column-gap:8px;}
 }
+
+
+/* Unified toolbar geometry: neither legacy share buttons nor anchor styles
+   may introduce their own top margins or differing vertical alignment. */
+.session-top-actions {
+  align-items:stretch;
+  column-gap:12px;
+  row-gap:12px;
+  min-width:0;
+}
+.session-top-actions > :is(
+  a.jynlo-action,button.jynlo-action,button.join-shortcut,
+  a.postgame-action,button.share-session-action,span.jynlo-action
+) {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  flex:0 0 auto;
+  min-height:42px;
+  max-width:100%;
+  margin:0;
+  padding:9px 15px;
+  box-sizing:border-box;
+  line-height:1.35;
+  vertical-align:middle;
+  text-align:center;
+  white-space:normal;
+  text-decoration:none;
+}
+.session-top-actions > :is(a.jynlo-action,button.jynlo-action,button.share-session-action):focus-visible {
+  outline:2px solid #8effdf;
+  outline-offset:3px;
+}
+.session-top-actions > .session-cancel-button {
+  margin-inline-start:auto;
+}
+@media(max-width:490px){
+  .session-top-actions > :is(
+    a.jynlo-action,button.jynlo-action,button.join-shortcut,
+    a.postgame-action,button.share-session-action
+  ) { flex:1 1 140px; }
+  .session-top-actions > .session-cancel-button {margin-inline-start:0;}
+}
+/* Each attendee row is one alignment unit: avatar and name never overlap
+   with the account tag, regardless of long names or a cancellation row. */
+.session-participant-list > .session-player-card {
+  grid-template-rows:auto auto;
+  align-content:start;
+}
+.session-player-card__avatar {flex-shrink:0;}
+.session-player-card__name {overflow-wrap:anywhere;line-height:1.4;}
