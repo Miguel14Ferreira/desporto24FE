@@ -117,12 +117,52 @@
           <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
           @if (guestToken && (canRequestParticipation || !!guestReceipt) && (!isAuthenticated || !!guestReceipt)) {
             <section id="guest-participate" class="guest-rsvp" [attr.aria-label]="'guestRsvp.title' | t">
-              <span class="guest-rsvp-kicker">{{ 'guestRsvp.noAccount' | t }}</span>
+              @if (guestStep === 'approved' || guestStep === 'linked') {
+                <span class="guest-rsvp-kicker">{{ 'guestRsvp.confirmedAs' | t }}</span>
+              }
               @if (guestLoading) {
                 <p role="status">{{ 'publicSession.loading' | t }}</p>
               } @else if (guestError === 'guestRsvp.invalidLink') {
                 <p role="alert" class="guest-rsvp-error">{{ guestError | t }}</p>
+              } @else if (guestStep === 'choose' && invitationStage === 'start') {
+                <h2>{{ 'inviteCenter.singleConfirmTitle' | t }}</h2>
+                <p>{{ 'inviteCenter.singleConfirmHelp' | t }}</p>
+                <button type="button" class="guest-rsvp-primary invitation-first-confirm"
+                  (click)="startInvitation()">{{ 'inviteCenter.confirmPresence' | t }}</button>
+              } @else if (guestStep === 'choose' && invitationStage === 'identify') {
+                <h2>{{ 'inviteCenter.identifyTitle' | t }}</h2>
+                <p>{{ 'inviteCenter.identifyHelp' | t }}</p>
+                <button type="button" class="guest-rsvp-primary invitation-have-account"
+                  (click)="chooseInvitationIdentity(true)">{{ 'inviteCenter.haveAccount' | t }}</button>
+                <button type="button" class="guest-rsvp-back invitation-no-account"
+                  (click)="chooseInvitationIdentity(false)">{{ 'inviteCenter.noAccount' | t }}</button>
+              } @else if (guestStep === 'choose' && invitationStage === 'login') {
+                <h2>{{ 'inviteCenter.loginHereTitle' | t }}</h2>
+                <p>{{ 'inviteCenter.loginHereHelp' | t }}</p>
+                <form class="invitation-inline-login" (ngSubmit)="loginInsideInvitation()">
+                  <label for="invite-login-user">{{ 'inviteCenter.loginUsername' | t }}</label>
+                  <input id="invite-login-user" type="text" autocomplete="username"
+                    maxlength="100" [(ngModel)]="invitationLoginUsername" name="inviteUsername" required />
+                  <label for="invite-login-password">{{ 'inviteCenter.loginPassword' | t }}</label>
+                  <input id="invite-login-password" type="password" autocomplete="current-password"
+                    [(ngModel)]="invitationLoginPassword" name="invitePassword" required />
+                  @if (invitationLoginError) {
+                    <p role="alert" class="guest-rsvp-error">{{ invitationLoginError | t }}</p>
+                  }
+                  <button type="submit" class="guest-rsvp-primary"
+                    [disabled]="invitationLoginBusy || !invitationLoginUsername.trim() || !invitationLoginPassword">
+                    {{ (invitationLoginBusy ? 'guestRsvp.linking' : 'inviteCenter.loginAndConfirm') | t }}
+                  </button>
+                </form>
+                <button type="button" class="guest-rsvp-back invitation-other-login"
+                  (click)="openFullLogin()">{{ 'inviteCenter.moreLoginOptions' | t }}</button>
+                <button type="button" class="guest-rsvp-back"
+                  [disabled]="invitationLoginBusy" (click)="invitationStage='identify'">
+                  {{ 'guestRsvp.back' | t }}
+                </button>
               } @else if (guestStep === 'choose') {
+                <button type="button" class="guest-rsvp-back"
+                  (click)="invitationStage='identify'">{{ 'guestRsvp.back' | t }}</button>
                 @if (guestSavedBookings.length) {
                   <div class="guest-saved-bookings">
                     <h3>{{ 'guestRsvp.savedBookingsTitle' | t }}</h3>
@@ -136,14 +176,14 @@
                   </div>
                 }
                 <h2>{{ 'guestRsvp.title' | t }}</h2>
-                <p>{{ 'guestRsvp.chooseHelp' | t }}</p>
+                <p>{{ 'inviteCenter.nameAfterChoiceHelp' | t }}</p>
                 <label for="guest-new-name">{{ 'guestRsvp.yourName' | t }}</label>
                 <input id="guest-new-name" type="text" maxlength="80" autocomplete="name"
                   [ngModel]="guestNewName" (ngModelChange)="setGuestNewName($event)"
                   [placeholder]="'guestRsvp.newNamePlaceholder' | t"/>
                 <button type="button" class="guest-rsvp-primary"
-                  [disabled]="!guestPlayerName || guestSending" (click)="chooseGuest()">
-                  {{ 'guestRsvp.continue' | t }}
+                  [disabled]="guestPlayerName.trim().length < 2 || guestSending" (click)="confirmGuestName()">
+                  {{ 'inviteCenter.confirmPresence' | t }}
                 </button>
               } @else if (guestStep === 'confirm') {
                 <button type="button" class="guest-rsvp-back" (click)="backToGuestChoices()"
