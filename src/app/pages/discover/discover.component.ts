@@ -13,6 +13,8 @@ import { environment } from 'src/environment/environment';
 import { SessionSummary } from '../model/session-summary';
 import { Venue } from '../model/venue';
 
+type ExploreCategory = 'all' | 'venues' | 'sessions' | 'people' | 'communities';
+
 @Component({
   selector: 'app-discover',
   templateUrl: './discover.component.html',
@@ -20,8 +22,6 @@ import { Venue } from '../model/venue';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-type ExploreCategory = 'all' | 'venues' | 'sessions' | 'people' | 'communities';
-
 export class DiscoverComponent implements OnInit {
   activeTab: ExploreCategory = 'all';
   readonly quickSports = ['Padel', 'Futebol', 'Ténis'];
