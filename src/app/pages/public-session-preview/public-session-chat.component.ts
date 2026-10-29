@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -47,7 +47,8 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
 
   constructor(
     private readonly http: HttpClient,
-    private readonly realtime: DirectChatRealtimeService
+    private readonly realtime: DirectChatRealtimeService,
+    private readonly zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -60,11 +61,13 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
           existing.id === message.id ? message : existing);
       }
     }));
-    this.interval = setInterval(() => {
-      if (!this.disposed && this.authenticated && document.visibilityState !== 'hidden') {
-        this.loadMessages(false);
-      }
-    }, 15000);
+    this.zone.runOutsideAngular(() => {
+      this.interval = setInterval(() => {
+        if (!this.disposed && this.authenticated && document.visibilityState !== 'hidden') {
+          this.zone.run(() => this.loadMessages(false));
+        }
+      }, 15000);
+    });
     this.initForSession();
   }
 
