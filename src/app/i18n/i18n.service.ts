@@ -649,7 +649,7 @@ const PT: Dictionary = {
   'guestRsvp.rejoin': 'Enganei-me — voltar a marcar presença',
   'guestRsvp.rejoining': 'A confirmar novamente…',
   'guestRsvp.rejoinHelp': 'Podes voltar a confirmar este jogador se ainda houver vagas disponíveis.',
-  'guestRsvp.rejoinNoPlaces': 'Não há vagas ou este jogador já está inscrito. A presença continua cancelada.',
+  'guestRsvp.rejoinNoPlaces': 'Não foi possível recuperar a presença. Não há vagas ou o jogador já está inscrito.',
   'guestRsvp.rejoinError': 'Não foi possível voltar a marcar presença. A inscrição continua cancelada. Tenta novamente.',
   'guestRsvp.cancelMySeat': 'Cancelar a minha presença',
   'guestRsvp.cancelMySeatHelp': 'Queres mesmo desistir? A tua vaga ficará disponível para outra pessoa.',
