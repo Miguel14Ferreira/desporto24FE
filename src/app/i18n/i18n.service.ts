@@ -710,7 +710,7 @@ const PT: Dictionary = {
   'sessionDetail.communityLabels': 'Comunidades',
   'sessionDetail.seasonLabel': 'Classificação',
   'sessionDetail.seasonYes': 'Jogo da época',
-  'sessionDetail.seasonNo': 'Não conta para a época',
+  'sessionDetail.seasonNo': 'Não ativada para esta sessão',
   'sessionDetail.communityContextError': 'Não foi possível carregar as comunidades e a época desta sessão.',
   'sessionDetail.postGameCommunity.kicker': 'DEPOIS DO JOGO',
   'sessionDetail.postGameCommunity.title': 'Gostaste de jogar com esta malta?',
