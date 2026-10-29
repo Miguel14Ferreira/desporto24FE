@@ -70,14 +70,13 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               <h2>{{ call.peer }}</h2>
               <p class="call-phase" role="status">
                 <span class="call-status-dot" [class.call-status-connected]="call.phase === 'active'"></span>
-                {{ (call.phase === 'incoming' ? 'calls.incoming' :
-                  call.phase === 'dialing' ? 'calls.ringing' :
+                {{ (call.phase === 'dialing' ? 'calls.ringing' :
                   call.phase === 'connecting' ? (call.startedAt ? 'calls.reconnecting' : 'calls.connecting') :
                   call.phase === 'error' ? 'calls.connectionLost' : 'calls.connected') | t }}
               </p>
             </div>
           </div>
-          @if (call.phase !== 'error' && call.phase !== 'incoming') {
+          @if (call.phase !== 'error') {
             <div class="call-metrics">
               <span class="call-metric" aria-label="Duração">
                 <span aria-hidden="true">◷</span> {{ (elapsed$ | async) || '00:00' }}
@@ -89,7 +88,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               <span class="call-metric">{{ 'calls.participants' | t }}: {{ participantCount }}</span>
             </div>
           }
-          @if (call.media === 'video' && call.phase !== 'incoming' && call.phase !== 'error') {
+          @if (call.media === 'video' && call.phase !== 'error') {
             <div class="call-videos" [class.call-videos--swapped]="viewsSwapped">
               <button type="button" class="call-swap" (click)="viewsSwapped=!viewsSwapped"
                 [disabled]="!remoteHasVideo || !call.cameraEnabled">⇄ {{ 'calls.swapView' | t }}</button>
@@ -112,7 +111,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
           } @else if (call.phase !== 'error') {
             <div class="call-voice-surface" [class.is-active]="call.phase === 'active'">
               <span class="call-avatar call-avatar-large" aria-hidden="true">{{ call.peer.slice(0,1).toUpperCase() }}</span>
-              <p>{{ call.phase === 'incoming' ? ('calls.incoming' | t) : ('calls.voiceConnected' | t) }}</p>
+              <p>{{ 'calls.voiceConnected' | t }}</p>
             </div>
           }
           @if (call.phase !== 'error') { <audio #remoteAudio autoplay></audio> }
@@ -128,27 +127,18 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                 </div>
               }
             }
-            @if ((call.phase === 'incoming' || call.phase === 'dialing')
-                  && (calls.ringtoneBlocked$ | async)) {
+            @if (call.phase === 'dialing' && (calls.ringtoneBlocked$ | async)) {
               <p class="call-audio-help" role="status">{{ 'calls.ringtoneBlocked' | t }}</p>
             }
           </div>
           <footer class="call-footer">
             <div class="call-buttons">
-              @if ((call.phase === 'incoming' || call.phase === 'dialing')
-                    && (calls.ringtoneBlocked$ | async)) {
+              @if (call.phase === 'dialing' && (calls.ringtoneBlocked$ | async)) {
                 <button type="button" class="call-enable-sound" (click)="calls.allowRingtone()">
                   {{ 'calls.enableRingtone' | t }}
                 </button>
               }
-              @if (call.phase === 'incoming') {
-                <button type="button" class="call-decline" (click)="calls.decline()">
-                  <span aria-hidden="true">✕</span> {{ 'calls.decline' | t }}
-                </button>
-                <button type="button" class="call-accept" (click)="calls.accept()">
-                  <span aria-hidden="true">✓</span> {{ 'calls.accept' | t }}
-                </button>
-              } @else if (call.phase === 'error') {
+              @if (call.phase === 'error') {
                 <button type="button" class="call-decline" (click)="calls.closeError()">
                   {{ 'calls.close' | t }}
                 </button>
@@ -188,7 +178,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                 </button>
               }
             </div>
-            @if (settingsOpen && call.phase !== 'incoming' && call.phase !== 'error') {
+            @if (settingsOpen && call.phase !== 'error') {
               <div class="call-device-panel" role="group" [attr.aria-label]="'calls.settings' | t">
                 <div class="call-settings-head">
                   <strong>{{ 'calls.devices' | t }}</strong>
