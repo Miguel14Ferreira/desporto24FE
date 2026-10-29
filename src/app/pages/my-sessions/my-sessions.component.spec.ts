@@ -99,7 +99,7 @@ describe('MySessionsComponent', () => {
     expect(details).toBeTruthy();
     expect(cancel).toBeTruthy();
     expect(details.classList.contains('jynlo-action')).toBeTrue();
-    expect(details.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(details.classList.contains('jynlo-action--primary')).toBeTrue();
     expect(cancel.classList.contains('jynlo-action--danger')).toBeTrue();
   });
 
