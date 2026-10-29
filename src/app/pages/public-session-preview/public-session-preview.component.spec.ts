@@ -107,15 +107,16 @@ describe('PublicSessionPreviewComponent', () => {
     const page=fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
     const location=page.querySelector('.public-location-link') as HTMLAnchorElement;
-    expect(page.querySelector('label[for="guest-player-select"]')?.textContent?.trim())
-      .toBe('Já jogaste com este grupo?');
+    expect(page.querySelector('#guest-player-select')).toBeNull();
+    expect(page.querySelector('label[for="guest-new-name"]')?.textContent?.trim())
+      .toBe('O teu nome');
     expect(location.textContent).toContain('Clube Nacional de Ginástica');
     expect(location.textContent).not.toContain('Rua Machado dos Santos');
     expect(location.textContent).toContain('Parede');
     expect(location.textContent).toContain('Pesquisar morada no mapa');
     expect(decodeURIComponent(location.href)).toContain('Rua Machado dos Santos');
     expect(location.title).toContain('Rua Machado dos Santos');
-    fixture.componentInstance.selectGuestPlayer(7);
+    fixture.componentInstance.setGuestNewName('Amigo Histórico');
     fixture.componentInstance.chooseGuest();
     fixture.detectChanges();
     expect(page.querySelector('.guest-rsvp-hint')?.textContent).toContain('vaga fica reservada');
@@ -436,7 +437,8 @@ describe('PublicSessionPreviewComponent', () => {
     expect(fixture.componentInstance.guestReceipt).toBe('');
     expect(localStorage.getItem(key)).toBeNull();
     expect(fixture.componentInstance.guestPlayers.map(p=>p.name)).toEqual(['Jogador disponível']);
-    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-player-select')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-player-select')).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-new-name')).not.toBeNull();
   });
 
   it('allows a signed-in player to participate when a previous shared guest receipt is invalid', () => {
@@ -458,8 +460,8 @@ describe('PublicSessionPreviewComponent', () => {
     expect(localStorage.getItem(key)).toBeNull();
     expect(fixture.componentInstance.guestReceipt).toBe('');
     expect(page.querySelector('.guest-rsvp')).toBeNull();
-    expect(page.querySelector('.join-panel .primary-action')?.textContent)
-      .toContain('Participar com a minha conta');
+    expect(page.querySelector('.join-panel .member-rsvp')).not.toBeNull();
+    expect(page.querySelector('.header-login')).toBeNull();
     expect(fixture.componentInstance.guestPlayers).toEqual([]);
   });
 
@@ -1294,7 +1296,7 @@ describe('PublicSessionPreviewComponent', () => {
     it('lets guests go back and correct their chosen player before submitting', () => {
       renderGuest();
       const component=fixture.componentInstance;
-      component.selectGuestPlayer(21);
+      component.setGuestNewName('Afonso Salvador');
       component.chooseGuest();
       fixture.detectChanges();
       expect(component.guestStep).toBe('confirm');
@@ -1303,14 +1305,14 @@ describe('PublicSessionPreviewComponent', () => {
       back.click();
       fixture.detectChanges();
       expect(component.guestStep).toBe('choose');
-      component.selectGuestPlayer(22);
+      component.setGuestNewName('João Marques');
       component.chooseGuest();
       component.sendGuestRequest();
       fixture.detectChanges();
       const calls=(http.post as jasmine.Spy).calls.allArgs();
       const requestCall=calls.find(args=>String(args[0]).endsWith('/guest-requests'))!;
-      expect(requestCall[1].playerId).toBe(22);
-      expect(requestCall[1].newName).toBeNull();
+      expect(requestCall[1].playerId).toBeNull();
+      expect(requestCall[1].newName).toBe('João Marques');
       expect(component.guestStep).toBe('pending');
       expect(localStorage.getItem('jynlo-guest-receipt:42:'+token.slice(0,18))).toBe(receipt);
     });
@@ -1337,18 +1339,18 @@ describe('PublicSessionPreviewComponent', () => {
       const page=render({sport:'Futebol'});
       expect(fixture.componentInstance.isAuthenticated).toBeTrue();
       expect(fixture.componentInstance.guestPlayers).toEqual([]);
-      expect(http.post).toHaveBeenCalledTimes(2);
+      expect(http.post).toHaveBeenCalledTimes(3);
       expect((http.post as jasmine.Spy).calls.allArgs().some(
-        args => String(args[0]).endsWith('/guest-preview'))).toBeTrue();
+        args => String(args[0]).endsWith('/guest-member-presence'))).toBeTrue();
       expect(page.querySelector('.guest-rsvp')).toBeNull();
-      const join=page.querySelector('.join-panel .primary-action') as HTMLButtonElement;
-      expect(join.tagName).toBe('BUTTON');
-      expect(join.textContent).toContain('Participar com a minha conta');
+      expect(page.querySelector('.header-login')).toBeNull();
+      const join=page.querySelector('.join-panel .member-rsvp') as HTMLElement;
+      expect(join).not.toBeNull();
       expect(fixture.componentInstance.participationReturnUrl)
         .toBe('/sessions/42?guest=' + token);
     });
 
-    it('only navigates to restricted details after authenticated signed registration succeeds', () => {
+    it('confirms with authenticated signed registration and stays on the invitation', () => {
       authenticationService.isLoggedIn.and.returnValue(true);
       routeQueryParamMap=convertToParamMap({guest:token});
       (http.post as jasmine.Spy).and.callFake((url:string)=>{
@@ -1357,17 +1359,20 @@ describe('PublicSessionPreviewComponent', () => {
           maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
         if(url.endsWith('/guest-confirmed-players')) return of([]);
         if(url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
+        if(url.endsWith('/guest-member-presence')) return of({status:'NONE',canCancel:false});
         throw new Error('Unexpected '+url);
       });
       const page=render();
       const navigation=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
-      const button=page.querySelector('.join-panel button.primary-action') as HTMLButtonElement;
+      const button=page.querySelector('.join-panel .member-rsvp .guest-rsvp-primary') as HTMLButtonElement;
       expect(button).not.toBeNull();
       expect(navigation).not.toHaveBeenCalled();
       button.click();
       expect((http.post as jasmine.Spy).calls.allArgs().some(
         args=>String(args[0]).endsWith('/guest-join-account') && args[1].token===token)).toBeTrue();
-      expect(navigation).toHaveBeenCalledOnceWith(['/menu/events',42]);
+      expect(navigation).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.memberPresence).toBe('PARTICIPANT');
+      expect(page.textContent).toContain('A tua presença está confirmada!');
     });
 
     it('does not redirect into a forbidden community screen if registration fails', () => {
@@ -1379,10 +1384,11 @@ describe('PublicSessionPreviewComponent', () => {
               gameDate:new Date(Date.now()+3600_000).toISOString(),
               maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null})
           : url.endsWith('/guest-confirmed-players') ? of([])
+          : url.endsWith('/guest-member-presence') ? of({status:'NONE',canCancel:false})
           : throwError(()=>new HttpErrorResponse({status:403})));
       const page=render();
       const navigation=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
-      (page.querySelector('.join-panel button.primary-action') as HTMLButtonElement).click();
+      (page.querySelector('.join-panel .member-rsvp .guest-rsvp-primary') as HTMLButtonElement).click();
       fixture.detectChanges();
       expect(navigation).not.toHaveBeenCalled();
       expect(page.querySelector('[role="alert"]')?.textContent)
@@ -1574,7 +1580,7 @@ describe('PublicSessionPreviewComponent', () => {
     expect(link.href).not.toContain('38.7488967');
   });
 
-  it('makes login status and optional guest participation clear before choosing a name', () => {
+  it('promotes attendance first, without duplicate login actions or a historical dropdown', () => {
     const token='L'.repeat(43);
     routeQueryParamMap=convertToParamMap({guest:token});
     (http.post as jasmine.Spy).and.callFake((url:string) => {
@@ -1588,16 +1594,64 @@ describe('PublicSessionPreviewComponent', () => {
       return of({});
     });
     const page=render();
-    const banner=page.querySelector('.invite-account-banner') as HTMLElement;
-    const signIn=page.querySelector('.invite-account-signin') as HTMLAnchorElement;
-    const guest=page.querySelector('.invite-account-guest') as HTMLAnchorElement;
-    expect(banner.textContent).toContain('sem sessão iniciada');
-    expect(signIn.textContent).toContain('Já tenho conta');
-    expect(new URL(signIn.href).searchParams.get('returnUrl'))
-      .toBe('/sessions/42?guest='+token);
-    expect(guest.getAttribute('href')).toBe('#guest-participate');
-    expect(page.querySelector('#guest-participate')).not.toBeNull();
+    expect(page.querySelector('.invite-account-banner')).toBeNull();
+    expect(page.querySelector('.header-login')).toBeNull();
+    expect(page.querySelector('.join-panel .secondary-action')).toBeNull();
+    expect(page.querySelector('#guest-player-select')).toBeNull();
+    expect(page.querySelector('#guest-new-name')).not.toBeNull();
+    expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
     expect(http.post).toHaveBeenCalledTimes(3);
+  });
+
+  it('shows the real registered presence and cancels only after explicit confirmation', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    routeQueryParamMap=convertToParamMap({guest:'M'.repeat(43)});
+    const posts=(http.post as jasmine.Spy);
+    let registered=true;
+    posts.and.callFake((url:string)=>{
+      if (url.endsWith('/guest-preview')) return of({
+        id:42,sport:'Futsal',city:'Lisboa',gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null
+      });
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      if (url.endsWith('/guest-member-presence')) return of({
+        status:registered?'PARTICIPANT':'NONE',canCancel:registered});
+      if (url.endsWith('/leave')) {registered=false;return of(null);}
+      return throwError(()=>new Error('unexpected '+url));
+    });
+    const page=render();
+    expect(page.querySelector('.header-login')).toBeNull();
+    expect(page.textContent).toContain('A tua presença está confirmada!');
+    expect(page.querySelector('.member-rsvp .guest-cancel-link')).not.toBeNull();
+    expect(posts.calls.allArgs().some(args=>String(args[0]).endsWith('/leave'))).toBeFalse();
+    (page.querySelector('.member-rsvp .guest-cancel-link') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (page.querySelector('.member-rsvp .guest-cancel-danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(posts.calls.allArgs().filter(args=>String(args[0]).endsWith('/leave')).length).toBe(1);
+    expect(fixture.componentInstance.memberPresence).toBe('NONE');
+    expect(page.textContent).toContain('Cancelaste a tua presença');
+    expect(page.querySelector('.member-rsvp .guest-rsvp-primary')).not.toBeNull();
+  });
+
+  it('does not allow registered self-registration on an unauthorised or failed status check', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    routeQueryParamMap=convertToParamMap({guest:'Q'.repeat(43)});
+    (http.post as jasmine.Spy).and.callFake((url:string)=>{
+      if (url.endsWith('/guest-preview')) return of({
+        id:42,sport:'Futsal',city:'Lisboa',gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null
+      });
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      if (url.endsWith('/guest-member-presence'))
+        return throwError(()=>new HttpErrorResponse({status:403}));
+      return throwError(()=>new Error('unexpected '+url));
+    });
+    const page=render();
+    expect(page.querySelector('.member-rsvp [role="alert"]')).not.toBeNull();
+    expect(page.querySelector('.member-rsvp .guest-rsvp-primary')).toBeNull();
+    expect((http.post as jasmine.Spy).calls.allArgs().some(
+      args=>String(args[0]).endsWith('/guest-join-account'))).toBeFalse();
   });
 
 });

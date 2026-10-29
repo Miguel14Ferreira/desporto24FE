@@ -293,13 +293,13 @@
           }
           @if (guestToken && isAuthenticated && !guestReceipt && canRequestParticipation) {
             <section class="member-rsvp" aria-labelledby="member-rsvp-title">
-              @if (memberPresenceLoading || memberPresence === 'UNKNOWN') {
-                <p role="status">{{ 'inviteCenter.checkingPresence' | t }}</p>
-              } @else if (memberPresenceError) {
+              @if (memberPresenceError) {
                 <p role="alert" class="guest-rsvp-error">{{ 'inviteCenter.presenceLoadError' | t }}</p>
                 <button type="button" class="guest-rsvp-back" (click)="loadMemberPresence()">
                   {{ 'publicSession.retry' | t }}
                 </button>
+              } @else if (memberPresenceLoading || memberPresence === 'UNKNOWN') {
+                <p role="status">{{ 'inviteCenter.checkingPresence' | t }}</p>
               } @else if (memberPresence === 'PARTICIPANT' || memberPresence === 'WAITLISTED') {
                 <h2 id="member-rsvp-title">{{ (memberPresence === 'PARTICIPANT' ?
                     'inviteCenter.memberConfirmed' : 'inviteCenter.memberWaitlisted') | t }}</h2>
