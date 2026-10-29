@@ -31,7 +31,7 @@
           <button #optionButton type="button" class="jynlo-select__option"
             role="option" [attr.aria-selected]="item.value === value"
             [class.jynlo-select__option--active]="item.value === value"
-            (click)="choose(item.value)" (keydown)="optionKey($event, $index)">
+            [disabled]="loading" (click)="choose(item.value)" (keydown)="optionKey($event, $index)">
             <span class="jynlo-select__option-text">
               <span class="jynlo-select__option-label">{{ item.label }}</span>
               @if (item.description) {
