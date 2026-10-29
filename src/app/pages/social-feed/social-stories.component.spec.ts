@@ -6,6 +6,7 @@ import { SocialStoriesService } from '../../services/social-stories.service';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { SocialStory } from '../model/social-story';
+import { I18nService, preloadEnglishTranslations } from '../../i18n/i18n.service';
 
 describe('SocialStoriesComponent', () => {
   let fixture: ComponentFixture<SocialStoriesComponent>;
@@ -296,4 +297,67 @@ describe('SocialStoriesComponent', () => {
     tick();
     expect(component.storyGroups).toHaveSize(0);
   }));
+
+  it('translates the complete Stories panel when switching PT → EN → PT without navigation', async () => {
+    await preloadEnglishTranslations();
+    const i18n = TestBed.inject(I18nService);
+    const initial = localStorage.getItem('d24-language');
+    try {
+      api.feed.and.returnValue(of([]));
+      api.mine.and.returnValue(of([]));
+      i18n.setLanguage('pt');
+      fixture.detectChanges();
+
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.stories-panel');
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Momentos desportivos');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Tentar novamente');
+      expect(panel.querySelector('.stories-empty')?.textContent).toContain('Ainda não há Stories');
+
+      i18n.setLanguage('en');
+      fixture.detectChanges();
+
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Sporting moments');
+      expect(panel.querySelector('.stories-heading p')?.textContent?.trim())
+        .toBe('Your friends’ and communities’ best moments, for 24 hours.');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.story-add-action')?.textContent?.trim()).toContain('Create Story');
+      expect(panel.querySelector('.stories-empty')?.textContent?.trim())
+        .toBe('No Stories yet. Share the first moment!');
+      (panel.querySelector('.story-add-action') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(panel.querySelector('.story-file')?.textContent).toContain('Choose photo or video');
+      expect(panel.querySelector('label[for="storyCaption"]')?.textContent?.trim()).toBe('Caption (optional)');
+
+      i18n.setLanguage('pt');
+      fixture.detectChanges();
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Momentos desportivos');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Tentar novamente');
+    } finally {
+      i18n.setLanguage(initial === 'en' ? 'en' : 'pt');
+      if (initial === null) localStorage.removeItem('d24-language');
+    }
+  });
+
+  it('renders the English Stories texts on the first Feed load', async () => {
+    await preloadEnglishTranslations();
+    const i18n = TestBed.inject(I18nService);
+    const initial = localStorage.getItem('d24-language');
+    try {
+      i18n.setLanguage('en');
+      api.feed.and.returnValue(of([]));
+      api.mine.and.returnValue(of([]));
+      fixture.detectChanges();
+
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.stories-panel');
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Sporting moments');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.story-add-action')?.textContent).toContain('Create Story');
+      expect(panel.querySelector('.stories-empty')?.textContent?.trim())
+        .toBe('No Stories yet. Share the first moment!');
+    } finally {
+      i18n.setLanguage(initial === 'en' ? 'en' : 'pt');
+      if (initial === null) localStorage.removeItem('d24-language');
+    }
+  });
+
 });

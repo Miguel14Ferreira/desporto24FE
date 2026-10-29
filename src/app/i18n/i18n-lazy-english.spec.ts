@@ -91,4 +91,20 @@ describe('Lazy English translations', () => {
     expect(localStorage.getItem('d24-language')).toBe('pt');
     expect(appTranslate('session.join')).toBe('Juntar-me à sessão');
   });
+
+  it('keeps pipe-backed and direct translations consistent when the locale preference changes', async () => {
+    await preloadEnglishTranslations();
+    const service = new I18nService();
+    service.setLanguage('pt');
+    expect(service.translate('stories.retry')).toBe('Tentar novamente');
+
+    localStorage.setItem('d24-language', 'en');
+    expect(appTranslate('stories.retry')).toBe('Try again');
+    expect(service.translate('stories.retry')).toBe('Try again');
+    expect(service.translate('stories.empty')).toBe('No Stories yet. Share the first moment!');
+
+    service.setLanguage('pt');
+    expect(service.translate('stories.retry')).toBe('Tentar novamente');
+  });
+
 });

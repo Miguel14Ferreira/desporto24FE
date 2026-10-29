@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 
 export type AppLanguage = 'pt' | 'en';
 
@@ -5124,6 +5125,8 @@ export class I18nService {
   private readonly storageKey = 'd24-language';
   private language: AppLanguage = this.readInitialLanguage();
   private requestedLanguage: AppLanguage = this.language;
+  private readonly languageChangeSubject = new Subject<AppLanguage>();
+  readonly languageChanges$ = this.languageChangeSubject.asObservable();
 
   constructor() {
     this.applyDocumentLanguage();
@@ -5153,17 +5156,16 @@ export class I18nService {
     this.language = language;
     localStorage.setItem(this.storageKey, language);
     this.applyDocumentLanguage();
+    // A nested/lazy standalone view may otherwise retain the previous locale
+    // until another interaction triggers its own change detection.
+    this.languageChangeSubject.next(language);
   }
 
   translate(key: string, params?: Record<string, string | number>): string {
-    const dictionary = this.language === 'en' ? (englishDictionary ?? PT) : PT;
-    let value = dictionary[key] ?? PT[key] ?? key;
-
-    for (const [name, replacement] of Object.entries(params ?? {})) {
-      value = value.replaceAll('{{' + name + '}}', String(replacement));
-    }
-
-    return value;
+    // Both standalone and NgModule translation pipes must resolve the same
+    // selected locale as appTranslate(). Never retain a stale constructor-time
+    // language in a lazily loaded view such as Feed > Stories.
+    return appTranslate(key, params);
   }
 
   private readInitialLanguage(): AppLanguage {

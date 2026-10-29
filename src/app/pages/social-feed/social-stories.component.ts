@@ -6,7 +6,7 @@ import { catchError, finalize, of, Subject, takeUntil, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { TranslatePipe } from '../../i18n/translate.pipe';
-import { appTranslate as t } from '../../i18n/i18n.service';
+import { appTranslate as t, I18nService } from '../../i18n/i18n.service';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { SocialStoriesService } from '../../services/social-stories.service';
@@ -263,10 +263,16 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
     private readonly directChat: DirectChatService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly communities: CommunityGroupsService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
+    // The Feed shell and this nested standalone component can be checked at
+    // different times. Explicitly dirty-check Stories whenever locale changes.
+    this.i18n.languageChanges$.pipe(takeUntil(this.destroyed)).subscribe(() => {
+      this.changeDetector.markForCheck();
+    });
     this.reload();
     this.loadMine();
     this.communities.mine().pipe(
