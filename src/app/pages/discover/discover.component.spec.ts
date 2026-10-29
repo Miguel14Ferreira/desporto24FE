@@ -1110,4 +1110,22 @@ describe('DiscoverComponent', () => {
     expect(fixture.nativeElement.querySelector('#explore-venues').hasAttribute('hidden')).toBeTrue();
   });
 
+  it('shows a real venue map only for validated GPS locations and keeps the selection in sync', () => {
+    component.venues = [
+      { id: 100, name: 'Recinto A', city: 'Lisboa', latitude: 38.72, longitude: -9.14 },
+      { id: 101, name: 'Sem coordenadas', city: 'Lisboa', latitude: null, longitude: null },
+      { id: 102, name: 'Recinto B', city: 'Porto', latitude: 41.15, longitude: -8.61 }
+    ] as any;
+    component.setCategory('venues');
+    fixture.detectChanges();
+    expect(component.mapAvailableVenues.length).toBe(2);
+    const map: HTMLElement = fixture.nativeElement.querySelector('.explore-map-panel');
+    expect(map).not.toBeNull();
+    expect(map.querySelectorAll('.explore-map-pick').length).toBe(2);
+    component.selectMapVenue(102);
+    fixture.detectChanges();
+    expect(component.focusedMapVenue?.id).toBe(102);
+    expect(map.querySelector('a[href="/menu/venues/102"]')).not.toBeNull();
+  });
+
 });
