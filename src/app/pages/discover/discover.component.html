@@ -1,10 +1,16 @@
 <section class="discover-page jynlo-c1 jynlo-social">
   <div class="discover-shell">
+
     <header class="discover-header">
-      <div>
-        <p class="eyebrow">{{ 'discover.eyebrow' | t }}</p>
+      <div class="discover-intro">
+        <p class="eyebrow"><span class="explore-eyebrow-dot"></span>{{ 'discover.eyebrow' | t }}</p>
         <h1>{{ 'discover.title' | t }}</h1>
         <p class="subtitle">{{ 'discover.subtitle' | t }}</p>
+      </div>
+      <div class="explore-header-actions">
+        <a class="explore-header-link" routerLink="/menu/feed">
+          <span aria-hidden="true">←</span> {{ 'discover.explore.backToFeed' | t }}
+        </a>
       </div>
     </header>
 
@@ -13,7 +19,6 @@
         <strong>{{ 'discover.question' | t }}</strong>
         <span>{{ 'discover.questionHint' | t }}</span>
       </div>
-
       <div class="search-fields">
         <label>
           <span>{{ 'events.sport' | t }}</span>
@@ -31,7 +36,6 @@
             }
           </datalist>
         </label>
-
         <label>
           <span>{{ 'common.location' | t }}</span>
           <input
@@ -42,18 +46,47 @@
             autocomplete="address-level2"
             [placeholder]="'discover.locationPlaceholder' | t">
         </label>
-
-        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="loading">
+        <button class="explore-search-submit jynlo-action jynlo-action--primary" type="submit" [disabled]="loading">
+          <span aria-hidden="true">⌕</span>
           {{ loading ? ('discover.searching' | t) : ('discover.search' | t) }}
         </button>
       </div>
-
-      @if (sport || location) {
-        <button type="button" class="clear-button jynlo-action jynlo-action--neutral" (click)="clear()">
-          {{ 'events.clear' | t }}
-        </button>
-      }
+      <div class="explore-search-footer">
+        <div class="explore-sports" role="group" [attr.aria-label]="'discover.explore.quickSports' | t">
+          <span>{{ 'discover.explore.quickSports' | t }}</span>
+          @for (quick of quickSports; track quick) {
+            <button type="button" class="explore-chip" [class.is-selected]="sport.trim() === quick"
+              [attr.aria-pressed]="sport.trim() === quick" (click)="selectQuickSport(quick)">
+              {{ quick }}
+            </button>
+          }
+        </div>
+        @if (sport || location) {
+          <button type="button" class="clear-button jynlo-action jynlo-action--neutral" (click)="clear()">
+            {{ 'events.clear' | t }} <span aria-hidden="true">×</span>
+          </button>
+        }
+      </div>
     </form>
+
+    <nav class="explore-category-nav" role="group" [attr.aria-label]="'discover.explore.categories' | t">
+      <button type="button" [class.is-active]="activeTab === 'all'" [attr.aria-pressed]="activeTab === 'all'"
+        (click)="setCategory('all')">{{ 'discover.explore.all' | t }}</button>
+      <button type="button" [class.is-active]="activeTab === 'venues'" [attr.aria-pressed]="activeTab === 'venues'"
+        (click)="setCategory('venues')">{{ 'discover.explore.venues' | t }}
+        @if (initialized && !venuesLoadError) { <span class="explore-tab-count">{{ venues.length }}{{ venuesHasMore ? '+' : '' }}</span> }
+      </button>
+      <button type="button" [class.is-active]="activeTab === 'sessions'" [attr.aria-pressed]="activeTab === 'sessions'"
+        (click)="setCategory('sessions')">{{ 'discover.explore.sessions' | t }}
+        @if (initialized && !sessionsLoadError) { <span class="explore-tab-count">{{ sessions.length }}</span> }
+      </button>
+      <button type="button" [class.is-active]="activeTab === 'people'" [attr.aria-pressed]="activeTab === 'people'"
+        (click)="setCategory('people')">{{ 'discover.explore.people' | t }}
+        @if (initialized && !peopleLoadError) { <span class="explore-tab-count">{{ people.length }}</span> }
+      </button>
+      <button type="button" [class.is-active]="activeTab === 'communities'" [attr.aria-pressed]="activeTab === 'communities'"
+        (click)="setCategory('communities')">{{ 'discover.explore.communities' | t }}</button>
+    </nav>
 
     @if (loading) {
       <div class="state-card">{{ 'discover.loading' | t }}</div>
@@ -78,8 +111,66 @@
 
 
     @if (!loading && initialized) {
-      <div class="discovery-grid">
-        <section class="pillar-panel">
+
+      @if (activeTab === 'all') {
+        <section class="explore-spotlight" aria-labelledby="explore-spotlight-heading">
+          <div class="explore-spotlight-copy">
+            <p class="explore-spotlight-kicker">{{ 'discover.explore.spotlightKicker' | t }}</p>
+            <h2 id="explore-spotlight-heading">
+              {{ (sessions.length > 0 ? 'discover.explore.spotlightSessions' : 'discover.explore.spotlightEmpty') | t }}
+            </h2>
+            <p>{{ (sessions.length > 0 ? 'discover.explore.spotlightSessionsHint' : 'discover.explore.spotlightEmptyHint') | t }}</p>
+            <div class="explore-spotlight-actions">
+              @if (sessions.length > 0) {
+                <button type="button" class="explore-main-cta" (click)="setCategory('sessions')">
+                  {{ 'discover.explore.openSessions' | t }} <span aria-hidden="true">→</span>
+                </button>
+              } @else {
+                <a class="explore-main-cta" routerLink="/menu/createEvent"
+                  [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
+                  {{ 'discover.when.createAction' | t }} <span aria-hidden="true">→</span>
+                </a>
+              }
+              <button type="button" class="explore-secondary-cta" (click)="setCategory('venues')">
+                {{ 'discover.explore.openVenues' | t }} <span aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </div>
+          <div class="explore-spotlight-art" aria-hidden="true">
+            <div class="explore-art-orbit explore-art-orbit-one"></div>
+            <div class="explore-art-orbit explore-art-orbit-two"></div>
+            <div class="explore-art-center"><span>✦</span></div>
+            <span class="explore-art-pin explore-art-pin-one">✦</span>
+            <span class="explore-art-pin explore-art-pin-two">●</span>
+            <span class="explore-art-pin explore-art-pin-three">●</span>
+          </div>
+        </section>
+      }
+
+      @if (activeTab === 'communities') {
+        <section class="explore-community-entry">
+          <span class="explore-community-icon" aria-hidden="true">👥</span>
+          <div>
+            <p class="eyebrow">{{ 'discover.explore.communities' | t }}</p>
+            <h2>{{ 'discover.explore.communityHeadline' | t }}</h2>
+            <p>{{ 'discover.explore.communityDescription' | t }}</p>
+            <a routerLink="/menu/communities" class="explore-main-cta">
+              {{ 'discover.explore.communityAction' | t }} <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </section>
+      }
+
+      <div class="explore-results-heading" [attr.hidden]="activeTab === 'communities' ? '' : null">
+        <div>
+          <p class="eyebrow">{{ 'discover.explore.resultsKicker' | t }}</p>
+          <h2>{{ (activeTab === 'all' ? 'discover.explore.allResults' : activeTab === 'venues' ? 'discover.where.title' : activeTab === 'sessions' ? 'discover.when.title' : 'discover.who.title') | t }}</h2>
+        </div>
+        <span>{{ 'discover.explore.refineHint' | t }}</span>
+      </div>
+
+      <div class="discovery-grid" [class.is-focused]="activeTab !== 'all'">
+        <section class="pillar-panel" id="explore-venues" [attr.hidden]="showSection('venues') ? null : ''">
           <header class="pillar-heading">
             <div class="pillar-icon">📍</div>
             <div>
@@ -185,7 +276,7 @@
           </a>
         </section>
 
-        <section class="pillar-panel featured-panel">
+        <section class="pillar-panel featured-panel" id="explore-sessions" [attr.hidden]="showSection('sessions') ? null : ''">
           <header class="pillar-heading">
             <div class="pillar-icon">📅</div>
             <div>
@@ -291,7 +382,7 @@
           </a>
         </section>
 
-        <section class="pillar-panel">
+        <section class="pillar-panel" id="explore-people" [attr.hidden]="showSection('people') ? null : ''">
           <header class="pillar-heading">
             <div class="pillar-icon">👥</div>
             <div>
@@ -387,7 +478,7 @@
         </section>
       </div>
 
-      <section class="discover-flow">
+      <section class="discover-flow" [attr.hidden]="activeTab !== 'all' ? '' : null">
         <span>{{ 'discover.flow.find' | t }}</span>
         <b>→</b>
         <span>{{ 'discover.flow.play' | t }}</span>
