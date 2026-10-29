@@ -9,7 +9,6 @@ const PT: Dictionary = {
   'nav.account.activeAs': 'Conta ativa: @{{username}}. Abrir menu de conta',
   'nav.account.profile': 'Perfil',
   'nav.account.viewProfile': 'Ver o meu perfil',
-  'nav.account.switch': 'Trocar de conta',
   'communities.inlineSpeed.trialOrderWarning': 'A seleção do júri diverge dos lugares da prova adicional',
   'communities.inlineSpeed.trialOrderWarningHint': 'A prova adicional registou um patinador excluído à frente de um selecionado. O júri pode decidir de forma diferente, mas deve explicar especificamente a exceção antes de guardar.',
   'communities.inlineSpeed.trialOrderExceptionReason': 'Justificação oficial desta divergência (20–500 caracteres)',
