@@ -112,7 +112,7 @@ describe('PublicSessionPreviewComponent', () => {
     expect(location.textContent).toContain('Clube Nacional de Ginástica');
     expect(location.textContent).not.toContain('Rua Machado dos Santos');
     expect(location.textContent).toContain('Parede');
-    expect(location.textContent).toContain('Ver morada no mapa');
+    expect(location.textContent).toContain('Pesquisar morada no mapa');
     expect(decodeURIComponent(location.href)).toContain('Rua Machado dos Santos');
     expect(location.title).toContain('Rua Machado dos Santos');
     fixture.componentInstance.selectGuestPlayer(7);
@@ -602,10 +602,10 @@ describe('PublicSessionPreviewComponent', () => {
     render({ sport: null, city: null, participantCount: null });
     const sharedText = () => new URL(fixture.componentInstance.whatsappShareUrl()!)
       .searchParams.get('text')!;
-    expect(sharedText()).toContain('🏅 Jogo desportivo');
-    expect(sharedText()).not.toContain('👥');
+    expect(sharedText()).toContain('Jogo desportivo');
+    expect(sharedText()).not.toContain('Vagas:');
     i18n.setLanguage('en');
-    expect(sharedText()).toContain('🏅 Sports game');
+    expect(sharedText()).toContain('Sports game');
     expect(sharedText()).not.toContain('Jynlo!');
   });
 

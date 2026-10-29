@@ -7,6 +7,26 @@
          class="header-login">{{ (isAuthenticated ? 'publicSession.openApp' : 'login.title') | t }}</a>
     </header>
 
+    @if (guestToken && session) {
+      <div class="invite-account-banner" role="status">
+        <div class="invite-account-banner-copy">
+          <strong>{{ (isAuthenticated ? 'publicSession.accountDetected' : 'publicSession.browsingAsGuest') | t }}</strong>
+          <p>{{ (isAuthenticated ? 'publicSession.accountDetectedHelp' : 'publicSession.browsingAsGuestHelp') | t }}</p>
+        </div>
+        @if (!isAuthenticated) {
+          <div class="invite-account-banner-actions">
+            <a class="invite-account-signin" routerLink="/login"
+               [queryParams]="{returnUrl: participationReturnUrl}">
+              {{ 'publicSession.signInExistingAccount' | t }}
+            </a>
+            <a class="invite-account-guest" href="#guest-participate">
+              {{ 'publicSession.continueWithoutAccount' | t }}
+            </a>
+          </div>
+        }
+      </div>
+    }
+
     @if (loading) {
       <div class="state-card" role="status">{{ 'publicSession.loading' | t }}</div>
     } @else if (session; as details) {
@@ -26,9 +46,9 @@
               @if (cityMapsUrl; as mapUrl) {
                 <a class="public-location-link" [href]="mapUrl" target="_blank" rel="noopener noreferrer"
                    [attr.title]="completeInvitationAddress || details.city || ''"
-                   [attr.aria-label]="'publicSession.viewAreaOnMaps' | t">
+                   [attr.aria-label]="(hasExactInvitationPin ? 'publicSession.openExactPin' : 'publicSession.viewAreaOnMaps') | t">
                   <strong>{{ exactInvitationLocation || details.city }}</strong>
-                  <span class="public-location-map">{{ 'publicSession.openMap' | t }} <span aria-hidden="true">↗</span></span>
+                  <span class="public-location-map">{{ (hasExactInvitationPin ? 'publicSession.openExactPin' : 'publicSession.openMap') | t }} <span aria-hidden="true">↗</span></span>
                 </a>
               } @else {
                 <strong>{{ 'publicSession.notSpecified' | t }}</strong>
@@ -114,7 +134,7 @@
         <aside class="join-panel">
           <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
           @if (guestToken && (canRequestParticipation || !!guestReceipt) && (!isAuthenticated || !!guestReceipt)) {
-            <section class="guest-rsvp" [attr.aria-label]="'guestRsvp.title' | t">
+            <section id="guest-participate" class="guest-rsvp" [attr.aria-label]="'guestRsvp.title' | t">
               <span class="guest-rsvp-kicker">{{ 'guestRsvp.noAccount' | t }}</span>
               @if (guestLoading) {
                 <p role="status">{{ 'publicSession.loading' | t }}</p>
