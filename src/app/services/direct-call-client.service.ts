@@ -7,6 +7,7 @@ import { ConnectionQuality, MediaDeviceFailure, Room, RoomEvent, Track } from 'l
 import { environment } from 'src/environment/environment';
 import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
 import { DirectCallToneService } from './direct-call-tone.service';
+import { appTranslate } from '../i18n/i18n.service';
 
 export type CallPhase = 'incoming' | 'dialing' | 'connecting' | 'active' | 'error';
 export type CallMedia = 'voice' | 'video';
@@ -73,8 +74,12 @@ export class DirectCallClientService implements OnDestroy {
   private checking = false;
   private recoveringPending = false;
   private pendingTimer?: ReturnType<typeof setInterval>;
+  private backgroundCallNotification: Notification | null = null;
   private readonly onForeground = (): void => {
-    if (document.visibilityState === 'visible') this.recoverPendingCall();
+    if (document.visibilityState === 'visible') {
+      this.dismissBackgroundCallNotification();
+      this.recoverPendingCall();
+    }
   };
 
   constructor(private readonly http: HttpClient,
@@ -82,7 +87,10 @@ export class DirectCallClientService implements OnDestroy {
               router: Router,
               private readonly tones: DirectCallToneService) {
     this.ringtoneBlocked$ = tones.needsGesture$;
-    this.subscriptions.add(this.state$.subscribe(call => this.tones.sync(call?.phase)));
+    this.subscriptions.add(this.state$.subscribe(call => {
+      this.tones.sync(call?.phase);
+      if (call?.phase !== 'incoming') this.dismissBackgroundCallNotification();
+    }));
     this.subscriptions.add(this.realtime.calls$.subscribe(call => this.onEvent(call)));
     this.subscriptions.add(router.events.pipe(filter(e => e instanceof NavigationEnd))
       .subscribe(() => this.ensureConnected()));
@@ -652,6 +660,41 @@ export class DirectCallClientService implements OnDestroy {
     this.mediaChanged$.next(this.mediaChanged$.value+1);
   }
 
+  /**
+   * Only show a system notification when the user has already granted browser
+   * permission and this tab is backgrounded. Never request notification access
+   * because somebody is calling, and never show a second foreground popup.
+   * This doesn't promise notifications if the browser/tab is completely closed.
+   */
+  private notifyBackgroundIncoming(call: DirectCallEvent): void {
+    if (document.visibilityState !== 'hidden' || typeof Notification === 'undefined'
+        || Notification.permission !== 'granted') return;
+    try {
+      this.dismissBackgroundCallNotification();
+      const notification = new Notification(appTranslate('calls.incoming'), {
+        body: call.caller + ' · ' + appTranslate(
+          call.media === 'video' ? 'calls.video' : 'calls.voice'),
+        tag: 'jynlo-incoming-call',
+        silent: true
+      });
+      notification.onclick = () => {
+        window.focus();
+        this.dismissBackgroundCallNotification();
+      };
+      this.backgroundCallNotification = notification;
+    } catch {
+      // Notifications are best-effort: the in-page call card remains available.
+    }
+  }
+
+  private dismissBackgroundCallNotification(): void {
+    const notice = this.backgroundCallNotification;
+    this.backgroundCallNotification = null;
+    if (notice) {
+      try { notice.close(); } catch { /* Browser already dismissed it. */ }
+    }
+  }
+
   private onEvent(call: DirectCallEvent): void {
     const user=this.username().toLowerCase();
     if (!user || !this.available$.value) return;
@@ -661,6 +704,7 @@ export class DirectCallClientService implements OnDestroy {
       if (!Number.isFinite(expiresAt) || expiresAt<=Date.now()) return;
       this.state$.next({id:call.callId,peer:call.caller,media:call.media,
         phase:'incoming',expiresAt,micEnabled:false,cameraEnabled:false});
+      this.notifyBackgroundIncoming(call);
       this.scheduleExpiry(call.callId,expiresAt);
       return;
     }
@@ -708,6 +752,7 @@ export class DirectCallClientService implements OnDestroy {
   }
 
   private dropCall(): void {
+    this.dismissBackgroundCallNotification();
     ++this.generation;
     this.clearRingTimer();
     this.clearPeerExitTimer();
