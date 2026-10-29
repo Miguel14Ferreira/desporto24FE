@@ -467,3 +467,19 @@
   .account-identity-copy,.account-identity-chevron {display:none;}
   .account-menu__panel {right:max(.5rem,env(safe-area-inset-right));}
 }
+
+/* On mobile the navigation links scroll horizontally. Pin the account identity
+   to the brand row so it remains visible regardless of which link is in view. */
+@media (max-width: 900px) {
+  .site-nav__links > .account-menu {
+    position: fixed;
+    top: .62rem;
+    right: max(1rem, env(safe-area-inset-right));
+    z-index: 15;
+  }
+  .site-nav__links > .account-menu .account-menu__panel {
+    position: fixed;
+    top: 3.65rem;
+    right: max(1rem, env(safe-area-inset-right));
+  }
+}
