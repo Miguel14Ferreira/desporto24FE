@@ -276,7 +276,7 @@
           @if (venue.venueType) {
             <div>
               <span>{{ 'venue.type' | t }}</span>
-              <strong>{{ venue.venueType }}</strong>
+              <strong>{{ venueCatalogueDisplayLabel(venue.venueType, 'venueType') }}</strong>
             </div>
           }
           @if (venue.ownershipType) {
@@ -292,7 +292,7 @@
           @if (venue.surfaceType) {
             <div>
               <span>{{ 'venue.surface' | t }}</span>
-              <strong>{{ venue.surfaceType }}</strong>
+              <strong>{{ venueCatalogueDisplayLabel(venue.surfaceType, 'surface') }}</strong>
             </div>
           }
           @if (venue.services) {
@@ -384,7 +384,7 @@
             @for (condition of sportConditions; track condition.id) {
               <article class="venue-sport-condition-card">
                 <div class="venue-sport-condition-heading">
-                  <strong>{{ condition.sport }}</strong>
+                  <strong>{{ venueCatalogueDisplayLabel(condition.sport, 'sport') }}</strong>
                   <span>
                     {{ condition.informationSource === 'OFFICIAL'
                       ? ('venue.detail.sourceOfficial' | t)

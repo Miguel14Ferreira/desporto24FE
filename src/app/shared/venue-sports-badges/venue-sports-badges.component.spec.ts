@@ -73,4 +73,27 @@ describe('Venue sports badges', () => {
     expect(fixture.nativeElement.querySelector('.venue-sports-more')).toBeNull();
     fixture.destroy();
   });
+  it('localizes sports chips immediately when the selected UI language changes', () => {
+    const old = localStorage.getItem('d24-language');
+    const fixture = TestBed.createComponent(VenueSportsBadgesComponent);
+    fixture.componentInstance.sports = 'Canoagem;Windsurf;Stand Up Paddle';
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      fixture.detectChanges();
+      expect(Array.from(fixture.nativeElement.querySelectorAll('.venue-sports-chip'))
+        .map((chip: any) => chip.textContent.trim())).toEqual(['Canoagem', 'Windsurf', 'Stand Up Paddle']);
+      localStorage.setItem('d24-language', 'en');
+      fixture.detectChanges();
+      expect(Array.from(fixture.nativeElement.querySelectorAll('.venue-sports-chip'))
+        .map((chip: any) => chip.textContent.trim()))
+        .toEqual(['Canoeing', 'Windsurfing', 'Stand-up paddleboarding']);
+      // Canonical API-sourced names are not modified for search and submission.
+      expect(fixture.componentInstance.items).toEqual(['Canoagem', 'Windsurf', 'Stand Up Paddle']);
+    } finally {
+      if (old === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', old);
+      fixture.destroy();
+    }
+  });
+
 });

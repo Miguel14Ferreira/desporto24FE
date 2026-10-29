@@ -791,4 +791,46 @@ describe('VenueDetailsComponent', () => {
     expect(component.backToDirectoryQueryParams).toEqual({ city: 'Lisboa' });
   });
 
+  it('translates venue type and surface in English, preserving the response values', async () => {
+    const originalLanguage = localStorage.getItem('d24-language');
+    const route = { snapshot: {
+      data: { publicVenueView: true },
+      paramMap: convertToParamMap({ id: '7' }),
+      queryParamMap: convertToParamMap({})
+    }} as unknown as ActivatedRoute;
+    const venue = {...createVenue(),
+      venueType: 'Equipamento desportivo', surfaceType: 'Madeira',
+      sports: 'Canoagem;Windsurf;Stand Up Paddle'};
+    const api = jasmine.createSpyObj<VenueService>('VenueService',
+      ['get', 'getRatingSummary', 'listPhotos', 'listSportConditions']);
+    api.get.and.returnValue(of(venue));
+    api.getRatingSummary.and.returnValue(of({venueId: 7, ratingCount: 0, averageScore: null}));
+    try {
+      localStorage.setItem('d24-language', 'en');
+      await import('../../i18n/i18n.service').then(module => module.preloadEnglishTranslations());
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [VenueDetailsModule, RouterModule.forRoot([])],
+        providers: [
+          { provide: ActivatedRoute, useValue: route },
+          { provide: VenueService, useValue: api }
+        ]
+      }).compileComponents();
+      const fixture = TestBed.createComponent(VenueDetailsComponent);
+      fixture.detectChanges();
+      const root: HTMLElement = fixture.nativeElement;
+      const info = root.querySelector('.venue-information-section')!;
+      expect(info.textContent).toContain('Sports facility');
+      expect(info.textContent).toContain('Wood');
+      expect(info.textContent).toContain('Canoeing');
+      expect(info.textContent).not.toContain('Equipamento desportivo');
+      expect(venue.venueType).toBe('Equipamento desportivo');
+      expect(venue.sports).toBe('Canoagem;Windsurf;Stand Up Paddle');
+      fixture.destroy();
+    } finally {
+      if (originalLanguage === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', originalLanguage);
+    }
+  });
+
 });

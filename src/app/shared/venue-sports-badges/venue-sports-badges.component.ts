@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { venueCatalogueDisplayLabel } from '../venue-catalogue-display';
 
 /** Sport names arrive as a legacy semicolon/comma/pipe-separated string from APIs. */
 export function parseVenueSports(value: string | null | undefined): string[] {
@@ -23,7 +24,7 @@ export function parseVenueSports(value: string | null | undefined): string[] {
     @if (items.length) {
       <div class="venue-sports-list" [class.is-compact]="compact">
         @for (sport of displayedSports; track sport) {
-          <span class="venue-sports-chip">{{ sport }}</span>
+          <span class="venue-sports-chip">{{ displaySport(sport) }}</span>
         }
         @if (remainingCount > 0) {
           @if (expandable) {
@@ -78,6 +79,10 @@ export function parseVenueSports(value: string | null | undefined): string[] {
   `]
 })
 export class VenueSportsBadgesComponent {
+  displaySport(sport: string): string {
+    return venueCatalogueDisplayLabel(sport, 'sport');
+  }
+
   items: string[] = [];
   expanded = false;
   @Input() limit = 0;
