@@ -747,7 +747,7 @@ describe('PerfisComponent', () => {
     service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
     routeParams.next(convertToParamMap({ username: 'ana' }));
     fixture.detectChanges();
-    const following = fixture.nativeElement.querySelector<HTMLButtonElement>('.profile-follow-toggle');
+    const following = fixture.nativeElement.querySelector('.profile-follow-toggle') as HTMLButtonElement | null;
     expect(following?.getAttribute('aria-pressed')).toBe('false');
     following!.click();
     fixture.detectChanges();
