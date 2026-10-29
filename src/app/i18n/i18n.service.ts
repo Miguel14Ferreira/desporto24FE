@@ -610,7 +610,7 @@ const PT: Dictionary = {
   'inviteCenter.mfaResend': 'Pedir novo código',
   'inviteCenter.mfaResending': 'A pedir novo código...',
   'inviteCenter.mfaResent': 'Novo código solicitado.',
-  'inviteCenter.mfaResendError': 'Não foi possível pedir um novo código. Tenta novamente.'
+  'inviteCenter.mfaResendError': 'Não foi possível pedir um novo código. Tenta novamente.',
   'inviteCenter.inlineLoginError': 'Não foi possível iniciar sessão. Verifica os dados e tenta novamente.',
   'inviteCenter.nameAfterChoiceHelp': 'Como te chamas? Vamos reservar já a tua vaga.',
   'publicSession.sessionChat': 'Chat da sessão',
