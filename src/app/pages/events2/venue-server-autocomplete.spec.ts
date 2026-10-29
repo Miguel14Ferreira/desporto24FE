@@ -171,7 +171,7 @@ describe('Create session venue server autocomplete', () => {
     expect(component.selectedVenueId).toBeNull();
   });
 
-  it('renders two same-name venues as separate clickable results with stable IDs', () => {
+  it('renders two same-name venues as separate clickable results with stable IDs', fakeAsync(() => {
     venues.suggest.and.returnValue(of(page([
       venue(501, 'Pavilhão Municipal', 'Porto'),
       venue(777, 'Pavilhão Municipal', 'Porto')
@@ -179,9 +179,13 @@ describe('Create session venue server autocomplete', () => {
     component.sport = 'Padel';
     component.loadVenues();
     fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
 
     const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
     (host.querySelector('.jynlo-select__trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    tick();
     fixture.detectChanges();
     const results = host.querySelectorAll(
       'button[role="option"]'
@@ -193,9 +197,9 @@ describe('Create session venue server autocomplete', () => {
 
     expect(component.selectedVenueId).toBe(777);
     expect(component.venueSearch).toBe('Pavilhão Municipal · Porto');
-  });
+  }));
 
-  it('shows the unverified OSM source and GPS-only address without inventing a street', () => {
+  it('shows the unverified OSM source and GPS-only address without inventing a street', fakeAsync(() => {
     const gpsOnly = {
       ...venue(2026, 'Campo Desportivo da Fonte'),
       address: null,
@@ -207,9 +211,13 @@ describe('Create session venue server autocomplete', () => {
     component.sport = 'Padel';
     component.loadVenues();
     fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
 
     const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
     (host.querySelector('.jynlo-select__trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    tick();
     fixture.detectChanges();
     const result = host.querySelector('button[role="option"]') as HTMLButtonElement;
     expect(result).not.toBeNull();
@@ -220,7 +228,7 @@ describe('Create session venue server autocomplete', () => {
     fixture.detectChanges();
     expect(component.selectedVenueId).toBe(2026);
     expect(host.querySelector('button[role="option"]')).toBeNull();
-  });
+  }));
 
   it('does not leave outdated search-result buttons active during debounce', fakeAsync(() => {
     venues.suggest.and.returnValues(
