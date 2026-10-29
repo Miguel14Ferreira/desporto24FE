@@ -3,7 +3,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { BehaviorSubject, filter, firstValueFrom, Subscription, TimeoutError, timeout } from 'rxjs';
-import { ConnectionQuality, MediaDeviceFailure, Room, RoomEvent } from 'livekit-client';
+import { ConnectionQuality, MediaDeviceFailure, Room, RoomEvent, Track } from 'livekit-client';
 import { environment } from 'src/environment/environment';
 import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
 import { DirectCallToneService } from './direct-call-tone.service';
@@ -569,9 +569,9 @@ export class DirectCallClientService implements OnDestroy {
     const room=this.createRoom();
     this.room=room;
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
-    room.on(RoomEvent.LocalTrackUnpublished, () => {
+    room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
       this.mediaChanged$.next(this.mediaChanged$.value+1);
-      this.screenShareEnabled$.next(false);
+      if (publication.source===Track.Source.ScreenShare) this.screenShareEnabled$.next(false);
     });
     room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
       if (room!==this.room || participant!==room.localParticipant) return;
@@ -719,6 +719,7 @@ export class DirectCallClientService implements OnDestroy {
     this.devices$.next([]);
     this.selectedDevices$.next({});
     this.connectionQuality$.next('unknown');
+    this.screenShareEnabled$.next(false);
     this.busyMedia$.next(false);
     this.mediaChanged$.next(this.mediaChanged$.value+1);
   }
