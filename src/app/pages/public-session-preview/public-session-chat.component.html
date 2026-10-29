@@ -1,0 +1,59 @@
+<section class="invite-chat" aria-labelledby="invite-chat-title">
+  <div class="invite-chat-heading">
+    <div>
+      <h2 id="invite-chat-title">{{ 'publicSession.sessionChat' | t }}</h2>
+      <p>{{ 'publicSession.sessionChatHelp' | t }}</p>
+    </div>
+    @if (allowed && chatOpen) {
+      <span class="invite-chat-live">{{ 'publicSession.chatParticipants' | t }}</span>
+    }
+  </div>
+
+  @if (!chatOpen) {
+    <p class="invite-chat-locked" role="status">{{ 'publicSession.chatClosed' | t }}</p>
+  } @else if (!authenticated) {
+    <p class="invite-chat-locked" role="status">
+      {{ (guestConfirmed ? 'publicSession.chatGuestUpgrade' : 'publicSession.chatConfirmFirst') | t }}
+    </p>
+    @if (guestConfirmed && returnUrl) {
+      <a class="invite-chat-join" routerLink="/login/registerNewUser" [queryParams]="{returnUrl: returnUrl}">
+        {{ 'guestRsvp.createAccount' | t }}
+      </a>
+    }
+  } @else if (loading && !allowed) {
+    <p class="invite-chat-locked" role="status">{{ 'publicSession.chatLoading' | t }}</p>
+  } @else if (!allowed) {
+    <p class="invite-chat-locked" role="status">{{ 'publicSession.chatConfirmFirst' | t }}</p>
+  } @else {
+    @if (readError) {
+      <p class="invite-chat-error" role="alert">{{ readError | t }}</p>
+    }
+    <div class="invite-chat-messages" role="log" aria-live="polite"
+         [attr.aria-label]="'publicSession.sessionChat' | t">
+      @for (message of messages; track message.id) {
+        <article class="invite-chat-message">
+          <div class="invite-chat-message-heading">
+            <strong>{{ '@' + message.senderUsername }}</strong>
+            <time [attr.datetime]="message.createdAt">{{ message.createdAt | date:'HH:mm' }}</time>
+          </div>
+          <p>{{ message.deletedAt ? ('chat.messageDeleted' | t) : message.body }}</p>
+        </article>
+      } @empty {
+        <p class="invite-chat-empty">{{ 'publicSession.chatEmpty' | t }}</p>
+      }
+    </div>
+    <form class="invite-chat-compose" (ngSubmit)="sendMessage()">
+      <label for="invite-chat-message">{{ 'publicSession.chatWrite' | t }}</label>
+      <textarea id="invite-chat-message" name="session-chat-message"
+                [(ngModel)]="messageText" maxlength="2000" rows="2"
+                [placeholder]="'publicSession.chatPlaceholder' | t"
+                [disabled]="!canSend" (keydown)="onMessageKeydown($event)"></textarea>
+      <button type="submit" [disabled]="!canSend || !messageText.trim()">
+        {{ (sending ? 'publicSession.chatSending' : 'publicSession.chatSend') | t }}
+      </button>
+    </form>
+    @if (sendError) {
+      <p class="invite-chat-error" role="alert">{{ sendError | t }}</p>
+    }
+  }
+</section>
