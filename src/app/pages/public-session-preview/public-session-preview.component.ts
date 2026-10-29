@@ -10,6 +10,7 @@ import { AuthenticationService } from '../../services/authethication.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { I18nService } from '../../i18n/i18n.service';
 import { compactSessionShareMessage } from '../../shared/session-share-message';
+import { PublicSessionChatComponent } from './public-session-chat.component';
 
 interface SessionPublicPreview {
   id: number;
@@ -36,7 +37,7 @@ interface ConfirmedSessionPlayer {
 @Component({
   selector: 'app-public-session-preview',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, FormsModule, TranslatePipe, PublicSessionChatComponent],
   templateUrl: './public-session-preview.component.html',
   styleUrls: ['./public-session-preview.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -707,11 +708,19 @@ export class PublicSessionPreviewComponent implements OnInit {
       + encodeURIComponent(place + ', Portugal') : null;
   }
 
+  /** Compact location label. The detailed street address stays in the Maps link. */
   get exactInvitationLocation(): string | null {
     if (!this.guestToken) return null;
     const venue = this.session?.venueName?.trim();
-    const address = this.session?.address?.trim();
-    return [venue, address].filter(Boolean).join(' · ') || null;
+    const city = this.session?.city?.trim();
+    if (venue && city && !venue.toLocaleLowerCase('pt-PT').includes(city.toLocaleLowerCase('pt-PT')))
+      return venue + ' · ' + city;
+    return venue || city || null;
+  }
+
+  get completeInvitationAddress(): string | null {
+    if (!this.guestToken) return null;
+    return this.session?.address?.trim() || null;
   }
 
   get remainingPlaces(): number | null {
