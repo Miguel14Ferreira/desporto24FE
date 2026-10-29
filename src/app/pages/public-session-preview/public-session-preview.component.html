@@ -500,11 +500,14 @@
     } @else {
       <main class="state-card error-state" role="alert">
         <h1>{{ 'publicSession.errorTitle' | t }}</h1>
-        <p>{{ errorMessageKey | t }}</p>
-        @if (canRetry) {
-          <button type="button" class="retry-action jynlo-action jynlo-action--neutral" (click)="retryLoad()">{{ 'publicSession.retry' | t }}</button>
-        }
-        <a routerLink="/home">{{ 'publicSession.backHome' | t }}</a>
+        <p class="error-description">{{ errorMessageKey | t }}</p>
+        <div class="error-actions">
+          @if (canRetry) {
+            <button type="button" class="retry-action jynlo-action jynlo-action--neutral"
+              (click)="retryLoad()">{{ 'publicSession.retry' | t }}</button>
+          }
+          <a class="error-home-action" routerLink="/home">{{ 'publicSession.backHome' | t }}</a>
+        </div>
       </main>
     }
   </div>
