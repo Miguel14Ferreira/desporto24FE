@@ -164,6 +164,8 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   private initializeInvitationGoogle(): void {
     if (this.destroyed || !this.guestToken || this.invitationStage !== 'login'
         || this.isAuthenticated || this.invitationGoogleReady) return;
+    if (this.googleMountTimer) clearTimeout(this.googleMountTimer);
+    this.googleMountTimer=undefined;
     this.authenticationService.googleConfig().pipe(timeout(10000)).subscribe({
       next: config => {
         const clientId = config?.clientId?.trim();
