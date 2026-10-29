@@ -228,20 +228,14 @@
         }
         <label>
           <span>{{ 'events.sport' | t }} *</span>
-          <input
-            type="search"
-            name="sport"
-            list="create-session-sports"
-            [(ngModel)]="sport"
-            autocomplete="off"
-            [disabled]="loading"
-            (change)="confirmSportSelection()"
-            [placeholder]="'events.sportPlaceholder' | t">
-          <datalist id="create-session-sports">
-            @for (sportOption of sportsCatalog; track sportOption) {
-              <option [value]="sportOption"></option>
-            }
-          </datalist>
+          <app-jynlo-select name="sport" class="create-premium-select"
+            [options]="sportChoices" [ngModel]="sport"
+            (ngModelChange)="onSportChoice($event)"
+            [searchable]="true" [required]="true"
+            [placeholder]="'events.sportPlaceholder' | t"
+            [ariaLabel]="'events.sport' | t"
+            [blocked]="loading" [disabled]="loading">
+          </app-jynlo-select>
         </label>
 
         @if (canChoosePlayFormat) {
@@ -486,16 +480,20 @@
 
         <label class="venue-select-field">
           <span>{{ 'venue.search' | t }}</span>
-          <input
-            type="search"
-            name="venueSearch"
-            [ngModel]="venueSearch"
-            (ngModelChange)="onVenueSearchChanged($event)"
-            autocomplete="off"
-            [disabled]="loading || !sportSelected || !venueDistrict"
-            (change)="confirmVenueSelection()"
+          <app-jynlo-select name="venueSearch" class="create-premium-select"
+            [options]="venueSearchChoices"
+            [ngModel]="selectedVenueId === null ? '' : selectedVenueId.toString()"
+            (ngModelChange)="onVenueSelected($event)"
+            [searchable]="true" [remoteSearch]="true"
+            [remoteQuery]="venueSearch" (remoteQueryChange)="onVenueSearchChanged($event)"
+            [loading]="venuesLoading" [loadingLabel]="'venue.searching' | t"
+            [emptyLabel]="'venue.noResults' | t"
             [placeholder]="!sportSelected ? ('venue.chooseSportFirst' | t)
-              : !venueDistrict ? ('venue.districtPlaceholder' | t) : ('venue.searchPlaceholder' | t)">
+              : !venueDistrict ? ('venue.districtPlaceholder' | t) : ('venue.searchPlaceholder' | t)"
+            [ariaLabel]="'venue.search' | t"
+            [blocked]="loading || !sportSelected || !venueDistrict"
+            [disabled]="loading || !sportSelected || !venueDistrict">
+          </app-jynlo-select>
           <small class="venue-current-location" aria-live="polite">
             @if (venuesLoading) {
               {{ 'venue.searching' | t }}
@@ -510,36 +508,6 @@
             }
           </small>
         </label>
-
-        @if (venueOptions.length > 0 && sportSelected && venueDistrict && !selectedVenueId) {
-          <section class="venue-search-results" [attr.aria-label]="'venue.resultsLabel' | t">
-            <p class="venue-results-caption">{{ 'venue.resultsLabel' | t }} ({{ venueOptions.length }})</p>
-            <ul class="venue-results-list">
-              @for (venue of venueOptions; track venue.id) {
-                <li>
-                  <button type="button" class="venue-result-option"
-                    [disabled]="venuesLoading || loading"
-                    (click)="chooseVenueFromResults(venue.id)">
-                    <span class="venue-result-main">
-                      <strong>{{ venue.name }}</strong>
-                      <span>{{ venue.city }}{{ venue.district && venue.district !== venue.city ? ' · ' + venue.district : '' }}</span>
-                    </span>
-                    <span class="venue-result-details">
-                      @if (venue.address) {
-                        <span>{{ venue.address }}</span>
-                      } @else if (venue.latitude !== null && venue.longitude !== null) {
-                        <span>{{ 'venue.gpsOnlyAddress' | t }}</span>
-                      }
-                      @if (venue.informationSource === 'OPENSTREETMAP') {
-                        <span class="venue-result-unverified">{{ 'venue.detail.sourceOpenStreetMap' | t }}</span>
-                      }
-                    </span>
-                  </button>
-                </li>
-              }
-            </ul>
-          </section>
-        }
 
         @if (venuesHasMore && sportSelected && venueDistrict) {
           <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
