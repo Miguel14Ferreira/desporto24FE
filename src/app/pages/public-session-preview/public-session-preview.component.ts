@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
@@ -42,7 +42,7 @@ interface ConfirmedSessionPlayer {
   styleUrls: ['./public-session-preview.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
 })
-export class PublicSessionPreviewComponent implements OnInit {
+export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   session: SessionPublicPreview | null = null;
   loading = true;
   errorMessageKey = '';
@@ -82,6 +82,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   guestSavedBookings: {receipt:string;name:string}[] = [];
   memberJoining = false;
   memberJoinError = '';
+  private rosterRefreshTimer?: ReturnType<typeof setInterval>;
 
   get guestRegistrationReturnUrl(): string | null {
     return this.sessionId && this.guestToken
@@ -550,6 +551,16 @@ export class PublicSessionPreviewComponent implements OnInit {
       }
     }
     this.loadPreview();
+    if (this.guestToken) {
+      // Keep the roster current without asking visitors to tap «Atualizar».
+      this.rosterRefreshTimer = setInterval(() => {
+        if (document.visibilityState !== 'hidden' && this.guestToken) this.loadConfirmedPlayers();
+      }, 15000);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.rosterRefreshTimer) clearInterval(this.rosterRefreshTimer);
   }
 
   // Keep the join/waitlist section in view after sign-in or registration.
