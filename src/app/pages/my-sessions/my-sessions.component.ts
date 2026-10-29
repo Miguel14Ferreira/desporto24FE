@@ -53,7 +53,7 @@ export class MySessionsComponent implements OnInit {
   get historyCommunityIds(): number[] {
     const ids = this.historicalCreated.map(s => this.communityId(s));
     return [...new Set(ids.filter((id): id is number => id !== null))]
-      .sort((a, b) => (this.communityNames[a] || '').localeCompare(this.communityNames[b] || '') || a - b);
+      .sort((a, b) => a - b);
   }
 
   communityLabel(id: number): string {
