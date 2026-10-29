@@ -2,30 +2,12 @@
   <div class="public-session-shell">
     <header class="public-header">
       <a routerLink="/home" class="brand" [attr.aria-label]="'publicSession.brandHome' | t">Jynlo<span>.</span></a>
-      <a [routerLink]="isAuthenticated ? (participationReturnUrl || '/menu/feed') : '/login'"
-         [queryParams]="!isAuthenticated && participationReturnUrl ? { returnUrl: participationReturnUrl } : null"
-         class="header-login">{{ (isAuthenticated ? 'publicSession.openApp' : 'login.title') | t }}</a>
+      @if (!guestToken) {
+        <a [routerLink]="isAuthenticated ? (participationReturnUrl || '/menu/feed') : '/login'"
+           [queryParams]="!isAuthenticated && participationReturnUrl ? { returnUrl: participationReturnUrl } : null"
+           class="header-login">{{ (isAuthenticated ? 'publicSession.openApp' : 'login.title') | t }}</a>
+      }
     </header>
-
-    @if (guestToken && session) {
-      <div class="invite-account-banner" role="status">
-        <div class="invite-account-banner-copy">
-          <strong>{{ (isAuthenticated ? 'publicSession.accountDetected' : 'publicSession.browsingAsGuest') | t }}</strong>
-          <p>{{ (isAuthenticated ? 'publicSession.accountDetectedHelp' : 'publicSession.browsingAsGuestHelp') | t }}</p>
-        </div>
-        @if (!isAuthenticated) {
-          <div class="invite-account-banner-actions">
-            <a class="invite-account-signin" routerLink="/login"
-               [queryParams]="{returnUrl: participationReturnUrl}">
-              {{ 'publicSession.signInExistingAccount' | t }}
-            </a>
-            <a class="invite-account-guest" href="#guest-participate">
-              {{ 'publicSession.continueWithoutAccount' | t }}
-            </a>
-          </div>
-        }
-      </div>
-    }
 
     @if (loading) {
       <div class="state-card" role="status">{{ 'publicSession.loading' | t }}</div>
@@ -155,15 +137,7 @@
                 }
                 <h2>{{ 'guestRsvp.title' | t }}</h2>
                 <p>{{ 'guestRsvp.chooseHelp' | t }}</p>
-                <label for="guest-player-select">{{ 'guestRsvp.selectPlayer' | t }}</label>
-                <select id="guest-player-select" [ngModel]="guestPlayerId"
-                  (ngModelChange)="selectGuestPlayer($event)" [disabled]="guestSending">
-                  <option [ngValue]="null">{{ 'guestRsvp.choosePlaceholder' | t }}</option>
-                  @for (person of guestPlayers; track person.id) {
-                    <option [ngValue]="person.id">{{ person.name }}</option>
-                  }
-                </select>
-                <label for="guest-new-name">{{ 'guestRsvp.notListed' | t }}</label>
+                <label for="guest-new-name">{{ 'guestRsvp.yourName' | t }}</label>
                 <input id="guest-new-name" type="text" maxlength="80" autocomplete="name"
                   [ngModel]="guestNewName" (ngModelChange)="setGuestNewName($event)"
                   [placeholder]="'guestRsvp.newNamePlaceholder' | t"/>
@@ -241,15 +215,7 @@
                       <div class="guest-change-panel">
                         <h3>{{ 'guestRsvp.changePlayerTitle' | t }}</h3>
                         <p class="guest-rsvp-hint">{{ 'guestRsvp.changePlayerHelp' | t }}</p>
-                        <label for="guest-change-player-select">{{ 'guestRsvp.selectPlayer' | t }}</label>
-                        <select id="guest-change-player-select" [ngModel]="guestPlayerId"
-                          (ngModelChange)="selectGuestPlayer($event)" [disabled]="guestChangingIdentity">
-                          <option [ngValue]="null">{{ 'guestRsvp.choosePlaceholder' | t }}</option>
-                          @for (person of guestPlayers; track person.id) {
-                            <option [ngValue]="person.id">{{ person.name }}</option>
-                          }
-                        </select>
-                        <label for="guest-change-new-name">{{ 'guestRsvp.notListed' | t }}</label>
+                        <label for="guest-change-new-name">{{ 'guestRsvp.yourName' | t }}</label>
                         <input id="guest-change-new-name" type="text" maxlength="80"
                           [ngModel]="guestNewName" (ngModelChange)="setGuestNewName($event)"
                           [disabled]="guestChangingIdentity"
@@ -258,7 +224,7 @@
                           <p class="guest-rsvp-error" role="alert">{{ guestError | t }}</p>
                         }
                         <button type="button" class="guest-rsvp-primary"
-                          [disabled]="guestChangingIdentity || (!guestPlayerId && guestNewName.trim().length < 2)"
+                          [disabled]="guestChangingIdentity || guestNewName.trim().length < 2"
                           (click)="changeGuestIdentity()">
                           {{ (guestChangingIdentity ? 'guestRsvp.changingPlayer' : 'guestRsvp.savePlayerChange') | t }}
                         </button>
@@ -325,7 +291,58 @@
               }
             </section>
           }
-          @if (canRequestParticipation && (!guestToken || (isAuthenticated && !guestReceipt))) {
+          @if (guestToken && isAuthenticated && !guestReceipt && canRequestParticipation) {
+            <section class="member-rsvp" aria-labelledby="member-rsvp-title">
+              @if (memberPresenceLoading || memberPresence === 'UNKNOWN') {
+                <p role="status">{{ 'inviteCenter.checkingPresence' | t }}</p>
+              } @else if (memberPresenceError) {
+                <p role="alert" class="guest-rsvp-error">{{ 'inviteCenter.presenceLoadError' | t }}</p>
+                <button type="button" class="guest-rsvp-back" (click)="loadMemberPresence()">
+                  {{ 'publicSession.retry' | t }}
+                </button>
+              } @else if (memberPresence === 'PARTICIPANT' || memberPresence === 'WAITLISTED') {
+                <h2 id="member-rsvp-title">{{ (memberPresence === 'PARTICIPANT' ?
+                    'inviteCenter.memberConfirmed' : 'inviteCenter.memberWaitlisted') | t }}</h2>
+                <p>{{ (memberPresence === 'PARTICIPANT' ?
+                    'inviteCenter.memberConfirmedHelp' : 'inviteCenter.memberWaitlistedHelp') | t }}</p>
+                @if (!memberCancelConfirm) {
+                  <button type="button" class="guest-cancel-link" (click)="memberCancelConfirm=true">
+                    {{ 'guestRsvp.cancelMySeat' | t }}
+                  </button>
+                } @else {
+                  <div class="guest-cancel-confirm">
+                    <p>{{ 'inviteCenter.confirmCancelMember' | t }}</p>
+                    <button type="button" class="guest-cancel-danger"
+                      [disabled]="memberCancelling" (click)="cancelMemberPresence()">
+                      {{ (memberCancelling ? 'guestRsvp.cancelling' : 'guestRsvp.confirmCancelSeat') | t }}
+                    </button>
+                    <button type="button" class="guest-rsvp-back" [disabled]="memberCancelling"
+                      (click)="memberCancelConfirm=false">{{ 'guestRsvp.keepMySeat' | t }}</button>
+                  </div>
+                }
+                @if (memberJoinError) {
+                  <p role="alert" class="guest-rsvp-error">{{ memberJoinError | t }}</p>
+                }
+              } @else if (memberPresence === 'ORGANIZER') {
+                <h2 id="member-rsvp-title">{{ 'inviteCenter.organizerPresence' | t }}</h2>
+                <p>{{ 'inviteCenter.organizerPresenceHelp' | t }}</p>
+              } @else {
+                @if (memberCancelledBySelf) {
+                  <p role="status" class="member-rsvp-notice">{{ 'inviteCenter.memberCancelled' | t }}</p>
+                }
+                <h2 id="member-rsvp-title">{{ 'inviteCenter.memberHeading' | t }}</h2>
+                <p>{{ 'inviteCenter.memberHelp' | t }}</p>
+                <button type="button" class="guest-rsvp-primary"
+                  [disabled]="memberJoining" (click)="joinWithAccount()">
+                  {{ (memberJoining ? 'guestRsvp.linking' : 'inviteCenter.confirmPresence') | t }}
+                </button>
+                @if (memberJoinError) {
+                  <p role="alert" class="guest-rsvp-error">{{ memberJoinError | t }}</p>
+                }
+              }
+            </section>
+          }
+          @if (canRequestParticipation && (!guestToken)) {
             @if (details.status === 'FULL') {
               <h2>{{ 'publicSession.fullHeading' | t }}</h2>
               <p>{{ 'publicSession.fullExplanation' | t }}</p>
@@ -351,14 +368,14 @@
             } @else {
               <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: participationReturnUrl }">{{ 'nav.register' | t }}</a>
             }
-          } @else if (!canRequestParticipation) {
+          } @else if (!canRequestParticipation && !guestToken) {
             <h2>{{ 'publicSession.closedHeading' | t }}</h2>
             <p>{{ 'publicSession.closedExplanation' | t }}</p>
             @if (isAuthenticated) {
               <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl">{{ 'publicSession.viewDetails' | t }}</a>
             }
           }
-          @if (!isAuthenticated) {
+          @if (!isAuthenticated && !guestToken) {
             <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login" [queryParams]="{returnUrl: participationReturnUrl}">{{ 'register.haveAccount' | t }}</a>
           }
           @if (canRequestParticipation) {

@@ -290,6 +290,16 @@ h1 {
 }
 .guest-rsvp .guest-rsvp-hint{color:#b4dce2;font-size:.77rem}
 .guest-rsvp .guest-rsvp-error{color:#ffb9ba}
+.member-rsvp {
+  display:grid;gap:.75rem;padding:1.2rem;margin:.95rem 0 0;border:1px solid rgba(46,216,181,.38);
+  border-radius:1rem;background:linear-gradient(125deg,rgba(7,53,63,.72),rgba(8,28,45,.7));
+}
+.member-rsvp h2 {margin:0;font-size:clamp(1.25rem,2vw,1.5rem)}
+.member-rsvp p {margin:0;color:#d0e4e8;line-height:1.55}
+.member-rsvp .guest-cancel-link {justify-self:start;margin:0;min-height:44px}
+.member-rsvp .guest-rsvp-primary {width:100%}
+.member-rsvp-notice {color:#b9f6ca!important}
+.member-rsvp :is(button,a):focus-visible {outline:3px solid #7dd3fc;outline-offset:2px}
 .guest-rsvp-upgrade{display:grid;gap:9px;border-top:1px solid #326473;padding-top:17px}
 .guest-rsvp-upgrade .guest-rsvp-primary{margin:7px 0}
 .guest-rsvp :is(button,a,select,input,textarea):focus-visible{

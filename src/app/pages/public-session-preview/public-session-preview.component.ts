@@ -85,6 +85,12 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   guestSavedBookings: {receipt:string;name:string}[] = [];
   memberJoining = false;
   memberJoinError = '';
+  memberPresence: 'UNKNOWN'|'NONE'|'PARTICIPANT'|'WAITLISTED'|'ORGANIZER' = 'UNKNOWN';
+  memberPresenceLoading = false;
+  memberPresenceError = false;
+  memberCancelConfirm = false;
+  memberCancelling = false;
+  memberCancelledBySelf = false;
   private rosterRefreshTimer?: ReturnType<typeof setInterval>;
 
   get guestRegistrationReturnUrl(): string | null {
@@ -118,7 +124,8 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
    */
   joinWithAccount(): void {
     if (!this.isAuthenticated || !this.guestToken || !this.sessionId
-        || this.guestReceipt || this.memberJoining || !this.canRequestParticipation) return;
+        || this.guestReceipt || this.memberJoining || this.memberPresence!=='NONE'
+        || this.memberPresenceError || this.memberPresenceLoading || !this.canRequestParticipation) return;
     this.memberJoining = true;
     this.memberJoinError = '';
     const id = this.sessionId;
@@ -128,13 +135,69 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     ).pipe(timeout(10000),finalize(()=>this.memberJoining=false)).subscribe({
       next: result => {
         if (result.state === 'PARTICIPANT' || result.state === 'WAITLISTED') {
-          void this.router.navigate(['/menu/events',id]);
+          // Keep the user on the invitation: show actual confirmed state and
+          // cancellation, rather than redirecting to an unrelated screen.
+          this.memberPresence=result.state;
+          this.memberCancelledBySelf=false;
+          this.memberCancelConfirm=false;
+          this.loadPreview();
+          this.loadConfirmedPlayers();
         } else {
           this.memberJoinError='guestRsvp.memberJoinError';
         }
       },
       error: () => {this.memberJoinError='guestRsvp.memberJoinError';}
     });
+  }
+
+  /** A signed invitation provides context; only the server knows the member's real seat. */
+  loadMemberPresence(): void {
+    if (!this.isAuthenticated || !this.guestToken || !this.sessionId
+        || this.memberPresenceLoading) return;
+    const id = this.sessionId;
+    this.memberPresenceLoading = true;
+    this.memberPresenceError = false;
+    this.http.post<{status:'NONE'|'PARTICIPANT'|'WAITLISTED'|'ORGANIZER';canCancel:boolean}>(
+      environment.apiUrl + '/api/sessions/' + id + '/guest-member-presence',
+      {token:this.guestToken}
+    ).pipe(timeout(10000),finalize(()=>this.memberPresenceLoading=false)).subscribe({
+      next: result => {
+        if (this.sessionId !== id) return;
+        if (['NONE','PARTICIPANT','WAITLISTED','ORGANIZER'].includes(result?.status)) {
+          this.memberPresence = result.status;
+          this.memberPresenceError = false;
+          if (result.status !== 'PARTICIPANT' && result.status !== 'WAITLISTED') {
+            this.memberCancelConfirm = false;
+          }
+        } else {
+          this.memberPresenceError = true;
+        }
+      },
+      error: () => {this.memberPresenceError = true;}
+    });
+  }
+
+  /** Uses the existing authenticated /leave handler, which enforces ownership,
+   * time limits and waitlist removal. The shared link alone cannot cancel seats.
+   */
+  cancelMemberPresence(): void {
+    if (!this.sessionId || !this.isAuthenticated || this.memberCancelling ||
+        !this.memberCancelConfirm || !['PARTICIPANT','WAITLISTED'].includes(this.memberPresence)) return;
+    const id=this.sessionId;
+    this.memberCancelling=true;
+    this.memberJoinError='';
+    this.http.post<void>(environment.apiUrl+'/api/sessions/'+id+'/leave',{})
+      .pipe(timeout(10000),finalize(()=>this.memberCancelling=false)).subscribe({
+        next:()=>{
+          if(this.sessionId!==id)return;
+          this.memberPresence='NONE';
+          this.memberCancelledBySelf=true;
+          this.memberCancelConfirm=false;
+          this.loadPreview();
+          this.loadConfirmedPlayers();
+        },
+        error:()=>{this.memberJoinError='inviteCenter.cancelPresenceError';}
+      });
   }
 
   get guestPlayerName(): string {
@@ -555,6 +618,7 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
       }
     }
     this.loadPreview();
+    if (this.guestToken && this.isAuthenticated) this.loadMemberPresence();
     if (this.guestToken) {
       // Periodic roster refresh should not hold Angular's testability zone
       // open indefinitely (or block stable screens awaiting async operations).
