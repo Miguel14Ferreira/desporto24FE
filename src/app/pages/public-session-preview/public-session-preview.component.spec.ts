@@ -1544,4 +1544,60 @@ describe('PublicSessionPreviewComponent', () => {
     });
   });
 
+  it('links a verified invitation to the exact Google Maps pin, never the city text', () => {
+    const token='P'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:token});
+    http.post.and.callFake((url:string) => {
+      if (url.endsWith('/guest-preview')) return of({
+        id:42,sport:'Futsal',city:'Campo Grande',
+        address:'Campo Grande',venueName:'Campo Grande',
+        latitude:38.7488967,longitude:-9.1526148,
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:10,participantCount:1,priceAmount:0,status:'OPEN',gamePhoto:null
+      });
+      if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:null,players:[]});
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      return of({});
+    });
+    const page=render({city:'Outra localidade',latitude:40,longitude:-8});
+    const link=page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(new URL(link.href).searchParams.get('query')).toBe('38.7488967,-9.1526148');
+    expect(link.textContent).toContain('Abrir pin exato');
+    expect(link.href).not.toContain('Campo%20Grande');
+  });
+
+  it('a public preview never exposes signed coordinates and still searches only the city', () => {
+    const page=render({city:'Cascais',latitude:38.7488967,longitude:-9.1526148});
+    const link=page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(new URL(link.href).searchParams.get('query')).toBe('Cascais, Portugal');
+    expect(link.href).not.toContain('38.7488967');
+  });
+
+  it('makes login status and optional guest participation clear before choosing a name', () => {
+    const token='L'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:token});
+    http.post.and.callFake((url:string) => {
+      if (url.endsWith('/guest-preview')) return of({
+        id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:10,participantCount:1,priceAmount:0,status:'OPEN',gamePhoto:null
+      });
+      if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:null,players:[]});
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      return of({});
+    });
+    const page=render();
+    const banner=page.querySelector('.invite-account-banner') as HTMLElement;
+    const signIn=page.querySelector('.invite-account-signin') as HTMLAnchorElement;
+    const guest=page.querySelector('.invite-account-guest') as HTMLAnchorElement;
+    expect(banner.textContent).toContain('sem sessão iniciada');
+    expect(signIn.textContent).toContain('Já tenho conta');
+    expect(new URL(signIn.href).searchParams.get('returnUrl'))
+      .toBe('/sessions/42?guest='+token);
+    expect(guest.getAttribute('href')).toBe('#guest-participate');
+    expect(page.querySelector('#guest-participate')).not.toBeNull();
+    expect(http.post).toHaveBeenCalledTimes(3);
+  });
+
 });
