@@ -127,6 +127,7 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     if (!this.guestToken || this.isAuthenticated || this.guestReceipt) return;
     this.invitationStage = hasAccount ? 'login' : 'name';
     this.invitationLoginError = '';
+    this.invitationGoogleReady = false;
     if (hasAccount) {
       // The Google button needs a mounted container after Angular renders this step.
       this.googleMountTimer = setTimeout(() => this.initializeInvitationGoogle(), 0);
@@ -255,6 +256,7 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   }
 
   private beginInlineMfa(challengeId:string,expiresAt:string|null): void {
+    this.invitationGoogleReady=false;
     this.invitationMfaChallengeId=challengeId;
     this.invitationMfaExpiresAt=expiresAt || '';
     this.invitationMfaCode='';
@@ -291,7 +293,7 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     const code=this.invitationMfaCode.trim();
     if (this.invitationStage!=='mfa' || !this.invitationMfaChallengeId
         || this.invitationMfaBusy || this.invitationMfaExpired) return;
-    if (!/^\\d{6}$/.test(code)) {
+    if (!/^[0-9]{6}$/.test(code)) {
       this.invitationMfaError='inviteCenter.mfaCodeInvalid';
       return;
     }
@@ -339,6 +341,8 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     this.clearInlineMfa();
     this.consumeAutoJoinIntent();
     this.invitationStage='login';
+    this.invitationGoogleReady=false;
+    this.googleMountTimer=setTimeout(()=>this.initializeInvitationGoogle(),0);
   }
 
   private clearInlineMfa(): void {
