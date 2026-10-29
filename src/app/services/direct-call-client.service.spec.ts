@@ -235,7 +235,7 @@ describe('Direct calls gated by authenticated realtime and backend availability'
       localParticipant:{
         setMicrophoneEnabled:jasmine.createSpy('microphone').and.resolveTo(),
         setCameraEnabled:jasmine.createSpy('camera').and.callFake(async (_enabled:boolean,options?:any)=>{
-          if (!options) throw new DOMException('Another application is using the camera','NotReadableError');
+          if (!options?.deviceId) throw new DOMException('Another application is using the camera','NotReadableError');
           return undefined;
         })
       }
@@ -249,13 +249,69 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     });
     await starting;
     expect(room.localParticipant.setCameraEnabled).toHaveBeenCalledWith(true, {
-      deviceId:{exact:'usb-camera'}
+      deviceId:{exact:'usb-camera'},resolution:{width:640,height:360,frameRate:15}
     });
     expect(calls.state$.value?.cameraEnabled).toBeTrue();
     expect(calls.state$.value?.error).toBeUndefined();
     expect(calls.selectedDevices$.value.videoinput).toBe('usb-camera');
     calls.end();
     http.expectOne(r=>r.url.endsWith('/api/calls/direct/recovered-camera/end')).flush(null);
+  });
+
+  it('recovers an incompatible default camera using a lower resolution', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake(()=>room),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants:new Map(),
+      localParticipant:{
+        setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo(),
+        setCameraEnabled:jasmine.createSpy('camera').and.callFake(async (_enabled:boolean,options?:any)=>{
+          if (!options?.resolution) throw new DOMException('Unsupported video profile','OverconstrainedError');
+        })
+      }
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const start=calls.start('bea','video');
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'fallback-resolution',peer:'bea',media:'video',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await start;
+    expect(room.localParticipant.setCameraEnabled).toHaveBeenCalledWith(true,{
+      resolution:{width:640,height:360,frameRate:15}
+    });
+    expect(calls.state$.value?.cameraEnabled).toBeTrue();
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/fallback-resolution/end')).flush(null);
+  });
+
+  it('reports an unpublished camera track without terminating the call', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake(()=>room),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants:new Map(),
+      localParticipant:{
+        videoTrackPublications:new Map(),
+        setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo(),
+        setCameraEnabled:jasmine.createSpy('camera').and.resolveTo()
+      }
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const start=calls.start('bea','video');
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'missing-publication',peer:'bea',media:'video',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await start;
+    expect(calls.state$.value?.cameraEnabled).toBeFalse();
+    expect(calls.state$.value?.error).toBe('calls.cameraPublicationFailed');
+    expect(room.disconnect).not.toHaveBeenCalled();
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/missing-publication/end')).flush(null);
   });
 
   it('preserves permission-denied camera diagnostics and never retries hardware automatically', async () => {
