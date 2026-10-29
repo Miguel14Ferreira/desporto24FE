@@ -33,8 +33,11 @@ export class Events2Component implements OnInit, OnDestroy {
   meetingPointInstructions = '';
   maxParticipants = 4;
   /** Null tracks the sport-aware default until the organiser edits the number. */
+  /** When enabled, the full capacity becomes the required minimum. */
+  capacityIsMinimum = false;
   selectedMinimumPlayers: number | null = null;
   get minimumPlayers(): number {
+    if (this.capacityIsMinimum) return Number(this.maxParticipants);
     return this.selectedMinimumPlayers === null
       ? suggestedMinimumPlayers(this.sport, Number(this.maxParticipants))
       : Number(this.selectedMinimumPlayers);
@@ -344,7 +347,6 @@ export class Events2Component implements OnInit, OnDestroy {
       city: this.city.trim(),
       address: this.address.trim(),
       maxParticipants: Number(this.maxParticipants),
-      minParticipants: this.minimumPlayers,
       creationMode: this.creationMode,
       confirmedPlayers: Number(this.confirmedPlayers ?? 1),
       hasPrice: this.hasPrice,
@@ -766,6 +768,7 @@ export class Events2Component implements OnInit, OnDestroy {
         : ''),
       meetingPointInstructions: this.meetingPointInstructions.trim() || null,
       maxParticipants: Number(this.maxParticipants),
+      minParticipants: this.minimumPlayers,
       ...(this.findPlayersMode
         ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
         : {}),
