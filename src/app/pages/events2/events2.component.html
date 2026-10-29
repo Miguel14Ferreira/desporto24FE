@@ -276,6 +276,16 @@
             max="100"
             [disabled]="loading">
         </label>
+        <label>
+          <span>{{ 'createSession.minimumPlayers' | t }} *</span>
+          <input type="number" name="minParticipants"
+            [ngModel]="minimumPlayers"
+            (ngModelChange)="selectedMinimumPlayers = $event"
+            min="2" [max]="maxParticipants" step="1"
+            [disabled]="loading">
+          <small>{{ 'createSession.minimumPlayersHint' | t }}</small>
+        </label>
+
 
       </div>
 
