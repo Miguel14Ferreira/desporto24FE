@@ -5157,14 +5157,10 @@ export class I18nService {
   }
 
   translate(key: string, params?: Record<string, string | number>): string {
-    const dictionary = this.language === 'en' ? (englishDictionary ?? PT) : PT;
-    let value = dictionary[key] ?? PT[key] ?? key;
-
-    for (const [name, replacement] of Object.entries(params ?? {})) {
-      value = value.replaceAll('{{' + name + '}}', String(replacement));
-    }
-
-    return value;
+    // Both standalone and NgModule translation pipes must resolve the same
+    // selected locale as appTranslate(). Never retain a stale constructor-time
+    // language in a lazily loaded view such as Feed > Stories.
+    return appTranslate(key, params);
   }
 
   private readInitialLanguage(): AppLanguage {
