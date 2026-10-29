@@ -3871,6 +3871,7 @@ const PT: Dictionary = {
   'venue.sportFilterPlaceholder': 'Escreve uma modalidade...',
   'venue.search': 'Pesquisar recinto',
   'venue.searchPlaceholder': 'Nome do recinto',
+  'venue.noResults': 'Nenhum recinto encontrado. Experimenta outro nome ou pesquisa nacional.',
   'venue.searching': 'A procurar recintos...',
   'venue.showMore': 'Mostrar mais recintos',
   'venue.resultsLabel': 'Recintos encontrados · escolhe o local pretendido',
