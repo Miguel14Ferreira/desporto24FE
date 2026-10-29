@@ -20,7 +20,29 @@ import { Venue } from '../model/venue';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
+type ExploreCategory = 'all' | 'venues' | 'sessions' | 'people' | 'communities';
+
 export class DiscoverComponent implements OnInit {
+  activeTab: ExploreCategory = 'all';
+  readonly quickSports = ['Padel', 'Futebol', 'Ténis'];
+
+  setCategory(category: ExploreCategory): void {
+    this.activeTab = category;
+  }
+
+  showSection(category: 'venues' | 'sessions' | 'people'): boolean {
+    if (this.activeTab === category) return true;
+    if (this.activeTab !== 'all') return false;
+    if (category === 'venues') return !this.venuesLoadError;
+    if (category === 'sessions') return !this.sessionsLoadError && this.sessions.length > 0;
+    return !this.peopleLoadError && this.people.length > 0;
+  }
+
+  selectQuickSport(value: string): void {
+    this.onSportChange(this.sport.trim() === value ? '' : value);
+    this.search();
+  }
+
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly venueEnvironmentTranslationKey = venueEnvironmentTranslationKey;
 
