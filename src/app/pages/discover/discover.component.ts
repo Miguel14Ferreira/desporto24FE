@@ -62,9 +62,11 @@ export class DiscoverComponent implements OnInit {
   }
 
   showSection(category: 'venues' | 'sessions' | 'people'): boolean {
+    // Venues have their own dedicated tab (and map); do not duplicate them
+    // in "For you", where sessions and players are the useful recommendations.
+    if (category === 'venues') return this.activeTab === 'venues';
     if (this.activeTab === category) return true;
     if (this.activeTab !== 'all') return false;
-    if (category === 'venues') return !this.venuesLoadError;
     if (category === 'sessions') return !this.sessionsLoadError && this.sessions.length > 0;
     return !this.peopleLoadError && this.people.length > 0;
   }

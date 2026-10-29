@@ -161,7 +161,8 @@
         </section>
       }
 
-      <div class="explore-results-heading" [attr.hidden]="activeTab === 'communities' ? '' : null">
+      <div class="explore-results-heading"
+        [attr.hidden]="(activeTab === 'communities' || (activeTab === 'all' && !showSection('sessions') && !showSection('people'))) ? '' : null">
         <div>
           <p class="eyebrow">{{ 'discover.explore.resultsKicker' | t }}</p>
           <h2>{{ (activeTab === 'all' ? 'discover.explore.allResults' : activeTab === 'venues' ? 'discover.where.title' : activeTab === 'sessions' ? 'discover.when.title' : 'discover.who.title') | t }}</h2>
