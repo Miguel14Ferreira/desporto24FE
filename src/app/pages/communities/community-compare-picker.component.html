@@ -1,7 +1,7 @@
 <div #root class="compare-picker" [class.compare-picker--b]="side === 'B'">
   <div class="picker-heading">
     <span class="picker-label">{{ label }}</span>
-    @if (selectedKey || otherSelected) {
+    @if (selectedKey) {
       <button type="button" class="picker-clear"
         [attr.title]="'communities.clearComparisonHelp' | t"
         (click)="clear()">

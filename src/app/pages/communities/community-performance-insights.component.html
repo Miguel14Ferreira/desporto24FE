@@ -59,16 +59,16 @@
   <div class="compare-selectors">
     <app-community-compare-picker
       [label]="'communities.playerA' | t" side="A" [rows]="rows"
-      [selectedKey]="compareSelectionA" [otherSelected]="!!compareSelectionB"
+      [selectedKey]="compareSelectionA"
       (selectionChange)="compareAChange.emit($event)"
-      (clearRequested)="clearRequested.emit()"
+      (clearRequested)="clearRequested.emit('A')"
     ></app-community-compare-picker>
     <span class="versus">VS</span>
     <app-community-compare-picker
       [label]="'communities.playerB' | t" side="B" [rows]="rows"
-      [selectedKey]="compareSelectionB" [otherSelected]="!!compareSelectionA"
+      [selectedKey]="compareSelectionB"
       (selectionChange)="compareBChange.emit($event)"
-      (clearRequested)="clearRequested.emit()"
+      (clearRequested)="clearRequested.emit('B')"
     ></app-community-compare-picker>
   </div>
 

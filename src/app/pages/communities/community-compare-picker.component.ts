@@ -26,7 +26,6 @@ interface PlayerChoice {
 export class CommunityComparePickerComponent {
   @Input() rows: readonly CommunityStanding[] = [];
   @Input() selectedKey = '';
-  @Input() otherSelected = false;
   @Input() label = '';
   @Input() side: 'A' | 'B' = 'A';
   @Output() selectionChange = new EventEmitter<string>();

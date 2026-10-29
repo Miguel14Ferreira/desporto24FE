@@ -5826,10 +5826,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.bestWinStreakStanding;
   }
 
-  /** Clear both picks without navigating away from the Statistics tab. */
-  clearPlayerComparison(): void {
-    this.compareSelectionA = '';
-    this.compareSelectionB = '';
+  /** Each clear button acts on its own comparison column only.
+   * Preserve the other selection, statistics and active tab.
+   */
+  clearPlayerComparison(side: 'A' | 'B'): void {
+    if (side === 'A') this.compareSelectionA = '';
+    else this.compareSelectionB = '';
   }
 
   comparePlayerA(): CommunityStanding | undefined {

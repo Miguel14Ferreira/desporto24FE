@@ -102,23 +102,56 @@ describe('CommunityPerformanceInsightsComponent', () => {
     expect(root.querySelector('.compare-table')?.textContent).toContain('22');
   });
 
-  it('shows clear actions for both players and delegates returning to standings to the parent', () => {
+  it('emits only A on the left clear and hides only its own clear button', () => {
     const fixture=render();
     const root=fixture.nativeElement as HTMLElement;
-    const actions=root.querySelectorAll<HTMLButtonElement>('.picker-clear');
-    expect(actions.length).toBe(2);
     const clear=jasmine.createSpy('clear');
     fixture.componentInstance.clearRequested.subscribe(clear);
-    actions[1].click();
-    expect(clear).toHaveBeenCalledTimes(1);
-    // Inputs are parent-owned. The parent resets both keys and navigates to standings.
+    const buttons=root.querySelectorAll<HTMLButtonElement>('.picker-clear');
+    expect(buttons).toHaveSize(2);
+    buttons[0].click();
+    expect(clear).toHaveBeenCalledOnceWith('A');
+
+    // Simulate the parent applying the A-only state change.
     fixture.componentRef.setInput('compareSelectionA','');
-    fixture.componentRef.setInput('compareSelectionB','');
     fixture.componentRef.setInput('comparePlayerA',undefined);
+    fixture.detectChanges();
+    const triggers=root.querySelectorAll<HTMLButtonElement>('.picker-trigger');
+    expect(triggers[0].textContent).toContain('Selecionar jogador');
+    expect(triggers[1].textContent).toContain('Jogador Beta');
+    expect(root.querySelectorAll('.picker-clear')).toHaveSize(1);
+    expect(root.querySelector('.compare-table')).toBeNull();
+    expect(root.querySelectorAll('.points-chart-row')).toHaveSize(2);
+  });
+
+  it('emits only B on the right clear and retains the selected A', () => {
+    const fixture=render();
+    const root=fixture.nativeElement as HTMLElement;
+    const clear=jasmine.createSpy('clear');
+    fixture.componentInstance.clearRequested.subscribe(clear);
+    const buttons=root.querySelectorAll<HTMLButtonElement>('.picker-clear');
+    expect(buttons).toHaveSize(2);
+    buttons[1].click();
+    expect(clear).toHaveBeenCalledOnceWith('B');
+
+    fixture.componentRef.setInput('compareSelectionB','');
     fixture.componentRef.setInput('comparePlayerB',undefined);
     fixture.detectChanges();
+    const triggers=root.querySelectorAll<HTMLButtonElement>('.picker-trigger');
+    expect(triggers[0].textContent).toContain('Jogadora Alfa');
+    expect(triggers[1].textContent).toContain('Selecionar jogador');
+    expect(root.querySelectorAll('.picker-clear')).toHaveSize(1);
     expect(root.querySelector('.compare-table')).toBeNull();
-    expect(root.querySelectorAll('.picker-clear')).toHaveSize(0);
+  });
+
+  it('does not display a clear button on a column without a player', () => {
+    const fixture=render();
+    fixture.componentRef.setInput('compareSelectionA','');
+    fixture.componentRef.setInput('comparePlayerA',undefined);
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('app-community-compare-picker:first-child .picker-clear')).toBeNull();
+    expect(root.querySelector('app-community-compare-picker:last-child .picker-clear')).not.toBeNull();
   });
 
   it('hides the head-to-head matrix without both selected players and keeps the empty chart', () => {
