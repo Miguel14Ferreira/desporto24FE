@@ -98,7 +98,8 @@
             <app-public-session-chat
               [sessionId]="details.id"
               [authenticated]="isAuthenticated"
-              [guestConfirmed]="guestStep === 'approved' || guestStep === 'linked'"
+              [guestConfirmed]="guestStep === 'approved'"
+              [guestReceipt]="guestStep === 'approved' ? guestReceipt : null"
               [returnUrl]="participationReturnUrl"
               [startsAt]="details.gameDate">
             </app-public-session-chat>

@@ -2,6 +2,7 @@ export interface SessionMessage {
   id: number;
   sessionId: number;
   senderUsername: string;
+  senderGuest?: boolean;
   body: string;
   createdAt: string;
   editedAt?: string | null;
