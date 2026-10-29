@@ -16,7 +16,7 @@ describe('MySessionsComponent', () => {
     id: 11,
     sport: 'Futebol',
     city: 'Lisboa',
-    gameDate: '2026-10-10T18:00:00Z',
+    gameDate: new Date(Date.now() + 86_400_000).toISOString(),
     distanceKm: null,
     participantCount: 3,
     maxParticipants: 10,
@@ -74,12 +74,15 @@ describe('MySessionsComponent', () => {
   });
 
   it('uses consistent pills for empty creation and discovery states', () => {
+    component.selectTab('participation');
+    fixture.detectChanges();
     const find = fixture.nativeElement.querySelector('.empty-card a[href="/menu/events"]') as HTMLAnchorElement;
     expect(find).toBeTruthy();
     expect(find.classList.contains('jynlo-action')).toBeTrue();
     expect(find.classList.contains('jynlo-action--neutral')).toBeTrue();
 
     component.data = { ...component.data, created: [] };
+    component.selectTab('upcoming');
     fixture.detectChanges();
 
     const create = fixture.nativeElement.querySelector('.empty-card a[href="/menu/createEvent"]') as HTMLAnchorElement;
@@ -145,6 +148,7 @@ describe('MySessionsComponent', () => {
         gameDate: new Date(Date.now() + 86_400_000).toISOString()
       };
       component.data = { ...component.data, waitlisted: [waitlisted] };
+      component.selectTab('participation');
       fixture.detectChanges();
 
       const waitlistCard: HTMLElement = fixture.nativeElement.querySelector('.waitlist-badge')
@@ -166,6 +170,7 @@ describe('MySessionsComponent', () => {
         gameDate: new Date(Date.now() + 86_400_000).toISOString()
       };
       component.data = { ...component.data, waitlisted: [waitlisted] };
+      component.selectTab('participation');
       fixture.detectChanges();
 
       const waitlistCard: HTMLElement = fixture.nativeElement.querySelector('.waitlist-badge')
@@ -190,6 +195,7 @@ describe('MySessionsComponent', () => {
       ],
       waitlisted: [{ ...createdSession, id: 36, gameDate: inHours(1) }]
     };
+    component.selectTab('participation');
     fixture.detectChanges();
 
     expect(component.nextJoinedSession?.id).toBe(32);
@@ -215,6 +221,7 @@ describe('MySessionsComponent', () => {
       ],
       waitlisted: [{ ...createdSession, id: 43, gameDate: tomorrow, status: 'FULL' }]
     };
+    component.selectTab('participation');
     fixture.detectChanges();
 
     expect(component.nextJoinedSession).toBeNull();
@@ -232,6 +239,7 @@ describe('MySessionsComponent', () => {
     ]) {
       const waitlisted = { ...createdSession, id: 44, status: 'FULL', gameDate };
       component.data = { ...component.data, waitlisted: [waitlisted] };
+      component.selectTab('participation');
       fixture.detectChanges();
 
       const card = fixture.nativeElement.querySelector('.waitlist-badge')?.closest('.session-card') as HTMLElement;
@@ -247,6 +255,8 @@ describe('MySessionsComponent', () => {
   });
 
   it('aligns attendance history session links with dispute actions', () => {
+    component.selectTab('participation');
+    fixture.detectChanges();
     const actions: HTMLElement = fixture.nativeElement.querySelector('.attendance-card .attendance-actions');
     const sessionLink = actions.querySelector('a[href="/menu/events/12"]') as HTMLAnchorElement;
     const dispute = actions.querySelector('button.dispute-action') as HTMLButtonElement;
@@ -348,6 +358,8 @@ describe('MySessionsComponent', () => {
     const ownSession = shell.querySelector('.session-card') as HTMLElement;
     expect(ownSession.querySelector('a[href="/menu/events/11"]')).toBeTruthy();
     expect(ownSession.querySelector('button.danger-action')).toBeTruthy();
+    component.selectTab('participation');
+    fixture.detectChanges();
     expect(shell.querySelector('.attendance-card a[href="/menu/events/12"]')).toBeTruthy();
   });
 
@@ -360,12 +372,114 @@ describe('MySessionsComponent', () => {
     };
     fixture.detectChanges();
 
+    component.selectTab('participation');
+    fixture.detectChanges();
     const shell: HTMLElement = fixture.nativeElement.querySelector('.jynlo-sessions-premium');
     expect(shell.querySelector('.next-session-highlight a[href="/menu/events/51?membership=1"]')).toBeTruthy();
     expect(shell.querySelector('a[href="/menu/events/52?membership=1"]')).toBeTruthy();
     const waitlist = shell.querySelector('.waitlist-badge')?.closest('.session-card') as HTMLElement;
     expect(waitlist.querySelector('button.danger-action')).toBeTruthy();
     expect(waitlist.querySelector('.waitlist-badge')).toBeTruthy();
+  });
+
+  it('starts with only upcoming organised sessions and displays two-column premium cards', () => {
+    component.data = {
+      ...component.data,
+      created: [
+        {...createdSession,id:101,gameDate:new Date(Date.now()+86400000).toISOString(),status:'OPEN'},
+        {...createdSession,id:102,gameDate:new Date(Date.now()+172800000).toISOString(),status:'FULL'},
+        {...createdSession,id:103,gameDate:new Date(Date.now()-86400000).toISOString(),status:'COMPLETED'},
+        {...createdSession,id:104,gameDate:new Date(Date.now()+86400000).toISOString(),status:'CANCELLED'}
+      ]
+    };
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    expect(component.activeTab).toBe('upcoming');
+    expect(component.upcomingCreated.map(s=>s.id)).toEqual([101,102]);
+    expect(component.historicalCreated.map(s=>s.id)).toEqual([104,103]);
+    expect(root.querySelectorAll('.upcoming-grid .upcoming-card')).toHaveSize(2);
+    expect(root.querySelectorAll('.history-row')).toHaveSize(0);
+    expect(root.textContent).toContain('Inscrições abertas');
+    expect(root.textContent).toContain('Lotação completa');
+    expect(root.querySelector('#tab-history')?.textContent).toContain('2');
+    expect(root.querySelector('.session-view-tabs [aria-selected="true"]')?.id).toBe('tab-upcoming');
+    expect(root.querySelectorAll('.upcoming-card .card-actions a[href^="/menu/events/"]')).toHaveSize(2);
+  });
+
+  it('moves cancellation to history immediately and preserves confirmation modal', () => {
+    component.requestCancel(createdSession);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-labelledby="cancel-title"]')).toBeTruthy();
+    component.confirmCancel();
+    fixture.detectChanges();
+    expect(component.upcomingCreated).toHaveSize(0);
+    expect(component.historicalCreated.map(s=>s.id)).toEqual([11]);
+    component.selectTab('history');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.history-row .history-status')?.textContent)
+      .toContain('Cancelada');
+    expect(fixture.nativeElement.querySelector('.history-row a[href="/menu/events/11"]')).toBeTruthy();
+  });
+
+  it('filters, orders and paginates historical activities without mutating source data', () => {
+    const previous=Array.from({length:21},(_,index)=>({
+      ...createdSession,id:100+index,city:index%2?'Cascais':'Lisboa',
+      sport:index%2?'Padel':'Futsal',
+      gameDate:new Date(Date.now()-(index+1)*86400000).toISOString(),
+      status:index%3?'COMPLETED':'CANCELLED'
+    }));
+    component.data={...component.data,created:previous};
+    component.selectTab('history');
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    expect(component.historicalCreated).toHaveSize(21);
+    expect(root.querySelectorAll('.history-row')).toHaveSize(8);
+    expect(component.visibleHistory[0].id).toBe(100);
+    component.showMoreHistory();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.history-row')).toHaveSize(16);
+    component.historySport='Padel';
+    component.historyStatus='CANCELLED';
+    component.historyQuery='cAscais';
+    component.historyShown=8;
+    fixture.detectChanges();
+    expect(component.filteredHistory.length).toBeGreaterThan(0);
+    expect(component.filteredHistory.every(s=>s.sport==='Padel'&&s.status==='CANCELLED')).toBeTrue();
+    const snapshot=previous.map(s=>s.id);
+    component.resetHistoryFilters();
+    expect(component.historyShown).toBe(8);
+    expect(component.historyQuery).toBe('');
+    expect(component.data.created.map(s=>s.id)).toEqual(snapshot);
+  });
+
+  it('handles invalid dates and older open sessions as history instead of upcoming', () => {
+    component.data={...component.data,created:[
+      {...createdSession,id:11,gameDate:'invalid-date',status:'OPEN'},
+      {...createdSession,id:12,gameDate:new Date(Date.now()-86400000).toISOString(),status:'OPEN'},
+      {...createdSession,id:13,gameDate:new Date(Date.now()+86400000).toISOString(),status:'CANCELLED'}
+    ]};
+    expect(component.upcomingCreated).toHaveSize(0);
+    expect(component.historicalCreated).toHaveSize(3);
+    expect(component.sessionStatusLabel(component.data.created[1])).toBe('Data passada');
+    component.selectTab('history');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.history-row')).toHaveSize(3);
+  });
+
+  it('keeps attendance disputes, joined sessions and waitlist controls in participations', () => {
+    const tomorrow=new Date(Date.now()+86400000).toISOString();
+    component.data={...component.data,joined:[{...createdSession,id:50,gameDate:tomorrow}],
+      waitlisted:[{...createdSession,id:51,gameDate:tomorrow,status:'FULL'}]};
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.attendance-card')).toBeNull();
+    component.selectTab('participation');
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.attendance-card a[href="/menu/events/12"]')).toBeTruthy();
+    expect(root.querySelector('a[href="/menu/events/50?membership=1"]')).toBeTruthy();
+    expect(root.querySelector('a[href="/menu/events/51?membership=1"]')).toBeTruthy();
+    expect(root.querySelector('.waitlist-badge')?.closest('.session-card')?.querySelector('button')).toBeTruthy();
+    expect(root.querySelector('.attendance-card button.dispute-action')).toBeTruthy();
   });
 
 });
