@@ -75,13 +75,14 @@ describe('Public invitation session chat access', () => {
     expect(page.messages.length).toBe(3);
   });
 
-  it('hides the chat immediately after attendance access is revoked', () => {
+  it('hides the chat immediately after attendance access is revoked', async () => {
     page.authenticated=true;
     http.get.and.returnValues(of([sample]) as any,
       throwError(() => new HttpErrorResponse({status:403})));
     fixture.detectChanges();
     expect(page.allowed).toBeTrue();
     page.loadMessages();
+    await fixture.whenStable();
     fixture.detectChanges();
     expect(page.allowed).toBeFalse();
     expect(page.messages).toEqual([]);
