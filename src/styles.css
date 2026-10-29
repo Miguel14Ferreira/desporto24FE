@@ -10,6 +10,7 @@
 @import './styles/jynlo-communities-sessions-premium.css';
 @import './styles/jynlo-tournaments-profiles-venues-premium.css';
 @import './styles/jynlo-account-notifications-admin-premium.css';
+@import './styles/jynlo-form-controls.css';
 
 :root {
   --d24-bg: #07111f;
