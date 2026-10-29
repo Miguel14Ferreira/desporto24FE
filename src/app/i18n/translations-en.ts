@@ -704,7 +704,7 @@ export const EN: Record<string, string> = {
   'sessionDetail.communityLabels': 'Communities',
   'sessionDetail.seasonLabel': 'Standings',
   'sessionDetail.seasonYes': 'Season game',
-  'sessionDetail.seasonNo': 'Does not count towards the season',
+  'sessionDetail.seasonNo': 'Not enabled for this session',
   'sessionDetail.communityContextError': 'Could not load the communities and season for this game.',
   'sessionDetail.postGameCommunity.kicker': 'AFTER THE GAME',
   'sessionDetail.postGameCommunity.title': 'Enjoyed playing with this group?',
