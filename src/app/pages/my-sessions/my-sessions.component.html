@@ -47,7 +47,7 @@
         <button type="button" role="tab" id="tab-participation" aria-controls="panel-participation"
           [attr.aria-selected]="activeTab === 'participation'" [class.is-active]="activeTab === 'participation'"
           (click)="selectTab('participation')">
-          <span>{{ 'mySessions.tabParticipation' | t }}</span><small>{{ data.joined.length + data.waitlisted.length }}</small>
+          <span>{{ 'mySessions.tabParticipation' | t }}</span><small>{{ joinedOtherSessions.length + waitlistedOtherSessions.length }}</small>
         </button>
       </nav>
 
@@ -137,6 +137,23 @@
                   <option value="past">{{ 'mySessions.statusPast' | t }}</option>
                 </select>
               </label>
+              <label class="history-filter">
+                <span>{{ 'mySessions.dateFrom' | t }}</span>
+                <input type="date" name="historyFrom" [(ngModel)]="historyFrom" (ngModelChange)="historyShown=8" />
+              </label>
+              <label class="history-filter">
+                <span>{{ 'mySessions.dateTo' | t }}</span>
+                <input type="date" name="historyTo" [(ngModel)]="historyTo" (ngModelChange)="historyShown=8" />
+              </label>
+              @if (historyCommunityIds.length) {
+                <label class="history-filter">
+                  <span>{{ 'mySessions.community' | t }}</span>
+                  <select name="historyCommunityId" [(ngModel)]="historyCommunityId" (ngModelChange)="historyShown=8">
+                    <option value="">{{ 'mySessions.allCommunities' | t }}</option>
+                    @for (id of historyCommunityIds; track id) { <option [value]="id">{{ communityLabel(id) }}</option> }
+                  </select>
+                </label>
+              }
             </div>
             @if (filteredHistory.length === 0) {
               <div class="empty-card history-no-results">
@@ -194,17 +211,17 @@
             <span class="section-kicker">{{ 'mySessions.participation' | t }}</span>
             <h2>{{ 'mySessions.joined' | t }}</h2>
           </div>
-          <span class="count-badge">{{ data.joined.length }}</span>
+          <span class="count-badge">{{ joinedOtherSessions.length }}</span>
         </div>
 
-        @if (data.joined.length === 0) {
+        @if (joinedOtherSessions.length === 0) {
           <div class="empty-card">
             <p>{{ 'mySessions.noneJoined' | t }}</p>
             <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'mySessions.findSession' | t }}</a>
           </div>
         } @else {
           <div class="session-grid">
-            @for (session of data.joined; track session.id) {
+            @for (session of joinedOtherSessions; track session.id) {
               <article class="session-card">
                 <div class="card-top">
                   <div>
@@ -235,16 +252,16 @@
             <span class="section-kicker">{{ 'mySessions.waiting' | t }}</span>
             <h2>{{ 'mySessions.waitlist' | t }}</h2>
           </div>
-          <span class="count-badge">{{ data.waitlisted.length }}</span>
+          <span class="count-badge">{{ waitlistedOtherSessions.length }}</span>
         </div>
 
-        @if (data.waitlisted.length === 0) {
+        @if (waitlistedOtherSessions.length === 0) {
           <div class="empty-card">
             <p>{{ 'mySessions.noneWaitlist' | t }}</p>
           </div>
         } @else {
           <div class="session-grid">
-            @for (session of data.waitlisted; track session.id) {
+            @for (session of waitlistedOtherSessions; track session.id) {
               <article class="session-card">
                 <div class="card-top">
                   <div>
@@ -256,7 +273,7 @@
 
                 <div class="compact-meta">
                   <span>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }}</span>
-                  <span>{{ session.participantCount }}/{{ session.maxParticipants }} jogadores</span>
+                  <span>{{ 'mySessions.players' | t:{ count: session.participantCount + '/' + session.maxParticipants } }}</span>
                 </div>
 
                 <div class="card-actions">
@@ -289,7 +306,7 @@
           <span class="section-kicker">{{ 'profileData.reliability' | t }}</span>
           <h2>{{ 'mySessions.attendanceHistory' | t }}</h2>
         </div>
-        <span class="count-badge">{{ attendanceHistory.length }}</span>
+        <span class="count-badge">{{ externalAttendanceHistory.length }}</span>
       </div>
 
       @if (attendanceLoading) {
@@ -303,15 +320,15 @@
         </div>
       }
 
-      @if (!attendanceLoading && !attendanceError && attendanceHistory.length === 0) {
+      @if (!attendanceLoading && !attendanceError && externalAttendanceHistory.length === 0) {
         <div class="empty-card">
           <p>{{ 'mySessions.noAttendance' | t }}</p>
         </div>
       }
 
-      @if (!attendanceLoading && !attendanceError && attendanceHistory.length > 0) {
+      @if (!attendanceLoading && !attendanceError && externalAttendanceHistory.length > 0) {
         <div class="attendance-list">
-          @for (item of attendanceHistory; track item.participantId) {
+          @for (item of externalAttendanceHistory; track item.participantId) {
             <article class="attendance-card">
               <div class="attendance-main">
                 <div>
@@ -403,7 +420,7 @@
               class="secondary-button jynlo-action jynlo-action--neutral"
               [disabled]="disputeLoading"
               (click)="dismissDispute()">
-              Cancelar
+              {{ 'mySessions.cancelBack' | t }}
             </button>
             <button
               type="button"
