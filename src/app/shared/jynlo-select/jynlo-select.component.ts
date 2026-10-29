@@ -171,7 +171,7 @@ export class JynloSelectComponent implements ControlValueAccessor, OnDestroy {
   }
 
   choose(value: string): void {
-    if (this.disabled) return;
+    if (this.disabled || this.loading) return;
     this.value = value;
     this.change(value);
     this.picked.emit(value);
