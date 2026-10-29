@@ -231,7 +231,7 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   joinWithAccount(): void {
     if (!this.isAuthenticated || !this.guestToken || !this.sessionId
         || this.guestReceipt || this.memberJoining || this.memberPresence!=='NONE'
-        || this.memberPresenceError || this.memberPresenceLoading || !this.canRequestParticipation) return;
+        || this.memberPresenceError || !this.canRequestParticipation) return;
     this.memberJoining = true;
     this.memberJoinError = '';
     const id = this.sessionId;
