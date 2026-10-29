@@ -434,25 +434,14 @@
 }
 .account-menu__status span { margin-right:.15rem;font-size:.56rem; }
 .account-menu__divider { margin:.32rem 0;border-top:1px solid rgba(127,200,183,.17); }
-.account-menu__panel a,
-.account-menu__panel .account-menu__switch {
+.account-menu__panel a {
   display:flex;align-items:center;
   min-height:38px;padding:.55rem .75rem;
   border-radius:.7rem;
   font-size:.83rem;font-weight:750;color:#dceeea;
 }
-.account-menu__panel a:hover,
-.account-menu__panel .account-menu__switch:hover:not(:disabled) {
+.account-menu__panel a:hover {
   background: rgba(64,230,173,.13);color:#e7fff7;
-}
-.account-menu__panel .account-menu__switch {
-  width:100%;gap:.6rem;cursor:pointer;border:0;
-  background:transparent;text-align:left;font-family:inherit;
-}
-.account-menu__switch > span {color:#64eaba;font-size:1.14rem;}
-.account-menu__switch:disabled {opacity:.6;cursor:wait;}
-.account-menu__switch:focus-visible {
-  outline:2px solid #59e5b3;outline-offset:2px;
 }
 .account-menu__panel .language-switch {border-color:rgba(64,230,173,.22);}
 @media (max-width: 900px) {

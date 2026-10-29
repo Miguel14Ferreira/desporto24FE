@@ -467,13 +467,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       });
     }
 
-    switchAccount(): void {
-      // The app supports one authenticated session in this browser. Changing
-      // account signs out first, then opens the normal login flow.
-      this.closeAccountMenu();
-      this.logout();
-    }
-
     @HostListener('document:click', ['$event'])
     closeAccountMenuOnOutsideClick(event: MouseEvent): void {
       if (this.elementRef.nativeElement.contains(event.target as Node)) {

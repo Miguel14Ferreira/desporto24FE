@@ -308,3 +308,17 @@
 .inbox-sender-profile{border:0;padding:0;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
 .inbox-sender-profile:hover{text-decoration-color:currentColor}
 .inbox-sender-profile:focus-visible{outline:2px solid #75efd5;outline-offset:3px}
+
+/* Jynlo signature aligned with Feed, Explore and Communities. Compact in the
+   sidebar so conversation space and controls remain the focus. */
+.inbox-side-heading-copy .inbox-brand-eyebrow {
+  display: block;
+  width: fit-content;
+  margin: 0 0 .55rem;
+  color: #55ebbb;
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .13em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}

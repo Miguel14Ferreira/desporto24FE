@@ -61,6 +61,13 @@ describe('DiscoverComponent', () => {
   });
 
 
+  it('uses Jynlo as the Explore brand signature while keeping the page title', () => {
+    const brand: HTMLElement = fixture.nativeElement.querySelector('.discover-header .eyebrow');
+    expect(brand.textContent?.trim().toLowerCase()).toBe('jynlo');
+    expect(brand.querySelector('.explore-eyebrow-dot')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.discover-header h1')).not.toBeNull();
+  });
+
   it('keeps sport and locality when opening all activities, including clearing them', () => {
     const fullList = (): HTMLAnchorElement =>
       fixture.nativeElement.querySelector('a.pillar-action[href^="/menu/events"]');

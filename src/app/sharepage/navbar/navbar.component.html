@@ -56,11 +56,6 @@
             @if (admin) {
               <a routerLink="/menu/admin" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'admin.eyebrow' | t }}</a>
             }
-            <button type="button" class="account-menu__switch"
-              [disabled]="loggingOut" (click)="switchAccount()">
-              <span aria-hidden="true">⇄</span>
-              {{ 'nav.account.switch' | t }}
-            </button>
             <div class="account-menu__divider" aria-hidden="true"></div>
             <div class="language-switch" aria-label="Language selector">
               <button type="button" [class.active-language]="i18n.currentLanguage === 'pt'" (click)="setLanguage('pt')">PT</button>
