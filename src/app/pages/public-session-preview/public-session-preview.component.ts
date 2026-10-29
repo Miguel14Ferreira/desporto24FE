@@ -91,11 +91,27 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   memberCancelConfirm = false;
   memberCancelling = false;
   memberCancelledBySelf = false;
-  invitationStage: 'start'|'identify'|'login'|'name' = 'start';
+  invitationStage: 'start'|'identify'|'login'|'mfa'|'name' = 'start';
   invitationLoginUsername = '';
   invitationLoginPassword = '';
   invitationLoginBusy = false;
   invitationLoginError = '';
+  invitationGoogleReady = false;
+  invitationGoogleLoading = false;
+  invitationGoogleOnboardingRequired = false;
+  invitationGoogleError = '';
+  private invitationGoogleCredential = '';
+  invitationMfaChallengeId = '';
+  invitationMfaExpiresAt = '';
+  invitationMfaCode = '';
+  invitationMfaBusy = false;
+  invitationMfaResending = false;
+  invitationMfaError = '';
+  invitationMfaFeedback = '';
+  invitationMfaClock = Date.now();
+  private mfaClockTimer?: ReturnType<typeof setInterval>;
+  private googleMountTimer?: ReturnType<typeof setTimeout>;
+  private destroyed = false;
   private rosterRefreshTimer?: ReturnType<typeof setInterval>;
 
   startInvitation(): void {
@@ -111,6 +127,10 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     if (!this.guestToken || this.isAuthenticated || this.guestReceipt) return;
     this.invitationStage = hasAccount ? 'login' : 'name';
     this.invitationLoginError = '';
+    if (hasAccount) {
+      // The Google button needs a mounted container after Angular renders this step.
+      this.googleMountTimer = setTimeout(() => this.initializeInvitationGoogle(), 0);
+    }
   }
 
   /** Name entry reserves the seat immediately; no redundant second confirmation. */
@@ -138,60 +158,232 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     return Number.isFinite(created) && created > 0 && Date.now() - created < 600000;
   }
 
-  /** Full login remains available for Google and MFA. */
-  openFullLogin(): void {
-    if (!this.guestRegistrationReturnUrl || this.isAuthenticated) return;
-    this.markAutoJoinIntent();
-    this.router.navigate(['/login'], {queryParams:{returnUrl:this.guestRegistrationReturnUrl}});
+  /** Use the existing Google Identity Services configuration, embedded in the
+   * invite rather than sending a guest to the standalone login route. */
+  private initializeInvitationGoogle(): void {
+    if (this.destroyed || !this.guestToken || this.invitationStage !== 'login'
+        || this.isAuthenticated || this.invitationGoogleReady) return;
+    this.authenticationService.googleConfig().pipe(timeout(10000)).subscribe({
+      next: config => {
+        const clientId = config?.clientId?.trim();
+        if (!clientId || this.destroyed || this.invitationStage !== 'login') return;
+        const mount = () => {
+          if (this.destroyed || this.invitationStage !== 'login') return;
+          const google = window.google?.accounts?.id;
+          const host = document.getElementById('invite-google-signin-button');
+          if (!google || !host) return;
+          google.initialize({
+            client_id:clientId,
+            callback:(response: {credential?:string}) =>
+              this.zone.run(() => this.handleInvitationGoogleCredential(response.credential || ''))
+          });
+          host.innerHTML='';
+          google.renderButton(host,{
+            theme:'outline',size:'large',width:Math.max(220,Math.min(400,Math.floor(host.getBoundingClientRect().width||340))),
+            text:'continue_with',shape:'pill'
+          });
+          this.invitationGoogleReady=true;
+        };
+        if (window.google?.accounts?.id) { mount(); return; }
+        const url='https://accounts.google.com/gsi/client';
+        const existing=document.querySelector<HTMLScriptElement>('script[src="'+url+'"]');
+        if (existing) {
+          existing.addEventListener('load',mount,{once:true});
+          return;
+        }
+        const script=document.createElement('script');
+        script.src=url;
+        script.async=true;
+        script.defer=true;
+        script.onload=mount;
+        script.onerror=() => {this.zone.run(() => this.invitationGoogleError='inviteCenter.googleUnavailable');};
+        document.head.appendChild(script);
+      },
+      error:() => {this.invitationGoogleError='inviteCenter.googleUnavailable';}
+    });
   }
 
-  loginInsideInvitation(): void {
-    const username = this.invitationLoginUsername.trim();
-    if (!this.guestToken || this.isAuthenticated || this.invitationLoginBusy ||
-        !username || !this.invitationLoginPassword || !this.guestRegistrationReturnUrl) return;
-    this.invitationLoginBusy = true;
-    this.invitationLoginError = '';
+  private handleInvitationGoogleCredential(credential:string): void {
+    if (!credential || !this.guestToken || this.invitationStage !== 'login'
+        || this.isAuthenticated || this.invitationGoogleLoading || this.destroyed) return;
+    this.invitationGoogleLoading=true;
+    this.invitationGoogleError='';
     this.markAutoJoinIntent();
-    this.authenticationService.login(username, this.invitationLoginPassword)
-      .pipe(timeout(10000), finalize(() => {
-        this.invitationLoginBusy = false;
-        this.invitationLoginPassword = '';
-      })).subscribe({
+    this.authenticationService.googleLogin(credential)
+      .pipe(timeout(10000),finalize(()=>this.invitationGoogleLoading=false)).subscribe({
         next: result => {
+          if (result.onboardingRequired) {
+            this.consumeAutoJoinIntent();
+            // New Google accounts still need the legal/age registration form.
+            // Existing users stay on the invitation throughout authentication.
+            this.invitationGoogleCredential=credential;
+            this.invitationGoogleOnboardingRequired=true;
+            return;
+          }
           if (result.mfaRequired) {
-            if (!result.challengeId) {
-              this.consumeAutoJoinIntent();
-              this.invitationLoginError = 'inviteCenter.inlineLoginError';
-              return;
-            }
-            try {
-              sessionStorage.setItem('mfa-challenge-id', result.challengeId);
-              sessionStorage.setItem('mfa-return-url', this.guestRegistrationReturnUrl!);
-              if (result.challengeExpiresAt)
-                sessionStorage.setItem('mfa-expires-at', result.challengeExpiresAt);
-              else sessionStorage.removeItem('mfa-expires-at');
-            } catch {
-              this.consumeAutoJoinIntent();
-              this.invitationLoginError = 'inviteCenter.inlineLoginError';
-              return;
-            }
-            this.router.navigate(['/login/MFAauthentication']);
+            if (result.challengeId) this.beginInlineMfa(result.challengeId,result.challengeExpiresAt);
+            else this.failInlineAuthentication('inviteCenter.inlineLoginError');
             return;
           }
           if (!result.token) {
-            this.consumeAutoJoinIntent();
-            this.invitationLoginError = 'inviteCenter.inlineLoginError';
+            this.failInlineAuthentication('inviteCenter.inlineLoginError');
             return;
           }
-          this.authenticationService.saveToken(result.token);
-          this.isAuthenticated = true;
-          this.memberPresence = 'UNKNOWN';
-          this.loadMemberPresence();
+          this.finishInlineAuthentication(result.token);
         },
-        error: () => {
-          this.consumeAutoJoinIntent();
-          this.invitationLoginError = 'inviteCenter.inlineLoginError';
+        error:() => this.failInlineAuthentication('inviteCenter.googleLoginError')
+      });
+  }
+
+  /** Only a new account completing the required onboarding uses a separate
+   * registration page, and only after the user explicitly requests it. */
+  completeInvitationGoogleOnboarding(): void {
+    if (!this.invitationGoogleOnboardingRequired || !this.invitationGoogleCredential
+        || !this.guestRegistrationReturnUrl) return;
+    try {
+      sessionStorage.setItem('google-onboarding-credential',this.invitationGoogleCredential);
+      this.invitationGoogleCredential='';
+      this.markAutoJoinIntent();
+      this.router.navigate(['/login/google/complete-profile'],
+        {queryParams:{returnUrl:this.guestRegistrationReturnUrl}});
+    } catch { this.invitationGoogleError='inviteCenter.googleUnavailable'; }
+  }
+
+  private failInlineAuthentication(message:string): void {
+    this.consumeAutoJoinIntent();
+    this.invitationLoginError=message;
+  }
+
+  private beginInlineMfa(challengeId:string,expiresAt:string|null): void {
+    this.invitationMfaChallengeId=challengeId;
+    this.invitationMfaExpiresAt=expiresAt || '';
+    this.invitationMfaCode='';
+    this.invitationMfaError='';
+    this.invitationMfaFeedback='';
+    this.invitationStage='mfa';
+    this.invitationMfaClock=Date.now();
+    if (this.mfaClockTimer) clearInterval(this.mfaClockTimer);
+    // Keep the countdown updated without blocking Angular stability.
+    this.zone.runOutsideAngular(()=>{
+      this.mfaClockTimer=setInterval(()=>{
+        if (!this.destroyed && this.invitationStage==='mfa') {
+          this.zone.run(()=>this.invitationMfaClock=Date.now());
         }
+      },1000);
+    });
+  }
+
+  get invitationMfaExpired(): boolean {
+    if (!this.invitationMfaExpiresAt) return false;
+    const end=Date.parse(this.invitationMfaExpiresAt);
+    return Number.isFinite(end) && end <= this.invitationMfaClock;
+  }
+
+  get invitationMfaCountdown(): string {
+    if (!this.invitationMfaExpiresAt) return '';
+    const end=Date.parse(this.invitationMfaExpiresAt);
+    if (!Number.isFinite(end)) return '';
+    const left=Math.max(0,Math.ceil((end-this.invitationMfaClock)/1000));
+    return String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');
+  }
+
+  confirmInvitationMfa(): void {
+    const code=this.invitationMfaCode.trim();
+    if (this.invitationStage!=='mfa' || !this.invitationMfaChallengeId
+        || this.invitationMfaBusy || this.invitationMfaExpired) return;
+    if (!/^\\d{6}$/.test(code)) {
+      this.invitationMfaError='inviteCenter.mfaCodeInvalid';
+      return;
+    }
+    this.invitationMfaBusy=true;
+    this.invitationMfaError='';
+    this.authenticationService.confirmMfaChallenge(this.invitationMfaChallengeId,code)
+      .pipe(timeout(10000),finalize(()=>this.invitationMfaBusy=false)).subscribe({
+        next: result => {
+          if (!result.token) {
+            this.invitationMfaError='inviteCenter.mfaVerifyError';
+            return;
+          }
+          this.clearInlineMfa();
+          this.finishInlineAuthentication(result.token);
+        },
+        error:()=>{this.invitationMfaError='inviteCenter.mfaVerifyError';}
+      });
+  }
+
+  resendInvitationMfa(): void {
+    if (this.invitationStage!=='mfa' || !this.invitationMfaChallengeId
+        || this.invitationMfaBusy || this.invitationMfaResending) return;
+    this.invitationMfaResending=true;
+    this.invitationMfaError='';
+    this.invitationMfaFeedback='';
+    this.authenticationService.resendMfaChallenge(this.invitationMfaChallengeId)
+      .pipe(timeout(10000),finalize(()=>this.invitationMfaResending=false)).subscribe({
+        next: result => {
+          if (!result.challengeId) {
+            this.invitationMfaError='inviteCenter.mfaResendError';
+            return;
+          }
+          this.invitationMfaChallengeId=result.challengeId;
+          this.invitationMfaExpiresAt=result.challengeExpiresAt||'';
+          this.invitationMfaClock=Date.now();
+          this.invitationMfaCode='';
+          this.invitationMfaFeedback='inviteCenter.mfaResent';
+        },
+        error:()=>{this.invitationMfaError='inviteCenter.mfaResendError';}
+      });
+  }
+
+  cancelInvitationMfa(): void {
+    if (this.invitationMfaBusy || this.invitationMfaResending) return;
+    this.clearInlineMfa();
+    this.consumeAutoJoinIntent();
+    this.invitationStage='login';
+  }
+
+  private clearInlineMfa(): void {
+    this.invitationMfaCode='';
+    this.invitationMfaChallengeId='';
+    this.invitationMfaExpiresAt='';
+    this.invitationMfaError='';
+    if (this.mfaClockTimer) clearInterval(this.mfaClockTimer);
+    this.mfaClockTimer=undefined;
+  }
+
+  private finishInlineAuthentication(token:string): void {
+    if (this.destroyed || !this.guestToken) return;
+    this.authenticationService.saveToken(token);
+    this.isAuthenticated=true;
+    this.memberPresence='UNKNOWN';
+    // loadMemberPresence consumes the explicit, single-use join intent.
+    this.loadMemberPresence();
+  }
+
+  loginInsideInvitation(): void {
+    const username=this.invitationLoginUsername.trim();
+    if (!this.guestToken || this.invitationStage!=='login' || this.isAuthenticated
+        || this.invitationLoginBusy || !username || !this.invitationLoginPassword) return;
+    this.invitationLoginBusy=true;
+    this.invitationLoginError='';
+    this.markAutoJoinIntent();
+    this.authenticationService.login(username,this.invitationLoginPassword)
+      .pipe(timeout(10000),finalize(()=>{
+        this.invitationLoginBusy=false;
+        this.invitationLoginPassword='';
+      })).subscribe({
+        next: result=>{
+          if (result.mfaRequired) {
+            if (result.challengeId) this.beginInlineMfa(result.challengeId,result.challengeExpiresAt);
+            else this.failInlineAuthentication('inviteCenter.inlineLoginError');
+            return;
+          }
+          if (!result.token) {
+            this.failInlineAuthentication('inviteCenter.inlineLoginError');
+            return;
+          }
+          this.finishInlineAuthentication(result.token);
+        },
+        error:()=>this.failInlineAuthentication('inviteCenter.inlineLoginError')
       });
   }
 
@@ -746,6 +938,10 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed=true;
+    if (this.googleMountTimer) clearTimeout(this.googleMountTimer);
+    this.clearInlineMfa();
+    this.invitationGoogleCredential='';
     if (this.rosterRefreshTimer) clearInterval(this.rosterRefreshTimer);
   }
 
