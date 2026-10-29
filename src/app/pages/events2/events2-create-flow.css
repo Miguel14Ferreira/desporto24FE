@@ -147,3 +147,30 @@
   padding:10px 13px;border:1px solid #4c8490;border-radius:11px;color:#f0fffd;background:#092b3c;font:inherit; }
 .create-meeting-point-panel input:focus-visible { outline:2px solid #54ddc3;outline-offset:2px; }
 .create-meeting-point-panel small { color:#accbd0;line-height:1.45; }
+
+/* Minimum attendance must not be confused with capacity. */
+.session-minimum-picker {
+  grid-column:1 / -1;display:grid;gap:12px;min-width:0;
+  padding:15px;border:1px solid rgba(74,208,195,.27);
+  border-radius:14px;background:rgba(8,45,58,.46);
+}
+.session-minimum-capacity-option {
+  display:flex!important;align-items:flex-start;gap:12px;cursor:pointer;
+}
+.session-minimum-capacity-option input[type="checkbox"] {
+  margin:3px 0 0;flex:0 0 20px;width:20px;height:20px;
+  accent-color:#24d6b1;cursor:pointer;
+}
+.session-minimum-capacity-option > span {display:grid;gap:5px;min-width:0;}
+.session-minimum-capacity-option strong {color:#e4fff8;font-size:.91rem;line-height:1.4;}
+.session-minimum-capacity-option small,
+.session-minimum-custom small {color:#accbd0;line-height:1.5;}
+.session-minimum-custom {display:grid;gap:7px;min-width:0;}
+.session-minimum-custom input {max-width:200px;min-height:42px;box-sizing:border-box;}
+.session-minimum-capacity-option input:focus-visible {
+  outline:2px solid #9cffe2;outline-offset:3px;
+}
+@media(max-width:580px){
+ .session-minimum-picker {padding:12px;}
+ .session-minimum-custom input {max-width:100%;}
+}

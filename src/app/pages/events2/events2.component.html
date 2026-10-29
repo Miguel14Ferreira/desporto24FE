@@ -276,6 +276,28 @@
             max="100"
             [disabled]="loading">
         </label>
+        <div class="session-minimum-picker">
+          <label class="session-minimum-capacity-option">
+            <input type="checkbox" name="capacityIsMinimum"
+              [(ngModel)]="capacityIsMinimum" [disabled]="loading">
+            <span>
+              <strong>{{ 'createSession.capacityAsMinimum' | t:{ count: maxParticipants } }}</strong>
+              <small>{{ 'createSession.capacityAsMinimumHint' | t }}</small>
+            </span>
+          </label>
+          @if (!capacityIsMinimum) {
+            <label class="session-minimum-custom">
+              <span>{{ 'createSession.minimumPlayers' | t }} *</span>
+              <input type="number" name="minParticipants"
+                [ngModel]="minimumPlayers"
+                (ngModelChange)="selectedMinimumPlayers = $event"
+                min="2" [max]="maxParticipants" step="1"
+                [disabled]="loading">
+              <small>{{ 'createSession.minimumPlayersHint' | t }}</small>
+            </label>
+          }
+        </div>
+
 
       </div>
 

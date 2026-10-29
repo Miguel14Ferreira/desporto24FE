@@ -1109,6 +1109,24 @@
               @if (guestRosterError) {
                 <p class="session-roster-feedback session-roster-feedback--error" role="alert">{{ guestRosterError }}</p>
               }
+              @if (participantManagementError) {
+                <p class="session-roster-feedback session-roster-feedback--error" role="alert">{{ participantManagementError }}</p>
+              }
+              @if (participantManagementSuccess) {
+                <p class="session-roster-feedback session-roster-feedback--success" role="status">{{ participantManagementSuccess }}</p>
+              }
+              @if (minimumToPlay(); as minimum) {
+                <div class="session-minimum-indicator"
+                     [class.session-minimum-indicator--ready]="visibleConfirmedForMinimum() >= minimum"
+                     role="status">
+                  <strong>{{ visibleConfirmedForMinimum() }}/{{ minimum }}</strong>
+                  <span>{{ (visibleConfirmedForMinimum() >= minimum
+                    ? 'sessionDetail.minimumReady'
+                    : 'sessionDetail.minimumMissing') | t:{
+                      count: MathMax(0, minimum - visibleConfirmedForMinimum())
+                    } }}</span>
+                </div>
+              }
 
               @if (!sessionParticipantsLoading && !sessionParticipantsError) {
                 @if (hasConfirmedTeams()) {
@@ -1118,7 +1136,9 @@
                       <strong>{{ 'sessionDetail.teamA' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('A'); track participant.id) {
-                          <a class="session-player-card session-player-card--member" [routerLink]="['/menu/perfis',participant.username]">
+                          <div class="session-player-card session-player-card--member">
+                            <a class="session-player-card__profile" [routerLink]="['/menu/perfis',participant.username]">
+
                             <span class="session-player-card__avatar" aria-hidden="true">
                               <span>{{ rosterInitials(participant.username) }}</span>
                               @if (rosterAvatar(participant.profilePicUrl); as photo) {
@@ -1127,7 +1147,27 @@
                             </span>
                             <span class="session-player-card__name">{{ '@' + participant.username }}</span>
                             <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
-                          </a>
+                                                      </a>
+                            @if (canCancelRegisteredPresence(participant)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (pendingRemovalId === participant.id) {
+                                  <p>{{ 'sessionDetail.cancelRegisteredConfirm' | t:{ name: participant.username } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger confirm-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="confirmRemoveParticipant(participant)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral cancel-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="cancelRemoveParticipant()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="removeLoadingId !== null"
+                                    (click)="requestRemoveParticipant(participant)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
                         }
                         @for (guest of guestTeamParticipants('A'); track guest.id) {
                           <div class="session-player-card session-player-card--guest">
@@ -1161,7 +1201,9 @@
                       <strong>{{ 'sessionDetail.teamB' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('B'); track participant.id) {
-                          <a class="session-player-card session-player-card--member" [routerLink]="['/menu/perfis',participant.username]">
+                          <div class="session-player-card session-player-card--member">
+                            <a class="session-player-card__profile" [routerLink]="['/menu/perfis',participant.username]">
+
                             <span class="session-player-card__avatar" aria-hidden="true">
                               <span>{{ rosterInitials(participant.username) }}</span>
                               @if (rosterAvatar(participant.profilePicUrl); as photo) {
@@ -1170,7 +1212,27 @@
                             </span>
                             <span class="session-player-card__name">{{ '@' + participant.username }}</span>
                             <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
-                          </a>
+                                                      </a>
+                            @if (canCancelRegisteredPresence(participant)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (pendingRemovalId === participant.id) {
+                                  <p>{{ 'sessionDetail.cancelRegisteredConfirm' | t:{ name: participant.username } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger confirm-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="confirmRemoveParticipant(participant)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral cancel-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="cancelRemoveParticipant()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="removeLoadingId !== null"
+                                    (click)="requestRemoveParticipant(participant)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
                         }
                         @for (guest of guestTeamParticipants('B'); track guest.id) {
                           <div class="session-player-card session-player-card--guest">
@@ -1204,7 +1266,9 @@
                 } @else {
                   <div class="session-participant-list">
                     @for (participant of sessionParticipants; track participant.id) {
-                      <a class="session-player-card session-player-card--member" [routerLink]="['/menu/perfis',participant.username]">
+                      <div class="session-player-card session-player-card--member">
+                            <a class="session-player-card__profile" [routerLink]="['/menu/perfis',participant.username]">
+
                             <span class="session-player-card__avatar" aria-hidden="true">
                               <span>{{ rosterInitials(participant.username) }}</span>
                               @if (rosterAvatar(participant.profilePicUrl); as photo) {
@@ -1213,7 +1277,27 @@
                             </span>
                             <span class="session-player-card__name">{{ '@' + participant.username }}</span>
                             <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
-                          </a>
+                                                      </a>
+                            @if (canCancelRegisteredPresence(participant)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (pendingRemovalId === participant.id) {
+                                  <p>{{ 'sessionDetail.cancelRegisteredConfirm' | t:{ name: participant.username } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger confirm-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="confirmRemoveParticipant(participant)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral cancel-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="cancelRemoveParticipant()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="removeLoadingId !== null"
+                                    (click)="requestRemoveParticipant(participant)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
                     }
                     @for (guest of confirmedGuestParticipants(); track guest.id) {
                       <div class="session-player-card session-player-card--guest">

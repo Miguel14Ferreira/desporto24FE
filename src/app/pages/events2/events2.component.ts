@@ -14,6 +14,7 @@ import { CommunityGroupsService } from '../../services/community-groups.service'
 import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue, VenueOwnershipType } from '../model/venue';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { suggestedMinimumPlayers } from '../../shared/session-minimum-players';
 import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/portugal-districts';
 
 @Component({
@@ -31,6 +32,15 @@ export class Events2Component implements OnInit, OnDestroy {
   address = '';
   meetingPointInstructions = '';
   maxParticipants = 4;
+  /** When enabled, the full capacity becomes the required minimum. */
+  capacityIsMinimum = false;
+  selectedMinimumPlayers: number | null = null;
+  get minimumPlayers(): number {
+    if (this.capacityIsMinimum) return Number(this.maxParticipants);
+    return this.selectedMinimumPlayers === null
+      ? suggestedMinimumPlayers(this.sport, Number(this.maxParticipants))
+      : Number(this.selectedMinimumPlayers);
+  }
   // The organiser already has one reserved Jynlo place.
   confirmedPlayers: number | null = 1;
   creationMode: 'START' | 'COMPLETE' = 'START';
@@ -426,6 +436,9 @@ export class Events2Component implements OnInit, OnDestroy {
     this.playFormat = s.playFormat === 'PAIRS' && this.canChoosePlayFormat ? 'PAIRS' : 'INDIVIDUAL';
     this.creationMode = s.creationMode === 'COMPLETE' ? 'COMPLETE' : 'START';
     this.maxParticipants = s.maxParticipants;
+    // Legacy presets do not store attendance thresholds; do not leak the prior selection.
+    this.capacityIsMinimum = false;
+    this.selectedMinimumPlayers = null;
     this.confirmedPlayers = Math.max(1, Math.min(s.confirmedPlayers || 1, this.maxParticipants));
     this.hasPrice = !!s.hasPrice;
     this.priceAmount = this.hasPrice ? s.priceAmount : null;
@@ -757,6 +770,7 @@ export class Events2Component implements OnInit, OnDestroy {
         : ''),
       meetingPointInstructions: this.meetingPointInstructions.trim() || null,
       maxParticipants: Number(this.maxParticipants),
+      minParticipants: this.minimumPlayers,
       ...(this.findPlayersMode
         ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
         : {}),
@@ -1581,6 +1595,10 @@ export class Events2Component implements OnInit, OnDestroy {
     const players = Number(this.maxParticipants);
     if (!Number.isInteger(players) || players < 2 || players > 100) {
       return t('feedback.create.playersRange');
+    }
+    if (!Number.isInteger(this.minimumPlayers) || this.minimumPlayers < 2
+        || this.minimumPlayers > players) {
+      return t('createSession.minimumPlayersInvalid');
     }
 
     if (this.seasonGame) {

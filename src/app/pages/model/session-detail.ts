@@ -3,6 +3,8 @@ import { Venue } from './venue';
 
 export interface SessionDetail extends SessionSummary {
   creatorUsername: string | null;
+  /** API-controlled minimum to be ready; capacity may be greater. */
+  minParticipants?: number;
   address: string | null;
   canSeeExactAddress: boolean;
   /** Visible only when canSeeExactAddress is true. */
