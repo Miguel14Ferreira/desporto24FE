@@ -14,5 +14,9 @@ describe('player avatar presentation', () => {
     expect(playerAvatarInitials('Afonso Salvador')).toBe('AS');
     expect(playerAvatarInitials('Ferreirinha')).toBe('F');
     expect(playerAvatarInitials('')).toBe('?');
+    expect(playerAvatarInitials('André (Borralho)')).toBe('A');
+    expect(playerAvatarInitials('Luis (Graça)')).toBe('L');
+    expect(playerAvatarInitials('André (Borralho) Silva')).toBe('AS');
+    expect(playerAvatarInitials('(sem nome)')).toBe('?');
   });
 });
