@@ -110,6 +110,8 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
       this.messages = [];
       this.readError = '';
       this.loginRequired = false;
+      // A revoked receipt must also invalidate the already-rendered composer.
+      this.cdr.markForCheck();
       return;
     }
     if (this.currentId !== this.sessionId || this.currentAccessKey !== accessKey) {

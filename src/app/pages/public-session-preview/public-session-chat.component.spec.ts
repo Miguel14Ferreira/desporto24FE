@@ -41,7 +41,7 @@ describe('Public invitation session chat access', () => {
     expect(http.get).not.toHaveBeenCalled();
     expect(http.post).not.toHaveBeenCalled();
     expect(page.allowed).toBeFalse();
-    expect(fixture.nativeElement.textContent).toContain('A tua presença está confirmada');
+    expect(fixture.nativeElement.textContent).toContain('recupera o comprovativo privado');
     expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
   });
 
@@ -246,8 +246,8 @@ describe('Public invitation session chat access', () => {
     http.post.and.returnValue(of([sample]) as any);
     fixture.detectChanges();
     expect(page.allowed).toBeTrue();
-    page.guestConfirmed=false;
-    page.ngOnChanges({});
+    fixture.componentRef.setInput('guestConfirmed', false);
+    fixture.componentRef.setInput('guestReceipt', null);
     fixture.detectChanges();
     expect(page.allowed).toBeFalse();
     expect(page.messages).toEqual([]);
