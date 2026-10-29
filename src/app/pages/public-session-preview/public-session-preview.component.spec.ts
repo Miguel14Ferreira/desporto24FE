@@ -34,10 +34,11 @@ describe('PublicSessionPreviewComponent', () => {
     routeQueryParamMap = convertToParamMap({});
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get', 'post']);
     authenticationService = jasmine.createSpyObj<AuthenticationService>(
-      'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate', 'login', 'saveToken']
+      'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate', 'login', 'saveToken', 'googleConfig', 'googleLogin', 'confirmMfaChallenge', 'resendMfaChallenge']
     );
     authenticationService.isLoggedIn.and.returnValue(false);
     authenticationService.hasSessionCandidate.and.returnValue(false);
+    authenticationService.googleConfig.and.returnValue(of({clientId:''}));
     TestBed.overrideComponent(PublicSessionPreviewComponent, {
       remove: { imports: [PublicSessionChatComponent] },
       add: { imports: [SessionChatStubComponent] }
@@ -1384,37 +1385,137 @@ describe('PublicSessionPreviewComponent', () => {
       expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
     });
 
-    it('preserves explicit auto-confirm intent through MFA and only for this invitation', () => {
+    it('handles password MFA inline, then confirms the registered account once', () => {
       routeQueryParamMap=convertToParamMap({guest:token});
       (http.post as jasmine.Spy).and.callFake((url:string)=>{
         if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
-          gameDate:new Date(Date.now()+3600_000).toISOString(),
-          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+          gameDate:new Date(Date.now()+3600_000).toISOString(),maxParticipants:10,
+          participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
         if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
         if (url.endsWith('/guest-confirmed-players')) return of([]);
+        if (url.endsWith('/guest-member-presence')) return of({status:'NONE',canCancel:false});
+        if (url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
         return throwError(()=>new Error('Unexpected '+url));
       });
       authenticationService.login.and.returnValue(of({
         mfaRequired:true,challengeId:'challenge-123',challengeExpiresAt:'2099-10-29T15:00:00Z'
       } as any));
+      authenticationService.confirmMfaChallenge.and.returnValue(of({
+        token:'verified-token',mfaRequired:false
+      } as any));
       const navigate=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      const navigateByUrl=spyOn(TestBed.inject(Router),'navigateByUrl').and.resolveTo(true);
       const page=render();
       (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
       fixture.detectChanges();
       (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
       fixture.detectChanges();
-      const component=fixture.componentInstance;
-      component.invitationLoginUsername='jynloteste';
-      component.invitationLoginPassword='pass';
-      component.loginInsideInvitation();
-      expect(navigate).toHaveBeenCalledWith(['/login/MFAauthentication']);
-      expect(sessionStorage.getItem('mfa-return-url')).toBe('/sessions/42?guest='+token);
-      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).not.toBeNull();
-      expect((http.post as jasmine.Spy).calls.allArgs().some(c=>
-        String(c[0]).endsWith('/guest-join-account'))).toBeFalse();
-      sessionStorage.removeItem('mfa-return-url');
-      sessionStorage.removeItem('mfa-challenge-id');
-      sessionStorage.removeItem('mfa-expires-at');
+      const c=fixture.componentInstance;
+      c.invitationLoginUsername='jynloteste';
+      c.invitationLoginPassword='pass';
+      c.loginInsideInvitation();
+      fixture.detectChanges();
+      expect(c.invitationStage).toBe('mfa');
+      expect(page.querySelector('#invite-mfa-code')).not.toBeNull();
+      expect(navigate).not.toHaveBeenCalled();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(args=>
+        String(args[0]).endsWith('/guest-join-account'))).toBeFalse();
+      c.invitationMfaCode='123456';
+      c.confirmInvitationMfa();
+      expect(authenticationService.confirmMfaChallenge).toHaveBeenCalledOnceWith('challenge-123','123456');
+      expect(authenticationService.saveToken).toHaveBeenCalledOnceWith('verified-token');
+      expect((http.post as jasmine.Spy).calls.allArgs().filter(args=>
+        String(args[0]).endsWith('/guest-join-account'))).toHaveSize(1);
+      expect(navigateByUrl).toHaveBeenCalledWith('/menu/events/42');
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
+      expect(sessionStorage.getItem('mfa-challenge-id')).toBeNull();
+    });
+
+    it('rejects malformed MFA codes and refreshes an expired challenge without navigating', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+          maxParticipants:10,participantCount:2,priceAmount:0,gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        return throwError(()=>new Error('unexpected '+url));
+      });
+      authenticationService.login.and.returnValue(of({
+        mfaRequired:true,challengeId:'challenge-old',challengeExpiresAt:'2020-01-01T00:00:00Z'
+      } as any));
+      authenticationService.resendMfaChallenge.and.returnValue(of({
+        challengeId:'challenge-new',challengeExpiresAt:'2099-01-01T00:00:00Z'
+      } as any));
+      const navigate=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      render();
+      const c=fixture.componentInstance;
+      c.startInvitation();
+      c.chooseInvitationIdentity(true);
+      c.invitationLoginUsername='user';
+      c.invitationLoginPassword='pass';
+      c.loginInsideInvitation();
+      expect(c.invitationMfaExpired).toBeTrue();
+      c.invitationMfaCode='123456';
+      c.confirmInvitationMfa();
+      expect(authenticationService.confirmMfaChallenge).not.toHaveBeenCalled();
+      c.resendInvitationMfa();
+      expect(authenticationService.resendMfaChallenge).toHaveBeenCalledOnceWith('challenge-old');
+      expect(c.invitationMfaChallengeId).toBe('challenge-new');
+      expect(c.invitationMfaExpired).toBeFalse();
+      c.invitationMfaCode='wrong';
+      c.confirmInvitationMfa();
+      expect(c.invitationMfaError).toBe('inviteCenter.mfaCodeInvalid');
+      expect(authenticationService.confirmMfaChallenge).not.toHaveBeenCalled();
+      expect(navigate).not.toHaveBeenCalled();
+      c.cancelInvitationMfa();
+      expect(c.invitationStage).toBe('login');
+      expect(c.invitationMfaChallengeId).toBe('');
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
+    });
+
+    it('embeds the Google button and confirms an existing Google account in this invite', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      const google = {
+        initialize: jasmine.createSpy('initialize'),
+        renderButton: jasmine.createSpy('renderButton')
+      };
+      const previous=(window as any).google;
+      (window as any).google={accounts:{id:google}};
+      try {
+        authenticationService.googleConfig.and.returnValue(of({clientId:'configured-client'}));
+        authenticationService.googleLogin.and.returnValue(of({
+          token:'google-token',onboardingRequired:false,mfaRequired:false
+        } as any));
+        (http.post as jasmine.Spy).and.callFake((url:string)=>{
+          if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+            gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+            maxParticipants:10,participantCount:2,priceAmount:0,gamePhoto:null});
+          if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+          if (url.endsWith('/guest-confirmed-players')) return of([]);
+          if (url.endsWith('/guest-member-presence')) return of({status:'NONE',canCancel:false});
+          if (url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
+          return throwError(()=>new Error('Unexpected '+url));
+        });
+        const navigateByUrl=spyOn(TestBed.inject(Router),'navigateByUrl').and.resolveTo(true);
+        const page=render();
+        (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        (fixture.componentInstance as any).initializeInvitationGoogle();
+        expect(google.initialize).toHaveBeenCalledTimes(1);
+        expect(google.renderButton).toHaveBeenCalledTimes(1);
+        const callback=google.initialize.calls.mostRecent().args[0].callback;
+        callback({credential:'google-credential'});
+        expect(authenticationService.googleLogin).toHaveBeenCalledOnceWith('google-credential');
+        expect(authenticationService.saveToken).toHaveBeenCalledOnceWith('google-token');
+        expect(navigateByUrl).toHaveBeenCalledWith('/menu/events/42');
+        expect((http.post as jasmine.Spy).calls.allArgs().filter(args=>
+          String(args[0]).endsWith('/guest-join-account'))).toHaveSize(1);
+      } finally {
+        (window as any).google=previous;
+      }
     });
 
     it('does not register on login failure and does not persist a hidden auto-join', () => {
