@@ -666,6 +666,8 @@ describe('DiscoverComponent', () => {
   });
 
   it('carries the selected sport and locality into venue creation', () => {
+    component.setCategory('venues');
+    fixture.detectChanges();
     const addVenueLink = (): HTMLAnchorElement =>
       fixture.nativeElement.querySelector('a[href^="/menu/venues/new"]');
 
@@ -903,7 +905,10 @@ describe('DiscoverComponent', () => {
     venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: true }));
     component.search();
     fixture.detectChanges();
-    const count: HTMLElement = fixture.nativeElement.querySelector('.pillar-panel .result-count');
+    // The category tab now carries the catalogue count, not a second venue card.
+    const count: HTMLElement = fixture.nativeElement.querySelector(
+      '.explore-category-nav button:nth-child(2) .explore-tab-count'
+    );
     expect(component.venuesHasMore).toBeTrue();
     expect(count.textContent?.replace(/\s/g, '')).toBe('36+');
     expect(count.title).toContain('Existem mais recintos');
@@ -995,6 +1000,7 @@ describe('DiscoverComponent', () => {
     venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: true }));
 
     component.search();
+    component.setCategory('venues');
     fixture.detectChanges();
 
     expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
