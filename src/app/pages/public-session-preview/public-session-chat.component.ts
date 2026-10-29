@@ -124,7 +124,8 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   loadMessages(indicateLoading = false): void {
-    if (!this.authenticated || !this.chatOpen || !this.currentId || this.checking) return;
+    if (!this.authenticated || !this.chatOpen || !this.currentId || this.checking
+        || (this.loginRequired && !indicateLoading)) return;
     const requestId = this.currentId;
     this.checking = true;
     if (indicateLoading) {
