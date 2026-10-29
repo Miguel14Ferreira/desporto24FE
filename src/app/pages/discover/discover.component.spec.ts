@@ -1088,7 +1088,38 @@ describe('DiscoverComponent', () => {
     expect(peoplePanel.hasAttribute('hidden')).toBeFalse();
     component.setCategory('all');
     fixture.detectChanges();
+    expect(venuesPanel.hasAttribute('hidden')).toBeTrue();
+
+    component.setCategory('venues');
+    fixture.detectChanges();
     expect(venuesPanel.hasAttribute('hidden')).toBeFalse();
+    expect(sessionsPanel.hasAttribute('hidden')).toBeTrue();
+    expect(venueService.suggest.calls.count()).toBe(calls);
+  });
+
+  it('shows venues only in the Recintos tab and hides empty For You results', () => {
+    component.venues = [
+      { id: 77, name: 'Recinto de teste', city: 'Lisboa', latitude: 38.72, longitude: -9.14 }
+    ] as any;
+    component.topVenueResults = [...component.venues];
+    component.initialized = true;
+    fixture.detectChanges();
+
+    const venuePanel: HTMLElement = fixture.nativeElement.querySelector('#explore-venues');
+    const resultsHeading: HTMLElement = fixture.nativeElement.querySelector('.explore-results-heading');
+    expect(venuePanel.hasAttribute('hidden')).toBeTrue();
+    expect(resultsHeading.hasAttribute('hidden')).toBeTrue();
+
+    component.setCategory('venues');
+    fixture.detectChanges();
+    expect(venuePanel.hasAttribute('hidden')).toBeFalse();
+    expect(resultsHeading.hasAttribute('hidden')).toBeFalse();
+    expect(venuePanel.querySelector('.venue-card')?.textContent).toContain('Recinto de teste');
+    expect(fixture.nativeElement.querySelector('.explore-map-panel')).not.toBeNull();
+
+    component.setCategory('all');
+    fixture.detectChanges();
+    expect(venuePanel.hasAttribute('hidden')).toBeTrue();
   });
 
   it('uses sport quick picks as real search filters and allows toggling them off', () => {
