@@ -5,6 +5,7 @@ import { finalize, retry, Subject, takeUntil, timeout } from 'rxjs';
 
 import { VenuePhoto, VenueRatingSummary, VenueService, VenueSportCondition } from '../../services/venue.service';
 import { Venue } from '../model/venue';
+import { venueCatalogueDisplayLabel } from '../../shared/venue-catalogue-display';
 import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
 import { venueHasPortugueseCoordinates, venueDirectionsUrl, VenueTravelMode, venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
@@ -18,6 +19,7 @@ import { venueOfficialContactPage, venueOfficialContactPageNeedsIdentityCheck } 
 })
 export class VenueDetailsComponent implements OnInit, OnDestroy {
   readonly venueEnvironmentTranslationKey = venueEnvironmentTranslationKey;
+  readonly venueCatalogueDisplayLabel = venueCatalogueDisplayLabel;
   venue: Venue | null = null;
   photos: VenuePhoto[] = [];
   sportConditions: VenueSportCondition[] = [];

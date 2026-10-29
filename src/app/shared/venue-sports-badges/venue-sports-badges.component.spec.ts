@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { I18nService, preloadEnglishTranslations } from '../../i18n/i18n.service';
 import { parseVenueSports, VenueSportsBadgesComponent } from './venue-sports-badges.component';
 
 describe('Venue sports badges', () => {
@@ -73,4 +74,29 @@ describe('Venue sports badges', () => {
     expect(fixture.nativeElement.querySelector('.venue-sports-more')).toBeNull();
     fixture.destroy();
   });
+  it('localizes sports chips immediately when the selected UI language changes', async () => {
+    await preloadEnglishTranslations();
+    const old = localStorage.getItem('d24-language');
+    const i18n = TestBed.inject(I18nService);
+    const fixture = TestBed.createComponent(VenueSportsBadgesComponent);
+    fixture.componentInstance.sports = 'Canoagem;Windsurf;Stand Up Paddle';
+    try {
+      i18n.setLanguage('pt');
+      fixture.detectChanges();
+      expect(Array.from(fixture.nativeElement.querySelectorAll('.venue-sports-chip'))
+        .map((chip: any) => chip.textContent.trim())).toEqual(['Canoagem', 'Windsurf', 'Stand Up Paddle']);
+      i18n.setLanguage('en');
+      fixture.detectChanges();
+      expect(Array.from(fixture.nativeElement.querySelectorAll('.venue-sports-chip'))
+        .map((chip: any) => chip.textContent.trim()))
+        .toEqual(['Canoeing', 'Windsurfing', 'Stand-up paddleboarding']);
+      // Canonical API-sourced names are not modified for search and submission.
+      expect(fixture.componentInstance.items).toEqual(['Canoagem', 'Windsurf', 'Stand Up Paddle']);
+    } finally {
+      i18n.setLanguage(old === 'en' ? 'en' : 'pt');
+      if (old === null) localStorage.removeItem('d24-language');
+      fixture.destroy();
+    }
+  });
+
 });
