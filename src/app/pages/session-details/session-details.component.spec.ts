@@ -1681,7 +1681,7 @@ describe('SessionDetailsComponent', () => {
       seasonGame:false,seasonName:null};
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.session-community-context').textContent)
-      .toContain('Não conta para a época');
+      .toContain('Não ativada para esta sessão');
   });
 
   it('does not expose guest invitations to non-creators or closed/private games', () => {

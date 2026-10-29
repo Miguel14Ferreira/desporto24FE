@@ -36,6 +36,17 @@ describe('NativeSelectEnhancementService (global Angular-compatible dropdown)', 
     select.style.cssText = 'display:block;width:260px;height:42px;';
     setOptions();
     app.appendChild(select);
+    // This synthetic DOM fixture is always a visible select. Other Angular
+    // suites can temporarily apply global app-root styles that collapse its
+    // layout in headless Chrome, making this spec order-dependent.
+    // Fix only the test geometry, never the runtime visibility guard.
+    const rect = new DOMRect(80, 80, 260, 42);
+    spyOn(select, 'getClientRects').and.returnValue({
+      length: 1,
+      0: rect,
+      item: (index: number) => index === 0 ? rect : null
+    } as unknown as DOMRectList);
+    spyOn(select, 'getBoundingClientRect').and.returnValue(rect);
     service.start();
   });
 
