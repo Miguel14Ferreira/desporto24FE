@@ -526,19 +526,23 @@ export class DirectCallClientService implements OnDestroy {
     // room: stay connected as listener and let the user retry the devices.
     let micEnabled=false;
     let cameraEnabled=false;
+    let microphoneError: string | undefined;
     try {
       await room.localParticipant.setMicrophoneEnabled(true);
       micEnabled=true;
-    } catch {
-      if (version===this.generation) this.update({error:'calls.microphoneAccessError'});
+    } catch (error) {
+      microphoneError=this.mediaFailure(error,'microphone');
+      if (version===this.generation) this.update({error:microphoneError});
     }
     if (version!==this.generation) {void room.disconnect();return;}
     if (session.media==='video') {
       // Reuse the same safe fallback and browser-specific diagnostics as the
       // in-call Retry camera control, instead of a separate fragile path.
-      this.update({micEnabled,error:undefined});
+      this.update({micEnabled});
       await this.setCamera(true);
       cameraEnabled=this.state$.value?.cameraEnabled === true;
+      // An unrelated successful camera publication must not hide a blocked mic.
+      if (microphoneError && cameraEnabled) this.update({error:microphoneError});
     }
     if (version!==this.generation) {void room.disconnect();return;}
     this.update({micEnabled:micEnabled,cameraEnabled:cameraEnabled});
