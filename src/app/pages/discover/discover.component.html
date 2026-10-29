@@ -162,7 +162,7 @@
       }
 
       <div class="explore-results-heading"
-        [attr.hidden]="(activeTab === 'communities' || (activeTab === 'all' && !showSection('sessions') && !showSection('people'))) ? '' : null">
+        [attr.hidden]="(activeTab === 'communities' || activeTab === 'people' || (activeTab === 'all' && !showSection('sessions') && !showSection('people'))) ? '' : null">
         <div>
           <p class="eyebrow">{{ 'discover.explore.resultsKicker' | t }}</p>
           <h2>{{ (activeTab === 'all' ? 'discover.explore.allResults' : activeTab === 'venues' ? 'discover.where.title' : activeTab === 'sessions' ? 'discover.when.title' : 'discover.who.title') | t }}</h2>
@@ -464,13 +464,6 @@
             <div class="pillar-empty people-empty">
               <strong>{{ 'discover.who.emptyTitle' | t }}</strong>
               <span>{{ (appliedPlayerName ? 'discover.who.emptyNameText' : 'discover.who.emptyText') | t }}</span>
-              @if (!peopleLoadError && !playerSearchError && !appliedPlayerName) {
-                <a class="jynlo-action jynlo-action--primary people-empty-recruit"
-                   routerLink="/menu/createEvent"
-                   [queryParams]="{ intent: 'findPlayers', sport: sport.trim() || null, city: location.trim() || null }">
-                  {{ 'discover.who.recruitAction' | t }} <span aria-hidden="true">→</span>
-                </a>
-              }
             </div>
           } @else {
             <div class="result-list">
