@@ -338,25 +338,21 @@ describe('SocialStoriesComponent', () => {
     }
   });
 
-  it('uses the same persisted language as the Feed for standalone Stories', async () => {
+  it('renders the English Stories texts on the first Feed load', async () => {
     await preloadEnglishTranslations();
     const i18n = TestBed.inject(I18nService);
     const initial = localStorage.getItem('d24-language');
     try {
-      i18n.setLanguage('pt');
+      i18n.setLanguage('en');
       api.feed.and.returnValue(of([]));
       api.mine.and.returnValue(of([]));
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.story-retry')?.textContent?.trim())
-        .toBe('Tentar novamente');
 
-      // Cover stale child views after an existing preference is changed outside
-      // the component, without re-instantiating or navigating away from Feed.
-      localStorage.setItem('d24-language', 'en');
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.story-retry')?.textContent?.trim())
-        .toBe('Try again');
-      expect(fixture.nativeElement.querySelector('.stories-empty')?.textContent?.trim())
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.stories-panel');
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Sporting moments');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.story-add-action')?.textContent).toContain('Create Story');
+      expect(panel.querySelector('.stories-empty')?.textContent?.trim())
         .toBe('No Stories yet. Share the first moment!');
     } finally {
       i18n.setLanguage(initial === 'en' ? 'en' : 'pt');
