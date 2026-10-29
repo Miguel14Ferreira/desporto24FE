@@ -74,7 +74,11 @@
         (click)="setCategory('all')">{{ 'discover.explore.all' | t }}</button>
       <button type="button" [class.is-active]="activeTab === 'venues'" [attr.aria-pressed]="activeTab === 'venues'"
         (click)="setCategory('venues')">{{ 'discover.explore.venues' | t }}
-        @if (initialized && !venuesLoadError) { <span class="explore-tab-count">{{ venues.length }}{{ venuesHasMore ? '+' : '' }}</span> }
+        @if (initialized && !venuesLoadError) {
+          <span class="explore-tab-count" [attr.title]="venuesHasMore ? ('discover.where.moreResults' | t) : null">
+            {{ venues.length }}{{ venuesHasMore ? '+' : '' }}
+          </span>
+        }
       </button>
       <button type="button" [class.is-active]="activeTab === 'sessions'" [attr.aria-pressed]="activeTab === 'sessions'"
         (click)="setCategory('sessions')">{{ 'discover.explore.sessions' | t }}
