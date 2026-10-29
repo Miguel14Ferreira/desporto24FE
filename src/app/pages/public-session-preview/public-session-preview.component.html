@@ -175,6 +175,9 @@
                          : guestStep === 'cancelled' ?
                            (guestCancelledBySelf ? 'guestRsvp.cancelledBySelfHelp' : 'guestRsvp.cancelledHelp')
                          : 'guestRsvp.pendingHelp') | t }}</p>
+                @if (guestStep === 'approved') {
+                  <p class="guest-rsvp-hint">{{ 'guestRsvp.chatAvailable' | t }}</p>
+                }
                 @if (guestStep === 'cancelled') {
                   <div class="guest-rejoin-actions">
                     <p class="guest-rsvp-hint">{{ 'guestRsvp.rejoinHelp' | t }}</p>
