@@ -137,9 +137,8 @@ body :is(
 }
 
 /* Chromium autofill must not flash an unrelated yellow/blue fill. */
-body :is(input[type="text"], input[type="email"], input[type="password"],
-  input[type="tel"], input[type="url"], input[type="search"])
-  :not(.jynlo-form-exempt):-webkit-autofill {
+body input:is([type="text"], [type="email"], [type="password"],
+  [type="tel"], [type="url"], [type="search"]):-webkit-autofill:not(.jynlo-form-exempt) {
   -webkit-text-fill-color: #f2fffc;
   -webkit-box-shadow: 0 0 0 1000px var(--jynlo-field-bg) inset;
   transition: background-color 9999s ease-out;
