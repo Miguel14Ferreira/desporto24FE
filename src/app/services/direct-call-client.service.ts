@@ -59,6 +59,7 @@ export class DirectCallClientService implements OnDestroy {
   readonly selectedDevices$ = new BehaviorSubject<Partial<Record<MediaDeviceKind, string>>>({});
   readonly connectionQuality$ = new BehaviorSubject<'unknown'|'excellent'|'good'|'poor'|'lost'>('unknown');
   readonly busyMedia$ = new BehaviorSubject<boolean>(false);
+  readonly screenShareEnabled$ = new BehaviorSubject<boolean>(false);
   room: Room | null = null;
   private readonly base = environment.apiUrl + '/api/calls/direct';
   private readonly jwt = new JwtHelperService();
@@ -339,41 +340,76 @@ export class DirectCallClientService implements OnDestroy {
       || ['NotFoundError','DevicesNotFoundError'].includes(name)) return prefix+'Missing';
     if (failure===MediaDeviceFailure.DeviceInUse
       || ['NotReadableError','TrackStartError'].includes(name)) return prefix+'Busy';
-    if (['OverconstrainedError','ConstraintNotSatisfiedError'].includes(name)) return prefix+'InvalidDevice';
+    if (['OverconstrainedError','ConstraintNotSatisfiedError'].includes(name)) return kind==='camera' ? 'calls.cameraConstraints' : prefix+'InvalidDevice';
+    if (name==='CAMERA_PUBLICATION_FAILED') return 'calls.cameraPublicationFailed';
+    if (['AbortError','NotSupportedError'].includes(name)) return prefix+'AccessError';
     return kind==='camera' ? 'calls.cameraAccessError' : 'calls.microphoneAccessError';
   }
 
+  /** A resolved capture attempt still needs a published video track. */
+  private assertCameraPublished(room: Room): void {
+    const publications=room.localParticipant.videoTrackPublications;
+    // Some deterministic test doubles don't implement publication collections.
+    if (publications && ![...publications.values()].some(pub=>!!pub.track))
+      throw {name:'CAMERA_PUBLICATION_FAILED'};
+  }
+
   /**
-   * Always try the system camera first, without a stale persisted deviceId.
-   * If it is missing or unavailable, try one of the enumerated alternatives.
-   * Never silently retry permission denial (browser requires user action).
+   * Progressive recovery: first let the browser choose; then try relaxed
+   * capture constraints and available device IDs. Stale IDs must not trap
+   * a call, and permission denial must never trigger repeated prompts.
    */
+  private async enableCameraWithFallback(room: Room): Promise<void> {
+    const enable=async (options?: Parameters<typeof room.localParticipant.setCameraEnabled>[1]): Promise<void> => {
+      await room.localParticipant.setCameraEnabled(true,options);
+      this.assertCameraPublished(room);
+    };
+    let firstError: unknown;
+    try {
+      await enable();
+      this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:undefined});
+      return;
+    } catch (error) {
+      firstError=error;
+      if (this.mediaFailure(error,'camera')==='calls.cameraDenied') throw error;
+    }
+
+    // Lower resolution avoids cameras that reject LiveKit's initial capture
+    // constraints. Do not force an exact deviceId on this fallback.
+    try {
+      await enable({resolution:{width:640,height:360,frameRate:15}});
+      this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:undefined});
+      return;
+    } catch (error) {
+      if (this.mediaFailure(error,'camera')==='calls.cameraDenied') throw error;
+    }
+
+    await this.refreshDevices();
+    const devices=this.devices$.value.filter(d=>d.kind==='videoinput' && !!d.deviceId && d.deviceId!=='default');
+    for (const device of devices) {
+      if (room!==this.room) return;
+      try {
+        // Exact selection may be necessary for a second external camera.
+        // The relaxed profile is intentionally used on that device as well.
+        await enable({deviceId:{exact:device.deviceId},resolution:{width:640,height:360,frameRate:15}});
+        this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:device.deviceId});
+        return;
+      } catch (error) {
+        if (this.mediaFailure(error,'camera')==='calls.cameraDenied') throw error;
+      }
+    }
+    throw firstError;
+  }
+
   async setCamera(enabled: boolean): Promise<void> {
     const room=this.room;
     if (!room || this.state$.value?.media!=='video' || this.busyMedia$.value) return;
     this.busyMedia$.next(true);
     try {
-      if (!enabled) {
-        await room.localParticipant.setCameraEnabled(false);
+      if (enabled) {
+        await this.enableCameraWithFallback(room);
       } else {
-        try {
-          await room.localParticipant.setCameraEnabled(true);
-        } catch (primary) {
-          const code=this.mediaFailure(primary,'camera');
-          if (code==='calls.cameraDenied') throw primary;
-          let recovered=false;
-          if (!this.devices$.value.some(d=>d.kind==='videoinput')) await this.refreshDevices();
-          const devices=this.devices$.value.filter(d=>d.kind==='videoinput' && d.deviceId && d.deviceId!=='default');
-          for (const device of devices.slice(0,3)) {
-            if (room!==this.room) return;
-            try {
-              await room.localParticipant.setCameraEnabled(true,{deviceId:{exact:device.deviceId}});
-              this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:device.deviceId});
-              recovered=true;break;
-            } catch { /* try another available camera */ }
-          }
-          if (!recovered) throw primary;
-        }
+        await room.localParticipant.setCameraEnabled(false);
       }
       if (room===this.room) {
         this.update({cameraEnabled:enabled,error:undefined});
@@ -387,9 +423,54 @@ export class DirectCallClientService implements OnDestroy {
     }
   }
 
+  /** Clear an obsolete camera selection and retry the real default camera. */
+  async useDefaultCamera(): Promise<void> {
+    const room=this.room;
+    if (!room || this.busyMedia$.value || this.state$.value?.media!=='video') return;
+    this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:undefined});
+    if (this.state$.value?.cameraEnabled) {
+      await this.setCamera(false);
+      if (room!==this.room || this.state$.value?.cameraEnabled) return;
+    }
+    await this.setCamera(true);
+  }
+
+  get canShareScreen(): boolean {
+    return typeof navigator.mediaDevices?.getDisplayMedia === 'function';
+  }
+
+  async setScreenShare(enabled: boolean): Promise<void> {
+    const room=this.room;
+    if (!room || !this.canShareScreen || this.busyMedia$.value) return;
+    this.busyMedia$.next(true);
+    try {
+      await room.localParticipant.setScreenShareEnabled(enabled);
+      if (this.room===room) this.screenShareEnabled$.next(enabled);
+    } catch {
+      // Cancelling the browser's share picker must not disrupt the call.
+      if (this.room===room) this.screenShareEnabled$.next(false);
+    } finally {
+      this.busyMedia$.next(false);
+      this.mediaChanged$.next(this.mediaChanged$.value+1);
+    }
+  }
+
   async selectDevice(kind: MediaDeviceKind, deviceId: string): Promise<void> {
     const room=this.room;
     if (!room || this.busyMedia$.value || !['videoinput','audioinput','audiooutput'].includes(kind)) return;
+    if (!deviceId) {
+      if (kind==='videoinput') await this.useDefaultCamera();
+      else {
+        try {
+          const changed=await room.switchActiveDevice(kind,'default');
+          if (changed && room===this.room) {
+            this.selectedDevices$.next({...this.selectedDevices$.value,[kind]:undefined});
+            this.update({error:undefined});
+          }
+        } catch { if (room===this.room) this.update({error:'calls.deviceMissing'}); }
+      }
+      return;
+    }
     // A client supplied ID cannot select a device which has disappeared.
     if (!this.devices$.value.some(d=>d.deviceId===deviceId && d.kind===kind)) {
       this.update({error:'calls.deviceMissing'});
@@ -405,7 +486,18 @@ export class DirectCallClientService implements OnDestroy {
         await room.localParticipant.setMicrophoneEnabled(true,{deviceId:{exact:deviceId}});
         if (room===this.room) this.update({micEnabled:true,error:undefined});
       } else {
-        const switched=await room.switchActiveDevice(kind,deviceId);
+        let switched=false;
+        try { switched=await room.switchActiveDevice(kind,deviceId); }
+        catch (error) { if (kind!=='videoinput') throw error; }
+        if (!switched && kind==='videoinput') {
+          // Mobile browsers sometimes reject replaceTrack: recreate capture.
+          await room.localParticipant.setCameraEnabled(false);
+          if (room===this.room) this.update({cameraEnabled:false});
+          await room.localParticipant.setCameraEnabled(true,{deviceId:{ideal:deviceId},resolution:{width:640,height:360,frameRate:15}});
+          this.assertCameraPublished(room);
+          if (room===this.room) this.update({cameraEnabled:true});
+          switched=true;
+        }
         if (!switched) throw new DOMException('Device was not switched','NotReadableError');
       }
       if (room===this.room) {
@@ -414,7 +506,8 @@ export class DirectCallClientService implements OnDestroy {
         this.mediaChanged$.next(this.mediaChanged$.value+1);
       }
     } catch (error) {
-      if (room===this.room) this.update({error:kind==='videoinput'
+      if (room===this.room) this.update({cameraEnabled:kind==='videoinput' ? !!room.localParticipant.videoTrackPublications?.size : this.state$.value?.cameraEnabled || false,
+        error:kind==='videoinput'
         ? this.mediaFailure(error,'camera')
         : kind==='audioinput' ? this.mediaFailure(error,'microphone')
         : 'calls.speakerUnavailable'});
@@ -476,6 +569,10 @@ export class DirectCallClientService implements OnDestroy {
     const room=this.createRoom();
     this.room=room;
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
+    room.on(RoomEvent.LocalTrackUnpublished, () => {
+      this.mediaChanged$.next(this.mediaChanged$.value+1);
+      this.screenShareEnabled$.next(false);
+    });
     room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
       if (room!==this.room || participant!==room.localParticipant) return;
       const status=quality===ConnectionQuality.Excellent ? 'excellent'
