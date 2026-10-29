@@ -114,7 +114,8 @@ describe('Public invitation session chat access', () => {
 
   it('stops checking after a slow server and provides a working retry', fakeAsync(() => {
     page.authenticated = true;
-    http.get.and.returnValues(NEVER as any, of([sample]) as any);
+    let requests = 0;
+    http.get.and.callFake(() => ++requests === 1 ? NEVER as any : of([sample]) as any);
     fixture.detectChanges();
     expect(page.loading).toBeTrue();
     expect(fixture.nativeElement.textContent).toContain('A verificar acesso ao chat');
