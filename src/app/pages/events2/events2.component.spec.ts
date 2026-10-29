@@ -2698,4 +2698,69 @@ describe('Events2Component', () => {
     )).toBeNull();
   });
 
+
+  it('searches sports with the premium select and preserves their exact canonical value', fakeAsync(() => {
+    component.sport = 'Futebol';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="sport"]') as HTMLElement;
+    const trigger = host.querySelector('button[role="combobox"]') as HTMLButtonElement;
+    expect(trigger.textContent).toContain('Futebol');
+    trigger.click();
+    fixture.detectChanges();
+    tick();
+    const search = host.querySelector('input[type="search"]') as HTMLInputElement;
+    expect(search).not.toBeNull();
+    search.value = 'padel';
+    search.dispatchEvent(new Event('input', {bubbles: true}));
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const options = host.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(options.length).toBe(1);
+    expect(options[0].textContent).toContain('Padel');
+    options[0].click();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.sport).toBe('Padel');
+    expect(component.sportSelected).toBeTrue();
+    expect(host.querySelector('.jynlo-select__value')?.textContent).toContain('Padel');
+  }));
+
+  it('does not confuse venue name with its server id or accept stale selected venues', fakeAsync(() => {
+    component.sport = 'Padel';
+    component.venueDistrict = 'Lisboa';
+    component.venues = [{
+      id: 511, name: 'Parque Desportivo', city: 'Lisboa',
+      address: 'Rua do Parque', sports: 'Padel',
+      latitude: 38.7, longitude: -9.2
+    } as Venue];
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    const trigger = host.querySelector('button[role="combobox"]') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    tick();
+    expect(host.querySelector('.jynlo-select__option-description')?.textContent)
+      .toContain('Rua do Parque');
+    const option = host.querySelector('button[role="option"]') as HTMLButtonElement;
+    option.click();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.selectedVenueId).toBe(511);
+    expect(component.address).toBe('Rua do Parque');
+    expect(trigger.textContent).toContain('Parque Desportivo');
+    component.onDistrictChanged('Porto');
+    fixture.detectChanges();
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSearch).toBe('');
+    expect(host.querySelector('.jynlo-select__value')?.textContent)
+      .not.toContain('Parque Desportivo');
+  }));
+
 });
