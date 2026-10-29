@@ -1,7 +1,8 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, Injector, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthenticationService } from './services/authethication.service';
+import type { NativeSelectEnhancementService } from './shared/jynlo-select/native-select-enhancement.service';
 import { PilotAnalyticsService } from './services/pilot-analytics.service';
 import { OnlinePresenceService } from './services/online-presence.service';
 import { appTranslate as t } from './i18n/i18n.service';
@@ -18,13 +19,15 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('callOverlayOutlet', { read: ViewContainerRef })
   private callOverlayOutlet?: ViewContainerRef;
   private disposed=false;
+  private nativeSelectEnhancement?: NativeSelectEnhancementService;
   title = 'desporto24';
 
   constructor(
     private router: Router,
     private authenticationService: AuthenticationService,
     private pilotAnalyticsService: PilotAnalyticsService,
-    private onlinePresence: OnlinePresenceService
+    private onlinePresence: OnlinePresenceService,
+    private injector: Injector
   ) {}
 
   ngOnInit(): void {
@@ -62,6 +65,16 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // Enhance all native single-select dropdowns, including lazy routed pages.
+    // The real select stays in the DOM, preserving ngModel / ngValue / validators.
+    void import('./shared/jynlo-select/native-select-enhancement.service')
+      .then(({ NativeSelectEnhancementService }) => {
+        if (this.disposed) return;
+        this.nativeSelectEnhancement = this.injector.get(NativeSelectEnhancementService);
+        this.nativeSelectEnhancement.start();
+      }).catch(() => {
+        // The native control remains usable if the enhancement chunk fails.
+      });
     // Do not include the meeting UI and its styles in the initial Angular
     // bundle. Load immediately after boot, so incoming call invitations still
     // have a global route-independent surface.
@@ -77,6 +90,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.disposed=true;
     this.onlinePresence.stop();
+    this.nativeSelectEnhancement?.stop();
   }
 
   private navigateToLoginAfterConfirmation(params: URLSearchParams): void {
