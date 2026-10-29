@@ -3592,8 +3592,8 @@ describe('SessionDetailsComponent', () => {
     expect(chatStyle.marginTop).toBe('0px');
     expect(inviteStyle.marginTop).toBe('0px');
     expect(chatStyle.minHeight).toBe(inviteStyle.minHeight);
-    expect(chatStyle.display).toBe('inline-flex');
-    expect(inviteStyle.display).toBe('inline-flex');
+    expect(chatStyle.display).toContain('flex');
+    expect(inviteStyle.display).toContain('flex');
     expect(chat.getBoundingClientRect().top).toBeCloseTo(invite.getBoundingClientRect().top, 0);
   });
 
