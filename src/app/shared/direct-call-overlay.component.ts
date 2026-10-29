@@ -33,8 +33,18 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
             </div>
           }
           @if (call.phase !== 'error') { <audio #remoteAudio autoplay></audio> }
+          @if ((call.phase === 'incoming' || call.phase === 'dialing')
+                && (calls.ringtoneBlocked$ | async)) {
+            <p class="call-audio-help" role="status">{{ 'calls.ringtoneBlocked' | t }}</p>
+          }
           @if (call.error) { <p class="call-error" role="alert">{{ call.error | t }}</p> }
           <div class="call-buttons">
+            @if ((call.phase === 'incoming' || call.phase === 'dialing')
+                  && (calls.ringtoneBlocked$ | async)) {
+              <button type="button" class="call-enable-sound" (click)="calls.allowRingtone()">
+                {{ 'calls.enableRingtone' | t }}
+              </button>
+            }
             @if (call.phase === 'incoming') {
               <button type="button" class="call-decline" (click)="calls.decline()">
                 <span aria-hidden="true">✕</span> {{ 'calls.decline' | t }}
@@ -53,7 +63,11 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                 <button type="button" (click)="calls.setCamera(!call.cameraEnabled)"
                   [attr.aria-pressed]="!call.cameraEnabled">{{ (call.cameraEnabled ? 'calls.cameraOff' : 'calls.cameraOn') | t }}</button>
               }
-              <button type="button" (click)="calls.allowAudio()">{{ 'calls.sound' | t }}</button>
+              @if (calls.audioPlaybackBlocked$ | async) {
+                <button type="button" class="call-enable-sound" (click)="calls.allowAudio()">
+                  {{ 'calls.sound' | t }}
+                </button>
+              }
               <button type="button" class="call-decline" (click)="calls.end()">{{ 'calls.hangUp' | t }}</button>
             }
           </div>
@@ -92,6 +106,8 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .call-buttons .call-accept {background:#147b60;border-color:#2dddab;}
     .call-buttons .call-decline {background:#7c3a42;border-color:#d87979;}
     .call-error {text-align:center;color:#ffc7c4;font-size:.84rem;}
+    .call-audio-help {text-align:center;color:#f2dfb4;font-size:.84rem;margin:0 0 14px;}
+    .call-buttons .call-enable-sound {background:#1d657d;border-color:#53b7cc;color:#effcff;}
     .call-refresh {display:none;}
     @media(max-width:480px) {.call-backdrop{padding:8px;}.call-panel{padding:20px 12px;}.call-videos video:first-child{height:250px;}}
   `]
