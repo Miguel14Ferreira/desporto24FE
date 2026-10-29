@@ -3,7 +3,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { BehaviorSubject, filter, firstValueFrom, Subscription, TimeoutError, timeout } from 'rxjs';
-import { ConnectionQuality, Room, RoomEvent } from 'livekit-client';
+import { ConnectionQuality, MediaDeviceFailure, Room, RoomEvent } from 'livekit-client';
 import { environment } from 'src/environment/environment';
 import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
 import { DirectCallToneService } from './direct-call-tone.service';
@@ -331,10 +331,14 @@ export class DirectCallClientService implements OnDestroy {
   private mediaFailure(error: unknown, kind: 'camera'|'microphone'): string {
     const name=error && typeof error==='object' && 'name' in error
       ? String((error as {name:unknown}).name) : '';
+    const failure=MediaDeviceFailure.getFailure(error);
     const prefix=kind==='camera' ? 'calls.camera' : 'calls.microphone';
-    if (['NotAllowedError','PermissionDeniedError','SecurityError'].includes(name)) return prefix+'Denied';
-    if (['NotFoundError','DevicesNotFoundError'].includes(name)) return prefix+'Missing';
-    if (['NotReadableError','TrackStartError'].includes(name)) return prefix+'Busy';
+    if (failure===MediaDeviceFailure.PermissionDenied
+      || ['NotAllowedError','PermissionDeniedError','SecurityError'].includes(name)) return prefix+'Denied';
+    if (failure===MediaDeviceFailure.NotFound
+      || ['NotFoundError','DevicesNotFoundError'].includes(name)) return prefix+'Missing';
+    if (failure===MediaDeviceFailure.DeviceInUse
+      || ['NotReadableError','TrackStartError'].includes(name)) return prefix+'Busy';
     if (['OverconstrainedError','ConstraintNotSatisfiedError'].includes(name)) return prefix+'InvalidDevice';
     return kind==='camera' ? 'calls.cameraAccessError' : 'calls.microphoneAccessError';
   }
@@ -358,6 +362,7 @@ export class DirectCallClientService implements OnDestroy {
           const code=this.mediaFailure(primary,'camera');
           if (code==='calls.cameraDenied') throw primary;
           let recovered=false;
+          if (!this.devices$.value.some(d=>d.kind==='videoinput')) await this.refreshDevices();
           const devices=this.devices$.value.filter(d=>d.kind==='videoinput' && d.deviceId && d.deviceId!=='default');
           for (const device of devices.slice(0,3)) {
             if (room!==this.room) return;
