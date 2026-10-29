@@ -992,7 +992,7 @@ describe('PerfisComponent', () => {
       component.selectedBlocked=false;
     });
 
-    it('loads only on user action and filters admin-only communities plus public upcoming sessions', () => {
+    it('loads on demand and includes future public, private and community sessions created by the organiser', () => {
       groups.mine.and.returnValue(of([
         eligibleGroup(), {...eligibleGroup(),id:42,myRole:'MEMBER'},
         {...eligibleGroup(),id:43,members:[{username:'ANA'}]}
@@ -1008,9 +1008,33 @@ describe('PerfisComponent', () => {
       component.toggleInvitePanel();
       fixture.detectChanges();
       expect(component.availableInviteCommunities.map(v=>v.id)).toEqual([41]);
-      expect(component.availableInviteSessions.map(v=>v.id)).toEqual([55]);
+      expect(component.availableInviteSessions.map(v=>v.id)).toEqual([55,56,57]);
+      component.inviteTab = 'session';
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('.profile-invite-option').length).toBe(3);
+      expect(fixture.nativeElement.textContent).toContain('Futebol');
+      expect(fixture.nativeElement.querySelector('.profile-invite-state')).toBeNull();
+      component.inviteTab = 'community';
+      fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.profile-invite-tabs')).toBeTruthy();
       expect(fixture.nativeElement.querySelectorAll('.profile-invite-option').length).toBe(1);
+    });
+
+    it('sends invitations for private and community sessions without accidentally including joined-only games', () => {
+      groups.mine.and.returnValue(of([]));
+      sessions.mine.and.returnValue(of({
+        created:[{...eligibleSession(),id:56,privateGame:true},
+          {...eligibleSession(),id:57,audience:'COMMUNITY_ONLY'}],
+        joined:[{...eligibleSession(),id:99}],waitlisted:[]
+      } as any));
+      component.toggleInvitePanel();
+      component.sendProfileInvite('session',56);
+      component.sendProfileInvite('session',57);
+      component.sendProfileInvite('session',99);
+      expect(sessions.invitePlayer).toHaveBeenCalledTimes(2);
+      expect(sessions.invitePlayer).toHaveBeenCalledWith(56,'ana');
+      expect(sessions.invitePlayer).toHaveBeenCalledWith(57,'ana');
+      expect(component.availableInviteSessions.map(s=>s.id)).toEqual([56,57]);
     });
 
     it('sends authorized invitations through existing endpoints exactly once per target', () => {
