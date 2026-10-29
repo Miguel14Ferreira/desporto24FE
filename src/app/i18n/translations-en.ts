@@ -3642,7 +3642,10 @@ export const EN: Record<string, string> = {
   'createSession.backCommunity': 'Back to community',
   'createSession.dateTime': 'Date and time',
   'createSession.minimumPlayers': 'Minimum players to play',
-  'createSession.minimumPlayersHint': 'Can be lower than the capacity. Jynlo warns when there are not enough players and prevents season results being recorded below this number.',
+  'createSession.capacityAsMinimum': 'Require all {{count}} players for the session to happen',
+  'createSession.capacityAsMinimumHint': 'When enabled, the session only takes place if all places are filled.',
+  'createSession.minimumPlayersHint': 'Otherwise, set your own minimum. If not enough players have confirmed by kickoff, the session will not take place.',
+
   'createSession.minimumPlayersInvalid': 'The minimum must be between 2 and the session capacity.',
   'createSession.maxPlayers': 'Maximum players',
   'createSession.playFormat': 'Playing format',
