@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -51,7 +51,8 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   constructor(
     private readonly http: HttpClient,
     private readonly realtime: DirectChatRealtimeService,
-    private readonly zone: NgZone
+    private readonly zone: NgZone,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -136,11 +137,18 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
     // first-screen loading state. Never imply access before an authorised GET.
     this.messageRequest = this.http.get<SessionMessage[]>(environment.apiUrl + '/api/sessions/' +
       requestId + '/messages').pipe(timeout(10000),finalize(() => {
-        this.checking = false;
-        this.loading = false;
+        // Timeout/interceptor callbacks may run outside the change-detection
+        // zone. Without a forced check the UI can remain on "checking access"
+        // even after loading=false and the request has ended.
+        this.zone.run(() => {
+          this.checking = false;
+          this.loading = false;
+          this.cdr.markForCheck();
+        });
       })).subscribe({
       next: rows => {
         if (this.disposed || requestId !== this.currentId || !this.authenticated) return;
+        this.zone.run(() => {
         this.allowed = true;
         this.loginRequired = false;
         this.readError = '';
@@ -149,9 +157,12 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
               .sort((a,b) => a.id - b.id)
           : [];
         this.realtime.connect();
+        this.cdr.markForCheck();
+        });
       },
       error: (error: unknown) => {
         if (this.disposed || requestId !== this.currentId) return;
+        this.zone.run(() => {
         if (error instanceof HttpErrorResponse && [401,403,404].includes(error.status)) {
           // Never reveal messages to an unauthorised invite holder.
           this.allowed = false;
@@ -161,6 +172,8 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
         } else {
           this.readError = 'publicSession.chatLoadError';
         }
+        this.cdr.markForCheck();
+        });
       }
     });
   }
