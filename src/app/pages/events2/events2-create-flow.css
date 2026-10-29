@@ -174,3 +174,25 @@
  .session-minimum-picker {padding:12px;}
  .session-minimum-custom input {max-width:100%;}
 }
+
+
+/* All create-session dropdowns use the shared fixed-position premium menu.
+   Keep host fields within the grid while the menu escapes clipped panels. */
+.create-card app-jynlo-select.create-premium-select {
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.create-card label:has(> app-jynlo-select.create-premium-select) {
+  min-width:0;
+  align-content:start;
+}
+.create-preset-fields app-jynlo-select.create-premium-select {
+  min-height:48px;
+}
+@media (max-width:650px) {
+  .create-card app-jynlo-select.create-premium-select {width:100%;}
+  .create-card label:has(> app-jynlo-select.create-premium-select) {min-width:0;}
+}
