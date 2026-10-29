@@ -973,6 +973,8 @@ export const EN: Record<string, string> = {
   'home.aboutD24': 'Discover Jynlo',
   'home.contactUs': 'Contact us',
 
+  'discover.explore.mapNoCoordsTitle': 'No venues available on the map yet',
+  'discover.explore.mapNoCoordsText': 'The venues found have no recorded coordinates. Open the full directory to see their details.',
   'discover.explore.mapSection': 'Venues map',
   'discover.explore.mapKicker': 'Real locations',
   'discover.explore.mapHeadline': 'Find the right place on the map',

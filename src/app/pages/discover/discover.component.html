@@ -74,7 +74,11 @@
         (click)="setCategory('all')">{{ 'discover.explore.all' | t }}</button>
       <button type="button" [class.is-active]="activeTab === 'venues'" [attr.aria-pressed]="activeTab === 'venues'"
         (click)="setCategory('venues')">{{ 'discover.explore.venues' | t }}
-        @if (initialized && !venuesLoadError) { <span class="explore-tab-count">{{ venues.length }}{{ venuesHasMore ? '+' : '' }}</span> }
+        @if (initialized && !venuesLoadError) {
+          <span class="explore-tab-count" [attr.title]="venuesHasMore ? ('discover.where.moreResults' | t) : null">
+            {{ venues.length }}{{ venuesHasMore ? '+' : '' }}
+          </span>
+        }
       </button>
       <button type="button" [class.is-active]="activeTab === 'sessions'" [attr.aria-pressed]="activeTab === 'sessions'"
         (click)="setCategory('sessions')">{{ 'discover.explore.sessions' | t }}
@@ -170,7 +174,7 @@
         <span>{{ 'discover.explore.refineHint' | t }}</span>
       </div>
 
-      @if (activeTab === 'venues' && !venuesLoadError && mapAvailableVenues.length > 0) {
+      @if (activeTab === 'venues' && !venuesLoadError) {
         <section class="explore-map-panel" [attr.aria-label]="'discover.explore.mapSection' | t">
           <div class="explore-map-header">
             <div>
@@ -180,49 +184,6 @@
             </div>
             <span class="explore-map-count">{{ mapAvailableVenues.length }} {{ 'discover.explore.mapLocations' | t }}</span>
           </div>
-          <div class="explore-map-layout">
-            <div class="explore-map-picks" role="group" [attr.aria-label]="'discover.explore.mapChoose' | t">
-              @for (venue of mapAvailableVenues; track venue.id) {
-                <button type="button" class="explore-map-pick" [class.is-active]="focusedMapVenue?.id === venue.id"
-                  [attr.aria-pressed]="focusedMapVenue?.id === venue.id" (click)="selectMapVenue(venue.id)">
-                  <span class="explore-map-pick-dot" aria-hidden="true">⌖</span>
-                  <span class="explore-map-pick-text"><strong>{{ venue.name }}</strong><small>{{ venue.city }}</small></span>
-                  <span aria-hidden="true">›</span>
-                </button>
-              }
-            </div>
-            <div class="explore-map-canvas">
-              @if (focusedVenueMapUrl; as mapUrl) {
-                <iframe [src]="mapUrl" loading="lazy"
-                  [title]="'discover.explore.mapTitle' | t:{ name: focusedMapVenue?.name || '' }"
-                  referrerpolicy="no-referrer"></iframe>
-                <div class="explore-map-caption">
-                  <small>{{ 'discover.explore.mapDisclaimer' | t }}
-                    <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>
-                  </small>
-                  <a [routerLink]="['/menu/venues', focusedMapVenue!.id]">
-                    {{ 'discover.explore.mapDetails' | t }} <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              }
-            </div>
-          </div>
-        </section>
-      }
-
-      <div class="discovery-grid" [class.is-focused]="activeTab !== 'all'">
-        <section class="pillar-panel" id="explore-venues" [attr.hidden]="showSection('venues') ? null : ''">
-          <header class="pillar-heading">
-            <div class="pillar-icon">📍</div>
-            <div>
-              <p>{{ 'discover.where.kicker' | t }}</p>
-              <h2>{{ 'discover.where.title' | t }}</h2>
-            </div>
-            <span class="result-count" [attr.title]="venuesHasMore ? ('discover.where.moreResults' | t) : null">
-              {{ venues.length }}{{ venuesHasMore ? '+' : '' }}
-            </span>
-          </header>
-
           <div class="discover-nearby discover-nearby--venues">
             @if (!nearbyVenuePosition) {
               <button type="button" class="jynlo-action jynlo-action--neutral"
@@ -250,73 +211,80 @@
             }
           </div>
 
-          @if (!venuesLoadError && topVenues.length === 0) {
-            <div class="pillar-empty">
-              <strong>{{ 'discover.where.emptyTitle' | t }}</strong>
-              @if (nearbyVenuePosition) {
-                <span>{{ 'discover.where.nearbyEmptyText' | t }}</span>
-                @if (nearbyVenueRadiusKm < 50) {
-                  <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--radius"
-                    (click)="changeNearbyVenueRadius(50)">{{ 'discover.where.widenRadius' | t }}</button>
-                }
-              } @else if (sport.trim() || location.trim()) {
-                <span>{{ 'discover.where.filteredEmptyText' | t }}</span>
-                @if (sport.trim() && location.trim()) {
-                  <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--sport"
-                    (click)="broadenVenueSearch('sport')">{{ 'discover.where.removeSport' | t }}</button>
-                  <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--city"
-                    (click)="broadenVenueSearch('city')">{{ 'discover.where.removeCity' | t }}</button>
-                } @else {
-                  <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--all"
-                    (click)="broadenVenueSearch('all')">{{ 'discover.where.removeFilters' | t }}</button>
-                }
-              } @else {
-                <span>{{ 'discover.where.emptyText' | t }}</span>
+
+          @if (mapAvailableVenues.length > 0) {
+          <div class="explore-map-layout">
+            <div class="explore-map-picks" role="group" [attr.aria-label]="'discover.explore.mapChoose' | t">
+              @for (venue of mapAvailableVenues; track venue.id) {
+                <button type="button" class="explore-map-pick" [class.is-active]="focusedMapVenue?.id === venue.id"
+                  [attr.aria-pressed]="focusedMapVenue?.id === venue.id" (click)="selectMapVenue(venue.id)">
+                  <span class="explore-map-pick-dot" aria-hidden="true">⌖</span>
+                  <span class="explore-map-pick-text"><strong>{{ venue.name }}</strong><small>{{ venue.city }}</small></span>
+                  <span aria-hidden="true">›</span>
+                </button>
               }
             </div>
-          } @else if (!venuesLoadError) {
-            <div class="result-list">
-              @for (venue of topVenues; track venue.id) {
-                <a class="result-card venue-card" [routerLink]="['/menu/venues', venue.id]">
-                  <div>
-                    <strong>{{ venue.name }}</strong>
-                    <span>{{ venue.city }}</span>
-                  </div>
-                  <div class="tags">
-                    @if (venue.venueType) {
-                      <span>{{ venue.venueType }}</span>
-                    }
-                    @if (venue.ownershipType) {
-                      <span>
-                        {{ venue.ownershipType === 'PUBLIC'
-                          ? ('venue.ownership.public' | t)
-                          : ('venue.ownership.private' | t) }}
-                      </span>
-                    }
-                    @if (venue.surfaceType) {
-                      <span>{{ venue.surfaceType }}</span>
-                    }
-                    <span>{{ venueEnvironmentTranslationKey(venue) | t }}</span>
-                    @if (venue.parking) {
-                      <span>🅿 {{ 'venue.parking' | t }}</span>
-                    }
-                  </div>
-                </a>
+            <div class="explore-map-canvas">
+              @if (focusedVenueMapUrl; as mapUrl) {
+                <iframe [src]="mapUrl" loading="lazy"
+                  [title]="'discover.explore.mapTitle' | t:{ name: focusedMapVenue?.name || '' }"
+                  referrerpolicy="no-referrer"></iframe>
+                <div class="explore-map-caption">
+                  <small>{{ 'discover.explore.mapDisclaimer' | t }}
+                    <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>
+                  </small>
+                  <a [routerLink]="['/menu/venues', focusedMapVenue!.id]">
+                    {{ 'discover.explore.mapDetails' | t }} <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+              }
+            </div>
+          </div>
+          } @else {
+            <div class="pillar-empty explore-map-empty" role="status">
+              @if (venues.length > 0) {
+                <strong>{{ 'discover.explore.mapNoCoordsTitle' | t }}</strong>
+                <span>{{ 'discover.explore.mapNoCoordsText' | t }}</span>
+              } @else {
+                <strong>{{ 'discover.where.emptyTitle' | t }}</strong>
+                @if (nearbyVenuePosition) {
+                  <span>{{ 'discover.where.nearbyEmptyText' | t }}</span>
+                  @if (nearbyVenueRadiusKm < 50) {
+                    <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--radius"
+                      (click)="changeNearbyVenueRadius(50)">{{ 'discover.where.widenRadius' | t }}</button>
+                  }
+                } @else if (sport.trim() || location.trim()) {
+                  <span>{{ 'discover.where.filteredEmptyText' | t }}</span>
+                  @if (sport.trim() && location.trim()) {
+                    <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--sport"
+                      (click)="broadenVenueSearch('sport')">{{ 'discover.where.removeSport' | t }}</button>
+                    <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--city"
+                      (click)="broadenVenueSearch('city')">{{ 'discover.where.removeCity' | t }}</button>
+                  } @else {
+                    <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--all"
+                      (click)="broadenVenueSearch('all')">{{ 'discover.where.removeFilters' | t }}</button>
+                  }
+                } @else {
+                  <span>{{ 'discover.where.emptyText' | t }}</span>
+                }
               }
             </div>
           }
 
-          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues"
-             [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
-            {{ 'discover.where.showAll' | t }} <span aria-hidden="true">→</span>
-          </a>
-
-          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues/new"
-             [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
-            {{ 'discover.where.action' | t }} <span>→</span>
-          </a>
+          <div class="explore-map-actions">
+            <a class="explore-main-cta" routerLink="/menu/venues"
+              [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
+              {{ 'discover.where.showAll' | t }} <span aria-hidden="true">→</span>
+            </a>
+            <a class="explore-secondary-cta" routerLink="/menu/venues/new"
+              [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
+              {{ 'discover.where.action' | t }} <span aria-hidden="true">→</span>
+            </a>
+          </div>
         </section>
+      }
 
+      <div class="discovery-grid" [class.is-focused]="activeTab !== 'all'">
         <section class="pillar-panel featured-panel" id="explore-sessions" [attr.hidden]="showSection('sessions') ? null : ''">
           <header class="pillar-heading">
             <div class="pillar-icon">📅</div>

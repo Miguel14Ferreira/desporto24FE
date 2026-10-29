@@ -978,6 +978,8 @@ const PT: Dictionary = {
   'home.aboutD24': 'Conhecer o Jynlo',
   'home.contactUs': 'Falar connosco',
 
+  'discover.explore.mapNoCoordsTitle': 'Ainda sem recintos disponíveis no mapa',
+  'discover.explore.mapNoCoordsText': 'Os recintos encontrados não têm coordenadas registadas. Consulta a lista completa para veres os detalhes.',
   'discover.explore.mapSection': 'Mapa de recintos',
   'discover.explore.mapKicker': 'Localização real',
   'discover.explore.mapHeadline': 'Encontra o lugar certo no mapa',
