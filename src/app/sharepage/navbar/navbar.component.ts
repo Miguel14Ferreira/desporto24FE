@@ -2,6 +2,9 @@ import { Component, ElementRef, HostListener, OnDestroy, OnInit, ChangeDetection
 import { NavigationEnd, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { AuthenticationService } from 'src/app/services/authethication.service';
+import { MyProfileService } from 'src/app/services/my-profile.service';
+import { MyProfile } from 'src/app/pages/model/my-profile';
+import { environment } from 'src/environment/environment';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
 import { NotificationApiService } from 'src/app/services/notification-api.service';
 import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime.service';
@@ -33,6 +36,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   authenticated = false;
   admin = false;
   loggingOut = false;
+  accountProfile: MyProfile | null = null;
+  private profileAccount: string | null = null;
+  private accountProfileRequest?: Subscription;
   private notificationTimer?: ReturnType<typeof setInterval>;
   private unreadRequest?: Subscription;
   private toastLookup?: Subscription;
@@ -50,6 +56,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private elementRef: ElementRef<HTMLElement>,
     private router: Router,
     private authService: AuthenticationService,
+    private myProfileService: MyProfileService,
     private notificationService: NotificationApiService,
     private realtimeService: DirectChatRealtimeService,
     private inboxApi: InboxApiService,
@@ -114,6 +121,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.unreadRequest?.unsubscribe();
       this.toastLookup?.unsubscribe();
       this.groupToastLookup?.unsubscribe();
+      this.accountProfileRequest?.unsubscribe();
       this.dismissChatToast();
       this.dismissGroupToast();
       if (this.notificationTimer) {
@@ -128,6 +136,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
         && this.authService.hasAnyRole('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
       const account = this.authenticated
         ? this.authService.loggedInPerfilname?.toLowerCase() ?? null : null;
+      // Navbar persists across accounts; never render the previous user's
+      // avatar/name, or accept a delayed response from their profile request.
+      if (account !== this.profileAccount) {
+        this.profileAccount = account;
+        this.accountProfileRequest?.unsubscribe();
+        this.accountProfile = null;
+        if (account) this.loadAccountProfile(account);
+        this.closeAccountMenu();
+      }
       if (account !== this.toastAccount) {
         this.toastAccount = account;
         this.seenToastIds.clear();
@@ -405,6 +422,56 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
     setLanguage(language: AppLanguage): void {
       this.i18n.setLanguage(language);
+    }
+
+    get activeAccountUsername(): string {
+      return this.authService.loggedInPerfilname?.trim()
+        || this.accountProfile?.username?.trim()
+        || '';
+    }
+
+    get accountDisplayName(): string {
+      return this.accountProfile?.nickname?.trim()
+        || this.accountProfile?.fullName?.trim()
+        || this.activeAccountUsername;
+    }
+
+    get accountInitials(): string {
+      const value = this.accountDisplayName || this.activeAccountUsername || '?';
+      return value.split(/\s+/).filter(Boolean).slice(0, 2)
+        .map(part => part.charAt(0).toUpperCase()).join('');
+    }
+
+    accountImage(): string | null {
+      const path = this.accountProfile?.profilePicUrl?.trim();
+      if (!path) return null;
+      if (path.startsWith('https://') || path.startsWith('http://') || path.startsWith('data:')) {
+        return path;
+      }
+      return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
+    }
+
+    private loadAccountProfile(account: string): void {
+      this.accountProfileRequest = this.myProfileService.get().pipe(timeout(8_000)).subscribe({
+        next: profile => {
+          // Fail closed if a logout/login happens during an in-flight request.
+          if (this.authenticated && this.profileAccount === account
+            && this.authService.loggedInPerfilname?.toLowerCase() === account
+            && profile.username?.toLowerCase() === account) {
+            this.accountProfile = profile;
+          }
+        },
+        error: () => {
+          // Username still appears, even when profile/image is unavailable.
+        }
+      });
+    }
+
+    switchAccount(): void {
+      // The app supports one authenticated session in this browser. Changing
+      // account signs out first, then opens the normal login flow.
+      this.closeAccountMenu();
+      this.logout();
     }
 
     @HostListener('document:click', ['$event'])

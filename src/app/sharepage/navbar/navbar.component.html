@@ -18,15 +18,50 @@
         </a>
 
         <details class="account-menu">
-          <summary class="jynlo-action jynlo-action--neutral"><span aria-hidden="true">☰</span> Menu</summary>
+          <summary class="jynlo-action jynlo-action--neutral account-identity-trigger"
+            [attr.aria-label]="'nav.account.activeAs' | t:{ username: activeAccountUsername }">
+            <span class="account-identity-avatar" aria-hidden="true">
+              @if (accountImage(); as picture) {
+                <img [src]="picture" alt="" loading="lazy">
+              } @else {
+                <span>{{ accountInitials }}</span>
+              }
+            </span>
+            <span class="account-identity-copy">
+              <small>{{ 'nav.account.active' | t }}</small>
+              <strong>@{{ activeAccountUsername || ('nav.account.profile' | t) }}</strong>
+            </span>
+            <span class="account-identity-chevron" aria-hidden="true">⌄</span>
+          </summary>
           <div class="account-menu__panel">
+            <div class="account-menu__identity">
+              <span class="account-identity-avatar account-identity-avatar--large" aria-hidden="true">
+                @if (accountImage(); as picture) {
+                  <img [src]="picture" alt="" loading="lazy">
+                } @else {
+                  <span>{{ accountInitials }}</span>
+                }
+              </span>
+              <div class="account-menu__identity-copy">
+                <span class="account-menu__status"><span aria-hidden="true">●</span> {{ 'nav.account.active' | t }}</span>
+                <strong>{{ accountDisplayName || ('nav.account.profile' | t) }}</strong>
+                <small>@{{ activeAccountUsername || ('nav.account.profile' | t) }}</small>
+              </div>
+            </div>
+            <div class="account-menu__divider" aria-hidden="true"></div>
             <a class="mobile-only-link" routerLink="/menu/feed" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.feed' | t }}</a>
             <a class="desktop-primary-link" routerLink="/menu/my-sessions" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.activities' | t }}</a>
             <a class="desktop-primary-link" routerLink="/menu/messages" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.messages' | t }}</a>
-            <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.profile' | t }}</a>
+            <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.account.viewProfile' | t }}</a>
             @if (admin) {
               <a routerLink="/menu/admin" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'admin.eyebrow' | t }}</a>
             }
+            <button type="button" class="account-menu__switch"
+              [disabled]="loggingOut" (click)="switchAccount()">
+              <span aria-hidden="true">⇄</span>
+              {{ 'nav.account.switch' | t }}
+            </button>
+            <div class="account-menu__divider" aria-hidden="true"></div>
             <div class="language-switch" aria-label="Language selector">
               <button type="button" [class.active-language]="i18n.currentLanguage === 'pt'" (click)="setLanguage('pt')">PT</button>
               <span>/</span>

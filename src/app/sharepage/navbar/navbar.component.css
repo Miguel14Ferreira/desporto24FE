@@ -350,3 +350,136 @@
   .jynlo-chat-toast { grid-template-columns: 34px minmax(0, 1fr) 26px; gap: .6rem; padding: .8rem; }
   .jynlo-chat-toast__icon { width: 34px; height: 34px; }
 }
+
+/* Compact, persistent account identity. Usernames disambiguate multiple logins,
+   while profile images/initials reuse the same shapes as the dashboard. */
+.account-menu > summary.account-identity-trigger {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: .58rem;
+  min-height: 43px;
+  max-width: 215px;
+  padding: .3rem .68rem .3rem .35rem;
+  border: 1px solid rgba(58,219,173,.46);
+  border-radius: 999px;
+  color: #f1fffc;
+  background: linear-gradient(115deg,#12363d,#0d2735);
+  cursor: pointer;
+  transition: background .2s,border-color .2s,box-shadow .2s;
+}
+.account-menu > summary.account-identity-trigger::-webkit-details-marker { display: none; }
+.account-menu > summary.account-identity-trigger:hover,
+.account-menu[open] > summary.account-identity-trigger {
+  background: #174740;
+  border-color: #3be5b2;
+  box-shadow: 0 0 0 3px rgba(59,229,178,.12);
+}
+.account-menu > summary.account-identity-trigger:focus-visible {
+  outline: 3px solid rgba(59,229,178,.65); outline-offset: 2px;
+}
+.account-identity-avatar {
+  flex: none;
+  width: 33px;
+  height: 33px;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 1px solid rgba(82,233,181,.5);
+  background: linear-gradient(135deg,#215c56,#214257);
+  display: grid;
+  place-items: center;
+  color: #d4fff0;
+  font-size: .79rem;
+  font-weight: 900;
+  letter-spacing: .015em;
+}
+.account-identity-avatar img { width:100%;height:100%;display:block;object-fit:cover; }
+.account-identity-avatar--large { width:49px;height:49px;font-size:1.02rem; }
+.account-identity-copy { min-width:0;display:grid;gap:1px;text-align:left; }
+.account-identity-copy small {
+  color: #7fe9c1; font-size:.58rem;font-weight:850;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.account-identity-copy strong {
+  max-width: 125px;
+  color:#f4fffc;font-size:.77rem;font-weight:850;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.account-identity-chevron { color:#76efd0;font-size:1.3rem;line-height:1;transition:transform .18s; }
+.account-menu[open] .account-identity-chevron { transform: rotate(180deg); }
+.account-menu__panel {
+  min-width: 265px;
+  max-width: min(320px, calc(100vw - 2rem));
+  border-radius: 1rem;
+  border: 1px solid rgba(65,219,174,.35);
+  padding:.68rem;
+  gap:.2rem;
+  background: linear-gradient(150deg, #102f39, #0a1c2d 80%);
+  box-shadow: 0 20px 52px rgba(0,0,0,.48);
+}
+.account-menu__identity {
+  display:flex;gap:.7rem;align-items:center;padding:.35rem .3rem .6rem;
+  min-width:0;
+}
+.account-menu__identity-copy { display:grid;min-width:0;gap:.15rem; }
+.account-menu__identity-copy strong {
+  color:#f5fffc;font-size:.91rem;overflow-wrap:anywhere;
+}
+.account-menu__identity-copy small {
+  color:#aecbd0;font-size:.77rem;overflow-wrap:anywhere;
+}
+.account-menu__status {
+  color:#64eaba;font-size:.66rem;font-weight:850;
+  text-transform:uppercase;letter-spacing:.055em;
+}
+.account-menu__status span { margin-right:.15rem;font-size:.56rem; }
+.account-menu__divider { margin:.32rem 0;border-top:1px solid rgba(127,200,183,.17); }
+.account-menu__panel a,
+.account-menu__panel .account-menu__switch {
+  display:flex;align-items:center;
+  min-height:38px;padding:.55rem .75rem;
+  border-radius:.7rem;
+  font-size:.83rem;font-weight:750;color:#dceeea;
+}
+.account-menu__panel a:hover,
+.account-menu__panel .account-menu__switch:hover:not(:disabled) {
+  background: rgba(64,230,173,.13);color:#e7fff7;
+}
+.account-menu__panel .account-menu__switch {
+  width:100%;gap:.6rem;cursor:pointer;border:0;
+  background:transparent;text-align:left;font-family:inherit;
+}
+.account-menu__switch > span {color:#64eaba;font-size:1.14rem;}
+.account-menu__switch:disabled {opacity:.6;cursor:wait;}
+.account-menu__switch:focus-visible {
+  outline:2px solid #59e5b3;outline-offset:2px;
+}
+.account-menu__panel .language-switch {border-color:rgba(64,230,173,.22);}
+@media (max-width: 900px) {
+  .account-menu > summary.account-identity-trigger { max-width: 100%; }
+  .account-menu__panel {right:1rem;top:auto;}
+}
+@media (max-width: 620px) {
+  .account-menu > summary.account-identity-trigger {
+    width:43px;min-width:43px;min-height:43px;
+    padding:.28rem;justify-content:center;
+  }
+  .account-identity-copy,.account-identity-chevron {display:none;}
+  .account-menu__panel {right:max(.5rem,env(safe-area-inset-right));}
+}
+
+/* On mobile the navigation links scroll horizontally. Pin the account identity
+   to the brand row so it remains visible regardless of which link is in view. */
+@media (max-width: 900px) {
+  .site-nav__links > .account-menu {
+    position: fixed;
+    top: .62rem;
+    right: max(1rem, env(safe-area-inset-right));
+    z-index: 15;
+  }
+  .site-nav__links > .account-menu .account-menu__panel {
+    position: fixed;
+    top: 3.65rem;
+    right: max(1rem, env(safe-area-inset-right));
+  }
+}
