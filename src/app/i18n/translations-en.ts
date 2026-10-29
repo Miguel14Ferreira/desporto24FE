@@ -1,5 +1,10 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'nav.account.active': 'Active account',
+  'nav.account.activeAs': 'Active account: @{{username}}. Open account menu',
+  'nav.account.profile': 'Profile',
+  'nav.account.viewProfile': 'View my profile',
+  'nav.account.switch': 'Switch account',
   'communities.inlineSpeed.trialOrderWarning': 'The jury selection differs from the recorded additional trial placings',
   'communities.inlineSpeed.trialOrderWarningHint': 'A skater excluded by this selection finished ahead of a selected skater in a recorded trial. The jury may decide differently, but must give a specific explanation for the exception.',
   'communities.inlineSpeed.trialOrderExceptionReason': 'Official reason for overriding the trial finish order (20–500 characters)',
