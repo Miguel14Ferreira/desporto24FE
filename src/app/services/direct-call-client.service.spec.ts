@@ -225,6 +225,129 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     expect(calls.state$.value).toBeNull();
   });
 
+  it('recovers camera publication using another available camera when default is busy', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake(() => room),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants:new Map(),
+      localParticipant:{
+        setMicrophoneEnabled:jasmine.createSpy('microphone').and.resolveTo(),
+        setCameraEnabled:jasmine.createSpy('camera').and.callFake(async (_enabled:boolean,options?:any)=>{
+          if (!options) throw new DOMException('Another application is using the camera','NotReadableError');
+          return undefined;
+        })
+      }
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    calls.devices$.next([{kind:'videoinput',deviceId:'usb-camera',groupId:'a',label:'USB camera'} as MediaDeviceInfo]);
+    const starting=calls.start('bea','video');
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'recovered-camera',peer:'bea',media:'video',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    expect(room.localParticipant.setCameraEnabled).toHaveBeenCalledWith(true, {
+      deviceId:{exact:'usb-camera'}
+    });
+    expect(calls.state$.value?.cameraEnabled).toBeTrue();
+    expect(calls.state$.value?.error).toBeUndefined();
+    expect(calls.selectedDevices$.value.videoinput).toBe('usb-camera');
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/recovered-camera/end')).flush(null);
+  });
+
+  it('preserves permission-denied camera diagnostics and never retries hardware automatically', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake(() => room),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants:new Map(),
+      localParticipant:{
+        setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo(),
+        setCameraEnabled:jasmine.createSpy('camera').and.rejectWith(
+          new DOMException('Camera access denied','NotAllowedError'))
+      }
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    calls.devices$.next([{kind:'videoinput',deviceId:'another',label:'Another'} as MediaDeviceInfo]);
+    const starting=calls.start('bea','video');
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'camera-denied',peer:'bea',media:'video',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    expect(room.localParticipant.setCameraEnabled).toHaveBeenCalledTimes(1);
+    expect(calls.state$.value?.cameraEnabled).toBeFalse();
+    expect(calls.state$.value?.error).toBe('calls.cameraDenied');
+    expect(room.disconnect).not.toHaveBeenCalled();
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/camera-denied/end')).flush(null);
+  });
+
+  it('allows selection of camera hardware during a call and refuses vanished devices', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake(() => room),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      switchActiveDevice:jasmine.createSpy('switch').and.resolveTo(true),
+      remoteParticipants:new Map(),
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'select-device',peer:'bea',media:'voice',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    calls.devices$.next([{kind:'audioinput',deviceId:'mic-2',label:'USB microphone'} as MediaDeviceInfo]);
+    await calls.selectDevice('audioinput','missing');
+    expect(calls.state$.value?.error).toBe('calls.deviceMissing');
+    expect(room.switchActiveDevice).not.toHaveBeenCalled();
+    await calls.selectDevice('audioinput','mic-2');
+    expect(room.switchActiveDevice).toHaveBeenCalledWith('audioinput','mic-2');
+    expect(calls.selectedDevices$.value.audioinput).toBe('mic-2');
+    expect(calls.state$.value?.error).toBeUndefined();
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/select-device/end')).flush(null);
+  });
+
+  it('keeps the same call duration across a temporary LiveKit reconnection', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners=new Map<string,()=>void>();
+    const peers=new Map<string,object>([['peer',{identity:'peer'}]]);
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake((event:string,cb:()=>void)=>{
+        listeners.set(event,cb);return room;
+      }),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants:peers,
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'duration',peer:'bea',media:'voice',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    const started=calls.state$.value?.startedAt;
+    expect(started).toEqual(jasmine.any(Number));
+    peers.clear();
+    listeners.get(RoomEvent.ParticipantDisconnected)?.();
+    expect(calls.state$.value?.startedAt).toBe(started);
+    peers.set('peer',{identity:'peer'});
+    listeners.get(RoomEvent.ParticipantConnected)?.();
+    expect(calls.state$.value?.startedAt).toBe(started);
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/duration/end')).flush(null);
+  });
+
   it('allows an established call to continue without microphone permission', async () => {
     http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     const room = {

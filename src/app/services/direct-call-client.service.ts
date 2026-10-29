@@ -3,7 +3,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { BehaviorSubject, filter, firstValueFrom, Subscription, TimeoutError, timeout } from 'rxjs';
-import { Room, RoomEvent } from 'livekit-client';
+import { ConnectionQuality, MediaDeviceFailure, Room, RoomEvent } from 'livekit-client';
 import { environment } from 'src/environment/environment';
 import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
 import { DirectCallToneService } from './direct-call-tone.service';
@@ -21,6 +21,8 @@ export interface DirectCallState {
   error?: string;
   micEnabled: boolean;
   cameraEnabled: boolean;
+  /** Timestamp is set once when connected, retained across reconnections. */
+  startedAt?: number;
 }
 interface CallSession {
   callId: string;
@@ -53,6 +55,10 @@ export class DirectCallClientService implements OnDestroy {
   /** Only display LiveKit's manual audio-unlock control if autoplay was blocked. */
   readonly audioPlaybackBlocked$ = new BehaviorSubject<boolean>(false);
   readonly ringtoneBlocked$: BehaviorSubject<boolean>;
+  readonly devices$ = new BehaviorSubject<MediaDeviceInfo[]>([]);
+  readonly selectedDevices$ = new BehaviorSubject<Partial<Record<MediaDeviceKind, string>>>({});
+  readonly connectionQuality$ = new BehaviorSubject<'unknown'|'excellent'|'good'|'poor'|'lost'>('unknown');
+  readonly busyMedia$ = new BehaviorSubject<boolean>(false);
   room: Room | null = null;
   private readonly base = environment.apiUrl + '/api/calls/direct';
   private readonly jwt = new JwtHelperService();
@@ -60,6 +66,8 @@ export class DirectCallClientService implements OnDestroy {
   private identityToken: string | null = null;
   private ringTimer?: ReturnType<typeof setTimeout>;
   private peerExitTimer?: ReturnType<typeof setTimeout>;
+  private refreshingDevices = false;
+  private readonly onDevicesChanged = (): void => { void this.refreshDevices(); };
   private generation = 0;
   private checking = false;
   private recoveringPending = false;
@@ -81,6 +89,7 @@ export class DirectCallClientService implements OnDestroy {
     window.addEventListener('storage', this.onStorage);
     window.addEventListener('focus', this.onForeground);
     document.addEventListener('visibilitychange', this.onForeground);
+    navigator.mediaDevices?.addEventListener?.('devicechange', this.onDevicesChanged);
     // Recover RINGING invitations even if the socket dropped the event.
     this.pendingTimer = setInterval(() => this.recoverPendingCall(), 8_000);
     if (this.realtime.connected$) {
@@ -284,20 +293,135 @@ export class DirectCallClientService implements OnDestroy {
   }
 
   async setMicrophone(enabled: boolean): Promise<void> {
-    if (!this.room) return;
+    const room=this.room;
+    if (!room) return;
     try {
-      await this.room.localParticipant.setMicrophoneEnabled(enabled);
-      this.update({micEnabled:enabled,error:undefined});
-    } catch { this.update({error:'calls.microphoneAccessError'}); }
+      await room.localParticipant.setMicrophoneEnabled(enabled);
+      if (room === this.room) this.update({micEnabled:enabled,error:undefined});
+    } catch (error) {
+      if (room === this.room) this.update({error:this.mediaFailure(error,'microphone')});
+    }
+    void this.refreshDevices();
   }
 
-  async setCamera(enabled: boolean): Promise<void> {
-    if (!this.room || this.state$.value?.media !== 'video') return;
+  /** Device labels are revealed only when the browser grants permission. */
+  async refreshDevices(): Promise<void> {
+    if (this.refreshingDevices || !this.room || !navigator.mediaDevices?.enumerateDevices) return;
+    const room=this.room;
+    this.refreshingDevices=true;
     try {
-      await this.room.localParticipant.setCameraEnabled(enabled);
-      this.update({cameraEnabled:enabled,error:undefined});
-      this.mediaChanged$.next(this.mediaChanged$.value+1);
-    } catch { this.update({error:'calls.cameraAccessError'}); }
+      const devices=await navigator.mediaDevices.enumerateDevices();
+      if (room !== this.room) return;
+      this.devices$.next(devices.filter(d => ['videoinput','audioinput','audiooutput'].includes(d.kind)));
+      const selected={...this.selectedDevices$.value};
+      for (const kind of ['videoinput','audioinput','audiooutput'] as MediaDeviceKind[]) {
+        if (selected[kind] && !devices.some(d=>d.kind===kind && d.deviceId===selected[kind])) {
+          delete selected[kind];
+        }
+      }
+      this.selectedDevices$.next(selected);
+    } catch {
+      // Enumerating media devices is optional and may be blocked by policy.
+    } finally {
+      this.refreshingDevices=false;
+    }
+  }
+
+  /** Translate native browser/LiveKit errors into actionable PT/EN i18n codes. */
+  private mediaFailure(error: unknown, kind: 'camera'|'microphone'): string {
+    const name=error && typeof error==='object' && 'name' in error
+      ? String((error as {name:unknown}).name) : '';
+    const failure=MediaDeviceFailure.getFailure(error);
+    const prefix=kind==='camera' ? 'calls.camera' : 'calls.microphone';
+    if (failure===MediaDeviceFailure.PermissionDenied
+      || ['NotAllowedError','PermissionDeniedError','SecurityError'].includes(name)) return prefix+'Denied';
+    if (failure===MediaDeviceFailure.NotFound
+      || ['NotFoundError','DevicesNotFoundError'].includes(name)) return prefix+'Missing';
+    if (failure===MediaDeviceFailure.DeviceInUse
+      || ['NotReadableError','TrackStartError'].includes(name)) return prefix+'Busy';
+    if (['OverconstrainedError','ConstraintNotSatisfiedError'].includes(name)) return prefix+'InvalidDevice';
+    return kind==='camera' ? 'calls.cameraAccessError' : 'calls.microphoneAccessError';
+  }
+
+  /**
+   * Always try the system camera first, without a stale persisted deviceId.
+   * If it is missing or unavailable, try one of the enumerated alternatives.
+   * Never silently retry permission denial (browser requires user action).
+   */
+  async setCamera(enabled: boolean): Promise<void> {
+    const room=this.room;
+    if (!room || this.state$.value?.media!=='video' || this.busyMedia$.value) return;
+    this.busyMedia$.next(true);
+    try {
+      if (!enabled) {
+        await room.localParticipant.setCameraEnabled(false);
+      } else {
+        try {
+          await room.localParticipant.setCameraEnabled(true);
+        } catch (primary) {
+          const code=this.mediaFailure(primary,'camera');
+          if (code==='calls.cameraDenied') throw primary;
+          let recovered=false;
+          if (!this.devices$.value.some(d=>d.kind==='videoinput')) await this.refreshDevices();
+          const devices=this.devices$.value.filter(d=>d.kind==='videoinput' && d.deviceId && d.deviceId!=='default');
+          for (const device of devices.slice(0,3)) {
+            if (room!==this.room) return;
+            try {
+              await room.localParticipant.setCameraEnabled(true,{deviceId:{exact:device.deviceId}});
+              this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:device.deviceId});
+              recovered=true;break;
+            } catch { /* try another available camera */ }
+          }
+          if (!recovered) throw primary;
+        }
+      }
+      if (room===this.room) {
+        this.update({cameraEnabled:enabled,error:undefined});
+        this.mediaChanged$.next(this.mediaChanged$.value+1);
+      }
+    } catch (error) {
+      if (room===this.room) this.update({cameraEnabled:false,error:this.mediaFailure(error,'camera')});
+    } finally {
+      this.busyMedia$.next(false);
+      void this.refreshDevices();
+    }
+  }
+
+  async selectDevice(kind: MediaDeviceKind, deviceId: string): Promise<void> {
+    const room=this.room;
+    if (!room || this.busyMedia$.value || !['videoinput','audioinput','audiooutput'].includes(kind)) return;
+    // A client supplied ID cannot select a device which has disappeared.
+    if (!this.devices$.value.some(d=>d.deviceId===deviceId && d.kind===kind)) {
+      this.update({error:'calls.deviceMissing'});
+      void this.refreshDevices();
+      return;
+    }
+    this.busyMedia$.next(true);
+    try {
+      if (kind==='videoinput' && !this.state$.value?.cameraEnabled) {
+        await room.localParticipant.setCameraEnabled(true,{deviceId:{exact:deviceId}});
+        if (room===this.room) this.update({cameraEnabled:true,error:undefined});
+      } else if (kind==='audioinput' && !this.state$.value?.micEnabled) {
+        await room.localParticipant.setMicrophoneEnabled(true,{deviceId:{exact:deviceId}});
+        if (room===this.room) this.update({micEnabled:true,error:undefined});
+      } else {
+        const switched=await room.switchActiveDevice(kind,deviceId);
+        if (!switched) throw new DOMException('Device was not switched','NotReadableError');
+      }
+      if (room===this.room) {
+        this.selectedDevices$.next({...this.selectedDevices$.value,[kind]:deviceId});
+        this.update({error:undefined});
+        this.mediaChanged$.next(this.mediaChanged$.value+1);
+      }
+    } catch (error) {
+      if (room===this.room) this.update({error:kind==='videoinput'
+        ? this.mediaFailure(error,'camera')
+        : kind==='audioinput' ? this.mediaFailure(error,'microphone')
+        : 'calls.speakerUnavailable'});
+    } finally {
+      this.busyMedia$.next(false);
+      void this.refreshDevices();
+    }
   }
 
   async allowAudio(): Promise<void> {
@@ -352,6 +476,14 @@ export class DirectCallClientService implements OnDestroy {
     const room=this.createRoom();
     this.room=room;
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
+    room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
+      if (room!==this.room || participant!==room.localParticipant) return;
+      const status=quality===ConnectionQuality.Excellent ? 'excellent'
+        : quality===ConnectionQuality.Good ? 'good'
+        : quality===ConnectionQuality.Poor ? 'poor'
+        : quality===ConnectionQuality.Lost ? 'lost' : 'unknown';
+      this.connectionQuality$.next(status);
+    });
     room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
       if (this.room === room)
         this.audioPlaybackBlocked$.next(room.canPlaybackAudio === false);
@@ -394,24 +526,28 @@ export class DirectCallClientService implements OnDestroy {
     }
     if (version!==this.generation) {void room.disconnect();return;}
     this.audioPlaybackBlocked$.next(room.canPlaybackAudio === false);
+    void this.refreshDevices();
     // Microphone/camera permission failures should not end an established
     // room: stay connected as listener and let the user retry the devices.
     let micEnabled=false;
     let cameraEnabled=false;
+    let microphoneError: string | undefined;
     try {
       await room.localParticipant.setMicrophoneEnabled(true);
       micEnabled=true;
-    } catch {
-      if (version===this.generation) this.update({error:'calls.microphoneAccessError'});
+    } catch (error) {
+      microphoneError=this.mediaFailure(error,'microphone');
+      if (version===this.generation) this.update({error:microphoneError});
     }
     if (version!==this.generation) {void room.disconnect();return;}
     if (session.media==='video') {
-      try {
-        await room.localParticipant.setCameraEnabled(true);
-        cameraEnabled=true;
-      } catch {
-        if (version===this.generation) this.update({error:'calls.cameraAccessError'});
-      }
+      // Reuse the same safe fallback and browser-specific diagnostics as the
+      // in-call Retry camera control, instead of a separate fragile path.
+      this.update({micEnabled});
+      await this.setCamera(true);
+      cameraEnabled=this.state$.value?.cameraEnabled === true;
+      // An unrelated successful camera publication must not hide a blocked mic.
+      if (microphoneError && cameraEnabled) this.update({error:microphoneError});
     }
     if (version!==this.generation) {void room.disconnect();return;}
     this.update({micEnabled:micEnabled,cameraEnabled:cameraEnabled});
@@ -468,7 +604,10 @@ export class DirectCallClientService implements OnDestroy {
 
   private update(patch: Partial<DirectCallState>): void {
     const state=this.state$.value;
-    if (state) this.state$.next({...state,...patch});
+    if (state) {
+      const startedAt=patch.phase==='active' ? (state.startedAt || Date.now()) : state.startedAt;
+      this.state$.next({...state,...patch,startedAt});
+    }
   }
 
   private dropCall(): void {
@@ -480,6 +619,10 @@ export class DirectCallClientService implements OnDestroy {
     if (room) room.disconnect();
     this.state$.next(null);
     this.audioPlaybackBlocked$.next(false);
+    this.devices$.next([]);
+    this.selectedDevices$.next({});
+    this.connectionQuality$.next('unknown');
+    this.busyMedia$.next(false);
     this.mediaChanged$.next(this.mediaChanged$.value+1);
   }
 
@@ -487,6 +630,7 @@ export class DirectCallClientService implements OnDestroy {
     window.removeEventListener('storage',this.onStorage);
     window.removeEventListener('focus',this.onForeground);
     document.removeEventListener('visibilitychange',this.onForeground);
+    navigator.mediaDevices?.removeEventListener?.('devicechange',this.onDevicesChanged);
     if (this.pendingTimer) clearInterval(this.pendingTimer);
     this.subscriptions.unsubscribe();
     this.dropCall();

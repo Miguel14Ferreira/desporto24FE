@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthenticationService } from './services/authethication.service';
@@ -14,7 +14,10 @@ import { registrationSessionReturnUrl, registrationCommunityReturnUrl, takeRegis
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('callOverlayOutlet', { read: ViewContainerRef })
+  private callOverlayOutlet?: ViewContainerRef;
+  private disposed=false;
   title = 'desporto24';
 
   constructor(
@@ -58,7 +61,21 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
+  ngAfterViewInit(): void {
+    // Do not include the meeting UI and its styles in the initial Angular
+    // bundle. Load immediately after boot, so incoming call invitations still
+    // have a global route-independent surface.
+    void import('./shared/direct-call-overlay.component').then(({DirectCallOverlayComponent}) => {
+      if (!this.disposed && this.callOverlayOutlet) {
+        this.callOverlayOutlet.createComponent(DirectCallOverlayComponent);
+      }
+    }).catch(() => {
+      // A transient chunk download failure must not crash the rest of Jynlo.
+    });
+  }
+
   ngOnDestroy(): void {
+    this.disposed=true;
     this.onlinePresence.stop();
   }
 
