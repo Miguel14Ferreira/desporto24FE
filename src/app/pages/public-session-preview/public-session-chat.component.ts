@@ -39,6 +39,9 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   sending = false;
   sendError = '';
   readError = '';
+  /** A pending login candidate is not proof that the chat API accepted a token. */
+  loginRequired = false;
+  private messageRequest?: Subscription;
   private readonly subscriptions = new Subscription();
   private interval?: ReturnType<typeof setInterval>;
   private currentId: number | null = null;
@@ -87,19 +90,36 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   private initForSession(): void {
     if (this.disposed) return;
     if (!this.authenticated || !Number.isSafeInteger(this.sessionId) || this.sessionId <= 0) {
+      this.stopMessageRequest();
       this.currentId = null;
       this.allowed = false;
       this.messages = [];
       this.readError = '';
+      this.loginRequired = false;
       return;
     }
     if (this.currentId !== this.sessionId) {
+      // Changing invitations must not be blocked by an old outstanding request.
+      this.stopMessageRequest();
       this.currentId = this.sessionId;
       this.allowed = false;
       this.messages = [];
       this.readError = '';
       this.messageText = '';
+      this.loginRequired = false;
     }
+    this.loadMessages(!this.allowed);
+  }
+
+  private stopMessageRequest(): void {
+    this.messageRequest?.unsubscribe();
+    this.messageRequest = undefined;
+    this.checking = false;
+    this.loading = false;
+  }
+
+  retryChatAccess(): void {
+    if (!this.authenticated || !this.chatOpen || this.checking) return;
     this.loadMessages(true);
   }
 
@@ -107,8 +127,13 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
     if (!this.authenticated || !this.chatOpen || !this.currentId || this.checking) return;
     const requestId = this.currentId;
     this.checking = true;
-    if (indicateLoading) this.loading = true;
-    this.http.get<SessionMessage[]>(environment.apiUrl + '/api/sessions/' +
+    if (indicateLoading) {
+      this.loading = true;
+      this.readError = '';
+    }
+    // If network or auth refresh hangs, timeout(10000) always resolves the
+    // first-screen loading state. Never imply access before an authorised GET.
+    this.messageRequest = this.http.get<SessionMessage[]>(environment.apiUrl + '/api/sessions/' +
       requestId + '/messages').pipe(timeout(10000),finalize(() => {
         this.checking = false;
         this.loading = false;
@@ -116,6 +141,7 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
       next: rows => {
         if (this.disposed || requestId !== this.currentId || !this.authenticated) return;
         this.allowed = true;
+        this.loginRequired = false;
         this.readError = '';
         this.messages = Array.isArray(rows)
           ? rows.filter(m => m && m.sessionId === requestId && Number.isSafeInteger(m.id))
@@ -126,11 +152,11 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
       error: (error: unknown) => {
         if (this.disposed || requestId !== this.currentId) return;
         if (error instanceof HttpErrorResponse && [401,403,404].includes(error.status)) {
-          // Attendance was cancelled, the caller is not enrolled, or the game
-          // is no longer available. Do not keep previously loaded chat visible.
+          // Never reveal messages to an unauthorised invite holder.
           this.allowed = false;
           this.messages = [];
-          this.readError = '';
+          this.loginRequired = error.status === 401;
+          this.readError = error.status === 404 ? 'publicSession.chatUnavailable' : '';
         } else {
           this.readError = 'publicSession.chatLoadError';
         }
@@ -180,6 +206,7 @@ export class PublicSessionChatComponent implements OnInit, OnChanges, OnDestroy 
   ngOnDestroy(): void {
     this.disposed = true;
     if (this.interval) clearInterval(this.interval);
+    this.stopMessageRequest();
     this.subscriptions.unsubscribe();
   }
 }
