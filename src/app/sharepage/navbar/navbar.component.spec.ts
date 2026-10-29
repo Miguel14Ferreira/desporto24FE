@@ -635,7 +635,8 @@ describe('NavbarComponent', () => {
     const details: HTMLDetailsElement = fixture.nativeElement.querySelector('.account-menu');
     details.open = true;
     fixture.detectChanges();
-    expect(details.textContent).toContain('Trocar de conta');
+    expect(details.textContent).not.toContain('Trocar de conta');
+    expect(details.querySelectorAll('.logout-action').length).toBe(1);
     expect(details.querySelector('a[href="/menu/dadosPerfil"]')?.textContent).toContain('Ver o meu perfil');
     expect(details.querySelector('.language-switch')).not.toBeNull();
   });
@@ -698,20 +699,21 @@ describe('NavbarComponent', () => {
     expect(component.accountProfile).toBeNull();
   });
 
-  it('switches account by invalidating the active session through the existing safe logout', () => {
+  it('offers a single logout action instead of two identical account switching controls', () => {
     (authService as any).loggedInPerfilname = 'bea';
     authService.hasSessionCandidate.and.returnValue(true);
     (component as any).syncAuthenticatedState();
     fixture.detectChanges();
     const details: HTMLDetailsElement = fixture.nativeElement.querySelector('.account-menu');
     details.open = true;
-    const button: HTMLButtonElement = details.querySelector('.account-menu__switch')!;
-    expect(button.disabled).toBeFalse();
+    expect(details.querySelectorAll('.logout-action').length).toBe(1);
+    expect(details.querySelector('.account-menu__switch')).toBeNull();
+    expect(details.textContent).not.toContain('Trocar de conta');
+    const button: HTMLButtonElement = details.querySelector('.logout-action')!;
     button.click();
     expect(authService.terminarSessao).toHaveBeenCalledTimes(1);
     expect(authService.logOut).toHaveBeenCalledTimes(1);
     expect(component.loggingOut).toBeTrue();
-    expect(details.open).toBeFalse();
   });
 
 
