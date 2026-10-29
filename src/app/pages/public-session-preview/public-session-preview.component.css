@@ -273,6 +273,28 @@ h1 {
 .invitation-inline-login input:focus-visible {outline:3px solid #7dd3fc;outline-offset:2px}
 .invitation-have-account,.invitation-no-account,.invitation-first-confirm {width:100%;min-height:48px}
 .invitation-other-login {margin-top:.35rem}
+.invite-auth-divider {
+  display:flex;align-items:center;gap:.75rem;margin:.3rem 0;color:#c6e6ed;
+  font-size:.79rem;font-weight:750
+}
+.invite-auth-divider::before,.invite-auth-divider::after {
+  content:'';height:1px;flex:1;background:rgba(125,211,252,.25)
+}
+.invite-google-auth {display:grid;gap:.65rem;min-width:0}
+.invite-google-button {display:flex;justify-content:center;min-height:42px;max-width:100%;overflow:hidden}
+.invite-google-auth p {margin:0}
+.invite-google-onboarding {display:grid;gap:.6rem;padding:.8rem;border:1px solid rgba(125,211,252,.3);border-radius:.75rem}
+.invite-mfa-form input {font-size:1.14rem;font-weight:800;letter-spacing:.18em;font-variant-numeric:tabular-nums}
+.invite-mfa-countdown {display:flex;align-items:center;justify-content:space-between;gap:.7rem;
+  padding:.7rem .85rem;border:1px solid rgba(125,211,252,.28);border-radius:.75rem;
+  background:rgba(125,211,252,.07)}
+.invite-mfa-countdown strong {font-size:1.1rem;color:#91fff0;font-variant-numeric:tabular-nums}
+.guest-rsvp .invite-mfa-feedback {color:#a7f3d0}
+.invite-mfa-resend {justify-self:stretch;min-height:44px}
+@media(max-width:480px){
+  .invite-google-button {justify-content:flex-start}
+  .invite-mfa-countdown {flex-wrap:wrap}
+}
 .member-rsvp {
   display:grid;gap:.75rem;padding:1.2rem;margin:.95rem 0 0;border:1px solid rgba(46,216,181,.38);
   border-radius:1rem;background:linear-gradient(125deg,rgba(7,53,63,.72),rgba(8,28,45,.7));
