@@ -1547,7 +1547,7 @@ describe('PublicSessionPreviewComponent', () => {
   it('links a verified invitation to the exact Google Maps pin, never the city text', () => {
     const token='P'.repeat(43);
     routeQueryParamMap=convertToParamMap({guest:token});
-    http.post.and.callFake((url:string) => {
+    (http.post as jasmine.Spy).and.callFake((url:string) => {
       if (url.endsWith('/guest-preview')) return of({
         id:42,sport:'Futsal',city:'Campo Grande',
         address:'Campo Grande',venueName:'Campo Grande',
@@ -1577,7 +1577,7 @@ describe('PublicSessionPreviewComponent', () => {
   it('makes login status and optional guest participation clear before choosing a name', () => {
     const token='L'.repeat(43);
     routeQueryParamMap=convertToParamMap({guest:token});
-    http.post.and.callFake((url:string) => {
+    (http.post as jasmine.Spy).and.callFake((url:string) => {
       if (url.endsWith('/guest-preview')) return of({
         id:42,sport:'Futsal',city:'Lisboa',
         gameDate:new Date(Date.now()+3600_000).toISOString(),
