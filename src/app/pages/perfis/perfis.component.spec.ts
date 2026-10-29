@@ -713,6 +713,70 @@ describe('PerfisComponent', () => {
     expect(component.profiles).toEqual([profile]);
   });
 
+  it('shows a compact relationship row and two equal priority actions for friends', () => {
+    service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const panel = root.querySelector<HTMLElement>('.profile-hero > .profile-actions-panel');
+    const relation = panel?.querySelector<HTMLElement>('.profile-relationship-row');
+    const actions = panel?.querySelector<HTMLElement>('.profile-primary-actions');
+    const badge = relation?.querySelector<HTMLElement>('.profile-friend-badge');
+    const following = relation?.querySelector<HTMLButtonElement>('.profile-follow-toggle');
+    const chat = actions?.querySelector<HTMLAnchorElement>('.profile-chat-action');
+    const invite = actions?.querySelector<HTMLButtonElement>('.profile-invite-trigger');
+
+    expect(panel).toBeTruthy();
+    expect(getComputedStyle(panel!).display).toBe('grid');
+    expect(getComputedStyle(actions!).display).toBe('grid');
+    expect(actions?.children.length).toBe(2);
+    expect(relation?.contains(chat!)).toBeFalse();
+    expect(badge?.textContent).toContain(t('friends.title'));
+    expect(badge?.tagName).toBe('SPAN'); // a status, not a disabled button
+    expect(following?.getAttribute('aria-pressed')).toBe('false');
+    expect(chat?.getAttribute('href')).toContain('/menu/messages?kind=direct');
+    expect(invite?.getAttribute('aria-expanded')).toBe('false');
+    invite!.click();
+    fixture.detectChanges();
+    expect(invite?.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelector('#profile-invitation-panel')).toBeTruthy();
+  });
+
+  it('keeps unfollow/follow distinct from friend status and request controls', () => {
+    service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+    const following = fixture.nativeElement.querySelector('.profile-follow-toggle') as HTMLButtonElement | null;
+    expect(following?.getAttribute('aria-pressed')).toBe('false');
+    following!.click();
+    fixture.detectChanges();
+    expect(socialGraphService.follow).toHaveBeenCalledOnceWith('ana');
+    expect(fixture.nativeElement.querySelector('.profile-follow-toggle')?.getAttribute('aria-pressed')).toBe('true');
+    expect(fixture.nativeElement.querySelector('.profile-friend-badge')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.profile-chat-action')).toBeTruthy();
+  });
+
+  it('places a friend request next to invite without showing a false friendship badge', () => {
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+    const actions = fixture.nativeElement.querySelector('.profile-primary-actions') as HTMLElement | null;
+    expect(actions?.querySelector('button.profile-request-action')).toBeTruthy();
+    expect(actions?.querySelector('button.profile-invite-trigger')).toBeTruthy();
+    expect(actions?.children.length).toBe(2);
+    expect(fixture.nativeElement.querySelector('.profile-friend-badge')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.profile-chat-action')).toBeNull();
+  });
+
+  it('does not show primary profile actions on own or blocked profiles', () => {
+    component.profilePage = true;
+    component.selectedProfile = { ...profile, username: 'ana' };
+    spyOn(component, 'isOwnProfile').and.returnValue(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.profile-relation-note')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.profile-primary-actions')?.children.length).toBe(0);
+  });
+
   it('shows the chat instead of another request when the server confirms friendship', () => {
     service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
     routeParams.next(convertToParamMap({ username: 'ana' }));

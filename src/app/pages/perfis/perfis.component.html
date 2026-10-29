@@ -241,60 +241,76 @@
             </div>
           </div>
 
-          <div class="detail-actions jynlo-action-cluster">
-            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
-              <button
-                type="button"
-                class="follow-action jynlo-action jynlo-action--primary"
-                [class.following]="selectedFollowStatus?.followedByMe"
-                [disabled]="followLoading"
-                (click)="toggleFollow(selectedProfile)">
-                @if (followLoading) {
-                  {{ 'common.processing' | t }}
-                } @else if (selectedFollowStatus?.followedByMe) {
-                  {{ 'social.following' | t }}
+          <div class="detail-actions jynlo-action-cluster profile-actions-panel">
+            <!-- Relationship states are secondary to the actions a player can take. -->
+            <div class="profile-relationship-row">
+              @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
+                <button
+                  type="button"
+                  class="follow-action profile-follow-toggle jynlo-action jynlo-action--neutral"
+                  [class.following]="selectedFollowStatus?.followedByMe"
+                  [attr.aria-pressed]="!!selectedFollowStatus?.followedByMe"
+                  [disabled]="followLoading"
+                  (click)="toggleFollow(selectedProfile)">
+                  @if (followLoading) {
+                    {{ 'common.processing' | t }}
+                  } @else if (selectedFollowStatus?.followedByMe) {
+                    {{ 'social.following' | t }}
+                  } @else {
+                    {{ 'social.follow' | t }}
+                  }
+                </button>
+              }
+              @if (isOwnProfile(selectedProfile)) {
+                <span class="profile-relation-note">{{ 'community.ownProfile' | t }}</span>
+              } @else if (selectedBlocked) {
+                <span class="profile-relation-note">{{ 'community.blockedStatus' | t }}</span>
+              } @else if (!friendshipLoading && !friendshipError && isFriend(selectedProfile)) {
+                <span class="friend-status profile-friend-badge" role="status">
+                  <span aria-hidden="true" class="profile-friend-check">✓</span>
+                  {{ 'friends.title' | t }}
+                </span>
+              }
+            </div>
+            <div class="profile-primary-actions">
+              @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
+                @if (friendshipLoading || friendshipError) {
+                  <!-- Do not show an unverified friendship action. -->
+                } @else if (isFriend(selectedProfile)) {
+                  <a
+                    class="primary-action profile-chat-action jynlo-action jynlo-action--primary"
+                    routerLink="/menu/messages"
+                    [queryParams]="{ kind: 'direct', id: selectedProfile.username }">
+                    <svg class="profile-cta-icon" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                         stroke-linejoin="round" aria-hidden="true" focusable="false">
+                      <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8 8 0 0 1-3.2-.7L4 20l1.7-5.3A8 8 0 0 1 5 11.5a7.5 7.5 0 0 1 15 0Z"></path>
+                      <path d="M9 11.5h6"></path>
+                    </svg>
+                    {{ 'friends.openChat' | t }}
+                  </a>
                 } @else {
-                  {{ 'social.follow' | t }}
+                  <button
+                    type="button"
+                    class="primary-action profile-request-action jynlo-action jynlo-action--primary"
+                    [disabled]="actionLoading || friendRequestPending(selectedProfile)"
+                    (click)="sendFriendRequest(selectedProfile)">
+                    @if (friendRequestPending(selectedProfile)) {
+                      {{ 'community.requestPending' | t }}
+                    } @else {
+                      {{ actionLoading ? ('contact.sending' | t) : ('community.sendRequest' | t) }}
+                    }
+                  </button>
                 }
-              </button>
-            }
-
-            @if (isOwnProfile(selectedProfile)) {
-              <span>{{ 'community.ownProfile' | t }}</span>
-            } @else if (selectedBlocked) {
-              <span>{{ 'community.blockedStatus' | t }}</span>
-            } @else if (friendshipLoading || friendshipError) {
-              <!-- Hide friend actions until the current relationship is confirmed. -->
-            } @else if (isFriend(selectedProfile)) {
-              <button type="button" class="friend-status jynlo-action jynlo-action--neutral" disabled>✓ {{ 'friends.title' | t }}</button>
-              <a
-                class="primary-action jynlo-action jynlo-action--primary"
-                routerLink="/menu/messages"
-                [queryParams]="{ kind: 'direct', id: selectedProfile.username }">
-                {{ 'friends.openChat' | t }}
-              </a>
-            } @else {
-              <button
-                type="button"
-                class="primary-action jynlo-action jynlo-action--primary"
-                [disabled]="actionLoading || friendRequestPending(selectedProfile)"
-                (click)="sendFriendRequest(selectedProfile)">
-                @if (friendRequestPending(selectedProfile)) {
-                  {{ 'community.requestPending' | t }}
-                } @else {
-                  {{ actionLoading ? ('contact.sending' | t) : ('community.sendRequest' | t) }}
-                }
-              </button>
-            }
-            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
-              <button type="button" class="profile-invite-trigger"
-                [attr.aria-expanded]="invitePanelOpen"
-                [attr.aria-controls]="'profile-invitation-panel'"
-                (click)="toggleInvitePanel()">
-                <span aria-hidden="true">＋</span>
-                {{ 'profileInvite.cta' | t }}
-              </button>
-            }
+                <button type="button" class="profile-invite-trigger jynlo-action jynlo-action--neutral"
+                  [attr.aria-expanded]="invitePanelOpen"
+                  [attr.aria-controls]="'profile-invitation-panel'"
+                  (click)="toggleInvitePanel()">
+                  <span aria-hidden="true">＋</span>
+                  {{ 'profileInvite.cta' | t }}
+                </button>
+              }
+            </div>
           </div>
           @if (friendshipLoading) {
             <p class="profile-relationship-feedback jynlo-status-line" role="status"
