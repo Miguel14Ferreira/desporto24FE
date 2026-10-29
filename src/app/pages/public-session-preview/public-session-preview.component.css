@@ -270,6 +270,22 @@ h1 {
 .member-rsvp h2 {margin:0;font-size:clamp(1.25rem,2vw,1.5rem)}
 .member-rsvp p {margin:0;color:#d0e4e8;line-height:1.55}
 .member-rsvp .guest-cancel-link {justify-self:start;margin:0;min-height:44px}
+.member-presence-status {
+  display:inline-flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
+  border:1px solid rgba(52,211,153,.4);border-radius:.8rem;
+  background:rgba(16,185,129,.1);color:#b9f6ca;font-weight:800;
+}
+.member-presence-status-dot {width:.65rem;height:.65rem;border-radius:50%;background:#34d399;flex:none}
+.member-rsvp .member-cancel-action {
+  display:inline-flex;align-items:center;justify-content:center;
+  width:100%;box-sizing:border-box;min-height:46px;padding:.75rem 1rem;
+  border:1px solid rgba(251,113,133,.65);border-radius:.8rem;
+  color:#fecdd3;background:rgba(127,29,29,.15);font-weight:800;text-decoration:none;
+}
+.member-rsvp .member-cancel-action:hover {background:rgba(127,29,29,.27);color:#fff}
+.member-rsvp .guest-cancel-confirm {display:grid;gap:.75rem;width:100%}
+.member-rsvp .guest-cancel-confirm :is(button) {min-height:44px}
+
 .member-rsvp .guest-rsvp-primary {width:100%}
 .member-rsvp-notice {color:#b9f6ca!important}
 .member-rsvp :is(button,a):focus-visible {outline:3px solid #7dd3fc;outline-offset:2px}

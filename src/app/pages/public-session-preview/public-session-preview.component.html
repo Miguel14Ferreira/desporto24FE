@@ -305,8 +305,12 @@
                     'inviteCenter.memberConfirmed' : 'inviteCenter.memberWaitlisted') | t }}</h2>
                 <p>{{ (memberPresence === 'PARTICIPANT' ?
                     'inviteCenter.memberConfirmedHelp' : 'inviteCenter.memberWaitlistedHelp') | t }}</p>
+                <div class="member-presence-status" role="status">
+                  <span class="member-presence-status-dot" aria-hidden="true"></span>
+                  {{ (memberPresence === 'PARTICIPANT' ? 'inviteCenter.memberSeatReserved' : 'inviteCenter.memberWaiting') | t }}
+                </div>
                 @if (!memberCancelConfirm) {
-                  <button type="button" class="guest-cancel-link" (click)="memberCancelConfirm=true">
+                  <button type="button" class="guest-cancel-link member-cancel-action" (click)="memberCancelConfirm=true">
                     {{ 'guestRsvp.cancelMySeat' | t }}
                   </button>
                 } @else {
@@ -330,11 +334,11 @@
                 @if (memberCancelledBySelf) {
                   <p role="status" class="member-rsvp-notice">{{ 'inviteCenter.memberCancelled' | t }}</p>
                 }
-                <h2 id="member-rsvp-title">{{ 'inviteCenter.memberHeading' | t }}</h2>
-                <p>{{ 'inviteCenter.memberHelp' | t }}</p>
+                <h2 id="member-rsvp-title">{{ (memberCancelledBySelf ? 'inviteCenter.memberRejoinHeading' : 'inviteCenter.memberHeading') | t }}</h2>
+                <p>{{ (memberCancelledBySelf ? 'inviteCenter.memberRejoinHelp' : 'inviteCenter.memberHelp') | t }}</p>
                 <button type="button" class="guest-rsvp-primary"
                   [disabled]="memberJoining" (click)="joinWithAccount()">
-                  {{ (memberJoining ? 'guestRsvp.linking' : 'inviteCenter.confirmPresence') | t }}
+                  {{ (memberJoining ? 'guestRsvp.linking' : memberCancelledBySelf ? 'guestRsvp.rejoin' : 'inviteCenter.confirmPresence') | t }}
                 </button>
                 @if (memberJoinError) {
                   <p role="alert" class="guest-rsvp-error">{{ memberJoinError | t }}</p>
