@@ -2528,4 +2528,52 @@ describe('Events2Component', () => {
     page.destroy();
   });
 
+
+  it('uses the chosen capacity as the minimum when the organiser checks the option', () => {
+    component.sport = 'Futsal';
+    component.maxParticipants = 10;
+    component.capacityIsMinimum = true;
+    component.selectedMinimumPlayers = 6;
+    expect(component.minimumPlayers).toBe(10);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="capacityIsMinimum"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="minParticipants"]')).toBeNull();
+    component.capacityIsMinimum = false;
+    fixture.detectChanges();
+    expect(component.minimumPlayers).toBe(6);
+    const input=fixture.nativeElement.querySelector('input[name="minParticipants"]') as HTMLInputElement;
+    expect(input).not.toBeNull();
+  });
+
+  it('posts the full-capacity minimum, or a custom lower one, with a real session', () => {
+    component.sport = 'Futsal';
+    component.maxParticipants = 10;
+    component.capacityIsMinimum = true;
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.creationMode = 'START';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({maxParticipants:10,minParticipants:10}));
+    sessionService.create.calls.reset();
+    component.capacityIsMinimum = false;
+    component.selectedMinimumPlayers = 7;
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({maxParticipants:10,minParticipants:7}));
+  });
+
+  it('does not send an invalid custom minimum exceeding capacity', () => {
+    component.sport = 'Futsal';
+    component.maxParticipants = 10;
+    component.capacityIsMinimum = false;
+    component.selectedMinimumPlayers = 11;
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('mínimo');
+  });
 });
