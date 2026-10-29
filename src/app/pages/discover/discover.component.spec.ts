@@ -1068,4 +1068,46 @@ describe('DiscoverComponent', () => {
 
     expect(component.venuesLoadError).toBeFalse();
   });
+  it('focuses the selected category without reloading data or removing the other sections', () => {
+    const calls = venueService.suggest.calls.count();
+    const sessionsPanel: HTMLElement = fixture.nativeElement.querySelector('#explore-sessions');
+    const venuesPanel: HTMLElement = fixture.nativeElement.querySelector('#explore-venues');
+    const peoplePanel: HTMLElement = fixture.nativeElement.querySelector('#explore-people');
+
+    expect(component.activeTab).toBe('all');
+    expect(sessionsPanel.hasAttribute('hidden')).toBeTrue();
+    component.setCategory('sessions');
+    fixture.detectChanges();
+    expect(sessionsPanel.hasAttribute('hidden')).toBeFalse();
+    expect(venuesPanel.hasAttribute('hidden')).toBeTrue();
+    expect(peoplePanel.hasAttribute('hidden')).toBeTrue();
+    expect(venueService.suggest.calls.count()).toBe(calls);
+
+    component.setCategory('people');
+    fixture.detectChanges();
+    expect(peoplePanel.hasAttribute('hidden')).toBeFalse();
+    component.setCategory('all');
+    fixture.detectChanges();
+    expect(venuesPanel.hasAttribute('hidden')).toBeFalse();
+  });
+
+  it('uses sport quick picks as real search filters and allows toggling them off', () => {
+    const calls = venueService.suggest.calls.count();
+    component.selectQuickSport('Futebol');
+    expect(component.sport).toBe('Futebol');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Futebol', 0);
+    component.selectQuickSport('Futebol');
+    expect(component.sport).toBe('');
+    expect(venueService.suggest.calls.count()).toBe(calls + 2);
+  });
+
+  it('shows the community entry only in the community category', () => {
+    expect(fixture.nativeElement.querySelector('.explore-community-entry')).toBeNull();
+    component.setCategory('communities');
+    fixture.detectChanges();
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('.explore-community-entry a');
+    expect(link.getAttribute('href')).toBe('/menu/communities');
+    expect(fixture.nativeElement.querySelector('#explore-venues').hasAttribute('hidden')).toBeTrue();
+  });
+
 });
