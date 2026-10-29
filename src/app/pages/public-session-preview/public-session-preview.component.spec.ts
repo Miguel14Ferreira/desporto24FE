@@ -183,12 +183,12 @@ describe('PublicSessionPreviewComponent', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
     component.startChangingGuestIdentity();
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-change-player-select')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-change-player-select')).toBeNull();
     expect((fixture.nativeElement as HTMLElement)
-      .querySelector('label[for="guest-change-player-select"]')?.textContent?.trim())
-      .toBe('Já jogaste com este grupo?');
+      .querySelector('label[for="guest-change-new-name"]')?.textContent?.trim())
+      .toBe('O teu nome');
     expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
-    component.selectGuestPlayer(17);
+    component.setGuestNewName('Zé Manel');
     component.changeGuestIdentity();
     fixture.detectChanges();
     expect(component.guestEditingIdentity).toBeFalse();
@@ -260,7 +260,8 @@ describe('PublicSessionPreviewComponent', () => {
     expect(component.guestStep).toBe('approved');
     expect(component.guestReceipt).toBe(receipt);
     expect(localStorage.getItem(key)).toBe(receipt);
-    expect(page.querySelector('#guest-change-player-select')).not.toBeNull();
+    expect(page.querySelector('#guest-change-player-select')).toBeNull();
+    expect(page.querySelector('#guest-change-new-name')).not.toBeNull();
     const calls=(http.post as jasmine.Spy).calls.allArgs().map(args=>String(args[0]));
     expect(calls.some(x=>x.endsWith('/guest-requests'))).toBeFalse();
   });
@@ -1372,6 +1373,7 @@ describe('PublicSessionPreviewComponent', () => {
         args=>String(args[0]).endsWith('/guest-join-account') && args[1].token===token)).toBeTrue();
       expect(navigation).not.toHaveBeenCalled();
       expect(fixture.componentInstance.memberPresence).toBe('PARTICIPANT');
+      fixture.detectChanges();
       expect(page.textContent).toContain('A tua presença está confirmada!');
     });
 
@@ -1416,7 +1418,8 @@ describe('PublicSessionPreviewComponent', () => {
       expect(fixture.componentInstance.guestStep).toBe('approved');
       expect(page.querySelector('.guest-rsvp')).toBeTruthy();
       expect(page.querySelector('.guest-rsvp-upgrade button')).toBeTruthy();
-      expect(http.post).toHaveBeenCalledTimes(3);
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        args=>String(args[0]).endsWith('/guest-member-presence'))).toBeTrue();
       expect((http.post as jasmine.Spy).calls.allArgs().some(
         args=>String(args[0]).endsWith('/guest-requests/status'))).toBeTrue();
     });
@@ -1596,7 +1599,7 @@ describe('PublicSessionPreviewComponent', () => {
     const page=render();
     expect(page.querySelector('.invite-account-banner')).toBeNull();
     expect(page.querySelector('.header-login')).toBeNull();
-    expect(page.querySelector('.join-panel .secondary-action')).toBeNull();
+    expect(page.querySelector('.join-panel .secondary-action:not(.whatsapp-share-action)')).toBeNull();
     expect(page.querySelector('#guest-player-select')).toBeNull();
     expect(page.querySelector('#guest-new-name')).not.toBeNull();
     expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
