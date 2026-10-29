@@ -10,6 +10,10 @@ export function playerAvatarUrl(raw: string | null | undefined, apiUrl: string):
 }
 
 export function playerAvatarInitials(name: string | null | undefined): string {
-  const words = (name || '?').trim().split(/\s+/).filter(Boolean);
+  // Parenthesised nicknames are annotations, not surname initials.
+  // Preserve source/history names; this affects avatar presentation only.
+  const sanitized = (name || '?').replace(/\([^)]*\)/g, ' ')
+    .replace(/[()[\]{}]/g, ' ').trim();
+  const words = sanitized.split(/\s+/).filter(Boolean);
   return words.slice(0, 2).map(word => word.charAt(0).toLocaleUpperCase()).join('') || '?';
 }
