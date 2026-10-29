@@ -1667,3 +1667,30 @@ h1 {
   .session-roster-live {width:fit-content;max-width:100%;}
   .session-player-card__confirmation .jynlo-action {flex:1 1 125px;}
 }
+
+/* Roster account actions share the same card vocabulary as confirmed guests. */
+.session-player-card--member .session-player-card__profile {
+  grid-column:1/-1;display:grid;grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;column-gap:11px;min-width:0;min-height:42px;
+  text-decoration:none;color:inherit;
+}
+.session-player-card--member .session-player-card__profile:hover .session-player-card__name {
+  text-decoration:underline;text-underline-offset:3px;
+}
+.session-player-card--member .session-player-card__profile:focus-visible {
+  outline:2px solid #8affea;outline-offset:3px;border-radius:8px;
+}
+.session-minimum-indicator {
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 14px;border:1px solid rgba(251,181,92,.44);
+  border-radius:12px;color:#ffe6b4;background:rgba(149,84,30,.12);
+  line-height:1.45;font-size:.84rem;
+}
+.session-minimum-indicator strong {font-size:1.06rem;color:#ffe4ad;}
+.session-minimum-indicator--ready {
+  border-color:rgba(69,219,179,.34);background:rgba(38,143,126,.11);color:#b8f4e2;
+}
+.session-minimum-indicator--ready strong {color:#8bf8d7;}
+@media(max-width:620px){
+  .session-player-card--member .session-player-card__profile {column-gap:8px;}
+}
