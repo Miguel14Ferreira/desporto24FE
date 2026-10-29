@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
@@ -513,7 +513,8 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly http: HttpClient,
     private readonly authenticationService: AuthenticationService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -552,10 +553,15 @@ export class PublicSessionPreviewComponent implements OnInit, OnDestroy {
     }
     this.loadPreview();
     if (this.guestToken) {
-      // Keep the roster current without asking visitors to tap «Atualizar».
-      this.rosterRefreshTimer = setInterval(() => {
-        if (document.visibilityState !== 'hidden' && this.guestToken) this.loadConfirmedPlayers();
-      }, 15000);
+      // Periodic roster refresh should not hold Angular's testability zone
+      // open indefinitely (or block stable screens awaiting async operations).
+      this.zone.runOutsideAngular(() => {
+        this.rosterRefreshTimer = setInterval(() => {
+          if (document.visibilityState !== 'hidden' && this.guestToken) {
+            this.zone.run(() => this.loadConfirmedPlayers());
+          }
+        }, 15000);
+      });
     }
   }
 
