@@ -2,26 +2,31 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { RoomEvent } from 'livekit-client';
 import { DirectCallClientService } from './direct-call-client.service';
 import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
+import { DirectCallToneService } from './direct-call-tone.service';
 
 describe('Direct calls gated by authenticated realtime and backend availability', () => {
   let calls: DirectCallClientService;
   let http: HttpTestingController;
   let events: Subject<DirectCallEvent>;
   let connect: jasmine.Spy;
+  let tones: {needsGesture$: BehaviorSubject<boolean>; prime: jasmine.Spy; sync: jasmine.Spy};
 
   beforeEach(() => {
     events = new Subject<DirectCallEvent>();
     connect = jasmine.createSpy('connect');
+    tones = {needsGesture$:new BehaviorSubject(false), prime:jasmine.createSpy('prime'), sync:jasmine.createSpy('sync')};
     const token = 'eyJhbGciOiJub25lIn0.' +
       btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/,'') + '.fixture';
     spyOn(localStorage,'getItem').and.callFake(key => key === 't' ? token : null);
     TestBed.configureTestingModule({providers:[
       provideHttpClient(), provideHttpClientTesting(),
       {provide:Router,useValue:{events:new Subject()}},
-      {provide:DirectChatRealtimeService,useValue:{calls$:events.asObservable(),connect}}
+      {provide:DirectChatRealtimeService,useValue:{calls$:events.asObservable(),connect}},
+      {provide:DirectCallToneService,useValue:tones}
     ]});
     calls=TestBed.inject(DirectCallClientService);
     http=TestBed.inject(HttpTestingController);
@@ -56,6 +61,72 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     expect(decline.request.method).toBe('POST');
     decline.flush(null);
     expect(calls.state$.value).toBeNull();
+  });
+
+
+  it('starts and stops a ringtone only for live outgoing and incoming invitation states', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room = {
+      on: jasmine.createSpy('on').and.callFake(() => room),
+      connect: jasmine.createSpy('connect').and.resolveTo(),
+      disconnect: jasmine.createSpy('disconnect').and.resolveTo(),
+      canPlaybackAudio:true,
+      remoteParticipants:new Map(),
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting = calls.start('bea','voice');
+    expect(tones.prime).toHaveBeenCalledTimes(1);
+    const expiry = new Date(Date.now()+60_000).toISOString();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'tone-outgoing',peer:'bea',media:'voice',serverUrl:'wss://example.test',
+      token:'test',expiresAt:expiry
+    });
+    await starting;
+    expect(tones.sync).toHaveBeenCalledWith('dialing');
+    events.next({callId:'tone-outgoing',caller:'ana',peer:'bea',media:'voice',
+      status:'ACTIVE',actor:'bea',expiresAt:expiry});
+    expect(tones.sync).toHaveBeenCalledWith('active');
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/tone-outgoing/end')).flush(null);
+    expect(tones.sync).toHaveBeenCalledWith(undefined);
+    events.next({callId:'tone-incoming',caller:'bea',peer:'ana',media:'voice',
+      status:'RINGING',actor:'bea',expiresAt:expiry});
+    expect(tones.sync).toHaveBeenCalledWith('incoming');
+    calls.decline();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/tone-incoming/decline')).flush(null);
+    expect(tones.sync).toHaveBeenCalledWith(undefined);
+  });
+
+  it('only asks to enable remote sound when LiveKit reports autoplay is blocked', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners=new Map<string,()=>void>();
+    const room = {
+      on:jasmine.createSpy('on').and.callFake((event:string,cb:()=>void)=>{listeners.set(event,cb);return room;}),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      canPlaybackAudio:true,
+      startAudio:jasmine.createSpy('startAudio').and.callFake(async()=>{room.canPlaybackAudio=true;}),
+      remoteParticipants:new Map(),
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'audio-block',peer:'bea',media:'voice',serverUrl:'wss://example.test',
+      token:'test',expiresAt:new Date(Date.now()+60_000).toISOString()
+    });
+    await starting;
+    expect(calls.audioPlaybackBlocked$.value).toBeFalse();
+    room.canPlaybackAudio=false;
+    listeners.get(RoomEvent.AudioPlaybackStatusChanged)?.();
+    expect(calls.audioPlaybackBlocked$.value).toBeTrue();
+    await calls.allowAudio();
+    expect(room.startAudio).toHaveBeenCalledTimes(1);
+    expect(calls.audioPlaybackBlocked$.value).toBeFalse();
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/audio-block/end')).flush(null);
+    expect(calls.audioPlaybackBlocked$.value).toBeFalse();
   });
 
   it('explains disabled provider and rechecks readiness after it is configured', () => {

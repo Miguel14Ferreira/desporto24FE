@@ -6,6 +6,7 @@ import { BehaviorSubject, filter, firstValueFrom, Subscription, TimeoutError, ti
 import { Room, RoomEvent } from 'livekit-client';
 import { environment } from 'src/environment/environment';
 import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
+import { DirectCallToneService } from './direct-call-tone.service';
 
 export type CallPhase = 'incoming' | 'dialing' | 'connecting' | 'active' | 'error';
 export type CallMedia = 'voice' | 'video';
@@ -49,6 +50,9 @@ export class DirectCallClientService implements OnDestroy {
   readonly available$ = new BehaviorSubject<boolean>(false);
   readonly availabilityStatus$ = new BehaviorSubject<CallAvailabilityStatus>('idle');
   readonly mediaChanged$ = new BehaviorSubject<number>(0);
+  /** Only display LiveKit's manual audio-unlock control if autoplay was blocked. */
+  readonly audioPlaybackBlocked$ = new BehaviorSubject<boolean>(false);
+  readonly ringtoneBlocked$: BehaviorSubject<boolean>;
   room: Room | null = null;
   private readonly base = environment.apiUrl + '/api/calls/direct';
   private readonly jwt = new JwtHelperService();
@@ -66,7 +70,10 @@ export class DirectCallClientService implements OnDestroy {
 
   constructor(private readonly http: HttpClient,
               private readonly realtime: DirectChatRealtimeService,
-              router: Router) {
+              router: Router,
+              private readonly tones: DirectCallToneService) {
+    this.ringtoneBlocked$ = tones.needsGesture$;
+    this.subscriptions.add(this.state$.subscribe(call => this.tones.sync(call?.phase)));
     this.subscriptions.add(this.realtime.calls$.subscribe(call => this.onEvent(call)));
     this.subscriptions.add(router.events.pipe(filter(e => e instanceof NavigationEnd))
       .subscribe(() => this.ensureConnected()));
@@ -211,6 +218,9 @@ export class DirectCallClientService implements OnDestroy {
 
   async start(peer: string, media: CallMedia): Promise<void> {
     if (this.state$.value || !this.available$.value || !peer) return;
+    // Unlock Web Audio while the outgoing call click still has user activation;
+    // the HTTP response and subsequent LiveKit connect are asynchronous.
+    this.tones.prime();
     const version = ++this.generation;
     const callerToken = localStorage.getItem('t');
     try {
@@ -291,8 +301,25 @@ export class DirectCallClientService implements OnDestroy {
   }
 
   async allowAudio(): Promise<void> {
-    try { await this.room?.startAudio(); }
-    catch { this.update({error:'calls.audioBlocked'}); }
+    const room = this.room;
+    if (!room) return;
+    try {
+      // Must be initiated by the actual button click, not a later promise.
+      await room.startAudio();
+      if (this.room === room) {
+        this.audioPlaybackBlocked$.next(room.canPlaybackAudio === false);
+        this.update({error: undefined});
+      }
+    } catch {
+      if (this.room === room) {
+        this.audioPlaybackBlocked$.next(true);
+        this.update({error:'calls.audioBlocked'});
+      }
+    }
+  }
+
+  allowRingtone(): void {
+    this.tones.prime();
   }
 
   /** Factory for deterministic LiveKit integration tests without real hardware. */
@@ -325,6 +352,10 @@ export class DirectCallClientService implements OnDestroy {
     const room=this.createRoom();
     this.room=room;
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
+    room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
+      if (this.room === room)
+        this.audioPlaybackBlocked$.next(room.canPlaybackAudio === false);
+    });
     room.on(RoomEvent.TrackUnsubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.ParticipantConnected, () => {
       if (this.room===room && version===this.generation) {
@@ -362,6 +393,7 @@ export class DirectCallClientService implements OnDestroy {
       return;
     }
     if (version!==this.generation) {void room.disconnect();return;}
+    this.audioPlaybackBlocked$.next(room.canPlaybackAudio === false);
     // Microphone/camera permission failures should not end an established
     // room: stay connected as listener and let the user retry the devices.
     let micEnabled=false;
@@ -447,6 +479,7 @@ export class DirectCallClientService implements OnDestroy {
     this.room=null;
     if (room) room.disconnect();
     this.state$.next(null);
+    this.audioPlaybackBlocked$.next(false);
     this.mediaChanged$.next(this.mediaChanged$.value+1);
   }
 
