@@ -605,7 +605,7 @@ export const EN: Record<string, string> = {
   'inviteCenter.mfaResend': 'Request a new code',
   'inviteCenter.mfaResending': 'Requesting a new code...',
   'inviteCenter.mfaResent': 'New code requested.',
-  'inviteCenter.mfaResendError': 'Could not request a new code. Try again.'
+  'inviteCenter.mfaResendError': 'Could not request a new code. Try again.',
   'inviteCenter.inlineLoginError': 'Unable to sign in. Check your credentials and try again.',
   'inviteCenter.nameAfterChoiceHelp': 'What is your name? We will reserve your place immediately.',
   'publicSession.sessionChat': 'Session chat',
