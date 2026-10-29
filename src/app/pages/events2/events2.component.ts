@@ -667,6 +667,12 @@ export class Events2Component implements OnInit, OnDestroy {
     }));
   }
 
+  onSportChoice(value: string): void {
+    if (this.sport === value) return;
+    this.sport = value;
+    this.confirmSportSelection();
+  }
+
   onVenueSelected(value: string): void {
     if (!value) {
       this.selectVenue(null);
