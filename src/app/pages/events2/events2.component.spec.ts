@@ -1,4 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { JynloSelectComponent } from '../../shared/jynlo-select/jynlo-select.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
@@ -101,7 +103,7 @@ describe('Events2Component', () => {
     expect(component.presetEditorOpen).toBeFalse();
     expect(fixture.nativeElement.querySelector('.create-preset-save-editor')).toBeNull();
     expect(fixture.nativeElement.querySelector('.create-preset-panel')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('select[name="sessionPresetSelection"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="sessionPresetSelection"]')).not.toBeNull();
   });
 
   it('saves a reusable preset without a date, password, photo or registration time', () => {
@@ -177,7 +179,7 @@ describe('Events2Component', () => {
   it('selects singles or doubles only for sports that actually support both formats', () => {
     component.sport = 'Padel';
     fixture.detectChanges();
-    const selector = fixture.nativeElement.querySelector('select[name="playFormat"]') as HTMLSelectElement | null;
+    const selector = fixture.nativeElement.querySelector('app-jynlo-select[name="playFormat"]') as HTMLElement | null;
     expect(selector).not.toBeNull();
     expect(component.selectedPlayFormat).toBe('INDIVIDUAL');
     component.playFormat = 'PAIRS';
@@ -185,10 +187,10 @@ describe('Events2Component', () => {
     component.sport = 'Futebol';
     fixture.detectChanges();
     expect(component.selectedPlayFormat).toBeUndefined();
-    expect(fixture.nativeElement.querySelector('select[name="playFormat"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="playFormat"]')).toBeNull();
     component.sport = 'Atletismo';
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('select[name="playFormat"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="playFormat"]')).toBeNull();
   });
 
   it('never forwards stale doubles format when the organiser changes sport', () => {
@@ -228,7 +230,7 @@ describe('Events2Component', () => {
     fixture.detectChanges();
 
     const select = fixture.nativeElement.querySelector(
-      'select[name="recurrence"]'
+      'app-jynlo-select[name="recurrence"]'
     ) as HTMLSelectElement | null;
     const sportInput = fixture.nativeElement.querySelector(
       'input[name="sport"]'
@@ -266,12 +268,12 @@ describe('Events2Component', () => {
     fixture.detectChanges();
 
     const form = fixture.nativeElement as HTMLElement;
-    const frequency = form.querySelector('select[name="recurrence"]') as HTMLSelectElement;
-    const weekly = form.querySelector('select[name="weeklySessionsPerWeek"]') as HTMLSelectElement;
+    const frequency = form.querySelector('app-jynlo-select[name="recurrence"]') as HTMLElement;
+    const weekly = form.querySelector('app-jynlo-select[name="weeklySessionsPerWeek"]') as HTMLElement;
     const weeks = form.querySelector('input[name="recurrenceOccurrences"]') as HTMLInputElement;
 
     expect(frequency.closest('label')?.textContent).toContain('Frequência dos jogos');
-    expect(frequency.options[1].textContent).toContain('Todas as semanas');
+    expect(component.recurrenceChoices[1].label).toContain('Todas as semanas');
     expect(weekly.closest('label')?.textContent).toContain('Sessões por semana');
     expect(weeks.closest('label')?.textContent).toContain('Semanas com jogo');
     expect(form.querySelector('.recurrence-plan-summary')?.textContent)
@@ -410,10 +412,10 @@ describe('Events2Component', () => {
   it('lets a community organizer choose scheduled or manual callup opening', () => {
     component.communityId = 7;
     fixture.detectChanges();
-    const mode = fixture.nativeElement.querySelector(
-      'select[name="registrationOpeningMode"]'
-    ) as HTMLSelectElement;
-    expect(Array.from(mode.options).map(option => option.value)).toEqual([
+    const mode = fixture.debugElement.query(By.css(
+      'app-jynlo-select[name="registrationOpeningMode"]'
+    )).componentInstance as JynloSelectComponent;
+    expect(mode.options.map(option => option.value)).toEqual([
       'IMMEDIATE', 'SCHEDULED', 'MANUAL'
     ]);
     component.registrationOpeningMode = 'SCHEDULED';
@@ -942,8 +944,8 @@ describe('Events2Component', () => {
     expect(component.privateGame).toBeFalse();
     expect(component.communitySessionSelected).toBeTrue();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('select[name="recurrence"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('select[name="registrationOpeningMode"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="recurrence"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="registrationOpeningMode"]')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('input[name="privateGame"]')).toBeNull();
     component.sport='Futebol';
     component.gameDate='2099-10-15T18:00';
@@ -1005,8 +1007,8 @@ describe('Events2Component', () => {
     component.toggleCommunityShare(12, false);
     fixture.detectChanges();
     expect(component.communitySessionSelected).toBeFalse();
-    expect(fixture.nativeElement.querySelector('select[name="recurrence"]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('select[name="registrationOpeningMode"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="recurrence"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="registrationOpeningMode"]')).toBeNull();
     component.sport = 'Futebol';
     component.gameDate = '2099-10-15T18:00';
     component.city = 'Lisboa';
