@@ -2554,13 +2554,13 @@ describe('Events2Component', () => {
     component.address = 'Rua do Campo';
     component.creationMode = 'START';
     component.createSession();
-    expect(sessionService.create).toHaveBeenCalledWith(
+    expect(sessionService.create.calls.mostRecent().args[0]).toEqual(
       jasmine.objectContaining({maxParticipants:10,minParticipants:10}));
     sessionService.create.calls.reset();
     component.capacityIsMinimum = false;
     component.selectedMinimumPlayers = 7;
     component.createSession();
-    expect(sessionService.create).toHaveBeenCalledWith(
+    expect(sessionService.create.calls.mostRecent().args[0]).toEqual(
       jasmine.objectContaining({maxParticipants:10,minParticipants:7}));
   });
 
