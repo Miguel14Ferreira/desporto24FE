@@ -30,7 +30,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                 <span class="call-status-dot" [class.call-status-connected]="call.phase === 'active'"></span>
                 {{ (call.phase === 'incoming' ? 'calls.incoming' :
                   call.phase === 'dialing' ? 'calls.ringing' :
-                  call.phase === 'connecting' ? 'calls.connecting' :
+                  call.phase === 'connecting' ? (call.startedAt ? 'calls.reconnecting' : 'calls.connecting') :
                   call.phase === 'error' ? 'calls.connectionLost' : 'calls.connected') | t }}
               </p>
             </div>
@@ -48,7 +48,9 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
             </div>
           }
           @if (call.media === 'video' && call.phase !== 'incoming' && call.phase !== 'error') {
-            <div class="call-videos">
+            <div class="call-videos" [class.call-videos--swapped]="viewsSwapped">
+              <button type="button" class="call-swap" (click)="viewsSwapped=!viewsSwapped"
+                [disabled]="!remoteHasVideo || !call.cameraEnabled">⇄ {{ 'calls.swapView' | t }}</button>
               <video #remoteVideo autoplay playsinline [attr.aria-label]="'calls.remoteVideo' | t"></video>
               @if (!remoteHasVideo) {
                 <div class="call-remote-placeholder">
@@ -66,7 +68,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               }
             </div>
           } @else if (call.phase !== 'error') {
-            <div class="call-voice-surface">
+            <div class="call-voice-surface" [class.is-active]="call.phase === 'active'">
               <span class="call-avatar call-avatar-large" aria-hidden="true">{{ call.peer.slice(0,1).toUpperCase() }}</span>
               <p>{{ call.phase === 'incoming' ? ('calls.incoming' | t) : ('calls.voiceConnected' | t) }}</p>
             </div>
@@ -76,8 +78,12 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
             @if (call.error) {
               <p class="call-error" role="alert">{{ call.error | t }}</p>
               @if (call.media === 'video' && !call.cameraEnabled && call.phase !== 'error') {
-                <button type="button" class="call-retry" [disabled]="calls.busyMedia$ | async"
-                  (click)="calls.setCamera(true)">{{ 'calls.retryCamera' | t }}</button>
+                <div class="call-recovery-actions">
+                  <button type="button" class="call-retry" [disabled]="calls.busyMedia$ | async"
+                    (click)="calls.setCamera(true)">{{ 'calls.retryCamera' | t }}</button>
+                  <button type="button" class="call-retry" [disabled]="calls.busyMedia$ | async"
+                    (click)="toggleSettings(true)">{{ 'calls.chooseCamera' | t }}</button>
+                </div>
               }
             }
             @if ((call.phase === 'incoming' || call.phase === 'dialing')
@@ -116,6 +122,14 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                     [attr.aria-pressed]="!call.cameraEnabled" [class.call-off]="!call.cameraEnabled">
                     <span aria-hidden="true">▣</span>
                     {{ (call.cameraEnabled ? 'calls.cameraOff' : 'calls.cameraOn') | t }}
+                  </button>
+                }
+                @if (calls.canShareScreen) {
+                  <button type="button" [disabled]="calls.busyMedia$ | async"
+                    (click)="calls.setScreenShare(!(calls.screenShareEnabled$ | async))"
+                    [attr.aria-pressed]="calls.screenShareEnabled$ | async">
+                    <span aria-hidden="true">▧</span>
+                    {{ ((calls.screenShareEnabled$ | async) ? 'calls.stopSharing' : 'calls.shareScreen') | t }}
                   </button>
                 }
                 @if (calls.audioPlaybackBlocked$ | async) {
@@ -167,6 +181,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                       }
                     }
                   </select>
+                  @if (speakerSelectionSupported) {
                   <label for="call-speaker">{{ 'calls.speakerDevice' | t }}</label>
                   <select id="call-speaker" [disabled]="calls.busyMedia$ | async"
                     (change)="selectDevice('audiooutput', $event)">
@@ -180,6 +195,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                     }
                   </select>
                 }
+                  }
                 <p>{{ 'calls.devicesHelp' | t }}</p>
               </div>
             }
@@ -267,12 +283,31 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .call-device-panel select{grid-row:3;min-width:0;width:100%;font:inherit;font-size:.78rem;
       background:#133748;color:#f4fffe;border:1px solid #547e8a;border-radius:9px;padding:9px}
     .call-device-panel p{grid-column:1/-1;color:#b1d2da;font-size:.71rem;margin:0}
+    .call-swap{position:absolute;top:10px;right:10px;z-index:5;background:#092b38de;
+      border:1px solid #66a9a0;color:#e1fffa;border-radius:10px;padding:7px 11px;cursor:pointer;font-size:.78rem}
+    .call-swap:disabled{opacity:.4;cursor:default}
+    .call-videos--swapped video:first-child{position:absolute;right:12px;bottom:12px;
+      width:clamp(76px,18%,142px);height:clamp(90px,22%,165px);min-height:100px;
+      border-radius:12px;z-index:3;border:1px solid #9be8d8}
+    .call-videos--swapped video:nth-of-type(2){position:relative;inset:auto;display:block;
+      width:100%;height:100%;min-height:0;max-height:none;border:0;border-radius:0;box-shadow:none;z-index:1}
+    .call-recovery-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:5px 0}
+    .call-voice-surface.is-active .call-avatar-large{box-shadow:0 0 0 10px #40dfbd22}
+    .call-panel{width:min(100%,1020px);height:min(710px,calc(100dvh - 20px))}
+    .call-videos{flex:1 1 0;min-height:0;max-height:none}
+    .call-videos video:first-child{min-height:0;max-height:none}
+    .call-voice-surface{flex:1 1 0;min-height:75px}
+    .call-footer{position:relative}
+    .call-device-panel{position:absolute;right:0;bottom:calc(100% + 6px);
+      width:min(100%,650px);box-sizing:border-box;z-index:10;max-height:48dvh;
+      overflow-y:auto;box-shadow:0 16px 45px #0008}
+    .call-buttons button{min-width:76px}
     .call-refresh{display:none}
     @media(max-width:600px){
       .call-backdrop{padding:6px}
       .call-panel{max-height:calc(100dvh - 12px);padding:12px;border-radius:15px}
-      .call-videos{min-height:140px;max-height:min(43dvh,380px)}
-      .call-videos video:first-child{max-height:min(43dvh,380px)}
+      .call-videos{min-height:0;max-height:none}
+      .call-videos video:first-child{max-height:none}
       .call-info{margin:5px 0 0}
       .call-metrics{margin:6px 0}
       .call-device-panel{grid-template-columns:1fr;max-height:34dvh}
@@ -281,8 +316,8 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
       .call-buttons button{padding:8px 10px;font-size:.75rem;min-height:40px}
     }
     @media(max-height:620px){
-      .call-videos{max-height:35dvh;min-height:100px}
-      .call-videos video:first-child{max-height:35dvh;min-height:100px}
+      .call-videos{max-height:none;min-height:0}
+      .call-videos video:first-child{max-height:none;min-height:0}
       .call-avatar{width:38px;height:38px}
       .call-voice-surface{min-height:75px}
     }
@@ -297,6 +332,10 @@ export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
   private lastRemoteAudio: Track | null = null;
   private readonly mediaSubscription: Subscription;
   settingsOpen=false;
+  viewsSwapped=false;
+  get speakerSelectionSupported(): boolean {
+    return typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
+  }
 
   readonly elapsed$: Observable<string>;
 
@@ -335,18 +374,18 @@ export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
       this.lastRemoteAudio = null;
     });
     this.mediaSubscription.add(calls.state$.subscribe(call=>{
-      if (!call) this.settingsOpen=false;
+      if (!call) { this.settingsOpen=false; this.viewsSwapped=false; }
     }));
   }
 
-  toggleSettings(): void {
-    this.settingsOpen=!this.settingsOpen;
+  toggleSettings(forceOpen=false): void {
+    this.settingsOpen=forceOpen || !this.settingsOpen;
     if (this.settingsOpen) void this.calls.refreshDevices();
   }
 
   selectDevice(kind: MediaDeviceKind, event: Event): void {
     const target=event.target as HTMLSelectElement;
-    if (target.value) void this.calls.selectDevice(kind,target.value);
+    void this.calls.selectDevice(kind,target.value);
   }
 
   dismiss(): void {
