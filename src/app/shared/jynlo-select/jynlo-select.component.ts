@@ -5,6 +5,8 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/f
 export interface JynloSelectOption {
   value: string;
   label: string;
+  /** Secondary description for richer server-search choices. */
+  description?: string;
 }
 
 /**
@@ -25,6 +27,13 @@ export class JynloSelectComponent implements ControlValueAccessor, OnDestroy {
   @Input() placeholder = 'Selecionar';
   @Input() ariaLabel = '';
   @Input() searchable = false;
+  /** Remote mode emits typed text instead of filtering locally cached results. */
+  @Input() remoteSearch = false;
+  @Input() remoteQuery = '';
+  @Output() remoteQueryChange = new EventEmitter<string>();
+  @Input() loading = false;
+  @Input() loadingLabel = 'A pesquisar…';
+  @Input() emptyLabel = 'Sem resultados';
   @Input() invalid = false;
   @Input() required = false;
   // Angular NgModel handles the [disabled] form state; [blocked] makes the
@@ -121,11 +130,20 @@ export class JynloSelectComponent implements ControlValueAccessor, OnDestroy {
   get selected(): JynloSelectOption | undefined {
     return this.options.find(option => option.value === this.value);
   }
+  get displayValue(): string {
+    return this.selected?.label || (this.remoteSearch ? this.remoteQuery : this.value) || this.placeholder;
+  }
+
+  get isPlaceholder(): boolean {
+    return !this.selected && !(this.remoteSearch && this.remoteQuery) && !this.value;
+  }
+
 
   get visibleOptions(): readonly JynloSelectOption[] {
     const normalized = (value: string) => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
     const filter = normalized(this.query.trim());
+    if (this.remoteSearch) return this.options;
     return filter
       ? this.options.filter(option => normalized(option.label).includes(filter))
       : this.options;
@@ -135,7 +153,7 @@ export class JynloSelectComponent implements ControlValueAccessor, OnDestroy {
     if (this.disabled) return;
     if (this.open) { this.close(); return; }
     this.open = true;
-    this.query = '';
+    this.query = this.remoteSearch ? this.remoteQuery : '';
     this.repositionPopover();
     document.addEventListener('scroll', this.repositionOnScroll, true);
     if (this.searchable) {
@@ -145,6 +163,11 @@ export class JynloSelectComponent implements ControlValueAccessor, OnDestroy {
         this.repositionPopover(); // mobile virtual keyboard can shrink the viewport
       }, 0);
     }
+  }
+
+  onSearchChanged(value: string): void {
+    this.query = value;
+    if (this.remoteSearch) this.remoteQueryChange.emit(value);
   }
 
   choose(value: string): void {
