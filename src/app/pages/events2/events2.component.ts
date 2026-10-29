@@ -14,6 +14,7 @@ import { CommunityGroupsService } from '../../services/community-groups.service'
 import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue, VenueOwnershipType } from '../model/venue';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { suggestedMinimumPlayers } from '../../shared/session-minimum-players';
 import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/portugal-districts';
 
 @Component({
@@ -31,6 +32,13 @@ export class Events2Component implements OnInit, OnDestroy {
   address = '';
   meetingPointInstructions = '';
   maxParticipants = 4;
+  /** Null tracks the sport-aware default until the organiser edits the number. */
+  selectedMinimumPlayers: number | null = null;
+  get minimumPlayers(): number {
+    return this.selectedMinimumPlayers === null
+      ? suggestedMinimumPlayers(this.sport, Number(this.maxParticipants))
+      : Number(this.selectedMinimumPlayers);
+  }
   // The organiser already has one reserved Jynlo place.
   confirmedPlayers: number | null = 1;
   creationMode: 'START' | 'COMPLETE' = 'START';
@@ -336,6 +344,7 @@ export class Events2Component implements OnInit, OnDestroy {
       city: this.city.trim(),
       address: this.address.trim(),
       maxParticipants: Number(this.maxParticipants),
+      minParticipants: this.minimumPlayers,
       creationMode: this.creationMode,
       confirmedPlayers: Number(this.confirmedPlayers ?? 1),
       hasPrice: this.hasPrice,
@@ -1581,6 +1590,10 @@ export class Events2Component implements OnInit, OnDestroy {
     const players = Number(this.maxParticipants);
     if (!Number.isInteger(players) || players < 2 || players > 100) {
       return t('feedback.create.playersRange');
+    }
+    if (!Number.isInteger(this.minimumPlayers) || this.minimumPlayers < 2
+        || this.minimumPlayers > players) {
+      return t('createSession.minimumPlayersInvalid');
     }
 
     if (this.seasonGame) {
