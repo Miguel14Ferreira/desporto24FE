@@ -1,7 +1,7 @@
 import { AfterViewChecked, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Track } from 'livekit-client';
-import { combineLatest, map, Subscription, timer } from 'rxjs';
+import { combineLatest, map, Observable, Subscription, timer } from 'rxjs';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { DirectCallClientService } from '../services/direct-call-client.service';
 
@@ -298,13 +298,7 @@ export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
   private readonly mediaSubscription: Subscription;
   settingsOpen=false;
 
-  readonly elapsed$ = combineLatest([this.calls.state$,timer(0,1000)]).pipe(map(([call]) => {
-    if (!call?.startedAt) return '00:00';
-    const seconds=Math.max(0,Math.floor((Date.now()-call.startedAt)/1000));
-    const hours=Math.floor(seconds/3600);
-    return hours ? [hours,Math.floor(seconds/60)%60,seconds%60].map(x=>String(x).padStart(2,'0')).join(':')
-      : [Math.floor(seconds/60),seconds%60].map(x=>String(x).padStart(2,'0')).join(':');
-  }));
+  readonly elapsed$: Observable<string>;
 
   get participantCount(): number {
     return (this.calls.room?.remoteParticipants.size || 0)+1;
@@ -327,6 +321,14 @@ export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
   }
 
   constructor(public readonly calls: DirectCallClientService) {
+    this.elapsed$ = combineLatest([this.calls.state$,timer(0,1000)]).pipe(map(([call]) => {
+    if (!call?.startedAt) return '00:00';
+    const seconds=Math.max(0,Math.floor((Date.now()-call.startedAt)/1000));
+    const hours=Math.floor(seconds/3600);
+    return hours ? [hours,Math.floor(seconds/60)%60,seconds%60].map(x=>String(x).padStart(2,'0')).join(':')
+      : [Math.floor(seconds/60),seconds%60].map(x=>String(x).padStart(2,'0')).join(':');
+  }));
+
     this.mediaSubscription = calls.mediaChanged$.subscribe(() => {
       this.lastRemoteVideo = null;
       this.lastLocalVideo = null;
