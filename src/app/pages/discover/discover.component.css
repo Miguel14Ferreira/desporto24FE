@@ -516,10 +516,6 @@ button.pillar-action {
 }
 .discover-header .subtitle { margin-top: 0; max-width: 600px; font-size: 1rem; color: #b5c8d3; }
 .discover-header .eyebrow { display: inline-flex; align-items: center; gap: .55rem; color: #43e5b5; }
-.explore-eyebrow-dot {
-  width: .48rem; height: .48rem; display: inline-block; border-radius: 50%;
-  box-shadow: 0 0 0 5px rgba(61,224,173,.1); background: #3de0ad;
-}
 .explore-header-actions { flex: 0 0 auto; padding-top: .35rem; }
 .explore-header-link {
   display: inline-flex; align-items: center; gap: .5rem; padding: .65rem .85rem;
