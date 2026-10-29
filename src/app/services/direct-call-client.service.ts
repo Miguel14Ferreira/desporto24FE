@@ -52,7 +52,7 @@ export class DirectCallClientService implements OnDestroy {
   readonly mediaChanged$ = new BehaviorSubject<number>(0);
   /** Only display LiveKit's manual audio-unlock control if autoplay was blocked. */
   readonly audioPlaybackBlocked$ = new BehaviorSubject<boolean>(false);
-  readonly ringtoneBlocked$: DirectCallToneService['needsGesture
+  readonly ringtoneBlocked$: BehaviorSubject<boolean>;
   room: Room | null = null;
   private readonly base = environment.apiUrl + '/api/calls/direct';
   private readonly jwt = new JwtHelperService();
