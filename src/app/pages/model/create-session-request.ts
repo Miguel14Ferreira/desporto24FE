@@ -8,6 +8,7 @@ export interface CreateSessionRequest {
   /** Private arrival instructions for confirmed players and organiser. */
   meetingPointInstructions?: string | null;
   maxParticipants: number;
+  minParticipants?: number;
   externalConfirmedParticipants?: number;
   priceAmount: number;
   privateGame: boolean;
