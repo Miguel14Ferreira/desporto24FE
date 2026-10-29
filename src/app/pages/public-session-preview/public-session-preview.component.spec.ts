@@ -1657,4 +1657,23 @@ describe('PublicSessionPreviewComponent', () => {
       args=>String(args[0]).endsWith('/guest-join-account'))).toBeFalse();
   });
 
+  it('keeps the signed invitation free of a redundant open-app header', () => {
+    const token='J'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:token});
+    authenticationService.isLoggedIn.and.returnValue(true);
+    (http.post as jasmine.Spy).and.callFake((url:string) => {
+      if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600000).toISOString(),status:'OPEN',maxParticipants:10,
+        participantCount:2,priceAmount:0,gamePhoto:null});
+      if (url.endsWith('/guest-member-presence')) return of({status:'PARTICIPANT',canCancel:true});
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      return of({});
+    });
+    const page=render();
+    expect(page.querySelector('.header-login')).toBeNull();
+    expect(page.querySelector('.member-presence-status')?.textContent).toContain('Presença confirmada');
+    expect(page.querySelector('.member-cancel-action')?.textContent).toContain('Cancelar');
+    expect(page.querySelector('#guest-player-select')).toBeNull();
+  });
+
 });
