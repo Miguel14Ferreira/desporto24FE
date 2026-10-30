@@ -223,7 +223,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                         (click)="inviteContact(contact.username)">
                         <span class="connect-contact-avatar">{{ contact.username.slice(0,1).toUpperCase() }}</span>
                         <span class="connect-contact-names"><strong>{{ contact.nickname || contact.fullName || contact.username }}</strong>
-                        <small>@{{ contact.username }}</small></span>
+                        <small>&#64;{{ contact.username }}</small></span>
                         <span aria-hidden="true">＋</span>
                       </button>
                     }
