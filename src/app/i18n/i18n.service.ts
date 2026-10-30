@@ -328,6 +328,7 @@ const PT: Dictionary = {
   'nav.register': 'Criar conta',
   'nav.feed': 'Feed',
   'nav.discover': 'Explorar',
+  'nav.venues': 'Recintos',
   'nav.activities': 'Atividades',
   'nav.communities': 'Comunidades',
   'nav.messages': 'Mensagens',
