@@ -1,0 +1,97 @@
+/* Opt-in Jynlo premium action system. Other screens are not changed unless
+   they explicitly adopt these classes. Use one geometry for links, buttons
+   and file-picker labels, with semantic variants and accessible states. */
+.jynlo-premium-btn:is(a,button,label) {
+  --jynlo-btn-fg:#d6f1ef;
+  --jynlo-btn-border:rgba(85,181,196,.38);
+  --jynlo-btn-bg:rgba(14,58,73,.66);
+  --jynlo-btn-hover:rgba(23,91,105,.82);
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:.48rem !important;
+  min-height:44px !important;
+  height:auto;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box !important;
+  padding:.65rem 1rem !important;
+  margin:0;
+  border:1px solid var(--jynlo-btn-border) !important;
+  border-radius:12px !important;
+  background:var(--jynlo-btn-bg) !important;
+  color:var(--jynlo-btn-fg) !important;
+  font:inherit;
+  font-size:.84rem !important;
+  font-weight:740 !important;
+  line-height:1.35 !important;
+  text-align:center;
+  text-decoration:none !important;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+  transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,color .16s ease;
+}
+.jynlo-premium-btn:is(a,button,label):hover:not(:disabled):not(.disabled) {
+  background:var(--jynlo-btn-hover) !important;
+  border-color:rgba(97,226,218,.67) !important;
+  color:var(--jynlo-btn-fg) !important;
+  text-decoration:none !important;
+}
+.jynlo-premium-btn--primary:is(a,button,label) {
+  --jynlo-btn-bg:#25e9cf;
+  --jynlo-btn-border:#25e9cf;
+  --jynlo-btn-hover:#6bf7dc;
+  --jynlo-btn-fg:#032d33;
+  font-weight:850 !important;
+  box-shadow:0 4px 17px rgba(25,228,202,.15);
+}
+.jynlo-premium-btn--primary:is(a,button,label):hover:not(:disabled):not(.disabled) {
+  border-color:#6bf7dc !important;
+}
+.jynlo-premium-btn--quiet:is(a,button,label) {
+  --jynlo-btn-bg:rgba(10,52,65,.28);
+  --jynlo-btn-border:rgba(84,174,188,.26);
+  --jynlo-btn-hover:rgba(22,79,93,.65);
+  --jynlo-btn-fg:#c9e5e7;
+}
+.jynlo-premium-btn--danger:is(a,button,label) {
+  --jynlo-btn-bg:rgba(143,42,51,.11);
+  --jynlo-btn-border:rgba(247,132,144,.36);
+  --jynlo-btn-hover:rgba(172,60,72,.25);
+  --jynlo-btn-fg:#ffbbc5;
+}
+.jynlo-premium-btn--small:is(a,button,label) {
+  min-height:36px !important;
+  padding:.4rem .75rem !important;
+  font-size:.76rem !important;
+  border-radius:10px !important;
+}
+.jynlo-premium-btn--icon:is(a,button,label) {
+  min-width:40px;
+  padding:.5rem .65rem !important;
+}
+.jynlo-premium-btn:is(a,button,label) svg,
+.jynlo-premium-btn:is(a,button,label) .jynlo-btn-icon {
+  display:inline-block;
+  width:17px;
+  height:17px;
+  flex:0 0 17px;
+  stroke:currentColor;
+  vertical-align:middle;
+}
+.jynlo-premium-btn:is(a,button,label):focus-visible,
+.jynlo-premium-btn:is(label):focus-within {
+  outline:3px solid #9cfde7 !important;
+  outline-offset:3px !important;
+}
+.jynlo-premium-btn:is(button,label):disabled,
+.jynlo-premium-btn:is(button,label).disabled,
+.jynlo-premium-btn:is(label):has(input:disabled) {
+  opacity:.52;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+.jynlo-premium-btn:is(label):has(input:disabled) {pointer-events:none;}
+@media(prefers-reduced-motion:reduce) {
+  .jynlo-premium-btn:is(a,button,label) {transition:none;}
+}
