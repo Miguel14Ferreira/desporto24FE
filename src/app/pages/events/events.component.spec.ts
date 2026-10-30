@@ -31,6 +31,62 @@ describe('EventsComponent', () => {
   });
 
 
+  it('exposes the premium filter groups and working quick action buttons', () => {
+    const page = fixture.nativeElement as HTMLElement;
+    const form = page.querySelector('.jynlo-session-filters') as HTMLFormElement;
+    expect(form).not.toBeNull();
+    expect(form.querySelectorAll('.filters-primary > label').length).toBe(3);
+    expect(form.querySelectorAll('.filters-quick .quick-chip').length).toBe(5);
+    expect(form.querySelector('.filters-toolbar .filter-actions')).not.toBeNull();
+
+    const padel = form.querySelectorAll<HTMLButtonElement>('.quick-chip')[3];
+    padel.click();
+    fixture.detectChanges();
+    expect(component.sport).toBe('Padel');
+    expect(padel.getAttribute('aria-pressed')).toBe('true');
+    expect(sessionService.discover.calls.mostRecent().args[0].sport).toBe('Padel');
+    padel.click();
+    fixture.detectChanges();
+    expect(component.sport).toBe('');
+    expect(padel.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('applies real search date boundaries and toggles quick dates off', () => {
+    component.applyQuickDate('today');
+    expect(component.quickDate).toBe('today');
+    expect(component.fromDateTime).toMatch(/^\\d{4}-\\d\\d-\\d\\dT00:00$/);
+    expect(component.toDateTime).toMatch(/^\\d{4}-\\d\\d-\\d\\dT23:59$/);
+    expect(sessionService.discover.calls.mostRecent().args[0].from).toBeTruthy();
+    expect(sessionService.discover.calls.mostRecent().args[0].to).toBeTruthy();
+    component.applyQuickDate('today');
+    expect(component.quickDate).toBe('');
+    expect(component.fromDateTime).toBe('');
+    expect(component.toDateTime).toBe('');
+    component.applyQuickDate('weekend');
+    expect(component.quickDate).toBe('weekend');
+    expect(Date.parse(component.toDateTime)).toBeGreaterThan(Date.parse(component.fromDateTime));
+    component.clearFilters();
+    expect(component.quickDate).toBe('');
+    expect(component.fromDateTime).toBe('');
+  });
+
+  it('only increases radius when nearby search is active', () => {
+    const calls = sessionService.discover.calls.count();
+    component.increaseRadius();
+    expect(sessionService.discover.calls.count()).toBe(calls);
+    component.nearbyActive = true;
+    component.latitude = 38.7;
+    component.longitude = -9.1;
+    component.radiusKm = 25;
+    component.increaseRadius();
+    expect(component.radiusKm).toBe(50);
+    expect(sessionService.discover.calls.mostRecent().args[0].radiusKm).toBe(50);
+    component.radiusKm = 100;
+    const atMaximum = sessionService.discover.calls.count();
+    component.increaseRadius();
+    expect(sessionService.discover.calls.count()).toBe(atMaximum);
+  });
+
   it('restores Discover sport and locality before the first full session search', async () => {
     const route = TestBed.inject(ActivatedRoute);
     const previous = route.snapshot.queryParamMap;
