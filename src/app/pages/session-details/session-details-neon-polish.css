@@ -17,7 +17,7 @@
 }
 :host .detail-page.jynlo-session-detail-premium .back-link {
   display:inline-flex;align-items:center;min-height:40px;
-  max-width:100%;margin-bottom:13px;
+  max-width:100%;
   color:#71edd8;text-decoration:none;font-size:.88rem;
 }
 :host .detail-page.jynlo-session-detail-premium .back-link:hover {color:#b6ffed;text-decoration:underline;}
@@ -60,7 +60,7 @@
 }
 :host .detail-page.jynlo-session-detail-premium .session-top-actions {
   display:flex;flex-wrap:wrap;align-items:center;
-  gap:10px;padding:15px 0;margin-block:12px;
+  gap:10px;padding:15px 0;
   border-top:1px solid rgba(91,200,198,.17);
   border-bottom:1px solid rgba(91,200,198,.17);
 }
