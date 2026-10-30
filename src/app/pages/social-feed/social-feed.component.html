@@ -183,7 +183,7 @@
           <img [src]="postImagePreview" [alt]="'feed.imagePreviewAlt' | t">
           <button
             type="button"
-            class="remove-image"
+            class="remove-image jynlo-premium-btn jynlo-premium-btn--danger jynlo-premium-btn--small"
             [disabled]="posting"
             (click)="removePostImage()">
             {{ 'feed.removeImage' | t }}
@@ -195,7 +195,7 @@
         <div class="composer-image-preview">
           <video [src]="postVideoPreview" controls preload="metadata" playsinline
             [attr.aria-label]="'feed.videoPreviewAlt' | t"></video>
-          <button type="button" class="remove-image" [disabled]="posting"
+          <button type="button" class="remove-image jynlo-premium-btn jynlo-premium-btn--danger jynlo-premium-btn--small" [disabled]="posting"
             (click)="removePostVideo()">{{ 'feed.removeVideo' | t }}</button>
         </div>
       }
@@ -207,12 +207,12 @@
             accept="image/jpeg,image/png,image/webp"
             [disabled]="posting"
             (change)="onPostImageChange($event)">
-          <span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
+          <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4"/><path d="m3 17 5.5-5.5 3.6 3.6 3-3L21 18"/></svg><span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
         </label>
         <label class="image-picker jynlo-action jynlo-premium-btn jynlo-premium-btn--quiet" [class.disabled]="posting">
           <input type="file" accept="video/mp4,video/webm" [disabled]="posting"
             (change)="onPostVideoChange($event)">
-          <span>{{ postVideoPreview ? ('feed.changeVideo' | t) : ('feed.addVideo' | t) }}</span>
+          <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="m17 10 4-3v10l-4-3"/></svg><span>{{ postVideoPreview ? ('feed.changeVideo' | t) : ('feed.addVideo' | t) }}</span>
         </label>
         <button
           class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
@@ -228,7 +228,7 @@
       <div class="feedback error-feedback">{{ actionError }}</div>
     }
 
-    <div class="feed-v3-post-heading"><h2>{{ 'feed.v3.latest' | t }}</h2><a routerLink="/menu/discover">{{ 'nav.discover' | t }} <span aria-hidden="true">↗</span></a></div>
+    <div class="feed-v3-post-heading"><h2>{{ 'feed.v3.latest' | t }}</h2><a class="feed-inline-link" routerLink="/menu/discover">{{ 'nav.discover' | t }} <span aria-hidden="true">↗</span></a></div>
     @if (loading) {
       <div class="state-card">{{ 'feed.loading' | t }}</div>
     }
@@ -326,7 +326,7 @@
                     [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
                     [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
-                    <span aria-hidden="true">↗</span>
+                    <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
                     {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                   </button>
                 }
@@ -354,7 +354,7 @@
                 </button>
 
                 @if (item.authorUsername !== currentUsername) {
-                  <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
+                  <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small feed-report-action"
                     type="button"
                     [disabled]="reportingPostId !== null || (item.postId !== null && reportedPostIds.has(item.postId))"
                     (click)="reportPost(item)">
@@ -399,7 +399,7 @@
                       @if (comment.authorUsername === currentUsername) {
                         <button
                           type="button"
-                          class="delete-comment jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
+                          class="delete-comment jynlo-premium-btn jynlo-premium-btn--danger jynlo-premium-btn--small"
                           [disabled]="deletingCommentId !== null"
                           (click)="deleteComment(item, comment)">
                           {{ deletingCommentId === comment.id ? ('common.processing' | t) : '×' }}
@@ -470,7 +470,7 @@
                                       [disabled]="sharingSessionId !== null"
                                       (click)="shareSession(item)"
                                       [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
-                                      <span aria-hidden="true">↗</span>
+                                      <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
                                       {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                                     </button>
                 </div>
@@ -505,7 +505,7 @@
                     [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
                     [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
-                    <span aria-hidden="true">↗</span>
+                    <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
                     {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                   </button>
                 </div>
@@ -532,7 +532,7 @@
         <section class="state-card feed-discovery-card">
           <div class="feed-v3-side-heading">
             <h2>{{ (suggestedSessions.length > 0 ? 'feed.suggestedSessionsTitle' : 'menu.findSessions') | t }}</h2>
-            <a routerLink="/menu/events">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+            <a class="feed-inline-link" routerLink="/menu/events">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
           </div>
           @if (suggestedSessions.length > 0) {
             <div class="feed-suggested-sessions">
@@ -556,7 +556,7 @@
         <section class="state-card feed-discovery-card">
           <div class="feed-v3-side-heading">
             <h2>{{ 'discover.who.title' | t }}</h2>
-            <a routerLink="/menu/perfis">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+            <a class="feed-inline-link" routerLink="/menu/perfis">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
           </div>
           @if (suggestedPeople.length > 0) {
             <div class="feed-suggested-people">
@@ -590,7 +590,7 @@
         <section class="state-card feed-discovery-card feed-v3-community-panel">
           <div class="feed-v3-side-heading">
             <h2>{{ 'feed.v3.communities' | t }}</h2>
-            <a routerLink="/menu/communities">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+            <a class="feed-inline-link" routerLink="/menu/communities">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
           </div>
           @if (myWeekCommunities.length > 0) {
             <div class="feed-v3-communities">
@@ -611,7 +611,7 @@
           <img src="/assets/jynlo-icon-approved.webp" width="65" height="65" alt="" loading="lazy">
           <h2>{{ 'feed.v3.joinTitle' | t }}</h2>
           <p>{{ 'feed.v3.joinHint' | t }}</p>
-          <a routerLink="/menu/communities">{{ 'feed.v3.exploreCommunities' | t }}</a>
+          <a class="jynlo-premium-btn jynlo-premium-btn--primary feed-v3-join-action" routerLink="/menu/communities">{{ 'feed.v3.exploreCommunities' | t }}</a>
         </section>
       </aside>
     </div>
