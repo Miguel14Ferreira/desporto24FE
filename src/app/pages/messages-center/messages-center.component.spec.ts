@@ -895,6 +895,132 @@ describe('Unified Jynlo message center', () => {
     component.ngOnDestroy();
   });
 
+
+  it('pastes an image into a direct chat as a staged private attachment without sending', () => {
+    const peer = item('direct','bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.draft = 'Legenda original';
+    const create = spyOn(URL,'createObjectURL').and.returnValue('blob:staged-image');
+    const revoke = spyOn(URL,'revokeObjectURL');
+    const file = new File(['PNG'],'clipboard.png',{type:'image/png'});
+    const preventDefault = jasmine.createSpy('preventDefault');
+    component.onComposerPaste({clipboardData:{items:[{kind:'file',type:'image/png',
+      getAsFile:()=>file}],files:[]},preventDefault} as unknown as ClipboardEvent);
+    expect(preventDefault).toHaveBeenCalled();
+    expect(component.selectedAttachment?.name).toMatch(/^imagem-colada-\d+\.png$/);
+    expect(component.selectedAttachmentPreviewUrl).toBe('blob:staged-image');
+    expect(component.draft).toBe('Legenda original');
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    expect(direct.send).not.toHaveBeenCalled();
+    component.removeAttachment();
+    expect(revoke).toHaveBeenCalledOnceWith('blob:staged-image');
+    expect(component.selectedAttachment).toBeNull();
+  });
+
+  it('keeps ordinary text paste untouched and respects private storage restrictions', () => {
+    const peer = item('direct','bea');
+    component.conversations=[peer];
+    component.selectedKey=peer.key;
+    component.composerAllowed=true;
+    component.draft='Hello';
+    const normal = jasmine.createSpy('plain');
+    component.onComposerPaste({clipboardData:{items:[{kind:'string',type:'text/plain',
+      getAsFile:()=>null}],files:[]},preventDefault:normal} as unknown as ClipboardEvent);
+    expect(normal).not.toHaveBeenCalled();
+    expect(component.draft).toBe('Hello');
+    const image = new File(['x'],'screen.png',{type:'image/png'});
+    const blocked = jasmine.createSpy('blocked');
+    component.onComposerPaste({clipboardData:{items:[{kind:'file',type:'image/png',
+      getAsFile:()=>image}]},preventDefault:blocked} as unknown as ClipboardEvent);
+    expect(blocked).toHaveBeenCalled();
+    expect(component.selectedAttachment).toBeNull();
+    expect(component.composerError).toBeTruthy();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid and oversized pasted images without replacing a valid draft', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer];
+    component.selectedKey=peer.key;
+    component.composerAllowed=true;
+    component.attachmentReady=true;
+    const png=new File(['ok'],'original.png',{type:'image/png'});
+    spyOn(URL,'createObjectURL').and.returnValue('blob:original');
+    const revoke=spyOn(URL,'revokeObjectURL');
+    component.onAttachmentPicked({target:{files:[png],value:''}} as any);
+    const svg=new File(['<svg/>'],'svg.svg',{type:'image/svg+xml'});
+    component.onComposerPaste({clipboardData:{items:[{kind:'file',type:'image/svg+xml',
+      getAsFile:()=>svg}]},preventDefault:()=>{}} as unknown as ClipboardEvent);
+    expect(component.selectedAttachment).toBe(png);
+    expect(revoke).not.toHaveBeenCalled();
+    expect(component.composerError).toBeTruthy();
+    const big=new File([new Uint8Array(5*1024*1024+1)],'huge.png',{type:'image/png'});
+    component.onComposerPaste({clipboardData:{items:[{kind:'file',type:'image/png',
+      getAsFile:()=>big}]},preventDefault:()=>{}} as unknown as ClipboardEvent);
+    expect(component.selectedAttachment).toBe(png);
+  });
+
+  it('uses authorized community and session multipart endpoints when pasted images are sent', () => {
+    const getEvent=(file:File)=>({clipboardData:{items:[{kind:'file',type:file.type,
+      getAsFile:()=>file}]},preventDefault:()=>{}} as unknown as ClipboardEvent);
+    spyOn(URL,'createObjectURL').and.returnValue('blob:local-image');
+    spyOn(URL,'revokeObjectURL');
+    const community = item('community',7);
+    component.conversations=[community];
+    component.selectedKey=community.key;
+    component.composerAllowed=true;
+    component.attachmentReady=true;
+    component.onComposerPaste(getEvent(new File(['x'],'shot.webp',{type:'image/webp'})));
+    timeline.sendChatAttachment.and.returnValue(of({id:70,communityId:7,kind:'CHAT',
+      username:'ana',body:'📎 imagem',createdAt:new Date().toISOString()}));
+    component.sendMessage();
+    expect(timeline.sendChatAttachment).toHaveBeenCalledTimes(1);
+    expect(timeline.sendChatAttachment.calls.mostRecent().args[1].type).toBe('image/webp');
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    expect(component.selectedAttachmentPreviewUrl).toBeNull();
+
+    const session=item('session',41);
+    component.conversations=[session];
+    component.selectedKey=session.key;
+    component.composerAllowed=true;
+    component.attachmentReady=true;
+    component.onComposerPaste(getEvent(new File(['x'],'shot.gif',{type:'image/gif'})));
+    sessions.sendAttachment.and.returnValue(of({id:71,sessionId:41,senderUsername:'ana',
+      body:'📎 imagem',createdAt:new Date().toISOString()}));
+    component.sendMessage();
+    expect(sessions.sendAttachment).toHaveBeenCalledTimes(1);
+    expect(sessions.sendAttachment.calls.mostRecent().args[1].type).toBe('image/gif');
+    expect(component.selectedAttachment).toBeNull();
+  });
+
+  it('revokes copied preview on changing conversation and on teardown', () => {
+    const first=item('direct','bea'), second=item('direct','carlos');
+    component.conversations=[first,second];
+    component.selectedKey=first.key;
+    component.attachmentReady=true;component.composerAllowed=true;
+    spyOn(URL,'createObjectURL').and.returnValues('blob:one','blob:two');
+    const revoked=spyOn(URL,'revokeObjectURL');
+    const clip=(file:File)=>({clipboardData:{items:[{kind:'file',type:file.type,
+      getAsFile:()=>file}]},preventDefault:()=>{}} as unknown as ClipboardEvent);
+    component.onComposerPaste(clip(new File(['x'],'one.png',{type:'image/png'})));
+    spyOn<any>(component,'loadHistory').and.stub();
+    spyOn<any>(component,'loadComposerAccess').and.stub();
+    component.selectConversation(second);
+    expect(revoked).toHaveBeenCalledWith('blob:one');
+    expect(component.selectedAttachment).toBeNull();
+    component.attachmentReady=true;component.composerAllowed=true;
+    component.previewLoading=false;component.previewError=false;
+    component.composerAccessLoading=false;
+    component.onComposerPaste(clip(new File(['x'],'two.png',{type:'image/png'})));
+    expect(component.selectedAttachmentPreviewUrl).toBe('blob:two');
+    component.ngOnDestroy();
+    expect(revoked).toHaveBeenCalledWith('blob:two');
+  });
+
   it('refuses unsupported or oversized attachments before HTTP upload', () => {
     const peer = item('direct','bea');
     component.conversations = [peer];

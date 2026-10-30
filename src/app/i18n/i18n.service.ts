@@ -458,6 +458,8 @@ const PT: Dictionary = {
   'chat.voiceRecordFailed': 'Não foi possível gravar esta mensagem de voz.',
   'chat.voiceTooLarge': 'A mensagem de voz ultrapassou 5 MB. Experimenta gravar uma mensagem mais curta.',
   'chat.attachmentInvalid': 'Seleciona JPG, PNG, WebP, GIF ou PDF até 5 MB.',
+  'chat.pasteUnavailable': 'Não é possível colar imagens nesta conversa neste momento.',
+  'chat.pastedImage': 'Imagem selecionada para enviar',
   'chat.attachmentRemove': 'Remover anexo',
   'chat.attachmentOpen': 'Abrir',
   'chat.attachmentHide': 'Ocultar',

@@ -309,3 +309,9 @@
 .inbox-shared-card a:hover { text-decoration:underline; }
 .inbox-shared-card p { margin:4px 0 0;white-space:pre-wrap;font-size:.85rem; }
 
+
+/* Clipboard image: local preview only, revoked on removal, send or thread switch. */
+.inbox-pasted-image-draft .inbox-pasted-image-preview{
+  display:block;flex:0 0 54px;width:54px;height:48px;object-fit:cover;
+  border-radius:8px;background:#0d2732;
+}

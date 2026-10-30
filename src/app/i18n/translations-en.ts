@@ -452,6 +452,8 @@ export const EN: Record<string, string> = {
   'chat.voiceRecordFailed': 'Could not record this voice message.',
   'chat.voiceTooLarge': 'Voice message exceeded 5 MB. Try recording a shorter message.',
   'chat.attachmentInvalid': 'Choose a JPG, PNG, WebP, GIF or PDF up to 5 MB.',
+  'chat.pasteUnavailable': 'Images cannot be pasted in this conversation right now.',
+  'chat.pastedImage': 'Image ready to send',
   'chat.attachmentRemove': 'Remove attachment',
   'chat.attachmentOpen': 'Open',
   'chat.attachmentHide': 'Hide',
