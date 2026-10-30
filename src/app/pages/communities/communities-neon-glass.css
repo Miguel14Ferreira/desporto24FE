@@ -308,6 +308,12 @@
     gap:11px;
   }
 }
+/* On compact devices the global nav occupies two lines; do not hide the title. */
+@media(max-width:900px) {
+  :host .communities-page.jynlo-community-main-premium {
+    padding-top:calc(8.5rem + env(safe-area-inset-top));
+  }
+}
 @media(max-width:820px) {
   :host .communities-page.jynlo-community-main-premium .communities-layout {
     grid-template-columns:minmax(0,1fr);
