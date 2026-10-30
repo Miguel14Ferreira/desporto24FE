@@ -438,3 +438,60 @@
     width:100%;
   }
 }
+
+/* Layout containment: prevent long labels and nested competition content
+   from pushing the page sideways or colliding with adjacent cards. */
+:host .communities-page.jynlo-community-main-premium {
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  overflow-x:clip;
+}
+:host .communities-page.jynlo-community-main-premium .communities-shell,
+:host .communities-page.jynlo-community-main-premium .community-detail,
+:host .communities-page.jynlo-community-main-premium .community-detail-copy,
+:host .communities-page.jynlo-community-main-premium .community-tab-panel {
+  min-inline-size:0;
+  overflow-wrap:anywhere;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page app-community-tabs {
+  display:block;
+  min-width:0;
+  max-width:100%;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page :is(
+  .community-tab-panel,.community-detail,.community-session-entry
+) > * {
+  min-width:0;
+  max-width:100%;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page :is(
+  .row-actions,.community-session-entry-actions,.community-session-result-footer
+) {
+  min-width:0;
+  flex-wrap:wrap;
+  row-gap:10px;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page :is(
+  .community-session-result-footer,.community-session-entry-actions
+) > :is(button,a) {
+  min-width:0;
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+@media(max-width:560px) {
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .detail-header,
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .community-detail-identity {
+    flex-direction:column;
+    align-items:stretch;
+  }
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .community-detail-identity {
+    flex:0 1 auto;
+  }
+  :host .communities-page.jynlo-community-main-premium.community-detail-page :is(
+    .community-session-result-footer,.community-session-entry-actions
+  ) > :is(button,a) {
+    flex:1 1 150px;
+  }
+}
