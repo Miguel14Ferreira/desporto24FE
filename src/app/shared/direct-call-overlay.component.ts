@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { CallParticipantTileComponent } from './call-participant-tile.component';
 import { combineLatest, map, Observable, Subscription, timer } from 'rxjs';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { appTranslate } from '../i18n/i18n.service';
 import { DirectCallClientService } from '../services/direct-call-client.service';
 
 /**
@@ -611,7 +612,7 @@ export class DirectCallOverlayComponent implements OnDestroy {
       .some(pub=>pub.source===Track.Source.ScreenShare && !!pub.track && !pub.isMuted));
   }
   participantLabel(person: LocalParticipant | RemoteParticipant): string {
-    if (person===this.calls.room?.localParticipant) return 'Tu';
+    if (person===this.calls.room?.localParticipant) return appTranslate('calls.you');
     const found=this.calls.members$.value.participants
       .find(member=>member.identity===person.identity);
     return found?.username || this.calls.state$.value?.peer || 'Participante';
