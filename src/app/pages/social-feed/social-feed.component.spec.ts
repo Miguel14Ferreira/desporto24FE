@@ -122,14 +122,15 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component.ngOnDestroy();
   }));
 
-  it('keeps Create session as the single recruitment entry without the redundant banner', fakeAsync(() => {
+  it('keeps one primary Create session action and a separate week shortcut', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('.week-recruit')).toBeNull();
+    expect(root.querySelectorAll('.feed-hero-cta')).toHaveSize(1);
+    expect(root.querySelector('.feed-hero-cta')?.getAttribute('href')).toBe('/menu/createEvent');
     expect(root.querySelectorAll('.week-hub-create')).toHaveSize(1);
-    expect(root.querySelector('.week-hub-create')?.getAttribute('href'))
-      .toBe('/menu/createEvent');
+    expect(root.querySelector('.week-hub-create')?.getAttribute('href')).toBe('/menu/my-sessions');
   }));
 
   it('shows my sports week before the feed using real session and community links', fakeAsync(() => {
@@ -214,7 +215,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(hub?.textContent).toContain(t('week.noOpenSlots'));
     expect(hub?.textContent).toContain(t('week.noCommunities'));
     expect(hub?.querySelector('a[href="/menu/discover"]')).not.toBeNull();
-    expect(hub?.querySelector('a[href="/menu/createEvent"]')).not.toBeNull();
+    expect(hub?.querySelector('a[href="/menu/my-sessions"]')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.feed-hero-cta[href="/menu/createEvent"]')).not.toBeNull();
   }));
 
   it('keeps normal publications simple, without manual session selection', fakeAsync(() => {
