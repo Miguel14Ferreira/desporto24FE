@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
+import { CommunityService } from '../services/community.service';
 import { DirectCallClientService, DirectCallState } from '../services/direct-call-client.service';
 import { DirectCallOverlayComponent } from './direct-call-overlay.component';
 
@@ -49,7 +50,8 @@ describe('Global incoming call popup', () => {
     };
     await TestBed.configureTestingModule({
       imports: [DirectCallOverlayComponent],
-      providers: [{provide: DirectCallClientService, useValue: calls}]
+      providers: [{provide: DirectCallClientService, useValue: calls},
+        {provide: CommunityService, useValue: {friends: () => of([{username:'carlos',fullName:'Carlos Silva',nickname:'Carlos',profilePicUrl:null,chatBlocked:false,blockedByMe:false}])}}]
     }).compileComponents();
     fixture = TestBed.createComponent(DirectCallOverlayComponent);
     fixture.detectChanges();
@@ -123,6 +125,17 @@ describe('Global incoming call popup', () => {
     state.next(null);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.connect-mini')).toBeNull();
+  });
+
+  it('finds eligible friends in the invitation picker', () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.connect-invite-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.connect-contact-option')?.textContent).toContain('Carlos');
+    fixture.componentInstance.inviteUsername='nobody';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.connect-contact-option')).toBeNull();
   });
 
   it('invites a username only through the authenticated calling service', async () => {
