@@ -1,10 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" role="img" aria-label="Jynlo">
   <defs>
-    <linearGradient id="jynlo-tile" x1="9" y1="6" x2="64" y2="68" gradientUnits="userSpaceOnUse"><stop stop-color="#0c4852"/><stop offset="1" stop-color="#062331"/></linearGradient>
-    <linearGradient id="jynlo-mark" x1="29" y1="18" x2="52" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#29f1e0"/><stop offset=".58" stop-color="#21dfc5"/><stop offset="1" stop-color="#a1f5d5"/></linearGradient>
+    <linearGradient id="tile" x1="36" y1="26" x2="290" y2="310" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#08515c"/><stop offset=".39" stop-color="#043747"/><stop offset="1" stop-color="#072635"/>
+    </linearGradient>
+    <radialGradient id="tile-glow" cx="0" cy="0" r="1" gradientTransform="translate(73 41) rotate(45) scale(255 230)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#159d9f" stop-opacity=".36"/><stop offset=".7" stop-color="#072d3c" stop-opacity=".02"/><stop offset="1" stop-color="#051d2c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="frame" x1="19" y1="20" x2="308" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#29f6f0"/><stop offset=".49" stop-color="#0bc7c6"/><stop offset="1" stop-color="#18c1ac"/>
+    </linearGradient>
+    <linearGradient id="letter" x1="188" y1="68" x2="156" y2="269" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#11f1eb"/><stop offset=".52" stop-color="#08d4c3"/><stop offset="1" stop-color="#a5ffd3"/>
+    </linearGradient>
+    <linearGradient id="motion" x1="90" y1="159" x2="164" y2="243" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b4ffe3"/><stop offset=".55" stop-color="#64e7c7"/><stop offset="1" stop-color="#1dc0b4"/>
+    </linearGradient>
+    <linearGradient id="swoosh" x1="116" y1="247" x2="187" y2="273" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f2fff4"/><stop offset="1" stop-color="#b1ffe0"/>
+    </linearGradient>
   </defs>
-  <rect x="2.5" y="2.5" width="67" height="67" rx="19" fill="url(#jynlo-tile)" stroke="#23dcca" stroke-width="1.5"/>
-  <path d="M49 19.5H44.5C41.6 19.5 40 21.2 40 24V44C40 49.1 37.5 52 32.5 52C29.7 52 27.2 50.8 25.5 48.4C25.3 54.5 29.9 58 35 58C45.4 58 51 51.2 51 41.1V21.5C51 20.4 50.1 19.5 49 19.5Z" fill="url(#jynlo-mark)"/>
-  <path d="M22 43.5C24.8 50.5 31.9 53.6 38.3 49.7C34.4 57.2 24.7 57.4 20.9 49.2C20 47.4 20.3 45.6 22 43.5Z" fill="#b4f5d5"/>
-  <circle cx="27" cy="34" r="6.5" fill="#26e6d6"/>
+  <rect x="17" y="16" width="286" height="288" rx="72" fill="url(#tile)" stroke="url(#frame)" stroke-width="3"/>
+  <rect x="20" y="19" width="280" height="282" rx="69" fill="url(#tile-glow)"/>
+  <path d="M191 86c0-12.5 10-22.5 22.5-22.5H251v137c0 43-20.5 69-61 69-29 0-55-11-72-27 21 8 45 9 60-6 9-9 13-21 13-37V86Z" fill="url(#letter)"/>
+  <circle cx="140.5" cy="139.5" r="24.5" fill="#11ecd4"/>
+  <path d="M90 163c11 18 36 43 77 50-11 16-24 24-39 24-25 0-41-26-41-52v-19c0-3 2-4 3-3Z" fill="url(#motion)"/>
+  <path d="M118 244c15 9 34 13 52 8 7-2 12-5 17-9-7 16-19 26-34 27-15-3-26-12-35-26Z" fill="url(#swoosh)"/>
 </svg>

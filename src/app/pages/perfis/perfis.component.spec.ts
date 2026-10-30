@@ -103,9 +103,10 @@ describe('PerfisComponent', () => {
     fixture.detectChanges();
   });
 
-  it('shows Jynlo branding while preserving player search and existing actions', () => {
+  it('keeps the player-search title and actions without repeating the navbar brand', () => {
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelector('.page-header .eyebrow')?.textContent?.trim()).toBe('Jynlo');
+    expect(root.querySelector('.page-header .eyebrow')).toBeNull();
+    expect(root.querySelector('.page-header h1')).not.toBeNull();
     expect(root.querySelector('.partner-search')).not.toBeNull();
     expect(root.querySelector('a[href="/menu/friendList"]')).not.toBeNull();
   });
