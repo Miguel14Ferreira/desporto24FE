@@ -429,7 +429,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     }
     .call-backdrop{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;
       padding:clamp(8px,2vh,24px);background:rgba(0,13,23,.9);backdrop-filter:blur(8px);}
-    .call-panel{box-sizing:border-box;width:min(100%,900px);max-height:calc(100dvh - 20px);
+    .call-panel{box-sizing:border-box;width:min(100%,1180px);max-height:calc(100dvh - 20px);
       display:flex;flex-direction:column;min-height:0;padding:clamp(12px,2vw,22px);
       color:#ecfcf9;background:linear-gradient(144deg,#0b2332,#133e49);
       border:1px solid rgba(104,201,198,.43);border-radius:22px;
@@ -615,7 +615,7 @@ export class DirectCallOverlayComponent implements OnDestroy {
     if (person===this.calls.room?.localParticipant) return appTranslate('calls.you');
     const found=this.calls.members$.value.participants
       .find(member=>member.identity===person.identity);
-    return found?.username || this.calls.state$.value?.peer || 'Participante';
+    return found?.username || 'Participante';
   }
 
   minimize(): void {
