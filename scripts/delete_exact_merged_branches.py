@@ -9,7 +9,23 @@ import urllib.error
 OWNER = "Miguel14Ferreira"
 REPO = "desporto24FE"
 ALLOWLIST = [
-    "fix/calls-camera-recovery-teams-ui-20261029"
+    "fix/calls-camera-recovery-teams-ui-20261029",
+    "feat/chat-realtime-notice-media-preview-20261028",
+    "feat/community-session-creation-policy-20261028",
+    "feat/community-venue-inline-map-preview-20261028",
+    "feat/group-chat-live-toast-20261028",
+    "feat/guest-private-meeting-point-ui-20261028",
+    "feat/guest-receipt-session-chat-20261029",
+    "feat/guest-rejoin-after-cancellation-20261028",
+    "feat/guest-self-cancel-fullwidth-20261028",
+    "feat/home-venue-cards-open-details-20261028",
+    "feat/invite-inline-google-mfa-20261029",
+    "feat/invite-single-confirm-rsvp-20261029",
+    "feat/meeting-point-notification-deeplink-20261028",
+    "feat/notification-unread-browser-tab-title-20261028",
+    "feat/participant-chips-guest-roster-20261028",
+    "feat/per-conversation-mute-controls-20261028",
+    "feat/premium-global-selects-profile-20261028"
 ]
 PROTECTED = {"develop", "master", "main", "preview/render-fullstack", "feature/desporto24-preview-deploy"}
 
