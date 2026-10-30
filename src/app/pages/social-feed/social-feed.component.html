@@ -593,7 +593,8 @@
           @if (myWeekCommunities.length > 0) {
             <div class="feed-v3-communities">
               @for (community of myWeekCommunities; track community.id) {
-                <a [routerLink]="['/menu/communities', community.id]" class="feed-v3-community-row">
+                <a [routerLink]="['/menu/communities', community.id]" class="feed-v3-community-row"
+                   [attr.title]="community.name" [attr.aria-label]="community.name">
                   <span class="feed-v3-community-avatar" aria-hidden="true">{{ community.name.charAt(0).toUpperCase() }}</span>
                   <span><strong>{{ community.name }}</strong><small>{{ community.memberCount }} {{ 'week.members' | t }}</small></span>
                   <span class="feed-v3-community-chevron" aria-hidden="true">↗</span>
@@ -603,7 +604,6 @@
           } @else {
             <p class="feed-v3-side-empty">{{ 'week.noCommunities' | t }}</p>
           }
-          <a class="feed-sidebar-link feed-v3-side-button" routerLink="/menu/communities">{{ 'week.exploreCommunities' | t }}</a>
         </section>
         <section class="feed-v3-join-card">
           <img src="/assets/jynlo-icon-approved.webp" width="65" height="65" alt="" loading="lazy">
