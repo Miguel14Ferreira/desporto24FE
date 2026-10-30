@@ -64,7 +64,8 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
           <div class="connect-mini-audio" aria-hidden="true">
             @for (person of participants; track person.identity) {
               @if (person !== calls.room?.localParticipant) {
-                <app-call-participant-tile [participant]="person" [label]="participantLabel(person)"/>
+                <app-call-participant-tile [participant]="person" [label]="participantLabel(person)"
+                  [volume]="volumeFor(person.identity)"/>
               }
             }
           </div>
@@ -130,7 +131,8 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                 [class.connect-participants--presenting]="hasPresentation">
                 @for (person of participants; track person.identity) {
                   <app-call-participant-tile [participant]="person"
-                    [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant">
+                    [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant"
+                    [volume]="volumeFor(person.identity)">
                   </app-call-participant-tile>
                 }
               </div>
@@ -224,7 +226,17 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                   <div class="connect-member-list">
                     <strong>{{ 'calls.participants' | t }} ({{ members.participants.length }})</strong>
                     @for (person of members.participants; track person.identity) {
-                      <span class="connect-member-item">● {{ person.username }}</span>
+                      <label class="connect-member-item">
+                        <span>● {{ person.username }}</span>
+                        @if (person.identity !== calls.room?.localParticipant?.identity) {
+                          <span class="connect-volume-label">{{ 'calls.volume' | t }} {{ volumeFor(person.identity) * 100 | number:'1.0-0' }}%</span>
+                          <input type="range" min="0" max="100" step="5"
+                            [ngModel]="volumeFor(person.identity) * 100"
+                            (ngModelChange)="setVolume(person.identity,$event)"
+                            [ngModelOptions]="{standalone:true}"
+                            [attr.aria-label]="('calls.volume' | t) + ' ' + person.username">
+                        }
+                      </label>
                     }
                     @for (pending of members.pending; track pending) {
                       <span class="connect-member-pending">◷ {{ pending }} · {{ 'calls.invitePending' | t }}</span>
@@ -539,6 +551,9 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .connect-member-list strong{width:100%;font-size:.78rem}
     .connect-member-item,.connect-member-pending{padding:6px 10px;border-radius:99px;border:1px solid #397f77;color:#b4ffe8;font-size:.74rem}
     .connect-member-pending{border-color:#827757;color:#f5ddb0}
+    .connect-member-item{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+    .connect-member-item input{width:118px;accent-color:#45dfb9}
+    .connect-volume-label{font-size:.67rem;color:#a9d5d5}
     .connect-mini{position:fixed;bottom:max(20px,env(safe-area-inset-bottom));right:20px;z-index:6000;
       display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #48bfa8;border-radius:16px;
       background:#0b303e;color:#ebfff8;box-shadow:0 12px 48px #0008}
@@ -574,6 +589,13 @@ export class DirectCallOverlayComponent implements OnDestroy {
   inviteOpen = false;
   inviteUsername = '';
   minimized = false;
+  private volumes: Record<string,number> = {};
+
+  volumeFor(identity: string): number { return this.volumes[identity] ?? 1; }
+  setVolume(identity: string, percent: number | string): void {
+    const value=Number(percent);
+    if (Number.isFinite(value)) this.volumes[identity]=Math.max(0,Math.min(1,value/100));
+  }
 
   get participants(): (LocalParticipant | RemoteParticipant)[] {
     const room = this.calls.room;
@@ -648,6 +670,7 @@ export class DirectCallOverlayComponent implements OnDestroy {
         this.inviteOpen=false;
         this.minimized=false;
         this.inviteUsername='';
+        this.volumes={};
       }
     });
   }
