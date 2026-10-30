@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72" fill="none">
+  <defs>
+    <linearGradient id="jynlo-tile" x1="9" y1="6" x2="64" y2="68" gradientUnits="userSpaceOnUse"><stop stop-color="#0c4852"/><stop offset="1" stop-color="#062331"/></linearGradient>
+    <linearGradient id="jynlo-mark" x1="29" y1="18" x2="52" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#29f1e0"/><stop offset=".58" stop-color="#21dfc5"/><stop offset="1" stop-color="#a1f5d5"/></linearGradient>
+  </defs>
+  <rect x="2.5" y="2.5" width="67" height="67" rx="19" fill="url(#jynlo-tile)" stroke="#23dcca" stroke-width="1.5"/>
+  <path d="M49 19.5H44.5C41.6 19.5 40 21.2 40 24V44C40 49.1 37.5 52 32.5 52C29.7 52 27.2 50.8 25.5 48.4C25.3 54.5 29.9 58 35 58C45.4 58 51 51.2 51 41.1V21.5C51 20.4 50.1 19.5 49 19.5Z" fill="url(#jynlo-mark)"/>
+  <path d="M22 43.5C24.8 50.5 31.9 53.6 38.3 49.7C34.4 57.2 24.7 57.4 20.9 49.2C20 47.4 20.3 45.6 22 43.5Z" fill="#b4f5d5"/>
+  <circle cx="27" cy="34" r="6.5" fill="#26e6d6"/>
+</svg>

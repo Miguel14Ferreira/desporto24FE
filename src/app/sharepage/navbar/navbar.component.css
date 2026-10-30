@@ -20,15 +20,28 @@
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .7rem;
+  min-width: 0;
   color: #f8fafc;
-  font-size: 1.15rem;
-  font-weight: 900;
-  letter-spacing: -.03em;
+  font-size: 1.02rem;
+  font-weight: 850;
+  letter-spacing: .2em;
   text-decoration: none;
 }
-
-.brand span {
-  color: var(--d24-accent);
+.brand__mark {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  filter: drop-shadow(0 0 12px rgba(39, 226, 201, .15));
+}
+.brand__wordmark {
+  color: #f3fffc;
+  letter-spacing: .17em;
+}
+@media (max-width: 620px) {
+  .brand__mark { width: 32px; height: 32px; }
 }
 
 .site-nav__links {

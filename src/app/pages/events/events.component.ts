@@ -31,6 +31,7 @@ export class EventsComponent implements OnInit, OnDestroy {
   sort = 'date';
 
   showAdvancedFilters = false;
+  quickDate: 'today' | 'week' | 'weekend' | '' = '';
   fromDateTime = '';
   toDateTime = '';
   minPrice: number | null = null;
@@ -216,7 +217,64 @@ export class EventsComponent implements OnInit, OnDestroy {
     this.showAdvancedFilters = !this.showAdvancedFilters;
   }
 
+  applyQuickSport(value: 'Padel' | 'Futebol'): void {
+    this.sport = this.sport === value ? '' : value;
+    this.loadSessions();
+  }
+
+  applyQuickDate(value: 'today' | 'week' | 'weekend'): void {
+    if (this.quickDate === value) {
+      this.quickDate = '';
+      this.fromDateTime = '';
+      this.toDateTime = '';
+      this.loadSessions();
+      return;
+    }
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+
+    if (value === 'week') {
+      const daysFromMonday = (start.getDay() + 6) % 7;
+      start.setDate(start.getDate() - daysFromMonday);
+      end.setTime(start.getTime());
+      end.setDate(end.getDate() + 6);
+    } else if (value === 'weekend') {
+      const daysUntilSaturday = (6 - start.getDay() + 7) % 7;
+      if (start.getDay() === 0) {
+        start.setDate(start.getDate() - 1);
+      } else {
+        start.setDate(start.getDate() + daysUntilSaturday);
+      }
+      end.setTime(start.getTime());
+      end.setDate(end.getDate() + 1);
+    }
+
+    end.setHours(23, 59, 0, 0);
+    this.fromDateTime = this.toLocalDateTime(start);
+    this.toDateTime = this.toLocalDateTime(end);
+    this.quickDate = value;
+    this.loadSessions();
+  }
+
+  increaseRadius(): void {
+    if (!this.nearbyActive) return;
+    const next = [5, 10, 25, 50, 100].find(km => km > this.radiusKm);
+    if (next === undefined) return;
+    this.radiusKm = next;
+    this.loadSessions();
+  }
+
+  private toLocalDateTime(value: Date): string {
+    const part = (num: number) => String(num).padStart(2, '0');
+    return value.getFullYear() + '-' + part(value.getMonth() + 1) + '-' +
+      part(value.getDate()) + 'T' + part(value.getHours()) + ':' +
+      part(value.getMinutes());
+  }
+
   clearFilters(): void {
+    this.quickDate = '';
     this.sport = '';
     this.city = '';
     this.availableOnly = false;
