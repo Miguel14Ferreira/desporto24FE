@@ -1,0 +1,19 @@
+name: Review QA candidate diffs
+on:
+  push:
+    branches:
+      - chore/safe-merged-branch-cleanup-20261030
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Show exact QA differences
+        env:
+          PRODUCTION_BRANCH: preview/render-fullstack
+          CANDIDATES: qa/community-tournaments-browser-proof-20261026,qa/concept-one-mobile-chromium-390-venues-20261026,qa/concept-one-populated-tournaments-permissions-20261026,qa/private-session-cleanup-resilience-20261023,test/qa-optional-email-resend-live-20261026
+        run: python3 scripts/review_whitespace_qa_diffs.py
