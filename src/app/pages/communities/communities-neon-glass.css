@@ -731,10 +731,6 @@
   color:#b3e6df;
 }
 /* Discovery cards: visible photo, stable content region and aligned action footer. */
-:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid {
-  grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));
-  gap:16px;
-}
 :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid > button.community-card {
   display:flex;
   flex-direction:column;
@@ -786,11 +782,6 @@
 :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid .community-discovery-card-link {
   white-space:normal;
   text-align:right;
-}
-@media(max-width:690px) {
-  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid > button.community-card {
-    min-height:205px;
-  }
 }
 @media(prefers-reduced-motion:reduce) {
   :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card {transition:none;}
