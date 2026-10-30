@@ -37,6 +37,10 @@ ALLOWLIST = [
     "feat/unified-session-create-communities-20261027",
     "feat/venue-directions-safe-modes-20261028",
     "feat/venue-sports-badges-premium-20261028",
+    "feat/private-group-photo-live-safe-20261028",
+    "feat/public-session-invite-chat-compact-venue-20261029",
+    "feat/my-sessions-organized-tabs-20261029",
+    "feat/modern-player-comparison-select-clear-20261028",
 ]
 PROTECTED = {"develop", "master", "main", "preview/render-fullstack", "feature/desporto24-preview-deploy"}
 
