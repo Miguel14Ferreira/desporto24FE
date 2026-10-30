@@ -34,6 +34,8 @@ interface CallSession {
   expiresAt: string;
 }
 /** The authenticated pending call response contains no LiveKit credentials. */
+export interface CallMember { username: string; identity: string; }
+export interface CallMembership { participants: CallMember[]; pending: string[]; }
 interface PendingCallInvitation {
   callId: string;
   caller: string;
@@ -61,6 +63,9 @@ export class DirectCallClientService implements OnDestroy {
   readonly connectionQuality$ = new BehaviorSubject<'unknown'|'excellent'|'good'|'poor'|'lost'>('unknown');
   readonly busyMedia$ = new BehaviorSubject<boolean>(false);
   readonly screenShareEnabled$ = new BehaviorSubject<boolean>(false);
+  readonly members$ = new BehaviorSubject<CallMembership>({participants:[],pending:[]});
+  readonly invitationBusy$ = new BehaviorSubject<boolean>(false);
+  readonly invitationError$ = new BehaviorSubject<string | null>(null);
   room: Room | null = null;
   private readonly base = environment.apiUrl + '/api/calls/direct';
   private readonly jwt = new JwtHelperService();
@@ -100,7 +105,10 @@ export class DirectCallClientService implements OnDestroy {
     document.addEventListener('visibilitychange', this.onForeground);
     navigator.mediaDevices?.addEventListener?.('devicechange', this.onDevicesChanged);
     // Recover RINGING invitations even if the socket dropped the event.
-    this.pendingTimer = setInterval(() => this.recoverPendingCall(), 8_000);
+    this.pendingTimer = setInterval(() => {
+      this.recoverPendingCall();
+      if (this.state$.value?.phase === 'active') this.refreshMembers();
+    }, 8_000);
     if (this.realtime.connected$) {
       this.subscriptions.add(this.realtime.connected$.subscribe(connected => {
         if (connected) this.recoverPendingCall();
@@ -280,6 +288,64 @@ export class DirectCallClientService implements OnDestroy {
     }
   }
 
+  /** Server validates invitation recipient, active membership and direct-chat ACL.
+   * No LiveKit room credentials are exposed until the recipient accepts.
+   */
+  async inviteMember(username: string): Promise<boolean> {
+    const call = this.state$.value;
+    const recipient = username.trim();
+    if (!call || call.phase !== 'active' || !this.room || this.invitationBusy$.value
+        || !/^[\\p{L}\\p{N}_.-]{2,128}$/u.test(recipient)) {
+      this.invitationError$.next('calls.inviteInvalid');
+      return false;
+    }
+    const token = localStorage.getItem('t');
+    this.invitationBusy$.next(true);
+    this.invitationError$.next(null);
+    try {
+      await firstValueFrom(this.http.post<void>(this.base + '/' +
+        encodeURIComponent(call.id) + '/invite/' + encodeURIComponent(recipient), {})
+        .pipe(timeout(10000)));
+      if (this.state$.value?.id === call.id &&
+          this.subjectFor(localStorage.getItem('t')) === this.subjectFor(token)) {
+        this.refreshMembers();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      if (this.state$.value?.id === call.id)
+        this.invitationError$.next(this.startFailureMessage(error));
+      return false;
+    } finally {
+      this.invitationBusy$.next(false);
+    }
+  }
+
+  /** Authorized, room-scoped membership; stale HTTP responses cannot cross
+   * the logout, identity or call boundary.
+   */
+  refreshMembers(): void {
+    const call = this.state$.value;
+    if (!call || call.phase !== 'active' || !this.room) return;
+    const version = this.generation;
+    const identity = this.subjectFor(localStorage.getItem('t'));
+    this.http.get<CallMembership>(this.base + '/' + encodeURIComponent(call.id)
+      + '/members').pipe(timeout(10000)).subscribe({
+      next: list => {
+        if (version !== this.generation || this.state$.value?.id !== call.id
+            || identity !== this.subjectFor(localStorage.getItem('t'))) return;
+        if (!Array.isArray(list?.participants) || !Array.isArray(list?.pending)) return;
+        this.members$.next({
+          participants: list.participants.filter(p => !!p && typeof p.username === 'string'
+            && typeof p.identity === 'string').slice(0,6),
+          pending: list.pending.filter(p => typeof p === 'string').slice(0,4)
+        });
+        this.mediaChanged$.next(this.mediaChanged$.value + 1);
+      },
+      error: () => { /* Group call media remains functional during REST retries. */ }
+    });
+  }
+
   decline(): void {
     const call=this.state$.value;
     if (!call || call.phase !== 'incoming') return;
@@ -411,7 +477,7 @@ export class DirectCallClientService implements OnDestroy {
 
   async setCamera(enabled: boolean): Promise<void> {
     const room=this.room;
-    if (!room || this.state$.value?.media!=='video' || this.busyMedia$.value) return;
+    if (!room || this.busyMedia$.value) return;
     this.busyMedia$.next(true);
     try {
       if (enabled) {
@@ -420,7 +486,8 @@ export class DirectCallClientService implements OnDestroy {
         await room.localParticipant.setCameraEnabled(false);
       }
       if (room===this.room) {
-        this.update({cameraEnabled:enabled,error:undefined});
+        this.update({cameraEnabled:enabled,
+          media:enabled ? 'video' : this.state$.value?.media || 'voice',error:undefined});
         this.mediaChanged$.next(this.mediaChanged$.value+1);
       }
     } catch (error) {
@@ -434,7 +501,7 @@ export class DirectCallClientService implements OnDestroy {
   /** Clear an obsolete camera selection and retry the real default camera. */
   async useDefaultCamera(): Promise<void> {
     const room=this.room;
-    if (!room || this.busyMedia$.value || this.state$.value?.media!=='video') return;
+    if (!room || this.busyMedia$.value) return;
     this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:undefined});
     if (this.state$.value?.cameraEnabled) {
       await this.setCamera(false);
@@ -577,6 +644,9 @@ export class DirectCallClientService implements OnDestroy {
     const room=this.createRoom();
     this.room=room;
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
+    room.on(RoomEvent.ActiveSpeakersChanged, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
+    room.on(RoomEvent.TrackMuted, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
+    room.on(RoomEvent.TrackUnmuted, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
       this.mediaChanged$.next(this.mediaChanged$.value+1);
       if (publication.source===Track.Source.ScreenShare) this.screenShareEnabled$.next(false);
@@ -598,6 +668,8 @@ export class DirectCallClientService implements OnDestroy {
       if (this.room===room && version===this.generation) {
         this.clearPeerExitTimer();
         this.update({phase:'active'});
+        this.refreshMembers();
+        this.mediaChanged$.next(this.mediaChanged$.value + 1);
       }
     });
     room.on(RoomEvent.ParticipantDisconnected, () => {
@@ -605,6 +677,12 @@ export class DirectCallClientService implements OnDestroy {
       // LiveKit also emits this event when a peer performs a full WebRTC
       // reconnect. Don't terminate the server call before it rejoins.
       this.clearPeerExitTimer();
+      // Other group members may still be connected after one member leaves.
+      if (room.remoteParticipants.size > 0) {
+        this.mediaChanged$.next(this.mediaChanged$.value + 1);
+        this.refreshMembers();
+        return;
+      }
       this.update({phase:'connecting'});
       this.peerExitTimer=setTimeout(() => {
         this.peerExitTimer=undefined;
@@ -657,6 +735,7 @@ export class DirectCallClientService implements OnDestroy {
     if (version!==this.generation) {void room.disconnect();return;}
     this.update({micEnabled:micEnabled,cameraEnabled:cameraEnabled});
     if (room.remoteParticipants.size) this.update({phase:'active'});
+    if (this.state$.value?.phase === 'active') this.refreshMembers();
     this.mediaChanged$.next(this.mediaChanged$.value+1);
   }
 
@@ -710,10 +789,17 @@ export class DirectCallClientService implements OnDestroy {
     }
     const state=this.state$.value;
     if (!state || state.id!==call.callId) return;
+    if (call.status==='MEMBERS_CHANGED' || call.status==='LEFT') {
+      if (call.status==='LEFT' && call.actor.toLowerCase()===user) {
+        this.dropCall();
+      } else if (state.phase==='active') this.refreshMembers();
+      return;
+    }
     if (call.status==='ACTIVE') {
       if (state.phase!=='incoming' && state.phase!=='error') {
         this.clearRingTimer();
         this.update({phase:'active'});
+        this.refreshMembers();
       } else if (state.phase==='incoming') {
         // Accepted by another device belonging to the same recipient account.
         this.dropCall();
@@ -766,6 +852,9 @@ export class DirectCallClientService implements OnDestroy {
     this.connectionQuality$.next('unknown');
     this.screenShareEnabled$.next(false);
     this.busyMedia$.next(false);
+    this.members$.next({participants:[],pending:[]});
+    this.invitationBusy$.next(false);
+    this.invitationError$.next(null);
     this.mediaChanged$.next(this.mediaChanged$.value+1);
   }
 
