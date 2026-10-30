@@ -1,0 +1,217 @@
+/* Session details / Neon Glass. This layer is opt-in and loaded last.
+   Leave participant status, API handlers, chat, invitations, and form bindings intact. */
+:host .detail-page.jynlo-session-detail-premium {
+  --details-line:rgba(40,200,205,.26);
+  --details-strong:rgba(43,229,208,.63);
+  --details-muted:#b6d6db;
+  min-width:0;
+  background:
+    radial-gradient(ellipse 56% 510px at 95% 5%,rgba(8,161,165,.15),transparent 78%),
+    radial-gradient(ellipse 38% 370px at 0% 44%,rgba(11,99,139,.09),transparent 80%),
+    linear-gradient(147deg,#041321,#062436 61%,#041725);
+  color:#eefcfb;
+}
+:host .detail-page.jynlo-session-detail-premium .detail-shell {
+  width:min(1120px,100%);max-width:100%;min-width:0;
+  margin:0 auto;
+}
+:host .detail-page.jynlo-session-detail-premium .back-link {
+  display:inline-flex;align-items:center;min-height:40px;
+  max-width:100%;margin-bottom:13px;
+  color:#71edd8;text-decoration:none;font-size:.88rem;
+}
+:host .detail-page.jynlo-session-detail-premium .back-link:hover {color:#b6ffed;text-decoration:underline;}
+:host .detail-page.jynlo-session-detail-premium :is(.detail-card,.state-card) {
+  min-width:0;box-sizing:border-box;
+  border:1px solid var(--details-line);
+  border-radius:20px;
+  background:linear-gradient(142deg,rgba(11,43,59,.98),rgba(5,27,43,.98));
+  box-shadow:0 20px 44px rgba(0,11,25,.16),inset 0 1px 0 rgba(208,255,250,.035);
+}
+:host .detail-page.jynlo-session-detail-premium .detail-card {overflow:clip;}
+:host .detail-page.jynlo-session-detail-premium .session-photo {
+  width:100%;max-height:390px;object-fit:cover;
+}
+:host .detail-page.jynlo-session-detail-premium .detail-content {
+  min-width:0;padding:clamp(15px,2.5vw,28px);
+}
+:host .detail-page.jynlo-session-detail-premium .title-row {
+  align-items:center;flex-wrap:wrap;gap:12px;
+  margin-bottom:16px;
+}
+:host .detail-page.jynlo-session-detail-premium .title-row > div:first-child {
+  min-width:0;flex:1 1 210px;
+}
+:host .detail-page.jynlo-session-detail-premium .title-row h1 {
+  color:#f4fffc;font-size:clamp(1.9rem,3.2vw,2.9rem);
+  letter-spacing:-.043em;line-height:1.13;overflow-wrap:anywhere;
+}
+:host .detail-page.jynlo-session-detail-premium .title-row .eyebrow {
+  color:#67f0d9;
+}
+:host .detail-page.jynlo-session-detail-premium .badges {
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:7px;flex-wrap:wrap;min-width:0;
+}
+:host .detail-page.jynlo-session-detail-premium .badges > span {
+  max-width:100%;white-space:normal;overflow-wrap:anywhere;
+  border:1px solid rgba(41,220,201,.39);
+  background:rgba(24,139,136,.16);color:#a4f5e3;
+}
+:host .detail-page.jynlo-session-detail-premium .session-top-actions {
+  display:flex;flex-wrap:wrap;align-items:center;
+  gap:10px;padding:15px 0;margin-block:12px;
+  border-top:1px solid rgba(91,200,198,.17);
+  border-bottom:1px solid rgba(91,200,198,.17);
+}
+:host .detail-page.jynlo-session-detail-premium .session-top-actions > :is(
+  button,a,span.jynlo-action
+) {
+  box-sizing:border-box;min-height:44px;
+  max-width:100%;min-width:0;
+  border-radius:11px;white-space:normal;
+  text-align:center;overflow-wrap:anywhere;
+  align-items:center;justify-content:center;
+}
+:host .detail-page.jynlo-session-detail-premium .session-top-actions > .session-cancel-button {
+  margin-inline-start:auto;
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  .session-created-share,.organizer-preparation,.session-community-context,
+  .session-post-game-community,.guest-organizer-panel,.session-cancel-confirm,
+  .overall-rating-panel,.player-compliments-panel,.venue-detail-panel,
+  .calendar-panel,.creator-reliability,.address-panel,.participation-panel,
+  .attendance-panel,.session-participants-panel
+) {
+  max-width:100%;min-width:0;box-sizing:border-box;
+  border:1px solid var(--details-line);border-radius:16px;
+  background:linear-gradient(145deg,rgba(11,51,64,.77),rgba(8,35,52,.81));
+  box-shadow:none;
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  .session-created-share,.organizer-preparation,.session-community-context,
+  .session-post-game-community,.guest-organizer-panel,.overall-rating-panel,
+  .player-compliments-panel,.venue-detail-panel,.calendar-panel,
+  .creator-reliability,.address-panel,.participation-panel,.attendance-panel,
+  .session-participants-panel
+) {
+  padding:clamp(13px,2vw,20px);
+  margin-block:0 16px;
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  .session-created-share,.organizer-preparation
+) {
+  background:
+    radial-gradient(ellipse at 98% 0%,rgba(25,200,184,.12),transparent 75%),
+    linear-gradient(145deg,rgba(10,54,63,.89),rgba(8,37,53,.92));
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  .session-created-actions,.organizer-preparation-actions,.post-game-review-actions,
+  .overall-rating-actions,.calendar-actions,.attendance-actions,.join-controls,
+  .session-cancel-actions,.session-friend-invite-actions
+) {
+  display:flex;flex-wrap:wrap;align-items:center;gap:9px;min-width:0;
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  .session-created-actions,.organizer-preparation-actions,.post-game-review-actions,
+  .overall-rating-actions,.calendar-actions,.attendance-actions,.join-controls,
+  .session-cancel-actions,.session-friend-invite-actions
+) > :is(a,button) {
+  box-sizing:border-box;max-width:100%;white-space:normal;
+  min-height:43px;line-height:1.35;overflow-wrap:anywhere;
+}
+:host .detail-page.jynlo-session-detail-premium .detail-grid {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;margin-block:0 17px;
+}
+:host .detail-page.jynlo-session-detail-premium .detail-grid > div {
+  box-sizing:border-box;min-width:0;max-width:100%;
+  border:1px solid rgba(64,186,194,.26);
+  border-radius:13px;padding:13px;
+  background:rgba(6,48,64,.75);
+}
+:host .detail-page.jynlo-session-detail-premium .detail-grid :is(span,strong) {
+  display:block;min-width:0;max-width:100%;
+  white-space:normal;overflow-wrap:anywhere;line-height:1.35;
+}
+:host .detail-page.jynlo-session-detail-premium .detail-grid > div strong {
+  color:#f0fffb;font-size:clamp(.85rem,1.6vw,1rem);
+}
+:host .detail-page.jynlo-session-detail-premium .detail-grid > div span {
+  color:#bad5dc;font-size:.77rem;
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  .session-participants-header,.organizer-preparation-heading,
+  .session-location-heading
+) {
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:11px;flex-wrap:wrap;min-width:0;
+}
+:host .detail-page.jynlo-session-detail-premium .session-participant-list {
+  display:grid;grid-template-columns:minmax(0,1fr);
+  gap:10px;min-width:0;
+}
+:host .detail-page.jynlo-session-detail-premium .session-participant-list > .session-player-card {
+  box-sizing:border-box;max-width:100%;min-width:0;
+  margin:0;padding:12px;
+  border:1px solid rgba(66,176,184,.29);
+  border-radius:13px;
+  background:linear-gradient(130deg,rgba(11,57,70,.68),rgba(7,38,55,.73));
+}
+:host .detail-page.jynlo-session-detail-premium .session-player-card__name {
+  max-width:100%;overflow-wrap:anywhere;line-height:1.35;
+}
+:host .detail-page.jynlo-session-detail-premium .session-player-card__confirmation {
+  display:flex;flex-wrap:wrap;gap:8px;min-width:0;
+}
+:host .detail-page.jynlo-session-detail-premium .session-player-card__confirmation > button {
+  max-width:100%;min-height:40px;
+  white-space:normal;overflow-wrap:anywhere;
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  input:not([type=checkbox]):not([type=radio]),textarea,select
+) {
+  max-width:100%;min-width:0;box-sizing:border-box;
+  border-radius:11px;
+}
+:host .detail-page.jynlo-session-detail-premium .join-controls input {
+  min-height:44px;background:rgba(4,37,51,.88);
+  border:1px solid rgba(57,181,188,.46);color:#effdfa;
+}
+:host .detail-page.jynlo-session-detail-premium :is(a,button,input,select,textarea):focus-visible {
+  outline:2px solid #a0ffe5;outline-offset:3px;
+}
+:host .detail-page.jynlo-session-detail-premium :is(button,input,select,textarea):disabled {
+  cursor:not-allowed;opacity:.58;
+}
+@media(max-width:900px) {
+  :host .detail-page.jynlo-session-detail-premium {
+    padding-top:calc(8.7rem + env(safe-area-inset-top));
+  }
+  :host .detail-page.jynlo-session-detail-premium .detail-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:600px) {
+  :host .detail-page.jynlo-session-detail-premium {padding-inline:12px;}
+  :host .detail-page.jynlo-session-detail-premium .detail-content {padding:14px;}
+  :host .detail-page.jynlo-session-detail-premium .title-row {align-items:flex-start;}
+  :host .detail-page.jynlo-session-detail-premium .badges {justify-content:flex-start;}
+  :host .detail-page.jynlo-session-detail-premium .session-top-actions > :is(a,button) {
+    flex:1 1 135px;
+  }
+  :host .detail-page.jynlo-session-detail-premium .session-top-actions > .session-cancel-button {
+    margin-inline-start:0;
+  }
+}
+@media(max-width:420px) {
+  :host .detail-page.jynlo-session-detail-premium .detail-grid {
+    grid-template-columns:minmax(0,1fr);
+  }
+  :host .detail-page.jynlo-session-detail-premium :is(
+    .session-created-actions,.organizer-preparation-actions,.join-controls,.session-cancel-actions
+  ) > :is(a,button) {flex:1 1 100%;}
+}
+@media(prefers-reduced-motion:reduce) {
+  :host .detail-page.jynlo-session-detail-premium .session-player-card {transition:none;}
+}
