@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
 import { EventsComponent } from './events.component';
@@ -27,6 +28,121 @@ describe('EventsComponent', () => {
     fixture = TestBed.createComponent(EventsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+
+  it('keeps action semantics and search bindings while adopting Neon Glass controls', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const header = root.querySelector('.sessions-page .page-header')!;
+    expect(header.querySelector('a[href="/menu/createEvent"]')?.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(header.querySelector('a[href="/menu/my-sessions"]')?.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    const form = root.querySelector('.jynlo-session-filters') as HTMLFormElement;
+    expect(form.querySelector('input[name="sport"]')).not.toBeNull();
+    expect(form.querySelector('input[name="city"]')).not.toBeNull();
+    expect(form.querySelector('select[name="sort"]')).not.toBeNull();
+    expect(form.querySelector('button[type="submit"]')?.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(form.querySelector('.advanced-toggle')?.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    expect(form.querySelectorAll('.quick-chip').length).toBe(5);
+    expect(root.querySelectorAll('.nearby-panel .jynlo-premium-btn').length).toBeGreaterThan(0);
+  });
+
+  it('exposes the premium filter groups and working quick action buttons', () => {
+    const page = fixture.nativeElement as HTMLElement;
+    const form = page.querySelector('.jynlo-session-filters') as HTMLFormElement;
+    expect(form).not.toBeNull();
+    expect(form.querySelectorAll('.filters-primary > label').length).toBe(3);
+    expect(form.querySelectorAll('.filters-quick .quick-chip').length).toBe(5);
+    expect(form.querySelector('.filters-toolbar .filter-actions')).not.toBeNull();
+
+    const padel = form.querySelectorAll<HTMLButtonElement>('.quick-chip')[3];
+    padel.click();
+    fixture.detectChanges();
+    expect(component.sport).toBe('Padel');
+    expect(padel.getAttribute('aria-pressed')).toBe('true');
+    expect(sessionService.discover.calls.mostRecent().args[0]?.sport).toBe('Padel');
+    padel.click();
+    fixture.detectChanges();
+    expect(component.sport).toBe('');
+    expect(padel.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('applies real search date boundaries and toggles quick dates off', () => {
+    component.applyQuickDate('today');
+    expect(component.quickDate).toBe('today');
+    expect(component.fromDateTime).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T00:00$/);
+    expect(component.toDateTime).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T23:59$/);
+    expect(sessionService.discover.calls.mostRecent().args[0]?.from).toBeTruthy();
+    expect(sessionService.discover.calls.mostRecent().args[0]?.to).toBeTruthy();
+    component.applyQuickDate('today');
+    expect(component.quickDate).toBe('');
+    expect(component.fromDateTime).toBe('');
+    expect(component.toDateTime).toBe('');
+    component.applyQuickDate('weekend');
+    expect(component.quickDate).toBe('weekend');
+    expect(Date.parse(component.toDateTime)).toBeGreaterThan(Date.parse(component.fromDateTime));
+    component.clearFilters();
+    expect(component.quickDate).toBe('');
+    expect(component.fromDateTime).toBe('');
+  });
+
+  it('only increases radius when nearby search is active', () => {
+    const calls = sessionService.discover.calls.count();
+    component.increaseRadius();
+    expect(sessionService.discover.calls.count()).toBe(calls);
+    component.nearbyActive = true;
+    component.latitude = 38.7;
+    component.longitude = -9.1;
+    component.radiusKm = 25;
+    component.increaseRadius();
+    expect(component.radiusKm).toBe(50);
+    expect(sessionService.discover.calls.mostRecent().args[0]?.radiusKm).toBe(50);
+    component.radiusKm = 100;
+    const atMaximum = sessionService.discover.calls.count();
+    component.increaseRadius();
+    expect(sessionService.discover.calls.count()).toBe(atMaximum);
+  });
+
+  it('restores Discover sport and locality before the first full session search', async () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ sport: '  Ténis  ', city: '  Sintra  ', unrelated: 'ignored' })
+    });
+    try {
+      const deepLinked = TestBed.createComponent(EventsComponent);
+      deepLinked.detectChanges();
+      // ngModel writes to the input after the initial change-detection microtask.
+      await deepLinked.whenStable();
+      deepLinked.detectChanges();
+
+      expect(deepLinked.componentInstance.sport).toBe('Ténis');
+      expect(deepLinked.componentInstance.city).toBe('Sintra');
+      expect(sessionService.discover).toHaveBeenCalledWith(
+        jasmine.objectContaining({ sport: 'Ténis', city: 'Sintra' })
+      );
+      const form = deepLinked.nativeElement.querySelector('.filters') as HTMLFormElement;
+      expect((form.querySelector('input[name="sport"]') as HTMLInputElement).value).toBe('Ténis');
+      expect((form.querySelector('input[name="city"]') as HTMLInputElement).value).toBe('Sintra');
+
+      deepLinked.componentInstance.clearFilters();
+      expect(sessionService.discover.calls.mostRecent().args[0]).toEqual(
+        jasmine.objectContaining({ sport: '', city: '' })
+      );
+      deepLinked.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('keeps the normal Sessions entry unfiltered without Discover parameters', () => {
+    expect(component.sport).toBe('');
+    expect(component.city).toBe('');
+    expect(sessionService.discover.calls.first().args[0]).toEqual(
+      jasmine.objectContaining({ sport: '', city: '' })
+    );
   });
 
   it('should create', () => {

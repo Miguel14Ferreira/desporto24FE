@@ -508,231 +508,6 @@ h1 {
 }
 
 
-.chat-panel,
-.chat-locked {
-  margin-top: 1.25rem;
-  border-radius: .95rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, .045);
-  border: 1px solid rgba(255, 255, 255, .1);
-}
-
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.chat-header h2,
-.chat-locked h2 {
-  margin: 0 0 .3rem;
-  font-size: 1.05rem;
-}
-
-.chat-header p,
-.chat-locked p {
-  margin: 0;
-  color: #94a3b8;
-}
-
-.message-list {
-  display: flex;
-  flex-direction: column;
-  gap: .7rem;
-  max-height: 520px;
-  min-height: 260px;
-  overflow-y: auto;
-  padding: .3rem;
-}
-
-.empty-chat {
-  margin: auto;
-  color: #94a3b8;
-  text-align: center;
-}
-
-.message {
-  max-width: 78%;
-  align-self: flex-start;
-  border-radius: .85rem .85rem .85rem .2rem;
-  padding: .75rem .85rem;
-  background: rgba(255, 255, 255, .08);
-}
-
-.message.own-message {
-  align-self: flex-end;
-  border-radius: .85rem .85rem .2rem .85rem;
-  background: rgba(56, 189, 248, .14);
-}
-
-.message-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: .35rem;
-  font-size: .75rem;
-}
-
-.message-meta span {
-  color: #94a3b8;
-}
-
-.message p {
-  margin: 0;
-  color: #e2e8f0;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.message-composer {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,.08);
-}
-
-.message-composer label {
-  display: block;
-}
-
-.message-composer label > span {
-  display: block;
-  margin-bottom: .4rem;
-  color: #94a3b8;
-  font-size: .78rem;
-  font-weight: 700;
-}
-
-.message-composer textarea {
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  border: 1px solid rgba(255, 255, 255, .16);
-  border-radius: .8rem;
-  padding: .8rem .9rem;
-  background: rgba(255, 255, 255, .07);
-  color: #fff;
-  outline: none;
-  font: inherit;
-}
-
-.composer-tools,
-.composer-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: .8rem;
-}
-
-.composer-tools {
-  margin-top: .65rem;
-}
-
-.composer-footer {
-  margin-top: .8rem;
-}
-
-.composer-footer > span,
-.character-count,
-.sync-status {
-  color: #64748b;
-  font-size: .75rem;
-}
-
-.emoji-wrap {
-  position: relative;
-}
-
-.emoji-toggle {
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: .75rem;
-  padding: .55rem .7rem;
-  background: rgba(255,255,255,.06);
-  color: #e2e8f0;
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.emoji-picker {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + .5rem);
-  z-index: 5;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: .25rem;
-  width: max-content;
-  max-width: min(300px, 80vw);
-  padding: .55rem;
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: .8rem;
-  background: #172033;
-  box-shadow: 0 14px 35px rgba(0,0,0,.3);
-}
-
-.emoji-option {
-  min-width: 2.35rem;
-  border: 0;
-  border-radius: .55rem;
-  padding: .4rem;
-  background: transparent;
-  color: #fff;
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-
-.emoji-option:hover {
-  background: rgba(255,255,255,.08);
-}
-
-.message-composer .primary-action {
-  background: #f8fafc;
-  color: #0f172a;
-}
-
-.chat-error {
-  margin-bottom: .75rem;
-  border-radius: .7rem;
-  padding: .75rem .85rem;
-  background: rgba(248, 113, 113, .1);
-  color: #fecaca;
-  border: 1px solid rgba(248, 113, 113, .3);
-}
-
-.chat-locked {
-  color: #cbd5e1;
-}
-
-.chat-read-only {
-  margin-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, .09);
-  padding: 1rem .85rem .25rem;
-  text-align: center;
-  color: #cbd5e1;
-  font-size: .87rem;
-  line-height: 1.5;
-}
-
-@media (max-width: 760px) {
-  .chat-header,
-  .composer-footer {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .composer-tools {
-    align-items: flex-start;
-  }
-
-  .message {
-    max-width: 92%;
-  }
-}
-
-
 .creator-reliability {
   margin: 1.25rem 0;
   border-radius: .9rem;
@@ -1121,6 +896,23 @@ h1 {
   background: rgba(125, 211, 252, .08);
   color: #bae6fd;
 }
+.future-exclusion-reason-label {
+  flex: 1 1 100%;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.future-exclusion-reason {
+  flex: 1 1 15rem;
+  min-width: 0;
+  padding: .65rem .75rem;
+  border: 1px solid rgba(125, 211, 252, .35);
+  border-radius: .65rem;
+  background: #192536;
+  color: #f1f5f9;
+  font: inherit;
+}
+.future-exclusion-reason:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+.future-exclusion-private-hint { flex: 1 1 100%; color: #cbd5e1; line-height: 1.4; }
 .future-exclusion-panel button:disabled { opacity: .55; cursor: wait; }
 .future-exclusion-panel button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
 
@@ -1225,6 +1017,35 @@ h1 {
   margin: 0;
   color: #94a3b8;
 }
+
+/* Accessible venue details affordance. Never bypass the session's server-
+   controlled exact-location visibility to reach public venue GPS. */
+.session-venue-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(125, 211, 252, .48);
+  text-underline-offset: .2em;
+  overflow-wrap: anywhere;
+}
+.session-venue-link:hover { color: #a2f7e2; text-decoration-color: currentColor; }
+.session-venue-link:focus-visible,
+.session-venue-details-action:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+  border-radius: .2rem;
+}
+.session-venue-details-action {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-top: .5rem;
+  color: #a2f7e2;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.session-venue-details-action:hover { color: #c4fff0; }
 
 .venue-surface,
 .venue-detail-tags span {
@@ -1427,3 +1248,501 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+/* Optional, positive-only peer appreciation. No public person scores. */
+.player-compliments-panel {
+  margin-top: 1.15rem;
+  padding: 1.15rem;
+  border: 1px solid rgba(125, 211, 252, .25);
+  border-radius: .95rem;
+  background: rgba(15, 23, 42, .62);
+}
+.player-compliments-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.player-compliments-heading h2 { margin: .3rem 0; font-size: 1.15rem; }
+.player-compliments-heading p { color: #cbd5e1; margin: 0; max-width: 55ch; }
+.player-compliments-panel .compliments-toggle { cursor: pointer; }
+.player-compliments-list { display: grid; gap: .8rem; margin-top: 1rem; }
+.player-compliment-row {
+  display: grid;
+  gap: .55rem;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: .7rem;
+  padding: .8rem;
+}
+.player-compliment-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.player-compliment-choice {
+  padding: .55rem .8rem;
+  border: 1px solid rgba(125,211,252,.42);
+  border-radius: 999px;
+  color: #e0f2fe;
+  background: rgba(125,211,252,.08);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.player-compliment-choice:hover:not(:disabled) { background: rgba(125,211,252,.17); }
+.player-compliment-choice.is-sent {
+  border-color: #00e676;
+  background: rgba(0,230,118,.16);
+  color: #bbf7d0;
+}
+.player-compliment-choice.is-sent::before { content: "✓ "; }
+.player-compliment-choice:disabled { cursor: wait; opacity: .65; }
+.player-compliment-choice:focus-visible,
+.player-compliments-panel button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.compliments-received { margin-top: 1rem; padding-top: .75rem; border-top: 1px solid rgba(255,255,255,.13); }
+.compliments-received h3 { margin: 0 0 .5rem; font-size: 1rem; }
+.compliments-received p { margin: .25rem 0; color: #d1fae5; }
+
+.session-location-map { color: #e0f2fe; text-decoration: underline; text-underline-offset: .2rem; overflow-wrap: anywhere; font-weight: 650; }
+.session-location-map:hover { color: #7dd3fc; }
+.session-location-map:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+.address-panel small { display: block; margin-top: .35rem; color: #94a3b8; }
+
+
+
+.session-profile-link{color:inherit;text-decoration:underline;text-decoration-color:#66d7c080;text-underline-offset:3px;overflow-wrap:anywhere}
+.session-profile-link:hover{color:#79efd6}
+.session-profile-link:focus-visible{outline:2px solid #79efd6;outline-offset:3px;border-radius:4px}
+
+/* Organizer-authorized guest reservations. No public roster is displayed here. */
+.guest-organizer-panel{
+  display:grid;gap:13px;margin:19px 0;padding:clamp(16px,2.5vw,24px);
+  border:1px solid #337a87;border-radius:18px;
+  background:linear-gradient(155deg,#104452,#092e40);
+  color:#ecfff9;
+}
+.guest-organizer-panel h2{margin:5px 0;font-size:1.25rem}
+.guest-organizer-panel p{margin:0;color:#b7d6df;font-size:.85rem;line-height:1.5}
+.guest-organizer-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.guest-organizer-actions button,.guest-organizer-actions a{
+  display:inline-flex;align-items:center;justify-content:center;min-height:40px;
+  text-decoration:none
+}
+.guest-organizer-hint{color:#9cbdc7!important;font-size:.77rem!important}
+.guest-organizer-link{display:grid;gap:9px;min-width:0;border-radius:12px;background:#092e3a;padding:15px}
+.guest-organizer-link label{font-size:.82rem;font-weight:700}
+.guest-organizer-link input{box-sizing:border-box;min-width:0;width:100%;
+  padding:12px 14px;border:1px solid #36717e;border-radius:10px;background:#061e2e;color:#d1fef4}
+.guest-organizer-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:14px;border:1px solid #235a6b;border-radius:13px;background:#082c3a;padding:13px}
+.guest-organizer-row>div:first-child{display:grid;gap:5px;min-width:0}
+.guest-organizer-row strong{font-size:.96rem;overflow-wrap:anywhere}
+.guest-organizer-row span,.guest-organizer-row small{color:#c1dce1;font-size:.8rem}
+.guest-organizer-error{color:#ffc5c1!important}
+.guest-organizer-success{color:#76f7d7!important}
+.team-guest-label{font-weight:800;color:#e3fff6;overflow-wrap:anywhere}
+
+/* All confirmed players share one compact, premium visual language.
+   Registered players remain real profile links; guests never impersonate one. */
+.session-participant-list > .session-player-chip{
+  display:inline-flex;align-items:center;justify-content:flex-start;
+  flex-wrap:wrap;gap:7px;min-width:0;max-width:100%;
+  padding:6px 9px;border:1px solid rgba(76,210,196,.3);border-radius:12px;
+  background:rgba(16,78,80,.45);color:#e8fffa;
+  font-size:.82rem;font-weight:750;line-height:1.4;text-decoration:none;
+}
+.session-participant-list > .session-player-chip--member{
+  border-color:rgba(116,189,242,.32);background:rgba(21,67,96,.45);
+}
+.session-player-chip__name{min-width:0;max-width:100%;overflow-wrap:anywhere;font-weight:800}
+.session-player-chip__status{
+  display:inline-flex;align-items:center;min-height:24px;
+  padding:3px 8px;border-radius:999px;white-space:normal;
+  font-size:.63rem;font-weight:850;letter-spacing:.035em;line-height:1.2;
+  color:#70f9d8;background:rgba(25,222,181,.13);
+}
+.session-player-chip--member .session-player-chip__status{
+  color:#b6e5ff;background:rgba(71,166,228,.17);
+}
+.session-participant-list > a.session-player-chip:hover{
+  color:#fff;background:rgba(27,112,137,.58);border-color:rgba(118,228,244,.6);
+}
+.session-participant-list > a.session-player-chip:focus-visible{
+  outline:2px solid #8affea;outline-offset:3px;
+}
+@media(max-width:480px){
+ .session-participant-list{gap:8px}
+ .session-participant-list > .session-player-chip{padding:8px 10px}
+}
+.guest-organizer-panel :is(button,a,input):focus-visible{outline:2px solid #8affea;outline-offset:3px}
+@media(max-width:530px){.guest-organizer-row{align-items:stretch;flex-direction:column}.guest-organizer-actions{width:100%}.guest-organizer-actions>*{flex:1 1 auto}}
+
+.invite-choice-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.invite-choice-guide>div{display:flex;flex-direction:column;align-items:start;gap:9px;
+  min-width:0;padding:17px;border:1px solid #326c7a;border-radius:14px;background:#092d3b}
+.invite-choice-guide strong{font-size:1rem;line-height:1.3;color:#f5fffc}
+.invite-choice-guide p{font-size:.85rem;line-height:1.5;color:#bcd9dd}
+.invite-choice-guide .jynlo-action{margin-top:auto;min-height:40px;text-align:center}
+.invite-choice-guest{border-color:#288f83!important;background:#0a3940!important}
+@media(max-width:670px){.invite-choice-guide{grid-template-columns:1fr}}
+
+/* Route planning is deliberately visible only for authorised session GPS. */
+.session-route-planner { margin-top: 14px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,.12); min-width: 0; }
+.session-route-planner > strong { display: block; font-size: .9rem; color: #eefefa; }
+.session-route-modes { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 10px; min-width: 0; }
+.session-route-mode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 0;
+  padding: 9px 13px;
+  font-size: .84rem;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+}
+.session-route-mode:focus-visible { outline: 2px solid #8eefd3; outline-offset: 3px; }
+@media (max-width: 390px) {
+  .session-route-modes { display: grid; grid-template-columns: 1fr; }
+  .session-route-mode { width: 100%; }
+}
+
+/* Creator-only session cancellation, contained below the sharing/actions toolbar. */
+.session-cancel-confirm {
+  display: grid;
+  gap: 12px;
+  padding: clamp(15px,2.5vw,22px);
+  margin: 18px 0;
+  border: 1px solid rgba(244,124,124,.5);
+  border-radius: 14px;
+  background: rgba(83,28,38,.27);
+}
+.session-cancel-confirm h3,.session-cancel-confirm p {margin:0;line-height:1.5}
+.session-cancel-confirm h3 {font-size:1.05rem;color:#ffe0df}
+.session-cancel-actions {display:flex;flex-wrap:wrap;gap:10px}
+.session-cancel-button {margin-inline-start:auto}
+@media(max-width:650px){
+  .session-cancel-button {margin-inline-start:0}
+  .session-cancel-actions button {flex:1 1 130px}
+}
+
+.session-meeting-point { display:grid;gap:6px;margin:0 0 15px;padding:14px 16px;min-width:0;
+  border:1px solid rgba(69,209,174,.34);border-radius:12px;background:rgba(15,98,82,.17); }
+.session-meeting-point strong { color:#b1ffdf;font-size:.95rem; }
+.session-meeting-point p { margin:0;color:#f0fffc;line-height:1.55;overflow-wrap:anywhere; }
+.session-meeting-point small { color:#b5cfd3;line-height:1.4; }
+
+/* Inline organiser note editor; stacked mobile buttons never overlap the map. */
+.session-meeting-edit-button { display:inline-flex;max-width:100%;min-height:42px;
+  align-items:center;justify-content:center;white-space:normal;margin:0 0 12px; }
+.session-meeting-edit { display:grid;gap:10px;min-width:0;margin:0 0 15px;
+  padding:clamp(13px,2vw,18px);border:1px solid rgba(69,209,174,.33);
+  border-radius:13px;background:rgba(11,60,69,.38); }
+.session-meeting-edit label { color:#d0f6ea;font-size:.9rem;font-weight:750; }
+.session-meeting-edit input { box-sizing:border-box;max-width:100%;min-width:0;width:100%;
+  min-height:45px;padding:10px 13px;border:1px solid #548f99;border-radius:10px;
+  background:#082a39;color:#f5fffc;font:inherit; }
+.session-meeting-edit input:focus-visible { outline:2px solid #65e1c7;outline-offset:2px; }
+.session-meeting-edit small { color:#b4cbd0;line-height:1.5; }
+.session-meeting-edit-actions { display:flex;flex-wrap:wrap;align-items:center;gap:10px; }
+.session-meeting-edit-actions button { min-height:43px;white-space:normal;min-width:0; }
+.session-meeting-edit-error { margin:0;color:#ffc6c6;line-height:1.45; }
+.session-meeting-edit-success { color:#acf3d7;margin:0 0 12px;line-height:1.45; }
+@media (max-width:430px) {
+  .session-meeting-edit-actions { display:grid;grid-template-columns:1fr; }
+  .session-meeting-edit-actions button { width:100%; }
+}
+
+
+/* Context of the session is first-class, not a buried attribute. */
+.session-community-context {
+  display: grid; gap: 12px; min-width: 0;
+  margin: 0 0 20px; padding: clamp(14px,2vw,19px);
+  border-radius: 14px; border: 1px solid rgba(94,199,193,.38);
+  background: linear-gradient(115deg,rgba(14,74,78,.42),rgba(9,43,59,.44));
+}
+.session-community-context-row {display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px 16px;min-width:0}
+.session-community-context-row .session-context-label {
+  flex:0 0 115px; color:#a9dfdd; font-size:.82rem; font-weight:750;
+  letter-spacing:.03em; text-transform:uppercase;
+}
+.session-community-links {display:flex;flex:1 1 220px;flex-wrap:wrap;gap:8px;min-width:0}
+.session-community-links a {display:inline-flex;max-width:100%;padding:7px 12px;
+  border:1px solid rgba(49,225,188,.53);border-radius:999px;
+  color:#d7fff2;background:rgba(31,126,120,.22);font-weight:750;
+  text-decoration:none;overflow-wrap:anywhere}
+.session-community-links a:hover {background:rgba(38,167,150,.35)}
+.session-community-context-row strong.season-game-yes {color:#8ef6d9;min-width:0;overflow-wrap:anywhere}
+.session-community-context-row > span:last-child {color:#c8d9df}
+.session-context-error {color:#ffcebe;line-height:1.5}
+.session-invite-toggle {min-width:0;white-space:normal}
+.guest-organizer-panel {margin:18px 0 24px}
+@media(max-width:650px) {
+  .session-community-context-row {display:grid;gap:7px}
+  .session-community-context-row .session-context-label {flex:auto}
+  .session-community-links {flex:auto}
+}
+
+/* Post-game membership is optional and never blocks the session detail flow. */
+.session-post-game-community {
+  display: grid; gap: 16px; min-width: 0;
+  margin: 18px 0 24px; padding: clamp(16px,2.5vw,24px);
+  border: 1px solid rgba(60,216,187,.42); border-radius: 15px;
+  background: linear-gradient(135deg,rgba(14,80,79,.55),rgba(10,42,58,.55));
+}
+.session-post-game-community-heading {display:grid;gap:6px}
+.session-post-game-community-heading h2 {font-size:clamp(1.08rem,1.7vw,1.3rem);line-height:1.3;color:#f0fffa;margin:0}
+.session-post-game-community-heading p {color:#c5dfe2;line-height:1.55;margin:0}
+.session-post-game-community-choices {display:grid;gap:12px}
+.session-post-game-community-option {
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;padding:14px 16px;border:1px solid rgba(132,200,197,.25);
+  border-radius:12px;background:rgba(7,37,52,.5);min-width:0;
+}
+.session-post-game-community-copy {display:grid;gap:5px;flex:1 1 210px;min-width:0;overflow-wrap:anywhere}
+.session-post-game-community-copy strong {color:#ebfffb;font-size:1rem}
+.session-post-game-community-copy span {color:#b9d5d9;font-size:.88rem}
+.session-post-game-community-actions {display:flex;gap:9px;flex-wrap:wrap;min-width:0}
+.session-post-game-community-actions button {min-height:40px;white-space:normal}
+.session-post-game-community-success {color:#a4f7dd;line-height:1.5}
+.session-post-game-community-error {color:#ffd0d0;line-height:1.5}
+@media(max-width:640px){
+  .session-post-game-community-option {align-items:stretch}
+  .session-post-game-community-actions {width:100%}
+  .session-post-game-community-actions button {flex:1 1 130px}
+}
+
+/* Notification deep-link focus is visible for keyboard/screen-reader users.
+   The private point is only rendered after an authorised session response. */
+.session-meeting-point:focus { outline: 2px solid #73e5c9; outline-offset: 3px; scroll-margin-block: 90px; }
+
+
+/* Premium session information: distinct actions and readable map address. */
+.address-panel {min-width:0;}
+.session-location-heading {
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px 20px;min-width:0;margin-bottom:16px;
+}
+.address-panel .session-location-heading h2 {margin:0;font-size:1.04rem;}
+.session-location-heading .session-meeting-edit-button {
+  margin:0;flex:0 1 auto;max-width:100%;min-height:42px;
+}
+.session-location-detail {
+  display:flex;align-items:flex-start;gap:13px;min-width:0;
+  padding:15px 17px;border:1px solid rgba(81,208,198,.22);
+  border-radius:14px;background:rgba(7,42,58,.45);
+}
+.session-location-pin {
+  display:grid;place-items:center;flex:0 0 36px;
+  width:36px;height:36px;border-radius:12px;
+  background:rgba(40,220,184,.13);color:#85ffdf;font-size:1.55rem;line-height:1;
+}
+.session-location-copy {min-width:0;display:grid;gap:7px;flex:1;}
+.session-location-copy .session-location-map {
+  display:inline-flex;align-items:flex-start;gap:7px;
+  width:fit-content;max-width:100%;font-weight:750;line-height:1.5;
+  text-decoration:none;color:#a8ffec;overflow-wrap:anywhere;
+}
+.session-location-copy .session-location-map:hover {text-decoration:underline;color:#dcfff6;}
+.session-location-copy .session-location-map span {margin:0;flex:0 0 auto;letter-spacing:0;}
+.session-location-copy small {
+  margin:0;color:#a7cbd2;line-height:1.55;font-weight:450;
+}
+.session-route-planner {margin-top:17px;padding-top:17px;}
+.session-route-modes {gap:10px;}
+@media(max-width:530px) {
+  .session-location-heading {display:grid;grid-template-columns:1fr;align-items:start;}
+  .session-location-heading .session-meeting-edit-button {justify-self:start;}
+  .session-location-detail {padding:12px;gap:10px;}
+  .session-location-pin {width:30px;height:30px;flex-basis:30px;}
+}
+
+/* Attendees look like compact ranking cards, not crowded inline tags. */
+.session-participants-panel {
+  gap:16px;padding:clamp(16px,2vw,22px);
+  background:linear-gradient(125deg,rgba(12,53,66,.64),rgba(8,34,51,.55));
+  border-color:rgba(70,205,188,.25);
+}
+.session-participants-header {align-items:flex-start;flex-wrap:wrap;gap:12px;}
+.session-participants-header p {line-height:1.5;margin-top:5px;color:#a7cbd4;}
+.session-participant-list {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));
+  gap:10px;min-width:0;align-items:stretch;
+}
+.session-participant-list > .session-player-card {
+  box-sizing:border-box;display:grid;grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;column-gap:11px;min-width:0;min-height:68px;
+  padding:11px 13px;border:1px solid rgba(87,171,211,.28);
+  border-radius:14px;background:linear-gradient(125deg,rgba(18,73,93,.55),rgba(10,49,68,.6));
+  color:#f2fffd;text-decoration:none;line-height:1.3;
+  transition:transform .15s,border-color .15s,background-color .15s;
+}
+.session-participant-list > .session-player-card--guest {
+  border-color:rgba(61,214,180,.24);background:rgba(12,76,72,.37);
+}
+.session-player-card__avatar {
+  position:relative;display:grid;place-items:center;overflow:hidden;
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid rgba(123,231,214,.48);
+  background:linear-gradient(135deg,#166b74,#152f4c);
+  color:#e4fff8;font-size:.81rem;font-weight:900;line-height:1;
+}
+.session-player-card__avatar img {
+  position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;
+}
+.session-player-card__name {
+  min-width:0;color:#f2fffc;font-size:.93rem;font-weight:800;
+  overflow-wrap:anywhere;
+}
+.session-player-card__badge {
+  display:inline-flex;align-items:center;justify-content:center;
+  max-width:100%;min-height:25px;padding:4px 7px;
+  border-radius:7px;background:rgba(73,167,220,.16);
+  color:#c2eeff;font-size:.64rem;letter-spacing:.015em;
+  line-height:1.2;font-weight:800;text-align:center;
+}
+.session-player-card--guest .session-player-card__badge {
+  background:rgba(45,208,169,.13);color:#a1ffe3;
+}
+.session-participant-list > a.session-player-card:hover {
+  transform:translateY(-1px);border-color:#66efd9;background:rgba(28,95,110,.64);
+}
+.session-participant-list > a.session-player-card:focus-visible {
+  outline:2px solid #87ffdf;outline-offset:3px;
+}
+.session-participants-panel .confirmed-teams {gap:14px;}
+.session-participants-panel .confirmed-teams > div {min-width:0;padding:13px;}
+.session-participant-list > .session-participants-empty {
+  grid-column:1/-1;min-width:0;white-space:normal;
+}
+@media(max-width:620px) {
+  .session-participant-list {grid-template-columns:1fr;}
+  .session-participant-list > .session-player-card {min-height:64px;padding:10px;}
+  .session-player-card__badge {font-size:.62rem;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .session-participant-list > .session-player-card {transition:none;}
+  .session-participant-list > a.session-player-card:hover {transform:none;}
+}
+
+
+/* Who's going owns cancellation actions; no action is mixed into invitation history. */
+.session-roster-live {
+  display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;
+  padding:7px 11px;border:1px solid rgba(68,218,184,.22);
+  border-radius:999px;background:rgba(32,151,126,.11);
+  color:#a8eeda;font-size:.77rem;font-weight:750;line-height:1.3;
+}
+.session-roster-live__dot {
+  width:7px;height:7px;border-radius:50%;flex:0 0 7px;
+  background:#51e9b5;box-shadow:0 0 0 3px rgba(58,227,180,.12);
+}
+.session-roster-feedback {margin:0;line-height:1.5;font-size:.86rem;}
+.session-roster-feedback--success {color:#a4f7dd;}
+.session-roster-feedback--error {color:#ffc5c1;}
+.session-participant-list > .session-player-card--guest {
+  grid-template-columns:40px minmax(0,1fr) auto;
+}
+.session-player-card__guest-actions {
+  grid-column:1/-1;display:grid;gap:10px;min-width:0;
+  padding-top:9px;border-top:1px solid rgba(94,221,190,.16);
+}
+.session-player-card__guest-actions > p {
+  margin:0;color:#d5f6ee;font-size:.84rem;line-height:1.5;overflow-wrap:anywhere;
+}
+.session-player-card__cancel {
+  width:max-content;max-width:100%;min-height:35px;
+  padding:6px 12px;font-size:.76rem;line-height:1.4;white-space:normal;
+}
+.session-player-card__confirmation {
+  display:flex;flex-wrap:wrap;gap:9px;min-width:0;
+}
+.session-player-card__confirmation .jynlo-action {
+  min-height:39px;min-width:0;white-space:normal;
+  font-size:.79rem;padding:7px 11px;
+}
+.session-player-card__cancel:focus-visible,
+.session-player-card__confirmation button:focus-visible {
+  outline:2px solid #a5ffea;outline-offset:3px;
+}
+@media(max-width:480px) {
+  .session-roster-live {width:fit-content;max-width:100%;}
+  .session-player-card__confirmation .jynlo-action {flex:1 1 125px;}
+}
+
+/* Roster account actions share the same card vocabulary as confirmed guests. */
+.session-player-card--member .session-player-card__profile {
+  grid-column:1/-1;display:grid;grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;column-gap:11px;min-width:0;min-height:42px;
+  text-decoration:none;color:inherit;
+}
+.session-player-card--member .session-player-card__profile:hover .session-player-card__name {
+  text-decoration:underline;text-underline-offset:3px;
+}
+.session-player-card--member .session-player-card__profile:focus-visible {
+  outline:2px solid #8affea;outline-offset:3px;border-radius:8px;
+}
+.session-minimum-indicator {
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 14px;border:1px solid rgba(251,181,92,.44);
+  border-radius:12px;color:#ffe6b4;background:rgba(149,84,30,.12);
+  line-height:1.45;font-size:.84rem;
+}
+.session-minimum-indicator strong {font-size:1.06rem;color:#ffe4ad;}
+.session-minimum-indicator--ready {
+  border-color:rgba(69,219,179,.34);background:rgba(38,143,126,.11);color:#b8f4e2;
+}
+.session-minimum-indicator--ready strong {color:#8bf8d7;}
+@media(max-width:620px){
+  .session-player-card--member .session-player-card__profile {column-gap:8px;}
+}
+
+
+/* Unified toolbar geometry: neither legacy share buttons nor anchor styles
+   may introduce their own top margins or differing vertical alignment. */
+.session-top-actions {
+  align-items:stretch;
+  column-gap:12px;
+  row-gap:12px;
+  min-width:0;
+}
+.session-top-actions > :is(
+  a.jynlo-action,button.jynlo-action,button.join-shortcut,
+  a.postgame-action,button.share-session-action,span.jynlo-action
+) {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  flex:0 0 auto;
+  min-height:42px;
+  max-width:100%;
+  margin:0;
+  padding:9px 15px;
+  box-sizing:border-box;
+  line-height:1.35;
+  vertical-align:middle;
+  text-align:center;
+  white-space:normal;
+  text-decoration:none;
+}
+.session-top-actions > :is(a.jynlo-action,button.jynlo-action,button.share-session-action):focus-visible {
+  outline:2px solid #8effdf;
+  outline-offset:3px;
+}
+.session-top-actions > .session-cancel-button {
+  margin-inline-start:auto;
+}
+@media(max-width:490px){
+  .session-top-actions > :is(
+    a.jynlo-action,button.jynlo-action,button.join-shortcut,
+    a.postgame-action,button.share-session-action
+  ) { flex:1 1 140px; }
+  .session-top-actions > .session-cancel-button {margin-inline-start:0;}
+}
+/* Each attendee row is one alignment unit: avatar and name never overlap
+   with the account tag, regardless of long names or a cancellation row. */
+.session-participant-list > .session-player-card {
+  grid-template-rows:auto auto;
+  align-content:start;
+}
+.session-player-card__avatar {flex-shrink:0;}
+.session-player-card__name {overflow-wrap:anywhere;line-height:1.4;}

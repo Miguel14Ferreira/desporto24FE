@@ -1,8 +1,7 @@
-<section class="dashboard-page">
+<section class="dashboard-page jynlo-c1 jynlo-secondary">
   <div class="dashboard-shell">
     <header class="dashboard-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
         <h1>
           @if (profile) {
             {{ 'menu.hello' | t:{ name: (profile.nickname || profile.fullName || profile.username) } }}
@@ -23,7 +22,7 @@
             }
           </div>
           <div>
-            <strong>{{ profile?.username || 'Perfil' }}</strong>
+            <strong>{{ profile?.username || ('menu.profile' | t) }}</strong>
             <span>{{ 'menu.viewProfile' | t }}</span>
           </div>
         </a>
@@ -83,8 +82,8 @@
       <a class="dashboard-card" routerLink="/menu/communities">
         <span class="card-icon">◎</span>
         <div>
-          <strong>Comunidades</strong>
-          <p>Cria grupos, convida jogadores e gere admins e membros.</p>
+          <strong>{{ 'menu.communities' | t }}</strong>
+          <p>{{ 'menu.communitiesText' | t }}</p>
         </div>
       </a>
 
@@ -125,8 +124,8 @@
         <a class="dashboard-card" routerLink="/menu/admin">
           <span class="card-icon">⚑</span>
           <div>
-            <strong>Administração</strong>
-            <p>Moderação, contestações e segurança da comunidade.</p>
+            <strong>{{ 'menu.admin' | t }}</strong>
+            <p>{{ 'menu.adminText' | t }}</p>
           </div>
         </a>
       }

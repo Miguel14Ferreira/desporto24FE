@@ -1,0 +1,28 @@
+/* Competition configuration. Validation, authorization and saving stay in CommunitiesComponent. */
+:host{display:block;}
+.management-block{
+  margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.08);
+}
+.management-block p{color:#94a3b8;}
+.section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.section-kicker{margin:0 0 .2rem;color:#83f4dd;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;}
+h3{margin:0;}
+label{display:grid;gap:.35rem;}
+label span{color:#cbd5e1;font-size:.8rem;font-weight:800;}
+input{
+  width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);
+  border-radius:.75rem;padding:.8rem .9rem;background:rgba(255,255,255,.06);
+  color:#fff;font:inherit;
+}
+.points-settings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+  margin: .8rem 0;
+}
+
+
+.competition-settings-switch{flex-shrink:0;margin-left:auto;}
+.primary-action{border:0;border-radius:.75rem;padding:.75rem 1rem;background:#f8fafc;color:#0f172a;font:inherit;font-weight:900;cursor:pointer;}
+@media(max-width:800px){.points-settings{grid-template-columns:1fr;}}
+@media(max-width:560px){.competition-settings-switch{margin-left:0;}}

@@ -1,0 +1,171 @@
+<section class="admin-edit-page jynlo-c1 jynlo-admin">
+  <div class="admin-edit-shell">
+    <a routerLink="/menu/admin/venue-suggestions" class="admin-edit-back">
+      ← {{ 'venue.edit.admin.back' | t }}
+    </a>
+    <header>
+      <span>{{ 'admin.eyebrow' | t }}</span>
+      <h1>{{ 'venue.edit.admin.title' | t }}</h1>
+      <p>{{ 'venue.edit.admin.subtitle' | t }}</p>
+    </header>
+    <nav class="admin-edit-tabs" [attr.aria-label]="'venue.edit.admin.modeLabel' | t">
+      <button type="button" (click)="changeMode('pending')" [disabled]="updating"
+        [class.active]="mode === 'pending'" [attr.aria-current]="mode === 'pending' ? 'page' : null">
+        {{ 'venue.edit.admin.pendingTab' | t }}
+      </button>
+      <button type="button" (click)="changeMode('history')" [disabled]="updating"
+        [class.active]="mode === 'history'" [attr.aria-current]="mode === 'history' ? 'page' : null">
+        {{ 'venue.edit.admin.historyTab' | t }}
+      </button>
+    </nav>
+    @if (loading) {
+      <div class="admin-edit-state" role="status">{{ 'venue.catalog.loading' | t }}</div>
+    } @else if (loadError) {
+      <div class="admin-edit-state" role="alert">
+        {{ 'venue.admin.error' | t }}
+        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
+      </div>
+    } @else if (suggestions.length === 0) {
+      <div class="admin-edit-state">
+        {{ (mode === 'history' ? 'venue.edit.admin.emptyHistory' : 'venue.edit.admin.empty') | t }}
+      </div>
+    } @else {
+      <div class="admin-edit-list">
+        @for (item of suggestions; track item.id) {
+          <button type="button" (click)="open(item)" class="admin-edit-item">
+            <span><strong>{{ item.venueName }}</strong>
+              <small>
+                @if (mode === 'history') {
+                  {{ ('venue.edit.status.' + item.status) | t }}
+                  · {{ item.reviewedAt | date:'short' }} · @{{ item.reviewedByUsername }}
+                } @else {
+                  {{ fields(item).length }} {{ 'venue.edit.admin.fields' | t }}
+                  · @{{ item.submittedByUsername }} · {{ item.submittedAt | date:'short' }}
+                }
+              </small>
+            </span>
+            <span aria-hidden="true">→</span>
+          </button>
+        }
+      </div>
+    }
+    <nav class="admin-edit-pages">
+      <button type="button" (click)="load(page-1)" [disabled]="loading || updating || page === 0">
+        {{ 'venue.admin.previous' | t }}
+      </button>
+      <span>{{ 'venue.catalog.page' | t }} {{ page + 1 }}</span>
+      <button type="button" (click)="load(page+1)" [disabled]="loading || updating || !hasMore">
+        {{ 'venue.admin.next' | t }}
+      </button>
+    </nav>
+
+    @if (selected; as item) {
+      <div class="admin-edit-overlay" (click)="close()">
+        <section class="admin-edit-dialog" role="dialog" aria-modal="true"
+          [attr.aria-label]="'venue.edit.admin.title' | t"
+          (click)="$event.stopPropagation()">
+          <div class="admin-edit-heading">
+            <div>
+              <small>#{{ item.id }} · @{{ item.submittedByUsername }}</small>
+              <h2>{{ item.venueName }}</h2>
+              <a [routerLink]="['/menu/venues', item.venueId]"
+                target="_blank" rel="noopener noreferrer">
+                {{ 'venue.catalog.viewDetails' | t }}
+              </a>
+            </div>
+            <button type="button" (click)="close()" [disabled]="updating"
+              [attr.aria-label]="'common.cancel' | t">×</button>
+          </div>
+
+          @if (mode === 'history') {
+            <div class="admin-edit-history-meta">
+              <strong>{{ ('venue.edit.status.' + item.status) | t }}</strong>
+              <p><span>{{ 'venue.edit.admin.reviewedBy' | t }}:</span> @{{ item.reviewedByUsername || '—' }}</p>
+              <p><span>{{ 'venue.edit.admin.reviewedAt' | t }}:</span>
+                {{ item.reviewedAt ? (item.reviewedAt | date:'medium') : '—' }}</p>
+              @if (item.decisionNote) {
+                <p><span>{{ 'venue.edit.admin.decisionNote' | t }}:</span> {{ item.decisionNote }}</p>
+              }
+              @if (hasProposedContact(item)) {
+                <p><span>{{ 'venue.edit.admin.sourceReviewDate' | t }}:</span>
+                  {{ item.sourceReviewConfirmedAt
+                    ? (item.sourceReviewConfirmedAt | date:'medium')
+                    : ('venue.edit.admin.sourceNotRecorded' | t) }}</p>
+              }
+            </div>
+          }
+          <h3>{{ 'venue.edit.admin.compare' | t }}</h3>
+          <div class="admin-edit-comparison">
+            @for (field of fields(item); track field) {
+              <div class="admin-edit-change">
+                <strong>{{ ('venue.edit.field.' + field) | t }}</strong>
+                <div class="admin-edit-values">
+                  <div><span>{{ 'venue.edit.admin.before' | t }}</span>
+                    <p>{{ item.before[field] || '—' }}</p></div>
+                  <div><span>{{ 'venue.edit.admin.after' | t }}</span>
+                    <p>{{ item.proposed[field] || '—' }}</p></div>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="admin-edit-reason">
+            <strong>{{ 'venue.edit.reason' | t }}</strong>
+            <p>{{ item.reason }}</p>
+          </div>
+          @if (needsEvidenceReview(item) || sourceLink(item)) {
+            <div class="admin-edit-source">
+              <strong>{{ (hasProposedContact(item)
+                ? 'venue.edit.admin.sourceHeading' : 'venue.edit.admin.evidenceHeading') | t }}</strong>
+              @if (sourceLink(item); as safeSource) {
+                <a [href]="safeSource" target="_blank" rel="noopener noreferrer">
+                  {{ 'venue.edit.admin.openSource' | t }}
+                </a>
+              } @else {
+                <p role="alert">{{ 'venue.edit.admin.missingSource' | t }}</p>
+              }
+              <small>{{ (hasProposedContact(item)
+                ? 'venue.edit.admin.sourceWarning' : 'venue.edit.admin.evidenceWarning') | t }}</small>
+              @if (needsEvidenceReview(item) && mode === 'pending' && sourceLink(item)) {
+                <label class="admin-edit-source-check">
+                  <input type="checkbox" name="sourceReviewed" [(ngModel)]="sourceReviewed">
+                  <span>{{ 'venue.edit.admin.sourceReviewed' | t }}</span>
+                </label>
+              }
+            </div>
+          }
+          @if (mode === 'pending' && item.status === 'PENDING') {
+          <label class="admin-edit-note">
+            <span>{{ 'venue.edit.admin.note' | t }}</span>
+            <textarea rows="3" name="note" [(ngModel)]="note"
+              maxlength="1000" [placeholder]="'venue.edit.admin.noteHint' | t"></textarea>
+          </label>
+          @if (actionError) {
+            <p class="admin-edit-error" role="alert">{{ 'venue.edit.admin.error' | t }}</p>
+          }
+          @if (action) {
+            <p class="admin-edit-confirm" role="alert">
+              {{ (action === 'approve' ? 'venue.admin.approveQuestion' : 'venue.admin.rejectQuestion') | t }}
+            </p>
+          }
+          <div class="admin-edit-actions">
+            @if (action) {
+              <button type="button" (click)="action = null" [disabled]="updating">
+                {{ 'common.cancel' | t }}
+              </button>
+              <button type="button" class="admin-edit-accept" (click)="decide()"
+                [disabled]="updating || (action === 'reject' && note.trim().length < 5) || (action === 'approve' && !canApproveSelected())">
+                {{ 'venue.admin.confirm' | t }}
+              </button>
+            } @else {
+              <button type="button" class="admin-edit-reject"
+                (click)="action='reject'">{{ 'venue.admin.reject' | t }}</button>
+              <button type="button" class="admin-edit-accept"
+                (click)="action='approve'" [disabled]="!sourceLink(item) && needsEvidenceReview(item)">{{ 'venue.admin.approve' | t }}</button>
+            }
+          </div>
+          }
+        </section>
+      </div>
+    }
+  </div>
+</section>

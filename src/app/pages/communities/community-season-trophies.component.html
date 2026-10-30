@@ -1,0 +1,21 @@
+@if (seasons.length > 0) {
+                      <div class="trophies-grid">
+                        @for (season of seasons; track season.id) {
+                          <article class="trophy-card">
+                            <span class="trophy-icon">🏆</span>
+                            <div>
+                              <strong>{{ season.name }}</strong>
+                              <span>
+                                {{ season.championDisplayName || season.championUsername }}
+                                · {{ season.championPoints }} {{ 'communities.pointsShort' | t }}
+                              </span>
+                            </div>
+                          </article>
+                        }
+                      </div>
+                    } @else {
+                      <div class="module-empty compact">
+                        <h3>{{ 'communities.noTrophies' | t }}</h3>
+                        <p>{{ 'communities.noTrophiesText' | t }}</p>
+                      </div>
+                    }

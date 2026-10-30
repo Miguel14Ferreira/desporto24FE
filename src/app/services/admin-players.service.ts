@@ -19,6 +19,12 @@ export interface AdminPlayerSearch {
   hasMore: boolean;
 }
 
+export interface CommunityQuota {
+  owned: number;
+  limit: number;
+  canCreate: boolean;
+}
+
 export type ModerationAction = 'SUSPEND' | 'REINSTATE' | 'DELETE';
 export interface ModerationResult {
   id: number;
@@ -30,6 +36,17 @@ export interface ModerationResult {
 @Injectable({ providedIn: 'root' })
 export class AdminPlayersService {
   constructor(private http: HttpClient) {}
+  communityLimit(id: number): Observable<CommunityQuota> {
+    return this.http.get<CommunityQuota>(
+      environment.apiUrl + '/api/admin/players/' + id + '/community-limit');
+  }
+
+  updateCommunityLimit(id: number, limit: number | null, reason: string): Observable<CommunityQuota> {
+    return this.http.put<CommunityQuota>(
+      environment.apiUrl + '/api/admin/players/' + id + '/community-limit',
+      { limit, reason });
+  }
+
   changeRole(id: number, role: string, expectedRole: string): Observable<{ id: number; role: string }> {
     return this.http.put<{ id: number; role: string }>(
       environment.apiUrl + '/api/admin/players/' + id + '/role', { role, expectedRole });

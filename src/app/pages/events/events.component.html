@@ -1,15 +1,14 @@
-<section class="sessions-page">
+<section class="sessions-page jynlo-c1 jynlo-games">
   <div class="sessions-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Jynlo</p>
         <h1>{{ 'events.title' | t }}</h1>
         <p class="subtitle">{{ 'events.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/menu/createEvent">{{ 'mySessions.create' | t }}</a>
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
+        <a class="primary-action jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" routerLink="/menu/createEvent">{{ 'mySessions.create' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
       </div>
     </header>
 
@@ -37,9 +36,9 @@
               <option [ngValue]="100">100 km</option>
             </select>
           </label>
-          <button type="button" class="ghost-button jynlo-action jynlo-action--neutral" (click)="disableNearby()">{{ 'events.disable' | t }}</button>
+          <button type="button" class="ghost-button jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" (click)="disableNearby()">{{ 'events.disable' | t }}</button>
         } @else {
-          <button class="jynlo-action jynlo-action--neutral" type="button" [disabled]="locating" (click)="useCurrentLocation()">
+          <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" type="button" [disabled]="locating" (click)="useCurrentLocation()">
             {{ locating ? ('events.locating' | t) : ('events.useLocation' | t) }}
           </button>
         }
@@ -50,7 +49,15 @@
       <div class="location-error">{{ locationError }}</div>
     }
 
-    <form class="filters" (ngSubmit)="loadSessions()">
+    <form class="filters jynlo-session-filters" (ngSubmit)="loadSessions()">
+      <div class="filters-intro">
+        <span class="filters-intro__icon" aria-hidden="true">☷</span>
+        <div>
+          <strong>{{ 'events.searchFiltersTitle' | t }}</strong>
+          <p>{{ 'events.searchFiltersHint' | t }}</p>
+        </div>
+      </div>
+      <div class="filters-primary">
       <label>
         <span>{{ 'events.sport' | t }}</span>
         <input
@@ -94,7 +101,23 @@
           <option value="price">{{ 'mySessions.price' | t }}</option>
         </select>
       </label>
+      </div>
 
+      <div class="filters-quick">
+        <div class="filters-quick__chips">
+          <span class="filters-quick__caption">{{ 'events.quickFilters' | t }}</span>
+          <button type="button" class="quick-chip" [attr.aria-pressed]="quickDate === 'today'"
+            [class.is-active]="quickDate === 'today'" (click)="applyQuickDate('today')">{{ 'events.quickToday' | t }}</button>
+          <button type="button" class="quick-chip" [attr.aria-pressed]="quickDate === 'week'"
+            [class.is-active]="quickDate === 'week'" (click)="applyQuickDate('week')">{{ 'events.quickWeek' | t }}</button>
+          <button type="button" class="quick-chip" [attr.aria-pressed]="quickDate === 'weekend'"
+            [class.is-active]="quickDate === 'weekend'" (click)="applyQuickDate('weekend')">{{ 'events.quickWeekend' | t }}</button>
+          <button type="button" class="quick-chip" [attr.aria-pressed]="sport === 'Padel'"
+            [class.is-active]="sport === 'Padel'" (click)="applyQuickSport('Padel')">Padel</button>
+          <button type="button" class="quick-chip" [attr.aria-pressed]="sport === 'Futebol'"
+            [class.is-active]="sport === 'Futebol'" (click)="applyQuickSport('Futebol')">Futebol</button>
+        </div>
+        <div class="filters-quick__checks">
       <label class="check-filter">
         <input type="checkbox" name="availableOnly" [(ngModel)]="availableOnly">
         <span>{{ 'events.availableOnly' | t }}</span>
@@ -104,10 +127,8 @@
         <input type="checkbox" name="freeOnly" [(ngModel)]="freeOnly">
         <span>{{ 'events.freeOnly' | t }}</span>
       </label>
-
-      <button type="button" class="advanced-toggle" (click)="toggleAdvancedFilters()">
-        {{ showAdvancedFilters ? ('events.lessFilters' | t) : ('events.moreFilters' | t) }}
-      </button>
+        </div>
+      </div>
 
       @if (showAdvancedFilters) {
         <div class="advanced-filters">
@@ -155,9 +176,14 @@
         </div>
       }
 
+      <div class="filters-toolbar">
+      <button type="button" class="advanced-toggle jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small" (click)="toggleAdvancedFilters()">
+        {{ showAdvancedFilters ? ('events.lessFilters' | t) : ('events.moreFilters' | t) }}
+      </button>
       <div class="filter-actions">
-        <button class="jynlo-action jynlo-action--primary" type="submit">{{ 'common.search' | t }}</button>
-        <button type="button" class="ghost-button jynlo-action jynlo-action--neutral" (click)="clearFilters()">{{ 'events.clear' | t }}</button>
+        <button class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" type="submit">{{ 'common.search' | t }}</button>
+        <button type="button" class="ghost-button jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" (click)="clearFilters()">{{ 'events.clear' | t }}</button>
+      </div>
       </div>
     </form>
 
@@ -168,7 +194,7 @@
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="loadSessions()">{{ 'common.retry' | t }}</button>
+        <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" type="button" (click)="loadSessions()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -183,13 +209,19 @@
           }
         </p>
         <div class="session-empty-actions">
-          <button type="button" class="jynlo-action jynlo-action--neutral session-empty-clear"
-            (click)="clearFilters()">{{ 'events.clear' | t }}</button>
-          <a class="jynlo-action jynlo-action--primary session-empty-create"
+          <a class="jynlo-action jynlo-action--primary session-empty-create jynlo-premium-btn jynlo-premium-btn--primary"
             routerLink="/menu/createEvent"
             [queryParams]="{ sport: sport.trim() || null, city: city.trim() || null }">
             {{ 'mySessions.create' | t }}
           </a>
+          @if (nearbyActive && radiusKm < 100) {
+            <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
+              (click)="increaseRadius()">{{ 'events.increaseRadius' | t }}</button>
+          } @else {
+            <button type="button" class="jynlo-action jynlo-action--neutral session-empty-clear jynlo-premium-btn jynlo-premium-btn--quiet"
+              (click)="clearFilters()">{{ 'events.clear' | t }}</button>
+          }
+          <a class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/venues">{{ 'events.exploreVenues' | t }}</a>
         </div>
       </div>
     }
@@ -240,7 +272,7 @@
             </div>
 
             <a
-              class="session-action jynlo-action jynlo-action--neutral"
+              class="session-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [class.session-action--join]="canJoin(session) || canJoinWaitlist(session)"
               [routerLink]="['/menu/events', session.id]"
                 [queryParams]="canJoin(session) || canJoinWaitlist(session) ? { join: 1 } : null">

@@ -48,7 +48,7 @@ export class VenueCreateComponent implements OnInit {
   venueType = '';
   ownershipType: VenueOwnershipType | null = null;
   surfaceType = '';
-  environmentType: VenueEnvironmentType = 'OUTDOOR';
+  environmentType: VenueEnvironmentType | null = null;
   changingRooms = false;
   changingRoomTypes: string[] = [];
   parking = false;
@@ -85,6 +85,7 @@ export class VenueCreateComponent implements OnInit {
   longitude: number | null = null;
   saving = false;
   saveError = false;
+  submitted = false;
   duplicateVenueError = false;
   validationError = false;
   locating = false;
@@ -101,6 +102,7 @@ export class VenueCreateComponent implements OnInit {
   private similarVenueRequestVersion = 0;
 
   private mapLinkRequestVersion = 0;
+  private locationRequestVersion = 0;
   private coordinatesFromResolvedMapLink = false;
 
   constructor(
@@ -173,6 +175,9 @@ export class VenueCreateComponent implements OnInit {
   }
 
   onMapLinkChanged(): void {
+    // A Maps edit supersedes a pending browser GPS position.
+    ++this.locationRequestVersion;
+    this.locating = false;
     // A changed Maps link must never silently retain coordinates from the previous link.
     ++this.mapLinkRequestVersion;
     if (this.coordinatesFromResolvedMapLink) {
@@ -186,6 +191,9 @@ export class VenueCreateComponent implements OnInit {
   }
 
   onManualCoordinatesChanged(): void {
+    // Manual coordinates supersede both pending GPS and Maps responses.
+    ++this.locationRequestVersion;
+    this.locating = false;
     // Explicitly edited coordinates belong to the user, not to a Maps URL.
     ++this.mapLinkRequestVersion;
     this.coordinatesFromResolvedMapLink = false;
@@ -197,6 +205,9 @@ export class VenueCreateComponent implements OnInit {
     const url = this.mapLink.trim();
     if (!url || this.resolvingMapLink || this.saving) return;
     const requestVersion = ++this.mapLinkRequestVersion;
+    // Explicit Maps resolution takes precedence over a pending browser location.
+    ++this.locationRequestVersion;
+    this.locating = false;
     this.resolvingMapLink = true;
     this.mapLinkError = false;
     this.mapLinkResolved = false;
@@ -234,16 +245,22 @@ export class VenueCreateComponent implements OnInit {
       return;
     }
 
+    const requestVersion = ++this.locationRequestVersion;
+    // A newly requested GPS location supersedes a Maps lookup still in flight.
+    ++this.mapLinkRequestVersion;
+    this.resolvingMapLink = false;
     this.locating = true;
     this.locationError = false;
     navigator.geolocation.getCurrentPosition(
       position => {
+        if (requestVersion !== this.locationRequestVersion) return;
         this.latitude = position.coords.latitude;
         this.longitude = position.coords.longitude;
         this.onManualCoordinatesChanged();
         this.locating = false;
       },
       () => {
+        if (requestVersion !== this.locationRequestVersion) return;
         this.locationError = true;
         this.locating = false;
       }
@@ -270,10 +287,39 @@ export class VenueCreateComponent implements OnInit {
       : this.selectedSports.filter(item => item !== sport);
   }
 
+  /** Only a complete plausible Portugal continental GPS pair can replace a postal address. */
+  get hasValidGpsCoordinates(): boolean {
+    return this.latitude !== null && this.longitude !== null
+      && Number.isFinite(this.latitude) && Number.isFinite(this.longitude)
+      && this.latitude >= 36.8 && this.latitude <= 42.3
+      && this.longitude >= -9.6 && this.longitude <= -6.0;
+  }
+
+  get hasInvalidGpsCoordinates(): boolean {
+    return (this.latitude !== null || this.longitude !== null)
+      && !this.hasValidGpsCoordinates;
+  }
+
+  get locationIsMissing(): boolean {
+    return !this.address.trim() && !this.hasValidGpsCoordinates;
+  }
+
+  /** Five required inputs as specified in the reviewed venue UX proposal.
+   * Postal addresses may be substituted by valid mainland GPS coordinates.
+   * District remains optional because its municipality mapping is not yet authoritative.
+   */
+  get essentialCompletedCount(): number {
+    return Number(!!this.name.trim())
+      + Number(!!this.city.trim())
+      + Number(!this.locationIsMissing && !this.hasInvalidGpsCoordinates)
+      + Number(this.selectedSports.length > 0)
+      + Number(this.environmentType !== null);
+  }
+
   save(): void {
     if (this.saving) return;
 
-    if (!this.name.trim() || !this.city.trim() || !this.address.trim() || this.selectedSports.length === 0) {
+    if (!this.name.trim() || !this.city.trim() || this.locationIsMissing || this.hasInvalidGpsCoordinates || this.selectedSports.length === 0 || this.environmentType === null) {
       this.validationError = true;
       return;
     }
@@ -282,10 +328,10 @@ export class VenueCreateComponent implements OnInit {
 
     const request: CreateVenueRequest = {
       name: this.name.trim(), city: this.city.trim(), district: this.district,
-      address: this.address.trim(),
+      address: this.address.trim() || null,
       sports: this.selectedSports.join(';'), venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
-      environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,
+      environmentType: this.environmentType, indoor: this.environmentType !== null && this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,
       changingRoomTypes: this.changingRooms && this.changingRoomTypes.length ? this.changingRoomTypes.join(';') : null, toilets: this.toilets,
       lockers: this.lockers, showers: this.showers, stands: this.stands, drinkingFountain: this.drinkingFountain, accessible: this.accessible, firstAid: this.firstAid,
       aed: this.aed, medicalStation: this.medicalStation, lifeguard: this.lifeguard, staffOnSite: this.staffOnSite, securitySurveillance: this.securitySurveillance, cafe: this.cafe, restaurant: this.restaurant, vendingMachines: this.vendingMachines, sportsShop: this.sportsShop, wifi: this.wifi, phoneCharging: this.phoneCharging, nearbyRadiusMeters: this.nearbyRadiusMeters, nearbyPharmacy: this.nearbyPharmacy, nearbyAtm: this.nearbyAtm, services: this.valueOrNull(this.services),
@@ -295,15 +341,19 @@ export class VenueCreateComponent implements OnInit {
     };
 
     this.saving = true;
+    this.submitted = false;
     this.saveError = false;
     this.duplicateVenueError = false;
-    this.venueService.create(request)
+    this.venueService.submitSuggestion(request)
       .pipe(
         timeout(10_000),
         finalize(() => this.saving = false)
       )
       .subscribe({
-      next: venue => this.router.navigate(['/menu/venues', venue.id]),
+      next: receipt => {
+        this.submitted = receipt.status === 'PENDING';
+        if (!this.submitted) this.saveError = true;
+      },
       error: (error: HttpErrorResponse) => {
         this.duplicateVenueError = error.status === 409;
         this.saveError = !this.duplicateVenueError;

@@ -10,6 +10,7 @@ import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SessionSummary } from '../model/session-summary';
 import { Venue } from '../model/venue';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 describe('HomeComponent public discovery', () => {
   let sessions: jasmine.SpyObj<SessionService>;
@@ -35,7 +36,7 @@ describe('HomeComponent public discovery', () => {
 
     await TestBed.configureTestingModule({
       declarations: [HomeComponent],
-      imports: [CommonModule, TranslatePipe, RouterModule.forRoot([])],
+      imports: [CommonModule, TranslatePipe, VenueSportsBadgesComponent, RouterModule.forRoot([])],
       providers: [
         { provide: SessionService, useValue: sessions },
         { provide: VenueService, useValue: venues }
@@ -48,6 +49,41 @@ describe('HomeComponent public discovery', () => {
     fixture.detectChanges();
     return fixture;
   }
+
+  it('uses the approved premium Concept One landing while retaining working discovery links', () => {
+    const fixture = render();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.jynlo-home-premium')).not.toBeNull();
+    expect(root.querySelector('main.hero[aria-labelledby="jynlo-home-title"]')).not.toBeNull();
+    expect(root.querySelector('.jynlo-premium-features')?.querySelectorAll('article').length).toBe(3);
+    expect(root.querySelector('.public-discovery form.preview-search')).not.toBeNull();
+    expect(root.querySelector('a[href="#jynlo-public-discovery"]')).not.toBeNull();
+    expect(root.querySelectorAll('a.preview-item').length).toBe(0);
+  });
+
+  it('keeps public discovery filters and actions level without the Bootstrap label margin', () => {
+    const fixture = render();
+    const form = (fixture.nativeElement as HTMLElement).querySelector('.preview-search') as HTMLFormElement;
+    const labels = Array.from(form.querySelectorAll('label')) as HTMLLabelElement[];
+    const inputs = Array.from(form.querySelectorAll('input[type="search"]')) as HTMLInputElement[];
+    const buttons = Array.from(form.querySelectorAll('.preview-search-actions button')) as HTMLButtonElement[];
+
+    expect(labels.length).toBe(2);
+    expect(inputs.length).toBe(2);
+    expect(buttons.length).toBe(2);
+    labels.forEach(label => expect(getComputedStyle(label).marginBottom).toBe('0px'));
+    [...inputs, ...buttons].forEach(control => {
+      expect(getComputedStyle(control).height).toBe('50px');
+      expect(getComputedStyle(control).boxSizing).toBe('border-box');
+    });
+
+    // At desktop width, the actions and both inputs share a bottom edge.
+    if (getComputedStyle(form).gridTemplateColumns.split(' ').length === 3) {
+      const edges = [...inputs, ...buttons].map(control => control.getBoundingClientRect().bottom);
+      expect(Math.max(...edges) - Math.min(...edges)).toBeLessThan(1);
+    }
+    fixture.destroy();
+  });
 
   it('makes public sessions discoverable without signing up and explains communities', () => {
     const fixture = render();
@@ -62,6 +98,9 @@ describe('HomeComponent public discovery', () => {
     expect(communitySection?.querySelector('h2')?.textContent?.trim()).toBeTruthy();
     expect(communityCta?.getAttribute('href')).toBe('/login/registerNewUser');
     expect(root.querySelectorAll('.hero-actions a[href="/login/registerNewUser"]').length).toBe(1);
+    // Preserve this optional joining action while improving visual layout elsewhere.
+    expect(root.querySelector<HTMLAnchorElement>('.preview-cta')?.getAttribute('href'))
+      .toBe('/login/registerNewUser');
   });
 
   it('shows real upcoming public sessions and no private, closed or community-only activities', () => {
@@ -82,8 +121,40 @@ describe('HomeComponent public discovery', () => {
     }));
     expect(component.featuredSessions.map(value => value.id)).toEqual([1, 6]);
     expect(component.featuredVenues.map(value => value.id)).toEqual([10]);
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item').length).toBe(2);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item:not(.preview-venue)').length).toBe(2);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-venue').length).toBe(1);
+  });
+
+  it('makes every public venue card a keyboard-accessible link to its own detail page', () => {
+    venues.suggest.and.returnValue(of({
+      venues: [venue(17, 'Futsal;Natação'), venue(29, 'Padel;Yoga')],
+      page: 0, hasMore: false
+    }));
+    const fixture = render();
+    const cards = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('a.preview-venue'));
+    expect(cards.length).toBe(2);
+    expect(cards.map(card => card.getAttribute('href'))).toEqual(['/venues/17', '/venues/29']);
+    expect(cards[0].getAttribute('aria-label')).toContain('Campo 17');
+    expect(cards[0].querySelector('.venue-sports-chip')?.textContent).toContain('Futsal');
+    expect(cards.every(card => card.querySelector('.preview-venue-action')?.textContent?.trim())).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).querySelector('article.preview-venue')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('renders the public venue sports as compact tags instead of semicolon strings', () => {
+    venues.suggest.and.returnValue(of({
+      venues: [venue(10, 'Futebol;Futsal;Ginástica;Judo;Natação')],
+      page: 0, hasMore: false
+    }));
+    const fixture = render();
+    const card: HTMLElement = fixture.nativeElement.querySelector('.preview-venue');
+    expect(card.querySelector('.preview-venue-city')?.textContent?.trim()).toBe('Cascais');
+    expect(Array.from(card.querySelectorAll('.venue-sports-chip')).map(node => node.textContent?.trim()))
+      .toEqual(['Futebol', 'Futsal', 'Ginástica']);
+    expect(card.querySelector('.venue-sports-counter')?.textContent?.trim()).toBe('+2');
+    expect(card.textContent).not.toContain(';');
+    fixture.destroy();
   });
 
   it('does not invent sessions or venues when the public catalogue is empty', () => {

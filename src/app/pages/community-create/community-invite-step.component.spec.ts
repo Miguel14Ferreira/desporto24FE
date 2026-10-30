@@ -1,4 +1,5 @@
 import { of, throwError } from 'rxjs';
+import { appTranslate } from '../../i18n/i18n.service';
 import { CommunityInviteStepComponent } from './community-invite-step.component';
 import { CommunityGroup } from '../model/community-group';
 
@@ -23,6 +24,29 @@ describe('CommunityInviteStepComponent', () => {
     component.ngOnInit();
     return { component, groups, router };
   }
+
+  it('shows available competition options in PT and EN, without out-of-date team warnings', () => {
+    const activityKeys = [
+      'communityInviteStep.activityTitle',
+      'communityInviteStep.activitySubtitle',
+      'communityInviteStep.individualTitle',
+      'communityInviteStep.teamsTitle',
+      'communityInviteStep.teamsDescription',
+      'communityInviteStep.teamsHint',
+      'communityInviteStep.statisticsTitle',
+      'communityInviteStep.sessionsTitle',
+      'communityInviteStep.activitySelectedCount'
+    ];
+
+    for (const language of ['pt', 'en']) {
+      localStorage.setItem('d24-language', language);
+      for (const key of activityKeys) {
+        expect(appTranslate(key)).not.toBe(key);
+      }
+      expect(appTranslate('communityInviteStep.teamsHint')).not.toMatch(/em desenvolvimento|in development/i);
+      expect(appTranslate('communityInviteStep.activitySelectedCount', { count: 2 })).toContain('2');
+    }
+  });
 
   it('prepares a link to the community after an explicit click', () => {
     const { component } = setup();
@@ -56,7 +80,7 @@ describe('CommunityInviteStepComponent', () => {
 
   it('lets organizer combine individual leagues and regular statistics', () => {
     const { component, groups, router } = setup();
-    const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(component.community));
     (groups as any).updateFeatures = update;
     component.continueAfterInvite();
     component.chooseActivity('individual');
@@ -67,12 +91,16 @@ describe('CommunityInviteStepComponent', () => {
     expect(update).toHaveBeenCalledWith(42, {
       rankingsEnabled: true, individualTournamentsEnabled: true, teamTournamentsEnabled: false
     });
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('no');
+    component.continueToCommunity();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
   });
 
-  it('supports all four paths, including sessions-only and the future teams module', () => {
+  it('supports all four paths, including sessions-only and team tournaments', () => {
     const { component, groups } = setup();
-    const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(component.community));
     (groups as any).updateFeatures = update;
     component.continueAfterInvite();
     component.chooseActivity('teams');
@@ -86,6 +114,7 @@ describe('CommunityInviteStepComponent', () => {
     expect(update).toHaveBeenCalledWith(42, {
       rankingsEnabled: false, individualTournamentsEnabled: false, teamTournamentsEnabled: false
     });
+    expect(component.step).toBe('venue');
   });
 
   it('does not save without selecting an explicit path', () => {
@@ -121,9 +150,10 @@ describe('CommunityInviteStepComponent', () => {
     expect(component.competitionSaving).toBeFalse();
     expect(component.step).toBe('competition');
 
-    update.and.returnValue(of({ rankingsEnabled: true }));
+    update.and.returnValue(of(component.community));
     component.saveCompetitionAndContinue();
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('lets people decide later without changing settings', () => {
@@ -131,9 +161,56 @@ describe('CommunityInviteStepComponent', () => {
     const update = jasmine.createSpy('updateFeatures');
     (component as any).groups.updateFeatures = update;
     component.continueAfterInvite();
-    component.continueToCommunity();
+    component.continueToVenue();
     expect(update).not.toHaveBeenCalled();
+    expect(component.step).toBe('venue');
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('no');
+    component.continueToCommunity();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
+  it('asks about the habitual venue after deciding on competition options', () => {
+    const { component, router } = setup();
+    component.continueAfterInvite();
+    component.continueToVenue();
+    expect(component.step).toBe('venue');
+    expect(component.habitualVenueChoice).toBeNull();
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.setHabitualVenueChoice('yes');
+    expect(component.habitualVenueChoice).toBe('yes');
+    component.onHabitualVenueSaved({ id:42, name:'Futebol das Quintas',
+      myRole:'OWNER', defaultVenueId:57, defaultVenueName:'Campo Municipal' } as CommunityGroup);
+    expect(component.community?.defaultVenueId).toBe(57);
+    expect(component.habitualVenueSaved).toBeTrue();
+    component.continueToCommunity();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
+  it('allows finishing after saving a habitual Maps point without a catalogue venue', () => {
+    const { component } = setup();
+    component.continueAfterInvite();
+    component.continueToVenue();
+    component.setHabitualVenueChoice('yes');
+    component.onHabitualVenueSaved({ ...component.community!,
+      defaultVenueId: null, habitualLocationSource: 'MAPS',
+      habitualLatitude: 38.71, habitualLongitude: -9.13 } as CommunityGroup);
+    expect(component.hasHabitualLocation()).toBeTrue();
+    expect(component.habitualVenueChoice).toBe('yes');
+    expect(component.habitualVenueSaved).toBeTrue();
+  });
+
+  it('recognizes GPS at latitude zero and clears a removed habitual point', () => {
+    const { component } = setup();
+    component.continueAfterInvite();
+    component.continueToVenue();
+    component.onHabitualVenueSaved({ ...component.community!,
+      habitualLocationSource: 'GPS', habitualLatitude: 0, habitualLongitude: -9.13 } as CommunityGroup);
+    expect(component.hasHabitualLocation()).toBeTrue();
+    component.onHabitualVenueSaved({ ...component.community!,
+      habitualLocationSource: null, habitualLatitude: null, habitualLongitude: null } as CommunityGroup);
+    expect(component.hasHabitualLocation()).toBeFalse();
+    expect(component.habitualVenueChoice).toBeNull();
   });
 
   it('continues to the new community even when its details could not be loaded', () => {

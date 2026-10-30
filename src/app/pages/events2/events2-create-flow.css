@@ -1,0 +1,198 @@
+/* A single deliberate flow for new and partly-filled sessions. */
+.create-mode-panel,.create-share-panel {
+  display:grid;gap:15px;min-width:0;margin:0 0 25px;
+  padding:clamp(17px,2.5vw,24px);
+  border:1px solid rgba(88,181,184,.3);border-radius:18px;
+  background:linear-gradient(145deg,rgba(12,51,65,.84),rgba(7,31,47,.9));
+}
+.create-mode-intro,.create-share-panel>div:first-child {display:grid;gap:6px}
+.create-mode-panel h2,.create-share-panel h2 {
+  font-size:clamp(1.1rem,2vw,1.3rem);color:#f0fffd;line-height:1.3;margin:0
+}
+.create-mode-panel p,.create-share-panel p {
+  color:#bfd8dd;font-size:.9rem;line-height:1.55;margin:0
+}
+.create-mode-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.create-mode-option {
+  display:grid;grid-template-columns:42px minmax(0,1fr);align-content:center;align-items:center;
+  row-gap:5px;column-gap:12px;min-height:105px;text-align:left;
+  padding:16px;color:#f7fffd;cursor:pointer;background:rgba(7,28,43,.8);
+  border:1px solid rgba(125,178,193,.35);border-radius:14px;
+}
+.create-mode-option-icon {
+  grid-row:span 2;width:42px;height:42px;display:grid;place-items:center;
+  color:#98e9d6;border:1px solid rgba(72,194,162,.4);
+  border-radius:13px;background:rgba(31,125,116,.21);font-size:1.35rem
+}
+.create-mode-option strong {font-size:.97rem;line-height:1.4}
+.create-mode-option small {color:#b6ccd7;line-height:1.55}
+.create-mode-option.active,.create-mode-option:focus-visible {
+  border-color:#34dbc3;background:rgba(22,108,103,.34);
+  outline:2px solid transparent;box-shadow:0 0 0 1px rgba(52,219,195,.36)
+}
+.create-mode-option:disabled {cursor:wait;opacity:.65}
+.create-mode-feedback {
+  padding:11px 13px;border-radius:10px;border:1px solid rgba(65,193,168,.3);
+  color:#b3e6d9;background:rgba(12,75,72,.25);line-height:1.5;font-size:.86rem
+}
+.create-share-panel {margin-top:0}
+.create-share-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.create-share-community {
+  display:flex;align-items:center;gap:12px;min-width:0;padding:13px;
+  border:1px solid rgba(110,172,190,.28);border-radius:12px;
+  background:rgba(8,33,48,.68);cursor:pointer
+}
+.create-share-community.selected {
+  border-color:#2dd4bf;background:rgba(22,110,103,.28)
+}
+.create-share-community input {width:18px;height:18px;flex:0 0 18px;accent-color:#2dd4bf}
+.create-share-community span {display:grid;min-width:0;gap:4px}
+.create-share-community strong {color:#eafffb;overflow-wrap:anywhere}
+.create-share-community small,.create-share-status {color:#b7d0d9;line-height:1.45}
+.create-share-selected {font-weight:700;color:#99f6e4!important}
+@media(max-width:700px){
+ .create-mode-grid,.create-share-grid {grid-template-columns:minmax(0,1fr)}
+ .create-mode-option {min-height:0}
+}
+
+/* Account-owned session presets: clearly separated from the game creation inputs. */
+.create-preset-panel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  margin: 0 0 clamp(24px, 3vw, 32px);
+  padding: clamp(17px, 2.5vw, 24px);
+  border: 1px solid rgba(71, 208, 181, .35);
+  border-radius: 17px;
+  background: linear-gradient(145deg, rgba(17, 67, 73, .76), rgba(8, 39, 54, .9));
+}
+.create-preset-heading h2 {
+  font-size: clamp(1.12rem, 2vw, 1.3rem);
+  line-height: 1.3;
+  color: #f0fffc;
+  margin: 3px 0 6px;
+}
+.create-preset-heading p {
+  margin: 0;
+  color: #c5e3e5;
+  font-size: .9rem;
+  line-height: 1.55;
+}
+.create-preset-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+.create-preset-fields label { display: grid; gap: 7px; min-width: 0; }
+.create-preset-fields label > span { font-weight: 700; color: #d8eeed; }
+.create-preset-fields :is(input,select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 45px;
+  border: 1px solid #447984;
+  border-radius: 11px;
+  padding: 10px 12px;
+  background: #092a3b;
+  color: #f0fffd;
+  font: inherit;
+}
+.create-preset-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.create-preset-actions button { min-height: 42px; max-width: 100%; white-space: normal; }
+.create-preset-message { color: #a4f7dd; margin: 0; line-height: 1.5; }
+.create-preset-error { color: #ffd0d0; margin: 0; line-height: 1.5; }
+@media(max-width: 650px) {
+  .create-preset-fields { grid-template-columns: minmax(0, 1fr); }
+  .create-preset-actions button { flex: 1 1 145px; }
+}
+
+/* Keep saved presets compact. The editor appears only on explicit "Save configuration". */
+.create-preset-save-editor {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: clamp(16px,2.4vw,22px);
+  border: 1px solid rgba(55,210,174,.4);
+  border-radius: 14px;
+  background: rgba(12,58,66,.72);
+}
+.create-preset-save-editor > div:first-child { display: grid; gap: 5px; }
+.create-preset-save-editor strong { color: #e8fffa; }
+.create-preset-save-editor p { color: #c0dadd; margin: 0; line-height: 1.5; }
+.create-preset-save-editor label { display: grid; gap: 7px; min-width: 0; font-weight: 700; }
+.create-preset-save-editor input {
+  min-height: 44px; width: 100%; min-width: 0;
+  padding: 10px 12px; border: 1px solid #447984; border-radius: 10px;
+  background: #092a3b; color: #f0fffd; font: inherit;
+}
+.create-preset-panel .create-preset-heading {display:grid;gap:4px}
+.create-preset-panel .create-preset-heading p {max-width: 75ch}
+.create-card .form-actions {flex-wrap:wrap;gap:12px}
+
+/* Separate private arrival instructions from the venue address and GPS. */
+.create-meeting-point-panel { display:grid;gap:12px;min-width:0;margin:21px 0;
+  padding:clamp(16px,2.5vw,22px);border:1px solid rgba(82,197,182,.31);
+  border-radius:16px;background:linear-gradient(145deg,rgba(11,49,62,.83),rgba(7,33,48,.92)); }
+.create-meeting-point-panel h2 { margin:0 0 5px;color:#f0fffc;font-size:1.13rem; }
+.create-meeting-point-panel p { margin:0;color:#bbd8db;font-size:.88rem;line-height:1.5; }
+.create-meeting-point-panel label { display:grid;gap:7px;min-width:0; }
+.create-meeting-point-panel label span { color:#e2f7f2;font-weight:750;font-size:.9rem; }
+.create-meeting-point-panel input { box-sizing:border-box;width:100%;min-width:0;min-height:45px;
+  padding:10px 13px;border:1px solid #4c8490;border-radius:11px;color:#f0fffd;background:#092b3c;font:inherit; }
+.create-meeting-point-panel input:focus-visible { outline:2px solid #54ddc3;outline-offset:2px; }
+.create-meeting-point-panel small { color:#accbd0;line-height:1.45; }
+
+/* Minimum attendance must not be confused with capacity. */
+.session-minimum-picker {
+  grid-column:1 / -1;display:grid;gap:12px;min-width:0;
+  padding:15px;border:1px solid rgba(74,208,195,.27);
+  border-radius:14px;background:rgba(8,45,58,.46);
+}
+.session-minimum-capacity-option {
+  display:flex!important;align-items:flex-start;gap:12px;cursor:pointer;
+}
+.session-minimum-capacity-option input[type="checkbox"] {
+  margin:3px 0 0;flex:0 0 20px;width:20px;height:20px;
+  accent-color:#24d6b1;cursor:pointer;
+}
+.session-minimum-capacity-option > span {display:grid;gap:5px;min-width:0;}
+.session-minimum-capacity-option strong {color:#e4fff8;font-size:.91rem;line-height:1.4;}
+.session-minimum-capacity-option small,
+.session-minimum-custom small {color:#accbd0;line-height:1.5;}
+.session-minimum-custom {display:grid;gap:7px;min-width:0;}
+.session-minimum-custom input {max-width:200px;min-height:42px;box-sizing:border-box;}
+.session-minimum-capacity-option input:focus-visible {
+  outline:2px solid #9cffe2;outline-offset:3px;
+}
+@media(max-width:580px){
+ .session-minimum-picker {padding:12px;}
+ .session-minimum-custom input {max-width:100%;}
+}
+
+
+/* All create-session dropdowns use the shared fixed-position premium menu.
+   Keep host fields within the grid while the menu escapes clipped panels. */
+.create-card app-jynlo-select.create-premium-select {
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.create-card label:has(> app-jynlo-select.create-premium-select) {
+  min-width:0;
+  align-content:start;
+}
+.create-preset-fields app-jynlo-select.create-premium-select {
+  min-height:48px;
+}
+@media (max-width:650px) {
+  .create-card app-jynlo-select.create-premium-select {width:100%;}
+  .create-card label:has(> app-jynlo-select.create-premium-select) {min-width:0;}
+}

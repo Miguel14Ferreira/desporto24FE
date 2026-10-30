@@ -1,0 +1,42 @@
+<section class="competition-guide" [attr.aria-label]="'communities.tournaments.overview.guideLabel' | t">
+  <div class="guide-intro">
+    <span class="tournament-eyebrow">{{ 'communities.tournaments.overview.beforeStart' | t }}</span>
+    <h4>{{ 'communities.tournaments.overview.guideTitle' | t }}</h4>
+    <p>{{ 'communities.tournaments.overview.guideDescription' | t }}</p>
+  </div>
+  <div class="guide-options">
+    <article class="guide-option">
+      <div class="guide-option-top">
+        <span aria-hidden="true">👤</span><strong>{{ 'communities.tournaments.overview.individualTitle' | t }}</strong>
+        <span class="guide-tag">{{ 'communities.tournaments.overview.available' | t }}</span>
+      </div>
+      <p>{{ 'communities.tournaments.overview.individualDescription' | t }}</p>
+      <p class="guide-example">{{ 'communities.tournaments.overview.individualExample' | t }}</p>
+      @if (canManage && individualEnabled) {
+        <button type="button" class="t-btn t-btn-primary"
+          (click)="individualSelected.emit()">{{ 'communities.tournaments.overview.createIndividual' | t }}</button>
+      } @else if (canManage) {
+        <p class="guide-coming">{{ 'communities.tournaments.overview.individualDisabled' | t }}</p>
+      }
+    </article>
+    <article class="guide-option">
+      <div class="guide-option-top">
+        <span aria-hidden="true">👥</span><strong>{{ 'communities.tournaments.overview.teamsTitle' | t }}</strong>
+        <span class="guide-tag">{{ 'communities.tournaments.overview.teamFormats' | t }}</span>
+      </div>
+      <p>{{ 'communities.tournaments.overview.teamsDescription' | t }}</p>
+      <p class="guide-example">{{ 'communities.tournaments.overview.teamsExample' | t }}</p>
+      <p>{{ 'communities.tournaments.overview.teamsHelp' | t }}</p>
+      @if (canManage && teamEnabled) {
+        <button type="button" class="t-btn t-btn-primary" (click)="teamSelected.emit()">{{ 'communities.tournaments.overview.createTeams' | t }}</button>
+      } @else if (canManage) {
+        <p class="guide-coming">{{ 'communities.tournaments.overview.teamsDisabled' | t }}</p>
+      }
+    </article>
+  </div>
+  <div class="guide-community-note" role="note">
+    <strong>{{ 'communities.tournaments.overview.weeklyTitle' | t }}</strong>
+    <p>{{ 'communities.tournaments.overview.weeklyDescription' | t }}</p>
+  </div>
+  <button type="button" class="t-btn t-btn-secondary" (click)="closeRequested.emit()">{{ 'communities.tournaments.overview.closeGuide' | t }}</button>
+</section>

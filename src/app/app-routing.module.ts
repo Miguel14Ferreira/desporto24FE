@@ -1,33 +1,31 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { CanActivateFn, Router, RouterModule, Routes } from '@angular/router';
+import { inject } from '@angular/core';
 import { AboutComponent } from './pages/about/about.component';
-import { AlterardadosComponent } from './pages/alterardados/alterardados.component';
 import { ChangepasswordComponent } from './pages/changepassword/changepassword.component';
 import { ContactComponent } from './pages/contact/contact.component';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
-import { EventsComponent } from './pages/events/events.component';
 import { ForgotpComponent } from './pages/forgotp/forgotp.component';
 import { HomeComponent } from './pages/home/home.component';
 import { LoginComponent } from './pages/login/login.component';
-import { PerfisComponent } from './pages/perfis/perfis.component'; 
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
-import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
-import { NotificationsComponent } from './pages/notifications/notifications.component';
-import { FriendsComponent } from './pages/friends/friends.component';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { GuestOnlyGuard } from './guard/guest-only.guard';
 import { AdminGuard } from './guard/admin.guard';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
-import { DiscoverComponent } from './pages/discover/discover.component';
-import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
-import { VenueCreateComponent } from './pages/venue-create/venue-create.component';
 import { LegalPageComponent } from './pages/legal-page/legal-page.component';
 import { PublicSessionPreviewComponent } from './pages/public-session-preview/public-session-preview.component';
+
+const legacyPrivateChatRedirect: CanActivateFn = route => {
+  const username = route.paramMap.get('username') || route.paramMap.get('username2');
+  return inject(Router).createUrlTree(['/menu/messages'], {
+    queryParams: username ? { kind: 'direct', id: username } : {}
+  });
+};
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -37,14 +35,19 @@ const routes: Routes = [
   {path:'privacy',component:LegalPageComponent,data:{document:'privacy'}},
   {path:'terms',component:LegalPageComponent,data:{document:'terms'}},
   {path:'sessions/:id',component:PublicSessionPreviewComponent},
+  // The same venue details page can be read by visitors. The authenticated route
+  // below still exposes photo uploads, community contributions and suggestions.
+  {path:'venues/:id',loadChildren:() => import('./pages/venue-details/venue-details.module').then(m => m.VenueDetailsModule),data:{publicVenueView:true}},
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
-  {path:'menu/my-sessions',component:MySessionsComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/my-sessions',loadChildren:() => import('./pages/my-sessions/my-sessions.module').then(m => m.MySessionsModule),canActivate:[AuthenticationGuard]},
   {path:'menu/events/:id',loadChildren:() => import('./pages/session-details/session-details.module').then(m => m.SessionDetailsModule),canActivate:[AuthenticationGuard]},
-  {path:'menu/feed',component:SocialFeedComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/discover',component:DiscoverComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/venues/new',component:VenueCreateComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/venues/:id',component:VenueDetailsComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/events',component:EventsComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/feed',loadChildren:() => import('./pages/social-feed/social-feed.module').then(m => m.SocialFeedModule),canActivate:[AuthenticationGuard]},
+  {path:'menu/discover',loadChildren:() => import('./pages/discover/discover.module').then(m => m.DiscoverModule),canActivate:[AuthenticationGuard]},
+  {path:'menu/venues',loadComponent:() => import('./pages/venues-directory/venues-directory.component').then(m => m.VenuesDirectoryComponent),canActivate:[AuthenticationGuard]},
+  {path:'menu/venues/new',loadChildren:() => import('./pages/venue-create/venue-create.module').then(m => m.VenueCreateModule),canActivate:[AuthenticationGuard]},
+  {path:'menu/venues/:id/suggest-edit',loadComponent:() => import('./pages/venue-suggest-edit/venue-suggest-edit.component').then(m => m.VenueSuggestEditComponent),canActivate:[AuthenticationGuard]},
+  {path:'menu/venues/:id',loadChildren:() => import('./pages/venue-details/venue-details.module').then(m => m.VenueDetailsModule),canActivate:[AuthenticationGuard]},
+  {path:'menu/events',loadChildren:() => import('./pages/events/events.module').then(m => m.EventsModule),canActivate:[AuthenticationGuard]},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent,canActivate:[GuestOnlyGuard]},
@@ -52,16 +55,16 @@ const routes: Routes = [
   {path:'menu/createEvent',loadChildren:() => import('./pages/events2/create-event.module').then(m => m.CreateEventModule),canActivate:[AuthenticationGuard]},
   {path:'menu/createEvent/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'login/registerNewUser/login', redirectTo:'login',pathMatch:'full'},
-  {path:'menu/alterardados',component:AlterardadosComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/alterardados',loadChildren:() => import('./pages/alterardados/alterardados.module').then(m => m.AlterardadosModule),canActivate:[AuthenticationGuard]},
   {path:'menu/alterardados/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'menu/alterarPassword/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'menu/alterarPassword', component:ChangepasswordComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/createEvents',loadChildren:() => import('./pages/events2/create-event.module').then(m => m.CreateEventModule),canActivate:[AuthenticationGuard]},
   {path:'menu/createEvents/menu',redirectTo:'menu',pathMatch:'full'},
   {path:'login/resetPassword',component:ForgotpComponent},
-  {path:'menu/perfis',component:PerfisComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/perfis',loadChildren:() => import('./pages/perfis/perfis.module').then(m => m.PerfisModule),canActivate:[AuthenticationGuard]},
   {path:'menu/perfis/menu',redirectTo:'menu',pathMatch:'full'},
-  {path:'menu/perfis/:username',component:PerfisComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/perfis/:username',loadChildren:() => import('./pages/perfis/perfis.module').then(m => m.PerfisModule),canActivate:[AuthenticationGuard]},
   {path:'login/resetPassword/:token',component:Forgotp2Component, pathMatch:'full'},
   {path:'login/registerNewUser/confirmTokenRegistration/:token', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
   {path:'menu/dadosPerfil',component:PerfilDataComponent,canActivate:[AuthenticationGuard], pathMatch:'full'},
@@ -69,11 +72,13 @@ const routes: Routes = [
   {path:'menu/dadosPerfil/alterardados',redirectTo:'menu/alterardados',pathMatch:'full'},
   {path:'login/MFAauthentication', component: LoginMFAComponent},
   {path:'menu', redirectTo:'/menu/feed', pathMatch:'full'},
-  {path:'menu/friendList',component:FriendsComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/friendList/chat/:username',loadChildren:() => import('./pages/direct-chat/direct-chat.module').then(m => m.DirectChatModule),canActivate:[AuthenticationGuard]},
-  {path:'menu/friendList/chat/:username1/:username2',loadChildren:() => import('./pages/direct-chat/direct-chat.module').then(m => m.DirectChatModule),canActivate:[AuthenticationGuard]},
-  {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/friendList',loadChildren:() => import('./pages/friends/friends.module').then(m => m.FriendsModule),canActivate:[AuthenticationGuard]},
+  {path:'menu/messages',loadComponent:() => import('./pages/messages-center/messages-center.component').then(m => m.MessagesCenterComponent),canActivate:[AuthenticationGuard]},
+  {path:'menu/groups',loadComponent:() => import('./pages/private-groups/private-groups.component').then(m => m.PrivateGroupsComponent),canActivate:[AuthenticationGuard]},
+  {path:'menu/friendList/chat/:username',canActivate:[AuthenticationGuard,legacyPrivateChatRedirect],children:[]},
+  {path:'menu/friendList/chat/:username1/:username2',canActivate:[AuthenticationGuard,legacyPrivateChatRedirect],children:[]},
+  {path:'menu/notifications',loadChildren:() => import('./pages/notifications/notifications.module').then(m => m.NotificationsModule),canActivate:[AuthenticationGuard]},
+  {path:'menu/notifications/:id',loadChildren:() => import('./pages/notifications/notifications.module').then(m => m.NotificationsModule),canActivate:[AuthenticationGuard]},
   {path:'menu/communities',loadChildren:() => import('./pages/communities/communities.module').then(m => m.CommunitiesModule),canActivate:[AuthenticationGuard]},
   {path:'menu/admin',loadChildren:() => import('./pages/admin/admin.module').then(m => m.AdminModule),canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},

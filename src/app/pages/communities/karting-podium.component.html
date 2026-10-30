@@ -1,0 +1,30 @@
+<section class="karting-final-podium" aria-labelledby="karting-final-podium-title">
+  <div class="karting-podium-heading">
+    <span class="karting-podium-kicker">{{ 'communities.tournaments.kartingArchiveKicker' | t }}</span>
+    <h5 id="karting-final-podium-title">{{ 'communities.tournaments.kartingFinalPodium' | t }}</h5>
+    <p>{{ tournament.name }} · {{ tournament.completedAt | date:'dd/MM/yyyy' }}</p>
+  </div>
+  <div class="karting-podium-grid">
+    @for (driver of podium; track driver.playerId) {
+      <article class="karting-podium-place" [class.is-first]="driver.position === 1"
+        [class.is-second]="driver.position === 2"
+        [class.is-third]="driver.position === 3">
+        <span class="karting-podium-medal" aria-hidden="true">
+          {{ driver.position === 1 ? '🥇' : (driver.position === 2 ? '🥈' : '🥉') }}
+        </span>
+        <span class="karting-podium-rank">{{ driver.position }}{{ 'communities.karting.ordinalSuffix' | t }}</span>
+        <strong>{{ driver.fullName || ('communities.tournaments.kartingChampionUnavailable' | t) }}</strong>
+        <span class="karting-podium-points">
+          {{ driver.championshipPoints ?? '—' }} {{ 'communities.tournaments.kartingPointsAbbrev' | t }}
+        </span>
+        <small>{{ driver.wins }} {{ 'communities.tournaments.kartingWins' | t }}
+          · {{ driver.podiums }} {{ 'communities.tournaments.kartingPodiums' | t }}</small>
+      </article>
+    }
+  </div>
+  @if (tournament.championTied) {
+    <p class="karting-shared-title" role="status">
+      {{ 'communities.tournaments.kartingSharedFirstPlaceNotice' | t }}
+    </p>
+  }
+</section>

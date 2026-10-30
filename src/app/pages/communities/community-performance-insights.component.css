@@ -1,0 +1,143 @@
+:host { display:block; min-width:0; }
+h3 { margin:0; }
+.section-heading { display:flex;align-items:center;justify-content:space-between;gap:1rem; }
+.section-kicker { margin:0 0 .2rem;color:#7dd3fc;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em; }
+.records-section,
+.performance-section,
+.compare-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.records-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+  margin-top: .75rem;
+}
+
+.record-card {
+  display: grid;
+  gap: .25rem;
+  padding: .8rem .9rem;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .85rem;
+  background: rgba(255,255,255,.03);
+}
+
+.record-card > span,
+.record-card small {
+  color: #94a3b8;
+  font-size: .76rem;
+}
+
+.points-chart {
+  display: grid;
+  gap: .65rem;
+  margin-top: .8rem;
+}
+
+.points-chart-row {
+  display: grid;
+  grid-template-columns: minmax(150px, .8fr) minmax(0, 2fr);
+  align-items: center;
+  gap: .75rem;
+}
+
+.points-chart-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.points-chart-label span {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  font-size: .75rem;
+}
+
+.points-chart-track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+}
+
+.points-chart-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(125,211,252,.65), rgba(34,211,238,.9));
+}
+
+.compare-selectors {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: .75rem;
+  margin-top: .8rem;
+}
+
+.versus {
+  padding-bottom: 1rem;
+  color: #64748b;
+  font-size: .75rem;
+  font-weight: 950;
+}
+
+.compare-table {
+  display: grid;
+  margin-top: .8rem;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .85rem;
+}
+
+.compare-table > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(100px, .6fr) minmax(0, 1fr);
+  align-items: center;
+  gap: .75rem;
+  padding: .62rem .8rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  text-align: center;
+}
+
+.compare-table > div:last-child {
+  border-bottom: 0;
+}
+
+.compare-table > div > span {
+  color: #94a3b8;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.compare-head {
+  background: rgba(125,211,252,.045);
+}
+
+@media (max-width: 760px) {
+  .records-grid,
+  .compare-selectors {
+    grid-template-columns: 1fr;
+  }
+
+  .versus {
+    padding: 0;
+    text-align: center;
+  }
+
+  .points-chart-row {
+    grid-template-columns: 1fr;
+    gap: .3rem;
+  }
+
+  .compare-table > div {
+    grid-template-columns: 1fr minmax(75px, .5fr) 1fr;
+    gap: .35rem;
+    padding-inline: .55rem;
+  }
+}

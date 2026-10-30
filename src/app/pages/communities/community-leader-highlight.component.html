@@ -1,0 +1,8 @@
+<section class="leader-highlight">
+                    <div>
+                      <span class="section-kicker">{{ 'communities.currentLeader' | t }}</span>
+                      <h3>{{ standing?.fullName || standing?.username }}</h3>
+                      <p>@{{ standing?.username }} · {{ standing?.points }} {{ 'communities.pointsShort' | t }}</p>
+                    </div>
+                    <div class="leader-score">{{ standing?.points }}</div>
+                  </section>

@@ -1,0 +1,126 @@
+/*
+ * Jynlo Premium Refresh — shared visual language, no behavioural overrides.
+ * Scoped to existing Concept One screens and explicit components.
+ * Keep modal, accessibility, layout, errors and disabled states owned by pages.
+ */
+:root {
+  --jynlo-premium-mint: #25e4c9;
+  --jynlo-premium-glow: rgba(37, 228, 201, .18);
+  --jynlo-premium-outline: rgba(76, 198, 197, .24);
+  --jynlo-premium-panel: #0c2435;
+  --jynlo-premium-muted: #bed7df;
+  --jynlo-premium-gradient: linear-gradient(145deg, #061a29 0%, #092a39 63%, #071725 100%);
+}
+body .jynlo-c1 {
+  --jynlo-ui-brand: var(--jynlo-premium-mint);
+  --jynlo-ui-brand-text: #042f31;
+  --jynlo-ui-muted: var(--jynlo-premium-muted);
+  --jynlo-ui-outline: var(--jynlo-premium-outline);
+  --jynlo-ui-radius-md: 1rem;
+  --jynlo-ui-radius-lg: 1.25rem;
+}
+body .jynlo-c1 :is(.page-header, .discover-header, .create-header, .dashboard-header) {
+  column-gap: 1.5rem;
+  row-gap: 1rem;
+}
+body .jynlo-c1 :is(.page-header, .discover-header, .create-header, .dashboard-header) h1 {
+  max-width: 25ch;
+  font-weight: 850;
+  line-height: 1.09;
+  letter-spacing: -.042em;
+  text-wrap: balance;
+}
+body .jynlo-c1 :is(.page-header, .discover-header, .create-header, .dashboard-header) :is(.subtitle, p:not(.eyebrow)) {
+  line-height: 1.55;
+}
+body .jynlo-c1 :is(.eyebrow,.section-kicker,.action-kicker) {
+  color: var(--jynlo-premium-mint);
+  letter-spacing: .1em;
+}
+body .jynlo-c1 :is(.header-actions,.row-actions,.explore-header-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .7rem;
+}
+body .jynlo-c1 :is(.header-actions,.row-actions,.explore-header-actions) > .jynlo-action {
+  min-height: 44px !important;
+}
+body .jynlo-c1 .jynlo-action--primary,
+body .jynlo-c1 .jynlo-action--accent {
+  --jynlo-action-bg: var(--jynlo-premium-mint);
+  --jynlo-action-border: var(--jynlo-premium-mint);
+  --jynlo-action-text: #052a30;
+  --jynlo-action-hover: #6bf6d7;
+}
+body .jynlo-c1 :is(.page-header,.discover-header,.create-header) + :is(.filters,.discover-search,.search-bar) {
+  margin-top: .35rem;
+}
+body .jynlo-c1 :is(.filters,.discover-search,.create-card,.state-card,.empty-card,.feed-card,.week-hub) {
+  border-color: var(--jynlo-premium-outline);
+  border-radius: 1.2rem;
+}
+body .jynlo-c1 :is(.filters,.discover-search,.state-card,.empty-card) {
+  box-shadow: 0 16px 38px rgba(0, 12, 22, .16);
+}
+body .jynlo-c1 :is(.filters,.discover-search,.search-bar) label {
+  min-width: 0;
+  margin-bottom: 0;
+}
+body .jynlo-c1 :is(.filters,.discover-search,.search-bar) :is(input:not([type="checkbox"]):not([type="radio"]),select) {
+  min-width: 0;
+  box-sizing: border-box;
+}
+body .jynlo-c1 :is(.filters,.discover-search,.search-bar) :is(.filter-actions,.search-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+}
+body .jynlo-c1 :is(.state-card,.empty-card) :is(.session-empty-actions,.empty-actions) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+@media (max-width: 700px) {
+  body .jynlo-c1 :is(.page-header,.discover-header,.create-header,.dashboard-header) h1 {
+    font-size: clamp(2rem, 7vw, 3rem);
+    overflow-wrap: anywhere;
+  }
+  body .jynlo-c1 :is(.header-actions,.row-actions) > .jynlo-action {
+    flex: 0 1 auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .jynlo-c1 :is(.state-card,.empty-card,.feed-card) {
+    transition: none;
+  }
+}
+
+/* The logo lives only in the site navigation, favicon and startup splash. */
+body .jynlo-c1 :is(.session-row,.session-card,.preview-item,.community-card,.venue-card) {
+  border-color: var(--jynlo-premium-outline);
+  border-radius: 1rem;
+}
+body .jynlo-c1 :is(.session-row,.session-card,.preview-item,.community-card,.venue-card):hover {
+  border-color: rgba(37, 228, 201, .43);
+}
+body .jynlo-c1 :is(.state-card,.empty-card) h2 {
+  color: #f4fffc;
+  letter-spacing: -.025em;
+}
+body .jynlo-c1 :is(.state-card,.empty-card) p {
+  color: var(--jynlo-premium-muted);
+}
+body .jynlo-c1 :is(.header-actions,.row-actions) > a,
+body .jynlo-c1 :is(.header-actions,.row-actions) > button {
+  box-sizing: border-box;
+}
+@media (max-width: 480px) {
+  body .jynlo-c1 :is(.header-actions,.row-actions) { width: 100%; }
+  body .jynlo-c1 :is(.header-actions,.row-actions) > .jynlo-action {
+    flex: 1 1 auto;
+  }
+}

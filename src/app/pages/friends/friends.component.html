@@ -1,8 +1,7 @@
-<section class="friends-page">
+<section class="friends-page jynlo-c1 jynlo-secondary">
   <div class="friends-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
         <h1>{{ 'friends.title' | t }}</h1>
         <p class="subtitle">{{ 'friends.subtitle' | t }}</p>
       </div>
@@ -58,16 +57,17 @@
       <div class="friend-grid">
         @for (friend of filteredFriends; track friend.username) {
           <article class="friend-card">
-            <div class="avatar">
+            <a class="avatar" [routerLink]="['/menu/perfis',friend.username]"
+              [attr.aria-label]="('friends.profileAction' | t) + ': ' + friend.username">
               @if (profileImage(friend); as image) {
                 <img [src]="image" [alt]="friend.username">
               } @else {
                 <span>{{ initials(friend) }}</span>
               }
-            </div>
+            </a>
 
             <div class="friend-copy">
-              <strong>{{ friend.username }}</strong>
+              <a [routerLink]="['/menu/perfis', friend.username]">{{ friend.username }}</a>
               <span>{{ friend.nickname || friend.fullName || ('friends.player' | t) }}</span>
             </div>
 
@@ -86,7 +86,8 @@
 
               <a
                 class="friend-action friend-action--primary jynlo-action jynlo-action--primary"
-                [routerLink]="['/menu/friendList/chat', friend.username]">
+                routerLink="/menu/messages"
+                [queryParams]="{ kind: 'direct', id: friend.username }">
                 <span>💬</span>
                 {{ 'friends.chatAction' | t }}
               </a>

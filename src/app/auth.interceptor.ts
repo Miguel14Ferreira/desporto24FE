@@ -9,7 +9,8 @@ import {
   HttpRequest
 } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, finalize, shareReplay, switchMap, catchError, throwError } from 'rxjs';
+import { Observable, defer, finalize, firstValueFrom, from, shareReplay, switchMap, catchError, throwError } from 'rxjs';
+import { JwtHelperService } from '@auth0/angular-jwt';
 
 import { environment } from '../environment/environment';
 import { LoginResponse } from './pages/model/login-response';
@@ -19,6 +20,7 @@ import { safeLoginReturnUrl } from './shared/safe-login-return-url';
 export class AuthInterceptor implements HttpInterceptor {
   private readonly rawHttp: HttpClient;
   private refreshInFlight?: Observable<LoginResponse>;
+  private readonly jwtHelper = new JwtHelperService();
 
   constructor(
     private router: Router,
@@ -57,11 +59,14 @@ export class AuthInterceptor implements HttpInterceptor {
           return throwError(() => error);
         }
 
-        return this.refreshAccessToken().pipe(
+        return this.refreshAccessToken(token).pipe(
           // Handle only errors from the refresh call. A forbidden response from
           // the retried request means insufficient permissions, not a lost session.
           catchError(refreshError => {
-            if (this.isRefreshRejected(refreshError)) {
+            // Another tab may have refreshed successfully in the meantime.
+            // A stale 400 from this tab must not erase a NEW session token.
+            if (this.isRefreshRejected(refreshError)
+                && localStorage.getItem('t') === token) {
               this.clearSessionAndRedirect();
             }
             return throwError(() => refreshError);
@@ -112,27 +117,61 @@ export class AuthInterceptor implements HttpInterceptor {
     }
   }
 
-  private refreshAccessToken(): Observable<LoginResponse> {
+  private refreshAccessToken(observedToken: string | null): Observable<LoginResponse> {
     if (!this.refreshInFlight) {
-      this.refreshInFlight = this.rawHttp.post<LoginResponse>(
-        environment.apiUrl + '/api/auth/refresh',
-        null,
-        { withCredentials: true }
-      ).pipe(
-        switchMap(response => {
-          if (!response.token) {
-            return throwError(() => new Error('Refresh response did not include an access token'));
+      const renew = async (): Promise<LoginResponse> => {
+        const currentToken = localStorage.getItem('t');
+        // If another tab already rotated the HttpOnly cookie, use the access
+        // JWT it published in shared storage instead of reusing the old cookie.
+        if (observedToken && currentToken && observedToken !== currentToken) {
+          const previous = this.decodeIdentity(observedToken);
+          const current = this.decodeIdentity(currentToken);
+          if (!previous || !current || previous !== current) {
+            throw new Error('Authentication identity changed while refreshing');
           }
+          if (!this.jwtHelper.isTokenExpired(currentToken)) {
+            return {
+              mfaRequired: false, challengeId: null, challengeExpiresAt: null,
+              token: currentToken, profile: null
+            };
+          }
+        }
 
-          localStorage.setItem('t', response.token);
-          return [response];
-        }),
+        const response = await firstValueFrom(this.rawHttp.post<LoginResponse>(
+          environment.apiUrl + '/api/auth/refresh',
+          null,
+          { withCredentials: true }
+        ));
+        if (!response.token) {
+          throw new Error('Refresh response did not include an access token');
+        }
+        localStorage.setItem('t', response.token);
+        return response;
+      };
+
+      this.refreshInFlight = defer(() => {
+        // Web Locks are origin-wide: unlike this singleton, they coordinate
+        // multiple browser tabs. Older browsers retain same-tab single flight.
+        if (typeof navigator !== 'undefined' && navigator.locks?.request) {
+          return from(navigator.locks.request(
+            'jynlo-refresh-cookie', { mode: 'exclusive' }, renew
+          ));
+        }
+        return from(renew());
+      }).pipe(
         finalize(() => this.refreshInFlight = undefined),
         shareReplay(1)
       );
     }
-
     return this.refreshInFlight;
+  }
+
+  private decodeIdentity(token: string): string | null {
+    try {
+      return this.jwtHelper.decodeToken(token)?.sub ?? null;
+    } catch {
+      return null;
+    }
   }
 
   private isRefreshRejected(error: unknown): boolean {

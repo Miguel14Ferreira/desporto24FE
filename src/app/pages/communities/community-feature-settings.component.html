@@ -1,0 +1,31 @@
+<section class="community-feature-settings" [attr.aria-label]="'communities.features.region' | t">
+                <div class="community-feature-settings-title">
+                  <div>
+                    <h3>{{ 'communities.features.title' | t }}</h3>
+                    <p>{{ 'communities.features.intro' | t }}</p>
+                  </div>
+                  @if (!editing) {
+                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                      (click)="editRequested.emit()">{{ 'communities.features.manage' | t }}</button>
+                  }
+                </div>
+                @if (feedback) { <p role="status" class="feature-settings-success">{{ feedback }}</p> }
+                @if (error) { <p role="alert" class="feature-settings-error">{{ error }}</p> }
+                @if (editing) {
+                  <div class="feature-settings-choices" role="group" [attr.aria-label]="'communities.features.group' | t">
+                    <label><input type="checkbox" [ngModel]="draft.individualTournamentsEnabled" (ngModelChange)="setFeature('individualTournamentsEnabled', $event)"
+                      [disabled]="saving"> {{ 'communities.features.individual' | t }}</label>
+                    <label><input type="checkbox" [ngModel]="draft.teamTournamentsEnabled" (ngModelChange)="setFeature('teamTournamentsEnabled', $event)"
+                      [disabled]="saving"> {{ 'communities.features.team' | t }}</label>
+                    <label><input type="checkbox" [ngModel]="draft.rankingsEnabled" (ngModelChange)="setFeature('rankingsEnabled', $event)"
+                      [disabled]="saving"> {{ 'communities.features.rankings' | t }}</label>
+                  </div>
+                  <p class="feature-settings-caption">{{ 'communities.features.caption' | t }}</p>
+                  <div class="feature-settings-actions">
+                    <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                      [disabled]="saving" (click)="saveRequested.emit()">{{ 'communities.features.save' | t }}</button>
+                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                      [disabled]="saving" (click)="cancelRequested.emit()">{{ 'communities.features.cancel' | t }}</button>
+                  </div>
+                }
+              </section>

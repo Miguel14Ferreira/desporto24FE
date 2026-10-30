@@ -1,0 +1,234 @@
+<section class="stories-panel" [attr.aria-label]="'stories.title' | t">
+  <div class="stories-heading">
+    <div>
+      <span class="stories-eyebrow">{{ 'stories.kicker' | t }}</span>
+      <h2>{{ 'stories.title' | t }}</h2>
+      <p>{{ 'stories.subtitle' | t }}</p>
+    </div>
+    <div class="story-header-actions">
+      <button type="button" class="story-retry jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small" (click)="retry()" [disabled]="loading || mineLoading">
+        {{ 'stories.retry' | t }}
+      </button>
+    <button type="button" class="story-add-action jynlo-action jynlo-action--accent jynlo-premium-btn jynlo-premium-btn--primary" (click)="composerOpen = !composerOpen">
+      <span aria-hidden="true">+</span> {{ 'stories.create' | t }}
+    </button>
+    </div>
+  </div>
+
+  @if (mineError) { <p class="story-error" role="alert">{{ mineError }}</p> }
+
+  <div class="story-rail">
+    @for (group of storyGroups; track group.key) {
+      <button type="button" class="story-bubble" (click)="openGroup(group)"
+          [attr.aria-label]="('stories.view' | t) + ' ' + group.name">
+        <span class="story-ring">
+          @if (group.avatar) {
+            <img [src]="group.avatar" [alt]="''" loading="lazy">
+          } @else {
+            <span class="story-placeholder">{{ group.name.charAt(0).toUpperCase() }}</span>
+          }
+        </span>
+        <span class="story-name">{{ group.name }}</span>
+        @if (group.stories.length > 1) { <small>{{ group.stories.length }} {{ 'stories.items' | t }}</small> }
+      </button>
+    }
+    @if (!loading && storyGroups.length === 0) {
+      <p class="stories-empty">{{ 'stories.empty' | t }}</p>
+    }
+    @if (loading) { <p class="stories-empty">{{ 'stories.loading' | t }}</p> }
+  </div>
+
+  @if (composerOpen) {
+    <div class="story-composer">
+      @if (groups.length > 0) {
+        <div class="story-field">
+          <label for="storyAudience">{{ 'stories.publishAs' | t }}</label>
+          <select id="storyAudience" [(ngModel)]="communityId" [disabled]="uploading">
+            <option value="">{{ 'stories.personal' | t }}</option>
+            @for (group of groups; track group.id) {
+              <option [value]="group.id">{{ group.name }} ({{ 'stories.community' | t }})</option>
+            }
+          </select>
+        </div>
+      }
+      <label class="story-file jynlo-premium-btn jynlo-premium-btn--quiet" [class.story-file-disabled]="uploading">
+        <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+          [disabled]="uploading" (change)="pickFile($event)">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <path d="m21 16-5.5-5.5L5 21"></path>
+        </svg>
+        {{ 'stories.selectMedia' | t }}
+      </label>
+      @if (filePreview) {
+        <div class="story-preview">
+          @if (file?.type?.startsWith('video/')) {
+            <video [src]="filePreview" controls playsinline preload="metadata"></video>
+          } @else {
+            <img [src]="filePreview" [alt]="'stories.preview' | t">
+          }
+          <button type="button" [disabled]="uploading" (click)="removeFile()">{{ 'stories.remove' | t }}</button>
+        </div>
+      }
+      <label for="storyCaption">{{ 'stories.caption' | t }}</label>
+      <textarea id="storyCaption" [(ngModel)]="caption" maxlength="180" rows="2"
+        [disabled]="uploading" [placeholder]="'stories.captionHint' | t"></textarea>
+      <div class="story-composer-footer">
+        <small>{{ caption.length }}/180 · {{ 'stories.expiry' | t }}</small>
+        <button type="button" class="story-primary jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" [disabled]="!file || uploading" (click)="publish()">
+          {{ (uploading ? 'stories.publishing' : 'stories.publish') | t }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (error) { <p class="story-error" role="alert">{{ error }}</p> }
+  @if (feedback && !activeStory) { <p class="story-success" role="status">{{ feedback }}</p> }
+
+
+  @if (activeStory; as story) {
+    <div class="story-overlay" role="presentation" (click)="close()">
+      <section class="story-dialog" role="dialog" aria-modal="true" [attr.aria-label]="'stories.viewer' | t"
+        (click)="$event.stopPropagation()">
+        <div class="story-dialog-media">
+          @if (story.video) {
+            <video #storyVideo [src]="media(story.mediaUrl)" autoplay muted playsinline preload="metadata"
+              [muted]="muted" (loadedmetadata)="onVideoReady($event)"
+              (timeupdate)="onVideoTime($event)" (ended)="next()" (error)="onMediaError()"></video>
+          } @else {
+            <img [src]="media(story.mediaUrl)" [alt]="story.caption || ('stories.photo' | t)"
+              (load)="onImageLoaded()" (error)="onMediaError()">
+          }
+          @if (mediaFailed) {
+            <p class="story-media-error" role="alert">{{ 'stories.mediaUnavailable' | t }}</p>
+          }
+          @if (autoplayFailed && story.video && !mediaFailed) {
+            <button class="story-autoplay-retry" type="button" (click)="retryVideo()">
+              {{ 'stories.tapToPlay' | t }}
+            </button>
+          }
+          <!-- Invisible tap zones preserve unobstructed media, even with native video controls hidden. -->
+          <button class="story-tap-target story-tap-left" type="button"
+            [attr.aria-label]="'stories.previous' | t" [disabled]="storyIndex === 0"
+            (click)="previous()"></button>
+          <button class="story-tap-target story-tap-right" type="button"
+            [attr.aria-label]="'stories.next' | t" (click)="next()"></button>
+          @if (story.caption) { <p class="story-caption">{{ story.caption }}</p> }
+        </div>
+
+        <div class="story-top">
+          <div class="story-progress" [attr.aria-label]="'stories.progress' | t">
+            @for (item of currentGroup; track item.id; let i = $index) {
+              <button type="button" class="story-progress-track"
+                [attr.aria-label]="('stories.viewPart' | t) + ' ' + (i + 1)"
+                (click)="jumpTo(i)">
+                <span [style.width.%]="i < storyIndex ? 100 : (i === storyIndex ? viewerProgress : 0)"></span>
+              </button>
+            }
+          </div>
+          <header class="story-dialog-header">
+            <div class="story-author">
+              <span class="story-author-avatar">
+                @if (storyAvatar(story); as avatar) {
+                  <img [src]="avatar" alt="">
+                } @else {
+                  {{ storyLabel(story).replace('@', '').charAt(0).toUpperCase() }}
+                }
+              </span>
+              <strong>{{ storyLabel(story) }}</strong>
+            </div>
+            <div class="story-top-actions">
+              @if (story.video) {
+                <button type="button" class="story-icon-button" [attr.aria-label]="(muted ? 'stories.unmute' : 'stories.mute') | t"
+                  (click)="toggleMute()">
+                  @if (muted) {
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4zM16 9l5 6m0-6-5 6"/></svg>
+                  } @else {
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4zM15 9a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12"/></svg>
+                  }
+                </button>
+              }
+              <button type="button" class="story-icon-button" [attr.aria-label]="'stories.options' | t"
+                [attr.aria-expanded]="menuOpen" (click)="toggleStoryMenu()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+              </button>
+              <button type="button" class="story-icon-button story-close-button"
+                [attr.aria-label]="'stories.close' | t" (click)="close()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5 19 19M19 5 5 19"/></svg>
+              </button>
+              @if (menuOpen) {
+                <div class="story-options-menu">
+                  <button type="button" (click)="toggleStoryMenu(); shareStory()">{{ 'stories.share' | t }}</button>
+                  @if (story.canDelete) {
+                    <button type="button" class="story-danger-action" [disabled]="deleting"
+                      (click)="requestDeleteStory()">{{ 'stories.delete' | t }}</button>
+                  }
+                </div>
+              }
+            </div>
+          </header>
+        </div>
+
+        <div class="story-bottom">
+          @if (feedback) {
+            <p class="story-feedback" role="status">{{ feedback }}</p>
+          }
+          @if (story.communityId === null && !story.canDelete) {
+            <form class="story-reply-row" (submit)="$event.preventDefault(); replyToStory()">
+              <input type="text" [(ngModel)]="replyText" name="storyReply" maxlength="500"
+                [attr.aria-label]="'stories.replyTo' | t"
+                [placeholder]="('stories.replyTo' | t) + ' ' + storyLabel(story) + '…'"
+                [disabled]="replying" (focus)="onReplyFocus(true)" (blur)="onReplyFocus(false)">
+              <button type="submit" class="story-send-button" [disabled]="replying || !replyText.trim()"
+                [attr.aria-label]="'stories.sendReply' | t">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/></svg>
+              </button>
+              <button type="button" class="story-reaction-button" [disabled]="replying"
+                [attr.aria-label]="'stories.sendHeart' | t" (click)="replyToStory('❤️')">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 4.8a5.4 5.4 0 0 0-7.7 0L12 5.6l-.8-.8a5.4 5.4 0 0 0-7.7 7.7L12 21l8.5-8.5a5.4 5.4 0 0 0 0-7.7z"/></svg>
+              </button>
+              <button type="button" class="story-share-icon" [attr.aria-label]="'stories.share' | t"
+                (click)="shareStory()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/></svg>
+              </button>
+            </form>
+          } @else {
+            <div class="story-owner-row">
+              <span>{{ story.communityName || ('stories.yourStory' | t) }}</span>
+              <button type="button" class="story-owner-share" (click)="shareStory()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/></svg>
+                {{ 'stories.share' | t }}
+              </button>
+            </div>
+          }
+        </div>
+
+        @if (deleteConfirmOpen) {
+          <div class="story-confirm-backdrop" (click)="cancelDeleteStory()">
+            <section class="story-confirm-dialog" role="alertdialog" aria-modal="true"
+              aria-labelledby="story-delete-title" aria-describedby="story-delete-description"
+              (click)="$event.stopPropagation()">
+              <span class="story-confirm-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v6m4-6v6"/></svg>
+              </span>
+              <h3 id="story-delete-title">{{ 'stories.deleteConfirm' | t }}</h3>
+              <p id="story-delete-description">{{ 'profile.delete.confirmAction' | t }}</p>
+              @if (deleteError) {
+                <p class="story-confirm-error" role="alert">{{ deleteError }}</p>
+              }
+              <div class="story-confirm-actions">
+                <button type="button" class="story-confirm-cancel" [disabled]="deleting"
+                  (click)="cancelDeleteStory()">{{ 'common.cancel' | t }}</button>
+                <button type="button" class="story-confirm-danger" [disabled]="deleting"
+                  (click)="confirmDeleteStory()">
+                  {{ (deleting ? 'common.processing' : 'stories.delete') | t }}
+                </button>
+              </div>
+            </section>
+          </div>
+        }
+      </section>
+    </div>
+  }
+</section>

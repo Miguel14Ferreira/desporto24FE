@@ -1,0 +1,26 @@
+/* Community overview is read-only; business calculations remain in the page. */
+:host { display:block; }
+.overview-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:.85rem;
+}
+.overview-card {
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 1rem;
+  background: rgba(255,255,255,.035);
+  display:grid;
+  gap:.35rem;
+  padding:.9rem;
+}
+.overview-card span {
+  color:#94a3b8;
+  font-size:.78rem;
+}
+.overview-card strong {font-size:1rem; overflow-wrap:anywhere;}
+@media (max-width:1050px) {
+  .overview-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:800px) {
+  .overview-grid {grid-template-columns:1fr;}
+}

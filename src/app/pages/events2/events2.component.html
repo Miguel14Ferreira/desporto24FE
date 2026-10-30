@@ -1,15 +1,14 @@
-<section class="create-page">
+<section class="create-page jynlo-c1 jynlo-games">
   <div class="create-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Jynlo</p>
-        <h1>{{ (findPlayersMode ? 'createSession.findPlayersTitle' : 'createSession.title') | t }}</h1>
-        <p class="subtitle">{{ (findPlayersMode ? 'createSession.findPlayersSubtitle' : 'createSession.subtitle') | t }}</p>
+        <h1>{{ 'createSession.title' | t }}</h1>
+        <p class="subtitle">{{ 'createSession.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
       </div>
     </header>
 
@@ -25,21 +24,204 @@
           <small>{{ 'createSession.communityAudienceHint' | t }}</small>
         </div>
         <a
-          class="secondary-action jynlo-action jynlo-action--neutral"
+          class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
           [routerLink]="['/menu/communities', communityId]">
           {{ 'createSession.backCommunity' | t }}
         </a>
       </div>
     }
 
-    @if (findPlayersMode) {
-      <div class="recruit-context" role="note">
-        <strong>{{ 'createSession.findPlayersNoteTitle' | t }}</strong>
-        <p>{{ 'createSession.findPlayersNote' | t }}</p>
-      </div>
-    }
-
     <form class="create-card" (ngSubmit)="createSession()">
+      @if (presets.length > 0) {
+        <section class="create-preset-panel" aria-labelledby="create-preset-title">
+          <div class="create-preset-heading">
+            <span class="section-kicker">{{ 'createSession.presets.kicker' | t }}</span>
+            <h2 id="create-preset-title">{{ 'createSession.presets.title' | t }}</h2>
+            <p>{{ 'createSession.presets.hintShort' | t }}</p>
+          </div>
+          <div class="create-preset-fields">
+            <label>
+              <span>{{ 'createSession.presets.select' | t }}</span>
+              <app-jynlo-select name="sessionPresetSelection" class="create-premium-select"
+                [options]="presetChoices" [ngModel]="selectedPresetChoice"
+                (ngModelChange)="selectPresetChoice($event)"
+                [searchable]="true"
+                [placeholder]="'createSession.presets.noSelection' | t"
+                [ariaLabel]="'createSession.presets.select' | t"
+                [blocked]="presetsLoading || presetSaving || presetDeleting || loading"
+                [disabled]="presetsLoading || presetSaving || presetDeleting || loading">
+              </app-jynlo-select>
+            </label>
+            @if (selectedPresetId !== null) {
+              <label>
+                <span>{{ 'createSession.presets.name' | t }}</span>
+                <input type="text" name="sessionPresetName" [(ngModel)]="presetName"
+                       maxlength="70" autocomplete="off"
+                       (keydown.enter)="$event.preventDefault(); savePreset(true)"
+                       [disabled]="loading || presetSaving || presetDeleting">
+              </label>
+            }
+          </div>
+          @if (selectedPresetId !== null) {
+            <div class="create-preset-actions">
+              <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
+                      [disabled]="loading || presetSaving || presetDeleting"
+                      (click)="savePreset(true)">{{ 'createSession.presets.update' | t }}</button>
+              <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
+                      [disabled]="loading || presetSaving || presetDeleting"
+                      (click)="deletePreset()">{{ (presetConfirmDelete
+                        ? 'createSession.presets.confirmDelete'
+                        : 'createSession.presets.delete') | t }}</button>
+              @if (presetConfirmDelete) {
+                <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
+                        (click)="presetConfirmDelete = false">{{ 'common.cancel' | t }}</button>
+              }
+            </div>
+          }
+          @if (presetMessage && !presetEditorOpen) {
+            <p class="create-preset-message" role="status">{{ presetMessage }}</p>
+          }
+        </section>
+      }
+      <section class="create-mode-panel" aria-labelledby="create-mode-title">
+        <div class="create-mode-intro">
+          <span class="section-kicker">{{ 'createSession.modeKicker' | t }}</span>
+          <h2 id="create-mode-title">{{ 'createSession.modeTitle' | t }}</h2>
+          <p>{{ 'createSession.modeSubtitle' | t }}</p>
+        </div>
+        <div class="create-mode-grid" role="group" [attr.aria-label]="'createSession.modeTitle' | t">
+          <button type="button" class="create-mode-option"
+            [class.active]="creationMode === 'START'"
+            [attr.aria-pressed]="creationMode === 'START'"
+            [disabled]="loading" (click)="selectCreationMode('START')">
+            <span class="create-mode-option-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 7v10M7 12h10"></path>
+              </svg>
+            </span>
+            <strong>{{ 'createSession.modeStart' | t }}</strong>
+            <small>{{ 'createSession.modeStartHelp' | t }}</small>
+          </button>
+          <button type="button" class="create-mode-option"
+            [class.active]="creationMode === 'COMPLETE'"
+            [attr.aria-pressed]="creationMode === 'COMPLETE'"
+            [disabled]="loading" (click)="selectCreationMode('COMPLETE')">
+            <span class="create-mode-option-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+                <circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2"></circle>
+                <path d="M3.5 20v-1.5a5.5 5.5 0 0 1 11 0V20M15 14a4 4 0 0 1 5.5 4V20"></path>
+              </svg>
+            </span>
+            <strong>{{ 'createSession.modeComplete' | t }}</strong>
+            <small>{{ 'createSession.modeCompleteHelp' | t }}</small>
+          </button>
+        </div>
+        @if (findPlayersMode) {
+          <div class="create-mode-feedback" role="note">
+            {{ 'createSession.modeCompleteNote' | t }}
+          </div>
+        }
+      </section>
+      @if (communityCreationBlocked) {
+        <p role="alert" class="create-share-status">{{ 'communities.sessionPolicy.blocked' | t }}</p>
+      }
+      @if (!communityId) {
+        <section class="create-share-panel" aria-labelledby="create-share-title">
+          <div>
+            <span class="section-kicker">{{ 'createSession.communityShareKicker' | t }}</span>
+            <h2 id="create-share-title">{{ 'createSession.communityShareTitle' | t }}</h2>
+            <p>{{ 'createSession.communityShareHelp' | t }}</p>
+          </div>
+          @if (communitiesLoading) {
+            <p role="status" class="create-share-status">{{ 'createSession.communityShareLoading' | t }}</p>
+          } @else if (communitiesLoadError) {
+            <p role="status" class="create-share-status">{{ 'createSession.communityShareUnavailable' | t }}</p>
+          } @else if (communities.length === 0) {
+            <p class="create-share-status">{{ 'createSession.communityShareNone' | t }}</p>
+          } @else {
+            <div class="create-share-grid">
+              @for (group of communities; track group.id) {
+                <label class="create-share-community" [class.selected]="shareCommunityIds.includes(group.id)">
+                  <input type="checkbox" [name]="'shareCommunity' + group.id"
+                    [ngModel]="shareCommunityIds.includes(group.id)"
+                    (ngModelChange)="toggleCommunityShare(group.id, $event)"
+                    [disabled]="loading || !canCreateForCommunity(group)
+                      || (!shareCommunityIds.includes(group.id) && shareCommunityIds.length >= 5)">
+                  <span>
+                    <strong>{{ group.name }}</strong>
+                    <small>{{ (canCreateForCommunity(group)
+                        ? 'createSession.communityShareMember'
+                        : 'communities.sessionPolicy.shareBlocked') | t }}</small>
+                  </span>
+                </label>
+              }
+            </div>
+            @if (shareCommunityIds.length > 0) {
+              <p class="create-share-selected" role="status">
+                {{ 'createSession.communityShareSelected' | t:{count: shareCommunityIds.length} }}
+              </p>
+              <p class="create-share-members-note" role="status">
+                {{ 'createSession.communityShareMembersOnly' | t }}
+              </p>
+            }
+          }
+        </section>
+      }
+      @if (canMarkSeasonGame) {
+        <section class="create-share-panel" aria-labelledby="create-season-game-title">
+          <div>
+            <span class="section-kicker">{{ 'createSession.seasonGameKicker' | t }}</span>
+            <h2 id="create-season-game-title">{{ 'createSession.seasonGameTitle' | t }}</h2>
+            <p>{{ 'createSession.seasonGameHelp' | t }}</p>
+          </div>
+          <label class="create-share-community" [class.selected]="seasonGame">
+            <input type="checkbox" name="seasonGame" [ngModel]="seasonGame"
+              (ngModelChange)="toggleSeasonGame($event)" [disabled]="loading">
+            <span><strong>{{ 'createSession.seasonGameToggle' | t }}</strong></span>
+          </label>
+          @if (seasonGame) {
+            <p class="create-share-members-note" role="status">
+              {{ 'createSession.seasonGameAutomaticCommunity' | t:{name: selectedSeasonCommunity?.name ?? ''} }}
+            </p>
+            @if (seasonOverviewLoading) {
+              <p role="status">{{ 'createSession.communityShareLoading' | t }}</p>
+            } @else if (seasonOverviewError) {
+              <p role="alert">{{ 'createSession.seasonGameDataUnavailable' | t }}</p>
+            } @else if (seasonOverview) {
+              @if (seasonRankingsInactive) {
+                <p class="create-share-members-note" role="note">
+                  {{ 'createSession.seasonGameActivationExplained' | t }}
+                </p>
+                <label class="create-share-community">
+                  <input type="checkbox" name="confirmActivateRankings"
+                    [(ngModel)]="confirmActivateRankings" [disabled]="loading">
+                  <span>{{ 'createSession.seasonGameConfirmActivation' | t }}</span>
+                </label>
+              } @else {
+                <p class="create-share-members-note" role="status">
+                  {{ 'createSession.seasonGameExistingStandings' | t }}
+                </p>
+              }
+              @if (seasonOverview.activeSeasonId === null) {
+                <p class="create-share-members-note" role="note">
+                  {{ 'createSession.seasonGameNewSeason' | t }}
+                </p>
+              } @else {
+                <p class="create-share-members-note">
+                  {{ 'createSession.seasonGameActiveSeason' | t }}
+                </p>
+              }
+            }
+          }
+        </section>
+      } @else if (seasonCommunities.length > 1) {
+        <p class="create-share-members-note" role="note">
+          {{ 'createSession.seasonGameMultipleCommunities' | t }}
+        </p>
+      }
       <div class="form-grid">
         @if (communityId && communitySportLoaded && communitySports.length) {
           <div class="community-sport-choices">
@@ -57,21 +239,29 @@
         }
         <label>
           <span>{{ 'events.sport' | t }} *</span>
-          <input
-            type="search"
-            name="sport"
-            list="create-session-sports"
-            [(ngModel)]="sport"
-            autocomplete="off"
-            [disabled]="loading"
-            (change)="confirmSportSelection()"
-            [placeholder]="'events.sportPlaceholder' | t">
-          <datalist id="create-session-sports">
-            @for (sportOption of sportsCatalog; track sportOption) {
-              <option [value]="sportOption"></option>
-            }
-          </datalist>
+          <app-jynlo-select name="sport" class="create-premium-select"
+            [options]="sportChoices" [ngModel]="sport"
+            (ngModelChange)="onSportChoice($event)"
+            [searchable]="true" [required]="true"
+            [placeholder]="'events.sportPlaceholder' | t"
+            [ariaLabel]="'events.sport' | t"
+            [blocked]="loading" [disabled]="loading">
+          </app-jynlo-select>
         </label>
+
+        @if (canChoosePlayFormat) {
+          <label class="session-play-format-field">
+            <span>{{ 'createSession.playFormat' | t }}</span>
+            <app-jynlo-select name="playFormat" class="create-premium-select"
+              [options]="playFormatChoices" [(ngModel)]="playFormat"
+              [ariaLabel]="'createSession.playFormat' | t"
+              [blocked]="loading" [disabled]="loading">
+            </app-jynlo-select>
+            @if (playFormat === 'PAIRS') {
+              <small>{{ 'createSession.playFormatPairsHint' | t }}</small>
+            }
+          </label>
+        }
 
         <label>
           <span>{{ 'createSession.dateTime' | t }} *</span>
@@ -93,6 +283,28 @@
             max="100"
             [disabled]="loading">
         </label>
+        <div class="session-minimum-picker">
+          <label class="session-minimum-capacity-option">
+            <input type="checkbox" name="capacityIsMinimum"
+              [(ngModel)]="capacityIsMinimum" [disabled]="loading">
+            <span>
+              <strong>{{ 'createSession.capacityAsMinimum' | t:{ count: maxParticipants } }}</strong>
+              <small>{{ 'createSession.capacityAsMinimumHint' | t }}</small>
+            </span>
+          </label>
+          @if (!capacityIsMinimum) {
+            <label class="session-minimum-custom">
+              <span>{{ 'createSession.minimumPlayers' | t }} *</span>
+              <input type="number" name="minParticipants"
+                [ngModel]="minimumPlayers"
+                (ngModelChange)="selectedMinimumPlayers = $event"
+                min="2" [max]="maxParticipants" step="1"
+                [disabled]="loading">
+              <small>{{ 'createSession.minimumPlayersHint' | t }}</small>
+            </label>
+          }
+        </div>
+
 
       </div>
 
@@ -118,35 +330,128 @@
         </div>
       }
 
-      @if (communityId) {
+      @if (communitySessionSelected) {
         <div class="form-grid">
           <label>
             <span>{{ 'createSession.recurrence' | t }}</span>
-            <select
-              name="recurrence"
-              [(ngModel)]="recurrence"
-              [disabled]="loading">
-              <option value="NONE">{{ 'createSession.recurrenceNone' | t }}</option>
-              <option value="WEEKLY">{{ 'createSession.recurrenceWeekly' | t }}</option>
-              <option value="BIWEEKLY">{{ 'createSession.recurrenceBiweekly' | t }}</option>
-            </select>
+            <app-jynlo-select name="recurrence" class="create-premium-select"
+              [options]="recurrenceChoices" [(ngModel)]="recurrence"
+              [ariaLabel]="'createSession.recurrence' | t"
+              [blocked]="loading" [disabled]="loading">
+            </app-jynlo-select>
             <small>{{ 'createSession.recurrenceHint' | t }}</small>
           </label>
 
+          @if (recurrence === 'WEEKLY') {
+            <label>
+              <span>{{ 'createSession.weeklySessionsPerWeek' | t }}</span>
+              <app-jynlo-select name="weeklySessionsPerWeek" class="create-premium-select"
+                [options]="weeklyCountChoices" [ngModel]="weeklySessionsPerWeek.toString()"
+                (ngModelChange)="setWeeklySessionsPerWeek(+$event)"
+                [ariaLabel]="'createSession.weeklySessionsPerWeek' | t"
+                [blocked]="loading" [disabled]="loading">
+              </app-jynlo-select>
+              <small>{{ 'createSession.weeklySessionsPerWeekHint' | t }}</small>
+            </label>
+          }
           @if (recurrence !== 'NONE') {
             <label>
-              <span>{{ 'createSession.recurrenceOccurrences' | t }}</span>
+              <span>{{ (recurrence === 'WEEKLY' ? 'createSession.recurrenceWeeks' : 'createSession.recurrenceOccurrences') | t }}</span>
               <input
                 type="number"
                 name="recurrenceOccurrences"
                 [(ngModel)]="recurrenceOccurrences"
                 min="2"
-                max="52"
+                [max]="maxRecurrenceCycles"
                 [disabled]="loading">
-              <small>{{ 'createSession.recurrenceOccurrencesHint' | t }}</small>
+              <small>{{ recurrence === 'WEEKLY'
+                ? ('createSession.recurrenceWeeksDynamicHint' | t:{ max: maxRecurrenceCycles })
+                : ('createSession.recurrenceOccurrencesHint' | t) }}</small>
             </label>
           }
         </div>
+        @if (recurrence === 'WEEKLY' && weeklySessionsPerWeek > 1) {
+          <section class="venue-section" aria-label="Horários semanais">
+            <div class="venue-heading">
+              <div>
+                <span class="section-kicker">{{ 'createSession.weeklyScheduleTitle' | t }}</span>
+                <p>{{ 'createSession.weeklyScheduleHint' | t }}</p>
+              </div>
+            </div>
+            <div class="form-grid">
+              <p class="recurrence-plan-summary">
+                {{ 'createSession.weeklyFirstSlotHint' | t }}
+              </p>
+              @for (slot of additionalWeeklyGameDates; track $index; let i = $index) {
+                <label>
+                  <span>{{ 'createSession.weeklySlotDate' | t:{ count: i + 2 } }} *</span>
+                  <input class="weekly-game-date" type="datetime-local" name="weeklySlotDate-{{i}}"
+                    [(ngModel)]="additionalWeeklyGameDates[i]"
+                    [min]="gameDate || minDate" [disabled]="loading" required>
+                </label>
+              }
+            </div>
+          </section>
+        }
+        @if (recurrence === 'WEEKLY') {
+          <p class="recurrence-plan-summary" role="status">
+            {{ 'createSession.recurrenceMultiWeeklySummary' | t:{
+              count: weeklySessionsPerWeek, weeks: recurrenceOccurrences, total: plannedSessions
+            } }}
+          </p>
+        } @else if (recurrence === 'BIWEEKLY') {
+          <p class="recurrence-plan-summary" role="status">
+            {{ 'createSession.recurrenceBiweeklySummary' | t:{ count: recurrenceOccurrences } }}
+          </p>
+        }
+      }
+
+      @if (communitySessionSelected) {
+        <section class="venue-section" aria-label="Convocatória">
+          <div class="venue-heading">
+            <div>
+              <span class="section-kicker">{{ 'createSession.callupTitle' | t }}</span>
+              <p>{{ 'createSession.callupHint' | t }}</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>
+              <span>{{ 'createSession.callupMode' | t }}</span>
+              <app-jynlo-select name="registrationOpeningMode" class="create-premium-select"
+                [options]="openingModeChoices" [(ngModel)]="registrationOpeningMode"
+                [ariaLabel]="'createSession.callupMode' | t"
+                [blocked]="loading" [disabled]="loading">
+              </app-jynlo-select>
+            </label>
+            @if (registrationOpeningMode === 'SCHEDULED') {
+              <label>
+                <span>{{ 'createSession.callupOpeningTime' | t }}</span>
+                <input type="datetime-local" name="registrationOpensAt"
+                  [(ngModel)]="registrationOpensAt" [disabled]="loading" required>
+                <small>{{ 'createSession.callupOpeningTimeHint' | t }}</small>
+              </label>
+            }
+          </div>
+          @if (recurrence !== 'NONE' && registrationOpeningMode === 'IMMEDIATE') {
+            <p class="recurrence-plan-summary" role="status">
+              {{ 'createSession.callupAllImmediate' | t:{ count: plannedSessions } }}
+            </p>
+          } @else if (recurrence !== 'NONE' && registrationOpeningMode === 'SCHEDULED') {
+            <p class="recurrence-plan-summary" role="status">
+              {{ (recurrence === 'WEEKLY' && weeklySessionsPerWeek > 1
+                  ? 'createSession.callupEachScheduledMultiWeekly'
+                  : recurrence === 'WEEKLY'
+                    ? 'createSession.callupEachScheduledWeekly'
+                    : 'createSession.callupEachScheduledBiweekly') | t }}
+            </p>
+          } @else if (recurrence !== 'NONE' && registrationOpeningMode === 'MANUAL') {
+            <p class="recurrence-plan-summary" role="status">
+              {{ 'createSession.callupEachManual' | t:{ count: plannedSessions } }}
+            </p>
+          } @else if (registrationOpeningMode === 'MANUAL') {
+            <p>{{ 'createSession.callupManualHint' | t }}</p>
+          }
+        </section>
       }
 
       <section class="venue-section">
@@ -160,7 +465,7 @@
           @if (locationMethod === 'venue') {
             <button
               type="button"
-              class="secondary-action jynlo-action jynlo-action--neutral"
+              class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [disabled]="loading || venueSaving"
               (click)="toggleVenueCreator()">
               {{ showVenueCreator ? ('common.cancel' | t) : ('venue.saveNew' | t) }}
@@ -168,49 +473,38 @@
           }
         </div>
 
-        <div class="location-methods" role="group" [attr.aria-label]="'createSession.locationMethods' | t">
-          <button type="button" class="location-method" [class.active]="locationMethod === 'venue'"
-                  [attr.aria-pressed]="locationMethod === 'venue'" [disabled]="loading || venueSaving"
-                  (click)="chooseLocationMethod('venue')">{{ 'createSession.locationMethod.venue' | t }}</button>
-          <button type="button" class="location-method" [class.active]="locationMethod === 'maps'"
-                  [attr.aria-pressed]="locationMethod === 'maps'" [disabled]="loading || venueSaving"
-                  (click)="chooseLocationMethod('maps')">{{ 'createSession.locationMethod.maps' | t }}</button>
-          <button type="button" class="location-method" [class.active]="locationMethod === 'gps'"
-                  [attr.aria-pressed]="locationMethod === 'gps'" [disabled]="loading || venueSaving"
-                  (click)="chooseLocationMethod('gps')">{{ 'createSession.locationMethod.gps' | t }}</button>
-        </div>
+        <app-location-method-selector
+          [value]="locationMethod" [disabled]="loading || venueSaving"
+          (valueChange)="chooseLocationMethod($event)"></app-location-method-selector>
         @if (locationMethod === 'venue') {
         <label class="venue-select-field">
           <span>{{ 'venue.district' | t }}</span>
-          <select name="venueDistrict" [ngModel]="venueDistrict"
-                  (ngModelChange)="onDistrictChanged($event)" [disabled]="loading || venueSaving">
-            <option value="">{{ 'venue.districtPlaceholder' | t }}</option>
-            @for (district of districts; track district) {
-              <option [value]="district">{{ district }}</option>
-            }
-            <option [value]="allDistrictsOption">{{ 'venue.searchAllDistricts' | t }}</option>
-          </select>
+          <app-jynlo-select name="venueDistrict" class="create-premium-select"
+            [options]="districtChoices" [ngModel]="venueDistrict"
+            (ngModelChange)="onDistrictChanged($event)"
+            [searchable]="true" [placeholder]="'venue.districtPlaceholder' | t"
+            [ariaLabel]="'venue.district' | t"
+            [blocked]="loading || venueSaving" [disabled]="loading || venueSaving">
+          </app-jynlo-select>
           <small class="venue-current-location">{{ 'venue.districtHint' | t }}</small>
         </label>
 
         <label class="venue-select-field">
           <span>{{ 'venue.search' | t }}</span>
-          <input
-            type="search"
-            name="venueSearch"
-            list="venue-search-options"
-            [ngModel]="venueSearch"
-            (ngModelChange)="onVenueSearchChanged($event)"
-            autocomplete="off"
-            [disabled]="loading || !sportSelected || !venueDistrict"
-            (change)="confirmVenueSelection()"
+          <app-jynlo-select name="venueSearch" class="create-premium-select"
+            [options]="venueSearchChoices"
+            [ngModel]="selectedVenueId === null ? '' : selectedVenueId.toString()"
+            (ngModelChange)="onVenueSelected($event)"
+            [searchable]="true" [remoteSearch]="true"
+            [remoteQuery]="venueSearch" (remoteQueryChange)="onVenueSearchChanged($event)"
+            [loading]="venuesLoading" [loadingLabel]="'venue.searching' | t"
+            [emptyLabel]="'venue.noResults' | t"
             [placeholder]="!sportSelected ? ('venue.chooseSportFirst' | t)
-              : !venueDistrict ? ('venue.districtPlaceholder' | t) : ('venue.searchPlaceholder' | t)">
-          <datalist id="venue-search-options">
-            @for (venue of venueOptions; track venue.id) {
-              <option [value]="venue.name + ' · ' + venue.city"></option>
-            }
-          </datalist>
+              : !venueDistrict ? ('venue.districtPlaceholder' | t) : ('venue.searchPlaceholder' | t)"
+            [ariaLabel]="'venue.search' | t"
+            [blocked]="loading || !sportSelected || !venueDistrict"
+            [disabled]="loading || !sportSelected || !venueDistrict">
+          </app-jynlo-select>
           <small class="venue-current-location" aria-live="polite">
             @if (venuesLoading) {
               {{ 'venue.searching' | t }}
@@ -227,7 +521,7 @@
         </label>
 
         @if (venuesHasMore && sportSelected && venueDistrict) {
-          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
             [disabled]="venuesLoading || loading" (click)="loadMoreVenues()">
             {{ 'venue.showMore' | t }}
           </button>
@@ -238,7 +532,7 @@
             <span>{{ 'venue.loadError' | t }}</span>
             <button
               type="button"
-              class="secondary-action jynlo-action jynlo-action--neutral"
+              class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [disabled]="venuesLoading || loading"
               (click)="loadVenues()">
               {{ 'common.retry' | t }}
@@ -254,7 +548,7 @@
             </div>
             <button
               type="button"
-              class="secondary-action jynlo-action jynlo-action--neutral"
+              class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [disabled]="loading"
               (click)="useMapLinkVenue()">
               {{ 'venue.mapLink.use' | t }}
@@ -285,7 +579,7 @@
             <div class="header-actions">
               <button
                 type="button"
-                class="secondary-action jynlo-action jynlo-action--neutral"
+                class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                 [disabled]="venueMapLinkLoading || !venueMapLink.trim() || locating"
                 (click)="resolveVenueMapLink()">
                 {{ venueMapLinkLoading ? ('venue.mapLink.resolving' | t) : ('venue.mapLink.resolve' | t) }}
@@ -294,7 +588,7 @@
               @if (venueMapCandidateResolvedUrl) {
                 <button
                   type="button"
-                  class="secondary-action jynlo-action jynlo-action--neutral"
+                  class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                   (click)="clearVenueMapLinkCandidate()">
                   {{ 'common.remove' | t }}
                 </button>
@@ -309,13 +603,13 @@
               <div class="header-actions">
                 <button
                   type="button"
-                  class="secondary-action jynlo-action jynlo-action--neutral gps-location-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral gps-location-action jynlo-premium-btn jynlo-premium-btn--quiet"
                   [disabled]="loading || locating || venueMapLinkLoading"
                   (click)="captureCurrentLocation()">
                   {{ locating ? ('events.locating' | t) : ('createSession.useLocation' | t) }}
                 </button>
                 @if (locationSource === 'gps') {
-                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                           [disabled]="loading || locating" (click)="clearLocation()">
                     {{ 'createSession.removeLocation' | t }}
                   </button>
@@ -324,6 +618,16 @@
               @if (locationError) {
                 <div class="location-error" role="alert">{{ locationError }}</div>
               }
+              @if (gpsAddressLoading) {
+                <p class="venue-current-location" role="status">{{ 'createSession.gpsAddressLoading' | t }}</p>
+              } @else if (gpsAddressNotice) {
+                <p class="venue-current-location" role="status">{{ gpsAddressNotice }}</p>
+              }
+              <small class="venue-current-location">
+                {{ 'createSession.gpsAddressPrivacy' | t }}
+                <a href="https://www.openstreetmap.org/copyright" target="_blank"
+                   rel="noopener noreferrer">© OpenStreetMap contributors</a>
+              </small>
             </div>
           }
 
@@ -343,6 +647,20 @@
                 <p class="venue-current-location" style="margin-top:.6rem;">
                   {{ (locationSource === 'gps' ? 'createSession.gpsLocationFound' : 'venue.mapLink.found') | t }}
                 </p>
+                @if (locationMethod === 'maps') {
+                  @if (gpsAddressLoading) {
+                    <p class="venue-current-location" role="status">
+                      {{ 'createSession.gpsAddressLoading' | t }}
+                    </p>
+                  } @else if (gpsAddressNotice) {
+                    <p class="venue-current-location" role="status">{{ gpsAddressNotice }}</p>
+                  }
+                  <small class="venue-current-location">
+                    {{ 'createSession.gpsAddressPrivacy' | t }}
+                    <a href="https://www.openstreetmap.org/copyright" target="_blank"
+                       rel="noopener noreferrer">© OpenStreetMap contributors</a>
+                  </small>
+                }
                 @if (locationSource === 'gps' && gpsAccuracyMeters !== null) {
                   <p class="gps-accuracy" [class.gps-accuracy-warning]="gpsAccuracyIsLow"
                      [attr.role]="gpsAccuracyIsLow ? 'status' : null">
@@ -360,7 +678,12 @@
           <div class="venue-preview">
             <div>
               <strong>{{ venue.name }}</strong>
-              <span>{{ venue.address }} · {{ venue.city }}</span>
+              <span>{{ venue.address ? venue.address + ' · ' : '' }}{{ venue.city }}</span>
+              @if (venue.informationSource === 'OPENSTREETMAP') {
+                <small class="venue-source-caution">
+                  {{ 'createSession.venueOsmUnverified' | t }}
+                </small>
+              }
             </div>
             <div class="venue-tags">
               @if (venue.surfaceType) { <span>{{ venue.surfaceType }}</span> }
@@ -395,7 +718,7 @@
                   referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
                 <a
-                  class="secondary-action jynlo-action jynlo-action--neutral"
+                  class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                   style="display:inline-flex;margin-top:.75rem;"
                   [href]="'https://www.google.com/maps/search/?api=1&query='
                     + venue.latitude + ',' + venue.longitude"
@@ -408,6 +731,9 @@
           </div>
         }
 
+        @if (venueSuggestionSubmitted) {
+          <p class="venue-submission-inline-notice" role="status">{{ 'venue.submission.eventHint' | t }}</p>
+        }
         @if (showVenueCreator && locationMethod === 'venue') {
           <div class="venue-create-card">
             <div class="venue-create-grid">
@@ -433,14 +759,12 @@
 
               <label>
                 <span>{{ 'venue.ownership' | t }}</span>
-                <select
-                  name="venueOwnershipType"
-                  [(ngModel)]="venueOwnershipType"
-                  [disabled]="venueSaving">
-                  <option [ngValue]="null">{{ 'venue.ownership.none' | t }}</option>
-                  <option [ngValue]="'PUBLIC'">{{ 'venue.ownership.public' | t }}</option>
-                  <option [ngValue]="'PRIVATE'">{{ 'venue.ownership.private' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueOwnershipType" class="create-premium-select"
+                  [options]="ownershipChoices" [ngModel]="venueOwnershipType ?? ''"
+                  (ngModelChange)="venueOwnershipType = $event || null"
+                  [ariaLabel]="'venue.ownership' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
 
               <label>
@@ -509,63 +833,57 @@
               </label>
               <label>
                 <span>{{ 'venue.toilets' | t }}</span>
-                <select
-                  name="venueToilets"
-                  [(ngModel)]="venueToilets">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueToilets" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueToilets)"
+                  (ngModelChange)="venueToilets = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.toilets' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.lockers' | t }}</span>
-                <select
-                  name="venueLockers"
-                  [(ngModel)]="venueLockers">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueLockers" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueLockers)"
+                  (ngModelChange)="venueLockers = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.lockers' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.accessible' | t }}</span>
-                <select
-                  name="venueAccessible"
-                  [(ngModel)]="venueAccessible">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueAccessible" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueAccessible)"
+                  (ngModelChange)="venueAccessible = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.accessible' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.firstAid' | t }}</span>
-                <select
-                  name="venueFirstAid"
-                  [(ngModel)]="venueFirstAid">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueFirstAid" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueFirstAid)"
+                  (ngModelChange)="venueFirstAid = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.firstAid' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.aed' | t }}</span>
-                <select
-                  name="venueAed"
-                  [(ngModel)]="venueAed">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueAed" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueAed)"
+                  (ngModelChange)="venueAed = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.aed' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <span>{{ 'venue.cafe' | t }}</span>
-                <select
-                  name="venueCafe"
-                  [(ngModel)]="venueCafe">
-                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
-                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
-                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
-                </select>
+                <app-jynlo-select name="venueCafe" class="create-premium-select"
+                  [options]="amenityChoices" [ngModel]="amenityChoice(venueCafe)"
+                  (ngModelChange)="venueCafe = parseAmenityChoice($event)"
+                  [ariaLabel]="'venue.cafe' | t"
+                  [blocked]="venueSaving" [disabled]="venueSaving">
+                </app-jynlo-select>
               </label>
               <label>
                 <input type="checkbox" name="venueParking" [(ngModel)]="venueParking">
@@ -579,10 +897,10 @@
 
             <button
               type="button"
-              class="primary-action jynlo-action jynlo-action--primary"
+              class="primary-action jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
               [disabled]="venueSaving"
               (click)="saveVenue()">
-              {{ venueSaving ? ('venue.saving' | t) : ('venue.save' | t) }}
+              {{ venueSaving ? ('venue.submission.sending' | t) : ('venue.submission.send' | t) }}
             </button>
           </div>
         }
@@ -619,8 +937,24 @@
         </div>
       }
 
+      <section class="create-meeting-point-panel" aria-labelledby="create-meeting-point-title">
+        <div>
+          <h2 id="create-meeting-point-title">{{ 'createSession.meetingPointTitle' | t }}</h2>
+          <p id="create-meeting-point-help">{{ 'createSession.meetingPointHint' | t }}</p>
+        </div>
+        <label for="create-meeting-point-instructions">
+          <span>{{ 'createSession.meetingPointLabel' | t }}</span>
+          <input id="create-meeting-point-instructions" type="text" name="meetingPointInstructions"
+                 [(ngModel)]="meetingPointInstructions" maxlength="240"
+                 autocomplete="off" [disabled]="loading"
+                 aria-describedby="create-meeting-point-help"
+                 [placeholder]="'createSession.meetingPointPlaceholder' | t">
+        </label>
+        <small>{{ 'createSession.meetingPointPrivacy' | t }}</small>
+      </section>
+
       <div class="options-grid">
-        @if (!findPlayersMode) {
+        @if (!findPlayersMode && shareCommunityIds.length === 0) {
         <section class="option-card">
           <label class="toggle-row">
             <input
@@ -683,7 +1017,7 @@
           <p>{{ 'createSession.photoHint' | t }}</p>
         </div>
 
-        <label class="upload-button">
+        <label class="upload-button" [class.is-disabled]="loading">
           <input
             type="file"
             accept="image/*"
@@ -697,15 +1031,44 @@
             <img [src]="photoPreview" [alt]="'createSession.photoAlt' | t">
             <div>
               <strong>{{ photo?.name }}</strong>
-              <button class="jynlo-action jynlo-action--neutral" type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
+              <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
             </div>
           </div>
         }
       </section>
 
+      @if (presetEditorOpen) {
+        <section class="create-preset-save-editor" aria-label="Guardar configuração">
+          <div>
+            <strong>{{ 'createSession.presets.saveNew' | t }}</strong>
+            <p>{{ 'createSession.presets.noDateHint' | t }}</p>
+          </div>
+          <label>
+            <span>{{ 'createSession.presets.name' | t }}</span>
+            <input type="text" name="sessionPresetNameNew" [(ngModel)]="presetName"
+                   maxlength="70" autocomplete="off"
+                   (keydown.enter)="$event.preventDefault(); savePreset()"
+                   [placeholder]="'createSession.presets.placeholder' | t"
+                   [disabled]="loading || presetSaving || presetDeleting">
+          </label>
+          <div class="create-preset-actions">
+            <button type="button" class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
+                    [disabled]="loading || presetSaving || presetsLoading"
+                    (click)="savePreset()">{{ (presetSaving
+                      ? 'createSession.presets.saving'
+                      : 'createSession.presets.confirmSave') | t }}</button>
+            <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
+                    [disabled]="presetSaving" (click)="closePresetEditor()">{{ 'common.cancel' | t }}</button>
+          </div>
+        </section>
+      }
+      @if (presetError) { <p class="create-preset-error" role="alert">{{ presetError }}</p> }
       <div class="form-actions">
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
-        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || venueSaving || venueMapLinkLoading">
+        <a class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
+                [attr.aria-expanded]="presetEditorOpen" [disabled]="loading || presetSaving || presetDeleting"
+                (click)="togglePresetEditor()">{{ 'createSession.presets.saveConfiguration' | t }}</button>
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" [disabled]="loading || venueSaving || venueMapLinkLoading || gpsAddressLoading || communityCreationBlocked">
           {{ loading ? ('createSession.creating' | t) : ('mySessions.create' | t) }}
         </button>
       </div>

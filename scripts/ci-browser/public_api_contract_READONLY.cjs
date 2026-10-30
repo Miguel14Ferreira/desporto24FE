@@ -97,7 +97,108 @@ async function main() {
   console.log('Public API READ-ONLY contract smoke complete; GET only; no production mutations.');
 }
 
-main().catch(error => {
-  console.error('READ-ONLY public API contract FAILED: ' + error.message);
+
+/**
+ * Anonymous browser QA against the real published frontend. All requests are
+ * guarded at the browser route layer: only GET/HEAD to the two known Jynlo
+ * origins can reach the network. This must NEVER use cookies/QA credentials,
+ * submit forms, create sessions or mutate community/competition records.
+ */
+async function liveBrowserReadOnly() {
+  const { chromium } = require('playwright');
+  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  const site = 'https://d24sports.com';
+  const allowedOrigins = new Set([site, HOST]);
+  const blockedMethods = [];
+  let readRequests = 0;
+  try {
+    const context = await browser.newContext({
+      locale: 'pt-PT',
+      viewport: { width: 1440, height: 900 },
+      serviceWorkers: 'block',
+      acceptDownloads: false
+    });
+    await context.route('**/*', async route => {
+      const request = route.request();
+      const url = new URL(request.url());
+      const method = request.method();
+      if (method !== 'GET' && method !== 'HEAD') {
+        blockedMethods.push(method);
+        return route.fulfill({
+          status: 403, contentType: 'text/plain', body: 'Blocked by read-only browser QA'
+        });
+      }
+      if (!allowedOrigins.has(url.origin)) return route.abort('blockedbyclient');
+      readRequests++;
+      return route.continue();
+    });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+
+    const response = await page.goto(site + '/home', {
+      waitUntil: 'domcontentloaded', timeout: 60_000
+    });
+    assert.equal(response?.status(), 200, 'Published homepage must return HTTP 200');
+    await page.locator('.home-page .hero h1').waitFor({ state: 'visible', timeout: 30_000 });
+    assert.equal(await page.locator('.preview-panel').count(), 2,
+      'Homepage must render the public sessions and venues panels');
+    console.log('PASS: real published homepage and public discovery widgets rendered.');
+
+    // The UI must send an actual filtered anonymous GET; no session content,
+    // user identities or query result rows are saved or printed.
+    await page.locator('.preview-search input[name="sport"]').fill('Karting');
+    await page.locator('.preview-search input[name="city"]').fill('Lisboa');
+    const filteredSession = page.waitForResponse(result => {
+      const url = new URL(result.url());
+      return url.origin === HOST && url.pathname === '/api/sessions'
+        && url.searchParams.get('sport') === 'Karting'
+        && url.searchParams.get('city') === 'Lisboa'
+        && result.request().method() === 'GET';
+    }, { timeout: 30_000 });
+    await page.locator('.preview-search button[type="submit"]').click();
+    const filtered = await filteredSession;
+    assert.equal(filtered.status(), 200, 'Filtered public session search must return 200');
+    console.log('PASS: published homepage sends filtered public sessions GET.');
+
+    const login = await page.goto(site + '/login', {
+      waitUntil: 'domcontentloaded', timeout: 60_000
+    });
+    assert.equal(login?.status(), 200, 'Published login route must return HTTP 200');
+    await page.locator('.login-card input[name="username"]').waitFor({
+      state: 'visible', timeout: 30_000
+    });
+    assert.ok(await page.locator('.login-card input[name="password"]').isVisible(),
+      'Password input must be rendered without credentials');
+    console.log('PASS: published login form rendered; no credentials entered.');
+
+    // Never request a private resource ID. A guest attempting the protected
+    // community index must be redirected to login by the real route guard.
+    await page.goto(site + '/menu/communities', {
+      waitUntil: 'domcontentloaded', timeout: 60_000
+    });
+    await page.locator('.login-card input[name="username"]').waitFor({
+      state: 'visible', timeout: 30_000
+    });
+    assert.equal(new URL(page.url()).pathname, '/login',
+      'Anonymous access to community management must redirect to login');
+    assert.equal(errors.length, 0, 'Unexpected uncaught Angular browser exception');
+    assert.ok(readRequests > 0, 'No verified live read request was made');
+    console.log('PASS: published community route redirects guests; all writes blocked.');
+    if (blockedMethods.length) {
+      console.log('INFO: rejected ' + blockedMethods.length
+        + ' browser-side non-read requests before they reached production.');
+    }
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+}
+
+const run = process.env.JYNLO_LIVE_BROWSER_READONLY === '1'
+  ? liveBrowserReadOnly().then(main)
+  : main();
+run.catch(error => {
+  console.error('READ-ONLY live Jynlo validation FAILED: ' + error.message);
   process.exitCode = 1;
 });

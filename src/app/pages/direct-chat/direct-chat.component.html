@@ -1,10 +1,10 @@
-<section class="chat-page">
+<section class="chat-page jynlo-c1 jynlo-secondary">
   <div class="chat-shell">
     <header class="chat-header">
       <div>
-        <a class="back-link" routerLink="/menu/friendList">← {{ 'chat.backFriends' | t }}</a>
+        <a class="back-link" routerLink="/menu/messages">← {{ 'inbox.backInbox' | t }}</a>
         <p class="eyebrow">{{ 'chat.direct' | t }}</p>
-        <h1>{{ recipientUsername }}</h1>
+        <h1>&#64;{{ recipientUsername }}</h1>
       </div>
 
       <div class="chat-actions">
@@ -23,7 +23,10 @@
             }
           </button>
         }
-        <span class="sync-status">{{ 'chat.autoRefresh' | t }}</span>
+        <span class="sync-status" [class.sync-status--connected]="realtimeConnected" role="status">
+          <span class="sync-indicator" aria-hidden="true"></span>
+          {{ (realtimeConnected ? 'chat.connected' : (realtimeEverConnected ? 'chat.reconnecting' : 'chat.connecting')) | t }}
+        </span>
       </div>
     </header>
 
@@ -44,42 +47,109 @@
         <div class="feedback">{{ actionSuccess }}</div>
       }
 
-      @if (actionError) {
-        <div class="feedback error-feedback">{{ actionError }}</div>
+      @if (actionError && !deliveryUncertain) {
+        <div class="feedback error-feedback" role="alert">{{ actionError }}</div>
+      }
+
+      @if (deliveryUncertain) {
+        <section class="delivery-warning" role="alert">
+          <div>
+            <strong>{{ 'chat.uncertainTitle' | t }}</strong>
+            <p>{{ actionError }}</p>
+          </div>
+          <div class="delivery-actions">
+            <button type="button" class="jynlo-action jynlo-action--secondary"
+              [disabled]="deliveryChecking" (click)="verifyDelivery()">
+              {{ (deliveryChecking ? 'chat.verifying' : 'chat.verifyDelivery') | t }}
+            </button>
+            <button type="button" class="jynlo-action jynlo-action--neutral"
+              [disabled]="deliveryChecking" (click)="resumeAfterUncertainSend()">
+              {{ 'chat.resumeWriting' | t }}
+            </button>
+          </div>
+        </section>
       }
 
       <section class="chat-card">
-        <div class="message-list">
+        <div class="message-list" #messageList (scroll)="onMessageLogScroll()" role="log" aria-live="polite" aria-relevant="additions" [attr.aria-label]="'chat.messages' | t">
           @if (hasOlderMessages) {
-            <button type="button" class="block-action jynlo-action jynlo-action--danger" [disabled]="loadingOlder" (click)="loadOlderMessages()">
-              {{ loadingOlder ? 'A carregar...' : 'Carregar mensagens anteriores' }}
+            <button type="button" class="load-older-action jynlo-action jynlo-action--neutral" [disabled]="loadingOlder" (click)="loadOlderMessages()">
+              {{ (loadingOlder ? 'chat.loadingOlder' : 'chat.loadOlder') | t }}
             </button>
           }
           @if (messages.length === 0) {
             <div class="empty-chat">{{ 'chat.empty' | t }}</div>
           }
 
-          @for (message of messages; track message.id ?? $index) {
-            <article class="message" [class.own-message]="isOwnMessage(message)">
+          @for (message of messages; track message.id ?? $index; let i = $index) {
+            @if (dayLabelAt(i); as dayLabel) {
+              <div class="chat-day-separator" role="separator" [attr.aria-label]="dayLabel">
+                <span>{{ dayLabel }}</span>
+              </div>
+            }
+            <article class="message" [class.own-message]="isOwnMessage(message)"
+              [class.thread-continuation]="continuesGroupAt(i)">
               <div class="message-meta">
-                <strong>{{ message.username1 }}</strong>
+                @if (!continuesGroupAt(i)) {
+                  <strong>{{ isOwnMessage(message) ? ('chat.you' | t) : message.username1 }}</strong>
+                }
                 <span>{{ messageDate(message) }}</span>
               </div>
+              @if (message.replyToMessageId && message.replyToText) {
+                <div class="message-quote">
+                  <strong>{{ message.replyToSender }}</strong>
+                  <span>{{ message.replyToText }}</span>
+                </div>
+              }
               <p>{{ message.text }}</p>
+              <button type="button" class="message-reply-action"
+                [disabled]="sending || deliveryUncertain || chatInfo?.chatBlocked === true"
+                (click)="replyTo(message)">
+                ↩ {{ 'chat.replyToMessage' | t }}
+              </button>
             </article>
+            @if (message.id) {
+              <app-chat-reactions class="direct-reaction-under-message"
+                [class.own-reaction]="isOwnMessage(message)"
+                kind="direct" [conversationId]="recipientUsername"
+                [messageId]="message.id"
+                [disabled]="chatInfo?.chatBlocked === true"></app-chat-reactions>
+            }
           }
         </div>
 
+        @if (newMessagesPending > 0) {
+          <button type="button" class="chat-new-messages" (click)="jumpToLatestMessages()">
+            <span aria-hidden="true">↓</span> {{ 'chat.newMessages' | t }}
+            <span class="chat-new-messages-count">{{ newMessagesPending }}</span>
+          </button>
+        }
+        @if (typing.label('direct', recipientUsername); as typingLabel) {
+          <p class="chat-typing-indicator" role="status" aria-live="off">{{ typingLabel }}</p>
+        }
         <form class="composer" (ngSubmit)="sendMessage()">
+          @if (replyingTo; as original) {
+            <div class="chat-reply-banner">
+              <div>
+                <strong>{{ 'chat.replyingTo' | t }} {{ original.username1 }}</strong>
+                <span>{{ original.text }}</span>
+              </div>
+              <button type="button" [disabled]="sending || deliveryUncertain"
+                (click)="cancelReply()">{{ 'chat.cancelReply' | t }}</button>
+            </div>
+          }
           <label>
             <span>{{ 'chat.message' | t }}</span>
-            <textarea
+            <textarea #composerTextarea
               name="messageBody"
               [(ngModel)]="messageBody"
               maxlength="2000"
               rows="3"
-              [disabled]="sending || chatInfo?.chatBlocked === true"
+              [readOnly]="sending"
+              [disabled]="deliveryUncertain || chatInfo?.chatBlocked === true"
               [placeholder]="'chat.placeholder' | t"
+              (ngModelChange)="onTypingInput()"
+              (blur)="typing.stop()"
               (keydown.enter)="onEnter($event)"></textarea>
           </label>
 
@@ -89,7 +159,7 @@
                 type="button"
                 class="emoji-toggle"
                 [attr.aria-expanded]="showEmojiPicker"
-                [disabled]="sending || chatInfo?.chatBlocked === true"
+                [disabled]="sending || deliveryUncertain || chatInfo?.chatBlocked === true"
                 (click)="toggleEmojiPicker()">
                 😊 {{ 'chat.emoji' | t }}
               </button>
@@ -109,10 +179,10 @@
           </div>
 
           <div class="composer-footer">
-            <span>{{ 'chat.autoRefreshHint' | t }}</span>
+            <span>{{ 'chat.enterHint' | t }}</span>
             <button class="jynlo-action jynlo-action--primary"
               type="submit"
-              [disabled]="sending || chatInfo?.chatBlocked === true || !messageBody.trim()">
+              [disabled]="sending || deliveryUncertain || chatInfo?.chatBlocked === true || !messageBody.trim()">
               {{ sending ? ('chat.sending' | t) : ('chat.send' | t) }}
             </button>
           </div>

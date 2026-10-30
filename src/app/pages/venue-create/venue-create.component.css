@@ -308,3 +308,69 @@
   font-size: .82rem;
   font-weight: 400;
 }
+
+/* Suggestion acknowledgment – no implied instant publication. */
+.venue-submission-explainer{font-size:.92rem;color:#a5d9d2;margin:4px 0 24px;line-height:1.6}
+.venue-submission-success{padding:26px;border:1px solid rgba(52,232,176,.43);border-radius:18px;background:#103c39;color:#ecfff8}
+.venue-submission-success strong{font-size:1.2rem}.venue-submission-success p{color:#bce9e0;margin:12px 0 19px}
+.venue-submission-success a{text-decoration:none;display:inline-flex;padding:12px 17px}
+
+/* Essential venue information: modest, accessible completion feedback.
+   Preserves the existing approval workflow and optional details section. */
+.venue-create-essential-progress {
+  padding: 16px 18px;
+  border: 1px solid rgba(113, 197, 188, .32);
+  border-radius: 14px;
+  background: rgba(12, 49, 57, .22);
+}
+.venue-create-essential-progress-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 11px;
+}
+.venue-create-essential-progress-heading span {
+  font-size: .83rem;
+  font-weight: 400;
+  opacity: .78;
+}
+.venue-create-essential-progress progress {
+  display: block;
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  accent-color: #34e2ad;
+}
+.venue-create-essential-progress progress::-webkit-progress-bar {
+  background: #244153;
+  border-radius: 999px;
+}
+.venue-create-essential-progress progress::-webkit-progress-value {
+  background: #34e2ad;
+  border-radius: 999px;
+}
+.venue-create-form select[aria-invalid="true"] { border-color: #f87171; }
+
+
+/* Form groups, not individual controls: protect dense sports and amenity grids. */
+.venue-create-page .venue-create-form > .venue-create-section-title:not(:first-child) {
+  margin-top: 16px;
+}
+.venue-create-page .venue-create-form > .venue-create-similar {
+  margin-block: 4px;
+}
+.venue-create-page .venue-create-form > details.venue-create-amenities {
+  margin-top: 8px;
+}
+@media (max-width: 640px) {
+  .venue-create-page .venue-create-form > .venue-create-section-title:not(:first-child) {
+    margin-top: 12px;
+  }
+  .venue-create-page .venue-create-form > details.venue-create-amenities {
+    margin-top: 4px;
+  }
+}

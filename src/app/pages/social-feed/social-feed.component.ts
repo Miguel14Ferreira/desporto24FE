@@ -19,7 +19,7 @@ import { CommunityProfile } from '../model/community-profile';
 @Component({
   selector: 'app-social-feed',
   templateUrl: './social-feed.component.html',
-  styleUrls: ['./social-feed.component.css'],
+  styleUrls: ['./social-feed.component.css', './social-feed-concept-one-refresh.css', './social-feed-neon-glass.css', './social-feed-action-polish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
@@ -99,19 +99,6 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   sessionSearchError = false;
 
   loading = false;
-  // A short path into the existing public Find Players session flow.
-  // Both values can be adjusted in the full creation form.
-  quickConfirmedPlayers: number | null = 1;
-  quickMissingPlayers: number | null = 2;
-
-  get quickRecruitValid(): boolean {
-    const confirmed = this.quickConfirmedPlayers;
-    const missing = this.quickMissingPlayers;
-    return confirmed !== null && missing !== null
-      && Number.isInteger(confirmed) && Number.isInteger(missing)
-      && confirmed >= 1 && missing >= 1 && confirmed + missing <= 100;
-  }
-
   posting = false;
   deletingPostId: number | null = null;
   hidingAttendanceSessionId: number | null = null;
@@ -235,6 +222,10 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     );
   }
 
+  // QA accounts stay usable for testing, but must never be promoted as people to follow.
+  // Match only the two known test usernames, not a general 'test' substring.
+  private readonly qaSuggestionUsernames = new Set(['jynloteste01', 'jynloteste02']);
+
   private rankSuggestedPeople(profiles: CommunityProfile[], me: CommunityProfile | null, friends: Set<string>): CommunityProfile[] {
     const sports = new Set((me?.favoriteSports || '').split(/[,;|]/)
       .map(value => this.normalizeSuggestion(value)).filter(Boolean));
@@ -242,7 +233,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     return profiles
       .filter(profile => profile.username?.trim()
         && profile.username.toLowerCase() !== this.currentUsername.toLowerCase()
-        && !friends.has(profile.username.toLowerCase()))
+        && !friends.has(profile.username.toLowerCase())
+        && !this.qaSuggestionUsernames.has(profile.username.trim().toLowerCase()))
       .map((profile, index) => {
         const theirSports = (profile.favoriteSports || '').split(/[,;|]/)
           .map(value => this.normalizeSuggestion(value));

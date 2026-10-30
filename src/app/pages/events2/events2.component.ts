@@ -6,28 +6,260 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, finalize, retry, Subject, timeout } from 'rxjs';
 
 import { CreateSessionRequest } from '../model/create-session-request';
+import { CommunityGroup, CommunityCompetitionOverview } from '../model/community-group';
 import { SessionService } from '../../services/session.service';
+import { SessionPresetService } from '../../services/session-preset.service';
+import { SessionPreset, SessionPresetSettings } from '../model/session-preset';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue, VenueOwnershipType } from '../model/venue';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { suggestedMinimumPlayers } from '../../shared/session-minimum-players';
+import { JynloSelectOption } from '../../shared/jynlo-select/jynlo-select.component';
 import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/portugal-districts';
 
 @Component({
   selector: 'app-events2',
   templateUrl: './events2.component.html',
-  styleUrls: ['./events2.component.css'],
+  styleUrls: ['./events2.component.css', './events2-create-flow.css', '../../../styles/jynlo-activities-neon-glass.css', './events2-neon-polish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
 export class Events2Component implements OnInit, OnDestroy {
   sport = '';
+  playFormat: 'INDIVIDUAL' | 'PAIRS' = 'INDIVIDUAL';
   gameDate = '';
   city = '';
   address = '';
+  meetingPointInstructions = '';
   maxParticipants = 4;
+  /** When enabled, the full capacity becomes the required minimum. */
+  capacityIsMinimum = false;
+  selectedMinimumPlayers: number | null = null;
+  get minimumPlayers(): number {
+    if (this.capacityIsMinimum) return Number(this.maxParticipants);
+    return this.selectedMinimumPlayers === null
+      ? suggestedMinimumPlayers(this.sport, Number(this.maxParticipants))
+      : Number(this.selectedMinimumPlayers);
+  }
   // The organiser already has one reserved Jynlo place.
   confirmedPlayers: number | null = 1;
+  creationMode: 'START' | 'COMPLETE' = 'START';
+  communities: CommunityGroup[] = [];
+  shareCommunityIds: number[] = [];
+  communitiesLoading = false;
+  communitiesLoadError = false;
+  directCommunity: CommunityGroup | null = null;
+  private autoCommunitySport = '';
+  private autoCommunityVenueId: number | null = null;
+  private autoCommunityPoint: { source: 'maps' | 'gps'; latitude: number;
+    longitude: number; city: string; address: string } | null = null;
+  private communityPrefillRevision = 0;
+
+  /** Apply defaults only when consistent across EVERY chosen community.
+   * Manual sports, venues and locations always take priority. */
+  private reconcileCommunityDefaults(): void {
+    const revision = ++this.communityPrefillRevision;
+    const groups = this.seasonCommunities;
+    const sports = groups.map(group => group.sports?.length ? group.sports
+      : (group.sport ? [group.sport] : []));
+    const sport = groups.length && sports.every(list => list.length === 1)
+        && sports.every(list => list[0] === sports[0][0])
+      ? sports[0][0] : '';
+    if (!this.sport.trim() || this.sport === this.autoCommunitySport) {
+      if (this.sport !== sport) {
+        this.sport = sport;
+        this.confirmSportSelection();
+      }
+      this.autoCommunitySport = sport;
+    }
+    // Automatically suggested Maps/GPS points are also replaceable.
+    // Never replace a manually changed coordinate, location method or address.
+    const savedPoint = this.autoCommunityPoint;
+    const autoStillIntact = !!savedPoint
+      && this.locationMethod === savedPoint.source
+      && this.locationSource === (savedPoint.source === 'maps' ? 'map' : 'gps')
+      && this.latitude === savedPoint.latitude
+      && this.longitude === savedPoint.longitude
+      && this.city === savedPoint.city && this.address === savedPoint.address;
+    if (autoStillIntact) {
+      this.clearLocation();
+      this.city = '';
+      this.address = '';
+      this.locationMethod = 'venue';
+    }
+    this.autoCommunityPoint = null;
+    const points = groups.map(group =>
+      group.habitualLocationSource && group.habitualLatitude != null && group.habitualLongitude != null
+        ? group : null);
+    const agreedPoint = points.length && points[0] !== null
+      && points.every(group => group !== null
+        && group.habitualLocationSource === points[0]?.habitualLocationSource
+        && group.habitualLatitude === points[0]?.habitualLatitude
+        && group.habitualLongitude === points[0]?.habitualLongitude)
+      ? points[0] : null;
+    if (agreedPoint && this.sportSelected && this.locationMethod === 'venue'
+        && this.selectedVenueId === null && !this.hasCoordinates
+        && !this.city.trim() && !this.address.trim()) {
+      const source = agreedPoint.habitualLocationSource === 'GPS' ? 'gps' : 'maps';
+      const latitude = agreedPoint.habitualLatitude!;
+      const longitude = agreedPoint.habitualLongitude!;
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)
+          && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
+        this.locationMethod = source;
+        this.locationSource = source === 'gps' ? 'gps' : 'map';
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.locationCaptured = true;
+        this.city = agreedPoint.habitualCity ?? '';
+        this.address = agreedPoint.habitualAddress ?? '';
+        this.autoCommunityPoint = {source, latitude, longitude,
+          city: this.city, address: this.address};
+      }
+    }
+    const venueIds = groups.map(group => group.defaultVenueId ?? null);
+    const venueId = groups.length && venueIds[0] !== null
+        && venueIds.every(id => id === venueIds[0])
+      ? venueIds[0] : null;
+    const isAutoVenue = this.selectedVenueId !== null
+      && this.selectedVenueId === this.autoCommunityVenueId;
+    if (isAutoVenue && this.selectedVenueId !== venueId) this.selectVenue(null);
+    if (!venueId || !this.sportSelected || this.locationMethod !== 'venue'
+        || (this.selectedVenueId !== null && !isAutoVenue)
+        || (this.selectedVenueId === null && (this.city.trim() || this.address.trim()))) {
+      this.autoCommunityVenueId = null;
+      return;
+    }
+    if (this.selectedVenueId === venueId) return;
+    this.venueService.get(venueId).pipe(timeout(10_000)).subscribe({
+      next: venue => {
+        if (revision !== this.communityPrefillRevision
+            || this.locationMethod !== 'venue'
+            || this.selectedVenueId !== null
+            || this.city.trim() || this.address.trim()) return;
+        const allowedSports = (venue.sports || '').split(/[;,]/)
+          .map(item => item.trim().toLocaleLowerCase('pt')).filter(Boolean);
+        if (allowedSports.length
+            && !allowedSports.includes(this.sport.trim().toLocaleLowerCase('pt'))) return;
+        if (!this.newlyCreatedVenues.some(item => item.id === venue.id)) {
+          this.newlyCreatedVenues = [...this.newlyCreatedVenues, venue];
+        }
+        if (!this.venues.some(item => item.id === venue.id)) this.venues = [...this.venues, venue];
+        this.venueDistrict = this.districts.find(d => d === venue.district)
+          || this.allDistrictsOption;
+        this.venueSearch = venue.name + ' · ' + venue.city;
+        this.selectVenue(venue.id);
+        this.autoCommunityVenueId = venue.id;
+      },
+      error: () => { /* A missing habitual venue must never block the organiser. */ }
+    });
+  }
+  seasonGame = false;
+  seasonGameCommunityId: number | null = null;
+  confirmActivateRankings = false;
+  seasonOverview: CommunityCompetitionOverview | null = null;
+  seasonOverviewLoading = false;
+  seasonOverviewError = false;
+  private seasonInfoRevision = 0;
+
+  get seasonCommunities(): CommunityGroup[] {
+    return this.communityId !== null
+      ? this.directCommunity ? [this.directCommunity] : []
+      : this.communities.filter(g => this.shareCommunityIds.includes(g.id));
+  }
+
+  /** A shared session with two or more communities never affects any standings. */
+  get canMarkSeasonGame(): boolean {
+    return this.seasonCommunities.length === 1;
+  }
+
+  get selectedSeasonCommunity(): CommunityGroup | undefined {
+    return this.canMarkSeasonGame ? this.seasonCommunities[0] : undefined;
+  }
+
+  get seasonRankingsInactive(): boolean {
+    return this.seasonOverview?.settings.rankingsEnabled === false
+      || (this.seasonOverview === null && this.selectedSeasonCommunity?.rankingsEnabled === false);
+  }
+
+  toggleSeasonGame(checked: boolean): void {
+    if (this.loading || (checked && !this.canMarkSeasonGame)) return;
+    this.seasonGame = checked;
+    this.confirmActivateRankings = false;
+    if (checked) {
+      this.loadOnlyCommunitySeason();
+    } else {
+      this.seasonGameCommunityId = null;
+      this.seasonOverview = null;
+      this.seasonOverviewLoading = false;
+      ++this.seasonInfoRevision;
+    }
+  }
+
+  private loadOnlyCommunitySeason(): void {
+    const id = this.seasonCommunities[0]?.id;
+    this.seasonGameCommunityId = this.canMarkSeasonGame && id != null ? id : null;
+    this.confirmActivateRankings = false;
+    this.seasonOverview = null;
+    const revision = ++this.seasonInfoRevision;
+    this.seasonOverviewError = false;
+    if (this.seasonGameCommunityId === null) return;
+    this.seasonOverviewLoading = true;
+    this.communityService.competition(this.seasonGameCommunityId).pipe(timeout(10_000)).subscribe({
+      next: overview => {
+        if (revision !== this.seasonInfoRevision) return;
+        this.seasonOverview = overview;
+        this.seasonOverviewLoading = false;
+      },
+      error: () => {
+        if (revision !== this.seasonInfoRevision) return;
+        this.seasonOverviewError = true;
+        this.seasonOverviewLoading = false;
+      }
+    });
+  }
+
+  selectCreationMode(mode: 'START' | 'COMPLETE'): void {
+    if (this.loading) return;
+    this.creationMode = mode;
+    if (mode === 'COMPLETE') this.privateGame = false;
+    if (this.confirmedPlayers === null) this.confirmedPlayers = 1;
+  }
+
+  canCreateForCommunity(group: CommunityGroup): boolean {
+    return group.membersCanCreateSessions !== false
+      || group.myRole === 'ADMIN' || group.myRole === 'OWNER';
+  }
+
+  get communityCreationBlocked(): boolean {
+    return !!this.directCommunity && !this.canCreateForCommunity(this.directCommunity);
+  }
+
+  toggleCommunityShare(id: number, checked: boolean): void {
+    if (this.loading || this.communityId !== null
+        || !this.communities.some(group => group.id === id
+            && group.myRole && this.canCreateForCommunity(group))) return;
+    if (checked && !this.shareCommunityIds.includes(id)) {
+      if (this.shareCommunityIds.length >= 5) return;
+      this.shareCommunityIds = [...this.shareCommunityIds, id];
+      this.privateGame = false;
+      this.password = '';
+    } else if (!checked) {
+      this.shareCommunityIds = this.shareCommunityIds.filter(groupId => groupId !== id);
+    }
+    this.reconcileCommunityDefaults();
+    // Changing from one group to zero/two+ must clear the old season destination.
+    // Going from two groups back to one stays opt-in; never auto-enable scoring.
+    if (this.seasonGame && (!this.canMarkSeasonGame
+        || this.seasonGameCommunityId !== this.seasonCommunities[0]?.id)) {
+      this.toggleSeasonGame(false);
+    }
+  }
+
+  /** A direct community session and a multi-community session share one creation flow. */
+  get communitySessionSelected(): boolean {
+    return this.communityId !== null || this.shareCommunityIds.length > 0;
+  }
 
   privateGame = false;
   password = '';
@@ -47,6 +279,10 @@ export class Events2Component implements OnInit, OnDestroy {
   locationSource: 'gps' | 'map' | null = null;
   locationMethod: 'venue' | 'maps' | 'gps' = 'venue';
   gpsAccuracyMeters: number | null = null;
+  gpsAddressLoading = false;
+  gpsAddressNotice = '';
+  private gpsAutoCity = '';
+  private gpsAutoAddress = '';
   private gpsRequestId = 0;
 
   get gpsAccuracyIsLow(): boolean {
@@ -63,6 +299,243 @@ export class Events2Component implements OnInit, OnDestroy {
   loading = false;
   errorMessage = '';
 
+  // Presets belong to the account and never include passwords, dates or photos.
+  presets: SessionPreset[] = [];
+  selectedPresetId: number | null = null;
+  presetName = '';
+  presetsLoading = false;
+  presetEditorOpen = false;
+
+  togglePresetEditor(): void {
+    if (this.loading || this.presetSaving || this.presetDeleting) return;
+    this.presetEditorOpen = !this.presetEditorOpen;
+    this.presetError = '';
+    this.presetMessage = '';
+    if (this.presetEditorOpen) this.presetName = '';
+  }
+
+  closePresetEditor(): void {
+    if (this.presetSaving) return;
+    this.presetEditorOpen = false;
+    this.presetError = '';
+  }
+  presetSaving = false;
+  presetDeleting = false;
+  presetConfirmDelete = false;
+  presetMessage = '';
+  presetError = '';
+  private presetApplyRevision = 0;
+
+  loadPresets(): void {
+    this.presetsLoading = true;
+    this.presetService.mine().pipe(
+      timeout(10_000),
+      finalize(() => this.presetsLoading = false)
+    ).subscribe({
+      next: presets => { this.presets = presets; this.presetError = ''; },
+      error: () => { this.presetError = t('createSession.presets.loadError'); }
+    });
+  }
+
+  private currentPresetSettings(): SessionPresetSettings {
+    // Browser GPS position may become stale; save the method, not historical coordinates.
+    const saveMapPoint = this.selectedVenueId === null
+      && this.locationMethod === 'maps' && this.hasCoordinates;
+    return {
+      sport: this.sport.trim(),
+      playFormat: this.playFormat,
+      city: this.city.trim(),
+      address: this.address.trim(),
+      maxParticipants: Number(this.maxParticipants),
+      creationMode: this.creationMode,
+      confirmedPlayers: Number(this.confirmedPlayers ?? 1),
+      hasPrice: this.hasPrice,
+      priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
+      privateGame: !this.findPlayersMode && this.privateGame,
+      communityShareIds: this.communityId === null ? [...this.shareCommunityIds] : [],
+      communityId: this.communityId,
+      seasonGame: this.seasonGame && this.canMarkSeasonGame,
+      selectedVenueId: this.selectedVenueId,
+      locationMethod: this.locationMethod,
+      latitude: saveMapPoint ? this.latitude : null,
+      longitude: saveMapPoint ? this.longitude : null,
+      venueMapLink: saveMapPoint ? this.venueMapLink.trim() : '',
+      recurrence: this.recurrence,
+      recurrenceOccurrences: Number(this.recurrenceOccurrences),
+      weeklySessionsPerWeek: Number(this.weeklySessionsPerWeek),
+      registrationOpeningMode: this.registrationOpeningMode
+    };
+  }
+
+  savePreset(update = false): void {
+    if (this.presetSaving || this.loading || this.presetsLoading) return;
+    const name = this.presetName.trim();
+    if (!name || name.length > 70) {
+      this.presetError = t('createSession.presets.nameRequired');
+      return;
+    }
+    if (!this.sportSelected) {
+      this.presetError = t('createSession.presets.sportRequired');
+      return;
+    }
+    const settings = this.currentPresetSettings();
+    if (!Number.isInteger(settings.maxParticipants) || settings.maxParticipants < 2
+        || settings.maxParticipants > 100 || settings.confirmedPlayers < 1
+        || settings.confirmedPlayers > settings.maxParticipants) {
+      this.presetError = t('feedback.create.playersRange');
+      return;
+    }
+    if (update && this.selectedPresetId === null) return;
+    if (!update && this.presets.length >= 20) {
+      this.presetError = t('createSession.presets.limit');
+      return;
+    }
+    const action = update
+      ? this.presetService.update(this.selectedPresetId!, name, settings)
+      : this.presetService.create(name, settings);
+    this.presetSaving = true;
+    this.presetError = '';
+    this.presetMessage = '';
+    action.pipe(
+      timeout(10_000),
+      finalize(() => this.presetSaving = false)
+    ).subscribe({
+      next: saved => {
+        this.presets = [saved, ...this.presets.filter(item => item.id !== saved.id)];
+        this.selectedPresetId = saved.id;
+        this.presetName = saved.name;
+        this.presetConfirmDelete = false;
+        this.presetEditorOpen = false;
+        this.presetMessage = t(update ? 'createSession.presets.updated' : 'createSession.presets.saved');
+      },
+      error: () => { this.presetError = t('createSession.presets.saveError'); }
+    });
+  }
+
+  applyPresetById(id: number | null): void {
+    this.selectedPresetId = id;
+    this.presetConfirmDelete = false;
+    this.presetError = '';
+    this.presetMessage = '';
+    if (id === null || this.loading) return;
+    const preset = this.presets.find(item => item.id === id);
+    if (!preset) return;
+    const s = preset.settings;
+    const revision = ++this.presetApplyRevision;
+    this.presetName = preset.name;
+    // Stop pending community recommendations overwriting a deliberately chosen preset.
+    ++this.communityPrefillRevision;
+    this.autoCommunitySport = '';
+    this.autoCommunityPoint = null;
+    this.autoCommunityVenueId = null;
+    this.sport = s.sport;
+    this.confirmSportSelection();
+    if (!this.sportSelected) {
+      this.presetError = t('createSession.presets.sportUnavailable');
+      return;
+    }
+    this.playFormat = s.playFormat === 'PAIRS' && this.canChoosePlayFormat ? 'PAIRS' : 'INDIVIDUAL';
+    this.creationMode = s.creationMode === 'COMPLETE' ? 'COMPLETE' : 'START';
+    this.maxParticipants = s.maxParticipants;
+    // Legacy presets do not store attendance thresholds; do not leak the prior selection.
+    this.capacityIsMinimum = false;
+    this.selectedMinimumPlayers = null;
+    this.confirmedPlayers = Math.max(1, Math.min(s.confirmedPlayers || 1, this.maxParticipants));
+    this.hasPrice = !!s.hasPrice;
+    this.priceAmount = this.hasPrice ? s.priceAmount : null;
+    this.privateGame = this.creationMode === 'START' && !!s.privateGame;
+    this.password = ''; // Never restore a password, even for a private preset.
+    if (this.communityId === null) {
+      const allowed = new Set(this.communities
+        .filter(g => !!g.myRole && this.canCreateForCommunity(g)).map(g => g.id));
+      const savedIds = (s.communityShareIds || []).length
+        ? s.communityShareIds : (s.communityId ? [s.communityId] : []);
+      this.shareCommunityIds = savedIds.filter(groupId => allowed.has(groupId)).slice(0, 5);
+      if (this.shareCommunityIds.length && this.privateGame) this.privateGame = false;
+      if (savedIds.length !== this.shareCommunityIds.length) {
+        this.presetMessage = t('createSession.presets.communityWarning');
+      }
+    } else if (s.communityId !== this.communityId) {
+      this.presetMessage = t('createSession.presets.communityWarning');
+    }
+    this.toggleSeasonGame(false);
+    if (s.seasonGame && this.canMarkSeasonGame) this.toggleSeasonGame(true);
+    this.recurrence = s.recurrence || 'NONE';
+    this.recurrenceOccurrences = s.recurrenceOccurrences || 4;
+    this.setWeeklySessionsPerWeek(s.weeklySessionsPerWeek || 1);
+    // A weekly template retains its recurrence pattern, not any previous dates.
+    this.gameDate = '';
+    this.additionalWeeklyGameDates = Array.from({length: this.weeklySessionsPerWeek - 1}, () => '');
+    this.registrationOpeningMode = s.registrationOpeningMode || 'IMMEDIATE';
+    this.registrationOpensAt = '';
+    this.clearPhoto();
+    this.city = s.city || '';
+    this.address = s.address || '';
+    this.locationMethod = s.locationMethod || 'venue';
+    this.venueMapLink = '';
+    this.clearLocation();
+    if (s.locationMethod === 'maps' && Number.isFinite(s.latitude)
+        && Number.isFinite(s.longitude) && s.latitude !== null && s.longitude !== null) {
+      this.locationMethod = 'maps';
+      this.locationSource = 'map';
+      this.latitude = s.latitude;
+      this.longitude = s.longitude;
+      this.locationCaptured = true;
+      this.venueMapLink = s.venueMapLink || '';
+      this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+        'https://www.google.com/maps?q=' + s.latitude + ',' + s.longitude + '&z=16&output=embed'
+      );
+    }
+    if (s.selectedVenueId) {
+      // Load the *current* venue record. Do not reuse stale details from a saved profile.
+      this.venueService.get(s.selectedVenueId).pipe(timeout(10_000)).subscribe({
+        next: venue => {
+          if (revision !== this.presetApplyRevision || this.selectedPresetId !== id) return;
+          const sports = (venue.sports || '').split(/[;,]/).map(item => item.trim().toLocaleLowerCase('pt'));
+          if (sports.some(Boolean) && !sports.includes(this.sport.trim().toLocaleLowerCase('pt'))) {
+            this.presetError = t('createSession.venueSportMismatch');
+            return;
+          }
+          this.newlyCreatedVenues = [...this.newlyCreatedVenues.filter(v => v.id !== venue.id), venue];
+          this.venues = [...this.venues.filter(v => v.id !== venue.id), venue];
+          this.venueDistrict = this.districts.find(d => d === venue.district) || this.allDistrictsOption;
+          this.venueSearch = venue.name + ' · ' + venue.city;
+          this.selectVenue(venue.id);
+        },
+        error: () => {
+          if (revision === this.presetApplyRevision) {
+            this.presetError = t('createSession.presets.venueUnavailable');
+          }
+        }
+      });
+    }
+    this.presetMessage = this.presetMessage || t('createSession.presets.applied');
+  }
+
+  deletePreset(): void {
+    if (this.selectedPresetId === null || this.presetSaving || this.presetDeleting) return;
+    if (!this.presetConfirmDelete) {
+      this.presetConfirmDelete = true;
+      return;
+    }
+    const id = this.selectedPresetId;
+    this.presetDeleting = true;
+    this.presetError = '';
+    this.presetService.remove(id).pipe(
+      timeout(10_000), finalize(() => this.presetDeleting = false)
+    ).subscribe({
+      next: () => {
+        ++this.presetApplyRevision;
+        this.presets = this.presets.filter(item => item.id !== id);
+        this.selectedPresetId = null;
+        this.presetName = '';
+        this.presetConfirmDelete = false;
+        this.presetMessage = t('createSession.presets.deleted');
+      },
+      error: () => { this.presetError = t('createSession.presets.deleteError'); }
+    });
+  }
+
   communityId: number | null = null;
   communityName = '';
   communitySports: string[] = [];
@@ -76,8 +549,156 @@ export class Events2Component implements OnInit, OnDestroy {
   }
   recurrence: 'NONE' | 'WEEKLY' | 'BIWEEKLY' = 'NONE';
   recurrenceOccurrences = 4;
+  readonly weeklySessionCountOptions = [1, 2, 3, 4, 5, 6, 7];
+  weeklySessionsPerWeek = 1;
+  additionalWeeklyGameDates: string[] = [];
+
+  setWeeklySessionsPerWeek(next: number): void {
+    const count = Number(next);
+    if (!Number.isInteger(count) || count < 1 || count > 7) return;
+    this.weeklySessionsPerWeek = count;
+    const dates = [...this.additionalWeeklyGameDates];
+    while (dates.length < count - 1) dates.push('');
+    this.additionalWeeklyGameDates = dates.slice(0, count - 1);
+  }
+
+  get plannedSessions(): number {
+    return Number(this.recurrenceOccurrences)
+      * (this.recurrence === 'WEEKLY' ? this.weeklySessionsPerWeek : 1);
+  }
+
+  get maxRecurrenceCycles(): number {
+    return this.recurrence === 'WEEKLY'
+      ? Math.floor(52 / this.weeklySessionsPerWeek) : 52;
+  }
+
+  registrationOpeningMode: 'IMMEDIATE' | 'SCHEDULED' | 'MANUAL' = 'IMMEDIATE';
+  registrationOpensAt = '';
+
+  /** Bind our existing form select without changing API enum, number or nullable boolean values. */
+  get presetChoices(): JynloSelectOption[] {
+    return [
+      {value: '', label: t('createSession.presets.noSelection')},
+      ...this.presets.map(preset => ({value: String(preset.id), label: preset.name}))
+    ];
+  }
+
+  get selectedPresetChoice(): string {
+    return this.selectedPresetId === null ? '' : String(this.selectedPresetId);
+  }
+
+  selectPresetChoice(value: string): void {
+    this.applyPresetById(value === '' ? null : Number(value));
+  }
+
+  get playFormatChoices(): JynloSelectOption[] {
+    return [
+      {value: 'INDIVIDUAL', label: t('createSession.playFormatIndividual')},
+      {value: 'PAIRS', label: t('createSession.playFormatPairs')}
+    ];
+  }
+
+  get recurrenceChoices(): JynloSelectOption[] {
+    return [
+      {value: 'NONE', label: t('createSession.recurrenceNone')},
+      {value: 'WEEKLY', label: t('createSession.recurrenceWeekly')},
+      {value: 'BIWEEKLY', label: t('createSession.recurrenceBiweekly')}
+    ];
+  }
+
+  get weeklyCountChoices(): JynloSelectOption[] {
+    return this.weeklySessionCountOptions.map(count => ({
+      value: String(count), label: t('createSession.weeklySessionOption', {count})
+    }));
+  }
+
+  get openingModeChoices(): JynloSelectOption[] {
+    return [
+      {value: 'IMMEDIATE', label: t('createSession.callupImmediate')},
+      {value: 'SCHEDULED', label: t('createSession.callupScheduled')},
+      {value: 'MANUAL', label: t('createSession.callupManual')}
+    ];
+  }
+
+  get districtChoices(): JynloSelectOption[] {
+    return [
+      {value: '', label: t('venue.districtPlaceholder')},
+      ...this.districts.map(district => ({value: district, label: district})),
+      {value: this.allDistrictsOption, label: t('venue.searchAllDistricts')}
+    ];
+  }
+
+  get ownershipChoices(): JynloSelectOption[] {
+    return [
+      {value: '', label: t('venue.ownership.none')},
+      {value: 'PUBLIC', label: t('venue.ownership.public')},
+      {value: 'PRIVATE', label: t('venue.ownership.private')}
+    ];
+  }
+
+  get amenityChoices(): JynloSelectOption[] {
+    return [
+      {value: '', label: t('venue.boolean.none')},
+      {value: 'true', label: t('venue.boolean.yes')},
+      {value: 'false', label: t('venue.boolean.no')}
+    ];
+  }
+
+  amenityChoice(value: boolean | null): string {
+    return value === null ? '' : String(value);
+  }
+
+  parseAmenityChoice(value: string): boolean | null {
+    return value === '' ? null : value === 'true';
+  }
 
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly sportChoices: JynloSelectOption[] = SPORTS_CATALOG.map(sport => ({
+    value: sport, label: sport
+  }));
+
+  /** Server IDs are the only permitted selection values; names are not unique. */
+  get venueSearchChoices(): JynloSelectOption[] {
+    return this.venueOptions.map(venue => ({
+      value: String(venue.id),
+      label: venue.name + ' · ' + venue.city,
+      description: [
+        venue.address || (venue.latitude != null && venue.longitude != null
+          ? t('venue.gpsOnlyAddress') : ''),
+        venue.district && venue.district !== venue.city ? venue.district : '',
+        venue.informationSource === 'OPENSTREETMAP'
+          ? t('venue.detail.sourceOpenStreetMap') : ''
+      ].filter(Boolean).join(' · ')
+    }));
+  }
+
+  onSportChoice(value: string): void {
+    if (this.sport === value) return;
+    this.sport = value;
+    this.confirmSportSelection();
+  }
+
+  onVenueSelected(value: string): void {
+    if (!value) {
+      this.selectVenue(null);
+      return;
+    }
+    this.chooseVenueFromResults(Number(value));
+  }
+
+  // Only sports explicitly supported for both singles and doubles offer this selector.
+  private readonly doublesSports = new Set([
+    'Padel', 'Ténis', 'Ténis de praia', 'Ténis de mesa', 'Badminton', 'Pickleball'
+  ]);
+
+  get canChoosePlayFormat(): boolean {
+    return this.doublesSports.has(this.sport.trim());
+  }
+
+  get selectedPlayFormat(): 'INDIVIDUAL' | 'PAIRS' | undefined {
+    return this.canChoosePlayFormat ? this.playFormat : undefined;
+  }
+
   readonly districts = MAINLAND_PORTUGAL_DISTRICTS;
   readonly allDistrictsOption = SEARCH_ALL_DISTRICTS;
   venueDistrict = '';
@@ -97,6 +718,7 @@ export class Events2Component implements OnInit, OnDestroy {
       if (this.sportSelected) this.loadVenues();
     });
   venueSaving = false;
+  venueSuggestionSubmitted = false;
   showVenueCreator = false;
   venueName = '';
   venueType = '';
@@ -128,6 +750,7 @@ export class Events2Component implements OnInit, OnDestroy {
 
   constructor(
     private sessionService: SessionService,
+    private presetService: SessionPresetService,
     private communityService: CommunityGroupsService,
     private venueService: VenueService,
     private sanitizer: DomSanitizer,
@@ -137,7 +760,7 @@ export class Events2Component implements OnInit, OnDestroy {
   ) {}
 
   get findPlayersMode(): boolean {
-    return this.route.snapshot.queryParamMap.get('intent') === 'findPlayers' && !this.communityId;
+    return this.creationMode === 'COMPLETE';
   }
 
   get availablePlaces(): number {
@@ -152,6 +775,7 @@ export class Events2Component implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.minDate = this.toLocalDateTimeValue(new Date());
+    this.loadPresets();
 
     const params = this.route.snapshot.queryParamMap;
     const communityId = Number(params.get('community'));
@@ -182,6 +806,22 @@ export class Events2Component implements OnInit, OnDestroy {
 
     if (this.sportSelected) this.loadVenues();
 
+    this.creationMode = params.get('intent') === 'findPlayers' ? 'COMPLETE' : 'START';
+
+    if (!(Number.isFinite(communityId) && communityId > 0)) {
+      this.communitiesLoading = true;
+      this.communityService.mine().pipe(
+        timeout(10_000),
+        finalize(() => this.communitiesLoading = false)
+      ).subscribe({
+        next: values => {
+          this.communities = values.filter(group => !!group.myRole);
+          this.communitiesLoadError = false;
+        },
+        error: () => { this.communitiesLoadError = true; }
+      });
+    }
+
     if (Number.isFinite(communityId) && communityId > 0) {
       this.communityId = communityId;
       this.communityService.get(communityId)
@@ -192,16 +832,14 @@ export class Events2Component implements OnInit, OnDestroy {
         .subscribe({
         next: community => {
           this.communityName = community.name;
+          this.directCommunity = community;
           const list = community.sports?.length ? community.sports
             : (community.sport ? [community.sport] : []);
           // Older communities expose just `sport`; multi-sport ones must not
           // silently pick the first modality on behalf of the organiser.
           this.communitySports = [...new Set(list.filter(value => this.sportsCatalog.includes(value)))];
           this.communitySportLoaded = true;
-          if (!this.sport.trim() && this.communitySports.length === 1) {
-            this.sport = this.communitySports[0];
-            if (this.sportSelected) this.loadVenues();
-          }
+          this.reconcileCommunityDefaults();
         },
         error: () => {
           this.errorMessage = t('feedback.communities.openError');
@@ -220,7 +858,7 @@ export class Events2Component implements OnInit, OnDestroy {
   }
 
   createSession(): void {
-    if (this.loading || this.venueSaving || this.venueMapLinkLoading) {
+    if (this.loading || this.venueSaving || this.venueMapLinkLoading || this.gpsAddressLoading) {
       return;
     }
 
@@ -232,6 +870,7 @@ export class Events2Component implements OnInit, OnDestroy {
 
     const request: CreateSessionRequest = {
       sport: this.sport.trim(),
+      ...(this.selectedPlayFormat ? { playFormat: this.selectedPlayFormat } : {}),
       gameDate: new Date(this.gameDate).toISOString(),
       city: this.city.trim(),
       address: this.address.trim() || (this.hasCoordinates
@@ -240,10 +879,17 @@ export class Events2Component implements OnInit, OnDestroy {
             longitude: this.longitude!.toFixed(6)
           })
         : ''),
+      meetingPointInstructions: this.meetingPointInstructions.trim() || null,
       maxParticipants: Number(this.maxParticipants),
+      minParticipants: this.minimumPlayers,
       ...(this.findPlayersMode
         ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
         : {}),
+      communityShareIds: this.communityId === null ? [...this.shareCommunityIds] : [],
+      seasonCompetitionCommunityId: this.seasonGame && this.canMarkSeasonGame
+        ? this.seasonCommunities[0].id : null,
+      confirmActivateRankings: this.seasonGame && this.canMarkSeasonGame
+        && this.confirmActivateRankings,
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
       privateGame: this.findPlayersMode ? false : this.privateGame,
       password: this.findPlayersMode ? null : (this.privateGame ? this.password.trim() : null),
@@ -251,9 +897,17 @@ export class Events2Component implements OnInit, OnDestroy {
       longitude: this.hasCoordinates ? this.longitude : null,
       communityId: this.communityId,
       venueId: this.selectedVenueId,
-      recurrence: this.communityId ? this.recurrence : 'NONE',
-      recurrenceOccurrences: this.communityId && this.recurrence !== 'NONE'
+      recurrence: this.communitySessionSelected ? this.recurrence : 'NONE',
+      recurrenceOccurrences: this.communitySessionSelected && this.recurrence !== 'NONE'
         ? Number(this.recurrenceOccurrences)
+        : null,
+      additionalWeeklyGameDates: this.communitySessionSelected && this.recurrence === 'WEEKLY'
+        ? this.additionalWeeklyGameDates.map(value => new Date(value).toISOString()) : [],
+      recurrenceTimeZone: this.communitySessionSelected && this.recurrence !== 'NONE'
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' : null,
+      registrationOpeningMode: this.communitySessionSelected ? this.registrationOpeningMode : 'IMMEDIATE',
+      registrationOpensAt: this.communitySessionSelected && this.registrationOpeningMode === 'SCHEDULED'
+        ? new Date(this.registrationOpensAt).toISOString()
         : null
     };
 
@@ -266,10 +920,11 @@ export class Events2Component implements OnInit, OnDestroy {
         finalize(() => this.loading = false)
       )
       .subscribe({
+        // Every creator sees an appropriate share dialog on first entry.
+        // Community/private links stay authenticated; public preview is never invented.
         next: session => this.router.navigate(
           ['/menu/events', session.id],
-          !session.privateGame && session.canSharePublicly === true
-            ? { queryParams: { created: 1 } } : {}
+          { queryParams: { created: 1 } }
         ),
         error: error => {
           this.errorMessage = this.errorFrom(
@@ -343,6 +998,9 @@ export class Events2Component implements OnInit, OnDestroy {
     this.venuesLoadError = false;
     this.venuesHasMore = false;
     this.venuePage = 0;
+    // Previously fetched rows belong to an older query/district/sport;
+    // never leave them clickable while the new lookup is debounced.
+    this.venues = [...this.newlyCreatedVenues];
     this.venueSearchChanged.next();
   }
 
@@ -434,6 +1092,7 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     this.sport = selected;
+    this.playFormat = 'INDIVIDUAL';
     this.venueSearch = '';
     this.selectVenue(null);
     this.loadVenues();
@@ -454,6 +1113,18 @@ export class Events2Component implements OnInit, OnDestroy {
       this.selectVenue(null);
     }
     if (this.sportSelected && this.venueDistrict) this.queueVenueLookup();
+  }
+
+  /** Visible results select the actual server ID, never a potentially duplicate name. */
+  chooseVenueFromResults(venueId: number): void {
+    if (this.venuesLoading || !this.sportSelected || !this.venueDistrict) return;
+    const venue = this.venueOptions.find(item => item.id === venueId);
+    if (!venue) return;
+
+    ++this.venueLookupVersion; // Ignore a slower response from the previous query.
+    this.venuesLoading = false;
+    this.venueSearch = venue.name + ' · ' + venue.city;
+    this.selectVenue(venue.id);
   }
 
   confirmVenueSelection(): void {
@@ -681,6 +1352,7 @@ export class Events2Component implements OnInit, OnDestroy {
           if (!isCurrentRequest()) {
             return;
           }
+          this.clearAutoGpsFields();
           this.latitude = candidate.latitude;
           this.longitude = candidate.longitude;
           this.locationCaptured = true;
@@ -693,6 +1365,7 @@ export class Events2Component implements OnInit, OnDestroy {
             + candidate.latitude + ',' + candidate.longitude
             + '&z=16&output=embed'
           );
+          this.lookupGpsAddress(candidate.latitude, candidate.longitude, undefined, 'map');
         },
         error: () => {
           if (isCurrentRequest()) {
@@ -740,9 +1413,10 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     this.venueSaving = true;
+    this.venueSuggestionSubmitted = false;
     this.errorMessage = '';
 
-    this.venueService.create({
+    this.venueService.submitSuggestion({
       name: this.venueName.trim(),
       city: this.city.trim(),
       district: this.venueDistrict,
@@ -773,35 +1447,18 @@ export class Events2Component implements OnInit, OnDestroy {
         finalize(() => this.venueSaving = false)
       )
       .subscribe({
-        next: venue => {
-          this.newlyCreatedVenues = [
-            ...this.newlyCreatedVenues.filter(item => item.id !== venue.id),
-            venue
-          ];
-          this.venues = [...this.venues.filter(item => item.id !== venue.id), venue]
-            .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
-          // Newly saved venues must go through the same selection flow as existing ones.
-          this.selectVenue(venue.id);
-          this.venueSearch = venue.name + ' · ' + venue.city;
+        next: suggestion => {
+          // Pending suggestions are NOT public venue ids. Never select or
+          // attach them to a session before an administrator approves them.
+          if (suggestion.status !== 'PENDING') {
+            this.errorMessage = t('feedback.venue.createError');
+            return;
+          }
+          this.venueSuggestionSubmitted = true;
+          this.selectedVenueId = null;
           this.showVenueCreator = false;
           this.venueName = '';
-          this.venueType = '';
-          this.venueOwnershipType = null;
-          this.venueSurfaceType = '';
-          this.venueIndoor = false;
-          this.venueChangingRooms = false;
-          this.venueToilets = null;
-          this.venueLockers = null;
-          this.venueAccessible = null;
-          this.venueFirstAid = null;
-          this.venueAed = null;
-          this.venueCafe = null;
-          this.venueServices = '';
-          this.venueTransport = '';
-          this.venueOpeningHours = '';
-          this.venuePriceInfo = '';
-          this.venueParking = false;
-          this.venueLighting = false;
+          this.errorMessage = '';
         },
         error: error => {
           this.errorMessage = this.errorFrom(
@@ -865,6 +1522,7 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     this.invalidateVenueMapLinkRequest();
+    this.clearAutoGpsFields();
     this.locationMethod = 'gps';
     this.latitude = latitude;
     this.longitude = longitude;
@@ -882,11 +1540,68 @@ export class Events2Component implements OnInit, OnDestroy {
     this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
       'https://www.google.com/maps?q=' + latitude + ',' + longitude + '&z=17&output=embed'
     );
+    this.lookupGpsAddress(latitude, longitude, accuracyMeters, 'gps');
+  }
+
+  /**
+   * Reverse-lookup is best-effort, never changes the actual GPS pin.
+   * A stale reply may not overwrite another venue, another GPS point,
+   * or text that the user edited while the lookup was pending.
+   */
+  private lookupGpsAddress(
+    latitude: number, longitude: number, accuracyMeters: number | undefined,
+    source: 'gps' | 'map'
+  ): void {
+    const requestId = this.gpsRequestId;
+    const startingCity = this.city;
+    const startingAddress = this.address;
+    this.gpsAddressLoading = true;
+    this.gpsAddressNotice = '';
+    this.venueService.reverseLocation(latitude, longitude, accuracyMeters).pipe(
+      timeout(20000),
+      finalize(() => {
+        if (this.gpsRequestId === requestId) this.gpsAddressLoading = false;
+      })
+    ).subscribe({
+      next: value => {
+        if (this.gpsRequestId !== requestId || this.locationSource !== source
+            || this.latitude !== latitude || this.longitude !== longitude) return;
+        const city = value.city?.trim().slice(0,120) || '';
+        const address = value.address?.trim().slice(0,250) || '';
+        if (city && this.city === startingCity) {
+          this.onCityChanged(city);
+          this.gpsAutoCity = city;
+        }
+        if (address && this.address === startingAddress) {
+          this.address = address;
+          this.gpsAutoAddress = address;
+        }
+        this.gpsAddressNotice = address
+          ? t('createSession.gpsAddressSuggested')
+          : city ? t('createSession.gpsAddressCityOnly')
+            : t('createSession.gpsAddressUnknown');
+      },
+      error: () => {
+        if (requestId === this.gpsRequestId) {
+          this.gpsAddressNotice = t('createSession.gpsAddressUnknown');
+        }
+      }
+    });
+  }
+
+  private clearAutoGpsFields(): void {
+    if (this.gpsAutoCity && this.city === this.gpsAutoCity) this.onCityChanged('');
+    if (this.gpsAutoAddress && this.address === this.gpsAutoAddress) this.address = '';
+    this.gpsAutoCity = '';
+    this.gpsAutoAddress = '';
   }
 
   clearLocation(): void {
     this.invalidateVenueMapLinkRequest();
     this.gpsRequestId++;
+    this.clearAutoGpsFields();
+    this.gpsAddressLoading = false;
+    this.gpsAddressNotice = '';
     this.locating = false;
     this.locationCaptured = false;
     this.latitude = null;
@@ -933,8 +1648,22 @@ export class Events2Component implements OnInit, OnDestroy {
   }
 
   private validate(): string | null {
+    if (this.communityCreationBlocked) {
+      return t('communities.sessionPolicy.blocked');
+    }
+    if (this.shareCommunityIds.some(id =>
+        this.communities.some(group => group.id === id && !this.canCreateForCommunity(group)))) {
+      return t('communities.sessionPolicy.shareBlocked');
+    }
+    if (this.meetingPointInstructions.length > 240
+        || /[\u0000-\u001F\u007F]/.test(this.meetingPointInstructions)) {
+      return t('createSession.meetingPointInvalid');
+    }
     if (!this.sportSelected) {
       return 'Seleciona um desporto da lista.';
+    }
+    if (this.gpsAddressLoading) {
+      return t('createSession.gpsAddressLoading');
     }
     if (this.locationMethod === 'maps' && !(this.hasCoordinates && this.locationSource === 'map')) {
       return 'Resolve primeiro a ligação do Google Maps para confirmar o ponto do recinto.';
@@ -978,7 +1707,31 @@ export class Events2Component implements OnInit, OnDestroy {
     if (!Number.isInteger(players) || players < 2 || players > 100) {
       return t('feedback.create.playersRange');
     }
+    if (!Number.isInteger(this.minimumPlayers) || this.minimumPlayers < 2
+        || this.minimumPlayers > players) {
+      return t('createSession.minimumPlayersInvalid');
+    }
 
+    if (this.seasonGame) {
+      if (!this.canMarkSeasonGame
+          || this.seasonGameCommunityId !== this.seasonCommunities[0]?.id) {
+        return t('createSession.seasonGameSelectCommunity');
+      }
+      if (this.seasonOverviewLoading || this.seasonOverviewError || !this.seasonOverview) {
+        return t('createSession.seasonGameDataUnavailable');
+      }
+      if (this.seasonRankingsInactive && !this.confirmActivateRankings) {
+        return t('createSession.seasonGameConfirmActivation');
+      }
+    }
+
+    if (this.shareCommunityIds.length && this.privateGame) {
+      return t('createSession.communitySharePublicOnly');
+    }
+    if (this.shareCommunityIds.length > 5
+        || this.shareCommunityIds.some(id => !this.communities.some(c => c.id === id && !!c.myRole))) {
+      return t('createSession.communityShareInvalid');
+    }
     if (this.findPlayersMode) {
       const confirmed = Number(this.confirmedPlayers);
       if (this.confirmedPlayers === null || !Number.isInteger(confirmed)
@@ -987,10 +1740,44 @@ export class Events2Component implements OnInit, OnDestroy {
       }
     }
 
-    if (this.communityId && this.recurrence !== 'NONE') {
+    if (this.communitySessionSelected && this.recurrence === 'WEEKLY') {
+      const count = Number(this.weeklySessionsPerWeek);
+      if (!Number.isInteger(count) || count < 1 || count > 7
+          || this.additionalWeeklyGameDates.length !== count - 1) {
+        return t('feedback.create.weeklySlotsRange');
+      }
+      const start = Date.parse(this.gameDate);
+      const upper = new Date(this.gameDate);
+      upper.setDate(upper.getDate() + 7);
+      const seen = new Set<number>([start]);
+      for (const input of this.additionalWeeklyGameDates) {
+        const slot = Date.parse(input);
+        if (!input || !Number.isFinite(slot) || !Number.isFinite(start)
+            || slot <= Date.now() || slot <= start || slot >= upper.getTime()
+            || seen.has(slot)) {
+          return t('feedback.create.weeklySlotDateInvalid');
+        }
+        seen.add(slot);
+      }
+    }
+
+    if (this.communitySessionSelected && this.registrationOpeningMode === 'SCHEDULED') {
+      const opening = Date.parse(this.registrationOpensAt);
+      const kickoff = Date.parse(this.gameDate);
+      if (!this.registrationOpensAt || !Number.isFinite(opening)
+          || !Number.isFinite(kickoff) || opening <= Date.now() || opening >= kickoff) {
+        return t('feedback.create.registrationOpensAtInvalid');
+      }
+    }
+
+    if (this.communitySessionSelected && this.recurrence !== 'NONE') {
       const occurrences = Number(this.recurrenceOccurrences);
-      if (!Number.isInteger(occurrences) || occurrences < 2 || occurrences > 52) {
+      if (!Number.isInteger(occurrences) || occurrences < 2
+          || occurrences > 52) {
         return t('feedback.create.recurrenceOccurrencesRange');
+      }
+      if (occurrences > this.maxRecurrenceCycles || this.plannedSessions > 52) {
+        return t('feedback.create.recurrenceTotalRange');
       }
     }
 

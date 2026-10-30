@@ -75,6 +75,14 @@ describe('PerfilDataComponent', () => {
     fixture.detectChanges();
   });
 
+  it('preserves profile actions while the brand stays only in the navbar', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.page-header .eyebrow')).toBeNull();
+    expect(root.querySelector('.page-header h1')).not.toBeNull();
+    expect(root.querySelector('.profile-card .identity')).not.toBeNull();
+    expect(root.querySelector('a[href="/menu/alterardados"]')).not.toBeNull();
+  });
+
   it('should create and load the authenticated profile', () => {
     expect(component).toBeTruthy();
     expect(profileService.get).toHaveBeenCalled();

@@ -1,0 +1,172 @@
+/* Scoped read-only rankings table; parent computes rank, season and visibility. */
+:host{display:block;}
+.ranking-table-wrap {
+  margin-top: .8rem;
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .85rem;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: .72rem .7rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ranking-table th {
+  color: #94a3b8;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.ranking-table th:nth-child(2),
+.ranking-table td:nth-child(2) {
+  text-align: left;
+}
+
+.ranking-table tr.podium {
+  background: rgba(125,211,252,.035);
+}
+.ranking-player {display:grid;gap:.08rem;}
+.ranking-player span{color:#64748b;font-size:.72rem;}
+
+.points-cell {
+  color: #bae6fd;
+  font-weight: 950;
+}
+
+
+.module-empty{
+  min-height:240px;display:grid;place-items:center;align-content:center;
+  gap:.45rem;padding:1.25rem;text-align:center;color:#94a3b8;
+  border:1px solid rgba(255,255,255,.09);border-radius:.9rem;
+  background:rgba(255,255,255,.035);
+}
+.module-empty h3,.module-empty p{margin:0;}
+.module-empty.compact{min-height:130px;margin-top:.8rem;}
+
+/* Identity controls are interactive, but preserve the ranking's compact grid. */
+.ranking-player--interactive {
+  box-sizing: border-box;
+  display: grid;
+  gap: .08rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: -.25rem -.35rem;
+  padding: .25rem .35rem;
+  border: 1px solid transparent;
+  border-radius: .55rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.ranking-player--interactive strong { white-space: normal; overflow-wrap: anywhere; }
+.ranking-player--interactive span { color: #92aebe; font-size: .72rem; }
+.ranking-player--interactive:hover {
+  color: #95f5df;
+  border-color: rgba(40, 222, 191, .3);
+  background: rgba(40, 222, 191, .09);
+}
+.ranking-player--interactive:focus-visible {
+  outline: 2px solid #7df9d9;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ranking-player--interactive { transition: none; }
+}
+
+/* Compact avatar rows: preserve all seven numeric columns and player actions. */
+.ranking-player--interactive {
+  display:flex;align-items:center;gap:11px;min-height:49px;
+  max-width:100%;padding:5px 9px;
+}
+.ranking-player__avatar {
+  position:relative;display:grid;place-items:center;flex:0 0 38px;
+  width:38px;height:38px;border-radius:50%;overflow:hidden;
+  border:1px solid rgba(92,226,203,.42);
+  background:linear-gradient(145deg,#155363,#163049);
+  color:#cbfff3;font-size:.76rem;font-weight:900;
+}
+.ranking-player__avatar img {
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+}
+.ranking-player__identity {display:grid;gap:3px;min-width:0;text-align:left;}
+.ranking-player__identity strong {line-height:1.25;color:#f3fffa;}
+.ranking-player__identity > span {color:#a9c8d0;font-size:.72rem;white-space:normal;}
+.ranking-player--interactive:hover .ranking-player__avatar {
+  border-color:#7bf5d8;box-shadow:0 0 0 3px rgba(70,220,190,.13);
+}
+@media(max-width:660px){
+  .ranking-player--interactive {gap:8px;padding:4px 7px;}
+  .ranking-player__avatar {width:32px;height:32px;flex-basis:32px;}
+}
+
+
+/* Ranking Neon Glass: preserve the full seven-column score table.
+   Horizontal scrolling rather than forcing compact mobile columns to overlap. */
+:host .ranking-table-wrap {
+  box-sizing:border-box;
+  max-width:100%;min-width:0;
+  overflow-x:auto;overscroll-behavior-inline:contain;
+  border:1px solid rgba(54,202,205,.28);
+  border-radius:14px;
+  background:linear-gradient(145deg,rgba(9,46,61,.73),rgba(7,32,48,.81));
+  scrollbar-width:thin;
+}
+:host .ranking-table {
+  width:100%;min-width:620px;border-collapse:separate;border-spacing:0;
+}
+:host .ranking-table thead {
+  background:rgba(10,76,85,.36);
+}
+:host .ranking-table th {
+  padding:12px 10px;line-height:1.4;
+  color:#b8dce2;font-size:.73rem;
+  border-bottom:1px solid rgba(73,194,197,.26);
+}
+:host .ranking-table td {
+  padding:10px 9px;
+  border-bottom:1px solid rgba(78,174,186,.14);
+  color:#e2f7f8;
+}
+:host .ranking-table tbody tr:last-child td {border-bottom:0;}
+:host .ranking-table tbody tr:hover {background:rgba(20,102,111,.17);}
+:host .ranking-table tr.podium {background:rgba(33,172,158,.075);}
+:host .ranking-table .points-cell {
+  color:#79f4da;font-weight:900;font-variant-numeric:tabular-nums;
+}
+:host .ranking-table .ranking-player--interactive {
+  display:flex;align-items:center;gap:10px;
+  min-height:48px;min-width:0;max-width:100%;
+  padding:5px 8px;border-radius:10px;
+}
+:host .ranking-table .ranking-player__identity {min-width:0;}
+:host .ranking-table .ranking-player__identity strong {
+  color:#eafffa;line-height:1.3;white-space:normal;overflow-wrap:anywhere;
+}
+:host .ranking-table .ranking-player__identity > span {color:#a1c2cb;}
+:host .ranking-table .ranking-player--interactive:hover {
+  border-color:rgba(55,221,198,.43);
+  background:rgba(30,144,144,.18);
+}
+:host .module-empty {
+  border:1px solid rgba(47,198,199,.26);
+  border-radius:14px;background:rgba(8,43,57,.58);
+  color:#b1d1d7;
+}
+@media(max-width:720px) {
+  :host .ranking-table {min-width:600px;}
+  :host .ranking-table :is(th,td) {padding:9px 7px;}
+}

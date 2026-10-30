@@ -1,10 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { JynloSelectComponent } from '../../shared/jynlo-select/jynlo-select.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
 import { Events2Component } from './events2.component';
+import { LocationMethodSelectorComponent } from '../../shared/location-method-selector/location-method-selector.component';
 import { Venue } from '../model/venue';
 import { SessionService } from '../../services/session.service';
+import { SessionPresetService } from '../../services/session-preset.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { VenuePhoto, VenueService, VenueSuggestionPage } from '../../services/venue.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
@@ -13,14 +17,29 @@ describe('Events2Component', () => {
   let component: Events2Component;
   let fixture: ComponentFixture<Events2Component>;
   let sessionService: jasmine.SpyObj<SessionService>;
+  let presetService: jasmine.SpyObj<SessionPresetService>;
   let venueService: jasmine.SpyObj<VenueService>;
+  let communityGroups: jasmine.SpyObj<CommunityGroupsService>;
   let router: Router;
 
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'create', 'listPhotos', 'resolveMapLink']);
+    presetService = jasmine.createSpyObj<SessionPresetService>(
+      'SessionPresetService', ['mine', 'create', 'update', 'remove']);
+    presetService.mine.and.returnValue(of([]));
+    communityGroups = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine', 'get', 'competition']);
+    communityGroups.mine.and.returnValue(of([]));
+    communityGroups.competition.and.returnValue(of({
+      settings: { rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 },
+      seasons: [], selectedSeasonId: null, activeSeasonId: 3,
+      rounds: [], standings: [], racketStandings: [], raceStandings: []
+    }));
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'submitSuggestion', 'listPhotos', 'resolveMapLink', 'reverseLocation', 'get']);
     venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     venueService.listPhotos.and.returnValue(of([]));
+    venueService.reverseLocation.and.returnValue(of({
+      city: null, address: null, distanceMeters: null, provider: 'My Geocode'
+    }));
 
     sessionService.create.and.returnValue(of({
       id: 42,
@@ -45,10 +64,12 @@ describe('Events2Component', () => {
 
     await TestBed.configureTestingModule({
       declarations: [Events2Component],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, LocationMethodSelectorComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: SessionService, useValue: sessionService },
+        { provide: SessionPresetService, useValue: presetService },
+        { provide: CommunityGroupsService, useValue: communityGroups },
         { provide: VenueService, useValue: venueService }
       ]
     }).compileComponents();
@@ -61,8 +82,420 @@ describe('Events2Component', () => {
     fixture.detectChanges();
   });
 
+
+  it('keeps responsive Neon Glass groups wired to real fields and actions', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const form = root.querySelector('form.create-card') as HTMLFormElement;
+    expect(form.querySelectorAll('button.create-mode-option[aria-pressed]').length).toBe(2);
+    expect(form.querySelectorAll('.create-mode-option-icon svg').length).toBe(2);
+    expect(form.querySelector('.form-grid input[name="gameDate"]')).not.toBeNull();
+    expect(form.querySelector('.form-grid input[name="maxParticipants"]')).not.toBeNull();
+    expect(form.querySelector('app-jynlo-select[name="sport"]')).not.toBeNull();
+    const upload = form.querySelector('.photo-section .upload-button') as HTMLLabelElement;
+    expect(upload.querySelector('input[type="file"]')).not.toBeNull();
+    const submit = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(submit).not.toBeNull();
+    expect(submit.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    component.loading = true;
+    fixture.detectChanges();
+    expect(upload.classList.contains('is-disabled')).toBeTrue();
+    expect(upload.querySelector('input')!.disabled).toBeTrue();
+  });
+
+  it('keeps the complete Create Session form operational with consistent actions', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const form = root.querySelector('form.create-card') as HTMLFormElement;
+    expect(form).not.toBeNull();
+    expect(root.querySelectorAll('.page-header .jynlo-premium-btn--quiet').length).toBe(2);
+    expect(form.querySelectorAll('button.create-mode-option').length).toBe(2);
+    expect(form.querySelector('button[type="submit"]')?.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(form.querySelectorAll('.form-actions .jynlo-premium-btn').length).toBeGreaterThanOrEqual(2);
+    expect(form.querySelectorAll('app-jynlo-select').length).toBeGreaterThan(0);
+  });
+
+  it('shows saved presets only after saving, with a separate save action beside Create session', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.create-preset-panel')).toBeNull();
+    const saveAction = fixture.nativeElement.querySelector('.form-actions button[type="button"]') as HTMLButtonElement;
+    expect(saveAction.textContent).toContain('Guardar configuração');
+    saveAction.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.create-preset-save-editor')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.create-preset-panel')).toBeNull();
+
+    component.sport = 'Futsal';
+    component.presetName = 'Treino semanal';
+    presetService.create.and.callFake((name, settings) => of({
+      id: 16, name, settings, createdAt: '', updatedAt: ''
+    }));
+    component.savePreset();
+    fixture.detectChanges();
+    expect(component.presetEditorOpen).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.create-preset-save-editor')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.create-preset-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="sessionPresetSelection"]')).not.toBeNull();
+  });
+
+  it('saves a reusable preset without a date, password, photo or registration time', () => {
+    component.sport = 'Futsal';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.gameDate = '2026-11-01T19:30';
+    component.registrationOpensAt = '2026-10-31T12:00';
+    component.password = 'do-not-save';
+    component.privateGame = true;
+    component.maxParticipants = 10;
+    component.presetName = 'Futsal habitual';
+    presetService.create.and.callFake((name, settings) => {
+      expect(name).toBe('Futsal habitual');
+      expect(settings.sport).toBe('Futsal');
+      expect(settings.maxParticipants).toBe(10);
+      expect(JSON.stringify(settings)).not.toContain('2026-11-01');
+      expect(JSON.stringify(settings)).not.toContain('2026-10-31');
+      expect(JSON.stringify(settings)).not.toContain('do-not-save');
+      return of({
+        id: 5, name, settings, createdAt: '2026-10-28T00:00:00Z',
+        updatedAt: '2026-10-28T00:00:00Z'
+      });
+    });
+    component.savePreset();
+    expect(presetService.create).toHaveBeenCalledTimes(1);
+    expect(component.selectedPresetId).toBe(5);
+    expect(component.presetMessage).toBeTruthy();
+  });
+
+  it('loads a preset but requires new date, registration opening and private password', () => {
+    component.sport = 'Futsal';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 10;
+    component.privateGame = true;
+    component.presetName = 'Sábado';
+    presetService.create.and.callFake((name, settings) => of({
+      id: 7, name, settings: {...settings, registrationOpeningMode: 'SCHEDULED'},
+      createdAt: '2026-10-28T00:00:00Z', updatedAt: '2026-10-28T00:00:00Z'
+    }));
+    component.savePreset();
+    component.gameDate = '2026-11-05T20:00';
+    component.registrationOpensAt = '2026-11-04T12:00';
+    component.password = 'old-secret';
+    component.applyPresetById(7);
+    expect(component.gameDate).toBe('');
+    expect(component.registrationOpensAt).toBe('');
+    expect(component.password).toBe('');
+    expect(component.privateGame).toBeTrue();
+    expect(component.maxParticipants).toBe(10);
+    expect(component.registrationOpeningMode).toBe('SCHEDULED');
+    expect(component.presetMessage).toBeTruthy();
+  });
+
+  it('requires two explicit clicks to delete a preset', () => {
+    component.sport = 'Futsal';
+    component.presetName = 'Futsal';
+    presetService.create.and.callFake((name, settings) => of({
+      id: 8, name, settings, createdAt: '', updatedAt: ''
+    }));
+    component.savePreset();
+    presetService.remove.and.returnValue(of(undefined));
+    component.deletePreset();
+    expect(component.presetConfirmDelete).toBeTrue();
+    expect(presetService.remove).not.toHaveBeenCalled();
+    component.deletePreset();
+    expect(presetService.remove).toHaveBeenCalledOnceWith(8);
+    expect(component.presets.length).toBe(0);
+    expect(component.selectedPresetId).toBeNull();
+  });
+
+  it('selects singles or doubles only for sports that actually support both formats', () => {
+    component.sport = 'Padel';
+    fixture.detectChanges();
+    const selector = fixture.nativeElement.querySelector('app-jynlo-select[name="playFormat"]') as HTMLElement | null;
+    expect(selector).not.toBeNull();
+    expect(component.selectedPlayFormat).toBe('INDIVIDUAL');
+    component.playFormat = 'PAIRS';
+    expect(component.selectedPlayFormat).toBe('PAIRS');
+    component.sport = 'Futebol';
+    fixture.detectChanges();
+    expect(component.selectedPlayFormat).toBeUndefined();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="playFormat"]')).toBeNull();
+    component.sport = 'Atletismo';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="playFormat"]')).toBeNull();
+  });
+
+  it('never forwards stale doubles format when the organiser changes sport', () => {
+    component.sport = 'Padel';
+    component.playFormat = 'PAIRS';
+    expect(component.selectedPlayFormat).toBe('PAIRS');
+    component.sport = 'Natação';
+    expect(component.selectedPlayFormat).toBeUndefined();
+    component.sport = 'Padel';
+    component.confirmSportSelection();
+    expect(component.playFormat).toBe('INDIVIDUAL');
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('separates the creation header, community banner and form without global card margins', () => {
+    component.communityId = 7;
+    component.communityName = 'Futebol das Quintas';
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const header = root.querySelector<HTMLElement>('.create-shell > .page-header');
+    const banner = root.querySelector<HTMLElement>('.create-shell > .community-context');
+    const form = root.querySelector<HTMLElement>('.create-shell > form.create-card');
+    expect(header).not.toBeNull();
+    expect(banner).not.toBeNull();
+    expect(form).not.toBeNull();
+    const expected = matchMedia('(max-width: 760px)').matches ? '20px' : '24px';
+    expect(getComputedStyle(header!).marginBottom).toBe(expected);
+    expect(getComputedStyle(banner!).marginBottom).toBe(expected);
+  });
+
+  it('styles the recurrence selector with the premium trigger without changing its options', () => {
+    component.communityId = 7;
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="recurrence"]'
+    ) as HTMLElement;
+    const trigger = select?.querySelector('.jynlo-select__trigger') as HTMLButtonElement;
+    const sportInput = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="sport"] .jynlo-select__trigger') as HTMLButtonElement;
+    expect(trigger).not.toBeNull();
+    expect(sportInput).not.toBeNull();
+    expect(trigger.getAttribute('role')).toBe('combobox');
+    const style = getComputedStyle(trigger);
+    expect(style.borderRadius).not.toBe('0px');
+    expect(style.backgroundImage).toContain('linear-gradient');
+    expect(style.borderColor).not.toBe('transparent');
+    expect(Math.abs(trigger.getBoundingClientRect().width -
+      sportInput.getBoundingClientRect().width)).toBeLessThan(2);
+    const selectInstance = fixture.debugElement.query(By.css(
+      'app-jynlo-select[name="recurrence"]'
+    )).componentInstance as JynloSelectComponent;
+    expect(selectInstance.options.map(option => option.value)).toEqual([
+      'NONE', 'WEEKLY', 'BIWEEKLY'
+    ]);
+    component.recurrence = 'WEEKLY';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="recurrenceOccurrences"]')).not.toBeNull();
+  });
+
+  it('explains one weekly game and warns that immediate opening opens all planned games', () => {
+    component.communityId = 7;
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.registrationOpeningMode = 'IMMEDIATE';
+    fixture.detectChanges();
+
+    const form = fixture.nativeElement as HTMLElement;
+    const frequency = form.querySelector('app-jynlo-select[name="recurrence"]') as HTMLElement;
+    const weekly = form.querySelector('app-jynlo-select[name="weeklySessionsPerWeek"]') as HTMLElement;
+    const weeks = form.querySelector('input[name="recurrenceOccurrences"]') as HTMLInputElement;
+
+    expect(frequency.closest('label')?.textContent).toContain('Frequência dos jogos');
+    expect(component.recurrenceChoices[1].label).toContain('Todas as semanas');
+    expect(weekly.closest('label')?.textContent).toContain('Sessões por semana');
+    expect(weeks.closest('label')?.textContent).toContain('Semanas com jogo');
+    expect(form.querySelector('.recurrence-plan-summary')?.textContent)
+      .toContain('1 por semana durante 4 semanas = 4 sessões');
+    expect(form.querySelectorAll('.recurrence-plan-summary')[1]?.textContent)
+      .toContain('as inscrições das 4 sessões abrem todas');
+
+    component.registrationOpeningMode = 'MANUAL';
+    fixture.detectChanges();
+    expect(form.textContent).toContain('Terás de abrir a convocatória de cada jogo individualmente');
+
+    component.registrationOpeningMode = 'SCHEDULED';
+    fixture.detectChanges();
+    expect(form.textContent).toContain('as seguintes uma semana depois da anterior');
+  });
+
+  it('allows three weekly games with separate first-week dates and shows 12 future games', () => {
+    component.communityId = 7;
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.gameDate = '2099-10-15T18:00';
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    // Initialize the ngModel-backed selector before simulating the user's choice.
+    fixture.detectChanges();
+    component.setWeeklySessionsPerWeek(3);
+    fixture.detectChanges();
+    expect(component.additionalWeeklyGameDates.length).toBe(2);
+
+    const form = fixture.nativeElement as HTMLElement;
+    const extras = form.querySelectorAll('input.weekly-game-date');
+    expect(extras.length).toBe(2);
+    expect(form.textContent).toContain('3 por semana durante 4 semanas = 12 sessões');
+    component.additionalWeeklyGameDates = ['2099-10-16T19:00', '2099-10-17T20:00'];
+    component.registrationOpeningMode = 'MANUAL';
+    fixture.detectChanges();
+    expect(form.textContent).toContain('As 12 sessões ficam fechadas');
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        recurrence: 'WEEKLY', recurrenceOccurrences: 4,
+        additionalWeeklyGameDates: [
+          new Date('2099-10-16T19:00').toISOString(),
+          new Date('2099-10-17T20:00').toISOString()
+        ],
+        registrationOpeningMode: 'MANUAL'
+      }), undefined
+    );
+  });
+
+  it('rejects duplicated out-of-window weekly dates or more than 52 created games', () => {
+    component.communityId = 7;
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.gameDate = '2099-10-15T18:00';
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.setWeeklySessionsPerWeek(2);
+    component.additionalWeeklyGameDates = ['2099-10-15T18:00'];
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('horários diferentes');
+
+    component.additionalWeeklyGameDates = ['2099-10-23T18:00'];
+    component.createSession();
+    expect(component.errorMessage).toContain('dentro dos 7 dias');
+
+    component.additionalWeeklyGameDates = ['2099-10-17T18:00'];
+    component.recurrenceOccurrences = 27;
+    component.createSession();
+    expect(component.errorMessage).toContain('no máximo 52 sessões');
+    expect(sessionService.create).not.toHaveBeenCalled();
+  });
+
+  it('sends an optional trimmed meeting point without changing venue or address', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.meetingPointInstructions = '  Portão lateral junto ao parque  ';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        address: 'Rua do Campo',
+        meetingPointInstructions: 'Portão lateral junto ao parque'
+      }), undefined);
+  });
+
+  it('rejects overlong and multi-line arrival instructions', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    for (const invalid of ['x'.repeat(241), 'porta\ntraseira']) {
+      component.meetingPointInstructions = invalid;
+      component.createSession();
+      expect(sessionService.create).not.toHaveBeenCalled();
+      expect(component.errorMessage).toBeTruthy();
+    }
+  });
+
+  it('keeps one-weekly-session default compatible with existing request', () => {
+    component.communityId = 7;
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.gameDate = '2099-10-15T18:00';
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        additionalWeeklyGameDates: [], recurrenceOccurrences: 4
+      }), undefined
+    );
+  });
+
+  it('distinguishes fortnightly sessions from weekly game weeks', () => {
+    component.communityId = 7;
+    component.recurrence = 'BIWEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.registrationOpeningMode = 'SCHEDULED';
+    fixture.detectChanges();
+
+    const form = fixture.nativeElement as HTMLElement;
+    expect(form.querySelector('input[name="recurrenceOccurrences"]')?.closest('label')?.textContent)
+      .toContain('Sessões de 2 em 2 semanas');
+    expect(form.querySelector('.recurrence-plan-summary')?.textContent)
+      .toContain('4 sessões, uma de 2 em 2 semanas');
+    expect(form.textContent).toContain('as seguintes de 2 em 2 semanas');
+  });
+
+  it('lets a community organizer choose scheduled or manual callup opening', () => {
+    component.communityId = 7;
+    fixture.detectChanges();
+    const mode = fixture.debugElement.query(By.css(
+      'app-jynlo-select[name="registrationOpeningMode"]'
+    )).componentInstance as JynloSelectComponent;
+    expect(mode.options.map(option => option.value)).toEqual([
+      'IMMEDIATE', 'SCHEDULED', 'MANUAL'
+    ]);
+    component.registrationOpeningMode = 'SCHEDULED';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="registrationOpensAt"]'))
+      .not.toBeNull();
+    component.registrationOpeningMode = 'MANUAL';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="registrationOpensAt"]'))
+      .toBeNull();
+  });
+
+  it('requires a future scheduled callup before kickoff', () => {
+    component.communityId = 7;
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.registrationOpeningMode = 'SCHEDULED';
+    component.registrationOpensAt = '2099-10-15T19:00';
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('abrir as inscrições');
+
+    component.registrationOpensAt = '2099-10-14T12:00';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        registrationOpeningMode: 'SCHEDULED',
+        registrationOpensAt: new Date('2099-10-14T12:00').toISOString()
+      }), undefined
+    );
+  });
+
+  it('creates a manually gated callup only for community sessions', () => {
+    component.communityId = 7;
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.registrationOpeningMode = 'MANUAL';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        registrationOpeningMode: 'MANUAL',
+        registrationOpensAt: null
+      }), undefined
+    );
+
+    sessionService.create.calls.reset();
+    component.communityId = null;
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({ registrationOpeningMode: 'IMMEDIATE' }), undefined
+    );
   });
 
   it('offers three exclusive location methods without requiring a venue in the catalogue', () => {
@@ -71,12 +504,12 @@ describe('Events2Component', () => {
     ) as HTMLButtonElement[];
     expect(buttons.length).toBe(3);
     expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
-    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]')).toBeTruthy();
 
     buttons[1].click();
     fixture.detectChanges();
     expect(component.locationMethod).toBe('maps');
-    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('input[name="venueMapLink"]')).toBeTruthy();
 
     fixture.nativeElement.querySelectorAll('.location-method')[2].click();
@@ -88,7 +521,7 @@ describe('Events2Component', () => {
     fixture.nativeElement.querySelectorAll('.location-method')[0].click();
     fixture.detectChanges();
     expect(component.locationMethod).toBe('venue');
-    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]')).toBeTruthy();
   });
 
   it('requires resolving a Maps URL before creating a session without a saved venue', () => {
@@ -113,6 +546,50 @@ describe('Events2Component', () => {
         latitude: 38.7, longitude: -9.1, venueId: null, city: 'Lisboa'
       }), undefined
     );
+  });
+
+  it('automatically fills locality and street after a Google Maps link is resolved', fakeAsync(() => {
+    venueService.reverseLocation.and.returnValue(of({
+      city:'Agualva-Cacém',address:'Rua das Flores',
+      distanceMeters:20,provider:'My Geocode'
+    }));
+    venueService.resolveMapLink.and.returnValue(of({
+      resolvedUrl:'https://www.google.com/maps?q=38.765,-9.29',
+      latitude:38.765,longitude:-9.29
+    }));
+    component.chooseLocationMethod('maps');
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.765,-9.29');
+    component.resolveVenueMapLink();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(venueService.reverseLocation).toHaveBeenCalledWith(38.765,-9.29,undefined);
+    expect(component.locationSource).toBe('map');
+    expect(component.city).toBe('Agualva-Cacém');
+    expect(component.address).toBe('Rua das Flores');
+    expect((fixture.nativeElement.querySelector('input[name="city"]') as HTMLInputElement).value)
+      .toBe('Agualva-Cacém');
+    expect((fixture.nativeElement.querySelector('input[name="address"]') as HTMLInputElement).value)
+      .toBe('Rua das Flores');
+  }));
+
+  it('ignores the old map address response if the Google Maps link changes', () => {
+    const old=new Subject<{city:string|null;address:string|null;distanceMeters:number|null;provider:string}>();
+    venueService.reverseLocation.and.returnValue(old.asObservable());
+    venueService.resolveMapLink.and.returnValue(of({
+      resolvedUrl:'https://www.google.com/maps?q=38.72,-9.14',latitude:38.72,longitude:-9.14
+    }));
+    component.chooseLocationMethod('maps');
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.72,-9.14');
+    component.resolveVenueMapLink();
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.70,-9.16');
+    old.next({city:'Lisboa',address:'Rua anterior',distanceMeters:10,provider:'My Geocode'});
+    old.complete();
+    expect(component.city).toBe('');
+    expect(component.address).toBe('');
+    expect(component.hasCoordinates).toBeFalse();
   });
 
   it('replaces Maps coordinates with current GPS and never reuses them on switching source', () => {
@@ -189,7 +666,7 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('.venue-load-error')).toBeNull();
   });
 
-  it('keeps a newly saved venue when the initial catalog response arrives late', () => {
+  it('keeps a pending suggestion out of public results, even after an older listing returns', () => {
     const pending = new Subject<VenueSuggestionPage>();
     venueService.suggest.and.returnValue(pending.asObservable());
     component.loadVenues();
@@ -197,26 +674,22 @@ describe('Events2Component', () => {
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua Nova';
-    venueService.create.and.returnValue(of({
-      id: 801, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
+    venueService.submitSuggestion.and.returnValue(of({id: 801, status: 'PENDING'}));
 
     component.saveVenue();
-    expect(component.selectedVenueId).toBe(801);
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSuggestionSubmitted).toBeTrue();
 
-    pending.next({ venues: [{
-      id: 802, name: 'Campo Antigo', city: 'Porto',
+    pending.next({ venues: [{ id: 802, name: 'Campo Antigo', city: 'Porto',
       address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
     } as Venue], page: 0, hasMore: false });
     pending.complete();
 
-    expect(component.venues.map(venue => venue.id)).toEqual([802, 801]);
-    expect(component.selectedVenueId).toBe(801);
-    expect(component.selectedVenue()?.name).toBe('Campo Novo');
+    expect(component.venues.map(venue => venue.id)).toEqual([802]);
+    expect(component.selectedVenueId).toBeNull();
   });
 
-  it('retains saved venues if a pending catalog refresh fails', () => {
+  it('never inserts a pending suggestion into the approved venue cache after a request failure', () => {
     const pending = new Subject<VenueSuggestionPage>();
     venueService.suggest.and.returnValue(pending.asObservable());
     component.loadVenues();
@@ -224,41 +697,14 @@ describe('Events2Component', () => {
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua Nova';
-    venueService.create.and.returnValue(of({
-      id: 801, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
+    venueService.submitSuggestion.and.returnValue(of({id: 801, status: 'PENDING'}));
 
     component.saveVenue();
     pending.error(new Error('Offline'));
 
     expect(component.venuesLoadError).toBeTrue();
-    expect(component.venues.map(venue => venue.id)).toEqual([801]);
-    expect(component.selectedVenue()?.name).toBe('Campo Novo');
-  });
-
-  it('does not duplicate a saved venue if it is also in the catalog response', () => {
-    const pending = new Subject<VenueSuggestionPage>();
-    venueService.suggest.and.returnValue(pending.asObservable());
-    component.loadVenues();
-    component.sport = 'Padel';
-    component.venueName = 'Campo Novo';
-    component.city = 'Lisboa';
-    component.address = 'Rua Nova';
-    venueService.create.and.returnValue(of({
-      id: 801, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
-
-    component.saveVenue();
-    pending.next({ venues: [{
-      id: 801, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue], page: 0, hasMore: false });
-    pending.complete();
-
-    expect(component.venues.filter(venue => venue.id === 801).length).toBe(1);
-    expect(component.selectedVenueId).toBe(801);
+    expect(component.venues).toEqual([]);
+    expect(component.selectedVenueId).toBeNull();
   });
 
   it('prefills an editable sport and locality from Discover', () => {
@@ -304,13 +750,14 @@ describe('Events2Component', () => {
     const route = TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    component.selectCreationMode('COMPLETE');
     fixture.detectChanges();
 
     expect(component.findPlayersMode).toBeTrue();
     expect(fixture.nativeElement.querySelector('.page-header h1')?.textContent)
-      .toContain('Encontrar jogadores');
-    expect(fixture.nativeElement.querySelector('.recruit-context')?.textContent)
-      .toContain('total de jogadores');
+      .toContain('Criar uma sessão');
+    expect(fixture.nativeElement.querySelector('.create-mode-feedback')?.textContent)
+      .toContain('confirmados');
     expect(fixture.nativeElement.querySelector('input[name="privateGame"]')).toBeNull();
 
     component.sport = 'Padel';
@@ -384,6 +831,7 @@ describe('Events2Component', () => {
     const route = TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    component.selectCreationMode('COMPLETE');
     fixture.detectChanges();
 
     component.sport = 'Padel';
@@ -413,6 +861,7 @@ describe('Events2Component', () => {
     const route = TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    component.selectCreationMode('COMPLETE');
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
     component.city = 'Lisboa';
@@ -439,6 +888,388 @@ describe('Events2Component', () => {
     const request = sessionService.create.calls.mostRecent().args[0];
     expect(request.externalConfirmedParticipants).toBeUndefined();
     expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).toBeNull();
+  });
+
+  it('lets the organiser choose between starting a game and completing a known team', () => {
+    fixture.detectChanges();
+    const buttons=fixture.nativeElement.querySelectorAll('.create-mode-option');
+    expect(buttons.length).toBe(2);
+    expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
+    buttons[1].click();
+    fixture.detectChanges();
+    expect(component.findPlayersMode).toBeTrue();
+    expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).not.toBeNull();
+    buttons[0].click();
+    fixture.detectChanges();
+    expect(component.findPlayersMode).toBeFalse();
+    expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).toBeNull();
+  });
+
+  it('blocks sharing sessions into admin-only communities for ordinary members', async () => {
+    const group = (id: number, role: 'MEMBER' | 'ADMIN', membersCanCreateSessions: boolean) => ({
+      id, name: 'Grupo ' + id, myRole: role, membersCanCreateSessions,
+      description: null, sport: 'Futebol', photoUrl: null, visibility: 'PRIVATE',
+      rankingsEnabled: false, ownerUsername: 'owner', memberCount: 1,
+      createdAt: '2026-01-01', members: []
+    } as any);
+    component.communities = [group(12, 'MEMBER', false), group(13, 'ADMIN', false), group(14, 'MEMBER', true)];
+    expect(component.canCreateForCommunity(component.communities[0])).toBeFalse();
+    expect(component.canCreateForCommunity(component.communities[1])).toBeTrue();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('.create-share-community input') as NodeListOf<HTMLInputElement>;
+    expect(options.length).toBe(3);
+    expect(options[0].disabled).toBeTrue();
+    expect(options[1].disabled).toBeFalse();
+    component.toggleCommunityShare(12, true);
+    expect(component.shareCommunityIds).toEqual([]);
+    component.toggleCommunityShare(13, true);
+    component.toggleCommunityShare(14, true);
+    expect(component.shareCommunityIds).toEqual([13, 14]);
+
+    // A stale client cannot force an admin-only community into its payload.
+    component.shareCommunityIds = [12];
+    expect((component as any).validate()).toContain('administradores');
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+  });
+
+  it('shows why a direct community session is unavailable to a non-admin', () => {
+    component.communityId = 12;
+    component.directCommunity = {
+      id: 12, myRole: 'MEMBER', membersCanCreateSessions: false
+    } as any;
+    fixture.detectChanges();
+    expect(component.communityCreationBlocked).toBeTrue();
+    expect((component as any).validate()).toContain('administradores');
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    component.directCommunity!.myRole = 'ADMIN';
+    expect(component.communityCreationBlocked).toBeFalse();
+  });
+
+  it('selects up to five own communities and creates one public session for them', () => {
+    component.communities = [12, 13, 14, 15, 16, 17].map(id => ({
+      id, name:'Comunidade '+id, myRole:'MEMBER', description:null, sport:'Futebol',
+      photoUrl:null, visibility:'PRIVATE', rankingsEnabled:false,
+      ownerUsername:'owner', memberCount:1, createdAt:'2026-01-01', members:[]
+    }));
+    fixture.detectChanges();
+    const choices=fixture.nativeElement.querySelectorAll('.create-share-community input');
+    expect(choices.length).toBe(6);
+    component.toggleCommunityShare(12,true);
+    component.toggleCommunityShare(13,true);
+    component.toggleCommunityShare(14,true);
+    component.toggleCommunityShare(15,true);
+    component.toggleCommunityShare(16,true);
+    component.toggleCommunityShare(17,true);
+    expect(component.shareCommunityIds).toEqual([12,13,14,15,16]);
+    expect(component.privateGame).toBeFalse();
+    expect(component.communitySessionSelected).toBeTrue();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="recurrence"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="registrationOpeningMode"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="privateGame"]')).toBeNull();
+    component.sport='Futebol';
+    component.gameDate='2099-10-15T18:00';
+    component.city='Lisboa';
+    component.address='Rua do Campo';
+    component.createSession();
+    const request=sessionService.create.calls.mostRecent().args[0];
+    expect(request.communityShareIds).toEqual([12,13,14,15,16]);
+    expect(request.communityId).toBeNull();
+    expect(request.externalConfirmedParticipants).toBeUndefined();
+  });
+
+  it('supports weekly repeats and scheduled registration when several communities are selected', () => {
+    component.communities = [12, 13].map(id => ({
+      id, name: 'Grupo ' + id, myRole: 'MEMBER', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: false,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }));
+    component.toggleCommunityShare(12, true);
+    component.toggleCommunityShare(13, true);
+    component.sport = 'Futebol';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.registrationOpeningMode = 'SCHEDULED';
+    component.registrationOpensAt = '2099-10-14T18:00';
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('input[name="recurrenceOccurrences"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="registrationOpensAt"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Exclusiva para membros');
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [12, 13],
+        communityId: null,
+        privateGame: false,
+        password: null,
+        recurrence: 'WEEKLY',
+        recurrenceOccurrences: 4,
+        registrationOpeningMode: 'SCHEDULED',
+        registrationOpensAt: new Date('2099-10-14T18:00').toISOString()
+      }), undefined);
+  });
+
+  it('hides repeat options again and sends a public one-off session after deselecting communities', () => {
+    component.communities = [12].map(id => ({
+      id, name: 'Grupo ' + id, myRole: 'MEMBER', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: false,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }));
+    component.toggleCommunityShare(12, true);
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.registrationOpeningMode = 'MANUAL';
+    component.toggleCommunityShare(12, false);
+    fixture.detectChanges();
+    expect(component.communitySessionSelected).toBeFalse();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="recurrence"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="registrationOpeningMode"]')).toBeNull();
+    component.sport = 'Futebol';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [], recurrence: 'NONE',
+        registrationOpeningMode: 'IMMEDIATE'
+      }), undefined);
+  });
+
+  it('prefills a saved Maps point and still allows the organiser to pick another location', () => {
+    component.communities = [{
+      id: 12, name: 'ACM', sport: 'Futebol', sports: ['Futebol'],
+      habitualLocationSource: 'MAPS', habitualLatitude: 38.73,
+      habitualLongitude: -9.18, habitualCity: 'Lisboa',
+      habitualAddress: 'Rua do Campo',
+      myRole: 'MEMBER', description: null, photoUrl: null, visibility: 'PRIVATE',
+      rankingsEnabled: false, ownerUsername: 'owner', memberCount: 1,
+      createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    expect(component.locationMethod).toBe('maps');
+    expect(component.latitude).toBe(38.73);
+    expect(component.longitude).toBe(-9.18);
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua do Campo');
+
+    component.chooseLocationMethod('venue');
+    expect(component.locationMethod).toBe('venue');
+    expect(component.locationCaptured).toBeFalse();
+    component.city = 'Porto'; // Manual choices must not be overwritten.
+    component.toggleCommunityShare(12, false);
+    component.toggleCommunityShare(12, true);
+    expect(component.city).toBe('Porto');
+    expect(component.locationMethod).toBe('venue');
+  });
+
+  it('does not preselect conflicting habitual points for different communities', () => {
+    component.communities = [12, 13].map((id, i) => ({
+      id, name: 'Grupo ' + id, sport: 'Futebol', sports: ['Futebol'],
+      habitualLocationSource: 'GPS' as const,
+      habitualLatitude: 38.7 + i, habitualLongitude: -9.2,
+      habitualCity: 'Lisboa', habitualAddress: 'Rua A',
+      myRole: 'MEMBER' as const, description: null, photoUrl: null,
+      visibility: 'PRIVATE' as const, rankingsEnabled: false,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01',
+      members: []
+    }));
+    component.toggleCommunityShare(12, true);
+    expect(component.locationMethod).toBe('gps');
+    component.toggleCommunityShare(13, true);
+    expect(component.locationMethod).toBe('venue');
+    expect(component.latitude).toBeNull();
+    expect(component.city).toBe('');
+  });
+
+  it('fills the sport and the habitual venue when one community is selected', () => {
+    venueService.get.and.returnValue(of({
+      id: 55, name: 'Pavilhão Municipal', city: 'Lisboa', district: 'Lisboa',
+      address: 'Rua do Pavilhão', sports: 'Futebol', latitude: 38.7, longitude: -9.2
+    } as Venue));
+    component.communities = [{
+      id: 12, name: 'ACM', sport: 'Futebol', sports: ['Futebol'],
+      defaultVenueId: 55, defaultVenueName: 'Pavilhão Municipal',
+      myRole: 'MEMBER', description: null, photoUrl: null, visibility: 'PRIVATE',
+      rankingsEnabled: false, ownerUsername: 'owner', memberCount: 1,
+      createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    fixture.detectChanges();
+    expect(component.sport).toBe('Futebol');
+    expect(component.selectedVenueId).toBe(55);
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua do Pavilhão');
+    expect(venueService.get).toHaveBeenCalledWith(55);
+  });
+
+  it('does not guess a sport or habitual venue when communities disagree', () => {
+    venueService.get.and.returnValue(of({
+      id: 55, name: 'Campo A', city: 'Lisboa', district: 'Lisboa',
+      address: 'Rua A', sports: 'Futebol', latitude: null, longitude: null
+    } as Venue));
+    component.communities = [
+      {id: 12, name: 'Futebol', sport: 'Futebol', sports: ['Futebol'],
+       defaultVenueId: 55, myRole: 'MEMBER'},
+      {id: 13, name: 'Padel', sport: 'Padel', sports: ['Padel'],
+       defaultVenueId: 66, myRole: 'MEMBER'}
+    ] as any;
+    component.toggleCommunityShare(12, true);
+    expect(component.sport).toBe('Futebol');
+    component.toggleCommunityShare(13, true);
+    expect(component.sport).toBe('');
+    expect(component.selectedVenueId).toBeNull();
+    // The first group's suggestion is removed when a second, incompatible group joins.
+    expect(venueService.get).toHaveBeenCalledWith(55);
+  });
+
+  it('keeps the sport manually chosen by the organiser when a community is selected', () => {
+    component.sport = 'Padel';
+    component.communities = [{
+      id: 12, name: 'ACM', sport: 'Futebol', sports: ['Futebol'],
+      myRole: 'MEMBER', description: null, photoUrl: null, visibility: 'PRIVATE',
+      rankingsEnabled: false, ownerUsername: 'owner', memberCount: 1,
+      createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    expect(component.sport).toBe('Padel');
+  });
+
+  it('shows the season game option only after selecting a community', () => {
+    expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).toBeNull();
+    component.communities = [{
+      id: 12, name: 'ACM', myRole: 'ADMIN', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: true,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).not.toBeNull();
+    component.toggleSeasonGame(true);
+    fixture.detectChanges();
+    expect(component.seasonGameCommunityId).toBe(12);
+    expect(fixture.nativeElement.querySelector('select[name="seasonGameCommunityId"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('época de ACM');
+    expect(fixture.nativeElement.textContent).toContain('Jogo de época');
+    component.toggleCommunityShare(12, false);
+    fixture.detectChanges();
+    expect(component.seasonGame).toBeFalse();
+    expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).toBeNull();
+  });
+
+  it('requires explicit consent from any member when classifications are off', () => {
+    communityGroups.competition.and.returnValue(of({
+      settings: { rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 },
+      seasons: [], selectedSeasonId: null, activeSeasonId: null,
+      rounds: [], standings: [], racketStandings: [], raceStandings: []
+    }));
+    component.communities = [{
+      id: 12, name: 'ACM', myRole: 'ADMIN', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: false,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    component.toggleSeasonGame(true);
+    component.sport = 'Futebol';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('serão ativadas');
+    expect(fixture.nativeElement.querySelector('input[name="confirmActivateRankings"]')).not.toBeNull();
+
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('Compreendo');
+    component.confirmActivateRankings = true;
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [12], seasonCompetitionCommunityId: 12,
+        confirmActivateRankings: true
+      }), undefined);
+  });
+
+  it('allows an ordinary member to enable standings and create a default season with consent', () => {
+    communityGroups.competition.and.returnValue(of({
+      settings: { rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 },
+      seasons: [], selectedSeasonId: null, activeSeasonId: null,
+      rounds: [], standings: [], racketStandings: [], raceStandings: []
+    }));
+    component.communities = [{
+      id: 12, name: 'ACM', myRole: 'MEMBER', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: false,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }];
+    component.toggleCommunityShare(12, true);
+    component.toggleSeasonGame(true);
+    component.sport = 'Futebol';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="confirmActivateRankings"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Época [ano do jogo]');
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    component.confirmActivateRankings = true;
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [12], seasonCompetitionCommunityId: 12,
+        confirmActivateRankings: true
+      }), undefined);
+  });
+
+  it('hides season scoring when a second community is selected and never reactivates automatically', () => {
+    component.communities = [12, 13].map(id => ({
+      id, name: 'Grupo ' + id, myRole: 'MEMBER', description: null, sport: 'Futebol',
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: true,
+      ownerUsername: 'owner', memberCount: 1, createdAt: '2026-01-01', members: []
+    }));
+    component.toggleCommunityShare(12, true);
+    component.toggleSeasonGame(true);
+    expect(component.seasonGame).toBeTrue();
+    component.toggleCommunityShare(13, true);
+    fixture.detectChanges();
+    expect(component.seasonGame).toBeFalse();
+    expect(component.seasonGameCommunityId).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('não conta para a classificação');
+    component.sport = 'Futebol';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        communityShareIds: [12, 13], seasonCompetitionCommunityId: null,
+        confirmActivateRankings: false
+      }), undefined);
+    component.toggleCommunityShare(13, false);
+    fixture.detectChanges();
+    expect(component.canMarkSeasonGame).toBeTrue();
+    expect(component.seasonGame).toBeFalse();
+    expect(fixture.nativeElement.querySelector('input[name="seasonGame"]')).not.toBeNull();
+  });
+
+  it('keeps direct community-session creation separate from cross-posting', () => {
+    component.communities=[];
+    component.communityId=12;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.create-share-panel[aria-labelledby="create-share-title"]')).toBeNull();
+    component.toggleCommunityShare(12,true);
+    expect(component.shareCommunityIds).toEqual([]);
   });
 
   it('should reject an incomplete session', () => {
@@ -476,12 +1307,12 @@ describe('Events2Component', () => {
     component.privateGame = true;
     component.password = 'secret';
     component.createSession();
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42], {});
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42], { queryParams: { created: 1 } });
   });
 
-  it('waits for a newly created venue before submitting the session', () => {
-    const pending = new Subject<Venue>();
-    venueService.create.and.returnValue(pending.asObservable());
+  it('blocks session submission during a pending venue submission but never attaches its id', () => {
+    const pending = new Subject<{ id: number; status: string }>();
+    venueService.submitSuggestion.and.returnValue(pending.asObservable());
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
     component.city = 'Lisboa';
@@ -490,35 +1321,26 @@ describe('Events2Component', () => {
 
     component.saveVenue();
     fixture.detectChanges();
-
-    const submit = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
     expect(component.venueSaving).toBeTrue();
-    expect(submit.disabled).toBeTrue();
-
     component.createSession();
     expect(sessionService.create).not.toHaveBeenCalled();
 
-    pending.next({
-      id: 303, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
-    } as Venue);
+    pending.next({id: 303, status: 'PENDING'});
     pending.complete();
     fixture.detectChanges();
 
     expect(component.venueSaving).toBeFalse();
-    expect(component.selectedVenueId).toBe(303);
-    expect(submit.disabled).toBeFalse();
-
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSuggestionSubmitted).toBeTrue();
     component.createSession();
     expect(sessionService.create).toHaveBeenCalledWith(
-      jasmine.objectContaining({ venueId: 303, sport: 'Padel' }),
-      undefined
+      jasmine.objectContaining({ venueId: null, sport: 'Padel' }), undefined
     );
   });
 
-  it('re-enables session submission after venue creation fails', () => {
-    const pending = new Subject<Venue>();
-    venueService.create.and.returnValue(pending.asObservable());
+  it('re-enables session submission after a venue suggestion fails', () => {
+    const pending = new Subject<{ id: number; status: string }>();
+    venueService.submitSuggestion.and.returnValue(pending.asObservable());
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
     component.city = 'Lisboa';
@@ -528,14 +1350,12 @@ describe('Events2Component', () => {
     component.saveVenue();
     component.createSession();
     expect(sessionService.create).not.toHaveBeenCalled();
-
     pending.error(new Error('Service unavailable'));
     fixture.detectChanges();
 
     const submit = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
     expect(component.venueSaving).toBeFalse();
     expect(submit.disabled).toBeFalse();
-
     component.createSession();
     expect(sessionService.create).toHaveBeenCalledTimes(1);
   });
@@ -640,6 +1460,73 @@ describe('Events2Component', () => {
     expect(component.latitude).toBe(38.72);
     expect(component.longitude).toBe(-9.14);
     expect(component.gpsAccuracyMeters).toBe(24);
+  });
+
+  it('fills locality and street using a GPS-triggered reverse lookup, preserving the exact pin', fakeAsync(() => {
+    venueService.reverseLocation.and.returnValue(of({
+      city: 'Agualva-Cacém', address: 'Rua de São João', distanceMeters: 24,
+      provider: 'My Geocode'
+    }));
+    component.chooseLocationMethod('gps');
+    component.applyCurrentPosition(38.7655,-9.2902,79);
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(venueService.reverseLocation).toHaveBeenCalledWith(38.7655,-9.2902,79);
+    expect(component.city).toBe('Agualva-Cacém');
+    expect(component.address).toBe('Rua de São João');
+    expect(component.latitude).toBe(38.7655);
+    expect(component.longitude).toBe(-9.2902);
+    expect(component.gpsAddressNotice).toContain('Localidade e rua preenchidas');
+    const cityField = fixture.nativeElement.querySelector('input[name="city"]') as HTMLInputElement;
+    const roadField = fixture.nativeElement.querySelector('input[name="address"]') as HTMLInputElement;
+    expect(cityField.value).toBe('Agualva-Cacém');
+    expect(roadField.value).toBe('Rua de São João');
+  }));
+
+  it('cannot overwrite manual edits or a changed GPS point with a delayed reverse result', () => {
+    const first = new Subject<{city:string|null;address:string|null;distanceMeters:number|null;provider:string}>();
+    venueService.reverseLocation.and.returnValue(first.asObservable());
+    component.applyCurrentPosition(38.72,-9.14,15);
+    expect(component.gpsAddressLoading).toBeTrue();
+    component.onCityChanged('Localidade escolhida');
+    component.address='Morada personalizada';
+    first.next({city:'Lisboa',address:'Rua Diferente',distanceMeters:5,provider:'My Geocode'});
+    first.complete();
+    expect(component.city).toBe('Localidade escolhida');
+    expect(component.address).toBe('Morada personalizada');
+    expect(component.gpsAddressLoading).toBeFalse();
+
+    const old = new Subject<{city:string|null;address:string|null;distanceMeters:number|null;provider:string}>();
+    venueService.reverseLocation.and.returnValue(old.asObservable());
+    component.applyCurrentPosition(38.73,-9.15,20);
+    component.clearLocation();
+    old.next({city:'Porto',address:'Rua Antiga',distanceMeters:5,provider:'My Geocode'});
+    old.complete();
+    expect(component.city).toBe('Localidade escolhida');
+    expect(component.address).toBe('Morada personalizada');
+    expect(component.latitude).toBeNull();
+    expect(component.gpsAddressNotice).toBe('');
+  });
+
+  it('does not block GPS when the address provider fails, and clears only auto-filled details', () => {
+    venueService.reverseLocation.and.returnValue(of({
+      city:'Lisboa',address:'Rua do Campo',distanceMeters:20,provider:'My Geocode'
+    }));
+    component.applyCurrentPosition(38.72,-9.14,40);
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua do Campo');
+    component.address='Rua confirmada manualmente';
+    component.clearLocation();
+    expect(component.city).toBe('');
+    expect(component.address).toBe('Rua confirmada manualmente');
+    expect(component.latitude).toBeNull();
+
+    venueService.reverseLocation.and.returnValue(throwError(()=>new Error('unavailable')));
+    component.applyCurrentPosition(38.72,-9.14,40);
+    expect(component.hasCoordinates).toBeTrue();
+    expect(component.gpsAddressNotice).toContain('manualmente');
+    expect(component.gpsAddressLoading).toBeFalse();
   });
 
   it('shows the browser-reported GPS accuracy and warns when it exceeds 100 metres', () => {
@@ -1001,17 +1888,16 @@ describe('Events2Component', () => {
     );
   });
 
-  it('lets the organiser replace a selected venue with another in a different city', () => {
-    component.venues = [
-      {
-        id: 101, name: 'Campo de Lisboa', city: 'Lisboa',
-        address: 'Rua A', sports: 'Padel', latitude: 38.72, longitude: -9.14
-      } as Venue,
-      {
-        id: 102, name: 'Campo do Porto', city: 'Porto',
-        address: 'Rua B', sports: 'Padel', latitude: 41.15, longitude: -8.61
-      } as Venue
-    ];
+  it('lets the organiser replace a selected venue after switching district and searching the server', fakeAsync(() => {
+    const lisbon = {
+      id: 101, name: 'Campo de Lisboa', city: 'Lisboa',
+      address: 'Rua A', sports: 'Padel', latitude: 38.72, longitude: -9.14
+    } as Venue;
+    const porto = {
+      id: 102, name: 'Campo do Porto', city: 'Porto',
+      address: 'Rua B', sports: 'Padel', latitude: 41.15, longitude: -8.61
+    } as Venue;
+    component.venues = [lisbon];
     component.sport = 'Padel';
     component.selectVenue(101);
     component.venueSearch = 'Campo de Lisboa · Lisboa';
@@ -1019,22 +1905,41 @@ describe('Events2Component', () => {
 
     expect(component.selectedVenueId).toBe(101);
     expect(component.city).toBe('Lisboa');
-    expect(component.venueOptions.map(venue => venue.id)).toEqual([101]);
 
-    const search = fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement;
-    search.value = 'Campo do Porto · Porto';
-    search.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    expect(component.venueSearch).toBe('Campo do Porto · Porto');
+    // Old results cannot be selected in a new district or during debounce.
+    venueService.suggest.and.returnValue(of({ venues: [porto], page: 0, hasMore: false }));
+    component.onDistrictChanged('Porto');
     expect(component.selectedVenueId).toBeNull();
     expect(component.city).toBe('');
     expect(component.address).toBe('');
     expect(component.latitude).toBeNull();
     expect(component.longitude).toBeNull();
-    expect(component.venueOptions.map(venue => venue.id)).toEqual([102]);
 
-    search.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    (select.querySelector('.jynlo-select__trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    tick();
+    const search = select.querySelector('.jynlo-select__search') as HTMLInputElement;
+    search.value = 'Campo do Porto · Porto';
+    search.dispatchEvent(new Event('input', {bubbles: true}));
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.venueOptions).toEqual([]);
+    tick(300);
+    fixture.detectChanges();
+
+    expect(venueService.suggest).toHaveBeenCalledWith('Campo do Porto', 'Porto', 'Padel', 0, 'Porto');
+    expect(component.venueOptions.map(venue => venue.id)).toEqual([102]);
+    const option = select.querySelector('.jynlo-select__option') as HTMLButtonElement;
+    expect(option).not.toBeNull();
+    option.click();
+    fixture.detectChanges();
+    tick();
     fixture.detectChanges();
 
     expect(component.selectedVenueId).toBe(102);
@@ -1042,7 +1947,7 @@ describe('Events2Component', () => {
     expect(component.address).toBe('Rua B');
     expect(component.latitude).toBe(41.15);
     expect(component.longitude).toBe(-8.61);
-  });
+  }));
 
   it('keeps manually entered location when searching without a selected venue', () => {
     component.sport = 'Padel';
@@ -1120,7 +2025,7 @@ describe('Events2Component', () => {
     expect(component.address).toBe('');
     expect(component.latitude).toBeNull();
     expect(component.longitude).toBeNull();
-    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]')).toBeNull();
     expect(component.venueSearch).toBe('');
   });
 
@@ -1424,7 +2329,7 @@ describe('Events2Component', () => {
 
     component.saveVenue();
 
-    expect(venueService.create).not.toHaveBeenCalled();
+    expect(venueService.submitSuggestion).not.toHaveBeenCalled();
     expect(component.venueSaving).toBeFalse();
     expect(component.errorMessage).toContain('modalidade');
   });
@@ -1437,86 +2342,41 @@ describe('Events2Component', () => {
 
     component.saveVenue();
 
-    expect(venueService.create).not.toHaveBeenCalled();
+    expect(venueService.submitSuggestion).not.toHaveBeenCalled();
     expect(component.errorMessage).toContain('modalidade');
   });
 
-  it('sends the selected catalog sport when saving a venue', () => {
-    venueService.create.and.returnValue(of({
-      id: 303, name: 'Campo Novo', city: 'Lisboa', address: 'Rua A',
-      sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
-    component.sport = 'Padel';
-    component.venueName = 'Campo Novo';
-    component.city = 'Lisboa';
-    component.address = 'Rua A';
-
-    component.saveVenue();
-
-    expect(venueService.create).toHaveBeenCalledWith(
-      jasmine.objectContaining({ sports: 'Padel', name: 'Campo Novo' })
-    );
-    expect(component.selectedVenueId).toBe(303);
-  });
-
-  it('selects a newly created venue and refreshes its search, map and photograph', () => {
-    const venue = {
-      id: 301, name: 'Campo Novo', city: 'Lisboa', address: 'Rua A',
-      sports: 'Padel', latitude: 38.72, longitude: -9.14
-    } as Venue;
-    venueService.create.and.returnValue(of(venue));
-    venueService.listPhotos.and.returnValue(of([{
-      id: 8, photoUrl: '/new-venue.jpg', uploadedByUsername: null,
-      createdAt: '2026-10-14T00:00:00Z'
-    }]));
+  it('submits a new venue suggestion without making it selectable before approval', () => {
+    venueService.submitSuggestion.and.returnValue(of({ id: 303, status: 'PENDING' }));
     component.sport = 'Padel';
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua A';
     component.showVenueCreator = true;
-    component.applyCurrentPosition(38.72, -9.14, 17);
-
     component.saveVenue();
-    fixture.detectChanges();
 
-    expect(venueService.create).toHaveBeenCalledTimes(1);
-    expect(venueService.listPhotos).toHaveBeenCalledWith(301);
-    expect(component.selectedVenueId).toBe(301);
-    expect(component.venueSearch).toBe('Campo Novo · Lisboa');
-    expect(component.city).toBe('Lisboa');
-    expect(component.address).toBe('Rua A');
-    expect(component.latitude).toBe(38.72);
-    expect(component.longitude).toBe(-9.14);
-    expect(component.locationSource).toBeNull();
-    expect(component.selectedVenuePhoto?.photoUrl).toBe('/new-venue.jpg');
+    expect(venueService.submitSuggestion).toHaveBeenCalledWith(
+      jasmine.objectContaining({ sports: 'Padel', name: 'Campo Novo' })
+    );
+    expect(component.venueSuggestionSubmitted).toBeTrue();
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venues.some(v => v.id === 303)).toBeFalse();
+    expect(venueService.listPhotos).not.toHaveBeenCalledWith(303);
     expect(component.showVenueCreator).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.venue-preview img')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.venue-preview iframe')).not.toBeNull();
   });
 
-  it('clears an obsolete map point when a newly saved venue has no coordinates', () => {
-    venueService.create.and.returnValue(of({
-      id: 302, name: 'Campo sem mapa', city: 'Lisboa', address: 'Rua B',
-      sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
+  it('does not turn the new suggestion into a public venue even when GPS is supplied', () => {
+    venueService.submitSuggestion.and.returnValue(of({ id: 301, status: 'PENDING' }));
     component.sport = 'Padel';
-    component.venueName = 'Campo sem mapa';
+    component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
-    component.address = 'Rua B';
-    component.applyCurrentPosition(38.72, -9.14);
-
+    component.address = 'Rua A';
+    component.applyCurrentPosition(38.72, -9.14, 17);
     component.saveVenue();
-    fixture.detectChanges();
 
-    expect(component.selectedVenueId).toBe(302);
-    expect(component.venueSearch).toBe('Campo sem mapa · Lisboa');
-    expect(component.city).toBe('Lisboa');
-    expect(component.address).toBe('Rua B');
-    expect(component.latitude).toBeNull();
-    expect(component.longitude).toBeNull();
-    expect(component.locationCaptured).toBeFalse();
-    expect(component.selectedVenueMapUrl).toBeNull();
-    expect(fixture.nativeElement.querySelector('.venue-preview iframe')).toBeNull();
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSuggestionSubmitted).toBeTrue();
+    expect(component.venues.some(v => v.id === 301)).toBeFalse();
   });
 
   it('should apply a saved venue to the session form', () => {
@@ -1640,7 +2500,7 @@ describe('Events2Component', () => {
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'community' ? '7' : null);
     const communities = TestBed.inject(CommunityGroupsService);
-    spyOn(communities, 'get').and.returnValue(of({
+    communityGroups.get.and.returnValue(of({
       id: 7, name: 'Desportistas de Lisboa', sport: 'Futebol',
       sports: ['Futebol', 'Padel']
     } as any));
@@ -1679,7 +2539,7 @@ describe('Events2Component', () => {
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'community' ? '8' : null);
     const communities = TestBed.inject(CommunityGroupsService);
-    spyOn(communities, 'get').and.returnValue(of({
+    communityGroups.get.and.returnValue(of({
       id: 8, name: 'Futebol de Bairro', sport: 'Futebol'
     } as any));
     const page = TestBed.createComponent(Events2Component);
@@ -1694,7 +2554,7 @@ describe('Events2Component', () => {
     spyOn(route.snapshot.queryParamMap, 'get')
       .and.callFake(name => name === 'community' ? '9' : null);
     const communities = TestBed.inject(CommunityGroupsService);
-    spyOn(communities, 'get').and.returnValue(of({
+    communityGroups.get.and.returnValue(of({
       id: 9, name: 'Desporto Livre', sport: null, sports: []
     } as any));
     const page = TestBed.createComponent(Events2Component);
@@ -1706,5 +2566,231 @@ describe('Events2Component', () => {
     expect(page.componentInstance.sport).toBe('Basquetebol');
     page.destroy();
   });
+
+
+  it('uses the chosen capacity as the minimum when the organiser checks the option', () => {
+    component.sport = 'Futsal';
+    component.maxParticipants = 10;
+    component.capacityIsMinimum = true;
+    component.selectedMinimumPlayers = 6;
+    expect(component.minimumPlayers).toBe(10);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="capacityIsMinimum"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="minParticipants"]')).toBeNull();
+    component.capacityIsMinimum = false;
+    fixture.detectChanges();
+    expect(component.minimumPlayers).toBe(6);
+    const input=fixture.nativeElement.querySelector('input[name="minParticipants"]') as HTMLInputElement;
+    expect(input).not.toBeNull();
+  });
+
+  it('posts the full-capacity minimum, or a custom lower one, with a real session', () => {
+    component.sport = 'Futsal';
+    component.maxParticipants = 10;
+    component.capacityIsMinimum = true;
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.creationMode = 'START';
+    component.createSession();
+    expect(sessionService.create.calls.mostRecent().args[0]).toEqual(
+      jasmine.objectContaining({maxParticipants:10,minParticipants:10}));
+    sessionService.create.calls.reset();
+    component.capacityIsMinimum = false;
+    component.selectedMinimumPlayers = 7;
+    component.createSession();
+    expect(sessionService.create.calls.mostRecent().args[0]).toEqual(
+      jasmine.objectContaining({maxParticipants:10,minParticipants:7}));
+  });
+
+  it('does not send an invalid custom minimum exceeding capacity', () => {
+    component.sport = 'Futsal';
+    component.maxParticipants = 10;
+    component.capacityIsMinimum = false;
+    component.selectedMinimumPlayers = 11;
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('mínimo');
+  });
+
+  it('lets the organiser choose game frequency through the premium selector', fakeAsync(() => {
+    component.communityId = 7;
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="recurrence"]'
+    ) as HTMLElement;
+    expect(select).not.toBeNull();
+    (select.querySelector('button[role="combobox"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(options.length).toBe(3);
+    expect(options[1].textContent).toContain('Todas as semanas');
+    options[1].click();
+    fixture.detectChanges();
+    expect(component.recurrence).toBe('WEEKLY');
+    expect(select.querySelector('.jynlo-select__value')?.textContent).toContain('Todas as semanas');
+    expect(fixture.nativeElement.querySelector('input[name="recurrenceOccurrences"]')).not.toBeNull();
+  }));
+
+  it('keeps weekly count numeric when selected from the premium dropdown', fakeAsync(() => {
+    component.communityId = 7;
+    component.recurrence = 'WEEKLY';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="weeklySessionsPerWeek"]'
+    ) as HTMLElement;
+    (select.querySelector('button[role="combobox"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(options.length).toBe(7);
+    options[2].click();
+    fixture.detectChanges();
+    expect(component.weeklySessionsPerWeek).toBe(3);
+    expect(component.additionalWeeklyGameDates.length).toBe(2);
+  }));
+
+  it('preserves selected district and supports searchable accent-insensitive matching', () => {
+    component.locationMethod = 'venue';
+    component.venueDistrict = 'Lisboa';
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="venueDistrict"]'
+    ) as HTMLElement;
+    expect(select).not.toBeNull();
+    expect(select.querySelector('.jynlo-select__value')?.textContent).toContain('Lisboa');
+    (select.querySelector('button[role="combobox"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const search = select.querySelector('input[type="search"]') as HTMLInputElement;
+    expect(search).not.toBeNull();
+    search.value = 'evora';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const buttons = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(buttons.length).toBe(1);
+    expect(buttons[0].textContent).toContain('Évora');
+    buttons[0].click();
+    fixture.detectChanges();
+    expect(component.venueDistrict).toBe('Évora');
+  });
+
+  it('preserves the difference between unset, false and true for venue facilities', fakeAsync(() => {
+    component.locationMethod = 'venue';
+    component.showVenueCreator = true;
+    component.venueToilets = null;
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="venueToilets"]'
+    ) as HTMLElement;
+    expect(select).not.toBeNull();
+    const trigger = select.querySelector('button[role="combobox"]') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    let options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(options.length).toBe(3);
+    options[2].click();
+    fixture.detectChanges();
+    expect(component.venueToilets).toBeFalse();
+    trigger.click();
+    fixture.detectChanges();
+    options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    options[1].click();
+    fixture.detectChanges();
+    expect(component.venueToilets).toBeTrue();
+    trigger.click();
+    fixture.detectChanges();
+    options = select.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    options[0].click();
+    fixture.detectChanges();
+    expect(component.venueToilets).toBeNull();
+  }));
+
+  it('disables the custom dropdown during form submission', () => {
+    component.communityId = 7;
+    component.loading = true;
+    fixture.detectChanges();
+    const disabled = fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="recurrence"] button[role="combobox"]'
+    ) as HTMLButtonElement;
+    expect(disabled.disabled).toBeTrue();
+    disabled.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="recurrence"] .jynlo-select__popover'
+    )).toBeNull();
+  });
+
+
+  it('searches sports with the premium select and preserves their exact canonical value', fakeAsync(() => {
+    component.sport = 'Futebol';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="sport"]') as HTMLElement;
+    const trigger = host.querySelector('button[role="combobox"]') as HTMLButtonElement;
+    expect(trigger.textContent).toContain('Futebol');
+    trigger.click();
+    fixture.detectChanges();
+    tick();
+    const search = host.querySelector('input[type="search"]') as HTMLInputElement;
+    expect(search).not.toBeNull();
+    search.value = 'padel';
+    search.dispatchEvent(new Event('input', {bubbles: true}));
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const options = host.querySelectorAll<HTMLButtonElement>('button[role="option"]');
+    expect(options.length).toBe(1);
+    expect(options[0].textContent).toContain('Padel');
+    options[0].click();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.sport).toBe('Padel');
+    expect(component.sportSelected).toBeTrue();
+    expect(host.querySelector('.jynlo-select__value')?.textContent).toContain('Padel');
+  }));
+
+  it('does not confuse venue name with its server id or accept stale selected venues', fakeAsync(() => {
+    component.sport = 'Padel';
+    component.venueDistrict = 'Lisboa';
+    component.venues = [{
+      id: 511, name: 'Parque Desportivo', city: 'Lisboa',
+      address: 'Rua do Parque', sports: 'Padel',
+      latitude: 38.7, longitude: -9.2
+    } as Venue];
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    const trigger = host.querySelector('button[role="combobox"]') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    tick();
+    expect(host.querySelector('.jynlo-select__option-description')?.textContent)
+      .toContain('Rua do Parque');
+    const option = host.querySelector('button[role="option"]') as HTMLButtonElement;
+    option.click();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.selectedVenueId).toBe(511);
+    expect(component.address).toBe('Rua do Parque');
+    expect(trigger.textContent).toContain('Parque Desportivo');
+    component.onDistrictChanged('Porto');
+    fixture.detectChanges();
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSearch).toBe('');
+    expect(host.querySelector('.jynlo-select__value')?.textContent)
+      .not.toContain('Parque Desportivo');
+  }));
 
 });

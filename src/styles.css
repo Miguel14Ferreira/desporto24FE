@@ -1,5 +1,18 @@
 @import 'https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css';
 @import 'https://use.fontawesome.com/releases/v5.8.1/css/all.css';
+@import './styles/jynlo-foundations.css';
+@import './styles/jynlo-admin-concept-one.css';
+@import './styles/jynlo-communities-concept-one.css';
+@import './styles/jynlo-sessions-concept-one.css';
+@import './styles/jynlo-social-concept-one.css';
+@import './styles/jynlo-secondary-concept-one.css';
+@import './styles/jynlo-entry-premium.css';
+@import './styles/jynlo-communities-sessions-premium.css';
+@import './styles/jynlo-tournaments-profiles-venues-premium.css';
+@import './styles/jynlo-account-notifications-admin-premium.css';
+@import './styles/jynlo-form-controls.css';
+@import './styles/jynlo-visual-refresh.css';
+@import './styles/jynlo-premium-actions.css';
 
 :root {
   --d24-bg: #07111f;
@@ -16,6 +29,12 @@
   --d24-danger: #fecaca;
   --d24-success: #bbf7d0;
   --d24-radius: 1rem;
+  /* Shared spacing rhythm: opt in on pages; do not override all layouts globally. */
+  --jynlo-space-xs: .5rem;
+  --jynlo-space-sm: .75rem;
+  --jynlo-space-md: 1rem;
+  --jynlo-space-lg: 1.5rem;
+  --jynlo-space-xl: 2rem;
   --d24-shadow: 0 24px 60px rgba(0, 0, 0, .24);
   --primary-color: var(--d24-bg);
   --secundary-color: var(--d24-text-subtle);
@@ -85,6 +104,38 @@ select option {
   color: #f8fafc;
 }
 
+/*
+ * App-wide premium SELECT foundation. Existing <select> bindings, ngValue,
+ * native keyboard behavior and validation remain unchanged. Browser-native
+ * option popups cannot be fully themed, so long searchable lists use the
+ * reusable <app-jynlo-select> instead (country and future migrations).
+ */
+select:not([multiple]):not([size]):not(.jynlo-select-native-exempt) {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid rgba(88,229,209,.34);
+  border-radius: .83rem;
+  color: #f2fffc;
+  color-scheme: dark;
+  padding-right: 2.6rem;
+  background-color: #092534;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2358e5d1' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .77rem center;
+  background-size: 1.08rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+select:not([multiple]):not([size]):not(.jynlo-select-native-exempt):hover:not(:disabled) {
+  border-color: rgba(88,229,209,.75);
+  background-color: #103446;
+}
+select:not([multiple]):not([size]):not(.jynlo-select-native-exempt):focus-visible {
+  border-color: #58e5d1;
+  box-shadow: 0 0 0 3px rgba(88,229,209,.15);
+  outline: 2px solid rgba(88,229,209,.5);
+}
+select:not([multiple]):not([size]):disabled {opacity:.62;cursor:not-allowed;}
+
 /* Jynlo action system — shared pill shape, independent semantic palettes. */
 .jynlo-action {
   --jynlo-action-text: #cbd5e1;
@@ -107,7 +158,10 @@ select option {
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
-  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
@@ -150,8 +204,9 @@ select option {
   vertical-align: middle !important;
   box-sizing: border-box;
   min-height: 40px !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  /* Default no outer margin, but let a page's spacing rules take precedence. */
+  margin-top: 0;
+  margin-bottom: 0;
   padding: .58rem .92rem !important;
   border: 1px solid var(--jynlo-action-border) !important;
   border-radius: 999px !important;
@@ -194,4 +249,200 @@ select option {
     white-space: normal !important;
     text-wrap: balance;
   }
+}
+
+
+/* Shared quoted chat messages (session and community chat, both desktop). */
+.jynlo-chat-quote, .jynlo-chat-reply-banner {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  border-left: 3px solid #46dbbd; border-radius: 5px 9px 9px 5px;
+  background: rgba(5, 23, 32, .45); padding: 9px 12px; margin: 6px 0 10px;
+}
+.jynlo-chat-quote strong, .jynlo-chat-reply-banner strong {
+  color: #8df4df; font-size: .76rem; line-height: 1.4;
+}
+.jynlo-chat-quote span, .jynlo-chat-reply-banner span {
+  color: #e0f1f3; font-size: .8rem; line-height: 1.4;
+  white-space: pre-wrap; overflow-wrap: anywhere; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
+.jynlo-chat-reply-action {
+  display: block; border: 0; background: transparent; color: #8df4df;
+  margin: 7px 0 0 auto; padding: 4px 5px; border-radius: 6px;
+  font: inherit; font-size: .75rem; cursor: pointer;
+}
+.jynlo-chat-reply-action:hover:not(:disabled) { text-decoration: underline; }
+.jynlo-chat-reply-action:disabled { opacity: .4; cursor: not-allowed; }
+.jynlo-chat-reply-action:focus-visible, .jynlo-chat-reply-banner button:focus-visible {
+  outline: 2px solid #8df4df; outline-offset: 2px;
+}
+.jynlo-chat-reply-banner { flex-direction: row; align-items: center; justify-content: space-between; }
+.jynlo-chat-reply-banner > div { display: flex; flex-direction: column; min-width: 0; }
+.jynlo-chat-reply-banner button {
+  flex: 0 0 auto; border: 1px solid #539a88; border-radius: 9px;
+  color: #c1fbea; background: #183944; padding: 7px 9px;
+  font: inherit; font-size: .76rem; cursor: pointer;
+}
+.jynlo-chat-reply-banner button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Community cover imagery is framed by the 16:10 editor. Never override
+   object-fit with !important: that would hide the user's saved adjustments. */
+
+
+/*
+ * Reusable layout primitives for profile, feed and future Jynlo screens.
+ * Do not clip controls or truncate status text to make a row fit.
+ * These are opt-in classes to avoid unintended changes to legacy layouts.
+ */
+.jynlo-flow-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jynlo-space-lg);
+  min-width: 0;
+}
+.jynlo-action-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--jynlo-space-sm);
+  min-width: 0;
+}
+.jynlo-action-cluster > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.jynlo-status-line {
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .jynlo-flow-stack { gap: var(--jynlo-space-md); }
+  .jynlo-action-cluster { gap: var(--jynlo-space-sm); }
+}
+
+/*
+ * Green premium option popup for every existing single <select>, including
+ * standalone routed pages that aren't compiled by AppModule.
+ * The select itself remains native/accessible and Angular forms own its value.
+ */
+select:not([multiple]):not([size]):not(.jynlo-select-native-exempt) {
+  border-color: rgba(64, 230, 173, .48);
+  background-color: #092833;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2340e6ad' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  cursor: pointer;
+}
+select:not([multiple]):not([size]):not(.jynlo-select-native-exempt):hover:not(:disabled),
+select.jynlo-native-select--open {
+  border-color: #40e6ad;
+  background-color: #103d41;
+  box-shadow: 0 0 0 3px rgba(64, 230, 173, .13);
+}
+select.jynlo-native-select--open:focus,
+select.jynlo-native-select--open:focus-visible {
+  outline: 2px solid rgba(64, 230, 173, .48);
+  outline-offset: 2px;
+}
+.jynlo-native-select__popover {
+  position: fixed;
+  z-index: 100070;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: .45rem;
+  border: 1px solid rgba(64,230,173,.54);
+  border-radius: .95rem;
+  background: linear-gradient(145deg, #0d3038, #071e2b 88%);
+  color: #eefdf8;
+  box-shadow: 0 22px 60px rgba(0,0,0,.56), 0 0 0 1px rgba(255,255,255,.035) inset;
+  animation: jynlo-native-select-appear .14s ease-out;
+}
+.jynlo-native-select__search {
+  width: 100%;
+  min-height: 42px;
+  margin: 0 0 .4rem;
+  padding: .55rem .7rem;
+  border: 1px solid rgba(104,181,177,.45);
+  border-radius: .65rem;
+  background: #081f2b;
+  color: #f4fffb;
+  font: inherit;
+  font-size: .85rem;
+}
+.jynlo-native-select__search::placeholder { color: #97b7bd; }
+.jynlo-native-select__search:focus-visible {
+  outline: 2px solid #40e6ad;
+  outline-offset: 1px;
+}
+.jynlo-native-select__options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #438777 #092b35;
+}
+.jynlo-native-select__option {
+  width: 100%;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-height: 39px;
+  padding: .55rem .7rem;
+  border: 1px solid transparent;
+  border-radius: .62rem;
+  background: transparent;
+  color: #def4f0;
+  font: inherit;
+  font-size: .87rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.jynlo-native-select__option:hover,
+.jynlo-native-select__option:focus-visible {
+  background: rgba(64,230,173,.16);
+  border-color: rgba(64,230,173,.32);
+  color: #fafffd;
+}
+.jynlo-native-select__option--selected {
+  background: rgba(64,230,173,.22);
+  border-color: rgba(64,230,173,.43);
+  color: #fff;
+}
+.jynlo-native-select__option:focus-visible {
+  outline: 2px solid #40e6ad;
+  outline-offset: -2px;
+}
+.jynlo-native-select__option:disabled { opacity: .4; cursor: not-allowed; }
+.jynlo-native-select__check { flex: none; color: #40e6ad; font-weight: 900; }
+.jynlo-native-select__group {
+  color: #75e9ca;
+  padding: .55rem .7rem .25rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .72rem;
+  font-weight: 850;
+}
+.jynlo-native-select__empty {
+  padding: .7rem .8rem;
+  text-align: center;
+  color: #aacbd0;
+  font-size: .83rem;
+}
+@keyframes jynlo-native-select-appear {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jynlo-native-select__popover { animation: none; }
 }

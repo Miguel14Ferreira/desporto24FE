@@ -6,9 +6,17 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Render terminates TLS before nginx; these headers reach public HTTPS.
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    # Compatibility-safe CSP for Google login, images and maps.
+    add_header Content-Security-Policy "frame-ancestors 'none'; object-src 'none'; base-uri 'self'" always;
+
     location = /healthz {
         access_log off;
-        add_header Content-Type text/plain;
+        default_type text/plain;
         return 200 'ok';
     }
 
@@ -28,6 +36,16 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Serve fresh HTML after security releases, while assets remain cacheable.
+    location = /index.html {
+        expires -1;
+    }
+
+    # Never serve hidden config or key files.
+    location ~ /\.(?!well-known) {
+        return 404;
     }
 
     location / {

@@ -1,0 +1,52 @@
+<section class="management-block sport-management" aria-label="Modalidades da comunidade">
+                  <div class="section-heading">
+                    <div>
+                      <span class="section-kicker">Modalidades</span>
+                      <h3>Desportos desta comunidade</h3>
+                      <p>Uma comunidade pode praticar um ou vários desportos. Isto não altera torneios já iniciados.</p>
+                    </div>
+                    @if (canManage && !editing) {
+                      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                        (click)="editRequested.emit()">Editar modalidades</button>
+                    }
+                  </div>
+                  <div class="sport-tags" aria-label="Modalidades da comunidade">
+                    @for (item of sports; track item) {
+                      <span class="sport-tag">{{ item }}</span>
+                    } @empty {
+                      <span class="sport-blank">Ainda sem modalidades definidas</span>
+                    }
+                  </div>
+                  @if (message) { <p class="sport-success" role="status">{{ message }}</p> }
+                  @if (editing && canManage) {
+                    <div class="sport-edit">
+                      <div class="sport-tags" aria-label="Modalidades a guardar">
+                        @for (item of draft; track item) {
+                          <span class="sport-tag">{{ item }}
+                            <button type="button" [disabled]="saving"
+                              [attr.aria-label]="'Remover ' + item"
+                              (click)="removeRequested.emit(item)">×</button>
+                          </span>
+                        }
+                      </div>
+                      <label for="edit-community-sports">Adicionar modalidades</label>
+                      <input id="edit-community-sports" name="editCommunitySports"
+                        [ngModel]="search" (ngModelChange)="searchChange.emit($event)" [disabled]="saving || draft.length >= 128"
+                        autocomplete="off" placeholder="Pesquisar modalidade">
+                      @if (suggestions.length) {
+                        <div class="sport-suggestions" role="group" aria-label="Sugestões de modalidades">
+                          @for (item of suggestions; track item) {
+                            <button type="button" [disabled]="saving"
+                              (click)="addRequested.emit(item)">{{ item }} +</button>
+                          }
+                        </div>
+                      }
+                      <div class="sport-edit-actions">
+                        <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                          [disabled]="saving" (click)="saveRequested.emit()">Guardar modalidades</button>
+                        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                          [disabled]="saving" (click)="cancelRequested.emit()">Cancelar</button>
+                      </div>
+                    </div>
+                  }
+                </section>

@@ -1,0 +1,171 @@
+import { TestBed } from '@angular/core/testing';
+import { CommunityStanding } from '../model/community-group';
+import { CommunityPerformanceInsightsComponent } from './community-performance-insights.component';
+
+describe('CommunityPerformanceInsightsComponent', () => {
+  const alpha: CommunityStanding = {
+    position: 1, profileId: 1, username: 'alpha', fullName: 'Jogadora Alfa',
+    profilePicUrl: null, games: 9, wins: 7, draws: 1, losses: 1,
+    points: 50, goals: 18, assists: 4, mvps: 2, cleanSheets: 5,
+    winRate: 78, currentStreak: 'W3', bestWinStreak: 5
+  };
+  const beta: CommunityStanding = {
+    ...alpha, position: 2, profileId: 2, username: 'beta', fullName: 'Jogador Beta',
+    games: 7, points: 25, goals: 8, assists: 2, wins: 4, winRate: 57
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CommunityPerformanceInsightsComponent]
+    }).compileComponents();
+  });
+
+  function render() {
+    const fixture = TestBed.createComponent(CommunityPerformanceInsightsComponent);
+    fixture.componentRef.setInput('rows', [alpha, beta]);
+    fixture.componentRef.setInput('mostGames', alpha);
+    fixture.componentRef.setInput('bestWinRate', alpha);
+    fixture.componentRef.setInput('bestWinStreak', alpha);
+    fixture.componentRef.setInput('maxStandingPoints', 50);
+    fixture.componentRef.setInput('compareSelectionA', 'standing:0');
+    fixture.componentRef.setInput('compareSelectionB', 'standing:1');
+    fixture.componentRef.setInput('comparePlayerA', alpha);
+    fixture.componentRef.setInput('comparePlayerB', beta);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('preserves records, top ten chart order and ratio-sized point bars', () => {
+    const root = render().nativeElement as HTMLElement;
+    expect(root.querySelectorAll('.record-card').length).toBe(3);
+    expect(root.querySelector('.record-card')?.textContent).toContain('Jogadora Alfa');
+    const rows = root.querySelectorAll('.points-chart-row');
+    expect(rows.length).toBe(2);
+    expect(rows[0].textContent).toContain('Jogadora Alfa');
+    expect(rows[1].textContent).toContain('Jogador Beta');
+    expect(root.querySelectorAll<HTMLElement>('.points-chart-track > span')[0].style.width).toBe('100%');
+    expect(root.querySelectorAll<HTMLElement>('.points-chart-track > span')[1].style.width).toBe('50%');
+    expect(root.querySelectorAll('.compare-table > div').length).toBe(8);
+    expect(root.querySelector('.compare-table')?.textContent).toContain('57%');
+  });
+
+  it('keeps player selector choices wired to parent-managed names', () => {
+    const fixture = render();
+    const root = fixture.nativeElement as HTMLElement;
+    const pickers = root.querySelectorAll('app-community-compare-picker');
+    expect(pickers.length).toBe(2);
+    const a = jasmine.createSpy('A');
+    const b = jasmine.createSpy('B');
+    fixture.componentInstance.compareAChange.subscribe(a);
+    fixture.componentInstance.compareBChange.subscribe(b);
+    const triggers = root.querySelectorAll<HTMLButtonElement>('.picker-trigger');
+    triggers[0].click();
+    fixture.detectChanges();
+    const optionsA = root.querySelectorAll<HTMLButtonElement>('app-community-compare-picker:first-child .picker-option');
+    optionsA[1].click();
+    fixture.detectChanges();
+    triggers[1].click();
+    fixture.detectChanges();
+    const optionsB = root.querySelectorAll<HTMLButtonElement>('app-community-compare-picker:last-child .picker-option');
+    optionsB[0].click();
+    fixture.detectChanges();
+    expect(a).toHaveBeenCalledWith('standing:1');
+    expect(b).toHaveBeenCalledWith('standing:0');
+    expect(fixture.componentInstance.compareSelectionA).toBe('standing:0');
+  });
+
+  it('offers historical players without accounts in both selectors and compares their real numbers', () => {
+    const fixture = render();
+    const historic = {
+      ...alpha, username: null, profileId: null, fullName: 'Ferreirinha', points: 16
+    };
+    const other = {
+      ...beta, username: null, profileId: null, fullName: 'Mestre', points: 22
+    };
+    fixture.componentRef.setInput('rows', [historic, other]);
+    fixture.componentRef.setInput('compareSelectionA', 'standing:0');
+    fixture.componentRef.setInput('compareSelectionB', 'standing:1');
+    fixture.componentRef.setInput('comparePlayerA', historic);
+    fixture.componentRef.setInput('comparePlayerB', other);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const triggers = root.querySelectorAll<HTMLButtonElement>('.picker-trigger');
+    triggers[0].click();
+    fixture.detectChanges();
+    const options = Array.from(root.querySelectorAll<HTMLButtonElement>('.picker-option'));
+    expect(options.map(option => option.textContent?.trim())).toEqual(
+      [jasmine.stringMatching(/Ferreirinha/), jasmine.stringMatching(/Mestre/)]
+    );
+    expect(root.querySelector('.compare-table')?.textContent).toContain('Ferreirinha');
+    expect(root.querySelector('.compare-table')?.textContent).toContain('Mestre');
+    expect(root.querySelector('.compare-table')?.textContent).toContain('16');
+    expect(root.querySelector('.compare-table')?.textContent).toContain('22');
+  });
+
+  it('emits only A on the left clear and hides only its own clear button', () => {
+    const fixture=render();
+    const root=fixture.nativeElement as HTMLElement;
+    const clear=jasmine.createSpy('clear');
+    fixture.componentInstance.clearRequested.subscribe(clear);
+    const buttons=root.querySelectorAll<HTMLButtonElement>('.picker-clear');
+    expect(buttons).toHaveSize(2);
+    buttons[0].click();
+    expect(clear).toHaveBeenCalledOnceWith('A');
+
+    // Simulate the parent applying the A-only state change.
+    fixture.componentRef.setInput('compareSelectionA','');
+    fixture.componentRef.setInput('comparePlayerA',undefined);
+    fixture.detectChanges();
+    const triggers=root.querySelectorAll<HTMLButtonElement>('.picker-trigger');
+    expect(triggers[0].textContent).toContain('Selecionar jogador');
+    expect(triggers[1].textContent).toContain('Jogador Beta');
+    expect(root.querySelectorAll('.picker-clear')).toHaveSize(1);
+    expect(root.querySelector('.compare-table')).toBeNull();
+    expect(root.querySelectorAll('.points-chart-row')).toHaveSize(2);
+  });
+
+  it('emits only B on the right clear and retains the selected A', () => {
+    const fixture=render();
+    const root=fixture.nativeElement as HTMLElement;
+    const clear=jasmine.createSpy('clear');
+    fixture.componentInstance.clearRequested.subscribe(clear);
+    const buttons=root.querySelectorAll<HTMLButtonElement>('.picker-clear');
+    expect(buttons).toHaveSize(2);
+    buttons[1].click();
+    expect(clear).toHaveBeenCalledOnceWith('B');
+
+    fixture.componentRef.setInput('compareSelectionB','');
+    fixture.componentRef.setInput('comparePlayerB',undefined);
+    fixture.detectChanges();
+    const triggers=root.querySelectorAll<HTMLButtonElement>('.picker-trigger');
+    expect(triggers[0].textContent).toContain('Jogadora Alfa');
+    expect(triggers[1].textContent).toContain('Selecionar jogador');
+    expect(root.querySelectorAll('.picker-clear')).toHaveSize(1);
+    expect(root.querySelector('.compare-table')).toBeNull();
+  });
+
+  it('does not display a clear button on a column without a player', () => {
+    const fixture=render();
+    fixture.componentRef.setInput('compareSelectionA','');
+    fixture.componentRef.setInput('comparePlayerA',undefined);
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('app-community-compare-picker:first-child .picker-clear')).toBeNull();
+    expect(root.querySelector('app-community-compare-picker:last-child .picker-clear')).not.toBeNull();
+  });
+
+  it('hides the head-to-head matrix without both selected players and keeps the empty chart', () => {
+    const fixture = render();
+    fixture.componentRef.setInput('comparePlayerB', undefined);
+    fixture.componentRef.setInput('rows', []);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.compare-table')).toBeNull();
+    expect(root.querySelectorAll('.points-chart-row').length).toBe(0);
+    expect(root.querySelectorAll('.record-card').length).toBe(3);
+    expect(fixture.componentInstance.pointsBarWidth({ ...alpha, points: 0 })).toBe(4);
+    fixture.componentRef.setInput('maxStandingPoints', 0);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.pointsBarWidth(alpha)).toBe(0);
+  });
+});

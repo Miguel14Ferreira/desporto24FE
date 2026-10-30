@@ -1,0 +1,7 @@
+<div class="ranking-controls">
+  <app-community-switch
+    [checked]="showAll"
+    [label]="'communities.identity.showAll' | t"
+    (checkedChange)="showAllChange.emit($event)"
+  ></app-community-switch>
+</div>

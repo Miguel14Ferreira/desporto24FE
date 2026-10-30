@@ -1,34 +1,59 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { Component, Input } from '@angular/core';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { PublicSessionPreviewComponent } from './public-session-preview.component';
+import { PublicSessionChatComponent } from './public-session-chat.component';
 import { AuthenticationService } from '../../services/authethication.service';
 import { I18nService } from '../../i18n/i18n.service';
+import { compactSessionShareMessage } from '../../shared/session-share-message';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+
+@Component({selector:'app-public-session-chat',standalone:true,template:''})
+class SessionChatStubComponent {
+  @Input() sessionId = 0;
+  @Input() authenticated = false;
+  @Input() guestConfirmed = false;
+  @Input() guestReceipt: string | null = null;
+  @Input() returnUrl: string | null = null;
+  @Input() startsAt: string | null = null;
+}
 
 describe('PublicSessionPreviewComponent', () => {
   let fixture: ComponentFixture<PublicSessionPreviewComponent>;
   let http: jasmine.SpyObj<HttpClient>;
   let authenticationService: jasmine.SpyObj<AuthenticationService>;
   let routeParamMap: ReturnType<typeof convertToParamMap>;
+  let routeQueryParamMap: ReturnType<typeof convertToParamMap>;
 
   beforeEach(async () => {
     routeParamMap = convertToParamMap({ id: '42' });
-    http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
+    routeQueryParamMap = convertToParamMap({});
+    http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get', 'post']);
     authenticationService = jasmine.createSpyObj<AuthenticationService>(
-      'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate']
+      'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate', 'login', 'saveToken', 'googleConfig', 'googleLogin', 'confirmMfaChallenge', 'resendMfaChallenge']
     );
     authenticationService.isLoggedIn.and.returnValue(false);
     authenticationService.hasSessionCandidate.and.returnValue(false);
+    authenticationService.googleConfig.and.returnValue(of({clientId:''}));
+    TestBed.overrideComponent(PublicSessionPreviewComponent, {
+      remove: { imports: [PublicSessionChatComponent] },
+      add: { imports: [SessionChatStubComponent] }
+    });
     await TestBed.configureTestingModule({
       imports: [PublicSessionPreviewComponent, RouterTestingModule],
       providers: [
         { provide: HttpClient, useValue: http },
+        { provide: DirectChatRealtimeService, useValue: {
+          sessionMessages$: new Subject(), connect: jasmine.createSpy('connect')
+        } }, 
         { provide: AuthenticationService, useValue: authenticationService },
         { provide: ActivatedRoute, useValue: {
-          snapshot: { get paramMap() { return routeParamMap; } }
+          snapshot: { get paramMap() { return routeParamMap; },
+                      get queryParamMap() { return routeQueryParamMap; } }
         } }
       ]
     }).compileComponents();
@@ -39,6 +64,11 @@ describe('PublicSessionPreviewComponent', () => {
   afterEach(() => {
     TestBed.inject(I18nService).setLanguage('pt');
     localStorage.removeItem('d24-language');
+    localStorage.removeItem('jynlo-guest-receipt:42');
+    Object.keys(sessionStorage).filter(key => key.startsWith('jynlo-invite-rsvp:'))
+      .forEach(key => sessionStorage.removeItem(key));
+    Object.keys(localStorage).filter(key => key.startsWith('jynlo-guest-receipt:42:'))
+      .forEach(key => localStorage.removeItem(key));
   });
 
   function render(overrides: Record<string, unknown> = {}): HTMLElement {
@@ -57,14 +87,417 @@ describe('PublicSessionPreviewComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  function shareWhen(locale: 'pt-PT' | 'en-GB'): string {
-    const start = Date.parse(fixture.componentInstance.session!.gameDate!);
-    const formatted = new Intl.DateTimeFormat(locale, {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-    }).format(start);
-    return (locale === 'pt-PT' ? 'Quando: ' : 'When: ') + formatted;
+  function shareText(locale: 'pt-PT' | 'en-GB'): string {
+    const game = fixture.componentInstance.session!;
+    return compactSessionShareMessage({
+      sport: game.sport, city: game.city, gameDate: game.gameDate,
+      remainingPlaces: fixture.componentInstance.remainingPlaces
+    }, locale);
   }
+
+  it('confirms an anonymous player instantly, reserves a place and offers account creation', () => {
+    const secret='G'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:7,name:'Amigo Histórico'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        address:'Rua Machado dos Santos, 112',venueName:'Clube Nacional de Ginástica',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        priceAmount:4.50,maxParticipants:10,participantCount:1,gamePhoto:null});
+      if(url.endsWith('/guest-requests')) return of({receipt:'R'.repeat(43),status:'APPROVED'});
+      return of({});
+    }) as any);
+    const page=fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+    fixture.componentInstance.startInvitation();
+    fixture.componentInstance.chooseInvitationIdentity(false);
+    fixture.detectChanges();
+    const location=page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(page.querySelector('#guest-player-select')).toBeNull();
+    expect(page.querySelector('label[for="guest-new-name"]')?.textContent?.trim())
+      .toBe('O teu nome');
+    expect(location.textContent).toContain('Clube Nacional de Ginástica');
+    expect(location.textContent).not.toContain('Rua Machado dos Santos');
+    expect(location.textContent).toContain('Parede');
+    expect(location.textContent).toContain('Pesquisar morada no mapa');
+    expect(decodeURIComponent(location.href)).toContain('Rua Machado dos Santos');
+    expect(location.title).toContain('Rua Machado dos Santos');
+    fixture.componentInstance.setGuestNewName('Amigo Histórico');
+    fixture.componentInstance.chooseGuest();
+    fixture.detectChanges();
+    expect(page.querySelector('.guest-rsvp-hint')?.textContent).toContain('vaga fica reservada');
+    fixture.componentInstance.sendGuestRequest();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('approved');
+    expect(page.querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    expect(page.textContent).toContain('Presença confirmada');
+    expect(page.textContent).toContain('Criar conta Jynlo');
+    localStorage.removeItem('jynlo-guest-receipt:42:'+secret.slice(0,18));
+  });
+
+  it('explains why an already confirmed historical guest cannot reserve a second place', () => {
+    const secret='Z'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:7,name:'Fresco'}]});
+      if(url.endsWith('/guest-confirmed-players')) return of([
+        {key:'account:1',name:'TMF14',hasAccount:true},
+        {key:'guest:40',name:'Fresco',hasAccount:false}
+      ]);
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        priceAmount:0,maxParticipants:10,participantCount:2,gamePhoto:null});
+      if(url.endsWith('/guest-requests')) return throwError(() => new HttpErrorResponse({status:409}));
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    component.selectGuestPlayer(7);
+    component.chooseGuest();
+    component.sendGuestRequest();
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('confirm');
+    expect(component.guestReceipt).toBe('');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-error')?.textContent)
+      .toContain('já tem presença confirmada');
+  });
+
+  it('changes Barata to a different historical player without reserving a second place', () => {
+    const secret='Q'.repeat(43), receipt='R'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem('jynlo-guest-receipt:42:'+secret.slice(0,18),receipt);
+    let shownName='Barata';
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster'))
+        return of({sessionId:42,communityId:5,players:[{id:17,name:'Zé Manel'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'FULL',
+        priceAmount:0,maxParticipants:10,participantCount:10,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([
+        {key:'guest:33',name:shownName,hasAccount:false}
+      ]);
+      if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:shownName});
+      if(url.endsWith('/guest-requests/change-player')){
+        shownName='Zé Manel';
+        return of({status:'APPROVED',receipt,playerName:shownName});
+      }
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    expect(component.guestStep).toBe('approved');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    component.startChangingGuestIdentity();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-change-player-select')).toBeNull();
+    expect((fixture.nativeElement as HTMLElement)
+      .querySelector('label[for="guest-change-new-name"]')?.textContent?.trim())
+      .toBe('O teu nome');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
+    component.setGuestNewName('Zé Manel');
+    component.changeGuestIdentity();
+    fixture.detectChanges();
+    expect(component.guestEditingIdentity).toBeFalse();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    expect(component.guestConfirmedName).toBe('Zé Manel');
+    expect(component.guestReceipt).toBe(receipt);
+    expect(localStorage.getItem('jynlo-guest-receipt:42:'+secret.slice(0,18))).toBe(receipt);
+    const calls=(http.post as jasmine.Spy).calls.allArgs().map(args=>String(args[0]));
+    expect(calls.filter(x=>x.endsWith('/guest-requests/change-player')).length).toBe(1);
+    expect(calls.filter(x=>x.endsWith('/guest-requests')&&!x.endsWith('/guest-requests/change-player')).length).toBe(0);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Zé Manel');
+  });
+
+  it('does not remove the guest booking merely by opening or closing the edit form', () => {
+    const secret='V'.repeat(43),receipt='W'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem('jynlo-guest-receipt:42:'+secret.slice(0,18),receipt);
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'FULL',
+        priceAmount:0,maxParticipants:10,participantCount:10,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:'Barata'});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      return throwError(()=>new Error('Unexpected request '+url));
+    }) as any);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    fixture.componentInstance.startChangingGuestIdentity();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
+    fixture.componentInstance.setGuestNewName('Outro');
+    fixture.componentInstance.cancelChangingGuestIdentity();
+    fixture.detectChanges();
+    // Backing out of an unsaved edit keeps the original approved booking.
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    expect(fixture.componentInstance.guestStep).toBe('approved');
+    expect(fixture.componentInstance.guestReceipt).toBe(receipt);
+    expect((http.post as jasmine.Spy).calls.allArgs().filter(
+      args=>String(args[0]).endsWith('/guest-requests/change-player')).length).toBe(0);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Barata');
+  });
+
+  it('keeps the confirmed receipt and offers correction rather than another registration on WhatsApp links', () => {
+    const secret='T'.repeat(43), receipt='U'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    localStorage.setItem(key,receipt);
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:17,name:'Fresco'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'FULL',
+        priceAmount:0,maxParticipants:10,participantCount:10,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:'Barata'});
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    const page=fixture.nativeElement as HTMLElement;
+    expect(component.guestStep).toBe('approved');
+    expect(page.textContent).not.toContain('Este não sou eu — registar outro jogador');
+    expect(page.textContent).toContain('Enganei-me — alterar jogador');
+    const correction=page.querySelector('.guest-change-player-button') as HTMLButtonElement;
+    expect(correction).not.toBeNull();
+    correction.click();
+    fixture.detectChanges();
+    expect(component.guestEditingIdentity).toBeTrue();
+    expect(component.guestStep).toBe('approved');
+    expect(component.guestReceipt).toBe(receipt);
+    expect(localStorage.getItem(key)).toBe(receipt);
+    expect(page.querySelector('#guest-change-player-select')).toBeNull();
+    expect(page.querySelector('#guest-change-new-name')).not.toBeNull();
+    const calls=(http.post as jasmine.Spy).calls.allArgs().map(args=>String(args[0]));
+    expect(calls.some(x=>x.endsWith('/guest-requests'))).toBeFalse();
+  });
+
+  it('requires a separate confirmation before cancelling and only sends the private receipt', () => {
+    const secret='Y'.repeat(43), receipt='X'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem('jynlo-guest-receipt:42:'+secret.slice(0,18),receipt);
+    let participants=10;
+    http.post.and.callFake(((url:string,body:any) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:participants===10?'FULL':'OPEN',
+        priceAmount:0,maxParticipants:10,participantCount:participants,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      if(url.endsWith('/guest-requests/status')) return of({status:participants===10?'APPROVED':'CANCELLED',playerName:'Barata'});
+      if(url.endsWith('/guest-requests/cancel-self')) {
+        expect(body).toEqual({receipt});
+        participants=9;return of({status:'CANCELLED',playerName:'Barata'});
+      }
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    component.guestConfirmCancellation=true;
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('approved');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
+    expect((http.post as jasmine.Spy).calls.allArgs().some(
+      args=>String(args[0]).endsWith('/guest-requests/cancel-self'))).toBeFalse();
+    component.cancelOwnGuestReservation();
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('cancelled');
+    expect(component.guestCancelledBySelf).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Cancelaste a tua presença');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('O organizador cancelou');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-upgrade')).toBeNull();
+    expect(component.session?.participantCount).toBe(9);
+    expect(component.guestSavedBookings).toEqual([]);
+    fixture.destroy();
+    fixture=TestBed.createComponent(PublicSessionPreviewComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('cancelled');
+    expect(fixture.componentInstance.guestCancelledBySelf).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Cancelaste a tua presença');
+  });
+
+  it('lets a cancelled historical guest confirm again in one click without duplicating a place', () => {
+    const secret='A'.repeat(43),oldReceipt='B'.repeat(43),newReceipt='C'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    localStorage.setItem(key,oldReceipt);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    let participants=9;
+    let rejoinCalls=0;
+    http.post.and.callFake(((url:string,body:any) => {
+      if(url.endsWith('/guest-roster')) return of({
+        sessionId:42,communityId:5,players:[{id:18,name:'Mestre'},{id:19,name:'Outro'}]
+      });
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        status:participants===10?'FULL':'OPEN',maxParticipants:10,
+        participantCount:participants,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      if(url.endsWith('/guest-requests/status')) return of({
+        status:participants===10?'APPROVED':'CANCELLED',playerName:'Mestre'
+      });
+      if(url.endsWith('/guest-requests')){
+        rejoinCalls++;
+        expect(body).toEqual({linkToken:secret,playerId:18,newName:null,note:''});
+        participants=10;
+        return of({status:'APPROVED',receipt:newReceipt,playerName:'Mestre'});
+      }
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const page=fixture.nativeElement as HTMLElement;
+    const component=fixture.componentInstance;
+    expect(component.guestStep).toBe('cancelled');
+    const button=page.querySelector('.guest-rejoin-button') as HTMLButtonElement;
+    expect(button).not.toBeNull();
+    expect(button.textContent).toContain('voltar a marcar presença');
+    button.click();
+    fixture.detectChanges();
+    expect(rejoinCalls).toBe(1);
+    expect(component.guestStep).toBe('approved');
+    expect(component.guestReceipt).toBe(newReceipt);
+    expect(localStorage.getItem(key)).toBe(newReceipt);
+    expect(component.session?.participantCount).toBe(10);
+    expect(component.guestConfirmedName).toBe('Mestre');
+    expect(page.querySelector('.guest-rejoin-button')).toBeNull();
+    expect(page.querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+    expect((http.post as jasmine.Spy).calls.allArgs().filter(
+      args=>String(args[0]).endsWith('/guest-requests')).length).toBe(1);
+  });
+
+  it('does not restore a cancelled guest if their released place was taken', () => {
+    const secret='D'.repeat(43),receipt='E'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    localStorage.setItem(key,receipt);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({
+        sessionId:42,communityId:5,players:[]
+      });
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        status:'FULL',maxParticipants:10,participantCount:10,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-confirmed-players')) return of([]);
+      if(url.endsWith('/guest-requests/status')) return of({
+        status:'CANCELLED',playerName:'Barata'
+      });
+      if(url.endsWith('/guest-requests'))
+        return throwError(()=>new HttpErrorResponse({status:409}));
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const component=fixture.componentInstance;
+    const page=fixture.nativeElement as HTMLElement;
+    expect(component.guestStep).toBe('cancelled');
+    (page.querySelector('.guest-rejoin-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.guestStep).toBe('cancelled');
+    expect(component.guestReceipt).toBe(receipt);
+    expect(localStorage.getItem(key)).toBe(receipt);
+    expect(page.querySelector('.guest-rsvp-error')?.textContent)
+      .toContain('Não foi possível recuperar a presença');
+    expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
+    expect(component.session?.participantCount).toBe(10);
+  });
+
+  it('does not show a second-registration button for an approved guest even when the session is full', () => {
+    const secret='H'.repeat(43),receipt='R'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    localStorage.setItem(key,receipt);
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:7,name:'Convidado'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'FULL',
+        priceAmount:0,maxParticipants:10,participantCount:10,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:'Barata'});
+      return of({});
+    }) as any);
+    fixture.detectChanges();
+    const page=fixture.nativeElement as HTMLElement;
+    const component=fixture.componentInstance;
+    expect(component.guestStep).toBe('approved');
+    expect(page.textContent).toContain('Presença confirmada');
+    expect(page.querySelector('.guest-change-player-button')).not.toBeNull();
+    expect(page.textContent).not.toContain('Este não sou eu — registar outro jogador');
+    expect(component.guestReceipt).toBe(receipt);
+    expect(localStorage.getItem(key)).toBe(receipt);
+    expect((http.post as jasmine.Spy).calls.allArgs().some(
+      args=>String(args[0]).endsWith('/guest-requests'))).toBeFalse();
+  });
+
+  it('removes an unknown saved receipt so an anonymous visitor can choose again', () => {
+    const secret='I'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem(key,'S'.repeat(43));
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[{id:7,name:'Jogador disponível'}]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        maxParticipants:8,participantCount:2,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status'))
+        return throwError(()=>new HttpErrorResponse({status:404,statusText:'Not Found'}));
+      return throwError(()=>new Error('Unexpected route '+url));
+    }) as any);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('choose');
+    expect(fixture.componentInstance.guestReceipt).toBe('');
+    expect(localStorage.getItem(key)).toBeNull();
+    expect(fixture.componentInstance.guestPlayers.map(p=>p.name)).toEqual(['Jogador disponível']);
+    expect((fixture.nativeElement as HTMLElement).querySelector('#guest-player-select')).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.invitation-first-confirm')).not.toBeNull();
+  });
+
+  it('allows a signed-in player to participate when a previous shared guest receipt is invalid', () => {
+    const secret='J'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    authenticationService.isLoggedIn.and.returnValue(true);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem(key,'S'.repeat(43));
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        maxParticipants:8,participantCount:2,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status'))
+        return throwError(()=>new HttpErrorResponse({status:404,statusText:'Not Found'}));
+      return throwError(()=>new Error('Unexpected route '+url));
+    }) as any);
+    fixture.detectChanges();
+    const page=fixture.nativeElement as HTMLElement;
+    expect(localStorage.getItem(key)).toBeNull();
+    expect(fixture.componentInstance.guestReceipt).toBe('');
+    expect(page.querySelector('.guest-rsvp')).toBeNull();
+    expect(page.querySelector('.join-panel .member-rsvp')).not.toBeNull();
+    expect(page.querySelector('.header-login')).toBeNull();
+    expect(fixture.componentInstance.guestPlayers).toEqual([]);
+  });
+
+  it('keeps the reservation and offers status retry on temporary API failure', () => {
+    const secret='K'.repeat(43);
+    const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+    routeQueryParamMap=convertToParamMap({guest:secret});
+    localStorage.setItem(key,'S'.repeat(43));
+    let unavailable=true;
+    http.post.and.callFake(((url:string) => {
+      if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:5,players:[]});
+      if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+        maxParticipants:8,participantCount:2,priceAmount:0,gamePhoto:null});
+      if(url.endsWith('/guest-requests/status')) return unavailable
+        ? throwError(()=>new HttpErrorResponse({status:503,statusText:'Unavailable'}))
+        : of({status:'APPROVED'});
+      return throwError(()=>new Error('Unexpected route '+url));
+    }) as any);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('pending');
+    expect(localStorage.getItem(key)).toBe('S'.repeat(43));
+    expect((fixture.nativeElement as HTMLElement).querySelector('.guest-rsvp-primary')).not.toBeNull();
+    unavailable=false;
+    fixture.componentInstance.checkGuestStatus();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.guestStep).toBe('approved');
+    expect(localStorage.getItem(key)).toBe('S'.repeat(43));
+  });
 
   it('localizes the session photo description without changing its source', () => {
     const i18n = TestBed.inject(I18nService);
@@ -151,47 +584,51 @@ describe('PublicSessionPreviewComponent', () => {
       .toBe(new URL('/sessions/42', window.location.origin).href);
   });
 
-  it('shares only the validated public session URL on WhatsApp in PT and EN', () => {
+  it('shares a short game-first WhatsApp message, with no promotional sentence', () => {
     const i18n = TestBed.inject(I18nService);
-    const page = render();
+    const page = render({ participantCount: 2 });
     const link = page.querySelector('.whatsapp-share-action') as HTMLAnchorElement;
     const publicUrl = new URL('/sessions/42', window.location.origin).href;
-
     expect(link).not.toBeNull();
-    expect(link.textContent?.trim()).toBe('Partilhar no WhatsApp');
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
-    expect(new URL(link.href).origin).toBe('https://wa.me');
-    expect(new URL(link.href).searchParams.get('text'))
-      .toBe('Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
+    const text = new URL(link.href).searchParams.get('text')!;
+    expect(text).toBe(shareText('pt-PT') + '\n' + publicUrl);
+    expect(text).toContain('Padel');
+    expect(text).toContain('Local: Lisboa');
+    expect(text).toContain('Vagas: 2 disponíveis');
+    expect(text).not.toContain('Junta-te a nós na Jynlo');
 
     i18n.setLanguage('en');
     fixture.detectChanges();
-
-    expect(link.textContent?.trim()).toBe('Share on WhatsApp');
     expect(new URL(link.href).searchParams.get('text'))
-      .toBe('Want to play Padel in Lisboa? Join us on Jynlo!\n' + shareWhen('en-GB') + '\n' + publicUrl);
+      .toBe(shareText('en-GB') + '\n' + publicUrl);
     expect(link.href).not.toContain('menu/events');
   });
 
-  it('keeps WhatsApp invitations useful when sport or city is missing', () => {
+  it('keeps the invite useful without sport, city or public count', () => {
     const i18n = TestBed.inject(I18nService);
-    render({ sport: '  Padel  ', city: null });
-    const publicUrl = new URL('/sessions/42', window.location.origin).href;
+    render({ sport: null, city: null, participantCount: null });
     const sharedText = () => new URL(fixture.componentInstance.whatsappShareUrl()!)
-      .searchParams.get('text');
-
-    expect(sharedText()).toBe('Bora jogar Padel? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
-
-    fixture.componentInstance.session!.sport = null;
-    fixture.componentInstance.session!.city = ' Porto ';
-    expect(sharedText()).toBe('Bora jogar em Porto? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
-
-    fixture.componentInstance.session!.city = ' ';
-    expect(sharedText()).toBe('Vem jogar connosco na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
-
+      .searchParams.get('text')!;
+    expect(sharedText()).toContain('Jogo desportivo');
+    expect(sharedText()).not.toContain('Vagas:');
     i18n.setLanguage('en');
-    expect(sharedText()).toBe('Come play with us on Jynlo!\n' + shareWhen('en-GB') + '\n' + publicUrl);
+    expect(sharedText()).toContain('Sports game');
+    expect(sharedText()).not.toContain('Jynlo!');
+  });
+
+  it('opens only the publicly known municipality in Maps', () => {
+    const page = render({ city: 'Cascais' });
+    const link = page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(new URL(link.href).searchParams.get('query')).toBe('Cascais, Portugal');
+
+    fixture.componentInstance.session!.city = null;
+    fixture.detectChanges();
+    expect(page.querySelector('.public-location-link')).toBeNull();
   });
 
   it('does not offer WhatsApp sharing for sessions closed to participation', () => {
@@ -206,49 +643,28 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.whatsapp-share-action')).toBeNull();
   });
 
-  it('uses localized invitations consistently for native and WhatsApp sharing', async () => {
+  it('keeps native sharing consistent with the short WhatsApp invite in both languages', async () => {
     const i18n = TestBed.inject(I18nService);
     const nativeShare = jasmine.createSpy('share').and.returnValue(Promise.resolve());
     const prior = Object.getOwnPropertyDescriptor(navigator, 'share');
     Object.defineProperty(navigator, 'share', { configurable: true, value: nativeShare });
-
     try {
-      render();
+      render({ participantCount: 2 });
       const component = fixture.componentInstance;
       const publicUrl = new URL('/sessions/42', window.location.origin).href;
-      const textForWhatsApp = () => new URL(component.whatsappShareUrl()!)
-        .searchParams.get('text');
-
       await component.shareSession();
       expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT'),
-        url: publicUrl
+        text: shareText('pt-PT'), url: publicUrl
       }));
-      expect(textForWhatsApp()).toContain('Bora jogar Padel em Lisboa?');
-
       i18n.setLanguage('en');
       nativeShare.calls.reset();
       await component.shareSession();
       expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Want to play Padel in Lisboa? Join us on Jynlo!\n' + shareWhen('en-GB'),
-        url: publicUrl
-      }));
-      expect(textForWhatsApp()).toContain('Want to play Padel in Lisboa?');
-
-      component.session!.sport = null;
-      component.session!.city = null;
-      nativeShare.calls.reset();
-      await component.shareSession();
-      expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Come play with us on Jynlo!\n' + shareWhen('en-GB'),
-        url: publicUrl
+        text: shareText('en-GB'), url: publicUrl
       }));
     } finally {
-      if (prior) {
-        Object.defineProperty(navigator, 'share', prior);
-      } else {
-        Reflect.deleteProperty(navigator, 'share');
-      }
+      if (prior) Object.defineProperty(navigator, 'share', prior);
+      else Reflect.deleteProperty(navigator, 'share');
     }
   });
 
@@ -715,6 +1131,41 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.retry-action')).toBeNull();
   });
 
+
+  it('spaces temporary-error actions as separate accessible controls', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    const panel = page.querySelector<HTMLElement>('.error-state');
+    const actions = panel?.querySelector<HTMLElement>('.error-actions');
+    const retry = actions?.querySelector<HTMLButtonElement>('button.retry-action');
+    const home = actions?.querySelector<HTMLAnchorElement>('a.error-home-action');
+
+    expect(panel?.getAttribute('role')).toBe('alert');
+    expect(actions?.children.length).toBe(2);
+    expect(retry?.type).toBe('button');
+    expect(home?.getAttribute('href')).toBe('/home');
+    expect(getComputedStyle(actions!).display).toBe('flex');
+    expect(parseFloat(getComputedStyle(actions!).gap)).toBeGreaterThanOrEqual(10);
+    expect(getComputedStyle(retry!).marginTop).toBe('0px');
+    expect(getComputedStyle(retry!).marginBottom).toBe('0px');
+    expect(parseFloat(getComputedStyle(home!).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(parseFloat(getComputedStyle(retry!).minHeight)).toBeGreaterThanOrEqual(44);
+    expect(panel?.querySelector('.error-description')?.textContent)
+      .toContain('Não foi possível carregar a sessão');
+  });
+
+  it('keeps the return-home action properly spaced when retry is not allowed', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    const actions = page.querySelector<HTMLElement>('.error-state .error-actions');
+    expect(actions?.children.length).toBe(1);
+    expect(actions?.querySelector('.retry-action')).toBeNull();
+    expect(actions?.querySelector('a.error-home-action')?.getAttribute('href')).toBe('/home');
+    expect(parseFloat(getComputedStyle(actions!).marginTop)).toBeGreaterThanOrEqual(8);
+  });
+
   it('shows a retry action when the preview API is temporarily unavailable', () => {
     http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
     fixture.detectChanges();
@@ -844,4 +1295,679 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.join-panel .primary-action')).toBeNull();
     expect(page.textContent).toContain('Inscrições encerradas');
   });
+
+  describe('no-login guest invitations', () => {
+    const token='A'.repeat(43);
+    const receipt='B'.repeat(43);
+    function renderGuest() {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string,body:any) => {
+        if(url.endsWith('/guest-preview')) {
+          expect(body.token).toBe(token);
+          return of({id:42,sport:'Futebol',city:'Lisboa',
+            gameDate:new Date(Date.now()+3600_000).toISOString(),
+            maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        }
+        if(url.endsWith('/guest-confirmed-players')) {
+          expect(body.token).toBe(token);
+          return of([]);
+        }
+        if(url.endsWith('/guest-roster')) {
+          expect(body.token).toBe(token);
+          return of({sessionId:42,communityId:7,players:[
+            {id:21,name:'Afonso Salvador'},{id:22,name:'João Marques'}]});
+        }
+        if(url.endsWith('/guest-requests')) {
+          return of({receipt,status:'PENDING'});
+        }
+        if(url.endsWith('/guest-requests/status')) {
+          return of({receipt,status:'APPROVED'});
+        }
+        return throwError(()=>new Error('Unexpected route '+url));
+      });
+      const page = render({sport:'Futebol'});
+      fixture.componentInstance.startInvitation();
+      fixture.componentInstance.chooseInvitationIdentity(false);
+      fixture.detectChanges();
+      return page;
+    }
+
+    it('starts with one confirmation button and does not auto-register on link opening', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string) => {
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      const page=render();
+      expect(page.querySelector('.invitation-first-confirm')).not.toBeNull();
+      expect(page.querySelector('#guest-new-name')).toBeNull();
+      expect(page.textContent).not.toContain('Já tens conta Jynlo?');
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        call=>String(call[0]).endsWith('/guest-join-account')
+          || String(call[0]).endsWith('/guest-requests'))).toBeFalse();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(page.textContent).toContain('Já tens conta Jynlo?');
+      expect(page.querySelector('.invitation-have-account')).not.toBeNull();
+      expect(page.querySelector('.invitation-no-account')).not.toBeNull();
+    });
+
+    it('confirms a new anonymous name in one server call without an intermediate confirmation page', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string, body:any) => {
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        if (url.endsWith('/guest-requests')) {
+          expect(body).toEqual(jasmine.objectContaining({linkToken:token,newName:'Joana Silva',playerId:null}));
+          return of({receipt,status:'APPROVED',playerName:'Joana Silva'});
+        }
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      const page=render();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (page.querySelector('.invitation-no-account') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      fixture.componentInstance.setGuestNewName('Joana Silva');
+      fixture.detectChanges();
+      (page.querySelector('#guest-participate .guest-rsvp-primary') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.guestStep).toBe('approved');
+      expect(page.textContent).toContain('Joana Silva');
+      expect(page.querySelector('.guest-rsvp-upgrade')).not.toBeNull();
+      expect((http.post as jasmine.Spy).calls.allArgs().filter(c=>
+        String(c[0]).endsWith('/guest-requests')).length).toBe(1);
+    });
+
+
+    it('signs in inline, confirms the real account once and opens its session details', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        if (url.endsWith('/guest-member-presence')) return of({status:'NONE',canCancel:false});
+        if (url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      authenticationService.login.and.returnValue(of({token:'test-token',mfaRequired:false} as any));
+      const navigation=spyOn(TestBed.inject(Router),'navigateByUrl').and.resolveTo(true);
+      const page=render();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(c=>
+        String(c[0]).endsWith('/guest-join-account'))).toBeFalse();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const component=fixture.componentInstance;
+      component.invitationLoginUsername='jynloteste';
+      component.invitationLoginPassword='pass';
+      component.loginInsideInvitation();
+      expect(authenticationService.login).toHaveBeenCalledOnceWith('jynloteste','pass');
+      expect(authenticationService.saveToken).toHaveBeenCalledOnceWith('test-token');
+      expect((http.post as jasmine.Spy).calls.allArgs().filter(c=>
+        String(c[0]).endsWith('/guest-join-account')).length).toBe(1);
+      expect(navigation).toHaveBeenCalledWith('/menu/events/42');
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
+    });
+
+    it('handles password MFA inline, then confirms the registered account once', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),maxParticipants:10,
+          participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        if (url.endsWith('/guest-member-presence')) return of({status:'NONE',canCancel:false});
+        if (url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      authenticationService.login.and.returnValue(of({
+        mfaRequired:true,challengeId:'challenge-123',challengeExpiresAt:'2099-10-29T15:00:00Z'
+      } as any));
+      authenticationService.confirmMfaChallenge.and.returnValue(of({
+        token:'verified-token',mfaRequired:false
+      } as any));
+      const navigate=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      const navigateByUrl=spyOn(TestBed.inject(Router),'navigateByUrl').and.resolveTo(true);
+      const page=render();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const c=fixture.componentInstance;
+      c.invitationLoginUsername='jynloteste';
+      c.invitationLoginPassword='pass';
+      c.loginInsideInvitation();
+      fixture.detectChanges();
+      expect(c.invitationStage).toBe('mfa');
+      expect(page.querySelector('#invite-mfa-code')).not.toBeNull();
+      expect(navigate).not.toHaveBeenCalled();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(args=>
+        String(args[0]).endsWith('/guest-join-account'))).toBeFalse();
+      c.invitationMfaCode='123456';
+      c.confirmInvitationMfa();
+      expect(authenticationService.confirmMfaChallenge).toHaveBeenCalledOnceWith('challenge-123','123456');
+      expect(authenticationService.saveToken).toHaveBeenCalledOnceWith('verified-token');
+      expect((http.post as jasmine.Spy).calls.allArgs().filter(args=>
+        String(args[0]).endsWith('/guest-join-account'))).toHaveSize(1);
+      expect(navigateByUrl).toHaveBeenCalledWith('/menu/events/42');
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
+      expect(sessionStorage.getItem('mfa-challenge-id')).toBeNull();
+    });
+
+    it('rejects malformed MFA codes and refreshes an expired challenge without navigating', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+          maxParticipants:10,participantCount:2,priceAmount:0,gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        return throwError(()=>new Error('unexpected '+url));
+      });
+      authenticationService.login.and.returnValue(of({
+        mfaRequired:true,challengeId:'challenge-old',challengeExpiresAt:'2020-01-01T00:00:00Z'
+      } as any));
+      authenticationService.resendMfaChallenge.and.returnValue(of({
+        challengeId:'challenge-new',challengeExpiresAt:'2099-01-01T00:00:00Z'
+      } as any));
+      const navigate=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      render();
+      const c=fixture.componentInstance;
+      c.startInvitation();
+      c.chooseInvitationIdentity(true);
+      c.invitationLoginUsername='user';
+      c.invitationLoginPassword='pass';
+      c.loginInsideInvitation();
+      expect(c.invitationMfaExpired).toBeTrue();
+      c.invitationMfaCode='123456';
+      c.confirmInvitationMfa();
+      expect(authenticationService.confirmMfaChallenge).not.toHaveBeenCalled();
+      c.resendInvitationMfa();
+      expect(authenticationService.resendMfaChallenge).toHaveBeenCalledOnceWith('challenge-old');
+      expect(c.invitationMfaChallengeId).toBe('challenge-new');
+      expect(c.invitationMfaExpired).toBeFalse();
+      c.invitationMfaCode='wrong';
+      c.confirmInvitationMfa();
+      expect(c.invitationMfaError).toBe('inviteCenter.mfaCodeInvalid');
+      expect(authenticationService.confirmMfaChallenge).not.toHaveBeenCalled();
+      expect(navigate).not.toHaveBeenCalled();
+      c.cancelInvitationMfa();
+      expect(c.invitationStage).toBe('login');
+      expect(c.invitationMfaChallengeId).toBe('');
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
+    });
+
+    it('embeds the Google button and confirms an existing Google account in this invite', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      const google = {
+        initialize: jasmine.createSpy('initialize'),
+        renderButton: jasmine.createSpy('renderButton')
+      };
+      const previous=(window as any).google;
+      (window as any).google={accounts:{id:google}};
+      try {
+        authenticationService.googleConfig.and.returnValue(of({clientId:'configured-client'}));
+        authenticationService.googleLogin.and.returnValue(of({
+          token:'google-token',onboardingRequired:false,mfaRequired:false
+        } as any));
+        (http.post as jasmine.Spy).and.callFake((url:string)=>{
+          if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+            gameDate:new Date(Date.now()+3600_000).toISOString(),status:'OPEN',
+            maxParticipants:10,participantCount:2,priceAmount:0,gamePhoto:null});
+          if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+          if (url.endsWith('/guest-confirmed-players')) return of([]);
+          if (url.endsWith('/guest-member-presence')) return of({status:'NONE',canCancel:false});
+          if (url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
+          return throwError(()=>new Error('Unexpected '+url));
+        });
+        const navigateByUrl=spyOn(TestBed.inject(Router),'navigateByUrl').and.resolveTo(true);
+        const page=render();
+        (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        (fixture.componentInstance as any).initializeInvitationGoogle();
+        expect(google.initialize).toHaveBeenCalledTimes(1);
+        expect(google.renderButton).toHaveBeenCalledTimes(1);
+        const callback=google.initialize.calls.mostRecent().args[0].callback;
+        callback({credential:'google-credential'});
+        expect(authenticationService.googleLogin).toHaveBeenCalledOnceWith('google-credential');
+        expect(authenticationService.saveToken).toHaveBeenCalledOnceWith('google-token');
+        expect(navigateByUrl).toHaveBeenCalledWith('/menu/events/42');
+        expect((http.post as jasmine.Spy).calls.allArgs().filter(args=>
+          String(args[0]).endsWith('/guest-join-account'))).toHaveSize(1);
+      } finally {
+        (window as any).google=previous;
+      }
+    });
+
+    it('does not register on login failure and does not persist a hidden auto-join', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if (url.endsWith('/guest-confirmed-players')) return of([]);
+        return throwError(()=>new Error('Unexpected '+url));
+      });
+      authenticationService.login.and.returnValue(throwError(()=>new Error('invalid credentials')));
+      const page=render();
+      (page.querySelector('.invitation-first-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (page.querySelector('.invitation-have-account') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const c=fixture.componentInstance;
+      c.invitationLoginUsername='ana';
+      c.invitationLoginPassword='incorrect';
+      c.loginInsideInvitation();
+      fixture.detectChanges();
+      expect(c.isAuthenticated).toBeFalse();
+      expect(c.invitationLoginError).toBe('inviteCenter.inlineLoginError');
+      expect(sessionStorage.getItem('jynlo-invite-rsvp:42:'+token.slice(0,18))).toBeNull();
+    });
+
+    it('loads the name list only when holding a valid organizer-issued invite token', () => {
+      const page=renderGuest();
+      expect(page.querySelector('.guest-rsvp')).toBeTruthy();
+      expect(fixture.componentInstance.guestPlayers.length).toBe(2);
+      expect(fixture.componentInstance.guestCommunityId).toBe(7);
+      expect(http.post).toHaveBeenCalledTimes(3);
+      expect(page.querySelector('.guest-rsvp-primary:disabled')).toBeTruthy();
+    });
+    it('lets guests go back and correct their chosen player before submitting', () => {
+      renderGuest();
+      const component=fixture.componentInstance;
+      component.setGuestNewName('Afonso Salvador');
+      component.chooseGuest();
+      fixture.detectChanges();
+      expect(component.guestStep).toBe('confirm');
+      expect(component.guestPlayerName).toBe('Afonso Salvador');
+      const back=fixture.nativeElement.querySelector('.guest-rsvp-back') as HTMLButtonElement;
+      back.click();
+      fixture.detectChanges();
+      expect(component.guestStep).toBe('choose');
+      component.setGuestNewName('João Marques');
+      component.chooseGuest();
+      component.sendGuestRequest();
+      fixture.detectChanges();
+      const calls=(http.post as jasmine.Spy).calls.allArgs();
+      const requestCall=calls.find(args=>String(args[0]).endsWith('/guest-requests'))!;
+      expect(requestCall[1].playerId).toBeNull();
+      expect(requestCall[1].newName).toBe('João Marques');
+      expect(component.guestStep).toBe('pending');
+      expect(localStorage.getItem('jynlo-guest-receipt:42:'+token.slice(0,18))).toBe(receipt);
+    });
+    it('offers optional registration only after organizer approval, not after sending', () => {
+      const page=renderGuest();
+      const component=fixture.componentInstance;
+      component.setGuestNewName('Convidado novo');
+      component.chooseGuest();
+      component.sendGuestRequest();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(component.guestStep).toBe('approved');
+      expect(page.querySelector('.guest-rsvp-upgrade a[routerlink]')).toBeTruthy();
+      expect((http.post as jasmine.Spy).calls.allArgs().find(args=>String(args[0]).endsWith('/guest-requests'))![1].playerId).toBeNull();
+    });
+    it('uses the Jynlo account instead of claiming a historical name when already logged in', () => {
+      authenticationService.isLoggedIn.and.returnValue(true);
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.returnValue(of({id:42,sport:'Futebol',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null}));
+      const page=render({sport:'Futebol'});
+      expect(fixture.componentInstance.isAuthenticated).toBeTrue();
+      expect(fixture.componentInstance.guestPlayers).toEqual([]);
+      expect(http.post).toHaveBeenCalledTimes(3);
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        args => String(args[0]).endsWith('/guest-member-presence'))).toBeTrue();
+      expect(page.querySelector('.guest-rsvp')).toBeNull();
+      expect(page.querySelector('.header-login')).toBeNull();
+      const join=page.querySelector('.join-panel .member-rsvp') as HTMLElement;
+      expect(join).not.toBeNull();
+      expect(fixture.componentInstance.participationReturnUrl)
+        .toBe('/sessions/42?guest=' + token);
+    });
+
+    it('confirms with authenticated signed registration and stays on the invitation', () => {
+      authenticationService.isLoggedIn.and.returnValue(true);
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string)=>{
+        if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if(url.endsWith('/guest-confirmed-players')) return of([]);
+        if(url.endsWith('/guest-join-account')) return of({state:'PARTICIPANT',waitlistPosition:null});
+        if(url.endsWith('/guest-member-presence')) return of({status:'NONE',canCancel:false});
+        throw new Error('Unexpected '+url);
+      });
+      const page=render();
+      const navigation=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      const button=page.querySelector('.join-panel .member-rsvp .guest-rsvp-primary') as HTMLButtonElement;
+      expect(button).not.toBeNull();
+      expect(navigation).not.toHaveBeenCalled();
+      button.click();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        args=>String(args[0]).endsWith('/guest-join-account') && args[1].token===token)).toBeTrue();
+      expect(navigation).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.memberPresence).toBe('PARTICIPANT');
+      fixture.detectChanges();
+      expect(page.textContent).toContain('A tua presença está confirmada!');
+    });
+
+    it('does not redirect into a forbidden community screen if registration fails', () => {
+      authenticationService.isLoggedIn.and.returnValue(true);
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string) =>
+        url.endsWith('/guest-preview')
+          ? of({id:42,sport:'Futebol',city:'Lisboa',
+              gameDate:new Date(Date.now()+3600_000).toISOString(),
+              maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null})
+          : url.endsWith('/guest-confirmed-players') ? of([])
+          : url.endsWith('/guest-member-presence') ? of({status:'NONE',canCancel:false})
+          : throwError(()=>new HttpErrorResponse({status:403})));
+      const page=render();
+      const navigation=spyOn(TestBed.inject(Router),'navigate').and.resolveTo(true);
+      (page.querySelector('.join-panel .member-rsvp .guest-rsvp-primary') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(navigation).not.toHaveBeenCalled();
+      expect(page.querySelector('[role="alert"]')?.textContent)
+        .toContain('Não foi possível confirmar a presença');
+    });
+
+    it('keeps the guest token across sign-in even without a private approval receipt', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      renderGuest();
+      expect(fixture.componentInstance.participationReturnUrl)
+        .toBe('/sessions/42?guest='+token);
+    });
+
+    it('keeps an approved receipt available for explicit linking after optional signup', () => {
+      authenticationService.isLoggedIn.and.returnValue(true);
+      localStorage.setItem('jynlo-guest-receipt:42',receipt);
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string) =>
+        url.endsWith('/guest-preview')
+          ? of({id:42,sport:'Futebol',city:'Lisboa',
+              gameDate:new Date(Date.now()+3600_000).toISOString(),
+              maxParticipants:4,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null})
+          : of({receipt,status:'APPROVED'}));
+      const page=render({sport:'Futebol'});
+      expect(fixture.componentInstance.guestStep).toBe('approved');
+      expect(page.querySelector('.guest-rsvp')).toBeTruthy();
+      expect(page.querySelector('.guest-rsvp-upgrade button')).toBeTruthy();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        args=>String(args[0]).endsWith('/guest-member-presence'))).toBeTrue();
+      expect((http.post as jasmine.Spy).calls.allArgs().some(
+        args=>String(args[0]).endsWith('/guest-requests/status'))).toBeTrue();
+    });
+
+    it('shows a cancelled approved reservation without asking the guest to register', () => {
+      const page=renderGuest();
+      const component=fixture.componentInstance;
+      component.guestReceipt=receipt;
+      (http.post as jasmine.Spy).and.returnValue(of({receipt,status:'CANCELLED'}));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(component.guestStep).toBe('cancelled');
+      expect(page.textContent).toContain('Presença cancelada');
+      expect(page.textContent).toContain('Já não tens uma vaga reservada neste jogo');
+      expect(page.textContent).toContain('Se cancelaste por engano');
+      expect(page.textContent).not.toContain('O organizador cancelou');
+      expect(page.textContent).not.toContain('Cancelaste a tua presença');
+      expect(component.guestCancelledBySelf).toBeFalse();
+      expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
+    });
+
+    it('shows ten confirmed identities only to a signed invite and distinguishes accounts', () => {
+      routeQueryParamMap=convertToParamMap({guest:token});
+      (http.post as jasmine.Spy).and.callFake((url:string) => {
+        if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Lisboa',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:10,priceAmount:0,status:'FULL',gamePhoto:null});
+        if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if(url.endsWith('/guest-confirmed-players')) return of([
+          ...Array.from({length:5}, (_,i)=>({key:'account:'+i,name:'jynlo'+i,hasAccount:true})),
+          ...Array.from({length:5}, (_,i)=>({key:'guest:'+i,name:'Convidado '+i,hasAccount:false}))
+        ]);
+        return of({});
+      });
+      const page=render();
+      const panel=page.querySelector('.guest-confirmed-roster') as HTMLElement;
+      expect(panel).not.toBeNull();
+      expect(panel.querySelectorAll('.guest-confirmed-player').length).toBe(10);
+      expect(panel.querySelectorAll('.guest-confirmed-player--account').length).toBe(5);
+      expect(panel.textContent).toContain('Convidado 4');
+      expect(panel.textContent).toContain('@jynlo4');
+      expect(panel.textContent).toContain('COM CONTA');
+      expect(panel.textContent).toContain('SEM CONTA');
+      expect(page.querySelectorAll('.guest-rsvp').length).toBe(1);
+    });
+
+    it('reveals and refreshes private meeting instructions only after a confirmed guest receipt', () => {
+      const page=renderGuest();
+      const component=fixture.componentInstance;
+      expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
+      component.guestReceipt=receipt;
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',playerName:'Jogador A',
+        meetingPointInstructions:'Portão 2 junto ao café'
+      }));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')?.textContent)
+        .toContain('Portão 2 junto ao café');
+      expect(page.querySelector('.guest-meeting-refresh')).toBeNull();
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',meetingPointInstructions:'Entrada norte'
+      }));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')?.textContent).toContain('Entrada norte');
+      expect(page.textContent).not.toContain('Portão 2 junto ao café');
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',meetingPointInstructions:null
+      }));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
+    });
+
+    it('hides guest arrival notes if the verified receipt is revoked or invalid', () => {
+      const page=renderGuest();
+      const component=fixture.componentInstance;
+      component.guestReceipt=receipt;
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',meetingPointInstructions:'Portão privado'
+      }));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')).not.toBeNull();
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'CANCELLED',meetingPointInstructions:'must not render'
+      }));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
+      (http.post as jasmine.Spy).and.returnValue(of({
+        receipt,status:'APPROVED',meetingPointInstructions:'New instructions'
+      }));
+      component.checkGuestStatus();
+      (http.post as jasmine.Spy).and.returnValue(
+        throwError(()=>new HttpErrorResponse({status:404})));
+      component.checkGuestStatus();
+      fixture.detectChanges();
+      expect(component.guestReceipt).toBe('');
+      expect(component.guestMeetingPoint).toBe('');
+      expect(page.querySelector('.guest-private-meeting-point')).toBeNull();
+    });
+
+    it('recovers the confirmed historical name after reopening an invitation', () => {
+      const secret='N'.repeat(43),receipt='R'.repeat(43);
+      const key='jynlo-guest-receipt:42:'+secret.slice(0,18);
+      localStorage.setItem(key,receipt);
+      routeQueryParamMap=convertToParamMap({guest:secret});
+      (http.post as jasmine.Spy).and.callFake((url:string) => {
+        if(url.endsWith('/guest-preview')) return of({id:42,sport:'Futebol',city:'Parede',
+          gameDate:new Date(Date.now()+3600_000).toISOString(),
+          maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null});
+        if(url.endsWith('/guest-roster')) return of({sessionId:42,communityId:7,players:[]});
+        if(url.endsWith('/guest-confirmed-players')) return of([{key:'guest:40',name:'Fresco',hasAccount:false}]);
+        if(url.endsWith('/guest-requests/status')) return of({status:'APPROVED',playerName:'Fresco'});
+        return of({});
+      });
+      const page=render();
+      expect(fixture.componentInstance.guestStep).toBe('approved');
+      expect(page.querySelector('.guest-rsvp-confirmed-identity')?.textContent).toContain('Fresco');
+      expect(page.querySelector('.guest-confirmed-roster')?.textContent).toContain('Fresco');
+      expect(localStorage.getItem(key)).toBe(receipt);
+    });
+
+    it('never treats an invalid guest link as a public roster permission', () => {
+      routeQueryParamMap=convertToParamMap({guest:'bad'});
+      const page=render({sport:'Futebol'});
+      expect(page.querySelector('.guest-rsvp')).toBeNull();
+      expect(http.post).not.toHaveBeenCalled();
+    });
+  });
+
+  it('links a verified invitation to the exact Google Maps pin, never the city text', () => {
+    const token='P'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:token});
+    (http.post as jasmine.Spy).and.callFake((url:string) => {
+      if (url.endsWith('/guest-preview')) return of({
+        id:42,sport:'Futsal',city:'Campo Grande',
+        address:'Campo Grande',venueName:'Campo Grande',
+        latitude:38.7488967,longitude:-9.1526148,
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:10,participantCount:1,priceAmount:0,status:'OPEN',gamePhoto:null
+      });
+      if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:null,players:[]});
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      return of({});
+    });
+    const page=render({city:'Outra localidade',latitude:40,longitude:-8});
+    const link=page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(new URL(link.href).searchParams.get('query')).toBe('38.7488967,-9.1526148');
+    expect(link.textContent).toContain('Abrir pin exato');
+    expect(link.href).not.toContain('Campo%20Grande');
+  });
+
+  it('a public preview never exposes signed coordinates and still searches only the city', () => {
+    const page=render({city:'Cascais',latitude:38.7488967,longitude:-9.1526148});
+    const link=page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(new URL(link.href).searchParams.get('query')).toBe('Cascais, Portugal');
+    expect(link.href).not.toContain('38.7488967');
+  });
+
+  it('promotes attendance first, without duplicate login actions or a historical dropdown', () => {
+    const token='L'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:token});
+    (http.post as jasmine.Spy).and.callFake((url:string) => {
+      if (url.endsWith('/guest-preview')) return of({
+        id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:10,participantCount:1,priceAmount:0,status:'OPEN',gamePhoto:null
+      });
+      if (url.endsWith('/guest-roster')) return of({sessionId:42,communityId:null,players:[]});
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      return of({});
+    });
+    const page=render();
+    expect(page.querySelector('.invite-account-banner')).toBeNull();
+    expect(page.querySelector('.header-login')).toBeNull();
+    expect(page.querySelector('.join-panel .secondary-action:not(.whatsapp-share-action)')).toBeNull();
+    expect(page.querySelector('#guest-player-select')).toBeNull();
+    expect(page.querySelector('.invitation-first-confirm')).not.toBeNull();
+    expect(page.querySelector('#guest-new-name')).toBeNull();
+    expect(page.querySelector('.guest-rsvp-upgrade')).toBeNull();
+    expect(http.post).toHaveBeenCalledTimes(3);
+  });
+
+  it('shows the real registered presence and cancels only after explicit confirmation', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    routeQueryParamMap=convertToParamMap({guest:'M'.repeat(43)});
+    const posts=(http.post as jasmine.Spy);
+    let registered=true;
+    posts.and.callFake((url:string)=>{
+      if (url.endsWith('/guest-preview')) return of({
+        id:42,sport:'Futsal',city:'Lisboa',gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null
+      });
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      if (url.endsWith('/guest-member-presence')) return of({
+        status:registered?'PARTICIPANT':'NONE',canCancel:registered});
+      if (url.endsWith('/leave')) {registered=false;return of(null);}
+      return throwError(()=>new Error('unexpected '+url));
+    });
+    const page=render();
+    expect(page.querySelector('.header-login')).toBeNull();
+    expect(page.textContent).toContain('A tua presença está confirmada!');
+    expect(page.querySelector('.member-rsvp .guest-cancel-link')).not.toBeNull();
+    expect(posts.calls.allArgs().some(args=>String(args[0]).endsWith('/leave'))).toBeFalse();
+    (page.querySelector('.member-rsvp .guest-cancel-link') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (page.querySelector('.member-rsvp .guest-cancel-danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(posts.calls.allArgs().filter(args=>String(args[0]).endsWith('/leave')).length).toBe(1);
+    expect(fixture.componentInstance.memberPresence).toBe('NONE');
+    expect(page.textContent).toContain('Cancelaste a tua presença');
+    expect(page.querySelector('.member-rsvp .guest-rsvp-primary')).not.toBeNull();
+  });
+
+  it('does not allow registered self-registration on an unauthorised or failed status check', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    routeQueryParamMap=convertToParamMap({guest:'Q'.repeat(43)});
+    (http.post as jasmine.Spy).and.callFake((url:string)=>{
+      if (url.endsWith('/guest-preview')) return of({
+        id:42,sport:'Futsal',city:'Lisboa',gameDate:new Date(Date.now()+3600_000).toISOString(),
+        maxParticipants:10,participantCount:2,priceAmount:0,status:'OPEN',gamePhoto:null
+      });
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      if (url.endsWith('/guest-member-presence'))
+        return throwError(()=>new HttpErrorResponse({status:403}));
+      return throwError(()=>new Error('unexpected '+url));
+    });
+    const page=render();
+    expect(page.querySelector('.member-rsvp [role="alert"]')).not.toBeNull();
+    expect(page.querySelector('.member-rsvp .guest-rsvp-primary')).toBeNull();
+    expect((http.post as jasmine.Spy).calls.allArgs().some(
+      args=>String(args[0]).endsWith('/guest-join-account'))).toBeFalse();
+  });
+
+  it('keeps the signed invitation free of a redundant open-app header', () => {
+    const token='J'.repeat(43);
+    routeQueryParamMap=convertToParamMap({guest:token});
+    authenticationService.isLoggedIn.and.returnValue(true);
+    (http.post as jasmine.Spy).and.callFake((url:string) => {
+      if (url.endsWith('/guest-preview')) return of({id:42,sport:'Futsal',city:'Lisboa',
+        gameDate:new Date(Date.now()+3600000).toISOString(),status:'OPEN',maxParticipants:10,
+        participantCount:2,priceAmount:0,gamePhoto:null});
+      if (url.endsWith('/guest-member-presence')) return of({status:'PARTICIPANT',canCancel:true});
+      if (url.endsWith('/guest-confirmed-players')) return of([]);
+      return of({});
+    });
+    const page=render();
+    expect(page.querySelector('.header-login')).toBeNull();
+    expect(page.querySelector('.member-presence-status')?.textContent).toContain('Presença confirmada');
+    expect(page.querySelector('.member-cancel-action')?.textContent).toContain('Cancelar');
+    expect(page.querySelector('#guest-player-select')).toBeNull();
+  });
+
 });

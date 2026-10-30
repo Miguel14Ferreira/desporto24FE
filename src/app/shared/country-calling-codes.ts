@@ -246,3 +246,10 @@ export const COUNTRY_CALLING_CODES: readonly CountryCallingCode[] = [
 export function countryNameFromLabel(label: string): string {
   return label.replace(/\s*\(\+.*\)$/, '').trim();
 }
+
+/** Country options with exactly the stored values used by existing profiles. */
+export const COUNTRY_SELECT_CHOICES: readonly {value:string;label:string}[] =
+  COUNTRY_CALLING_CODES.map(item => {
+    const country = countryNameFromLabel(item.label);
+    return {value:country,label:country};
+  });

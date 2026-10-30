@@ -1,10 +1,9 @@
-<section class="home-page">
+<section class="home-page jynlo-c1 jynlo-social jynlo-entry-premium jynlo-home-premium">
   <div class="home-shell">
-    <main class="hero">
+    <main class="hero" aria-labelledby="jynlo-home-title">
       <div class="hero-copy">
-        <p class="brand-lockup" aria-label="Jynlo">Jynl<span>o</span></p>
         <p class="eyebrow">{{ 'home.eyebrow' | t }}</p>
-        <h1>{{ 'home.hero.title' | t }}</h1>
+        <h1 id="jynlo-home-title">{{ 'home.hero.title' | t }}</h1>
         <p class="subtitle">{{ 'home.hero.subtitle' | t }}</p>
 
         <div class="hero-actions">
@@ -22,7 +21,7 @@
         </div>
       </div>
 
-      <aside class="flow-card">
+      <aside class="flow-card jynlo-premium-surface">
         <p class="eyebrow">{{ 'home.flow.eyebrow' | t }}</p>
         <h2>{{ 'home.flow.title' | t }}</h2>
         <div class="flow-steps">
@@ -34,7 +33,7 @@
       </aside>
     </main>
 
-    <section class="pillar-grid" [attr.aria-label]="'home.features' | t">
+    <section class="pillar-grid jynlo-premium-features" [attr.aria-label]="'home.features' | t">
       <article>
         <span class="pillar-icon">📍</span>
         <div>
@@ -63,7 +62,7 @@
       </article>
     </section>
 
-    <section class="community-teaser" aria-labelledby="home-community-title">
+    <section class="community-teaser jynlo-premium-surface" aria-labelledby="home-community-title">
       <div class="community-teaser-copy">
         <p class="eyebrow">{{ 'home.groups.eyebrow' | t }}</p>
         <h2 id="home-community-title">{{ 'home.groups.title' | t }}</h2>
@@ -73,7 +72,7 @@
          routerLink="/login/registerNewUser">{{ 'home.groups.cta' | t }}</a>
     </section>
 
-    <section class="public-discovery" id="jynlo-public-discovery" aria-label="{{ 'home.preview.title' | t }}">
+    <section class="public-discovery jynlo-premium-surface" id="jynlo-public-discovery" aria-label="{{ 'home.preview.title' | t }}">
       <div class="preview-heading">
         <p class="eyebrow">{{ 'home.preview.eyebrow' | t }}</p>
         <h2>{{ 'home.preview.title' | t }}</h2>
@@ -106,7 +105,7 @@
           </button>
         </div>
       </form>
-      <div class="preview-columns">
+      <div class="preview-columns" aria-live="polite">
         <div class="preview-panel">
           <h3>{{ 'home.preview.sessionsTitle' | t }}</h3>
           @if (sessionsLoading) {
@@ -141,10 +140,15 @@
             <p class="preview-state">{{ 'home.preview.emptyVenues' | t }}</p>
           } @else {
             @for (venue of featuredVenues; track venue.id) {
-              <article class="preview-item preview-venue">
+              <a class="preview-item preview-venue"
+                 [routerLink]="['/venues', venue.id]"
+                 [attr.aria-label]="('home.preview.viewVenue' | t) + ': ' + venue.name">
                 <strong>{{ venue.name }}</strong>
-                <span>{{ venue.city }} · {{ venue.sports }}</span>
-              </article>
+                <span class="preview-venue-city">{{ venue.city }}</span>
+                <app-venue-sports-badges [sports]="venue.sports" [limit]="3"
+                  [compact]="true"></app-venue-sports-badges>
+                <small class="preview-venue-action">{{ 'home.preview.viewVenue' | t }} ↗</small>
+              </a>
             }
           }
         </div>

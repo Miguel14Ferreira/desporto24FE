@@ -1,0 +1,74 @@
+/* Preserve native sidebar flex layout; the list remains its independent scroll item. */
+:host { display: contents; }
+.inbox-entries {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #527b87 #122c3b;
+}
+.inbox-entries::-webkit-scrollbar { width: 8px; }
+.inbox-entries::-webkit-scrollbar-track { background: #122c3b; }
+.inbox-entries::-webkit-scrollbar-thumb {
+  border: 2px solid #122c3b;
+  border-radius: 999px;
+  background: #527b87;
+}
+.inbox-entries::-webkit-scrollbar-thumb:hover { background: #6c9ca2; }
+.inbox-entry { display:flex; align-items:center; gap:12px; width:100%; border:0; border-bottom:1px solid #284657; color:inherit; text-align:left; background: transparent; padding:16px; font:inherit; cursor:pointer; }
+.inbox-entry:hover { background:#1c3c4b; }
+.inbox-entry:focus-visible { outline: 2px solid #5ee6d0; outline-offset: -3px; background: #1c3c4b; }
+.inbox-entry.is-selected { background:linear-gradient(90deg,#15535b,#163d4a); border-left:3px solid #45e1c9; padding-left:13px; }
+
+.inbox-avatar { display:grid; place-items:center; flex:0 0 46px; width:46px; height:46px; border-radius:16px; background:#294b65; font-size:1.35rem; }
+.inbox-avatar--community { background:#245a5e; }
+.inbox-avatar--session { background:#42623e; }
+
+.inbox-entry-content { min-width:0; flex:1; display:flex; flex-direction:column; gap:5px; }
+.inbox-entry-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.inbox-entry-top strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.93rem; }
+.inbox-entry-top small { color:#a1b9c5; white-space:nowrap; font-size:.69rem; }
+.inbox-entry-kind,.inbox-entry-snippet { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.inbox-entry-kind { color:#62cbbb; font-size:.72rem; }
+.inbox-entry-snippet { font-size:.78rem; color:#bacdd5; }
+.inbox-unread { display:grid; place-items:center; align-self:start; flex:0 0 auto; min-width:24px; height:24px; padding:0 5px; color:#063a35; background:#62e6c4; border-radius:30px; font-size:.75rem; font-weight:900; }
+
+@media(max-width:800px){.inbox-entries{min-height:100px;}}
+/* Original Concept One Premium conversation list, now scoped to the list view. */
+.inbox-entries {padding:8px 5px;scrollbar-width:thin;
+  scrollbar-color:#376a75 #102c3d;}
+.inbox-entries::-webkit-scrollbar {width:6px;}
+.inbox-entries::-webkit-scrollbar-track {background:#102c3d;}
+.inbox-entries::-webkit-scrollbar-thumb {border:1px solid #102c3d;background:#376a75;border-radius:20px;}
+.inbox-entry {position:relative;width:calc(100% - 10px);margin:2px 5px;
+  padding:13px 13px;gap:12px;min-height:79px;border:1px solid transparent;
+  border-bottom:1px solid rgba(124,183,187,.13);border-radius:11px;
+  background:transparent;transition:background .16s,border-color .16s;}
+.inbox-entry:hover {background:rgba(43,94,107,.41);}
+.inbox-entry.is-selected {padding:13px 13px;border:1px solid #32dfcb;
+  background:linear-gradient(110deg,rgba(22,95,105,.56),rgba(25,84,92,.26));
+  box-shadow:inset 0 0 0 1px rgba(40,222,191,.10),0 0 16px rgba(13,131,120,.09);}
+
+.inbox-avatar {flex:0 0 46px;width:46px;height:46px;border-radius:50%;
+  font-size:1rem;font-weight:800;color:#dceffd;background:linear-gradient(155deg,#245b72,#213c60);
+  border:1px solid rgba(143,192,205,.15);box-shadow:inset 0 0 9px #0002;}
+.inbox-avatar--community {background:linear-gradient(135deg,#224e70,#29356a);
+  color:#c6d2ff;font-size:1.35rem;}
+.inbox-avatar--session {background:linear-gradient(135deg,#225c61,#23624f);
+  font-size:1.25rem;}
+
+.inbox-entry-content {gap:4px;min-width:0;padding-right:4px;}
+.inbox-entry-top strong {font-size:.88rem;color:#f6fdff;letter-spacing:-.013em;}
+.inbox-entry-top small {font-size:.66rem;color:#a6c4cd;align-self:flex-start;padding-top:2px;}
+.inbox-entry-kind {font-size:.68rem;font-weight:700;color:#45dcca;}
+.inbox-entry-snippet {font-size:.73rem;color:#b9d4dc;padding-right:20px;}
+.inbox-unread {position:absolute;right:12px;bottom:14px;min-width:22px;height:22px;
+  font-size:.68rem;background:var(--inbox-accent);color:#063b38;
+  box-shadow:0 0 8px rgba(17,211,171,.27);}
+
+@media(max-width:1050px){
+  .inbox-entry{padding:11px 10px;}
+  .inbox-entry.is-selected{padding:11px 10px;}
+}
+@media(prefers-reduced-motion:reduce){.inbox-entry{transition:none;}}

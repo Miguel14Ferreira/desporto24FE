@@ -1,0 +1,122 @@
+/* Concept One Premium: detail view only. Retains all session controls and states. */
+:host{--detail-teal:#28debf;--detail-border:rgba(96,181,184,.28)}
+.detail-page.jynlo-session-detail-premium{
+  background:radial-gradient(ellipse at 80% 7%,rgba(28,152,146,.17),transparent 46%),
+    linear-gradient(165deg,#061b29,#092a3a 63%,#071e2e);color:#effcfd
+}
+.jynlo-session-detail-premium .detail-shell{width:min(1080px,100%)}
+.jynlo-session-detail-premium .back-link{color:#9af7df;text-underline-offset:4px}
+.jynlo-session-detail-premium .detail-card,
+.jynlo-session-detail-premium .state-card{
+  border:1px solid var(--detail-border);border-radius:22px;
+  background:linear-gradient(153deg,rgba(17,54,70,.97),rgba(8,38,53,.97));
+  box-shadow:0 20px 50px rgba(0,15,25,.22)
+}
+.jynlo-session-detail-premium .detail-content{padding:clamp(1.15rem,3.5vw,2.5rem)}
+.jynlo-session-detail-premium .session-photo{max-height:390px}
+.jynlo-session-detail-premium .title-row{gap:1.2rem;padding-bottom:1rem}
+.jynlo-session-detail-premium .title-row h1{letter-spacing:-.04em;color:#f2ffff;line-height:1.12}
+.jynlo-session-detail-premium .eyebrow,
+.jynlo-session-detail-premium .section-kicker{color:#80f5dc}
+.jynlo-session-detail-premium .badges span{
+  border:1px solid rgba(40,222,191,.32);background:rgba(40,222,191,.11);
+  color:#aff8e8
+}
+.jynlo-session-detail-premium .session-created-share,
+.jynlo-session-detail-premium .organizer-preparation,
+.jynlo-session-detail-premium .membership-status{
+  border:1px solid rgba(40,222,191,.37);border-radius:16px;
+  background:linear-gradient(110deg,rgba(20,92,90,.32),rgba(9,48,62,.5))
+}
+.jynlo-session-detail-premium .membership-status.waitlisted{
+  border-color:rgba(251,191,36,.34);background:rgba(161,98,7,.12);color:#fde68a
+}
+.jynlo-session-detail-premium .session-created-share strong,
+.jynlo-session-detail-premium .organizer-preparation-count{color:#9cf7dd}
+.jynlo-session-detail-premium .session-created-share p,
+.jynlo-session-detail-premium .organizer-preparation p{color:#c2dce1}
+.jynlo-session-detail-premium .session-top-actions{gap:.7rem;min-width:0}
+.jynlo-session-detail-premium .detail-grid{gap:.8rem}
+.jynlo-session-detail-premium .detail-grid>div,
+.jynlo-session-detail-premium .address-panel,
+.jynlo-session-detail-premium .participation-panel,
+.jynlo-session-detail-premium .creator-reliability,
+.jynlo-session-detail-premium .attendance-panel,
+.jynlo-session-detail-premium .session-participants-panel,
+.jynlo-session-detail-premium .player-compliments-panel,
+.jynlo-session-detail-premium .overall-rating-panel,
+.jynlo-session-detail-premium .team-suggestion{
+  min-width:0;border:1px solid rgba(97,174,181,.25);border-radius:15px;
+  background:rgba(9,42,57,.66)
+}
+.jynlo-session-detail-premium .detail-grid>div{padding:1rem}
+.jynlo-session-detail-premium .detail-grid span{color:#b2d1d8}
+.jynlo-session-detail-premium .detail-grid strong{color:#f2ffff;overflow-wrap:anywhere}
+.jynlo-session-detail-premium .session-participant-list>span{
+  background:rgba(40,222,191,.10);color:#aff9e4
+}
+.jynlo-session-detail-premium .confirmed-teams>div,
+.jynlo-session-detail-premium .team-card{border-color:rgba(97,174,181,.26);background:rgba(9,43,58,.8)}
+.jynlo-session-detail-premium .session-location-map{color:#a2f7e2}
+.jynlo-session-detail-premium .jynlo-action--primary{
+  --jynlo-action-border:rgba(40,222,191,.62);
+  --jynlo-action-bg:rgba(40,222,191,.17);
+  --jynlo-action-hover:rgba(40,222,191,.26);
+  --jynlo-action-text:#a0f9e3
+}
+.jynlo-session-detail-premium .join-shortcut{
+  border:1px solid rgba(40,222,191,.66);background:#28debf;color:#073937;
+  box-shadow:0 8px 22px rgba(23,194,166,.11)
+}
+.jynlo-session-detail-premium .join-shortcut:hover{background:#91f5df}
+.jynlo-session-detail-premium a:focus-visible,
+.jynlo-session-detail-premium button:focus-visible,
+.jynlo-session-detail-premium input:focus-visible,
+.jynlo-session-detail-premium textarea:focus-visible{
+  outline:2px solid #a4fae5;outline-offset:3px
+}
+@media(max-width:760px){
+  .jynlo-session-detail-premium .detail-content{padding:1.1rem}
+  .jynlo-session-detail-premium .title-row{flex-wrap:wrap}
+  .jynlo-session-detail-premium .session-top-actions>a,
+  .jynlo-session-detail-premium .session-top-actions>button{max-width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .jynlo-session-detail-premium a,.jynlo-session-detail-premium button{transition:none}
+}
+
+/* Session detail hierarchy: back navigation, title, membership and next action group.
+   Only direct children are targeted; panels, roster rows and grids remain untouched. */
+.jynlo-session-detail-premium .detail-shell > .back-link {margin-bottom:24px}
+.jynlo-session-detail-premium .detail-content > .session-created-share {margin-bottom:24px}
+.jynlo-session-detail-premium .detail-content > .title-row + :is(.membership-status,.session-top-actions) {margin-top:24px}
+.jynlo-session-detail-premium .detail-content > .membership-status + .session-top-actions {margin-top:24px}
+.jynlo-session-detail-premium .detail-content > .session-top-actions + :is(.organizer-preparation,.detail-grid,.session-player-search) {margin-top:24px}
+@media(max-width:760px){
+  .jynlo-session-detail-premium .detail-shell > .back-link {margin-bottom:20px}
+  .jynlo-session-detail-premium .detail-content > .session-created-share {margin-bottom:20px}
+  .jynlo-session-detail-premium .detail-content > .title-row + :is(.membership-status,.session-top-actions) {margin-top:20px}
+  .jynlo-session-detail-premium .detail-content > .membership-status + .session-top-actions {margin-top:20px}
+  .jynlo-session-detail-premium .detail-content > .session-top-actions + :is(.organizer-preparation,.detail-grid,.session-player-search) {margin-top:20px}
+}
+
+/* Explicit source choice: both options stay legible on desktop and narrow phones.
+   Scope avoids changes to generic buttons, chat or other community screens. */
+.jynlo-session-detail-premium .team-generator-actions{
+  display:flex;flex-wrap:wrap;align-items:center;gap:12px;
+}
+.jynlo-session-detail-premium .team-generator-actions .jynlo-action{
+  flex:1 1 185px;white-space:normal;min-width:0;min-height:44px;
+}
+.jynlo-session-detail-premium .team-generator-actions [aria-pressed="true"]{
+  border-color:rgba(40,222,191,.75);
+  background:rgba(40,222,191,.19);
+  color:#c5fff2;
+}
+.jynlo-session-detail-premium .team-card h3 span{
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:760px){
+  .jynlo-session-detail-premium .team-generator-actions{width:100%}
+  .jynlo-session-detail-premium .team-generator-actions .jynlo-action{flex-basis:100%}
+}

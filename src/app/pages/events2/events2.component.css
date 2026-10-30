@@ -144,7 +144,8 @@ input[type='text'],
 input[type='search'],
 input[type='password'],
 input[type='number'],
-input[type='datetime-local'] {
+input[type='datetime-local'],
+.form-grid select {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, .16);
@@ -156,7 +157,8 @@ input[type='datetime-local'] {
   font: inherit;
 }
 
-input[type='datetime-local'] {
+input[type='datetime-local'],
+.form-grid select {
   color-scheme: dark;
 }
 
@@ -569,31 +571,131 @@ input[type='datetime-local'] {
   color: #bbf7d0; }
 .community-sport-option:focus-visible { outline: 2px solid #86efac; outline-offset: 3px; }
 
-/* Choose exactly one location source; this also works without an existing venue. */
-.location-methods {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .6rem;
+/* The shared selector owns all three location-method button styles. */
+
+
+.venue-source-caution {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted, #64748b);
+  font-size: 0.83rem;
+  line-height: 1.45;
 }
-.location-method {
-  min-width: 0;
-  padding: .85rem .5rem;
+
+
+/* National catalogue results: scan names and cities, then choose by venue ID. */
+.venue-search-results {
+  border: 1px solid rgba(148, 163, 184, .2);
   border-radius: .85rem;
-  border: 1px solid rgba(148, 163, 184, .4);
-  background: rgba(15, 23, 42, .5);
-  color: #e2e8f0;
+  background: rgba(2, 6, 23, .36);
+  padding: .45rem;
+  min-width: 0;
+}
+
+.venue-results-caption {
+  margin: .3rem .5rem .65rem;
+  color: #cbd5e1;
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.venue-results-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: .3rem;
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.venue-result-option {
+  appearance: none;
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: .85rem;
+  padding: .72rem .8rem;
+  text-align: left;
+  color: #f8fafc;
+  border: 1px solid transparent;
+  border-radius: .65rem;
+  background: rgba(255, 255, 255, .04);
   font: inherit;
-  font-weight: 700;
   cursor: pointer;
 }
-.location-method.active,
-.location-method[aria-pressed='true'] {
-  border-color: #00e676;
-  background: rgba(0, 230, 118, .1);
-  color: #b9f6ca;
+
+.venue-result-option:hover:not(:disabled),
+.venue-result-option:focus-visible {
+  border-color: rgba(125, 211, 252, .55);
+  background: rgba(56, 189, 248, .1);
+  outline-offset: 2px;
 }
-.location-method:focus-visible { outline: 3px solid #7dd3fc; outline-offset: 2px; }
-.location-method:disabled { opacity: .6; cursor: not-allowed; }
-@media (max-width: 540px) {
-  .location-methods { grid-template-columns: 1fr; }
+
+.venue-result-option:focus-visible {
+  outline: 2px solid #7dd3fc;
+}
+
+.venue-result-option:disabled {
+  cursor: wait;
+  opacity: .58;
+}
+
+.venue-result-main,
+.venue-result-details {
+  min-width: 0;
+  display: grid;
+  gap: .2rem;
+}
+
+.venue-result-main strong {
+  overflow-wrap: anywhere;
+  font-size: .88rem;
+}
+
+.venue-result-main > span,
+.venue-result-details > span {
+  color: #94a3b8;
+  font-size: .74rem;
+  line-height: 1.4;
+}
+
+.venue-result-details {
+  text-align: right;
+  max-width: 42%;
+}
+
+.venue-result-details .venue-result-unverified {
+  color: #fbbf24;
+}
+
+@media (max-width: 760px) {
+  .venue-result-option {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .4rem;
+  }
+
+  .venue-result-details {
+    text-align: left;
+    max-width: 100%;
+  }
+}
+
+.venue-submission-inline-notice{padding:13px 16px;margin:12px 0;border:1px solid rgba(47,222,165,.48);border-radius:12px;background:rgba(21,118,94,.16);color:#aaf7d9;line-height:1.5}
+
+/* Concept One section rhythm for the session creation page.
+   Scope to top-level siblings: internal venue options and forms keep their own spacing. */
+.create-page.jynlo-games .create-shell > .page-header,
+.create-page.jynlo-games .create-shell > :is(.feedback, .community-context, .recruit-context) {
+  margin-bottom: 24px;
+}
+@media (max-width: 760px) {
+  .create-page.jynlo-games .create-shell > .page-header,
+  .create-page.jynlo-games .create-shell > :is(.feedback, .community-context, .recruit-context) {
+    margin-bottom: 20px;
+  }
 }

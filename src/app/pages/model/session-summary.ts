@@ -9,6 +9,8 @@ export interface SessionSummary {
   priceAmount: number;
   privateGame: boolean;
   audience?: 'COMMUNITY_ONLY' | 'PUBLIC';
+  communityId?: number | null;
+  seasonCommunityId?: number | null;
   joinedByViewer?: boolean;
   waitlistedByViewer?: boolean;
   recurrenceSeriesId?: string | null;

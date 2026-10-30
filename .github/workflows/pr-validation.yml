@@ -9,11 +9,32 @@ on:
     branches: [preview/render-fullstack]
     paths:
       - 'src/**'
+      - 'e2e/community-tournaments.spec.ts'
+      - 'e2e/community-track-sprint.spec.ts'
+      - 'e2e/inbox-read-sync.spec.ts'
+      - 'e2e/venue-admin-decision-history.spec.ts'
+      - 'scripts/qa/jynlo-karting-live-readonly.cjs'
+      - 'scripts/qa/jynlo-karting-live-readonly.test.cjs'
+      - 'scripts/ci-browser/public_api_contract_READONLY.cjs'
+      - 'scripts/qa/jynlo-sessions-live-readonly.cjs'
+      - 'scripts/qa/jynlo-sessions-live-readonly.test.cjs'
+      - 'scripts/qa/jynlo-community-roles-live-readonly.cjs'
+      - 'scripts/qa/jynlo-community-roles-live-readonly.test.cjs'
+      - '.github/workflows/community-role-live-readonly.yml'
+      - '.github/workflows/notification-live-readonly.yml'
+      - 'scripts/ci-browser/concept_one_mobile_readonly.cjs'
+      - 'scripts/ci-browser/concept_one_populated_admin_readonly.cjs'
+      - 'scripts/ci-browser/desktop_candidate_smoke.cjs'
+      - 'scripts/ci-browser/authenticated_candidate_smoke.cjs'
+      - 'scripts/ci-browser/chat_reaction_bubble_browser.cjs'
       - 'package.json'
       - 'package-lock.json'
       - 'angular.json'
       - 'tsconfig*.json'
       - 'Dockerfile'
+      - 'default.conf.template'
+      - 'scripts/ci-browser/html_security_policy.test.cjs'
+      - 'scripts/ci-browser/nginx_security_headers.test.cjs'
       - '.github/workflows/pr-validation.yml'
   workflow_dispatch:
 
@@ -40,10 +61,509 @@ jobs:
           cache: npm
       - name: Install dependencies once
         run: npm ci
+      # Olympic Sprint: isolated real-Chromium browser contract, mocked API,
+      # two synthetic identities and two independent seasons. Never production.
+      - name: Install isolated Playwright runner for Olympic Sprint
+        if: ${{ startsWith(github.head_ref, 'qa/track-sprint-olympic-browser-') }}
+        run: |
+          # Prevent npm from re-resolving Jynlo's unrelated Angular dependencies.
+          QA_DEPS="$RUNNER_TEMP/jynlo-sprint-playwright"
+          mkdir -p "$QA_DEPS" node_modules/@playwright
+          printf '%s\n' '{"private":true,"dependencies":{"@playwright/test":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/@playwright/test" node_modules/@playwright/test
+          "$QA_DEPS/node_modules/.bin/playwright" install ffmpeg
+      - name: Validate Olympic repechages, 5th–8th places and season isolation
+        if: ${{ startsWith(github.head_ref, 'qa/track-sprint-olympic-browser-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: |
+          "$RUNNER_TEMP/jynlo-sprint-playwright/node_modules/.bin/playwright" test e2e/community-track-sprint.spec.ts --config=playwright.config.ts --project=desktop-chromium
+
+      # Optional real-Chromium QA for the admin venue-edit history.
+      # Uses only synthetic JWTs/HTTP fixtures; never calls production API.
+      # Run within the normal PR CI job to avoid a duplicate npm ci.
+      - name: Install pinned browser runner for venue-admin history
+        if: ${{ startsWith(github.head_ref, 'qa/venue-admin-history-browser-') }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-venue-admin-playwright"
+          mkdir -p "$QA_DEPS" node_modules/@playwright
+          printf '%s\n' '{"private":true,"dependencies":{"@playwright/test":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/@playwright/test" node_modules/@playwright/test
+          # Capturing failure videos requires the bundled FFmpeg even when
+          # the runner uses the already-installed system Google Chrome.
+          "$QA_DEPS/node_modules/.bin/playwright" install ffmpeg
+      - name: Chromium venue history and moderation regression (isolated)
+        if: ${{ startsWith(github.head_ref, 'qa/venue-admin-history-browser-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: |
+          "$RUNNER_TEMP/jynlo-venue-admin-playwright/node_modules/.bin/playwright" test e2e/venue-admin-decision-history.spec.ts --config=playwright.config.ts --project=desktop-chromium
+      - name: Upload venue admin Chromium failure artifacts
+        if: ${{ failure() && startsWith(github.head_ref, 'qa/venue-admin-history-browser-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-venue-admin-history-browser-failures
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Verify LIVE sessions auditor guardrails using synthetic fixtures only
+        if: ${{ startsWith(github.head_ref, 'qa/live-auth-session-readonly-') }}
+        run: node --test scripts/qa/jynlo-sessions-live-readonly.test.cjs
+      - name: Audit LIVE community role runner guardrails with synthetic responses
+        if: ${{ startsWith(github.head_ref, 'qa/community-tournament-live-roles-readonly-') || startsWith(github.head_ref, 'qa/community-roles-live-fallback-') }}
+        run: |
+          node --check scripts/qa/jynlo-community-roles-live-readonly.cjs
+          node --test scripts/qa/jynlo-community-roles-live-readonly.test.cjs
       - name: Run all Angular unit and regression tests
         run: npm test -- --watch=false --browsers=ChromeHeadless
+      - name: Validate nginx security policy
+        run: node --test scripts/ci-browser/nginx_security_headers.test.cjs
+      - name: Validate static HTML security policy
+        run: node --test scripts/ci-browser/html_security_policy.test.cjs
       - name: Build frontend once
         run: npm run build
+      - name: Chromium historical player modal layout and close translation (isolated)
+        if: ${{ startsWith(github.head_ref, 'fix/historical-player-modal-size-close-i18n-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          QA_DEPS="$RUNNER_TEMP/jynlo-historical-modal-browser"
+          mkdir -p "$QA_DEPS"
+          printf '%s\n' '{"private":true,"dependencies":{"playwright":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          NODE_PATH="$QA_DEPS/node_modules" node scripts/ci-browser/historical_modal_layout_browser.cjs
+      # Regression reproduced by a real user: reaction badges overlapped the
+      # date and pointer clicks missed their target. Two synthetic friends, no
+      # production requests, against the production-built Angular candidate.
+      - name: Install isolated browser runner for reaction hitboxes
+        if: ${{ (startsWith(github.head_ref, 'fix/chat-reactions-hitbox-e2e-') || startsWith(github.head_ref, 'fix/chat-reaction-compact-inline-') || startsWith(github.head_ref, 'feat/chat-reaction-details-') || startsWith(github.head_ref, 'fix/chat-reactions-tap-same-emoji-') || startsWith(github.head_ref, 'fix/chat-reaction-badge-direct-toggle-') || (startsWith(github.head_ref, 'feat/private-group-chat-ui-') || (startsWith(github.head_ref, 'feat/private-group-manage-members-') || startsWith(github.head_ref, 'feat/private-group-photo-live-safe-'))) || startsWith(github.head_ref, 'feat/private-calls-live-rebased-') || (startsWith(github.head_ref, 'feat/chat-contact-preview-and-group-') || (startsWith(github.head_ref, 'feat/global-profile-quickview-') || (startsWith(github.head_ref, 'fix/profile-contact-close-icon-') || (startsWith(github.head_ref, 'feat/profile-premium-invite-community-session-') || startsWith(github.head_ref, 'feat/profile-premium-hero-layout-')))))) }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-chat-reactions-browser"
+          mkdir -p "$QA_DEPS" node_modules
+          printf '%s\n' '{"private":true,"dependencies":{"playwright":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/playwright" node_modules/playwright
+      - name: Real Chromium reaction badges — two fake accounts, desktop and mobile
+        if: ${{ (startsWith(github.head_ref, 'fix/chat-reactions-hitbox-e2e-') || startsWith(github.head_ref, 'fix/chat-reaction-compact-inline-') || startsWith(github.head_ref, 'feat/chat-reaction-details-') || startsWith(github.head_ref, 'fix/chat-reactions-tap-same-emoji-') || startsWith(github.head_ref, 'fix/chat-reaction-badge-direct-toggle-') || (startsWith(github.head_ref, 'feat/private-group-chat-ui-') || (startsWith(github.head_ref, 'feat/private-group-manage-members-') || startsWith(github.head_ref, 'feat/private-group-photo-live-safe-'))) || startsWith(github.head_ref, 'feat/private-calls-live-rebased-') || (startsWith(github.head_ref, 'feat/chat-contact-preview-and-group-') || (startsWith(github.head_ref, 'feat/global-profile-quickview-') || (startsWith(github.head_ref, 'fix/profile-contact-close-icon-') || (startsWith(github.head_ref, 'feat/profile-premium-invite-community-session-') || startsWith(github.head_ref, 'feat/profile-premium-hero-layout-')))))) }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+          JYNLO_VERIFY_GROUPS: ${{ (startsWith(github.head_ref, 'feat/private-group-chat-ui-') || (startsWith(github.head_ref, 'feat/private-group-manage-members-') || startsWith(github.head_ref, 'feat/private-group-photo-live-safe-'))) && '1' || '0' }}
+          JYNLO_GROUP_PHOTO_ONLY: ${{ startsWith(github.head_ref, 'feat/private-group-photo-live-safe-') && '1' || '0' }}
+          JYNLO_VERIFY_CONTACT: ${{ (startsWith(github.head_ref, 'feat/chat-contact-preview-and-group-') || (startsWith(github.head_ref, 'feat/global-profile-quickview-') || (startsWith(github.head_ref, 'fix/profile-contact-close-icon-') || (startsWith(github.head_ref, 'feat/profile-premium-invite-community-session-') || startsWith(github.head_ref, 'feat/profile-premium-hero-layout-'))))) && '1' || '0' }}
+          JYNLO_VERIFY_CALLS: ${{ startsWith(github.head_ref, 'feat/private-calls-live-rebased-') && '1' || '0' }}
+          JYNLO_VERIFY_PROFILE_INVITES: ${{ (startsWith(github.head_ref, 'feat/profile-premium-invite-community-session-') || startsWith(github.head_ref, 'feat/profile-premium-hero-layout-')) && '1' || '0' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > /tmp/jynlo-chat-reactions-spa.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:4173/; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then
+            cat /tmp/jynlo-chat-reactions-spa.log
+            exit 1
+          fi
+          node scripts/ci-browser/chat_reaction_bubble_browser.cjs
+      - name: Save real reaction badge screenshots
+        if: ${{ always() && (startsWith(github.head_ref, 'fix/chat-reactions-hitbox-e2e-') || startsWith(github.head_ref, 'fix/chat-reaction-compact-inline-') || startsWith(github.head_ref, 'feat/chat-reaction-details-') || startsWith(github.head_ref, 'fix/chat-reactions-tap-same-emoji-') || startsWith(github.head_ref, 'fix/chat-reaction-badge-direct-toggle-') || (startsWith(github.head_ref, 'feat/private-group-chat-ui-') || (startsWith(github.head_ref, 'feat/private-group-manage-members-') || startsWith(github.head_ref, 'feat/private-group-photo-live-safe-'))) || startsWith(github.head_ref, 'feat/private-calls-live-rebased-') || (startsWith(github.head_ref, 'feat/chat-contact-preview-and-group-') || (startsWith(github.head_ref, 'feat/global-profile-quickview-') || (startsWith(github.head_ref, 'fix/profile-contact-close-icon-') || (startsWith(github.head_ref, 'feat/profile-premium-invite-community-session-') || startsWith(github.head_ref, 'feat/profile-premium-hero-layout-')))))) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-reactions-desktop-mobile-chromium
+          path: artifacts/chat-reactions/*.png
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # 390px real-browser visual contract against the BUILT candidate.
+      # Synthetic JWT, GET-only fixtures and blocked outbound network;
+      # no live API requests, credentials or Render writes.
+      - name: Install isolated Chromium runner for 390px Premium audit
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-mobile-chromium-390-') }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-concept-one-mobile"
+          mkdir -p "$QA_DEPS" node_modules
+          printf '%s\n' '{"private":true,"dependencies":{"playwright":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/playwright" node_modules/playwright
+          # ChromeHeadless was already used by Angular tests on this runner.
+          # Reuse that system browser to avoid a second large Chromium download.
+      - name: Audit desktop and 390px Jynlo public and synthetic authenticated views
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-mobile-chromium-390-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > /tmp/jynlo-mobile-spa.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:4173/; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then
+            cat /tmp/jynlo-mobile-spa.log
+            exit 1
+          fi
+          node scripts/ci-browser/concept_one_mobile_readonly.cjs
+          # Additional coverage for public session preview and community creation/details.
+          # Reuse the same compiled candidate, browser package and isolated API mocks.
+          node scripts/ci-browser/desktop_candidate_smoke.cjs
+          node scripts/ci-browser/authenticated_candidate_smoke.cjs
+      - name: Save 390px Premium audit screenshots
+        if: ${{ always() && startsWith(github.head_ref, 'qa/concept-one-mobile-chromium-390-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-concept-one-mobile-audit
+          path: |
+            artifacts/concept-one-mobile/
+            artifacts/desktop-candidate/*.png
+          retention-days: 3
+          if-no-files-found: ignore
+
+      # Filled, visually rich moderation pages at 390px and 1366px:
+      # signed-in test admin is fake, all remote HTTP and WS are intercepted.
+      - name: Install isolated Chromium for populated admin audit
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-populated-admin-mobile-') }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-premium-admin-browser"
+          mkdir -p "$QA_DEPS" node_modules
+          printf '%s\n' '{"private":true,"dependencies":{"playwright":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/playwright" node_modules/playwright
+          "$QA_DEPS/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify populated admin screens and details in mobile and desktop Chromium
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-populated-admin-mobile-') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > /tmp/jynlo-admin-spa.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:4173/; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then
+            cat /tmp/jynlo-admin-spa.log
+            exit 1
+          fi
+          node scripts/ci-browser/concept_one_populated_admin_readonly.cjs
+      - name: Save populated admin screenshots
+        if: ${{ always() && startsWith(github.head_ref, 'qa/concept-one-populated-admin-mobile-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-populated-admin-mobile-audit
+          path: artifacts/concept-one-admin-populated/
+          retention-days: 3
+          if-no-files-found: ignore
+
+      # Real browser verification of populated community tournaments at
+      # 390px/768px/desktop in PT/EN; all API fixtures are synthetic.
+      - name: Install isolated Playwright for populated tournament layout QA
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-populated-tournaments-') }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-premium-tournament-playwright"
+          mkdir -p "$QA_DEPS" node_modules/@playwright
+          printf '%s\n' '{"private":true,"dependencies":{"@playwright/test":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/@playwright/test" node_modules/@playwright/test
+          "$QA_DEPS/node_modules/.bin/playwright" install chromium
+      - name: Inspect populated tournaments, rosters, standings and confirmations at 390px
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-populated-tournaments-') }}
+        env:
+          CI: 'true'
+        run: |
+          "$RUNNER_TEMP/jynlo-premium-tournament-playwright/node_modules/.bin/playwright" test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --workers=1 --grep "Premium populated tournament QA"
+      - name: Save populated tournament Chromium artifacts
+        if: ${{ always() && startsWith(github.head_ref, 'qa/concept-one-populated-tournaments-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-premium-populated-tournaments
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 3
+          if-no-files-found: ignore
+
+      # Opt-in real Chromium QA for the source-labelled historical tournament
+      # navigation. The endpoint is fully mocked in Playwright, with 57 synthetic
+      # matches and no QA credentials or production traffic. One CI job only.
+      - name: Install Playwright for historical tournament browser navigation
+        if: ${{ startsWith(github.head_ref, 'fix/historical-phase-exact-row-browser-qa-') }}
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify exact quarterfinal and final targets across 50-row pages
+        if: ${{ startsWith(github.head_ref, 'fix/historical-phase-exact-row-browser-qa-') }}
+        run: npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "Historical knockout browser QA"
+      # Offline contract for the future manual authenticated QA workflow.
+      # Fake network/browser only; production passwords are NEVER available on PR events.
+      - name: Validate dual-account QA read-only safeguards (synthetic)
+        if: ${{ startsWith(github.head_ref, 'qa/karting-auth-readonly-') || startsWith(github.head_ref, 'qa/karting-auth-coverage-pages-') }}
+        run: node --test scripts/qa/jynlo-karting-live-readonly.test.cjs
+      # Opt-in browser regression for the unread-indicator fix only.
+      # Two fully synthetic accounts share in-memory API state; no prod writes,
+      # credentials, extra CI job or Chromium download.
+      - name: Install Playwright for inbox dual-browser regression
+        if: ${{ startsWith(github.head_ref, 'fix/inbox-persistent-unread-badge-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Check persisted unread across two isolated browser contexts
+        if: ${{ startsWith(github.head_ref, 'fix/inbox-persistent-unread-badge-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium
+      # Historical-search browser QA runs in this same job, using two separate
+      # in-memory identities. All external API/WebSocket traffic is intercepted.
+      - name: Add Playwright for historical search browser contract
+        if: ${{ startsWith(github.head_ref, 'qa/inbox-history-search-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Exercise historical search in two browser contexts
+        if: ${{ startsWith(github.head_ref, 'qa/inbox-history-search-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-history-search.spec.ts --config=playwright.config.ts --project=desktop-chromium
+      # Full two-browser contract for the single inbox, deep links, membership
+      # and automatic kick-off closure. Synthetic accounts; no live credentials
+      # or production traffic. Keep this in the existing Angular CI job.
+      - name: Add Playwright for unified inbox browser flow
+        if: ${{ startsWith(github.head_ref, 'qa/unified-inbox-browser-flow-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify unified chat with two independent browsers
+        if: ${{ startsWith(github.head_ref, 'qa/unified-inbox-browser-flow-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts e2e/inbox-history-search.spec.ts --config=playwright.config.ts --project=desktop-chromium
+      # Verify real Angular DOM ✓ / ✓✓ against two separate mocked identities.
+      # GitHub Actions never receives QA credentials or contacts production.
+      - name: Install Playwright for read-indicator browser contract
+        if: ${{ startsWith(github.head_ref, 'qa/read-indicators-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Confirm sender, recipient and account-switch read indicators
+        if: ${{ startsWith(github.head_ref, 'qa/read-indicators-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow recipient read cursor"
+      # Recheck only foreground chat reading and recipient receipts using two
+      # real Chromium browser contexts with completely synthetic backend state.
+      - name: Install Playwright for foreground read regression
+        if: ${{ startsWith(github.head_ref, 'fix/chat-read-visible-active-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify inactive-tab reads and fast recipient receipts
+        if: ${{ startsWith(github.head_ref, 'fix/chat-read-visible-active-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow|background recipient tab"
+      # Direct read receipts: two fully simulated browser identities and a
+      # committed socket event; no credentials or production API calls.
+      - name: Install Playwright for instant confirmed read regression
+        if: ${{ startsWith(github.head_ref, 'feature/chat-confirmed-read-websocket-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify ✓/✓✓ before and immediately after server confirmation
+        if: ${{ startsWith(github.head_ref, 'feature/chat-confirmed-read-websocket-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow"
+      # Two independent Chromium contexts of the SAME account: a read on one
+      # instantly synchronizes the other's unread count via committed WebSocket.
+      # All APIs and sockets are synthetic; never use production credentials.
+      - name: Install Playwright for cross-device unread synchronization
+        if: ${{ startsWith(github.head_ref, 'feature/chat-own-read-sync-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify own read synchronization across isolated browsers
+        if: ${{ startsWith(github.head_ref, 'feature/chat-own-read-sync-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "two devices of the same account|blue checks follow"
+      # Browser regression: own sent message reaches the sender's second
+      # signed-in context and recipient using the same committed server ID.
+      # All HTTP and WebSocket traffic intercepted; no production credentials.
+      - name: Install Playwright for outgoing multi-device message QA
+        if: ${{ startsWith(github.head_ref, 'qa/chat-sender-multidevice-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify outgoing message mirror and no duplicate bubbles
+        if: ${{ startsWith(github.head_ref, 'qa/chat-sender-multidevice-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "sent direct message mirrors|blue checks follow"
+      # Outage recovery: one authenticated Chromium client, all remote APIs
+      # and sockets mocked. Verify missed history plus new friend discovery.
+      - name: Install Playwright for offline reconnection regression
+        if: ${{ startsWith(github.head_ref, 'fix/inbox-offline-recovery-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify reconnect recovery, read checks and deduplication
+        if: ${{ startsWith(github.head_ref, 'fix/inbox-offline-recovery-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "WebSocket outage recovers|blue checks follow"
+      # Pending-send navigation contract: keep each async HTTP response on its
+      # originating thread. All HTTP/WebSocket responses are synthetic.
+      - name: Install Playwright for pending-send navigation regression
+        if: ${{ startsWith(github.head_ref, 'fix/chat-switch-pending-send-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify delayed send, independent drafts and no duplicate POST
+        if: ${{ startsWith(github.head_ref, 'fix/chat-switch-pending-send-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "switching chats during a pending send|sent direct message mirrors"
+      # Deterministic committed-WebSocket-versus-lost-HTTP regression.
+      # Browser + fake API/socket are fully isolated from production.
+      - name: Install Playwright for off-screen delivery confirmation
+        if: ${{ startsWith(github.head_ref, 'fix/chat-confirm-offscreen-delivery-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify committed delivery, late HTTP error and duplicate protection
+        if: ${{ startsWith(github.head_ref, 'fix/chat-confirm-offscreen-delivery-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "off-screen WebSocket confirmation|switching chats during a pending send"
+      # Synthetic outage: POST committed, HTTP reply lost, sender socket
+      # disconnected, original GET unavailable; on AUTH reconnect a scoped
+      # read-only GET must reconcile the original off-screen uncertain send.
+      - name: Install Playwright for uncertain-send reconnect recovery
+        if: ${{ startsWith(github.head_ref, 'fix/chat-pending-reconnect-verification-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify read-only reconnect recovery without duplicate POST
+        if: ${{ startsWith(github.head_ref, 'fix/chat-pending-reconnect-verification-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "socket reconnection reconciles|off-screen WebSocket confirmation"
+      # Same-tab sessionStorage recovery: the server commits one POST but the
+      # browser reloads before receiving HTTP; restore a blocked draft and
+      # confirm via GET. All API/socket interactions are synthetic.
+      - name: Install Playwright for reload-safe pending sends
+        if: ${{ startsWith(github.head_ref, 'fix/chat-reload-pending-sends-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify F5 pending-send recovery without duplicate POST
+        if: ${{ startsWith(github.head_ref, 'fix/chat-reload-pending-sends-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "reloading mid-send recovers|socket reconnection reconciles"
+      # Browser verifies status from authenticated committed events only:
+      # pending POST, uncertain HTTP, persisted ✓ and recipient-read ✓✓.
+      - name: Install Playwright for delivery-status visual checks
+        if: ${{ startsWith(github.head_ref, 'feat/chat-clear-delivery-status-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify private read checks and pending composer status
+        if: ${{ startsWith(github.head_ref, 'feat/chat-clear-delivery-status-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow|switching chats during a pending send|socket reconnection reconciles"
+      # Audited UX regression: quoted-reply metadata must remain bound to
+      # its original conversation while users navigate and edit other drafts.
+      - name: Install Playwright for quoted-reply navigation QA
+        if: ${{ startsWith(github.head_ref, 'fix/chat-preserve-reply-drafts-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify reply targets survive navigation without cross-chat leaks
+        if: ${{ startsWith(github.head_ref, 'fix/chat-preserve-reply-drafts-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "reply quote remains bound|switching chats during a pending send"
+      # Opt-in browser QA using synthetic community participants; no production API.
+      - name: Install Playwright for community tournaments browser QA
+        if: ${{ (github.head_ref == 'qa/tournament-browser-current-20261024' || startsWith(github.head_ref, 'fix/competitions-final-standings-i18n-') || startsWith(github.head_ref, 'fix/competitions-karting-ci-coverage-') || startsWith(github.head_ref, 'feature/road-cycling-event-types-ui-') || startsWith(github.head_ref, 'feature/track-cycling-scratch-time-trial-ui-') || startsWith(github.head_ref, 'feature/track-flying-200-qualification-ui-') || startsWith(github.head_ref, 'feature/ciclocrosse-championship-ui-') || startsWith(github.head_ref, 'fix/competitions-creation-form-i18n-') || startsWith(github.head_ref, 'fix/competitions-teams-rosters-tiebreak-i18n-') || startsWith(github.head_ref, 'fix/competitions-team-fixtures-i18n-') || startsWith(github.head_ref, 'fix/competitions-stage-labels-i18n-') || startsWith(github.head_ref, 'fix/competitions-individual-i18n-reconciled-') || startsWith(github.head_ref, 'fix/competitions-organizer-feedback-i18n-') || startsWith(github.head_ref, 'fix/competitions-classification-profile-i18n-') || startsWith(github.head_ref, 'fix/competitions-organizer-detail-i18n-') || startsWith(github.head_ref, 'fix/communities-historical-import-feedback-i18n-') || startsWith(github.head_ref, 'fix/import-use-stable-diagnostics-') || startsWith(github.head_ref, 'fix/import-http-error-i18n-')) }}
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise community competitions in desktop Chromium (mock API)
+        if: ${{ (github.head_ref == 'qa/tournament-browser-current-20261024' || startsWith(github.head_ref, 'fix/competitions-final-standings-i18n-') || startsWith(github.head_ref, 'fix/competitions-karting-ci-coverage-') || startsWith(github.head_ref, 'feature/road-cycling-event-types-ui-') || startsWith(github.head_ref, 'feature/track-cycling-scratch-time-trial-ui-') || startsWith(github.head_ref, 'feature/track-flying-200-qualification-ui-') || startsWith(github.head_ref, 'feature/ciclocrosse-championship-ui-') || startsWith(github.head_ref, 'fix/competitions-creation-form-i18n-') || startsWith(github.head_ref, 'fix/competitions-teams-rosters-tiebreak-i18n-') || startsWith(github.head_ref, 'fix/competitions-team-fixtures-i18n-') || startsWith(github.head_ref, 'fix/competitions-stage-labels-i18n-') || startsWith(github.head_ref, 'fix/competitions-individual-i18n-reconciled-') || startsWith(github.head_ref, 'fix/competitions-organizer-feedback-i18n-') || startsWith(github.head_ref, 'fix/competitions-classification-profile-i18n-') || startsWith(github.head_ref, 'fix/competitions-organizer-detail-i18n-') || startsWith(github.head_ref, 'fix/communities-historical-import-feedback-i18n-') || startsWith(github.head_ref, 'fix/import-use-stable-diagnostics-') || startsWith(github.head_ref, 'fix/import-http-error-i18n-')) }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Run the five Karting flows in a fresh Playwright process first.
+          # A real Karting regression fails the PR; no retries or skipped tests.
+          npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --workers=1 --grep "Karting E2E" --output=test-results/karting
+          # Then validate every other competition case, including both PT/EN tests.
+          npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --workers=1 --grep-invert "Karting E2E" --output=test-results/competitions
+      - name: Save isolated tournament browser results
+        if: ${{ always() && (github.head_ref == 'qa/tournament-browser-current-20261024' || startsWith(github.head_ref, 'fix/competitions-final-standings-i18n-') || startsWith(github.head_ref, 'fix/competitions-karting-ci-coverage-') || startsWith(github.head_ref, 'feature/road-cycling-event-types-ui-') || startsWith(github.head_ref, 'feature/track-cycling-scratch-time-trial-ui-') || startsWith(github.head_ref, 'feature/track-flying-200-qualification-ui-') || startsWith(github.head_ref, 'feature/ciclocrosse-championship-ui-') || startsWith(github.head_ref, 'fix/competitions-creation-form-i18n-') || startsWith(github.head_ref, 'fix/competitions-teams-rosters-tiebreak-i18n-') || startsWith(github.head_ref, 'fix/competitions-team-fixtures-i18n-') || startsWith(github.head_ref, 'fix/competitions-stage-labels-i18n-') || startsWith(github.head_ref, 'fix/competitions-individual-i18n-reconciled-') || startsWith(github.head_ref, 'fix/competitions-organizer-feedback-i18n-') || startsWith(github.head_ref, 'fix/competitions-classification-profile-i18n-') || startsWith(github.head_ref, 'fix/competitions-organizer-detail-i18n-') || startsWith(github.head_ref, 'fix/communities-historical-import-feedback-i18n-') || startsWith(github.head_ref, 'fix/import-use-stable-diagnostics-') || startsWith(github.head_ref, 'fix/import-http-error-i18n-')) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-tournament-browser-audit
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3
+          if-no-files-found: ignore
+      # Karting browser QA with two synthetic, isolated identities.
+      - name: Install Chromium for Karting championship E2E
+        if: ${{ startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') || startsWith(github.head_ref, 'fix/karting-pt-en-current-') || startsWith(github.head_ref, 'fix/communities-historical-import-feedback-i18n-') || startsWith(github.head_ref, 'fix/import-use-stable-diagnostics-') || startsWith(github.head_ref, 'fix/import-http-error-i18n-') }}
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Validate Karting race linking and read-only member views
+        if: ${{ startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') || startsWith(github.head_ref, 'fix/karting-pt-en-current-') || startsWith(github.head_ref, 'fix/communities-historical-import-feedback-i18n-') || startsWith(github.head_ref, 'fix/import-use-stable-diagnostics-') || startsWith(github.head_ref, 'fix/import-http-error-i18n-') }}
+        run: npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "Karting E2E"
+      - name: Save Karting E2E screenshots
+        if: ${{ always() && (startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') || startsWith(github.head_ref, 'fix/karting-pt-en-current-') || startsWith(github.head_ref, 'fix/communities-historical-import-feedback-i18n-') || startsWith(github.head_ref, 'fix/import-use-stable-diagnostics-') || startsWith(github.head_ref, 'fix/import-http-error-i18n-')) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-karting-e2e
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3
+          if-no-files-found: ignore
+      # Opt-in anonymous smoke against the REAL published site, without Work.
+      # Chromium blocks every non-GET/HEAD request before it reaches production.
+      # No QA credentials, cookies, private IDs, data mutations or stored responses.
+      - name: Install Chromium for live read-only public QA
+        if: ${{ startsWith(github.head_ref, 'qa/live-public-browser-readonly-') }}
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify published Jynlo UI and anonymous API (GET only)
+        if: ${{ startsWith(github.head_ref, 'qa/live-public-browser-readonly-') }}
+        env:
+          JYNLO_LIVE_BROWSER_READONLY: '1'
+        run: node scripts/ci-browser/public_api_contract_READONLY.cjs
+      # Opt-in auth-identifier browser regression. All API calls stay mocked.
+      - name: Install Chromium for username email phone login browser QA
+        if: ${{ github.head_ref == 'feat/login-multiple-identifiers-pt-en-20261025' }}
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify login identifier submission in isolated Chromium
+        if: ${{ github.head_ref == 'feat/login-multiple-identifiers-pt-en-20261025' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > /tmp/jynlo-login-spa.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:4173/; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then
+            cat /tmp/jynlo-login-spa.log
+            exit 1
+          fi
+          node scripts/ci-browser/desktop_auth_smoke.cjs
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke

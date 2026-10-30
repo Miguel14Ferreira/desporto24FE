@@ -1,15 +1,44 @@
 <section class="venue-detail-page">
   <div class="venue-detail-shell">
-    <a class="back-link" routerLink="/menu/discover">{{ 'venue.detail.back' | t }}</a>
-
     @if (loading) {
       <div class="venue-state">{{ 'venue.detail.loading' | t }}</div>
     } @else if (loadError || !venue) {
-      <div class="venue-state venue-state-error">{{ 'venue.detail.error' | t }}</div>
+      <div class="venue-state venue-state-error" role="alert">
+        <strong>{{ 'venue.detail.error' | t }}</strong>
+        <p>{{ 'venue.catalog.loadFailedHelp' | t }}</p>
+        <div class="venue-error-actions">
+          <button class="jynlo-action jynlo-action--primary" type="button" (click)="retryVenue()">{{ 'common.retry' | t }}</button>
+          <a class="jynlo-action jynlo-action--neutral"
+             [routerLink]="isPublicView ? '/home' : '/menu/venues'"
+             [fragment]="isPublicView ? 'jynlo-public-discovery' : undefined"
+             [queryParams]="isPublicView ? null : backToDirectoryQueryParams">
+            {{ (isPublicView ? 'venue.detail.back' : 'venue.catalog.backToList') | t }}
+          </a>
+        </div>
+      </div>
     } @else {
       <header class="venue-header">
+        <a class="back-link venue-hero-back"
+           [routerLink]="isPublicView ? '/home' : '/menu/venues'"
+           [fragment]="isPublicView ? 'jynlo-public-discovery' : undefined"
+           [queryParams]="isPublicView ? null : backToDirectoryQueryParams">
+          ← {{ (isPublicView ? 'venue.detail.back' : 'venue.catalog.backToList') | t }}
+        </a>
         <span class="venue-kicker">{{ 'venue.detail.kicker' | t }}</span>
         <h1>{{ venue.name }}</h1>
+        <p class="venue-hero-location">📍 {{ venue.city }}@if (venue.district && venue.district !== venue.city) {, {{ venue.district }}}</p>
+        @if (!isPublicView) {
+          <a class="jynlo-action jynlo-action--neutral venue-edit-link"
+            [routerLink]="['/menu/venues', venue.id, 'suggest-edit']">
+            ✎ {{ 'venue.edit.suggest' | t }}
+          </a>
+        }
+        @if (venue.sports) {
+          <div class="venue-hero-sports">
+            <app-venue-sports-badges [sports]="venue.sports"
+              [limit]="6" [expandable]="true"></app-venue-sports-badges>
+          </div>
+        }
 
         <div class="venue-provenance">
           <span class="venue-source-badge">
@@ -42,22 +71,144 @@
         </div>
         <div>
           <span>{{ 'venue.detail.address' | t }}</span>
-          <strong>{{ venue.address }}</strong>
+          <strong>{{ postalAddress || ('venue.detail.postalAddressUnknown' | t) }}</strong>
+          @if (isGpsOnly) {
+            <small class="venue-map-approximate-hint">{{ 'venue.detail.gpsOnlyHint' | t }}</small>
+            @if (hasConfirmedMapCoordinates && mapUrl) {
+              <a class="venue-address-map-link" [href]="mapUrl" target="_blank" rel="noopener noreferrer">
+                ↗ {{ 'venue.visit.openGoogleMap' | t }}
+              </a>
+            }
+          }
         </div>
       </div>
-
-      @if (mapUrl; as venueMapUrl) {
-        <a class="venue-map-link"
-           [href]="venueMapUrl"
-           target="_blank"
-           rel="noopener noreferrer">
-          {{ (hasConfirmedMapCoordinates ? 'venue.detail.viewMap' : 'venue.detail.searchMap') | t }}
-        </a>
-        @if (!hasConfirmedMapCoordinates) {
-          <small class="venue-map-approximate-hint">{{ 'venue.detail.searchMapHint' | t }}</small>
-        }
+      @if (isPublicView) {
+        <aside class="venue-public-more" [attr.aria-label]="'venue.detail.publicMore' | t">
+          <p>{{ 'venue.detail.publicMore' | t }}</p>
+          <a class="venue-public-more-link" [routerLink]="['/menu/venues', venue.id]">{{ 'venue.detail.openFull' | t }} ↗</a>
+        </aside>
       }
 
+      @if (!ratingSummaryLoading && !ratingSummaryLoadError) {
+        <section class="venue-rating-summary" aria-labelledby="venue-rating-heading">
+          <h2 id="venue-rating-heading">{{ 'venue.detail.ratingHeading' | t }}</h2>
+          @if (ratingSummary; as summary) {
+            <p class="venue-rating-summary-score">
+              <strong>{{ summary.averageScore | number:'1.1-1' }} / 5 ★</strong>
+              <span>{{ 'venue.detail.ratingCount' | t:{ count: summary.ratingCount } }}</span>
+            </p>
+          } @else {
+            <p>{{ 'venue.detail.ratingWaiting' | t }}</p>
+          }
+          <small>{{ 'venue.detail.ratingOnlyPlayed' | t }}</small>
+        </section>
+      }
+
+      <section class="venue-visit-section" aria-labelledby="venue-visit-heading">
+        <div class="venue-visit-intro">
+          <h2 id="venue-visit-heading">{{ 'venue.visit.heading' | t }}</h2>
+          <p>{{ 'venue.visit.intro' | t }}</p>
+        </div>
+
+        <div class="venue-visit-grid">
+          <div class="venue-visit-card venue-visit-map">
+            <h3>{{ 'venue.visit.location' | t }}</h3>
+            @if (embeddedMapUrl; as mapEmbedUrl) {
+              <iframe class="venue-map-iframe"
+                [src]="mapEmbedUrl"
+                [title]="'venue.visit.mapTitle' | t:{ name: venue.name }"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                allowfullscreen></iframe>
+              <small class="venue-map-credit">
+                {{ 'venue.visit.mapCredit' | t }}
+                <a href="https://www.openstreetmap.org/copyright" target="_blank"
+                   rel="noopener noreferrer">OpenStreetMap</a>
+              </small>
+            } @else {
+              <div class="venue-map-unavailable">
+                {{ 'venue.visit.noGps' | t }}
+              </div>
+            }
+            @if (mapUrl; as venueMapUrl) {
+              <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                 [href]="venueMapUrl" target="_blank" rel="noopener noreferrer">
+                {{ (hasConfirmedMapCoordinates ? 'venue.visit.openGoogleMap' : 'venue.detail.searchMap') | t }}
+              </a>
+            }
+            @if (hasConfirmedMapCoordinates) {
+              <div class="venue-route-planner" aria-label="{{ 'venue.visit.directionsTitle' | t }}">
+                <strong>{{ 'venue.visit.directionsTitle' | t }}</strong>
+                <div class="venue-route-modes">
+                  @if (directionsUrl('driving'); as carUrl) {
+                    <a class="jynlo-action jynlo-action--neutral venue-route-mode" [href]="carUrl"
+                       target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsDriving' | t }}</a>
+                  }
+                  @if (directionsUrl('walking'); as walkingUrl) {
+                    <a class="jynlo-action jynlo-action--neutral venue-route-mode" [href]="walkingUrl"
+                       target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsWalking' | t }}</a>
+                  }
+                  @if (directionsUrl('transit'); as transitUrl) {
+                    <a class="jynlo-action jynlo-action--neutral venue-route-mode" [href]="transitUrl"
+                       target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsTransit' | t }}</a>
+                  }
+                </div>
+                <small class="venue-route-caveat">{{ 'venue.visit.directionsCaveat' | t }}</small>
+              </div>
+            } @else {
+              <small class="venue-map-approximate-hint">{{ 'venue.detail.searchMapHint' | t }}</small>
+            }
+          </div>
+
+          <div class="venue-visit-card venue-visit-contact">
+            <h3>{{ 'venue.visit.contact' | t }}</h3>
+            @if (venue.contact?.trim()) {
+              <p class="venue-contact-number">{{ venue.contact }}</p>
+              @if (publicTelephoneUrl; as phoneUrl) {
+                <a [href]="phoneUrl"
+                   class="jynlo-action jynlo-action--primary venue-visit-action">
+                  {{ 'venue.visit.call' | t }}
+                </a>
+              }
+              <small class="venue-contact-caveat">{{ 'venue.visit.confirmContact' | t }}</small>
+            } @else {
+              <p class="venue-contact-missing">{{ 'venue.visit.noContact' | t }}</p>
+            }
+            <div class="venue-contact-other-actions">
+              @if (officialContactPageUrl; as officialPage) {
+                <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                   [href]="officialPage" target="_blank" rel="noopener noreferrer">
+                  {{ 'venue.visit.checkOfficialContact' | t }}
+                </a>
+                @if (officialContactIdentityUnconfirmed) {
+                  <small class="venue-contact-caveat">{{ 'venue.visit.operatorIdentityUnconfirmed' | t }}</small>
+                }
+              }
+              @if (googleVenueContactUrl; as googleListing) {
+                <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                   [href]="googleListing" target="_blank" rel="noopener noreferrer">
+                  {{ 'venue.visit.findGoogleContact' | t }}
+                </a>
+              }
+              @if (!isPublicView) {
+                <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                   [routerLink]="['/menu/venues', venue.id, 'suggest-edit']">
+                  {{ (venue.contact?.trim() ? 'venue.visit.correctContact' : 'venue.visit.suggestContact') | t }}
+                </a>
+              }
+            </div>
+            @if (venueWebsiteUrl; as safeVenueWebsite) {
+              <a class="venue-website-under-contact"
+                 [href]="safeVenueWebsite" target="_blank" rel="noopener noreferrer">
+                {{ 'venue.detail.externalWebsite' | t }}
+              </a>
+            }
+          </div>
+        </div>
+        <p class="venue-access-note">{{ 'venue.detail.accessNotice' | t }}</p>
+      </section>
+
+      @if (!isPublicView) {
       <section class="venue-photos-section">
         <div class="venue-photos-heading">
           <h2>{{ 'venue.detail.photos' | t }}</h2>
@@ -110,6 +261,7 @@
           </div>
         }
       </section>
+      }
 
       <section class="venue-information-section">
         <h2>{{ 'venue.detail.information' | t }}</h2>
@@ -117,13 +269,14 @@
           @if (venue.sports) {
             <div>
               <span>{{ 'venue.detail.sports' | t }}</span>
-              <strong>{{ venue.sports }}</strong>
+              <app-venue-sports-badges [sports]="venue.sports"
+                [limit]="8" [expandable]="true"></app-venue-sports-badges>
             </div>
           }
           @if (venue.venueType) {
             <div>
               <span>{{ 'venue.type' | t }}</span>
-              <strong>{{ venue.venueType }}</strong>
+              <strong>{{ venueCatalogueDisplayLabel(venue.venueType, 'venueType') }}</strong>
             </div>
           }
           @if (venue.ownershipType) {
@@ -139,7 +292,7 @@
           @if (venue.surfaceType) {
             <div>
               <span>{{ 'venue.surface' | t }}</span>
-              <strong>{{ venue.surfaceType }}</strong>
+              <strong>{{ venueCatalogueDisplayLabel(venue.surfaceType, 'surface') }}</strong>
             </div>
           }
           @if (venue.services) {
@@ -169,6 +322,7 @@
         </div>
       </section>
 
+      @if (!isPublicView) {
       <section class="venue-sport-conditions-section">
         <div class="venue-sport-conditions-heading">
           <h2>{{ 'venue.detail.sportConditions' | t }}</h2>
@@ -230,7 +384,7 @@
             @for (condition of sportConditions; track condition.id) {
               <article class="venue-sport-condition-card">
                 <div class="venue-sport-condition-heading">
-                  <strong>{{ condition.sport }}</strong>
+                  <strong>{{ venueCatalogueDisplayLabel(condition.sport, 'sport') }}</strong>
                   <span>
                     {{ condition.informationSource === 'OFFICIAL'
                       ? ('venue.detail.sourceOfficial' | t)
@@ -249,6 +403,7 @@
           </div>
         }
       </section>
+      }
 
       <section class="venue-amenities-section">
         <h2>{{ 'venue.detail.amenities' | t }}</h2>

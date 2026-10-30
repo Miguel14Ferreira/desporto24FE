@@ -1,4 +1,4 @@
-<section class="players-page">
+<section class="players-page jynlo-c1 jynlo-admin">
   <div class="players-shell">
     <header>
       <div>
@@ -38,6 +38,37 @@
       <p class="state success" role="status">{{ moderationSuccessKey | t:{ name: moderationSuccessName } }}</p>
     }
 
+    @if (communityLimitSuccess) {
+      <p class="state success" role="status">
+        {{ 'adminPlayers.communityLimitSaved' | t:{ name: communityLimitSuccess } }}
+      </p>
+    }
+    @if (communityLimitError) {
+      <p class="state error" role="alert">{{ communityLimitError | t }}</p>
+    }
+    @if (selectedCommunityLimitPlayer && communityLimitQuota) {
+      <section class="role-confirmation" role="group" aria-label="Limite de comunidades">
+        <h2>{{ 'adminPlayers.communityLimitTitle' | t:{ name: selectedCommunityLimitPlayer.username } }}</h2>
+        <p>{{ 'adminPlayers.communityLimitUsage' | t:{ count: communityLimitQuota.owned, limit: communityLimitQuota.limit } }}</p>
+        <label for="community-limit-value">{{ 'adminPlayers.communityLimitNew' | t }}</label>
+        <input id="community-limit-value" type="number" min="1" max="100"
+          [(ngModel)]="communityLimitValue" [disabled]="working || resetCommunityLimit">
+        <label>
+          <input type="checkbox" [(ngModel)]="resetCommunityLimit" [disabled]="working">
+          {{ 'adminPlayers.communityLimitReset' | t }}
+        </label>
+        <label for="community-limit-reason">{{ 'adminPlayers.communityLimitReason' | t }}</label>
+        <textarea id="community-limit-reason" [(ngModel)]="communityLimitReason" rows="2"
+          maxlength="500" [disabled]="working"></textarea>
+        <div class="confirmation-actions">
+          <button type="button" class="jynlo-action jynlo-action--primary"
+            [disabled]="working || !communityLimitReason.trim()"
+            (click)="saveCommunityLimit()">{{ 'adminPlayers.communityLimitSave' | t }}</button>
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+            [disabled]="working" (click)="cancelCommunityLimit()">{{ 'common.cancel' | t }}</button>
+        </div>
+      </section>
+    }
     @if (pendingRole) {
       <section class="role-confirmation" role="group" aria-labelledby="role-confirm-title">
         <h2 id="role-confirm-title">{{ (pendingRole.role === 'ROLE_ADMIN' ? 'adminPlayers.confirmPromote' : 'adminPlayers.confirmDemote') | t:{ name: pendingRole.username } }}</h2>
@@ -113,6 +144,12 @@
                 <tr class="management-row">
                   <td [attr.colspan]="(canManageRoles || canModerate) ? 4 : 3">
                     <div class="management-actions">
+                      @if (canManageRoles) {
+                        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                          [disabled]="working" (click)="beginCommunityLimit(player)">
+                          {{ 'adminPlayers.communityLimitAction' | t }}
+                        </button>
+                      }
                       @if (canChangeRole(player)) {
                         <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
                           [disabled]="working" (click)="beginRoleChange(player)">

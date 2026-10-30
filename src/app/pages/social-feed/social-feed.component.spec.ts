@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { SocialFeedComponent } from './social-feed.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -10,8 +11,12 @@ import { CommunityService } from '../../services/community.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { FeedItem } from '../model/feed-item';
-import { appTranslate as t } from '../../i18n/i18n.service';
+import { appTranslate as t, preloadEnglishTranslations } from '../../i18n/i18n.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
+
+@Component({ selector: 'app-social-stories', standalone: true, template: '' })
+class StubStoriesComponent {}
 
 describe('SocialFeedComponent discovery sidebar', () => {
   let fixture: ComponentFixture<SocialFeedComponent>;
@@ -38,7 +43,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
 
     await TestBed.configureTestingModule({
       declarations: [SocialFeedComponent],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, StubStoriesComponent, VenueSportsBadgesComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: SocialFeedService, useValue: feed },
@@ -51,6 +56,83 @@ describe('SocialFeedComponent discovery sidebar', () => {
     fixture = TestBed.createComponent(SocialFeedComponent);
     component = fixture.componentInstance;
   });
+
+  it('uses the approved premium Concept One feed with genuine existing interactions', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.jynlo-feed-premium .jynlo-feed-hero')).not.toBeNull();
+    expect(root.querySelector('.jynlo-premium-week .week-hub-grid')).not.toBeNull();
+    expect(root.querySelectorAll('.jynlo-premium-week .week-hub-card').length).toBe(3);
+    expect(root.querySelector('.jynlo-premium-feed-grid')).not.toBeNull();
+    expect(root.querySelector('a[href="/menu/createEvent"]')).not.toBeNull();
+    component.ngOnDestroy();
+  }));
+
+  it('keeps the Feed in two content columns without duplicate site navigation', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const shell = root.querySelector('.feed-v3-shell')!;
+    expect(shell.querySelector('.feed-left-rail')).toBeNull();
+    expect(shell.querySelector('.feed-rail-links')).toBeNull();
+    expect(shell.querySelector('.feed-main .feed-v3-welcome h1')?.textContent).toContain(t('feed.v3.welcome'));
+    expect(shell.querySelector('.feed-main .week-hub-grid')).not.toBeNull();
+    expect(shell.querySelector('.feed-main .composer textarea')).not.toBeNull();
+    expect(shell.querySelector('.feed-sidebar .feed-v3-community-panel')).not.toBeNull();
+    expect(shell.querySelector('.feed-sidebar .feed-v3-join-card a[href="/menu/communities"]')).not.toBeNull();
+    expect(shell.querySelectorAll('.feed-discovery-card').length).toBe(3);
+    component.ngOnDestroy();
+  }));
+
+  it('keeps premium Feed buttons consistent without changing their real routes and actions', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('.feed-rail-links')).toBeNull();
+    expect(root.querySelectorAll('.composer-actions .jynlo-premium-btn').length).toBe(3);
+
+    const primary = root.querySelector('.feed-hero-cta') as HTMLAnchorElement;
+    expect(primary.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(primary.getAttribute('href')).toBe('/menu/createEvent');
+
+    const secondary = root.querySelector('.week-hub-create') as HTMLAnchorElement;
+    expect(secondary.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    expect(secondary.getAttribute('href')).toBe('/menu/my-sessions');
+
+    const composer = root.querySelector('.composer')!;
+    const pickers = Array.from(composer.querySelectorAll<HTMLLabelElement>('.image-picker'));
+    expect(pickers.length).toBe(2);
+    expect(pickers.every(label => label.classList.contains('jynlo-premium-btn--quiet'))).toBeTrue();
+    expect(pickers.every(label => label.querySelector('input[type="file"]') !== null)).toBeTrue();
+    expect(pickers.every(label => label.querySelector('svg.feed-ui-icon') !== null)).toBeTrue();
+
+    const submit = composer.querySelector('button.jynlo-premium-btn--primary') as HTMLButtonElement;
+    expect(submit.disabled).toBeTrue();
+    expect(root.querySelector('.feed-v3-join-action[href="/menu/communities"]')).not.toBeNull();
+    expect(root.querySelectorAll('.feed-v3-side-heading > a.feed-inline-link').length).toBe(3);
+    component.ngOnDestroy();
+  }));
+
+  it('keeps the feed controls real and separates the primary and weekly navigation actions', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    const root = fixture.nativeElement as HTMLElement;
+    const header = root.querySelector('.jynlo-feed-hero') as HTMLElement;
+    expect(header).not.toBeNull();
+    expect(header.querySelector('h1')).not.toBeNull();
+    expect(header.querySelector('.feed-hero-cta')?.getAttribute('href')).toBe('/menu/createEvent');
+    expect(root.querySelector('.week-hub-heading .week-hub-create')?.getAttribute('href')).toBe('/menu/my-sessions');
+    expect(root.querySelector('.composer textarea')).not.toBeNull();
+    expect(root.querySelectorAll('.composer-actions .image-picker').length).toBe(2);
+    expect(root.querySelector('.composer-actions button.jynlo-action--primary')).not.toBeNull();
+    expect(root.querySelector('.feed-layout .feed-main')).not.toBeNull();
+    expect(root.querySelector('.feed-layout .feed-sidebar')).not.toBeNull();
+    component.ngOnDestroy();
+  }));
 
   it('allows video selection, limits its size and keeps photo/video mutually exclusive', fakeAsync(() => {
     fixture.detectChanges();
@@ -88,41 +170,57 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component.ngOnDestroy();
   }));
 
-  it('links a missing-two-players request to the existing public recruitment flow', fakeAsync(() => {
+  it('keeps one primary Create session action and a separate week shortcut', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
-    component.quickConfirmedPlayers = 8;
-    component.quickMissingPlayers = 2;
-    fixture.detectChanges();
-
     const root = fixture.nativeElement as HTMLElement;
-    const link = root.querySelector<HTMLAnchorElement>('.week-recruit-cta')!;
-    expect(root.querySelector('.header-actions')).toBeNull();
-    expect(root.querySelectorAll('.week-recruit-cta')).toHaveSize(1);
-    expect(component.quickRecruitValid).toBeTrue();
-    expect(link.getAttribute('href')).toContain('intent=findPlayers');
-    expect(link.getAttribute('href')).toContain('confirmed=8');
-    expect(link.getAttribute('href')).toContain('missing=2');
-    expect(root.querySelector('input[name="weekMissing"]')).not.toBeNull();
-    expect(sessions.discover).toHaveBeenCalledWith(
-      { query: '', privateGame: false, availability: 'available', sort: 'date' });
+    expect(root.querySelector('.week-recruit')).toBeNull();
+    expect(root.querySelectorAll('.feed-hero-cta')).toHaveSize(1);
+    expect(root.querySelector('.feed-hero-cta')?.getAttribute('href')).toBe('/menu/createEvent');
+    expect(root.querySelectorAll('.week-hub-create')).toHaveSize(1);
+    expect(root.querySelector('.week-hub-create')?.getAttribute('href')).toBe('/menu/my-sessions');
   }));
 
-  it('disables the quick-recruit shortcut for impossible or fractional team sizes', fakeAsync(() => {
+  it('keeps narrow community suggestions separated, accessible and within their panel', fakeAsync(() => {
+    const community = (id: number, name: string) => ({
+      id, name, description: null, sport: 'Futebol', sports: ['Futebol'],
+      photoUrl: null, visibility: 'PRIVATE' as const, rankingsEnabled: false,
+      ownerUsername: 'ana', myRole: 'MEMBER' as const, memberCount: id,
+      createdAt: '2026-10-01T09:00:00Z', members: []
+    });
+    groups.mine.and.returnValue(of([
+      community(2, 'reis da cerveja'), community(3, 'Colégio Pio'),
+      community(4, 'Uma comunidade com um nome muito longo para um cartão lateral')
+    ]));
+
     fixture.detectChanges();
     tick(351);
-    for (const [confirmed, missing] of [[0, 2], [8, 0], [99, 2], [2.5, 2]]) {
-      component.quickConfirmedPlayers = confirmed;
-      component.quickMissingPlayers = missing;
-      fixture.detectChanges();
-      const link = (fixture.nativeElement as HTMLElement)
-        .querySelector<HTMLAnchorElement>('.week-recruit-cta')!;
-      expect(component.quickRecruitValid).toBeFalse();
-      expect(link.hasAttribute('href')).toBeFalse();
-      expect(link.getAttribute('aria-disabled')).toBe('true');
-      expect((fixture.nativeElement as HTMLElement).textContent)
-        .toContain(t('week.recruitValidation'));
+    fixture.detectChanges();
+
+    const panel = (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLElement>('.feed-v3-community-panel')!;
+    const list = panel.querySelector<HTMLElement>('.feed-v3-communities')!;
+    const links = Array.from(panel.querySelectorAll<HTMLAnchorElement>('.feed-v3-community-row'));
+    expect(links.length).toBe(3);
+    expect(getComputedStyle(list).display).toBe('grid');
+    expect(parseFloat(getComputedStyle(list).rowGap)).toBeGreaterThanOrEqual(8);
+    expect(panel.querySelectorAll('.feed-v3-side-heading a').length).toBe(1);
+    expect(panel.querySelectorAll('.feed-v3-side-button').length).toBe(0);
+    links.forEach((link, index) => {
+      expect(link.getAttribute('href')).toBe('/menu/communities/' + (index + 2));
+      expect(link.getAttribute('title')).toBeTruthy();
+      expect(link.getAttribute('aria-label')).toBe(link.getAttribute('title'));
+      expect(getComputedStyle(link).boxSizing).toBe('border-box');
+      expect(getComputedStyle(link).display).toBe('grid');
+      expect(getComputedStyle(link.querySelector('strong')!).textOverflow).toBe('ellipsis');
+    });
+    const positions = links.map(link => link.getBoundingClientRect());
+    if (positions.every(position => position.height > 0)) {
+      for (let index = 1; index < positions.length; index++) {
+        expect(positions[index].top).toBeGreaterThanOrEqual(positions[index - 1].bottom + 7);
+      }
     }
+    component.ngOnDestroy();
   }));
 
   it('shows my sports week before the feed using real session and community links', fakeAsync(() => {
@@ -155,8 +253,9 @@ describe('SocialFeedComponent discovery sidebar', () => {
     const root = fixture.nativeElement as HTMLElement;
     const hub = root.querySelector<HTMLElement>('.week-hub');
     expect(hub).not.toBeNull();
-    expect((root.querySelector('.feed-layout')!.compareDocumentPosition(hub!)) & Node.DOCUMENT_POSITION_PRECEDING)
-      .toBeTruthy();
+    expect(root.querySelector('.feed-main')?.contains(hub)).toBeTrue();
+    expect(root.querySelector('.feed-layout')?.contains(hub)).toBeTrue();
+    expect(root.querySelector('.feed-main')?.querySelector('.composer')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/4"]')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/5"]')).not.toBeNull();
     const openGame = hub?.querySelector<HTMLAnchorElement>('a[href^="/menu/events/6?"]');
@@ -207,7 +306,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(hub?.textContent).toContain(t('week.noOpenSlots'));
     expect(hub?.textContent).toContain(t('week.noCommunities'));
     expect(hub?.querySelector('a[href="/menu/discover"]')).not.toBeNull();
-    expect(hub?.querySelector('a[href="/menu/createEvent"]')).not.toBeNull();
+    expect(hub?.querySelector('a[href="/menu/my-sessions"]')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.feed-hero-cta[href="/menu/createEvent"]')).not.toBeNull();
   }));
 
   it('keeps normal publications simple, without manual session selection', fakeAsync(() => {
@@ -298,8 +398,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
       profilePicUrl: null, joinDateDisplay: null
     });
     community.discoverProfiles.and.returnValue(of([
-      candidate('miguel'), candidate('ana'), candidate('bruno'),
-      candidate('carla'), candidate('diogo')
+      candidate('miguel'), candidate('jynloteste01'), candidate('JYNLOTESTE02'),
+      candidate('ana'), candidate('bruno'), candidate('carla'), candidate('diogo')
     ]));
 
     fixture.detectChanges();
@@ -307,6 +407,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
     fixture.detectChanges();
 
     expect(community.discoverProfiles).toHaveBeenCalledTimes(1);
+    // QA accounts must never take slots from real player suggestions, even if
+    // the discovery API still returns them during a rolling deployment.
     expect(component.suggestedPeople.map(person => person.username))
       .toEqual(['ana', 'bruno', 'carla']);
     const links = Array.from(
@@ -417,6 +519,7 @@ describe('SocialFeedComponent session sharing fallback', () => {
     const previousLanguage = localStorage.getItem('d24-language');
     try {
       localStorage.setItem('d24-language', 'en');
+      await preloadEnglishTranslations();
       makeNativeSharingUnavailable();
       spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
 
@@ -620,9 +723,10 @@ describe('SocialFeedComponent post-game entry', () => {
     }
   });
 
-  it('uses an English prompt when the user has selected English', () => {
+  it('uses an English prompt when the user has selected English', async () => {
     const previousLanguage = localStorage.getItem('d24-language');
     localStorage.setItem('d24-language', 'en');
+    await preloadEnglishTranslations();
     const { target } = openFromSession();
     try {
       target.applyPostGamePrompt('feed.postGamePrompt.team');

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
@@ -8,8 +9,10 @@ import { DirectChatService } from '../../services/direct-chat.service';
 import { SessionService } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { SessionMessage } from '../model/session-message';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { ChatReactionsStubComponent } from '../../testing/chat-reactions-stub.component';
 import { I18nService } from '../../i18n/i18n.service';
 
 describe('SessionDetailsComponent', () => {
@@ -22,6 +25,7 @@ describe('SessionDetailsComponent', () => {
   let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
   let realtimeSessionMessages: Subject<SessionMessage>;
   let realtimeConnected: BehaviorSubject<boolean>;
+  let readSync: jasmine.SpyObj<ChatReadSyncService>;
 
   const session = {
     id: 7,
@@ -43,21 +47,45 @@ describe('SessionDetailsComponent', () => {
     gamePhoto: null
   };
 
+  /** Private rating controls are available only to confirmed session attendees. */
+  function confirmRatingAttendance(username?: string): void {
+    const identity = username ?? (component as any).currentUsername ?? 'player-one';
+    (component as any).currentUsername = identity;
+    component.sessionParticipants = [{
+      id: 15,
+      username: identity,
+      attendanceStatus: 'ATTENDED',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }];
+  }
+
   beforeEach(async () => {
+    readSync = jasmine.createSpyObj<ChatReadSyncService>('ChatReadSyncService', ['markVisible']);
     communityService = jasmine.createSpyObj<CommunityService>('CommunityService', ['friends']);
     communityService.friends.and.returnValue(of([{username:'player-two', fullName: 'Player Two', nickname: null, profilePicUrl: null, chatBlocked: false, blockedByMe: false}]));
     directChatService = jasmine.createSpyObj<DirectChatService>('DirectChatService', ['send']);
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall']
+      ['detail', 'context', 'postGameCommunities', 'joinCommunityAfterGame', 'updateMeetingPoint', 'join', 'leave', 'cancel', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment', 'issueGuestLink', 'guestRequests', 'confirmedGuests', 'reviewGuestRequest', 'cancelGuestRequest']
     );
     sessionService.detail.and.returnValue(of(session));
+    sessionService.context.and.returnValue(of({communities:[],seasonGame:false,seasonName:null}));
+    sessionService.postGameCommunities.and.returnValue(of([]));
+    sessionService.joinCommunityAfterGame.and.returnValue(of({communityId:22,state:'REQUESTED'}));
+    sessionService.guestRequests.and.returnValue(of([]));
+    sessionService.confirmedGuests.and.returnValue(of([]));
+    sessionService.issueGuestLink.and.returnValue(of({token:'T'.repeat(43)}));
+    sessionService.cancelGuestRequest.and.returnValue(of({id:30,name:'Convidado',status:'CANCELLED',note:'',teamCode:null}));
     sessionService.join.and.returnValue(of({
       state: 'PARTICIPANT',
       waitlistPosition: null
     }));
     sessionService.leave.and.returnValue(of(void 0));
+    sessionService.cancel.and.returnValue(of(void 0));
+    sessionService.updateMeetingPoint.and.returnValue(of({
+      ...session, canSeeExactAddress: true, meetingPointInstructions: 'Novo portão'
+    }));
     sessionService.complete.and.returnValue(of(void 0));
     sessionService.reportDidNotOccur.and.returnValue(of(void 0));
     sessionService.reportProblem.and.returnValue(of(void 0));
@@ -66,8 +94,20 @@ describe('SessionDetailsComponent', () => {
     sessionService.excludeFromFutureSessions.and.returnValue(of({ excluded: true }));
     sessionService.allowFutureSessions.and.returnValue(of({ excluded: false }));
     sessionService.myOverallRating.and.returnValue(of(null));
+    sessionService.myVenueRating.and.returnValue(of(null));
+    sessionService.rateVenue.and.returnValue(of({
+      venueId: 100, score: 4, updatedAt: '2026-10-22T10:00:00Z'
+    }));
     sessionService.rateOverall.and.returnValue(of({
       overallScore: 5, updatedAt: '2026-10-13T10:00:00Z'
+    }));
+    sessionService.sentCompliments.and.returnValue(of([]));
+    sessionService.receivedCompliments.and.returnValue(of([]));
+    sessionService.giveCompliment.and.returnValue(of({
+      senderUsername: 'player-one',
+      recipientUsername: 'player-two',
+      type: 'FAIR_PLAY',
+      updatedAt: '2026-10-22T10:00:00Z'
     }));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
@@ -139,9 +179,10 @@ describe('SessionDetailsComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [SessionDetailsComponent],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, ChatReactionsStubComponent],
       providers: [
         ...TEST_PROVIDERS,
+        { provide: ChatReadSyncService, useValue: readSync },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -171,6 +212,567 @@ describe('SessionDetailsComponent', () => {
     fixture = TestBed.createComponent(SessionDetailsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('offers optional community membership only after completed, verified attendance', () => {
+    (component as any).currentUsername='player-one';
+    component.session={...session,status:'COMPLETED',joined:true};
+    sessionService.postGameCommunities.and.returnValue(of([
+      {id:22,name:'Futsal da Parede',requiresApproval:true},
+      {id:23,name:'Amigos do futebol',requiresApproval:false}
+    ]));
+    (component as any).loadPostGameCommunities(session.id);
+    fixture.detectChanges();
+    const card=fixture.nativeElement.querySelector('.session-post-game-community') as HTMLElement;
+    expect(card).not.toBeNull();
+    expect(card.textContent).toContain('Futsal da Parede');
+    expect(card.textContent).toContain('Amigos do futebol');
+    expect(card.querySelectorAll('.session-post-game-community-option').length).toBe(2);
+    expect(card.textContent).toContain('Pedir para aderir');
+    expect(card.textContent).toContain('Juntar-me à comunidade');
+  });
+
+  it('uses the backend action and closes only the selected community offer', () => {
+    (component as any).currentUsername='player-one';
+    component.session={...session,status:'COMPLETED',joined:true};
+    component.postGameCommunities=[
+      {id:22,name:'Futsal da Parede',requiresApproval:true},
+      {id:23,name:'Amigos do futebol',requiresApproval:false}
+    ];
+    sessionService.joinCommunityAfterGame.and.returnValue(of({communityId:22,state:'REQUESTED'}));
+    fixture.detectChanges();
+    const first=fixture.nativeElement.querySelector('.session-post-game-community-option button') as HTMLButtonElement;
+    first.click();
+    fixture.detectChanges();
+    expect(sessionService.joinCommunityAfterGame).toHaveBeenCalledOnceWith(session.id,22);
+    expect(component.postGameCommunities.map(x=>x.id)).toEqual([23]);
+    expect(component.postGameCommunityFeedback).toContain('Pedido enviado');
+  });
+
+  it('dismisses post-game community suggestion without making any membership request', () => {
+    (component as any).currentUsername='player-one';
+    component.session={...session,status:'COMPLETED',joined:true};
+    component.postGameCommunities=[{id:122,name:'Jogos semanais',requiresApproval:true}];
+    fixture.detectChanges();
+    const noThanks=fixture.nativeElement.querySelectorAll('.session-post-game-community-option button')[1] as HTMLButtonElement;
+    noThanks.click();
+    fixture.detectChanges();
+    expect(component.postGameCommunities).toEqual([]);
+    expect(sessionService.joinCommunityAfterGame).not.toHaveBeenCalled();
+    try { localStorage.removeItem('jynlo:postgame-community-dismiss:player-one:'+session.id+':122'); }
+    catch { /* Browser blocks storage in some test runners. */ }
+  });
+
+  it('returns to Discover with original filters without forwarding join action', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({
+        from: 'discover', sport: 'Ténis', city: 'Sintra', player: 'Ana', join: '1'
+      })
+    });
+    fixture.detectChanges();
+
+    const back = fixture.nativeElement.querySelector('.back-link') as HTMLAnchorElement;
+    const url = new URL(back.getAttribute('href')!, 'https://jynlo.test');
+    expect(url.pathname).toBe('/menu/discover');
+    expect(url.searchParams.get('sport')).toBe('Ténis');
+    expect(url.searchParams.get('city')).toBe('Sintra');
+    expect(url.searchParams.get('player')).toBe('Ana');
+    expect(url.searchParams.has('join')).toBeFalse();
+    expect(back.textContent).toContain('Voltar ao Descobrir');
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('ignores untrusted return origins and keeps the default sessions destination', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({
+        from: 'https://untrusted.example/', sport: 'Ténis', join: '1'
+      })
+    });
+    fixture.detectChanges();
+    const back = fixture.nativeElement.querySelector('.back-link') as HTMLAnchorElement;
+    expect(back.getAttribute('href')).toBe('/menu/events');
+    expect(back.textContent).toContain('Voltar às sessões');
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('preserves the detail card, summary facts and action toolbar under the Neon layout', () => {
+    const page = fixture.nativeElement as HTMLElement;
+    const shell = page.querySelector('.jynlo-session-detail-premium');
+    expect(shell).not.toBeNull();
+    expect(shell!.querySelector('.detail-card .detail-content')).not.toBeNull();
+    expect(shell!.querySelector('.detail-card .title-row h1')?.textContent).toContain('Lisboa');
+    const summary = shell!.querySelector('.detail-card .detail-grid')!;
+    expect(summary).not.toBeNull();
+    expect(summary.children.length).toBeGreaterThanOrEqual(4);
+    expect(shell!.querySelector('.session-top-actions')).not.toBeNull();
+    expect(shell!.querySelector('a.back-link[href="/menu/events"]')).not.toBeNull();
+  });
+
+  it('keeps session detail navigation and participation information inside the Premium shell', () => {
+    const shell: HTMLElement = fixture.nativeElement.querySelector('.detail-page');
+    expect(shell.classList.contains('jynlo-session-detail-premium')).toBeTrue();
+    expect(shell.classList.contains('jynlo-games')).toBeTrue();
+    expect(shell.querySelector('a.back-link[href="/menu/events"]')).toBeTruthy();
+    expect(shell.querySelector('.detail-card .title-row h1')?.textContent).toContain('Lisboa');
+    expect(shell.querySelector('.detail-card .detail-grid')).toBeTruthy();
+    expect(shell.querySelector('.session-top-actions')).toBeTruthy();
+    expect(shell.querySelector('.detail-grid')?.textContent).toContain('2/4');
+  });
+
+  it('gives back navigation and membership blocks consistent Premium breathing room', () => {
+    component.session = { ...session, joined: true };
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const back = root.querySelector<HTMLElement>('.jynlo-session-detail-premium .detail-shell > .back-link');
+    const membership = root.querySelector<HTMLElement>('.detail-content > .membership-status');
+    const actions = root.querySelector<HTMLElement>('.detail-content > .session-top-actions');
+    expect(back).not.toBeNull();
+    expect(membership).not.toBeNull();
+    expect(actions).not.toBeNull();
+    const expected = matchMedia('(max-width: 760px)').matches ? '20px' : '24px';
+    expect(getComputedStyle(back!).marginBottom).toBe(expected);
+    expect(getComputedStyle(membership!).marginTop).toBe(expected);
+    expect(getComputedStyle(actions!).marginTop).toBe(expected);
+  });
+
+  it('retains confirmed and waitlisted membership badges with Premium styling', () => {
+    component.session = { ...session, joined: true, waitlisted: false };
+    fixture.detectChanges();
+    let membership: HTMLElement = fixture.nativeElement.querySelector('.jynlo-session-detail-premium .membership-status');
+    expect(membership).toBeTruthy();
+    expect(membership.classList.contains('waitlisted')).toBeFalse();
+    expect(membership.querySelector('.participants-shortcut')).toBeTruthy();
+
+    component.session = { ...session, joined: false, waitlisted: true, waitlistPosition: 3 };
+    fixture.detectChanges();
+    membership = fixture.nativeElement.querySelector('.jynlo-session-detail-premium .membership-status');
+    expect(membership.classList.contains('waitlisted')).toBeTrue();
+    expect(membership.textContent).toContain('3');
+    expect(membership.querySelector('.participants-shortcut')).toBeNull();
+  });
+
+  it('offers a jump to new session messages without moving the scroll until chosen', () => {
+    component.session = { ...session, joined: true };
+    const log = { scrollHeight: 900, scrollTop: 60, clientHeight: 260 };
+    component.chatMessageList = { nativeElement: log } as any;
+    realtimeSessionMessages.next({ id: 91, sessionId: 7, senderUsername: 'player-two',
+      body: 'Vamos!', createdAt: '2026-10-23T09:00:00Z' });
+    expect(component.newMessagesPending).toBe(1);
+    expect(log.scrollTop).toBe(60);
+    component.jumpToLatestMessages();
+    expect(log.scrollTop).toBe(900);
+    expect(component.newMessagesPending).toBe(0);
+  });
+
+  it('only synchronizes session chat reads after access is granted and messages have loaded', () => {
+    component.messages = [{
+      id: 29, sessionId: 7, senderUsername: 'creator-user',
+      body: 'Olá', createdAt: '2026-10-23T09:00:00Z'
+    }];
+    component.onSessionChatScroll();
+    expect(readSync.markVisible).not.toHaveBeenCalled();
+
+    component.session = { ...session, joined: true };
+    fixture.detectChanges();
+    readSync.markVisible.calls.reset();
+    component.onSessionChatScroll();
+    expect(readSync.markVisible).not.toHaveBeenCalled(); // No chat log on session details.
+
+    readSync.markVisible.calls.reset();
+    component.chatError = 'Sem autorização';
+    component.onSessionChatScroll();
+    expect(readSync.markVisible).not.toHaveBeenCalled();
+  });
+
+  it('keeps a confirmed membership visible if the details refresh fails after POST', () => {
+    component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
+    sessionService.detail.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    expect(component.canJoinSession()).toBeTrue();
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+    expect(component.session?.joined).toBeTrue();
+    expect(component.canJoinSession()).toBeFalse();
+    expect(component.actionSuccess).toBeTruthy();
+    expect(component.errorMessage).toBe('');
+    expect(component.detailRefreshWarning).toBeTruthy();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(component.detailRefreshWarning);
+  });
+
+  it('blocks duplicate POST after a network failure until GET confirms membership', () => {
+    component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    sessionService.detail.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeTrue();
+    expect(component.canJoinSession()).toBeFalse();
+    expect(component.joinStatusMessage).toBeTruthy();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.participation-panel button')).not.toBeNull();
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+
+    sessionService.detail.and.returnValue(of({ ...session, joined: true }));
+    component.verifyJoinOutcome();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.session?.joined).toBeTrue();
+    expect(component.actionSuccess).toBeTruthy();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats an explicit invalid request as rejected without showing uncertain state', () => {
+    component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 403, error: { message: 'Não autorizado' }
+    })));
+    component.joinSession();
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.actionError).toContain('Não autorizado');
+    expect(sessionService.detail).toHaveBeenCalledTimes(1); // ngOnInit only
+  });
+
+  it('opens a shared session when the lazy route keeps its id on the parent snapshot', () => {
+    const route = TestBed.inject(ActivatedRoute) as any;
+    route.snapshot.paramMap = convertToParamMap({});
+    route.parent = { snapshot: { paramMap: convertToParamMap({ id: '53' }) } };
+    sessionService.detail.calls.reset();
+
+    component.ngOnInit();
+
+    expect(sessionService.detail).toHaveBeenCalledWith(53);
+    expect(component.errorMessage).toBe('');
+  });
+
+  it('does not expose meeting-point editing to organisers or guests, preserving existing directions', () => {
+    const future = new Date(Date.now() + 3600000).toISOString();
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, gameDate: future, canSeeExactAddress: true,
+      meetingPointInstructions: 'Entrada antiga'
+    };
+    fixture.detectChanges();
+    const location = fixture.nativeElement.querySelector('.address-panel') as HTMLElement;
+    expect(location.querySelector('.session-meeting-edit-button')).toBeNull();
+    expect(location.querySelector('#session-meeting-point-input')).toBeNull();
+    expect(location.querySelector('.session-meeting-edit')).toBeNull();
+    expect(location.querySelector('.session-meeting-point')?.textContent).toContain('Entrada antiga');
+    expect(sessionService.updateMeetingPoint).not.toHaveBeenCalled();
+
+    (component as any).currentUsername = 'guest-user';
+    fixture.detectChanges();
+    expect(location.querySelector('.session-meeting-edit-button')).toBeNull();
+    expect(location.querySelector('#session-meeting-point-input')).toBeNull();
+    expect(sessionService.updateMeetingPoint).not.toHaveBeenCalled();
+  });
+
+  it('can clear a point without changing the mapped venue', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600000).toISOString(),
+      canSeeExactAddress: true, meetingPointInstructions: 'Porta A',
+      address: 'Rua do Pavilhão'
+    };
+    sessionService.updateMeetingPoint.and.returnValue(of({
+      ...component.session, meetingPointInstructions: null
+    }));
+    component.beginMeetingPointEdit();
+    component.meetingPointDraft = '   ';
+    component.saveMeetingPoint();
+    expect(sessionService.updateMeetingPoint).toHaveBeenCalledWith(7, null);
+    expect(component.session?.address).toBe('Rua do Pavilhão');
+    expect(component.session?.meetingPointInstructions).toBeNull();
+  });
+
+  it('keeps editing closed after kickoff, cancellation or completion', () => {
+    (component as any).currentUsername = 'creator-user';
+    for (const status of ['CANCELLED', 'COMPLETED', 'OPEN'] as const) {
+      component.session = {
+        ...session, status, meetingPointInstructions: 'Entrada antiga',
+        canSeeExactAddress: true, gameDate: new Date(Date.now() - 3600000).toISOString()
+      };
+      expect(component.canEditMeetingPoint()).toBeFalse();
+      component.beginMeetingPointEdit();
+      expect(component.meetingPointEditing).toBeFalse();
+    }
+    expect(sessionService.updateMeetingPoint).not.toHaveBeenCalled();
+  });
+
+  it('blocks invalid or duplicate point updates and preserves input on failure', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600000).toISOString(),
+      canSeeExactAddress: true, meetingPointInstructions: 'Porta A'
+    };
+    component.beginMeetingPointEdit();
+    component.meetingPointDraft = 'x'.repeat(241);
+    component.saveMeetingPoint();
+    expect(component.meetingPointError).toBeTruthy();
+    component.meetingPointDraft = 'Porta A';
+    component.saveMeetingPoint();
+    expect(sessionService.updateMeetingPoint).not.toHaveBeenCalled();
+
+    component.beginMeetingPointEdit();
+    component.meetingPointDraft = 'Porta B';
+    sessionService.updateMeetingPoint.and.returnValue(
+      throwError(() => new HttpErrorResponse({status: 503})));
+    component.saveMeetingPoint();
+    expect(component.meetingPointEditing).toBeTrue();
+    expect(component.meetingPointDraft).toBe('Porta B');
+    expect(component.meetingPointError).toBeTruthy();
+    expect(component.session?.meetingPointInstructions).toBe('Porta A');
+  });
+
+  it('focuses an authorised meeting point from a notification deep-link', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true, value: convertToParamMap({ meetingPoint: '1' })
+    });
+    (component as any).currentUsername = 'player-one';
+    const note = 'Junto à entrada norte';
+    component.session = { ...session, canSeeExactAddress: true, meetingPointInstructions: note };
+    (component as any).pendingMeetingPointScroll = true;
+    fixture.detectChanges();
+    const anchor = fixture.nativeElement.querySelector('#session-meeting-point') as HTMLElement;
+    expect(anchor).not.toBeNull();
+    expect(anchor.getAttribute('tabindex')).toBe('-1');
+    expect((component as any).pendingMeetingPointScroll).toBeFalse();
+    expect(document.activeElement).toBe(anchor);
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(anchor);
+  });
+
+  it('does not reveal or focus private meeting points for expired permissions', () => {
+    (component as any).pendingMeetingPointScroll = true;
+    component.session = {
+      ...session, canSeeExactAddress: false, meetingPointInstructions: 'Porta privada'
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#session-meeting-point')).toBeNull();
+    expect((component as any).pendingMeetingPointScroll).toBeFalse();
+
+    component.session = {
+      ...session, canSeeExactAddress: true, meetingPointInstructions: null
+    };
+    (component as any).pendingMeetingPointScroll = true;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#session-meeting-point')).toBeNull();
+    expect((component as any).pendingMeetingPointScroll).toBeFalse();
+  });
+
+  it('renders meeting instructions only for session viewers with exact-location access', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true,
+      meetingPointInstructions: 'Portão lateral, junto ao campo'
+    };
+    fixture.detectChanges();
+    const info = fixture.nativeElement.querySelector('.session-meeting-point') as HTMLElement;
+    expect(info).not.toBeNull();
+    expect(info.textContent).toContain('Portão lateral, junto ao campo');
+
+    component.session = {
+      ...session, canSeeExactAddress: false,
+      meetingPointInstructions: 'Portão lateral, junto ao campo'
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-meeting-point')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .not.toContain('Portão lateral');
+  });
+
+  it('opens only an authorised exact address in Google Maps', () => {
+    component.session = {
+      ...session, address: 'Rua Machado dos Santos, Parede',
+      canSeeExactAddress: true,
+      venue: { latitude: 38.7, longitude: -9.36 } as any
+    };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.session-location-map') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(new URL(link.href).hostname).toBe('www.google.com');
+    expect(new URL(link.href).searchParams.get('query')).toBe('38.7,-9.36');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+
+    component.session = { ...session, address: 'Rua Machado dos Santos, Parede', canSeeExactAddress: false };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .not.toContain('Rua Machado dos Santos');
+  });
+
+  it('lets an authorised player navigate to a GPS-only venue with no postal address', () => {
+    component.session = {
+      ...session,
+      canSeeExactAddress: true,
+      address: null,
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN', address: '' } as any
+    };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.session-location-map') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(new URL(link.href).searchParams.get('query')).toBe('40.6668823,-8.7391574');
+    expect(link.textContent?.trim()).toBeTruthy();
+    expect(link.textContent).not.toContain('null');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('offers driving, walking and transit only to viewers authorised to see venue GPS', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN', address: '' } as any
+    };
+    fixture.detectChanges();
+    const links = Array.from(fixture.nativeElement.querySelectorAll(
+      '.session-route-mode')) as HTMLAnchorElement[];
+    expect(links.length).toBe(3);
+    expect(links.map(a => new URL(a.href).searchParams.get('travelmode')))
+      .toEqual(['driving', 'walking', 'transit']);
+    links.forEach(a => {
+      const url = new URL(a.href);
+      expect(url.searchParams.get('destination')).toBe('40.6668823,-8.7391574');
+      expect(url.searchParams.has('origin')).toBeFalse();
+      expect(a.rel).toContain('noopener');
+      expect(a.target).toBe('_blank');
+    });
+
+    component.session = { ...component.session, canSeeExactAddress: false };
+    fixture.detectChanges();
+    expect(component.exactDirectionsUrl('driving')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-route-planner')).toBeNull();
+  });
+
+  it('does not show false turn-by-turn directions for unknown or invalid GPS', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: 'Rua do Campo 10',
+      venue: { id: 447, latitude: 0, longitude: 0 } as any
+    };
+    fixture.detectChanges();
+    expect(component.exactDirectionsUrl('walking')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-route-mode')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).not.toBeNull();
+  });
+
+  it('does not leak GPS-only coordinates to an unauthorised session viewer', () => {
+    component.session = {
+      ...session,
+      canSeeExactAddress: false,
+      address: null,
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN', address: '' } as any
+    };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .not.toContain('-8.7391574');
+  });
+
+  it('does not turn an OSM coordinate placeholder into a confirmed postal address', () => {
+    component.session = {
+      ...session,
+      canSeeExactAddress: true,
+      address: 'Coordenadas (morada por confirmar)',
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN', address: '' } as any
+    };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.session-location-map') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(new URL(link.href).searchParams.get('query')).toBe('40.6668823,-8.7391574');
+    expect(link.textContent).not.toContain('Coordenadas (morada por confirmar)');
+  });
+
+  it('preserves address-based Maps search when there is no venue GPS', () => {
+    component.session = { ...session, canSeeExactAddress: true,
+      address: 'Rua do Campo, 12', city: 'Lisboa', venue: null };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.session-location-map') as HTMLAnchorElement;
+    expect(new URL(link.href).searchParams.get('query')).toBe('Rua do Campo, 12, Lisboa');
+
+    component.session = { ...session, canSeeExactAddress: true, address: null, venue: null };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
+  });
+
+  it('rejects (0,0) GPS pins and distinguishes missing from locked locations', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, latitude: 0, longitude: 0 } as any
+    };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .toContain('Localização exata ainda não disponível');
+  });
+
+  it('shows a reference GPS point for authorised island session players', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, name: 'Pavilhão da Ilha', city: 'Ponta Delgada',
+        latitude: 37.741, longitude: -25.675,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN' } as any
+    };
+    fixture.detectChanges();
+    const url = component.exactGoogleMapsUrl();
+    expect(new URL(url!).searchParams.get('query')).toBe('37.741,-25.675');
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location'))
+      .toBe('37.741,-25.675');
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .toContain('não é necessariamente a entrada');
+  });
+
+  it('does not search Maps using old placeholder coordinates as street text', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true,
+      address: 'Coordenadas (morada por confirmar)',
+      venue: { id: 447, latitude: 0, longitude: 0 } as any
+    };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(component.exactLocationLabel()).not.toContain('morada por confirmar');
+    expect(component.calendarIcsContent()).toContain('LOCATION:Lisboa');
+  });
+
+  it('does not expose Madeira venue coordinates in private session calendar links', () => {
+    component.session = {
+      ...session, canSeeExactAddress: false, address: 'Rua Privada 9',
+      venue: { id: 447, latitude: 32.648, longitude: -16.908 } as any
+    };
+    fixture.detectChanges();
+    expect(component.hasVenueMapCoordinates()).toBeFalse();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent).not.toContain('-16.908');
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location')).toBe('Lisboa');
+  });
+
+  it('shares only concise game details and a public URL, without generic promotion', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, status: 'OPEN', canSharePublicly: true,
+      gameDate: '2099-10-01T18:00:00Z'
+    };
+    const link = component.whatsappShareUrl()!;
+    expect(link).not.toBeNull();
+    const text = new URL(link).searchParams.get('text')!;
+    expect(text).toContain('Padel');
+    expect(text).toContain('Local: Lisboa');
+    expect(text).toContain('Vagas: 2 disponíveis');
+    expect(text).toContain('/sessions/7');
+    expect(text).not.toContain('Vem jogar connosco na Jynlo!');
   });
 
   it('sends a public session link to a selected friend only on explicit action', () => {
@@ -252,8 +854,166 @@ describe('SessionDetailsComponent', () => {
     expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
   });
 
+  it('offers positive peer compliments only when both players attended', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    confirmRatingAttendance('player-one');
+    component.sessionParticipants.push({
+      id: 16, username: 'player-two', attendanceStatus: 'PENDING', joinedAt: '2026-09-20T18:00:00Z'
+    });
+    fixture.detectChanges();
+    expect(component.canOfferCompliments()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.player-compliments-panel')).toBeNull();
+
+    component.sessionParticipants[1].attendanceStatus = 'ATTENDED';
+    fixture.detectChanges();
+    expect(component.canOfferCompliments()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.player-compliments-panel')).not.toBeNull();
+    expect(sessionService.sentCompliments).not.toHaveBeenCalled();
+
+    (fixture.nativeElement.querySelector('.compliments-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(sessionService.sentCompliments).toHaveBeenCalledOnceWith(7);
+    expect(sessionService.receivedCompliments).toHaveBeenCalledOnceWith(7);
+    expect(fixture.nativeElement.querySelectorAll('.player-compliment-choice').length).toBe(3);
+  });
+
+  it('submits username-based compliments without confusing participation IDs with profile IDs', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    confirmRatingAttendance('player-one');
+    component.sessionParticipants.push({
+      id: 9999, username: 'player-two', attendanceStatus: 'ATTENDED', joinedAt: '2026-09-20T18:00:00Z'
+    });
+    sessionService.giveCompliment.and.returnValue(of({
+      senderUsername: 'player-one', recipientUsername: 'player-two',
+      type: 'GREAT_TEAMMATE', updatedAt: '2026-10-22T10:00:00Z'
+    }));
+    component.toggleCompliments();
+    fixture.detectChanges();
+    const choices = fixture.nativeElement.querySelectorAll('.player-compliment-choice') as NodeListOf<HTMLButtonElement>;
+    choices[1].click();
+    fixture.detectChanges();
+    expect(sessionService.giveCompliment).toHaveBeenCalledOnceWith(7, 'player-two', 'GREAT_TEAMMATE');
+    expect(component.myCompliment('player-two')?.type).toBe('GREAT_TEAMMATE');
+    expect(fixture.nativeElement.querySelector('.player-compliment-choice.is-sent')).not.toBeNull();
+
+    choices[1].click();
+    expect(sessionService.giveCompliment).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows only compliments received by the logged-in player', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    confirmRatingAttendance('player-one');
+    component.sessionParticipants.push({
+      id: 16, username: 'player-two', attendanceStatus: 'ATTENDED', joinedAt: '2026-09-20T18:00:00Z'
+    });
+    sessionService.receivedCompliments.and.returnValue(of([{
+      senderUsername: 'player-two', recipientUsername: 'player-one', type: 'FAIR_PLAY',
+      updatedAt: '2026-10-22T10:00:00Z'
+    }]));
+    component.toggleCompliments();
+    fixture.detectChanges();
+    const received = fixture.nativeElement.querySelector('.compliments-received') as HTMLElement;
+    expect(received).not.toBeNull();
+    expect(received.textContent).toContain('player-two');
+    expect(received.textContent).toContain('Fair play');
+    expect(sessionService.receivedCompliments).toHaveBeenCalledOnceWith(7);
+  });
+
+  it('handles unavailable compliments API without submitting any feedback', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    confirmRatingAttendance('player-one');
+    component.sessionParticipants.push({
+      id: 16, username: 'player-two', attendanceStatus: 'ATTENDED', joinedAt: '2026-09-20T18:00:00Z'
+    });
+    sessionService.sentCompliments.and.returnValue(throwError(() => new Error('offline')));
+    component.toggleCompliments();
+    fixture.detectChanges();
+    expect(component.complimentsLoadedSessionId).toBeNull();
+    expect(fixture.nativeElement.querySelector('.player-compliments-panel [role="alert"]')).not.toBeNull();
+    expect(sessionService.giveCompliment).not.toHaveBeenCalled();
+    sessionService.sentCompliments.and.returnValue(of([]));
+    component.loadCompliments();
+    fixture.detectChanges();
+    expect(component.complimentsLoadedSessionId).toBe(7);
+  });
+
+  it('offers venue stars only after confirmed attendance at a registered venue', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString(),
+      venue: { id: 100, name: 'Recinto Jynlo', city: 'Lisboa' } as any
+    };
+    component.sessionParticipants = [{
+      id: 15, username: 'player-one', attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }];
+    fixture.detectChanges();
+    expect(component.canRateVenuePostGame()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.venue-rating-panel')).toBeNull();
+
+    confirmRatingAttendance('player-one');
+    component.loadMyVenueRating();
+    fixture.detectChanges();
+    expect(component.canRateVenuePostGame()).toBeTrue();
+    expect(fixture.nativeElement.querySelectorAll('.venue-rating-star').length).toBe(5);
+    expect(sessionService.myVenueRating).toHaveBeenCalledWith(7);
+  });
+
+  it('submits a venue score separately from the game experience rating', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString(),
+      venue: { id: 100, name: 'Recinto Jynlo', city: 'Lisboa' } as any
+    };
+    confirmRatingAttendance('player-one');
+    component.loadMyVenueRating();
+    fixture.detectChanges();
+    const stars = fixture.nativeElement.querySelectorAll('.venue-rating-star') as NodeListOf<HTMLButtonElement>;
+    stars[3].click();
+    fixture.detectChanges();
+    expect(component.canSaveVenueRating()).toBeTrue();
+    (fixture.nativeElement.querySelector('.venue-rating-panel .primary-action') as HTMLButtonElement).click();
+    expect(sessionService.rateVenue).toHaveBeenCalledOnceWith(7, 4);
+    expect(sessionService.rateOverall).not.toHaveBeenCalled();
+    expect(component.myVenueScore).toBe(4);
+    expect(component.venueRatingSuccess).toContain('guardada');
+  });
+
+  it('never renders venue ratings for a game without a registered venue', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString(),
+      venue: null
+    };
+    confirmRatingAttendance('player-one');
+    fixture.detectChanges();
+    expect(component.canRateVenuePostGame()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.venue-rating-panel')).toBeNull();
+    expect(sessionService.myVenueRating).not.toHaveBeenCalled();
+  });
+
   it('offers one optional overall rating only to registered participants after the game', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     component.loadMyOverallRating();
     fixture.detectChanges();
 
@@ -269,6 +1029,7 @@ describe('SessionDetailsComponent', () => {
 
   it('saves a selected star rating and permits editing a stored rating', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     sessionService.myOverallRating.and.returnValue(of({
       overallScore: 3, updatedAt: '2026-10-13T10:00:00Z'
     }));
@@ -301,6 +1062,7 @@ describe('SessionDetailsComponent', () => {
 
   it('does not keep prompting after a previously saved rating', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     sessionService.myOverallRating.and.returnValue(of({
       overallScore: 4, updatedAt: '2026-10-13T10:00:00Z'
     }));
@@ -324,6 +1086,7 @@ describe('SessionDetailsComponent', () => {
 
   it('keeps first-time rating success visible on the visit where it was saved', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     component.loadMyOverallRating();
     fixture.detectChanges();
     expect(component.myOverallScore).toBeNull();
@@ -346,6 +1109,7 @@ describe('SessionDetailsComponent', () => {
     try {
       (component as any).currentUsername = 'rating-dismiss-test-user';
       component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
       component.loadMyOverallRating();
       fixture.detectChanges();
 
@@ -380,6 +1144,7 @@ describe('SessionDetailsComponent', () => {
     try {
       (component as any).currentUsername = 'rating-return-test-user';
       component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
       sessionService.myOverallRating.and.returnValue(of({
         overallScore: 4, updatedAt: '2026-10-13T10:00:00Z'
       }));
@@ -414,6 +1179,7 @@ describe('SessionDetailsComponent', () => {
     try {
       (component as any).currentUsername = 'rating-pending-test-user';
       component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
       const pending = new Subject<{ overallScore: number; updatedAt: string } | null>();
       sessionService.myOverallRating.and.returnValue(pending.asObservable());
       (component as any).restoreRatingDismissal();
@@ -458,6 +1224,7 @@ describe('SessionDetailsComponent', () => {
 
   it('can skip the rating without sending it or changing attendance', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     component.loadMyOverallRating();
     fixture.detectChanges();
     (fixture.nativeElement.querySelector('.overall-rating-skip') as HTMLButtonElement).click();
@@ -487,6 +1254,7 @@ describe('SessionDetailsComponent', () => {
 
   it('does not save an invalid or missing rating', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     component.loadMyOverallRating();
     component.selectedOverallScore = null;
     component.saveOverallRating();
@@ -499,6 +1267,7 @@ describe('SessionDetailsComponent', () => {
 
   it('can retry retrieving an existing rating without submitting a new one', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     sessionService.myOverallRating.and.returnValue(throwError(() => new Error('offline')));
     component.loadMyOverallRating();
     fixture.detectChanges();
@@ -510,6 +1279,46 @@ describe('SessionDetailsComponent', () => {
     expect(component.ratingError).toBe('');
     expect(sessionService.myOverallRating).toHaveBeenCalledTimes(2);
     expect(sessionService.rateOverall).not.toHaveBeenCalled();
+  });
+
+  it('hides star ratings while attendance is pending or marked no-show', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    (component as any).currentUsername = 'player-one';
+    component.sessionParticipants = [{
+      id: 15, username: 'player-one', attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }];
+    component.loadMyOverallRating();
+    fixture.detectChanges();
+    expect(component.canRatePostGame()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+    expect(sessionService.myOverallRating).not.toHaveBeenCalled();
+
+    component.sessionParticipants[0].attendanceStatus = 'NO_SHOW';
+    expect(component.canRatePostGame()).toBeFalse();
+
+    component.sessionParticipants[0].attendanceStatus = 'LATE_CANCELLED';
+    expect(component.canRatePostGame()).toBeFalse();
+
+    component.sessionParticipants[0].attendanceStatus = 'ATTENDED';
+    expect(component.canRatePostGame()).toBeTrue();
+  });
+
+  it('loads an attendee rating only after the participation roster confirms presence', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    (component as any).currentUsername = 'player-one';
+    sessionService.participants.and.returnValue(of([{
+      id: 15, username: 'player-one', attendanceStatus: 'ATTENDED',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }]));
+    expect(sessionService.myOverallRating).not.toHaveBeenCalled();
+
+    component.loadSessionParticipants();
+    fixture.detectChanges();
+
+    expect(component.canRatePostGame()).toBeTrue();
+    expect(sessionService.myOverallRating).toHaveBeenCalledOnceWith(7);
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).not.toBeNull();
   });
 
   it('should create', () => {
@@ -550,6 +1359,78 @@ describe('SessionDetailsComponent', () => {
     expect(ics).toContain('DTSTART:20261001T180000Z');
     expect(ics).toContain('SUMMARY:Desporto24 — Padel');
     expect(ics).toContain('LOCATION:Rua do Campo\\, 10');
+  });
+
+  it('saves authorised GPS-only venue coordinates in all calendar providers', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, name: 'Pavilhão Marítimo', city: 'Aveiro',
+        address: '', latitude: 40.6668823, longitude: -8.7391574,
+        locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN' } as any
+    };
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location'))
+      .toBe('40.6668823,-8.7391574');
+    expect(new URL(component.outlookCalendarUrl()!).searchParams.get('location'))
+      .toBe('40.6668823,-8.7391574');
+    expect(component.calendarIcsContent()).toContain(
+      'LOCATION:40.6668823\\,-8.7391574');
+  });
+
+  it('never exports venue coordinates or a private address to the calendar when locked', () => {
+    component.session = {
+      ...session, canSeeExactAddress: false,
+      address: 'Rua Secreta, 21',
+      venue: { id: 447, name: 'Recinto Privado', city: 'Lisboa',
+        latitude: 38.7223, longitude: -9.1393 } as any
+    };
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location')).toBe('Lisboa');
+    expect(new URL(component.outlookCalendarUrl()!).searchParams.get('location')).toBe('Lisboa');
+    expect(component.calendarIcsContent()).toContain('LOCATION:Lisboa');
+    expect(component.calendarIcsContent()).not.toContain('Rua Secreta');
+    expect(component.calendarIcsContent()).not.toContain('38.7223');
+  });
+
+  it('does not export a legacy GPS placeholder as a postal address', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true,
+      address: 'Coordenadas (morada por confirmar)',
+      venue: { id: 447, latitude: 40.6668823, longitude: -8.7391574 } as any
+    };
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location'))
+      .toBe('40.6668823,-8.7391574');
+    expect(component.calendarIcsContent()).not.toContain('morada por confirmar');
+  });
+
+  it('falls back to municipality for implausible GPS without a usable street address', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true, address: null,
+      venue: { id: 447, latitude: 0, longitude: 0 } as any
+    };
+    expect(new URL(component.googleCalendarUrl()!).searchParams.get('location')).toBe('Lisboa');
+    expect(component.calendarIcsContent()).toContain('LOCATION:Lisboa');
+  });
+
+  it('links a registered venue only after the session authorises exact location', () => {
+    component.session = {
+      ...session, canSeeExactAddress: true,
+      venue: { id: 447, name: 'Pavilhão Central', city: 'Lisboa' } as any
+    };
+    fixture.detectChanges();
+    const venueLink = fixture.nativeElement.querySelector('.session-venue-link') as HTMLAnchorElement;
+    const detailsAction = fixture.nativeElement.querySelector('.session-venue-details-action') as HTMLAnchorElement;
+    expect(venueLink).not.toBeNull();
+    expect(detailsAction).not.toBeNull();
+    expect(venueLink.getAttribute('href')).toBe('/menu/venues/447');
+    expect(detailsAction.getAttribute('href')).toBe('/menu/venues/447');
+    expect(detailsAction.textContent).toContain('Ver recinto');
+
+    component.session = { ...session, canSeeExactAddress: false,
+      venue: { id: 447, name: 'Pavilhão Central', city: 'Lisboa' } as any };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-venue-link')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-venue-details-action')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.venue-detail-panel h2').textContent)
+      .toContain('Pavilhão Central');
   });
 
   it('scrolls to the participant list without navigating away from the session', () => {
@@ -605,157 +1486,246 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.membership-status')).toBeNull();
   });
 
-  it('offers a public share link only when the backend explicitly allows it', () => {
-    component.session = { ...session, canSharePublicly: true };
-    fixture.detectChanges();
-
-    const button = fixture.nativeElement.querySelector('.share-session-action') as HTMLButtonElement;
-    expect(button).not.toBeNull();
-    expect(button.textContent).toContain('Partilhar sessão');
-    expect(component.publicShareUrl()).toBe(new URL('/sessions/7', window.location.origin).href);
-  });
-
-  it('offers opt-in sharing after the creator makes a public game', async () => {
-    const route = TestBed.inject(ActivatedRoute);
-    spyOn(route.snapshot.queryParamMap, 'get').and.callFake(key => key === 'created' ? '1' : null);
+  it('allows only the creator to cancel from details with a confirmation', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
     fixture.detectChanges();
-    const panel = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
+    const cancel = fixture.nativeElement.querySelector('.session-cancel-button') as HTMLButtonElement;
+    expect(cancel).not.toBeNull();
+    cancel.click();
+    fixture.detectChanges();
+    expect(sessionService.cancel).not.toHaveBeenCalled();
+    const confirmation = fixture.nativeElement.querySelector('.session-cancel-confirm');
+    expect(confirmation).not.toBeNull();
+    (confirmation.querySelector('.jynlo-action--danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(sessionService.cancel).toHaveBeenCalledOnceWith(7);
+    expect(component.session?.status).toBe('CANCELLED');
+    expect(fixture.nativeElement.querySelector('.session-cancel-confirm')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-cancel-button')).toBeNull();
+
+    (component as any).currentUsername = 'someone-else';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z' };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-cancel-button')).toBeNull();
+  });
+
+  it('retains the confirmation and shows an error if cancel fails', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z' };
+    sessionService.cancel.and.returnValue(throwError(() => new HttpErrorResponse({status: 503})));
+    component.requestCancelOwnSession();
+    component.confirmCancelOwnSession();
+    fixture.detectChanges();
+    expect(component.session?.status).toBe('OPEN');
+    expect(component.cancelSessionConfirmOpen).toBeTrue();
+    expect(component.actionError).toBeTruthy();
+  });
+
+  it('shows confirmed guest names and counts them in Who is going without inventing accounts', () => {
+    (component as any).currentUsername='creator-user';
+    component.session={...session,joined:true};
+    component.sessionParticipants=[{id:11,username:'creator-user',attendanceStatus:'PENDING',
+      joinedAt:'2026-10-28T15:00:00Z'}];
+    component.guestRequests=[
+      {id:40,name:'Ferreirinha',status:'APPROVED',note:'',teamCode:null},
+      {id:41,name:'Pedido Antigo',status:'PENDING',note:'',teamCode:null},
+      {id:42,name:'Conta criada',status:'LINKED',note:'',teamCode:null}
+    ];
+    fixture.detectChanges();
+    const region=fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(region).not.toBeNull();
+    expect(region.textContent).toContain('Ferreirinha');
+    expect(region.textContent).toContain('2 jogadores visíveis');
+    expect(region.textContent).not.toContain('Pedido Antigo');
+    expect(region.textContent).not.toContain('Conta criada');
+    expect(region.querySelectorAll('a.session-player-card__profile').length).toBe(1);
+  });
+
+  it('shows confirmed guests to a joined non-organizer without organizer access', () => {
+    (component as any).currentUsername='monicagomes';
+    sessionService.detail.and.returnValue(of({...session,joined:true,participantCount:3}));
+    component.session={...session,creatorUsername:'creator-user',joined:true,participantCount:3};
+    component.sessionParticipants=[
+      {id:1,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T15:00:00Z'},
+      {id:2,username:'monicagomes',attendanceStatus:'PENDING',joinedAt:'2026-10-28T15:01:00Z'}
+    ];
+    sessionService.participants.and.returnValue(of(component.sessionParticipants));
+    sessionService.confirmedGuests.and.returnValue(of([
+      {id:40,name:'oal',teamCode:null}
+    ]));
+    component.refreshVisiblePlayers();
+    fixture.detectChanges();
+    const section=fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(section.textContent).toContain('3 jogadores visíveis');
+    expect(section.textContent).toContain('@monicagomes');
+    expect(section.textContent).toContain('oal');
+    expect(section.querySelectorAll('.session-player-card--guest').length).toBe(1);
+    expect(section.querySelectorAll('a.session-player-card__profile').length).toBe(2);
+    expect(sessionService.confirmedGuests).toHaveBeenCalledWith(7);
+    expect(sessionService.guestRequests).not.toHaveBeenCalled();
+    expect(component.isCreator()).toBeFalse();
+  });
+
+  it('does not show guests to non-participants and preserves error visibility', () => {
+    (component as any).currentUsername='outsider';
+    sessionService.detail.and.returnValue(of({...session,joined:true}));
+    component.session={...session,creatorUsername:'creator-user',joined:false};
+    component.memberConfirmedGuests=[{id:20,name:'Private guest',teamCode:null}];
+    expect(component.confirmedGuestParticipants()).toEqual([]);
+    component.session={...session,creatorUsername:'creator-user',joined:true};
+    sessionService.confirmedGuests.and.returnValue(
+      throwError(()=>new HttpErrorResponse({status:403})));
+    component.refreshVisiblePlayers();
+    fixture.detectChanges();
+    const section=fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(section.textContent).toContain('Não foi possível atualizar os convidados confirmados');
+    expect(section.textContent).not.toContain('Private guest');
+  });
+
+  it('renders ten registered and confirmed guest players as matching profile cards', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, creatorUsername: 'creator-user', joined: true };
+    component.sessionParticipants = Array.from({length: 5}, (_, index) => ({
+      id: index + 1, username: index === 0 ? 'creator-user' : 'jynlo-player-' + index,
+      attendanceStatus: 'PENDING' as const, joinedAt: '2026-10-28T15:00:00Z'
+    }));
+    component.guestRequests = Array.from({length: 5}, (_, index) => ({
+      id: index + 100, name: 'Convidado ' + (index + 1),
+      status: 'APPROVED' as const, note: '', teamCode: null
+    }));
+    fixture.detectChanges();
+    const region = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const chips = region.querySelectorAll('.session-participant-list > .session-player-card');
+    expect(chips.length).toBe(10);
+    expect(region.textContent).toContain('10 jogadores visíveis');
+    expect(region.querySelectorAll('a.session-player-card__profile').length).toBe(5);
+    expect(region.querySelectorAll('.session-player-card--guest').length).toBe(5);
+    expect(region.textContent).toContain('COM CONTA');
+    expect(region.textContent).toContain('SEM CONTA');
+    const links = region.querySelectorAll('a.session-player-card__profile');
+    expect(links[0].getAttribute('href')).toContain('/menu/perfis/creator-user');
+  });
+
+  it('preserves the same identity cards in two confirmed teams of five', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, creatorUsername: 'creator-user', joined: true };
+    const registered = Array.from({length: 6}, (_, index) => ({
+      id: index + 1, username: index === 0 ? 'creator-user' : 'jynlo-player-' + index,
+      attendanceStatus: 'PENDING' as const, joinedAt: '2026-10-28T15:00:00Z',
+      teamCode: (index < 3 ? 'A' : 'B') as 'A' | 'B'
+    }));
+    component.sessionParticipants = registered;
+    component.teamAParticipants = registered.slice(0, 3);
+    component.teamBParticipants = registered.slice(3);
+    component.guestRequests = Array.from({length: 4}, (_, index) => ({
+      id: index + 100, name: 'Convidado ' + (index + 1),
+      status: 'APPROVED' as const, note: '',
+      teamCode: (index < 2 ? 'A' : 'B') as 'A' | 'B'
+    }));
+    component.confirmedTeams = true;
+    fixture.detectChanges();
+    const region = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const teams = region.querySelectorAll('.confirmed-teams > div');
+    expect(teams.length).toBe(2);
+    expect(teams[0].querySelectorAll('.session-player-card').length).toBe(5);
+    expect(teams[1].querySelectorAll('.session-player-card').length).toBe(5);
+    expect(region.querySelectorAll('a.session-player-card__profile').length).toBe(6);
+    expect(region.querySelectorAll('.session-player-card--guest').length).toBe(4);
+  });
+
+  it('starts with guest-first invitations after creating a community game', () => {
+    const route=TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap,'get').and.callFake(key=>key==='created'?'1':null);
+    (component as any).currentUsername='creator-user';
+    component.session={...session,gameDate:'2099-10-01T18:00:00Z',
+      audience:'COMMUNITY_ONLY',communityId:12,canSharePublicly:false};
+    fixture.detectChanges();
+    expect(component.showInvitePanel()).toBeTrue();
+    const panel=fixture.nativeElement.querySelector('.guest-organizer-panel') as HTMLElement;
     expect(panel).not.toBeNull();
-    const whatsapp = panel.querySelector('a[href^="https://wa.me/"]') as HTMLAnchorElement;
-    expect(decodeURIComponent(whatsapp.href)).toContain('/sessions/7');
-    const feedLink = panel.querySelector('a[href^="/menu/feed"]') as HTMLAnchorElement;
-    expect(feedLink.getAttribute('href')).toContain('shareSession=7');
-    const copy = spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
-    await component.copyPublicShareLink();
-    expect(copy).toHaveBeenCalledWith(new URL('/sessions/7', window.location.origin).href);
-    panel.querySelectorAll('button')[1].click();
-    fixture.detectChanges();
+    expect(panel.textContent).toContain('Convidar jogadores');
+    expect(panel.textContent).toContain('SEM CONTA');
+    expect(panel.textContent).toContain('COM CONTA JYNLO');
     expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-  });
-
-  it('never promotes private, community-only or other peoples games', () => {
-    const route = TestBed.inject(ActivatedRoute);
-    spyOn(route.snapshot.queryParamMap, 'get').and.returnValue('1');
-    (component as any).currentUsername = 'creator-user';
-    for (const detail of [
-      { privateGame: true, canSharePublicly: false },
-      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false },
-      { canSharePublicly: false }
-    ]) {
-      component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', ...detail };
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-    }
-    (component as any).currentUsername = 'someone-else';
-    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-  });
-
-  it('lets the organizer reopen WhatsApp, link and Feed options on a later visit', async () => {
-    (component as any).currentUsername = 'creator-user';
-    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-    const toggle = fixture.nativeElement.querySelector('.open-promotion-button') as HTMLButtonElement;
-    expect(toggle).not.toBeNull();
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    toggle.click();
-    fixture.detectChanges();
-
-    const panel = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
-    expect(panel.textContent).toContain('Divulgar jogo');
-    expect(panel.querySelector('a[href^="https://wa.me/"]')).not.toBeNull();
-    expect((panel.querySelector('a[href^="/menu/feed"]') as HTMLAnchorElement)
-      .getAttribute('href')).toContain('shareSession=7');
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-
-    const copy = spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.reject(new Error('Denied')));
-    await component.copyPublicShareLink();
-    fixture.detectChanges();
-    expect(copy).toHaveBeenCalled();
-    expect((panel.querySelector('#session-share-url') as HTMLInputElement).value)
-      .toBe(new URL('/sessions/7', window.location.origin).href);
-    toggle.click();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-  });
-
-  it('opens sharing from My Sports Week only when the viewer owns a public game', () => {
-    const route = TestBed.inject(ActivatedRoute);
-    spyOn(route.snapshot.queryParamMap, 'get')
-      .and.callFake(key => key === 'promote' ? '1' : null);
-    component.ngOnInit();
-    (component as any).currentUsername = 'creator-user';
-    component.session = {
-      ...session, canSharePublicly: true, gameDate: '2099-10-01T18:00:00Z'
-    };
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).not.toBeNull();
-
-    component.session = { ...component.session, privateGame: true, canSharePublicly: false };
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-
-    component.session = {
-      ...session, canSharePublicly: true, gameDate: '2099-10-01T18:00:00Z'
-    };
-    (component as any).currentUsername = 'different-user';
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
-  });
-
-  it('never offers re-promotion for private, community-only, past, or other users games', () => {
-    (component as any).currentUsername = 'creator-user';
-    for (const detail of [
-      { privateGame: true, canSharePublicly: false },
-      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false },
-      { status: 'CANCELLED' as const, canSharePublicly: true },
-      { gameDate: '2020-10-01T18:00:00Z', canSharePublicly: true }
-    ]) {
-      component.session = {
-        ...session, gameDate: '2099-10-01T18:00:00Z', ...detail
-      };
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.open-promotion-button')).toBeNull();
-    }
-    (component as any).currentUsername = 'someone-else';
-    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.open-promotion-button')).toBeNull();
-  });
-
-  it('does not offer public sharing when the backend has not provided permission', () => {
-    fixture.detectChanges();
-
+    expect(fixture.nativeElement.textContent).not.toContain('Divulgar jogo');
     expect(component.publicShareUrl()).toBeNull();
-    expect(fixture.nativeElement.querySelector('.share-session-action')).toBeNull();
-  });
-
-  it('does not offer public sharing for private or community-only sessions', () => {
-    for (const detail of [
-      { privateGame: true, canSharePublicly: false },
-      { audience: 'COMMUNITY_ONLY' as const, communityId: 12, canSharePublicly: false },
-      { audience: 'PUBLIC' as const, canSharePublicly: false }
-    ]) {
-      component.session = { ...session, ...detail };
-      fixture.detectChanges();
-      expect(component.publicShareUrl()).toBeNull();
-      expect(fixture.nativeElement.querySelector('.share-session-action')).toBeNull();
-    }
-  });
-
-  it('allows sharing a community session explicitly made public by the backend', () => {
-    component.session = {
-      ...session, audience: 'PUBLIC', communityId: 12, canSharePublicly: true
-    };
+    const toggle=fixture.nativeElement.querySelector('.session-invite-toggle') as HTMLButtonElement;
+    toggle.click();
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.guest-organizer-panel')).toBeNull();
+    (fixture.nativeElement.querySelector('.session-invite-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.guest-organizer-panel')).not.toBeNull();
+  });
 
-    expect(component.publicShareUrl()).toBe(new URL('/sessions/7', window.location.origin).href);
-    expect(fixture.nativeElement.querySelector('.share-session-action')).not.toBeNull();
+  it('generates signed WhatsApp and copy invitations for crossposted games', async () => {
+    (component as any).currentUsername='creator-user';
+    component.session={...session,gameDate:'2099-10-01T18:00:00Z',
+      audience:'COMMUNITY_ONLY',communityId:null,canSharePublicly:false};
+    component.invitePanelOpen=true;
+    fixture.detectChanges();
+    expect(component.canShareGuestInvites()).toBeTrue();
+    expect(component.publicShareUrl()).toBeNull();
+    component.createGuestLink();
+    fixture.detectChanges();
+    expect(sessionService.issueGuestLink).toHaveBeenCalledWith(7);
+    const url=component.guestLinkUrl;
+    expect(url).toContain('/sessions/7?guest=');
+    expect(decodeURIComponent(component.guestLinkWhatsAppUrl)).toContain(url);
+    const clipboard=spyOn(navigator.clipboard,'writeText').and.returnValue(Promise.resolve());
+    await component.copyGuestLink();
+    expect(clipboard).toHaveBeenCalledWith(url);
+  });
+
+  it('renders actual shared community names and season competition state', () => {
+    component.session={...session,audience:'COMMUNITY_ONLY',communityId:null};
+    component.sessionContext={
+      communities:[{id:12,name:'Colégio Pio'},{id:14,name:'ACM'}],
+      seasonGame:true,seasonName:'Época 2026/27'};
+    fixture.detectChanges();
+    const panel=fixture.nativeElement.querySelector('.session-community-context') as HTMLElement;
+    expect(panel.textContent).toContain('Colégio Pio');
+    expect(panel.textContent).toContain('ACM');
+    expect(panel.textContent).toContain('Jogo da época');
+    expect(panel.textContent).toContain('Época 2026/27');
+    expect(panel.querySelectorAll('.session-community-links a').length).toBe(2);
+    component.sessionContext={communities:[{id:12,name:'Colégio Pio'}],
+      seasonGame:false,seasonName:null};
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-community-context').textContent)
+      .toContain('Não ativada para esta sessão');
+  });
+
+  it('does not expose guest invitations to non-creators or closed/private games', () => {
+    (component as any).currentUsername='creator-user';
+    for(const detail of [
+      {gameDate:'2020-10-01T18:00:00Z',status:'OPEN' as const,privateGame:false},
+      {gameDate:'2099-10-01T18:00:00Z',status:'CANCELLED' as const,privateGame:false},
+      {gameDate:'2099-10-01T18:00:00Z',status:'OPEN' as const,privateGame:true}
+    ]){
+      component.session={...session,audience:'COMMUNITY_ONLY',...detail};
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.session-invite-toggle')).toBeNull();
+    }
+    (component as any).currentUsername='someone-else';
+    component.session={...session,audience:'COMMUNITY_ONLY',gameDate:'2099-10-01T18:00:00Z'};
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-invite-toggle')).toBeNull();
+  });
+
+  it('only offers a restricted internal share for private games', () => {
+    const route=TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap,'get').and.callFake(key=>key==='created'?'1':null);
+    (component as any).currentUsername='creator-user';
+    component.session={...session,gameDate:'2099-10-01T18:00:00Z',
+      audience:'PUBLIC',privateGame:true,canSharePublicly:false};
+    fixture.detectChanges();
+    const panel=fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
+    expect(panel).not.toBeNull();
+    expect(panel.textContent).toContain('Convidar jogadores');
+    expect(panel.querySelector('a[href^="/menu/feed"]')).toBeNull();
+    expect(component.organizerShareUrl()).toContain('/menu/events/7');
   });
 
   it('shows the organiser confirmed players and remaining slots before a future game', () => {
@@ -1430,7 +2400,7 @@ describe('SessionDetailsComponent', () => {
     expect(component.messages).toEqual([]);
   });
 
-  it('keeps chat history visible but hides the composer after the game', () => {
+  it('keeps past-session chat unavailable on details without deleting server messages', () => {
     const archived: SessionMessage = {
       id: 7,
       sessionId: 7,
@@ -1446,20 +2416,17 @@ describe('SessionDetailsComponent', () => {
 
     expect(component.canAccessChat()).toBeTrue();
     expect(component.canSendChat()).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.chat-panel')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.message-list').textContent)
-      .toContain('Até ao próximo jogo!');
+    expect(fixture.nativeElement.querySelector('.chat-panel')).toBeNull();
     expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.chat-read-only').textContent)
-      .toContain('chat está encerrado');
-    expect(fixture.nativeElement.textContent).toContain('Chat encerrado');
+    expect(fixture.nativeElement.textContent).toContain('Chat indisponível');
+    expect(component.messages.some(item => item.body === 'Até ao próximo jogo!')).toBeTrue();
 
     component.messageBody = 'Tentar enviar depois do jogo';
     component.sendMessage();
     expect(sessionService.postMessage).not.toHaveBeenCalled();
   });
 
-  it('keeps the chat writable while a game is underway', () => {
+  it('closes chat as soon as the game starts', () => {
     component.session = {
       ...session,
       joined: true,
@@ -1467,9 +2434,9 @@ describe('SessionDetailsComponent', () => {
     };
     fixture.detectChanges();
 
-    expect(component.canSendChat()).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.message-composer')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.chat-read-only')).toBeNull();
+    expect(component.canSendChat()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Chat indisponível');
   });
 
   it('immediately closes chat when the game is completed, cancelled or did not occur', () => {
@@ -1490,14 +2457,14 @@ describe('SessionDetailsComponent', () => {
     expect(component.canSendChat()).toBeFalse();
   });
 
-  it('shows a closed empty state instead of suggesting a new chat', () => {
+  it('does not render another chat UI for a concluded session', () => {
     component.session = { ...session, joined: true };
     component.messages = [];
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.empty-chat').textContent)
-      .toContain('terminou sem mensagens');
+    expect(fixture.nativeElement.querySelector('.empty-chat')).toBeNull();
     expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Chat indisponível');
   });
 
   it('should send a chat message and append it locally', () => {
@@ -1513,6 +2480,150 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.postMessage).toHaveBeenCalledWith(7, 'Bora jogar!');
     expect(component.messages.length).toBe(1);
     expect(component.messageBody).toBe('');
+  });
+
+  it('sends a quoted session reply with the parent ID and renders persisted snapshot', () => {
+    component.session = { ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString() };
+    const original: SessionMessage = { id: 30, sessionId: 7, senderUsername: 'player-two',
+      body: 'Levas as bolas?', createdAt: new Date().toISOString() };
+    component.messages = [original];
+    component.replyToSessionMessage(original);
+    expect(component.replyingToSessionMessage?.id).toBe(30);
+    const response: SessionMessage = { id: 31, sessionId: 7, senderUsername: 'player-one',
+      body: 'Levo!', createdAt: new Date().toISOString(),
+      replyToMessageId: 30, replyToSender: 'player-two', replyToText: 'Levas as bolas?' };
+    sessionService.postMessage.and.returnValue(of(response));
+    component.messageBody = 'Levo!';
+    component.sendMessage();
+    expect(sessionService.postMessage).toHaveBeenCalledOnceWith(7, 'Levo!', 30);
+    expect(component.replyingToSessionMessage).toBeNull();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.chat-panel')).toBeNull();
+    expect(component.messages.some(item => item.replyToMessageId === 30)).toBeTrue();
+  });
+
+  it('preserves quoted parent and text after an uncertain session POST', () => {
+    component.session = { ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString() };
+    const original: SessionMessage = { id: 40, sessionId: 7, senderUsername: 'player-two',
+      body: 'A que horas?', createdAt: new Date().toISOString() };
+    component.replyToSessionMessage(original);
+    component.messageBody = 'Às oito';
+    sessionService.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    sessionService.messages.and.returnValue(of([]));
+    component.sendMessage();
+    expect(component.replyingToSessionMessage?.id).toBe(40);
+    expect(component.messageBody).toBe('Às oito');
+    expect(component.chatDeliveryUncertain).toBeTrue();
+    component.sendMessage();
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a socket message when an older HTTP chat response arrives afterwards', () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    const pending = new Subject<SessionMessage[]>();
+    sessionService.messages.and.returnValue(pending.asObservable());
+    component.refreshMessages();
+    const incoming: SessionMessage = {
+      id: 801, sessionId: 7, senderUsername: 'player-one',
+      body: 'Chego em 5 minutos', createdAt: new Date().toISOString()
+    };
+    realtimeSessionMessages.next(incoming);
+    pending.next([]);
+    pending.complete();
+    expect(component.messages).toEqual([incoming]);
+    realtimeSessionMessages.next(incoming);
+    expect(component.messages.length).toBe(1);
+  });
+
+  it('shows one inbox chat entry instead of another session chat header', () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    realtimeConnected.next(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Chat da sessão');
+    expect(fixture.nativeElement.querySelector('.chat-panel')).toBeNull();
+    realtimeConnected.next(false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sync-status')).toBeNull();
+  });
+
+  it('blocks a second session POST after network loss until delivery is verified', async () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    (component as any).currentUsername = 'fixture-user';
+    component.messageBody = 'Confirmam a hora?';
+    sessionService.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    sessionService.messages.and.returnValue(of([]));
+    component.sendMessage();
+    expect(component.chatDeliveryUncertain).toBeTrue();
+    expect(component.messageBody).toBe('Confirmam a hora?');
+    component.sendMessage();
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+    fixture.detectChanges();
+    await fixture.whenStable(); // ngModel schedules the disabled state asynchronously.
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.chat-delivery-warning')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+    component.resumeChatAfterUncertainSend();
+    expect(component.chatDeliveryUncertain).toBeFalse();
+    expect(component.messageBody).toBe('Confirmam a hora?');
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('confirms uncertain delivery from session chat history without a duplicate POST', () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    (component as any).currentUsername = 'fixture-user';
+    component.messageBody = 'Até logo, equipa';
+    const delivered: SessionMessage = {
+      id: 810, sessionId: 7, senderUsername: 'fixture-user',
+      body: 'Até logo, equipa', createdAt: new Date().toISOString()
+    };
+    sessionService.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    sessionService.messages.and.returnValue(of([delivered]));
+    component.sendMessage();
+    expect(component.chatDeliveryUncertain).toBeFalse();
+    expect(component.messageBody).toBe('');
+    expect(component.messages.map(message => message.id)).toContain(810);
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('never mistakes an older identical message for the uncertain new message', () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    (component as any).currentUsername = 'fixture-user';
+    const old: SessionMessage = {
+      id: 707, sessionId: 7, senderUsername: 'fixture-user',
+      body: 'Bora jogar', createdAt: new Date().toISOString()
+    };
+    component.messages = [old];
+    component.messageBody = 'Bora jogar';
+    sessionService.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 408 })));
+    sessionService.messages.and.returnValue(of([old]));
+    component.sendMessage();
+    expect(component.chatDeliveryUncertain).toBeTrue();
+    expect(component.messageBody).toBe('Bora jogar');
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not submit Enter during text composition', () => {
+    const event = new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, cancelable: true });
+    component.onChatEnter(event);
+    expect(event.defaultPrevented).toBeFalse();
+    expect(sessionService.postMessage).not.toHaveBeenCalled();
   });
 
   it('should append a realtime session message only once', () => {
@@ -1575,7 +2686,7 @@ describe('SessionDetailsComponent', () => {
     const section = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
     expect(section).not.toBeNull();
     expect(section.textContent).toContain('@player-one');
-    expect(section.textContent).toContain('perfis de jogadores visíveis');
+    expect(section.textContent).toContain('jogadores visíveis');
     const summary = fixture.nativeElement.querySelector('.organizer-preparation') as HTMLElement;
     const button = Array.from(summary.querySelectorAll('button'))
       .find((candidate: any) => candidate.textContent.includes('Quem vai')) as HTMLButtonElement;
@@ -1610,7 +2721,7 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
 
     expect(sessionService.participants).toHaveBeenCalledTimes(1);
-    expect(section.textContent).toContain('1 perfis de jogadores visíveis');
+    expect(section.textContent).toContain('1 jogadores visíveis');
     expect(section.textContent).not.toContain('A carregar jogadores confirmados');
   });
 
@@ -1676,13 +2787,43 @@ describe('SessionDetailsComponent', () => {
     expect(component.participants.length).toBe(1);
   });
 
+  it('offers the Excel team balancer to a community organiser who does not take a playing slot', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername: 'creator-user', joined: false, waitlisted: false,
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true, participantCount: 10, maxParticipants: 10,
+      status: 'FULL', gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    };
+    fixture.detectChanges();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.team-generator');
+    expect(panel).toBeTruthy();
+    const excel: HTMLButtonElement | null = panel.querySelector('.team-generator-excel-action');
+    expect(excel).toBeTruthy();
+    excel!.click();
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7, 'EXCEL_POINTS');
+    expect(component.teamSuggestionPendingConfirmation).toBeTrue();
+  });
+
+  it('does not offer Excel team generation to non-organisers or before the roster is full', () => {
+    component.session = {
+      ...session, communityId: 9, sport: 'Futebol', teamBalanceSupported: true, participantCount: 10, maxParticipants: 10,
+      status: 'FULL', gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.team-generator-excel-action')).toBeNull();
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...component.session, participantCount: 9, status: 'OPEN' };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.team-generator-excel-action')).toBeNull();
+  });
+
   it('should generate balanced teams for a full community session created by the viewer', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session,
       creatorUsername: 'creator-user',
       joined: true,
-      communityId: 9,
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true,
       participantCount: 4,
       maxParticipants: 4,
       status: 'FULL'
@@ -1692,7 +2833,7 @@ describe('SessionDetailsComponent', () => {
 
     component.generateTeams();
 
-    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7);
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7, 'FORM');
     expect(component.teamSuggestion?.teamA[0].username).toBe('creator-user');
     expect(component.teamSuggestion?.playersWithStats).toBe(2);
     expect(component.teamSuggestionPendingConfirmation).toBeTrue();
@@ -1704,7 +2845,7 @@ describe('SessionDetailsComponent', () => {
       ...session,
       creatorUsername: 'creator-user',
       joined: true,
-      communityId: 9,
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true,
       participantCount: 4,
       maxParticipants: 4,
       status: 'FULL'
@@ -1741,11 +2882,55 @@ describe('SessionDetailsComponent', () => {
 
     component.confirmTeams();
 
-    expect(sessionService.confirmTeams).toHaveBeenCalledWith(7);
+    expect(sessionService.confirmTeams).toHaveBeenCalledWith(7, 'FORM');
     expect(component.teamsSuccess).toContain('confirmadas');
     expect(component.teamSuggestionPendingConfirmation).toBeFalse();
     expect(component.hasConfirmedTeams()).toBeTrue();
     expect(component.teamParticipants('A')[0].username).toBe('creator-user');
+  });
+
+  it('offers Excel balancing as a separate, non-persisting organiser preview', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, joined: true, creatorUsername: 'creator-user',
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true, participantCount: 10, maxParticipants: 10, status: 'FULL'
+    };
+    const preview = {
+      teamA: [{ username: 'creator-user', strengthScore: 20, statsAvailable: true,
+        games: 0, wins: 0, goals: 0, assists: 0 }],
+      teamB: [{ username: 'player-one', strengthScore: 19, statsAvailable: false,
+        games: 0, wins: 0, goals: 0, assists: 0 }],
+      teamAScore: 20, teamBScore: 19, playersWithStats: 1, totalPlayers: 2
+    };
+    sessionService.teamSuggestion.and.returnValue(of(preview));
+    component.generateTeams('EXCEL_POINTS');
+    fixture.detectChanges();
+
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7, 'EXCEL_POINTS');
+    expect(sessionService.confirmTeams).not.toHaveBeenCalled();
+    expect(component.teamsScoreSource).toBe('EXCEL_POINTS');
+    expect(component.teamSuggestionPendingConfirmation).toBeTrue();
+    const shell: HTMLElement = fixture.nativeElement;
+    expect(shell.querySelector('.team-generator-excel-action')).toBeTruthy();
+    expect(shell.querySelector('.team-suggestion')?.textContent).toContain('20');
+    expect(shell.querySelector('.team-suggestion')?.textContent).toContain('Sem pontuação associada');
+  });
+
+  it('confirms the same selected Excel ranking source and can switch back to form', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, joined: true, creatorUsername: 'creator-user',
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true, participantCount: 10, maxParticipants: 10, status: 'FULL'
+    };
+    component.generateTeams('EXCEL_POINTS');
+    component.confirmTeams();
+    expect(sessionService.confirmTeams).toHaveBeenCalledWith(7, 'EXCEL_POINTS');
+    expect(component.teamSuggestionPendingConfirmation).toBeFalse();
+
+    component.generateTeams('FORM');
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7, 'FORM');
+    expect(component.teamsScoreSource).toBe('FORM');
+    expect(component.teamSuggestionPendingConfirmation).toBeTrue();
   });
 
   it('should not confirm the same team suggestion twice', () => {
@@ -1754,7 +2939,7 @@ describe('SessionDetailsComponent', () => {
       ...session,
       creatorUsername: 'creator-user',
       joined: true,
-      communityId: 9,
+      communityId: 9, sport: 'Futebol', teamBalanceSupported: true,
       participantCount: 4,
       maxParticipants: 4,
       status: 'FULL'
@@ -1791,6 +2976,38 @@ describe('SessionDetailsComponent', () => {
     component.generateTeams();
 
     expect(sessionService.teamSuggestion).not.toHaveBeenCalled();
+  });
+
+
+  it('hides the team generator for individual and undecided singles/doubles sports', () => {
+    (component as any).currentUsername = 'creator-user';
+    for (const sport of ['Atletismo', 'Ciclismo', 'Padel', 'Ténis']) {
+      component.session = {
+        ...session, creatorUsername: 'creator-user', sport,
+        teamBalanceSupported: false, communityId: 9,
+        participantCount: 10, maxParticipants: 10, status: 'FULL'
+      };
+      fixture.detectChanges();
+      expect(component.canGenerateTeams()).withContext(sport).toBeFalse();
+      expect(fixture.nativeElement.querySelector('.team-generator')).toBeNull();
+    }
+    expect(sessionService.teamSuggestion).not.toHaveBeenCalled();
+  });
+
+  it('supports different confirmed team rosters only when the API declares eligibility', () => {
+    (component as any).currentUsername = 'creator-user';
+    for (const size of [4, 6, 8, 10, 12, 14]) {
+      component.session = {
+        ...session, creatorUsername: 'creator-user', sport: 'Futebol',
+        teamBalanceSupported: true, communityId: 9,
+        participantCount: size, maxParticipants: size, status: 'FULL'
+      };
+      expect(component.canGenerateTeams()).withContext(String(size)).toBeTrue();
+    }
+    component.session = { ...component.session!, participantCount: 9, maxParticipants: 10 };
+    expect(component.canGenerateTeams()).toBeFalse();
+    component.session = { ...component.session!, participantCount: 10, maxParticipants: 10, teamBalanceSupported: false };
+    expect(component.canGenerateTeams()).toBeFalse();
   });
 
   it('distinguishes cancelling removal from the destructive confirm action', () => {
@@ -2034,8 +3251,14 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('ana');
 
     fixture.detectChanges();
+    const reason = fixture.nativeElement.querySelector('.future-exclusion-reason') as HTMLSelectElement;
+    expect(reason).not.toBeNull();
+    expect((fixture.nativeElement.querySelector('.future-exclusion-confirm') as HTMLButtonElement).disabled).toBeTrue();
+    reason.value = 'NO_SHOW';
+    reason.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
     (fixture.nativeElement.querySelector('.future-exclusion-confirm') as HTMLButtonElement).click();
-    expect(sessionService.excludeFromFutureSessions).toHaveBeenCalledWith(7, 15);
+    expect(sessionService.excludeFromFutureSessions).toHaveBeenCalledWith(7, 15, 'NO_SHOW');
     expect(component.futureExclusions[15]).toBeTrue();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.future-exclusion-undo')).not.toBeNull();
@@ -2048,20 +3271,66 @@ describe('SessionDetailsComponent', () => {
     expect(component.futureExclusions[15]).toBeFalse();
   });
 
-  it('does not create future exclusions without a recorded no-show or for outsiders', () => {
+  it('requires an explicit reason and does not allow restrictions by outsiders', () => {
     const participant = { id: 15, username: 'ana', attendanceStatus: 'PENDING' as const,
       joinedAt: '2026-09-20T18:00:00Z' };
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
     component.futureExclusions[15] = false;
     component.requestFutureExclusion(participant);
+    expect(component.pendingFutureExclusionId).toBe(15);
     component.confirmFutureExclusion(participant);
     expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
+    component.chooseFutureExclusionReason(participant, 'NO_SHOW');
+    expect(component.pendingFutureExclusionReason).toBe('');
+    component.cancelFutureExclusion();
 
     (component as any).currentUsername = 'outsider';
-    component.requestFutureExclusion({ ...participant, attendanceStatus: 'NO_SHOW' });
+    component.requestFutureExclusion(participant);
     expect(component.pendingFutureExclusionId).toBeNull();
     expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
+  });
+
+  it('shows confirmed guest team members by name without creating a profile link', () => {
+    component.guestRequests = [
+      {id: 501,name:'Afonso Salvador',status:'APPROVED',teamCode:'A',note:''},
+      {id: 502,name:'João Marques',status:'APPROVED',teamCode:'B',note:''},
+      {id: 503,name:'Outro',status:'CANCELLED',teamCode:'A',note:''}
+    ];
+    spyOn(component,'isCreator').and.returnValue(true);
+    expect(component.guestTeamParticipants('A').map(item=>item.name)).toEqual(['Afonso Salvador']);
+    expect(component.guestTeamParticipants('B').map(item=>item.name)).toEqual(['João Marques']);
+    component.confirmedTeams=false;
+    expect(component.hasConfirmedTeams()).toBeTrue();
+  });
+
+  it('lets the organizer restrict a present player for lack of fair play without changing attendance', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.showAttendanceManager = true;
+    const player = { id: 15, username: 'ana', attendanceStatus: 'ATTENDED' as const,
+      joinedAt: '2026-09-20T18:00:00Z' };
+    sessionService.participants.and.returnValue(of([player]));
+    component.loadParticipants();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.future-exclusion-request')).not.toBeNull();
+    (fixture.nativeElement.querySelector('.future-exclusion-request') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const reason = fixture.nativeElement.querySelector('.future-exclusion-reason') as HTMLSelectElement;
+    expect(Array.from(reason.options).some(option => option.value === 'NO_SHOW')).toBeFalse();
+    reason.value = 'UNSPORTING_CONDUCT';
+    reason.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.pendingFutureExclusionReason).toBe('UNSPORTING_CONDUCT');
+    (fixture.nativeElement.querySelector('.future-exclusion-confirm') as HTMLButtonElement).click();
+    expect(sessionService.excludeFromFutureSessions).toHaveBeenCalledOnceWith(7, 15, 'UNSPORTING_CONDUCT');
+    expect(player.attendanceStatus).toBe('ATTENDED');
+    expect(component.futureExclusions[15]).toBeTrue();
+
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.future-exclusion-undo') as HTMLButtonElement).click();
+    expect(sessionService.allowFutureSessions).toHaveBeenCalledOnceWith(7, 15);
+    expect(component.futureExclusions[15]).toBeFalse();
   });
 
   it('shows a recoverable error when restriction status cannot be loaded', () => {
@@ -2125,5 +3394,234 @@ describe('SessionDetailsComponent', () => {
 
     expect(component.errorMessage).toBe('');
     expect(component.session?.id).toBe(7);
+  });
+
+  it('shows account photos and guest initials in readable roster cards', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {...session, joined:true};
+    component.sessionParticipants = [
+      {id:1,username:'player-one',profilePicUrl:'https://cdn.example.test/player.jpg',
+       attendanceStatus:'PENDING',joinedAt:'2026-09-20T18:00:00Z'}
+    ];
+    component.memberConfirmedGuests = [{id:501,name:'Fresco',teamCode:null}];
+    component.confirmedTeams = false;
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const cards = panel.querySelectorAll('.session-player-card');
+    expect(cards.length).toBe(2);
+    const linked = panel.querySelector('a.session-player-card__profile') as HTMLAnchorElement;
+    expect(linked).not.toBeNull();
+    expect(linked.querySelector('img')?.getAttribute('src'))
+      .toBe('https://cdn.example.test/player.jpg');
+    const guest = panel.querySelector('.session-player-card--guest') as HTMLElement;
+    expect(guest.querySelector('img')).toBeNull();
+    expect(guest.querySelector('.session-player-card__avatar')?.textContent?.trim()).toBe('F');
+    expect(panel.textContent).toContain('2 jogadores');
+  });
+
+  it('keeps location navigation without a meeting-point edit action', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {...session,canSeeExactAddress:true,
+      address:'Rua da Paz 10, Lisboa',meetingPointInstructions:null,
+      gameDate:'2099-10-01T18:00:00Z'};
+    fixture.detectChanges();
+    const location = fixture.nativeElement.querySelector('.address-panel') as HTMLElement;
+    expect(location.querySelector('.session-location-heading')).not.toBeNull();
+    expect(location.querySelector('.session-location-detail')).not.toBeNull();
+    const maps = location.querySelector('a.session-location-map') as HTMLAnchorElement;
+    expect(maps?.href).toContain('google.com/maps');
+    expect(location.querySelector('.session-meeting-edit-button')).toBeNull();
+    expect(location.querySelector('.session-meeting-edit')).toBeNull();
+  });
+
+  it('keeps approved guest cancellations only in Who is going, requiring explicit confirmation', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user', joined:true,
+      audience:'COMMUNITY_ONLY', gameDate:'2099-10-01T18:00:00Z'
+    };
+    sessionService.detail.and.returnValue(of(component.session));
+    component.invitePanelOpen = true;
+    component.guestRequestsLoadedForSession = 7;
+    component.guestRequests = [
+      {id:30,name:'Fresco',status:'APPROVED',teamCode:null,note:''},
+      {id:31,name:'Barata',status:'CANCELLED',teamCode:null,note:''}
+    ];
+    component.sessionParticipants = [{
+      id:10,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T18:00:00Z'
+    }];
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const invites = root.querySelector('.guest-organizer-panel') as HTMLElement;
+    const roster = root.querySelector('#session-participants') as HTMLElement;
+    expect(invites).not.toBeNull();
+    expect(invites.querySelector('button.session-player-card__cancel')).toBeNull();
+    expect(invites.textContent).toContain('Barata');
+    expect(invites.textContent).not.toContain('Atualizar pedidos');
+    expect(roster.querySelector('button.secondary-action')).toBeNull();
+    const fresco = roster.querySelector('.session-player-card--guest') as HTMLElement;
+    expect(fresco.textContent).toContain('Fresco');
+    const request = fresco.querySelector('.session-player-card__cancel') as HTMLButtonElement;
+    expect(request).toBeTruthy();
+    request.click();
+    fixture.detectChanges();
+    expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
+    const confirmation = fresco.querySelector('.session-player-card__confirmation') as HTMLElement;
+    expect(fresco.querySelector('.session-player-card__guest-actions')?.textContent).toContain('Fresco');
+    (confirmation.querySelectorAll('button')[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
+
+    (fresco.querySelector('.session-player-card__cancel') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const submit = fresco.querySelector('.session-player-card__confirmation button') as HTMLButtonElement;
+    submit.click();
+    fixture.detectChanges();
+    expect(sessionService.cancelGuestRequest).toHaveBeenCalledOnceWith(7,30);
+    expect(component.guestRequests.find(g=>g.id===30)?.status).toBe('CANCELLED');
+    expect(roster.querySelector('.session-player-card--guest')).toBeNull();
+    expect(roster.textContent).toContain('Presença cancelada');
+  });
+
+  it('shows guest removal within confirmed teams but never to regular participants', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user',joined:true,
+      audience:'PUBLIC',gameDate:'2099-10-01T18:00:00Z'
+    };
+    component.confirmedTeams = true;
+    component.guestRequests=[{id:40,name:'Vasquinho',status:'APPROVED',note:'',teamCode:'A'}];
+    fixture.detectChanges();
+    const teamA = (fixture.nativeElement as HTMLElement).querySelector('.confirmed-teams > div') as HTMLElement;
+    expect(teamA.querySelectorAll('.session-player-card__cancel').length).toBe(1);
+    (component as any).currentUsername='other-user';
+    component.session={...component.session,joined:true};
+    component.memberConfirmedGuests=[{id:40,name:'Vasquinho',teamCode:'A'}];
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.session-player-card__cancel')).toBeNull();
+    expect(sessionService.cancelGuestRequest).not.toHaveBeenCalled();
+  });
+
+  it('reconciles registered players and WhatsApp confirmations automatically without hiding cards', () => {
+    (component as any).currentUsername='creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user',joined:true,
+      audience:'COMMUNITY_ONLY',gameDate:'2099-10-01T18:00:00Z'
+    };
+    component.sessionParticipants = [{
+      id:11,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T18:00:00Z'
+    }];
+    component.guestRequests=[{id:33,name:'Fresco',status:'APPROVED',teamCode:null,note:''}];
+    const pending = new Subject<any[]>();
+    sessionService.participants.and.returnValue(pending.asObservable());
+    fixture.detectChanges();
+    component.loadSessionParticipants(true);
+    fixture.detectChanges();
+    let roster = (fixture.nativeElement as HTMLElement).querySelector('#session-participants') as HTMLElement;
+    expect(roster.querySelectorAll('.session-player-card').length).toBe(2);
+    expect(roster.querySelector('.session-participants-loading')).toBeNull();
+    pending.next([{
+      id:11,username:'creator-user',attendanceStatus:'PENDING',
+      joinedAt:'2026-10-28T18:00:00Z'
+    },{
+      id:12,username:'player-two',attendanceStatus:'PENDING',
+      joinedAt:'2026-10-28T18:01:00Z'
+    }]);
+    pending.complete();
+    fixture.detectChanges();
+    roster = (fixture.nativeElement as HTMLElement).querySelector('#session-participants') as HTMLElement;
+    expect(roster.querySelectorAll('.session-player-card').length).toBe(3);
+    expect(roster.textContent).toContain('@player-two');
+    expect(roster.textContent).toContain('Fresco');
+
+    sessionService.detail.and.returnValue(of(component.session));
+    const before = sessionService.detail.calls.count();
+    component.syncVisibleRoster();
+    expect(sessionService.detail.calls.count()).toBeGreaterThan(before);
+    expect(sessionService.guestRequests).toHaveBeenCalled();
+  });
+
+  it('offers registered player cancellation from Who is going only to the organiser', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user', joined:true,
+      status:'OPEN', gameDate:'2099-10-01T18:00:00Z'
+    };
+    component.sessionParticipants = [
+      {id:15,username:'creator-user',attendanceStatus:'PENDING',joinedAt:'2026-10-28T18:00:00Z'},
+      {id:16,username:'player-two',attendanceStatus:'PENDING',joinedAt:'2026-10-28T18:00:00Z'}
+    ];
+    fixture.detectChanges();
+    const roster=fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const cards=roster.querySelectorAll('.session-player-card--member');
+    expect(cards.length).toBe(2);
+    expect(cards[0].querySelector('.session-player-card__cancel')).toBeNull();
+    const cancel=cards[1].querySelector('.session-player-card__cancel') as HTMLButtonElement;
+    expect(cancel).toBeTruthy();
+    cancel.click();
+    fixture.detectChanges();
+    expect(sessionService.removeParticipant).not.toHaveBeenCalled();
+    const confirm=cards[1].querySelector('.confirm-remove-action') as HTMLButtonElement;
+    expect(confirm).toBeTruthy();
+    confirm.click();
+    fixture.detectChanges();
+    expect(sessionService.removeParticipant).toHaveBeenCalledOnceWith(7,16);
+    expect(roster.querySelectorAll('.session-player-card--member').length).toBe(1);
+  });
+
+  it('warns when a football session has too few confirmed players to play', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, sport:'Futsal',maxParticipants:10,minParticipants:6,participantCount:4,
+      joined:true,gameDate:'2099-10-01T18:00:00Z'
+    };
+    fixture.detectChanges();
+    const badge=fixture.nativeElement.querySelector('.session-minimum-indicator') as HTMLElement;
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toContain('4/6');
+    expect(badge.textContent).toContain('Faltam 2');
+    expect(badge.classList.contains('session-minimum-indicator--ready')).toBeFalse();
+    component.session={...component.session,participantCount:6};
+    fixture.detectChanges();
+    expect(badge.classList.contains('session-minimum-indicator--ready')).toBeTrue();
+  });
+
+  it('aligns session chat and invite actions on the same baseline without old top margins', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, creatorUsername:'creator-user', joined:true, privateGame:false,
+      audience:'COMMUNITY_ONLY', status:'OPEN', gameDate:'2099-10-01T18:00:00Z'
+    };
+    fixture.detectChanges();
+    const toolbar = fixture.nativeElement.querySelector('.session-top-actions') as HTMLElement;
+    expect(toolbar).not.toBeNull();
+    const chat = toolbar.querySelector('a[href*="/menu/messages"]') as HTMLElement;
+    const invite = toolbar.querySelector('.session-invite-toggle') as HTMLElement;
+    expect(chat).not.toBeNull();
+    expect(invite).not.toBeNull();
+    const chatStyle = getComputedStyle(chat);
+    const inviteStyle = getComputedStyle(invite);
+    expect(chatStyle.marginTop).toBe('0px');
+    expect(inviteStyle.marginTop).toBe('0px');
+    expect(chatStyle.minHeight).toBe(inviteStyle.minHeight);
+    expect(chatStyle.display).toContain('flex');
+    expect(inviteStyle.display).toContain('flex');
+    expect(chat.getBoundingClientRect().top).toBeCloseTo(invite.getBoundingClientRect().top, 0);
+  });
+
+  it('uses real name initials rather than parentheses on the guest avatar', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {...session,joined:true};
+    component.guestRequests = [{
+      id: 121, name:'André (Borralho)', status:'APPROVED', note:'',teamCode:null
+    }];
+    fixture.detectChanges();
+    const card = fixture.nativeElement.querySelector(
+      '#session-participants .session-player-card--guest') as HTMLElement;
+    expect(card).not.toBeNull();
+    expect(card.querySelector('.session-player-card__avatar')?.textContent?.trim()).toBe('A');
+    // Historical label is never rewritten as a real user's account name.
+    expect(card.querySelector('.session-player-card__name')?.textContent).toContain('André (Borralho)');
   });
 });

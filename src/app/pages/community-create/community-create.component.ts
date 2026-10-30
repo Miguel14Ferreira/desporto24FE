@@ -1,20 +1,20 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, finalize, of, switchMap, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { CommunityVisibility } from '../model/community-group';
-import { CommunityGroupsService } from '../../services/community-groups.service';
+import { CommunityCreationQuota, CommunityGroupsService } from '../../services/community-groups.service';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-community-create',
   templateUrl: './community-create.component.html',
-  styleUrls: ['./community-create.component.css'],
+  styleUrls: ['./community-create.component.css', './community-create-concept-one-premium.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class CommunityCreateComponent {
+export class CommunityCreateComponent implements OnInit {
   name = '';
   description = '';
   sports: string[] = [];
@@ -28,6 +28,8 @@ export class CommunityCreateComponent {
 
   saving = false;
   errorMessage = '';
+  quota: CommunityCreationQuota | null = null;
+  quotaLoading = true;
 
   get sportSuggestions(): string[] {
     const query = this.sportSearch.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -55,8 +57,17 @@ export class CommunityCreateComponent {
     private router: Router
   ) {}
 
+  ngOnInit(): void {
+    this.communityService.creationQuota()
+      .pipe(timeout(10_000), finalize(() => this.quotaLoading = false))
+      .subscribe({
+        next: quota => this.quota = quota,
+        error: () => { this.quota = null; }
+      });
+  }
+
   create(): void {
-    if (!this.name.trim() || this.saving) {
+    if (!this.name.trim() || this.saving || this.quota?.canCreate === false) {
       return;
     }
 
@@ -88,8 +99,13 @@ export class CommunityCreateComponent {
           void this.router.navigate(['/menu/communities', community.id, 'invite']);
         },
         error: error => {
-          this.errorMessage =
-            error.error?.message || t('communityCreate.error');
+          this.errorMessage = error.error?.message || t('communityCreate.error');
+          if (error.status === 409 || error.status === 429) {
+            this.communityService.creationQuota().pipe(timeout(10_000)).subscribe({
+              next: quota => this.quota = quota,
+              error: () => {}
+            });
+          }
         }
       });
   }

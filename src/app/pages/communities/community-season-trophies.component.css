@@ -1,0 +1,48 @@
+/* Historical trophies, read-only. Parent decides whether rankings are enabled. */
+:host{display:block;}
+.module-empty{
+  min-height:240px;display:grid;place-items:center;align-content:center;
+  gap:.45rem;padding:1.25rem;text-align:center;color:#94a3b8;
+}
+.module-empty h3,.module-empty p{margin:0;}
+.module-empty.compact{min-height:130px;margin-top:.8rem;}
+
+.trophies-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+  margin-top: .85rem;
+}
+
+.trophy-card {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .8rem .9rem;
+  border: 1px solid rgba(251,191,36,.22);
+  border-radius: .85rem;
+  background: rgba(251,191,36,.055);
+}
+
+.trophy-icon {
+  font-size: 1.45rem;
+}
+
+.trophy-card > div {
+  min-width: 0;
+  display: grid;
+  gap: .15rem;
+}
+
+.trophy-card strong,
+.trophy-card span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trophy-card span {
+  color: #cbd5e1;
+  font-size: .77rem;
+}
+@media(max-width:900px){.trophies-grid{grid-template-columns:1fr;}}

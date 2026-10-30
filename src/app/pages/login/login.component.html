@@ -1,7 +1,6 @@
 <section class="login-page">
   <div class="login-shell">
     <div class="login-copy">
-      <p class="eyebrow">Jynlo · Join the game.</p>
       <h1>{{ 'login.hero.title' | t }}</h1>
       <p>{{ 'login.hero.subtitle' | t }}</p>
     </div>
@@ -43,14 +42,14 @@
 
       <form method="post" (ngSubmit)="onLogin()" novalidate>
         <label>
-          <span>{{ 'login.username' | t }}</span>
+          <span>{{ 'login.identifier' | t }}</span>
           <input
             name="username"
             required
             [(ngModel)]="username"
             autocomplete="username"
             [disabled]="loading"
-            [placeholder]="'login.usernamePlaceholder' | t">
+            [placeholder]="'login.identifierPlaceholder' | t">
         </label>
 
         <label>

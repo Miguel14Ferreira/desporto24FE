@@ -597,3 +597,81 @@ textarea { resize: vertical; }
   flex-wrap: wrap;
   gap: .6rem;
 }
+
+/* Device sessions: compact, first-class account security surface. */
+.device-sessions {
+  margin-top: 1.2rem;
+  padding: 1.2rem;
+  border: 1px solid rgba(125, 211, 252, .2);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, .65);
+}
+.device-sessions__header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
+.device-sessions__header h2 { margin: .2rem 0 .35rem; font-size: 1.15rem; }
+.device-sessions__header p { margin: 0; color: #cbd5e1; font-size: .86rem; line-height: 1.5; }
+.device-sessions__state { color: #cbd5e1; font-size: .88rem; }
+.device-sessions__error { color: #fca5a5; font-size: .85rem; }
+.device-sessions__list { display: grid; gap: .7rem; margin-top: 1rem; }
+.device-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: .9rem 1rem;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: .8rem;
+  background: rgba(255,255,255,.035);
+}
+.device-session__content { display: grid; gap: .3rem; min-width: 0; }
+.device-session__content small { color: #94a3b8; }
+.device-session__name { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.device-session__current {
+  padding: .2rem .5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(125,211,252,.3);
+  color: #bae6fd;
+  background: rgba(125,211,252,.08);
+  font-size: .7rem;
+  font-weight: 800;
+}
+.device-session__confirm { display: grid; gap: .55rem; }
+.device-session__confirm small { color: #fecaca; }
+.device-session__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+@media (max-width: 640px) {
+  .device-sessions__header { flex-direction: column; }
+  .device-session { align-items: stretch; }
+}
+
+
+.device-sessions__bulk {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,.1);
+  padding-top: 1rem;
+}
+.device-sessions__bulk-confirm {
+  padding: .9rem 1rem;
+  border: 1px solid rgba(248,113,113,.25);
+  border-radius: .8rem;
+  background: rgba(127,29,29,.1);
+}
+.device-sessions__bulk-confirm p {
+  margin: 0 0 .75rem;
+  color: #fecaca;
+  line-height: 1.5;
+}
+
+
+/* Sports selection must visibly confirm local changes before Save. */
+.sport-selector { min-width: 0; }
+.sport-selection-count { margin: 0; color: #b9dce3; font-size: .79rem; line-height: 1.45; }
+.sport-selection-feedback {
+  margin: .1rem 0; padding: .65rem .85rem;
+  border: 1px solid rgba(41, 227, 195, .38);
+  border-radius: 10px; background: rgba(41, 227, 195, .09);
+  color: #c7fff3; font-size: .81rem; line-height: 1.5;
+}
+.sport-chips { min-width: 0; }
+.sport-chip { max-width: 100%; overflow-wrap: anywhere; }
+.sport-chip:focus-visible,
+.sport-suggestions button:focus-visible { outline: 2px solid #83ffe7; outline-offset: 3px; }

@@ -2,10 +2,26 @@
   <div class="venue-create-shell">
     <a class="back-link" routerLink="/menu/discover">{{ 'venue.detail.back' | t }}</a>
     <span class="venue-kicker">{{ 'venue.kicker' | t }}</span>
-    <h1>{{ 'venue.saveNew' | t }}</h1>
-
+    <h1>{{ 'venue.submission.title' | t }}</h1>
+    <p class="venue-submission-explainer">{{ 'venue.submission.explainer' | t }}</p>
+    @if (submitted) {
+      <div class="venue-submission-success" role="status" aria-live="polite">
+        <strong>{{ 'venue.submission.success' | t }}</strong>
+        <p>{{ 'venue.submission.successHint' | t }}</p>
+        <a class="jynlo-action jynlo-action--primary" routerLink="/menu/venues">{{ 'venue.catalog.backToList' | t }}</a>
+      </div>
+    } @else {
     <form class="venue-create-form" (ngSubmit)="save()">
       <h2 class="venue-create-section-title">{{ 'venue.create.basicInfo' | t }}</h2>
+      <div class="venue-create-essential-progress venue-create-wide" role="status"
+        aria-live="polite">
+        <div class="venue-create-essential-progress-heading">
+          <strong>{{ 'venue.create.essentialProgress' | t:{ count: essentialCompletedCount } }}</strong>
+          <span>{{ 'venue.create.essentialHint' | t }}</span>
+        </div>
+        <progress [value]="essentialCompletedCount" max="5"
+          [attr.aria-label]="'venue.create.essentialProgressLabel' | t"></progress>
+      </div>
 
       <label>
         <span>{{ 'venue.name' | t }}</span>
@@ -51,11 +67,12 @@
           type="text"
           name="address"
           [(ngModel)]="address"
-          required
-          [attr.aria-invalid]="validationError && !address.trim() ? 'true' : null"
-          [attr.aria-describedby]="validationError && !address.trim() ? 'venue-required-fields-error' : null"
+          [required]="!hasValidGpsCoordinates"
+          [attr.aria-invalid]="validationError && locationIsMissing ? 'true' : null"
+          [attr.aria-describedby]="validationError && locationIsMissing ? 'venue-required-fields-error' : null"
           autocomplete="street-address"
           [placeholder]="'createSession.addressPlaceholder' | t">
+        <small>{{ 'venue.create.addressOrGpsHint' | t }}</small>
       </label>
 
       <div class="venue-create-similar venue-create-wide" [attr.aria-label]="'venue.create.similarTitle' | t">
@@ -146,12 +163,19 @@
       </div>
 
       <label>
-        <span>{{ 'venue.environment' | t }}</span>
-        <select name="environmentType" [(ngModel)]="environmentType">
+        <span>{{ 'venue.environment' | t }} *</span>
+        <select name="environmentType" [(ngModel)]="environmentType" required
+          [attr.aria-invalid]="validationError && !environmentType ? 'true' : null">
+          <option [ngValue]="null">{{ 'venue.create.environmentChoose' | t }}</option>
           <option value="INDOOR">{{ 'venue.environment.indoor' | t }}</option>
           <option value="OUTDOOR">{{ 'venue.environment.outdoor' | t }}</option>
           <option value="BOTH">{{ 'venue.environment.both' | t }}</option>
         </select>
+        @if (validationError && !environmentType) {
+          <small class="venue-create-error" role="alert">
+            {{ 'venue.create.environmentRequired' | t }}
+          </small>
+        }
       </label>
 
       <details class="venue-create-amenities venue-create-wide">
@@ -455,7 +479,7 @@
         </div>
       </details>
 
-      <details class="venue-create-amenities venue-create-wide">
+      <details class="venue-create-amenities venue-create-wide" open>
         <summary class="venue-create-amenities-summary">
           <strong>{{ 'venue.create.location' | t }}</strong>
           <span class="venue-create-amenities-closed">{{ 'venue.create.addOptionalDetails' | t }}</span>
@@ -503,8 +527,14 @@
       </details>
 
       <div class="venue-create-actions venue-create-wide">
-        @if (validationError && (!name.trim() || !city.trim() || !address.trim())) {
+        @if (validationError && (!name.trim() || !city.trim() || locationIsMissing)) {
           <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
+        }
+        @if (validationError && !environmentType) {
+          <span class="venue-create-error" role="alert">{{ 'venue.create.environmentRequired' | t }}</span>
+        }
+        @if (validationError && hasInvalidGpsCoordinates) {
+          <span class="venue-create-error" role="alert">{{ 'venue.create.invalidGps' | t }}</span>
         }
         @if (duplicateVenueError) {
           <span id="venue-create-duplicate-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.create.duplicateError' | t }}</span>
@@ -515,9 +545,11 @@
         <a class="venue-create-cancel" routerLink="/menu/discover">{{ 'common.cancel' | t }}</a>
         <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="saving"
           [attr.aria-describedby]="duplicateVenueError ? 'venue-create-duplicate-error' : (saveError ? 'venue-create-save-error' : null)">
-          {{ (saving ? 'venue.saving' : 'venue.save') | t }}
+          {{ (saving ? 'venue.submission.sending' : 'venue.submission.send') | t }}
         </button>
       </div>
     </form>
+    }
   </div>
 </section>
+

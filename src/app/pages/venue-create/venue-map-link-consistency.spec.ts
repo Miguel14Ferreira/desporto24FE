@@ -13,7 +13,7 @@ describe('Venue Maps link coordinate consistency', () => {
   });
 
   beforeEach(() => {
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['resolveMapLink', 'create']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['resolveMapLink', 'submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     component = new VenueCreateComponent(venueService, router, undefined as unknown as ActivatedRoute);
   });
@@ -88,11 +88,12 @@ describe('Venue Maps link coordinate consistency', () => {
 
   it('submits the new resolved coordinates, not values from the old link', () => {
     venueService.resolveMapLink.and.returnValues(of(coords(38.7, -9.1)), of(coords(40.2, -8.4)));
-    venueService.create.and.returnValue(of({id:9} as Venue));
+    venueService.submitSuggestion.and.returnValue(of({id:9,status:'PENDING'}));
     component.name = 'Recinto do Porto';
     component.city = 'Porto';
     component.address = 'Rua Central';
     component.selectedSports = ['Futsal'];
+    component.environmentType = 'OUTDOOR';
     component.mapLink = 'https://maps.app.goo.gl/old';
     component.resolveMapLink();
     component.mapLink = 'https://maps.app.goo.gl/new';
@@ -100,7 +101,7 @@ describe('Venue Maps link coordinate consistency', () => {
     component.resolveMapLink();
     component.save();
 
-    expect(venueService.create).toHaveBeenCalledWith(
+    expect(venueService.submitSuggestion).toHaveBeenCalledWith(
       jasmine.objectContaining({ latitude: 40.2, longitude: -8.4 })
     );
   });

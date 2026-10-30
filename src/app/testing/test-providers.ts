@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 
 import { AuthenticationService } from '../services/authethication.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { JynloSelectComponent } from '../shared/jynlo-select/jynlo-select.component';
 
 const authenticationServiceMock = new Proxy(
   {
@@ -44,7 +45,8 @@ export const TEST_IMPORTS = [
   FormsModule,
   ReactiveFormsModule,
   RouterTestingModule,
-  TranslatePipe
+  TranslatePipe,
+  JynloSelectComponent
 ];
 
 export const TEST_PROVIDERS: Provider[] = [

@@ -1,19 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, Subject, BehaviorSubject } from 'rxjs';
+import { of, Subject, BehaviorSubject, throwError } from 'rxjs';
 
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
 import { PerfisComponent } from './perfis.component';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { CommunityService } from '../../services/community.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
+import { SessionService } from '../../services/session.service';
 import { SocialGraphService } from '../../services/social-graph.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/venue-sports-badges.component';
 
 describe('PerfisComponent', () => {
   let component: PerfisComponent;
   let fixture: ComponentFixture<PerfisComponent>;
   let service: jasmine.SpyObj<CommunityService>;
   let socialGraphService: jasmine.SpyObj<SocialGraphService>;
+  let groups: jasmine.SpyObj<CommunityGroupsService>;
+  let sessions: jasmine.SpyObj<SessionService>;
 
   const profile = {
     username: 'ana',
@@ -36,12 +41,13 @@ describe('PerfisComponent', () => {
     routeParams = new BehaviorSubject(convertToParamMap({}));
     service = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
-      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'reportUser', 'userBlockStatus', 'blockUser', 'unblockUser', 'discoverProfiles', 'friends', 'publicProfile']
+      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'reportUser', 'userBlockStatus', 'blockUser', 'unblockUser', 'discoverProfiles', 'friends', 'publicProfile', 'friendshipStatus']
     );
     service.searchProfiles.and.returnValue(of([profile]));
     service.findProfiles.and.returnValue(of([profile]));
     service.discoverProfiles.and.returnValue(of([profile]));
     service.friends.and.returnValue(of([]));
+    service.friendshipStatus.and.returnValue(of({ friends: false, pendingRequest: false }));
     service.publicProfile.and.returnValue(of(profile));
     service.sendFriendRequest.and.returnValue(of({}));
     service.reportUser.and.returnValue(of(void 0));
@@ -72,13 +78,22 @@ describe('PerfisComponent', () => {
       following: 5
     }));
 
+    groups = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine','invite']);
+    sessions = jasmine.createSpyObj<SessionService>('SessionService', ['mine','invitePlayer']);
+    groups.mine.and.returnValue(of([]));
+    groups.invite.and.returnValue(of({} as any));
+    sessions.mine.and.returnValue(of({created:[],joined:[],waitlisted:[]}));
+    sessions.invitePlayer.and.returnValue(of({id:1}));
+
     await TestBed.configureTestingModule({
       declarations: [PerfisComponent],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, VenueSportsBadgesComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: CommunityService, useValue: service },
         { provide: SocialGraphService, useValue: socialGraphService },
+        { provide: CommunityGroupsService, useValue: groups },
+        { provide: SessionService, useValue: sessions },
         { provide: ActivatedRoute, useValue: { paramMap: routeParams, snapshot: { params: {}, queryParams: {}, paramMap: convertToParamMap({}), queryParamMap: convertToParamMap({}) } } }
       ]
     }).compileComponents();
@@ -86,6 +101,14 @@ describe('PerfisComponent', () => {
     fixture = TestBed.createComponent(PerfisComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('keeps the player-search title and actions without repeating the navbar brand', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.page-header .eyebrow')).toBeNull();
+    expect(root.querySelector('.page-header h1')).not.toBeNull();
+    expect(root.querySelector('.partner-search')).not.toBeNull();
+    expect(root.querySelector('a[href="/menu/friendList"]')).not.toBeNull();
   });
 
   it('preserves successful player results and their profile links if a later search fails', () => {
@@ -691,6 +714,189 @@ describe('PerfisComponent', () => {
     expect(component.profiles).toEqual([profile]);
   });
 
+  it('shows a compact relationship row and two equal priority actions for friends', () => {
+    service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const panel = root.querySelector<HTMLElement>('.profile-hero > .profile-actions-panel');
+    const relation = panel?.querySelector<HTMLElement>('.profile-relationship-row');
+    const actions = panel?.querySelector<HTMLElement>('.profile-primary-actions');
+    const badge = relation?.querySelector<HTMLElement>('.profile-friend-badge');
+    const following = relation?.querySelector<HTMLButtonElement>('.profile-follow-toggle');
+    const chat = actions?.querySelector<HTMLAnchorElement>('.profile-chat-action');
+    const invite = actions?.querySelector<HTMLButtonElement>('.profile-invite-trigger');
+
+    expect(panel).toBeTruthy();
+    expect(getComputedStyle(panel!).display).toBe('grid');
+    expect(getComputedStyle(actions!).display).toBe('grid');
+    expect(actions?.children.length).toBe(2);
+    expect(relation?.contains(chat!)).toBeFalse();
+    expect(badge?.textContent).toContain(t('friends.title'));
+    expect(badge?.tagName).toBe('SPAN'); // a status, not a disabled button
+    expect(following?.getAttribute('aria-pressed')).toBe('false');
+    expect(chat?.getAttribute('href')).toContain('/menu/messages?kind=direct');
+    expect(invite?.getAttribute('aria-expanded')).toBe('false');
+    invite!.click();
+    fixture.detectChanges();
+    expect(invite?.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelector('#profile-invitation-panel')).toBeTruthy();
+  });
+
+  it('keeps unfollow/follow distinct from friend status and request controls', () => {
+    service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+    const following = fixture.nativeElement.querySelector('.profile-follow-toggle') as HTMLButtonElement | null;
+    expect(following?.getAttribute('aria-pressed')).toBe('false');
+    following!.click();
+    fixture.detectChanges();
+    expect(socialGraphService.follow).toHaveBeenCalledOnceWith('ana');
+    expect(fixture.nativeElement.querySelector('.profile-follow-toggle')?.getAttribute('aria-pressed')).toBe('true');
+    expect(fixture.nativeElement.querySelector('.profile-friend-badge')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.profile-chat-action')).toBeTruthy();
+  });
+
+  it('places a friend request next to invite without showing a false friendship badge', () => {
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+    const actions = fixture.nativeElement.querySelector('.profile-primary-actions') as HTMLElement | null;
+    expect(actions?.querySelector('button.profile-request-action')).toBeTruthy();
+    expect(actions?.querySelector('button.profile-invite-trigger')).toBeTruthy();
+    expect(actions?.children.length).toBe(2);
+    expect(fixture.nativeElement.querySelector('.profile-friend-badge')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.profile-chat-action')).toBeNull();
+  });
+
+  it('does not show primary profile actions on own or blocked profiles', () => {
+    component.profilePage = true;
+    component.selectedProfile = { ...profile, username: 'ana' };
+    spyOn(component, 'isOwnProfile').and.returnValue(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.profile-relation-note')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.profile-primary-actions')?.children.length).toBe(0);
+  });
+
+  it('shows the chat instead of another request when the server confirms friendship', () => {
+    service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    expect(service.friendshipStatus).toHaveBeenCalledWith('ana');
+    expect(component.isFriend(profile)).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.friend-status')?.textContent).toContain(t('friends.title'));
+    expect(fixture.nativeElement.querySelector('a[href*="/menu/messages?kind=direct"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
+    component.sendFriendRequest(profile);
+    expect(service.sendFriendRequest).not.toHaveBeenCalled();
+  });
+
+  it('recovers from an already-friends response instead of keeping a red error and duplicate button', () => {
+    service.friendshipStatus.and.returnValues(
+      of({ friends: false, pendingRequest: false }),
+      of({ friends: true, pendingRequest: false })
+    );
+    service.sendFriendRequest.and.returnValue(throwError(() => ({
+      status: 409, error: { message: 'Tu já tens este perfil na tua lista de amigos!' }
+    })));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    component.sendFriendRequest(profile);
+    fixture.detectChanges();
+
+    expect(service.friendshipStatus).toHaveBeenCalledTimes(2);
+    expect(component.actionError).toBe('');
+    expect(component.isFriend(profile)).toBeTrue();
+    expect(fixture.nativeElement.querySelector('a[href*="/menu/messages?kind=direct"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
+  });
+
+  it('renders an outstanding friend request without offering another request', () => {
+    service.friendshipStatus.and.returnValue(of({ friends: false, pendingRequest: true }));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    expect(component.friendRequestPending(profile)).toBeTrue();
+    const request: HTMLButtonElement = fixture.nativeElement.querySelector('.detail-actions button.primary-action');
+    expect(request.disabled).toBeTrue();
+    expect(request.textContent).toContain(t('community.requestPending'));
+  });
+
+  it('separates the relationship loading message from action buttons without clipping', () => {
+    const pending = new Subject<{ friends: boolean; pendingRequest: boolean }>();
+    service.friendshipStatus.and.returnValue(pending);
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const status = root.querySelector<HTMLElement>('.profile-relationship-feedback[role="status"]');
+    const actions = root.querySelector<HTMLElement>('.profile-hero > .detail-actions');
+    expect(status).not.toBeNull();
+    expect(actions).not.toBeNull();
+    expect(actions?.contains(status!)).toBeFalse();
+    expect(status?.textContent?.trim()).toBe(t('profile.relationshipChecking'));
+    expect(getComputedStyle(status!).whiteSpace).toBe('normal');
+    expect(getComputedStyle(status!).overflowWrap).toBe('anywhere');
+    expect(root.querySelector('.profile-invite-trigger')).toBeTruthy();
+
+    pending.error({ status: 503 });
+    fixture.detectChanges();
+    const error = root.querySelector<HTMLElement>('.profile-relationship-feedback[role="alert"]');
+    expect(error?.textContent).toContain(t('profile.relationshipCheckFailed'));
+    expect(error?.querySelector('button')?.textContent?.trim()).toBe(t('common.retry'));
+    expect(root.querySelector('.detail-actions button.primary-action')).toBeNull();
+  });
+
+  it('lays out the back action separately from the full profile card', () => {
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const back = root.querySelector<HTMLElement>('a.back-to-search');
+    const card = root.querySelector<HTMLElement>('.profile-detail');
+    expect(back).not.toBeNull();
+    expect(card).not.toBeNull();
+    expect(getComputedStyle(back!).display).toBe('flex');
+    expect(parseFloat(getComputedStyle(back!).marginBottom)).toBeGreaterThan(0);
+    expect(card?.contains(back!)).toBeFalse();
+  });
+
+  it('fails closed while status is loading or failed, rather than displaying add-friend', () => {
+    const pending = new Subject<{ friends: boolean; pendingRequest: boolean }>();
+    service.friendshipStatus.and.returnValue(pending);
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
+    expect(component.friendshipLoading).toBeTrue();
+
+    pending.error({ status: 503 });
+    fixture.detectChanges();
+    expect(component.friendshipError).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
+
+    service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
+    component.loadFriendshipStatus('ana');
+    fixture.detectChanges();
+    expect(component.friendshipError).toBeFalse();
+    expect(component.isFriend(profile)).toBeTrue();
+  });
+
+  it('ignores friendship responses from a profile that is no longer selected', () => {
+    const oldStatus = new Subject<{ friends: boolean; pendingRequest: boolean }>();
+    service.friendshipStatus.and.returnValue(oldStatus);
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+
+    const secondProfile = { ...profile, username: 'rui' };
+    service.publicProfile.and.returnValue(of(secondProfile));
+    service.friendshipStatus.and.returnValue(of({ friends: false, pendingRequest: false }));
+    routeParams.next(convertToParamMap({ username: 'rui' }));
+    oldStatus.next({ friends: true, pendingRequest: false });
+    fixture.detectChanges();
+
+    expect(component.selectedProfile?.username).toBe('rui');
+    expect(component.isFriend(secondProfile)).toBeFalse();
+    expect(component.friendUsernames.has('ana')).toBeFalse();
+  });
+
   it('should send a friend request for the selected profile', () => {
     component.sendFriendRequest(profile);
 
@@ -811,4 +1017,144 @@ describe('PerfisComponent', () => {
     expect(component.profiles).toEqual([]);
     expect(component.searched).toBeFalse();
   });
+
+  it('keeps premium profile hero actions, iconic details and activity accessible', () => {
+    component.profilePage = true;
+    component.selectedProfile = { ...profile, username: 'ana', bio: 'Gosto de jogar' };
+    component.selectedActivity = {
+      activitiesCompleted: 3, peoplePlayedWith: 5, sportsPractised: 2,
+      eventsCreated: 1, participantsMobilized: 8, communitiesJoined: 1,
+      achievements: []
+    };
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.profile-hero > .detail-heading')).toBeTruthy();
+    expect(root.querySelector('.profile-hero > .detail-actions')).toBeTruthy();
+    expect(root.querySelectorAll('.profile-meta > .profile-meta-card').length).toBe(5);
+    expect(root.querySelectorAll('.profile-meta .profile-stat-icon svg').length).toBe(5);
+    expect(root.querySelectorAll('.public-activity-grid > .profile-activity-card').length).toBe(4);
+    expect(root.querySelectorAll('.public-activity-grid svg').length).toBe(4);
+    expect(root.querySelector('.profile-invite-trigger')).toBeTruthy();
+    expect(root.querySelector('.profile-safety summary')).toBeTruthy();
+    expect(root.querySelector('.public-bio')?.textContent).toContain('Gosto de jogar');
+  });
+
+  describe('profile community and session invitations', () => {
+    const future = () => new Date(Date.now()+86400_000).toISOString();
+    const eligibleGroup = (members: {username:string}[] = []) => ({
+      id: 41, name:'Futebol de sábado', sport:'Futebol', myRole:'OWNER',
+      members
+    });
+    const eligibleSession = () => ({
+      id: 55, sport:'Futebol', city:'Lisboa', gameDate:future(), status:'OPEN',
+      privateGame:false, audience:'PUBLIC'
+    });
+
+    beforeEach(() => {
+      component.currentUsername='miguel';
+      component.profilePage=true;
+      component.selectedProfile={...profile,username:'ana'};
+      component.selectedBlocked=false;
+    });
+
+    it('loads on demand and includes future public, private and community sessions created by the organiser', () => {
+      groups.mine.and.returnValue(of([
+        eligibleGroup(), {...eligibleGroup(),id:42,myRole:'MEMBER'},
+        {...eligibleGroup(),id:43,members:[{username:'ANA'}]}
+      ] as any));
+      sessions.mine.and.returnValue(of({
+        created:[eligibleSession(),{...eligibleSession(),id:56,privateGame:true},
+          {...eligibleSession(),id:57,audience:'COMMUNITY_ONLY'},
+          {...eligibleSession(),id:58,gameDate:'2020-01-01T00:00:00Z'}],
+        joined:[],waitlisted:[]
+      } as any));
+      expect(groups.mine).not.toHaveBeenCalled();
+      expect(sessions.mine).not.toHaveBeenCalled();
+      component.toggleInvitePanel();
+      fixture.detectChanges();
+      expect(component.availableInviteCommunities.map(v=>v.id)).toEqual([41]);
+      expect(component.availableInviteSessions.map(v=>v.id)).toEqual([55,56,57]);
+      component.inviteTab = 'session';
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('.profile-invite-option').length).toBe(3);
+      expect(fixture.nativeElement.textContent).toContain('Futebol');
+      expect(fixture.nativeElement.querySelector('.profile-invite-state')).toBeNull();
+      component.inviteTab = 'community';
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.profile-invite-tabs')).toBeTruthy();
+      expect(fixture.nativeElement.querySelectorAll('.profile-invite-option').length).toBe(1);
+    });
+
+    it('sends invitations for private and community sessions without accidentally including joined-only games', () => {
+      groups.mine.and.returnValue(of([]));
+      sessions.mine.and.returnValue(of({
+        created:[{...eligibleSession(),id:56,privateGame:true},
+          {...eligibleSession(),id:57,audience:'COMMUNITY_ONLY'}],
+        joined:[{...eligibleSession(),id:99}],waitlisted:[]
+      } as any));
+      component.toggleInvitePanel();
+      component.sendProfileInvite('session',56);
+      component.sendProfileInvite('session',57);
+      component.sendProfileInvite('session',99);
+      expect(sessions.invitePlayer).toHaveBeenCalledTimes(2);
+      expect(sessions.invitePlayer).toHaveBeenCalledWith(56,'ana');
+      expect(sessions.invitePlayer).toHaveBeenCalledWith(57,'ana');
+      expect(component.availableInviteSessions.map(s=>s.id)).toEqual([56,57]);
+    });
+
+    it('sends authorized invitations through existing endpoints exactly once per target', () => {
+      groups.mine.and.returnValue(of([eligibleGroup()] as any));
+      sessions.mine.and.returnValue(of({created:[eligibleSession()],joined:[],waitlisted:[]} as any));
+      component.toggleInvitePanel();
+      component.sendProfileInvite('community',41);
+      component.sendProfileInvite('community',41);
+      component.sendProfileInvite('session',55);
+      component.sendProfileInvite('session',55);
+      expect(groups.invite).toHaveBeenCalledOnceWith(41,'ana');
+      expect(sessions.invitePlayer).toHaveBeenCalledOnceWith(55,'ana');
+      expect(component.sentInvites.size).toBe(2);
+    });
+
+    it('will not invite to an unauthorized community, old session, or from own and blocked profiles', () => {
+      groups.mine.and.returnValue(of([{...eligibleGroup(),myRole:'MEMBER'}] as any));
+      sessions.mine.and.returnValue(of({created:[{...eligibleSession(),gameDate:'2020-01-01T00:00:00Z'}],joined:[],waitlisted:[]} as any));
+      component.toggleInvitePanel();
+      component.sendProfileInvite('community',41);
+      component.sendProfileInvite('session',55);
+      expect(groups.invite).not.toHaveBeenCalled();
+      expect(sessions.invitePlayer).not.toHaveBeenCalled();
+      component.closeInvitePanel();
+      component.selectedBlocked=true;
+      component.toggleInvitePanel();
+      expect(component.invitePanelOpen).toBeFalse();
+      component.selectedBlocked=false;
+      component.selectedProfile={...profile,username:'miguel'};
+      component.toggleInvitePanel();
+      expect(component.invitePanelOpen).toBeFalse();
+    });
+
+    it('invalidates stale invite choices after navigating to a different profile', () => {
+      const pending=new Subject<any[]>();
+      groups.mine.and.returnValue(pending.asObservable());
+      sessions.mine.and.returnValue(of({created:[],joined:[],waitlisted:[]}));
+      component.toggleInvitePanel();
+      expect(component.inviteLoading).toBeTrue();
+      component.closeProfile();
+      component.selectedProfile={...profile,username:'bea'};
+      pending.next([eligibleGroup()]);
+      pending.complete();
+      expect(component.invitePanelOpen).toBeFalse();
+      expect(component.availableInviteCommunities).toEqual([]);
+    });
+
+    it('keeps profile details compact without placeholder tiles for missing public fields', () => {
+      component.profilePage=true;
+      component.selectedProfile={...profile,country:null,location:null,age:null,
+        favoriteSports:null,skillLevel:null,availability:null,joinDateDisplay:null};
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('.profile-meta > div').length).toBe(0);
+    });
+  });
+
+
 });

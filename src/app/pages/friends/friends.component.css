@@ -283,3 +283,8 @@ h1 {
     align-items: flex-start;
   }
 }
+
+.friend-card a.avatar{text-decoration:none;cursor:pointer}
+.friend-card .friend-copy a{color:#fff;text-decoration:underline;text-decoration-color:#7dd3fc66;text-underline-offset:4px;font-weight:850}
+.friend-card .friend-copy a:hover{color:#7dd3fc}
+.friend-card a:focus-visible{outline:2px solid #7dd3fc;outline-offset:3px}

@@ -18,10 +18,13 @@ export interface CommunityTournament {
   sport?: string | null;
   // Older individual competitions may omit these fields in cached responses.
   entryType?: 'INDIVIDUAL' | 'TEAM';
+  scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | null;
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: TeamTieBreakPriority;
-  format: 'LEAGUE' | 'KNOCKOUT';
+  format: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT';
+  groupCount?: 2 | 4 | null;
+  historicalArchiveId?: number | null;
   status: TournamentStatus;
   winPoints: number;
   drawPoints: number;
@@ -120,7 +123,7 @@ export interface TournamentTeamPlayer {
 export interface TournamentTeam {
   id: number;
   name: string;
-  playersPerTeam: number;
+  playersPerTeam: number | null;
   createdAt: string;
   players: TournamentTeamPlayer[];
 }
@@ -136,6 +139,7 @@ export interface TournamentTeamMatch {
   status: TournamentMatchStatus;
   homeScore?: number | null;
   awayScore?: number | null;
+  groupNumber?: number | null;
 }
 
 export interface TournamentTeamMatchPage {
@@ -166,6 +170,17 @@ export interface TournamentTeamStandingRow {
   points: number;
 }
 
+export interface TournamentTeamGroup {
+  groupNumber: number;
+  standings: TournamentTeamStandingRow[];
+}
+
+export interface TournamentTeamGroups {
+  tournamentId: number;
+  knockoutStarted: boolean;
+  groups: TournamentTeamGroup[];
+}
+
 export interface TournamentTeamStandings {
   tournamentId: number;
   status: TournamentStatus;
@@ -175,4 +190,144 @@ export interface TournamentTeamStandings {
   drawPoints: number;
   lossPoints: number;
   standings: TournamentTeamStandingRow[];
+}
+
+/** Karting championship only. Race entries are the existing community round results. */
+export interface TournamentRaceEntry {
+  communityPlayerId: number | null;
+  fullName: string | null;
+  finishPosition: number | null;
+  elapsedSeconds: number | null;
+  bestLapSeconds: number | null;
+  racePenaltyPoints: number;
+  racePenaltyReason?: string | null;
+  raceTimePenaltySeconds?: number | null;
+  adjustedElapsedSeconds?: number | null;
+  raceStewardReason?: string | null;
+  lapsCompleted?: number | null;
+  raceDisqualified: boolean;
+}
+
+export interface TournamentRaceRound {
+  id: number;
+  name: string;
+  sport: string | null;
+  playedAt: string;
+  entries: TournamentRaceEntry[];
+}
+
+export interface TournamentRaceStanding {
+  position: number;
+  playerId: number;
+  fullName: string | null;
+  races: number;
+  wins: number;
+  podiums: number;
+  bestFinish: number | null;
+  championshipPoints: number | null;
+  penaltyPoints: number;
+}
+
+export interface TournamentRaceOverview {
+  tournamentId: number;
+  pointsByPlace: number[];
+  linkedRaces: TournamentRaceRound[];
+  availableRaces: TournamentRaceRound[];
+  standings: TournamentRaceStanding[];
+}
+
+/** Official World Skate 2026 progression; never inferred as a final placement. */
+export type InlineSpeedStage = 'FIRST' | 'QUARTER' | 'SEMI' | 'FINAL';
+export interface InlineSpeedSkater {
+  playerId: number;
+  name: string;
+  position: number | null;
+  seconds: number | null;
+  disqualified: boolean;
+}
+export interface InlineSpeedHeat {
+  roundId: number;
+  name: string;
+  eventType: string;
+  heatNumber: number;
+  skaters: InlineSpeedSkater[];
+}
+export interface InlineSpeedProposal {
+  sourceStage: Exclude<InlineSpeedStage, 'FINAL'>;
+  targetStage: Exclude<InlineSpeedStage, 'FIRST'>;
+  playerIds: number[];
+  expectedCount: number;
+  ready: boolean;
+  warning: string;
+}
+export interface InlineSpeedDecision {
+  sourceStage: Exclude<InlineSpeedStage, 'FINAL'>;
+  targetStage: Exclude<InlineSpeedStage, 'FIRST'>;
+  playerIds: number[];
+  reason: string | null;
+  confirmedBy: string;
+  confirmedAt: string;
+  stale: boolean;
+}
+export type InlineSpeedTieEvidenceType = 'PHOTO_FINISH' | 'VIDEO_REVIEW' | 'OFFICIAL_MINUTES' | 'TIEBREAK_TRIAL' | 'OTHER';
+
+export interface InlineSpeedTieBreakRevision {
+  revision: number;
+  selectedPlayerIds: number[];
+  reason: string;
+  trialOrderExceptionReason?: string | null;
+  evidenceType?: InlineSpeedTieEvidenceType | null;
+  evidenceReference?: string | null;
+  trialIds?: number[];
+  confirmedBy: string;
+  confirmedAt: string;
+  stale: boolean;
+}
+export interface InlineSpeedTieBreak {
+  sourceStage: 'FIRST';
+  selectedPlayerIds: number[];
+  reason: string;
+  trialOrderExceptionReason?: string | null;
+  evidenceType?: InlineSpeedTieEvidenceType | null;
+  evidenceReference?: string | null;
+  trialIds?: number[];
+  confirmedBy: string;
+  confirmedAt: string;
+  stale: boolean;
+  revisions?: InlineSpeedTieBreakRevision[];
+}
+
+export interface InlineSpeedTrialResult {
+  playerId: number;
+  place: number;
+  seconds: number | null;
+}
+export interface InlineSpeedTrial {
+  id: number;
+  sourceStage: 'FIRST';
+  heldAt: string;
+  officialReference: string;
+  reason: string;
+  recordedBy: string;
+  recordedAt: string;
+  stale: boolean;
+  results: InlineSpeedTrialResult[];
+}
+export interface InlineSpeedTrialRequest {
+  actuallyHeld: boolean;
+  heldAt: string;
+  officialReference: string;
+  reason: string;
+  results: InlineSpeedTrialResult[];
+}
+
+export interface InlineSpeedOverview {
+  tournamentId: number;
+  discipline: 'TRACK_500D' | 'ROAD_LAP' | null;
+  linkedHeats: InlineSpeedHeat[];
+  availableHeats: InlineSpeedHeat[];
+  proposals: InlineSpeedProposal[];
+  decisions: InlineSpeedDecision[];
+  tieBreaks?: InlineSpeedTieBreak[];
+  trials?: InlineSpeedTrial[];
 }

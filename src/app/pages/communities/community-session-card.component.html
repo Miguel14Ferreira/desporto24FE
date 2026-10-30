@@ -1,0 +1,40 @@
+                      <a
+                        class="community-session-card"
+                        [routerLink]="['/menu/events', session.id]">
+                        <div class="community-session-main">
+                          <strong>{{ session.sport }}</strong>
+                          <span>{{ session.city }} · {{ formattedDate }}</span>
+                        </div>
+                        <div class="community-session-meta">
+                          <span>
+                            {{ session.audience === 'COMMUNITY_ONLY'
+                              ? ('communities.sessionMembersOnly' | t)
+                              : ('communities.sessionPublic' | t) }}
+                          </span>
+                          <span>
+                            {{ session.participantCount }}/{{ session.maxParticipants }}
+                            {{ 'communities.participantsShort' | t }}
+                          </span>
+                          @if (session.recurrenceSeriesId) {
+                            <span class="competition-badge">
+                              {{ 'communities.recurringSession' | t }}
+                            </span>
+                          }
+                          @if (session.participantCount < session.maxParticipants) {
+                            <span class="session-open-spots">
+                              {{ 'communities.spotsMissing' | t:{
+                                count: session.maxParticipants - session.participantCount
+                              } }}
+                            </span>
+                          } @else {
+                            <span class="session-full">
+                              {{ 'communities.sessionFull' | t }}
+                            </span>
+                          }
+                          @if (session.priceAmount > 0) {
+                            <span>{{ session.priceAmount }} €</span>
+                          } @else {
+                            <span>{{ 'communities.free' | t }}</span>
+                          }
+                        </div>
+                      </a>

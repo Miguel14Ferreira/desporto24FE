@@ -38,6 +38,7 @@ describe('Community join request deep links', () => {
     expect(getCommunity).toHaveBeenCalledWith(42);
     expect(component.activeTab).toBe('members');
     expect(pendingJoinRequests).toHaveBeenCalledWith(42);
+    expect(myHistoricalClaims).not.toHaveBeenCalled();
   });
 
   it('also allows admins to open the join request management tab', () => {
@@ -112,13 +113,13 @@ describe('Community join request deep links', () => {
     expect(component.activeTab).toBe('members');
   });
 
-  it('opens identity self-service for ordinary members without exposing manager join requests', () => {
+  it('opens member tab for ordinary members without loading the retired identity card or manager requests', () => {
     getCommunity.and.returnValue(of({
       id: 42, myRole: 'MEMBER', members: []
     } as unknown as CommunityGroup));
     component.open({ id: 42 } as unknown as CommunityGroup);
     expect(component.activeTab).toBe('members');
-    expect(myHistoricalClaims).toHaveBeenCalledWith(42);
+    expect(myHistoricalClaims).not.toHaveBeenCalled();
     expect(pendingJoinRequests).not.toHaveBeenCalled();
   });
 });

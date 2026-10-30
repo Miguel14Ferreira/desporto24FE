@@ -5,37 +5,31 @@ import { AppComponent } from './app.component';
 import { NavbarComponent } from './sharepage/navbar/navbar.component';
 import { FooterComponent } from './sharepage/footer/footer.component';
 import { HomeComponent } from './pages/home/home.component';
-import { EventsComponent } from './pages/events/events.component';
 import { LoginComponent } from './pages/login/login.component';
 import { MenuComponent } from './pages/menu/menu.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
-import { AlterardadosComponent } from './pages/alterardados/alterardados.component';
 import { ChangepasswordComponent } from './pages/changepassword/changepassword.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ContactComponent } from './pages/contact/contact.component';
 import { ForgotpComponent } from './pages/forgotp/forgotp.component';
 import { AuthInterceptor } from './auth.interceptor';
 import { AuthenticationGuard } from './guard/authentication.guard';
-import { PerfisComponent } from './pages/perfis/perfis.component';
 import { AuthenticationService } from './services/authethication.service';
 import { AboutComponent } from './pages/about/about.component';
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
-import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
-import { NotificationsComponent } from './pages/notifications/notifications.component';
-import { FriendsComponent } from './pages/friends/friends.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
-import { DiscoverComponent } from './pages/discover/discover.component';
-import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
-import { VenueCreateComponent } from './pages/venue-create/venue-create.component';
 import { TranslatePipe } from './i18n/translate.pipe';
+
+import { ProfileQuickViewComponent } from './shared/profile-quick-view.component';
+import { VenueSportsBadgesComponent } from './shared/venue-sports-badges/venue-sports-badges.component';
 import { LegalPageComponent } from './pages/legal-page/legal-page.component';
+import { JynloSelectComponent } from './shared/jynlo-select/jynlo-select.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -43,28 +37,20 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         NavbarComponent,
         FooterComponent,
         HomeComponent,
-        EventsComponent,
         LoginComponent,
         MenuComponent,
         LoginMFAComponent,
         CreateaccountComponent,
-        PerfisComponent,
-        AlterardadosComponent,
+
         ChangepasswordComponent,
         ContactComponent,
         ForgotpComponent,
         PerfilDataComponent,
         Forgotp2Component,
         ConfirmTokenRegistrationComponent,
-        MySessionsComponent,
-        NotificationsComponent,
-        FriendsComponent,
         GoogleOnboardingComponent,
         NotFoundComponent,
-        SocialFeedComponent,
-        DiscoverComponent,
-        VenueDetailsComponent,
-        VenueCreateComponent,
+
         LegalPageComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
@@ -72,5 +58,9 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         FormsModule,
         ReactiveFormsModule,
         BrowserAnimationsModule,
-        TranslatePipe], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
+        TranslatePipe,
+    JynloSelectComponent,
+    VenueSportsBadgesComponent,
+        ProfileQuickViewComponent,
+        VenueSportsBadgesComponent], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }

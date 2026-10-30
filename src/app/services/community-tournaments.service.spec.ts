@@ -42,6 +42,44 @@ describe('CommunityTournamentsService API contract', () => {
         winPoints: 4, drawPoints: 2, lossPoints: 0 });
   });
 
+  it('creates group knockout with group count and independent sporting rules', () => {
+    service.createTeamTournament(7, 'Taça com grupos', 'Futebol', 5, 1,
+      { winPoints: 3, drawPoints: 1, lossPoints: 0 },
+      'GOAL_DIFFERENCE_FIRST', 'GROUP_KNOCKOUT', 4).subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça com grupos', sport: 'Futebol', entryType: 'TEAM',
+        playersPerTeam: 5, format: 'GROUP_KNOCKOUT', groupCount: 4,
+        teamTieBreakPriority: 'GOAL_DIFFERENCE_FIRST',
+        winPoints: 3, drawPoints: 1, lossPoints: 0 });
+    service.teamGroups(7, 9).subscribe();
+    expect(http.get).toHaveBeenCalledWith(base + '/teams/groups');
+  });
+
+  it('creates an individual Ciclocrosse series with race points, never football match rules', () => {
+    service.createRaceChampionship(7, 'Taça de Ciclocrosse', 'Ciclocrosse').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça de Ciclocrosse', sport: 'Ciclocrosse',
+        entryType: 'INDIVIDUAL', format: 'LEAGUE', scoringMode: 'RACE_POINTS' });
+  });
+
+  it('creates road race championships with positions only, without time-trial rule mode', () => {
+    service.createRaceChampionship(7, 'Taça estrada', 'Ciclismo de Estrada').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça estrada', sport: 'Ciclismo de Estrada',
+        entryType: 'INDIVIDUAL', format: 'LEAGUE', scoringMode: 'RACE_POINTS' });
+  });
+
+  it('creates track scratch-only position championship without time-trial scoring', () => {
+    service.createRaceChampionship(7, 'Taça Scratch', 'Ciclismo de Pista').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça Scratch', sport: 'Ciclismo de Pista',
+        entryType: 'INDIVIDUAL', format: 'LEAGUE', scoringMode: 'RACE_POINTS' });
+  });
+
   it('sends knockout format without league-only settings', () => {
     service.createTeamTournament(7, 'Taça', 'Futebol', 3, 2,
       { winPoints: 4, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT').subscribe();
@@ -77,4 +115,26 @@ describe('CommunityTournamentsService API contract', () => {
     service.complete(7, 9).subscribe();
     expect(http.post).toHaveBeenCalledWith(base + '/complete', null);
   });
+  it('reads and links only real speed skating heats with an explicit heat number', () => {
+    service.inlineSpeedOverview(7, 9).subscribe();
+    expect(http.get).toHaveBeenCalledWith(base + '/inline-speed');
+    service.linkInlineSpeedHeat(7, 9, 71, 3).subscribe();
+    const [url, body, options] = http.put.calls.mostRecent().args;
+    expect(url).toBe(base + '/inline-speed/heats/71');
+    expect(body).toEqual({});
+    expect((options as any).params.heatNumber).toBe('3');
+  });
+
+  it('unlinks only tournament linkage, without a destructive round request', () => {
+    service.unlinkInlineSpeedHeat(7, 9, 71).subscribe();
+    expect(http.delete).toHaveBeenCalledWith(base + '/inline-speed/heats/71');
+  });
+
+  it('submits a human judge decision with an explicit roster and reason', () => {
+    service.confirmInlineSpeedQualification(7, 9, 'QUARTER', [12, 8], 'Chief judge decision').subscribe();
+    expect(http.put).toHaveBeenCalledWith(
+      base + '/inline-speed/qualifications/QUARTER',
+      { playerIds: [12, 8], reason: 'Chief judge decision' });
+  });
+
 });

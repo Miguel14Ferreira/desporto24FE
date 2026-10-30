@@ -398,3 +398,282 @@
   font-size: 0.85rem;
   color: #696969;
 }
+
+/* A source link is informational; Jynlo does not arrange venue bookings. */
+.venue-website-link {
+  margin-left: 12px;
+}
+
+.venue-access-note {
+  max-width: 720px;
+  margin: 14px 0 0;
+  color: var(--text-muted, #596372);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .venue-website-link {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+}
+
+/* Public facility averages show only after three independent attendees rate. */
+.venue-rating-summary {
+  margin: 14px 0;
+  padding: 15px 18px;
+  border: 1px solid rgba(14, 116, 83, .18);
+  border-radius: 12px;
+  background: rgba(16, 185, 129, .055);
+}
+
+.venue-rating-summary h2 {
+  margin: 0 0 9px;
+  font-size: 1rem;
+}
+
+.venue-rating-summary p {
+  margin: 0 0 7px;
+  line-height: 1.5;
+}
+
+.venue-rating-summary small {
+  color: var(--text-muted, #596372);
+}
+
+.venue-rating-summary-score {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.venue-rating-summary-score strong {
+  font-size: 1.35rem;
+  color: #047857;
+}
+
+.venue-rating-summary-score span {
+  font-size: .9rem;
+}
+
+/* Concept One venue profile – dark dedicated venue page. */
+.venue-detail-page{background:linear-gradient(155deg,#071927,#0a2431 62%,#071b27);color:#eef9ff;min-height:75vh}
+.venue-detail-shell{width:min(1090px,100%)}
+.venue-detail-page .back-link{color:#b6efe0;border:1px solid rgba(99,209,175,.32);border-radius:100px;padding:9px 14px;width:fit-content;text-decoration:none}
+.venue-detail-page .venue-header{padding:clamp(22px,4vw,42px);margin:0 0 20px;border-radius:22px;border:1px solid rgba(142,212,210,.24);background:radial-gradient(ellipse at 88% 8%,rgba(44,151,143,.23),transparent 58%),linear-gradient(135deg,#132e43,#102b35)}
+.venue-detail-page .venue-kicker{color:#50e9bf;letter-spacing:.17em;font-size:.75rem}
+.venue-detail-page .venue-header h1{font-size:clamp(2.2rem,5vw,3.5rem);line-height:1.1;letter-spacing:-.04em;margin:5px 0 12px;color:#fff}
+.venue-detail-page .venue-hero-location{color:#b8d6df;font-size:1rem;margin:0 0 18px}
+.venue-detail-page .venue-hero-sports{display:flex;flex-wrap:wrap;gap:8px}
+.venue-detail-page .venue-hero-sports span{font-size:.8rem;padding:7px 12px;border-radius:100px;border:1px solid rgba(54,230,183,.27);background:rgba(54,230,183,.1);color:#a8f8dc}
+.venue-detail-page .venue-provenance{margin-top:19px}
+.venue-detail-page .venue-source-badge{background:rgba(255,255,255,.07);border-color:rgba(184,220,227,.25);color:#d7f2f4}
+.venue-detail-page .venue-created-by,.venue-detail-page .venue-created-by a{color:#a6cad4}
+.venue-detail-page .venue-state{background:#10293b;border:1px solid rgba(159,205,217,.29);color:#f1fafc}
+.venue-detail-page .venue-state-error p{color:#bdd5db;font-weight:400}
+.venue-error-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}
+.venue-error-actions .jynlo-action{padding:10px 15px;text-decoration:none}
+.venue-detail-page .venue-basic-info>div,.venue-detail-page .venue-information-grid>div,
+.venue-detail-page .venue-photos-state,.venue-detail-page .venue-sport-condition-card,.venue-detail-page .venue-sport-condition-form,
+.venue-detail-page .venue-sport-conditions-state{background:#102c3b;border:1px solid rgba(157,205,219,.22);border-radius:16px}
+.venue-detail-page .venue-basic-info span,.venue-detail-page .venue-information-grid span{color:#a1c6d0}
+.venue-detail-page .venue-basic-info strong,.venue-detail-page .venue-information-grid strong{color:#f7fbfc;overflow-wrap:anywhere}
+.venue-detail-page .venue-information-section h2,.venue-detail-page .venue-photos-section h2,
+.venue-detail-page .venue-amenities-section h2,.venue-detail-page .venue-sport-conditions-heading h2{color:#fff;font-size:1.25rem}
+.venue-detail-page .venue-amenities-list span{border-color:rgba(88,200,175,.27);background:rgba(35,134,128,.13);color:#bdf9e7}
+.venue-detail-page .venue-map-link,.venue-detail-page .venue-photo-upload,.venue-detail-page .venue-sport-condition-submit{
+  border:1px solid rgba(88,200,175,.42);background:#103b3a;color:#bbffe7}
+.venue-detail-page .venue-access-note,.venue-detail-page .venue-map-approximate-hint{color:#a5c2ce}
+.venue-detail-page .venue-photo-grid img{border-color:rgba(132,207,211,.25)}
+.venue-detail-page .venue-photo-item figcaption{color:#a8c9d4}
+.venue-detail-page .venue-sport-condition-form input,.venue-detail-page .venue-sport-condition-form textarea{
+ background:#091f2e;border:1px solid rgba(153,206,220,.27);color:#fff}
+.venue-detail-page .venue-rating-summary{background:rgba(14,93,77,.17);border-color:rgba(54,230,183,.3);color:#dffbef}
+.venue-detail-page .venue-rating-summary strong{color:#56efbe}
+.venue-detail-page .venue-rating-summary small{color:#afc9d3}
+.venue-detail-page .venue-venue-actions{display:flex;gap:12px}
+@media(max-width:640px){.venue-detail-page{padding:22px 14px}.venue-detail-page .venue-header{padding:23px}}
+
+.venue-edit-link{display:inline-flex;text-decoration:none;margin:11px 0 3px;align-items:center;gap:7px}
+
+/* Map and contact cards use the same Concept One visual language as venue details. */
+.venue-visit-section{margin:25px 0 28px}
+.venue-visit-intro h2{color:#fff;font-size:1.3rem;margin:0 0 8px}
+.venue-visit-intro p{color:#b0cbd5;margin:0 0 19px;line-height:1.5}
+.venue-visit-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);gap:16px}
+.venue-visit-card{padding:20px;border:1px solid rgba(153,213,218,.23);
+  border-radius:18px;background:linear-gradient(145deg,#123242,#0b2635);min-width:0}
+.venue-visit-card h3{color:#f3fbfd;font-size:1.06rem;margin:0 0 16px}
+.venue-map-iframe{display:block;width:100%;height:300px;border:0;border-radius:13px;
+  background:#17384a}
+.venue-map-credit{display:block;margin-top:9px;color:#b0d0d8;font-size:.76rem}
+.venue-map-credit a{color:#8eefd3;text-decoration:underline}
+.venue-map-unavailable{padding:35px 17px;min-height:165px;display:grid;place-content:center;
+  text-align:center;color:#b4d5de;background:#173b4a;border-radius:13px;line-height:1.5}
+.venue-visit-action{display:inline-flex;justify-content:center;align-items:center;text-align:center;
+  padding:10px 14px;margin-top:14px;text-decoration:none;white-space:normal}
+.venue-contact-number{color:#fff;font-weight:750;font-size:1.23rem;margin:6px 0 8px;
+  overflow-wrap:anywhere}
+.venue-contact-caveat{display:block;color:#a6c4d2;font-size:.79rem;margin:12px 0;line-height:1.55}
+.venue-contact-missing{color:#b8d4dc;line-height:1.6;margin:8px 0}
+.venue-contact-other-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.venue-contact-other-actions .venue-visit-action{font-size:.85rem;margin-top:9px}
+.venue-website-under-contact{display:inline-block;margin-top:18px;color:#9ff1dc;text-decoration:underline}
+@media(max-width:800px){.venue-visit-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.venue-visit-card{padding:14px}.venue-map-iframe{height:265px}
+  .venue-contact-other-actions{flex-direction:column}.venue-contact-other-actions .venue-visit-action{width:100%}}
+
+/* Keep the return action inside the visible hero, below sticky app navigation. */
+.venue-detail-page .venue-header .venue-hero-back{
+  display:inline-flex;align-items:center;margin:0 0 22px;
+  color:#abf9df;background:rgba(17,65,67,.78);
+  border:1px solid rgba(99,209,175,.48);
+  border-radius:999px;padding:10px 16px;
+  text-decoration:none;font-weight:750;line-height:1.3;
+}
+.venue-detail-page .venue-header .venue-hero-back:hover{background:#15564f}
+.venue-detail-page .venue-address-map-link{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:9px 12px;margin-top:11px;
+  border:1px solid rgba(88,200,175,.42);border-radius:10px;
+  color:#a9f4dc;background:#113c40;text-decoration:none;font-weight:750;
+}
+.venue-detail-page .venue-address-map-link:hover{background:#15564f}
+
+
+/* Outer venue profile sections share one rhythm; contact and map cards stay intact. */
+.venue-detail-page .venue-header { margin-bottom: 24px; }
+.venue-detail-page .venue-rating-summary { margin: 24px 0; }
+.venue-detail-page .venue-visit-section { margin: 24px 0; }
+.venue-detail-page :is(.venue-photos-section, .venue-information-section, .venue-amenities-section, .venue-sport-conditions-section) {
+  margin-top: 24px;
+}
+@media (max-width: 640px) {
+  .venue-detail-page .venue-header { margin-bottom: 20px; }
+  .venue-detail-page .venue-rating-summary { margin: 20px 0; }
+  .venue-detail-page .venue-visit-section { margin: 20px 0; }
+  .venue-detail-page :is(.venue-photos-section, .venue-information-section, .venue-amenities-section, .venue-sport-conditions-section) {
+    margin-top: 20px;
+  }
+}
+
+/*
+ * Consistent vertical rhythm across venue profiles.
+ * Each top-level block has its own space instead of inheriting colliding
+ * top/bottom margins from successive design iterations.
+ */
+.venue-detail-page .venue-detail-shell {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 2.8vw, 32px);
+}
+.venue-detail-page .venue-detail-shell > * {
+  min-width: 0;
+}
+.venue-detail-page .venue-detail-shell > :where(
+  .venue-header,
+  .venue-basic-info,
+  .venue-public-more,
+  .venue-rating-summary,
+  .venue-visit-section,
+  .venue-photos-section,
+  .venue-information-section,
+  .venue-sport-conditions-section,
+  .venue-amenities-section
+) {
+  margin-block: 0;
+}
+
+/* Helpful public information must breathe; it is not an inline, cramped CTA. */
+.venue-detail-page .venue-public-more {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 28px;
+  row-gap: 12px;
+  padding: 20px 24px;
+  border: 1px solid rgba(87, 219, 189, .26);
+  border-radius: 16px;
+  background: rgba(14, 57, 69, .72);
+  color: #d0eae8;
+  line-height: 1.55;
+}
+.venue-detail-page .venue-public-more p {
+  margin: 0;
+  font-size: .91rem;
+  max-width: 65ch;
+}
+.venue-detail-page .venue-public-more-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 42px;
+  padding: 10px 15px;
+  border: 1px solid rgba(121, 239, 203, .38);
+  border-radius: 10px;
+  color: #a0ffdf;
+  background: rgba(32, 114, 99, .16);
+  font-weight: 750;
+  text-decoration: none;
+  white-space: normal;
+  text-align: center;
+}
+.venue-detail-page .venue-public-more-link:hover {
+  background: rgba(54, 230, 183, .17);
+  border-color: #7deccd;
+}
+.venue-detail-page .venue-public-more-link:focus-visible {
+  outline: 2px solid #8ef2d6;
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .venue-detail-page .venue-detail-shell {
+    gap: 22px;
+  }
+  .venue-detail-page .venue-public-more {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    row-gap: 14px;
+  }
+  .venue-detail-page .venue-public-more-link {
+    max-width: 100%;
+  }
+}
+
+/* Arrival modes are route-planner links, not verified facility entrances.
+   Flexible, equal-height actions prevent overflow on narrow mobile widths. */
+.venue-route-planner {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(153, 213, 218, .21);
+  min-width: 0;
+}
+.venue-route-planner > strong { display: block; color: #f1fcf9; font-size: .94rem; }
+.venue-route-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 10px;
+}
+.venue-detail-page .venue-route-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px;
+  font-size: .82rem;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.venue-route-caveat { display: block; margin-top: 11px; color: #b0cbd5; line-height: 1.5; }
+.venue-route-mode:focus-visible { outline: 2px solid #8eefd3; outline-offset: 3px; }
+@media (max-width: 390px) {
+  .venue-route-modes { grid-template-columns: 1fr; }
+  .venue-detail-page .venue-route-mode { width: 100%; }
+}

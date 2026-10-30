@@ -55,7 +55,10 @@ let createdCommunity = null;
 let featureChoice = null;
 
 async function main() {
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  const browser = await chromium.launch({
+    headless: true, args: ['--no-sandbox'],
+    ...(process.env.JYNLO_USE_SYSTEM_CHROME === '1' ? { channel: 'chrome' } : {})
+  });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'pt-PT' });
   page.on('pageerror', error => errors.push(error.stack || error.message));
   const json = (route, status, data) => route.fulfill({
@@ -104,6 +107,10 @@ async function main() {
       }
       if (endpoint === 'GET /api/notifications/me/unread-count') return json(route, 200, 0);
       if (endpoint === 'GET /api/communities/mine') return json(route, 200, createdCommunity ? [createdCommunity] : []);
+      // Current owned-community quota contract: five simultaneous groups, no daily cap.
+      if (endpoint === 'GET /api/communities/creation-quota') {
+        return json(route, 200, { owned: createdCommunity ? 1 : 0, limit: 5, canCreate: true });
+      }
       if (endpoint === 'GET /api/communities/invites/me') return json(route, 200, []);
       if (endpoint === 'GET /api/communities/search') {
         const query = (url.searchParams.get('name') || '').toLowerCase();
@@ -234,11 +241,46 @@ async function main() {
     assert.equal(await page.locator('input[name="venueSearch"]').isDisabled(), true,
       'venue lookup requires a sport and district');
     await snapshot('12-qa-create-session');
+    // The premium community page and creation form need a real mobile
+    // viewport check; DOM-only unit tests cannot catch horizontal clipping.
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileFits = async (label, selectors) => {
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      assert.ok(overflow <= 4, label + ': horizontal scroll overflow ' + overflow + 'px');
+      for (const selector of selectors) {
+        const element = page.locator(selector).first();
+        await element.waitFor({ state: 'visible' });
+        const box = await element.boundingBox();
+        assert.ok(box && box.width > 8 && box.x >= -3 && box.x + box.width <= 393,
+          label + ': ' + selector + ' extends outside viewport: ' + JSON.stringify(box));
+      }
+    };
+    await page.goto(SITE + '/menu/communities/create', { waitUntil: 'domcontentloaded' });
+    await page.locator('.jynlo-community-create-premium .create-panel').waitFor();
+    await mobileFits('mobile community creation', [
+      '.jynlo-community-create-premium .create-panel',
+      '.jynlo-community-create-premium input[name="name"]',
+      '.jynlo-community-create-premium #community-sport-search',
+      '.jynlo-community-create-premium .form-actions button[type="submit"]'
+    ]);
+    await snapshot('13-mobile-community-create');
+
+    await page.goto(SITE + '/menu/communities/903', { waitUntil: 'domcontentloaded' });
+    await page.locator('.jynlo-community-main-premium .community-detail .detail-header').waitFor();
+    await mobileFits('mobile community detail', [
+      '.jynlo-community-main-premium .community-detail',
+      '.jynlo-community-main-premium .detail-header',
+      '.jynlo-community-main-premium .community-detail-copy'
+    ]);
+    assert.equal(await page.locator('.community-detail h2').filter({ hasText: 'QA Comunidade Criada' }).count() > 0,
+      true, 'created community detail remains visible at mobile viewport');
+    await snapshot('14-mobile-community-detail');
+
     assert.deepEqual(errors, [], 'no uncaught JavaScript exceptions');
     assert.deepEqual(unexpected, [], 'only explicitly mocked API calls are allowed');
     console.log('PASS: synthetic login, rejection, community search and join request,');
     console.log('PASS: community creation, invitation, options and session form.');
-    console.log('PASS: 6 authenticated journey screenshots, no production requests or credentials.');
+    console.log('PASS: authenticated journey screenshots + 390px community creation/detail checks, no production requests or credentials.');
   } catch (err) {
     await snapshot('FAILED-authenticated-browser-state').catch(() => {});
     console.error(err);

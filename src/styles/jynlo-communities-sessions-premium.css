@@ -1,0 +1,146 @@
+/*
+ * Jynlo Concept One Premium — sessions & communities (desktop-first).
+ * Opt-in selectors only; existing templates, route flows, permissions and states
+ * remain authoritative. Imported after Concept One base & entry premium.
+ */
+body .jynlo-c1:is(.communities-page,.jynlo-games) {
+  --jynlo-next-panel: #0e2b3b;
+  --jynlo-next-panel-deep: #0a2635;
+  --jynlo-next-line: rgba(105,193,193,.24);
+  --jynlo-next-line-hover: rgba(52,230,199,.52);
+  --jynlo-next-mint: #32e4c4;
+  --jynlo-next-muted: #bfd8df;
+  --jynlo-next-shadow: 0 18px 44px rgba(0,10,22,.22);
+  background:
+    radial-gradient(ellipse 48% 400px at 89% 6%, rgba(36,160,147,.14), transparent 75%),
+    linear-gradient(155deg,#061b29 3%,#082737 64%,#061b2a 100%);
+}
+body .jynlo-c1:is(.communities-page,.jynlo-games) :is(.page-header,.title-row) .subtitle {
+  color: var(--jynlo-next-muted);
+}
+body .jynlo-c1:is(.communities-page,.jynlo-games) :is(.page-header,.title-row) h1 {
+  text-wrap: balance;
+}
+body .jynlo-c1:is(.communities-page,.jynlo-games) .jynlo-action--primary {
+  --jynlo-action-bg: var(--jynlo-next-mint);
+  --jynlo-action-border: var(--jynlo-next-mint);
+  --jynlo-action-text: #05342e;
+  --jynlo-action-hover: #77f8d9;
+}
+body .jynlo-c1:is(.communities-page,.jynlo-games) .jynlo-action--neutral {
+  --jynlo-action-bg: #113a48;
+  --jynlo-action-border: rgba(116,191,195,.34);
+  --jynlo-action-text: #ebfbfa;
+  --jynlo-action-hover: #205465;
+}
+body .jynlo-c1:is(.communities-page,.jynlo-games) :is(a,button,input,select,textarea):focus-visible {
+  outline: 2px solid #81f8de;
+  outline-offset: 3px;
+}
+body .jynlo-c1:is(.communities-page,.jynlo-games) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea):not(:disabled) {
+  border-color: rgba(113,179,194,.3);
+  background-color: rgba(6,28,42,.68);
+}
+
+/* Community discovery and member-facing overview. */
+body .communities-page.jynlo-c1 .community-pitch {
+  border-color: var(--jynlo-next-line);
+  background:
+    radial-gradient(ellipse at 93% 0%,rgba(50,228,196,.15),transparent 58%),
+    linear-gradient(120deg,#103b48,#0b283a 75%);
+  box-shadow: var(--jynlo-next-shadow);
+}
+body .communities-page.jynlo-c1 .community-pitch-eyebrow,
+body .communities-page.jynlo-c1 .community-pitch-promise { color: #8cf8de; }
+body .communities-page.jynlo-c1 .community-pitch-benefit {
+  border-color: var(--jynlo-next-line);
+  background: linear-gradient(145deg,rgba(23,69,79,.7),rgba(8,38,54,.72));
+}
+body .communities-page.jynlo-c1 .community-pitch-benefit h3 { color: #f2fdfb; }
+body .communities-page.jynlo-c1 :is(.community-discovery,.invites-card,.state-card,.community-detail) {
+  border-color: var(--jynlo-next-line);
+  border-radius: 18px;
+  background: linear-gradient(145deg,rgba(17,52,69,.95),rgba(9,38,53,.95));
+  box-shadow: var(--jynlo-next-shadow);
+}
+body .communities-page.jynlo-c1 .community-list .community-card {
+  border-color: var(--jynlo-next-line);
+  background: linear-gradient(145deg,#123445,#0b293a);
+  box-shadow: 0 12px 28px rgba(0,10,22,.16);
+}
+body .communities-page.jynlo-c1 .community-list .community-card:is(:hover,:focus-visible),
+body .communities-page.jynlo-c1 .community-list .community-card.active {
+  border-color: var(--jynlo-next-line-hover);
+}
+body .communities-page.jynlo-c1 .community-discovery :is(input,select):focus-visible {
+  outline: 2px solid #81f8de;
+  outline-offset: 2px;
+}
+body .communities-page.jynlo-c1.community-detail-page .detail-header {
+  border-color: rgba(102,188,193,.22);
+}
+body .communities-page.jynlo-c1 :is(.community-timeline-entry,.overview-card,.leader-highlight) {
+  border-color: var(--jynlo-next-line);
+  background: linear-gradient(150deg,rgba(17,51,66,.92),rgba(8,36,51,.9));
+}
+
+/* Sessions: discovery, creation, details and My Sessions. */
+body .sessions-page.jynlo-c1 :is(.nearby-panel,.filters) {
+  border-color: var(--jynlo-next-line);
+  border-radius: 18px;
+  box-shadow: var(--jynlo-next-shadow);
+}
+body .sessions-page.jynlo-c1 .session-row {
+  border-color: var(--jynlo-next-line);
+  background: linear-gradient(145deg,#113445,#0b2a3a);
+  box-shadow: 0 12px 28px rgba(0,10,22,.15);
+}
+body .sessions-page.jynlo-c1 .session-row:hover { border-color: var(--jynlo-next-line-hover); }
+body .jynlo-games.jynlo-c1:is(.create-page,.detail-page) :is(.create-card,.detail-card,.detail-content) {
+  border-color: var(--jynlo-next-line);
+  border-radius: 18px;
+  background: linear-gradient(155deg,rgba(17,52,69,.96),rgba(8,37,53,.96));
+  box-shadow: var(--jynlo-next-shadow);
+}
+body .detail-page.jynlo-c1 :is(.address-panel,.participation-panel,.calendar-panel,.organizer-preparation,.post-game-review,.overall-rating-panel,.attendance-panel,.session-participants-panel) {
+  border-color: var(--jynlo-next-line);
+  background: linear-gradient(145deg,rgba(17,52,69,.95),rgba(10,39,55,.92));
+}
+body .my-sessions-page.jynlo-c1 .next-session-highlight {
+  border-color: rgba(50,228,196,.37);
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at 96% 0%,rgba(50,228,196,.16),transparent 60%),
+    linear-gradient(120deg,#123d49,#0a293a);
+  box-shadow: var(--jynlo-next-shadow);
+}
+body .my-sessions-page.jynlo-c1 :is(.session-card,.attendance-card,.empty-card,.state-card) {
+  border-color: var(--jynlo-next-line);
+  border-radius: 17px;
+  background: linear-gradient(145deg,rgba(17,52,69,.96),rgba(9,38,53,.96));
+  box-shadow: 0 12px 30px rgba(0,10,22,.18);
+}
+body .my-sessions-page.jynlo-c1 .session-card .meta-grid > div {
+  border-color: rgba(112,182,194,.2);
+  background: rgba(6,30,42,.55);
+}
+body .my-sessions-page.jynlo-c1 .session-card :is(.meta-grid span,.compact-meta span) {
+  color: var(--jynlo-next-muted);
+}
+body .my-sessions-page.jynlo-c1 .count-badge {
+  background: rgba(50,228,196,.13);
+  color: #b8ffed;
+}
+@media (max-width: 850px) {
+  body .communities-page.jynlo-c1 .community-pitch { gap: 1.2rem; }
+  body .jynlo-c1:is(.communities-page,.jynlo-games) :is(.page-header,.title-row) h1 {
+    overflow-wrap: break-word;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .sessions-page.jynlo-c1 .session-row,
+  body .communities-page.jynlo-c1 .community-list .community-card {
+    transition: none;
+    transform: none;
+  }
+}

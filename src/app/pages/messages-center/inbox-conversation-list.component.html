@@ -1,0 +1,26 @@
+<div class="inbox-entries">
+            @for (conversation of conversations; track conversation.key) {
+              <button type="button" class="inbox-entry"
+                [class.is-selected]="selectedKey === conversation.key"
+                [attr.aria-pressed]="selectedKey === conversation.key"
+                (click)="conversationSelected.emit(conversation)">
+                <span class="inbox-avatar" [class.inbox-avatar--community]="conversation.kind === 'community'"
+                  [class.inbox-avatar--session]="conversation.kind === 'session'" aria-hidden="true">
+                  {{ conversation.kind === 'direct' ? conversation.title.slice(0, 1).toUpperCase() : conversation.kind === 'community' ? '👥' : '⚽' }}
+                </span>
+                <span class="inbox-entry-content">
+                  <span class="inbox-entry-top">
+                    <strong>{{ conversation.title }}</strong>
+                    @if (conversation.latestAt) { <small [attr.title]="formatters.date(conversation.latestAt)">{{ formatters.time(conversation.latestAt) }}</small> }
+                  </span>
+                  <span class="inbox-entry-kind">{{ formatters.kind(conversation.kind) | t }} · {{ conversation.subtitle }}</span>
+                  <span class="inbox-entry-snippet">{{ conversation.latestText ? formatters.preview(conversation.latestText) : ('inbox.openPreview' | t) }}</span>
+                </span>
+                @if ((conversation.unreadCount ?? conversation.newThisVisit) > 0) {
+                  <span class="inbox-unread" [attr.aria-label]="'inbox.newCount' | t:{count: (conversation.unreadCount ?? conversation.newThisVisit)}">
+                    {{ formatters.unread(conversation) }}
+                  </span>
+                }
+              </button>
+            }
+          </div>

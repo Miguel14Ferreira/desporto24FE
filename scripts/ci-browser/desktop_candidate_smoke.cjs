@@ -48,7 +48,10 @@ const venues = [
 ];
 
 async function main() {
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  const browser = await chromium.launch({
+    headless: true, args: ['--no-sandbox'],
+    ...(process.env.JYNLO_USE_SYSTEM_CHROME === '1' ? { channel: 'chrome' } : {})
+  });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'pt-PT' });
   const pageErrors = [];
   const unexpectedCalls = [];
@@ -216,10 +219,44 @@ async function main() {
       'malformed session ID must not show join action');
     checkNoRuntimeErrors('invalid public links');
 
+    // Premium responsive smoke: real 390px Chromium viewport with synthetic API.
+    // Never contact production or rely on a desktop-sized screenshot for mobile claims.
+    await page.setViewportSize({ width: 390, height: 844 });
+    const checkMobile = async (label, selectors) => {
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      assert.ok(overflow <= 4, label + ': horizontal document overflow ' + overflow + 'px');
+      for (const selector of selectors) {
+        const node = page.locator(selector).first();
+        await node.waitFor({ state: 'visible' });
+        const box = await node.boundingBox();
+        assert.ok(box && box.width > 8 && box.x >= -3 && box.x + box.width <= 393,
+          label + ': ' + selector + ' clipped beyond the mobile viewport: ' + JSON.stringify(box));
+      }
+      checkNoRuntimeErrors(label);
+    };
+    await go('/');
+    await page.locator('.home-page .preview-search').waitFor();
+    await checkMobile('mobile home', ['.home-page .hero', '.home-page .preview-search',
+      '.home-page .preview-search input[name="sport"]', '.home-page .preview-search button[type="submit"]']);
+    await snapshot('13-mobile-home');
+
+    await go('/sessions/42');
+    await page.locator('.public-session-page .join-panel .primary-action').waitFor();
+    await checkMobile('mobile public session', ['.public-session-page .session-main',
+      '.public-session-page .join-panel', '.public-session-page .join-panel .primary-action']);
+    await snapshot('14-mobile-open-session');
+
+    await go('/sessions/43');
+    await page.locator('.public-session-page .join-panel .primary-action').waitFor();
+    await checkMobile('mobile full-session waitlist', ['.public-session-page .session-main',
+      '.public-session-page .join-panel']);
+    assert.match(await page.locator('.join-panel').innerText(), /lista de espera/i);
+    await snapshot('15-mobile-full-session');
+
     assert.deepEqual(unexpectedCalls, [], 'no unexpected production API calls should be made');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     assert.ok(overflow <= 4, 'desktop UI has unexpected horizontal overflow: ' + overflow);
-    console.log('PASS: 7 browser scenarios, 6 screenshots, zero browser JS exceptions.');
+    console.log('PASS: desktop journeys + three real 390px Chromium responsive scenarios; no browser JS exceptions.');
     console.log('PASS: all API data synthetic and intercepted; no production credentials or requests.');
   } catch (error) {
     await snapshot('FAILED-browser-state').catch(() => {});

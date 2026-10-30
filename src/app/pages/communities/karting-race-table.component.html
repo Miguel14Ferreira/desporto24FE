@@ -1,0 +1,60 @@
+<div class="karting-race-table-wrap">
+  <table class="karting-race-table"
+    [attr.aria-label]="('communities.tournaments.kartingRaceResults' | t) + ': ' + race.name">
+    <thead>
+      <tr>
+        <th scope="col">{{ 'communities.tournaments.kartingRacePlace' | t }}</th>
+        <th scope="col">{{ sport === 'Karting' ? ('communities.tournaments.kartingRaceDriver' | t) : ('communities.race.athlete' | t) }}</th>
+        @if (hasRaceLaps(race.entries)) {
+          <th scope="col">{{ 'communities.tournaments.kartingRaceLaps' | t }}</th>
+        }
+        <th scope="col">{{ 'communities.tournaments.kartingRaceTime' | t }}</th>
+        @if (hasRaceBestLap(race.entries)) {
+          <th scope="col">{{ 'communities.tournaments.kartingRaceBestLap' | t }}</th>
+        }
+        <th scope="col">{{ 'communities.tournaments.kartingRacePoints' | t }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (driver of orderedKartingRaceEntries(race.entries); track $index) {
+        <tr [class.is-disqualified]="driver.raceDisqualified"
+          [class.is-not-finished]="!driver.raceDisqualified && driver.finishPosition == null"
+          [class.is-race-winner]="driver.finishPosition === 1 && !driver.raceDisqualified">
+          <td>
+            <span class="karting-race-position"
+              [class.is-status]="driver.raceDisqualified || driver.finishPosition == null">
+              {{ driver.raceDisqualified ? 'DSQ'
+                : (driver.finishPosition == null ? 'DNF' : driver.finishPosition + '.º') }}
+            </span>
+          </td>
+          <td class="karting-race-driver">
+            <strong>{{ driver.fullName || ('communities.tournaments.kartingUnknownDriver' | t) }}</strong>
+            @if (driver.raceDisqualified && driver.raceStewardReason) {
+              <small>{{ driver.raceStewardReason }}</small>
+            }
+            @if (driver.racePenaltyPoints > 0) {
+              <small class="karting-race-penalty">
+                −{{ driver.racePenaltyPoints }} {{ 'communities.tournaments.kartingPenaltyPoints' | t }}
+                @if (driver.racePenaltyReason) { · {{ driver.racePenaltyReason }} }
+              </small>
+            }
+          </td>
+          @if (hasRaceLaps(race.entries)) {
+            <td>{{ driver.lapsCompleted ?? '—' }}</td>
+          }
+          <td class="karting-race-clock">
+            <strong>{{ formatKartingDuration(driver.adjustedElapsedSeconds ?? driver.elapsedSeconds) }}</strong>
+            @if (driver.raceTimePenaltySeconds != null && driver.raceTimePenaltySeconds > 0) {
+              <small>+{{ formatKartingDuration(driver.raceTimePenaltySeconds) }}
+                {{ 'communities.tournaments.kartingTimePenalty' | t }}</small>
+            }
+          </td>
+          @if (hasRaceBestLap(race.entries)) {
+            <td class="karting-race-clock">{{ formatKartingDuration(driver.bestLapSeconds) }}</td>
+          }
+          <td class="karting-race-award">{{ kartingRaceAward(driver) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

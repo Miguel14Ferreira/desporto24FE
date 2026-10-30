@@ -1,19 +1,19 @@
-<section class="admin-reports-page">
+<section class="admin-reports-page jynlo-c1 jynlo-admin">
   <div class="admin-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Administração</p>
-        <h1>Reports de utilizadores</h1>
+        <p class="eyebrow">{{ 'adminReports.eyebrow' | t }}</p>
+        <h1>{{ 'adminReports.title' | t }}</h1>
         <p class="subtitle">
-          Analisa denúncias abertas e encerra cada caso depois da revisão.
+          {{ 'adminReports.subtitle' | t }}
         </p>
       </div>
 
       <div class="header-actions">
         <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="load()" [disabled]="loading">
-          Atualizar
+          {{ 'adminReports.refresh' | t }}
         </button>
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">Voltar ao Admin</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">{{ 'adminReports.back' | t }}</a>
       </div>
     </header>
 
@@ -22,13 +22,13 @@
     }
 
     @if (loading) {
-      <div class="state-card">A carregar reports...</div>
+      <div class="state-card">{{ 'adminReports.loading' | t }}</div>
     }
 
     @if (!loading && reports.length === 0 && !errorMessage) {
       <div class="state-card">
-        <strong>Não existem reports abertos.</strong>
-        <p>Novas denúncias aparecem aqui para análise.</p>
+        <strong>{{ 'adminReports.emptyTitle' | t }}</strong>
+        <p>{{ 'adminReports.emptyText' | t }}</p>
       </div>
     }
 
@@ -37,13 +37,13 @@
         @for (report of reports; track report.id) {
           <article class="report-card">
             <div class="report-top">
-              <span class="status-badge">OPEN</span>
+              <span class="status-badge">{{ 'adminReports.openStatus' | t }}</span>
               <span class="created-at">{{ formatDate(report.createdAt) }}</span>
             </div>
 
             <div class="report-people">
               <strong>@{{ report.reportedUsername }}</strong>
-              <span>Reportado por @{{ report.reporterUsername }}</span>
+              <span>{{ 'adminReports.reportedBy' | t:{ username: report.reporterUsername } }}</span>
             </div>
 
             <p class="reason">{{ report.reason }}</p>
@@ -53,14 +53,14 @@
                 type="button"
                 [disabled]="updatingId !== null"
                 (click)="closeReport(report, 'REVIEWED')">
-                Marcar analisado
+                {{ 'adminReports.markReviewed' | t }}
               </button>
               <button
                 type="button"
                 class="dismiss"
                 [disabled]="updatingId !== null"
                 (click)="closeReport(report, 'DISMISSED')">
-                Dispensar
+                {{ 'adminReports.dismiss' | t }}
               </button>
             </div>
           </article>

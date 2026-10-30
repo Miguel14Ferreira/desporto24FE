@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import { finalize, Subscription, timeout } from 'rxjs';
 import { AuthenticationService } from '../../services/authethication.service';
-import { AdminPlayer, AdminPlayersService, ModerationAction } from '../../services/admin-players.service';
+import { AdminPlayer, AdminPlayersService, CommunityQuota, ModerationAction } from '../../services/admin-players.service';
 
 interface PendingModeration {
   id: number;
@@ -27,6 +27,16 @@ export class AdminPlayersComponent implements OnDestroy {
   searched = false;
   errorKey = '';
   expandedPlayerId: number | null = null;
+
+  selectedCommunityLimitPlayer: AdminPlayer | null = null;
+  communityLimitQuota: CommunityQuota | null = null;
+  communityLimitValue = 5;
+  resetCommunityLimit = false;
+  communityLimitReason = '';
+  communityLimitLoading = false;
+  communityLimitError = '';
+  communityLimitSuccess = '';
+  private communityLimitRequest?: Subscription;
 
   pendingRole: { id: number; username: string; role: 'ROLE_ADMIN' | 'ROLE_USER'; expectedRole: string } | null = null;
   changingRole = false;
@@ -55,7 +65,7 @@ export class AdminPlayersComponent implements OnDestroy {
   }
 
   get working(): boolean {
-    return this.changingRole || this.moderating;
+    return this.changingRole || this.moderating || this.communityLimitLoading;
   }
 
   canChangeRole(player: AdminPlayer): boolean {
@@ -82,12 +92,65 @@ export class AdminPlayersComponent implements OnDestroy {
 
   canManagePlayer(player: AdminPlayer): boolean {
     return this.canChangeRole(player) || this.canSuspend(player)
-      || this.canReinstate(player) || this.canDelete(player);
+      || this.canReinstate(player) || this.canDelete(player) || this.canManageRoles;
   }
 
   toggleActions(player: AdminPlayer): void {
     if (this.working || !this.canManagePlayer(player)) return;
     this.expandedPlayerId = this.expandedPlayerId === player.id ? null : player.id;
+  }
+
+  beginCommunityLimit(player: AdminPlayer): void {
+    if (!this.canManageRoles || this.working) return;
+    this.communityLimitRequest?.unsubscribe();
+    this.selectedCommunityLimitPlayer = player;
+    this.communityLimitQuota = null;
+    this.communityLimitError = '';
+    this.communityLimitSuccess = '';
+    this.communityLimitReason = '';
+    this.resetCommunityLimit = false;
+    this.communityLimitLoading = true;
+    this.communityLimitRequest = this.service.communityLimit(player.id)
+      .pipe(timeout(10_000), finalize(() => this.communityLimitLoading = false))
+      .subscribe({
+        next: quota => {
+          this.communityLimitQuota = quota;
+          this.communityLimitValue = quota.limit;
+        },
+        error: () => this.communityLimitError = 'adminPlayers.communityLimitError'
+      });
+  }
+
+  cancelCommunityLimit(): void {
+    if (this.communityLimitLoading) return;
+    this.selectedCommunityLimitPlayer = null;
+    this.communityLimitQuota = null;
+    this.communityLimitError = '';
+  }
+
+  saveCommunityLimit(): void {
+    const selected = this.selectedCommunityLimitPlayer;
+    if (!selected || !this.canManageRoles || this.working ||
+        !this.communityLimitReason.trim() ||
+        (!this.resetCommunityLimit && (
+          !Number.isInteger(Number(this.communityLimitValue))
+          || Number(this.communityLimitValue) < 1
+          || Number(this.communityLimitValue) > 100))) return;
+    this.communityLimitLoading = true;
+    this.communityLimitError = '';
+    this.communityLimitSuccess = '';
+    this.communityLimitRequest = this.service.updateCommunityLimit(selected.id,
+      this.resetCommunityLimit ? null : Number(this.communityLimitValue),
+      this.communityLimitReason.trim())
+      .pipe(timeout(10_000), finalize(() => this.communityLimitLoading = false))
+      .subscribe({
+        next: quota => {
+          this.communityLimitQuota = quota;
+          this.communityLimitSuccess = selected.username;
+          this.selectedCommunityLimitPlayer = null;
+        },
+        error: () => this.communityLimitError = 'adminPlayers.communityLimitError'
+      });
   }
 
   beginRoleChange(player: AdminPlayer): void {
@@ -212,6 +275,8 @@ export class AdminPlayersComponent implements OnDestroy {
     if (this.working) return;
     this.pendingRole = null;
     this.pendingModeration = null;
+    this.selectedCommunityLimitPlayer = null;
+    this.communityLimitRequest?.unsubscribe();
     this.roleErrorKey = '';
     this.roleSuccessName = '';
     this.moderationErrorKey = '';
@@ -230,6 +295,7 @@ export class AdminPlayersComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.roleRequest?.unsubscribe();
+    this.communityLimitRequest?.unsubscribe();
     this.moderationRequest?.unsubscribe();
     this.request?.unsubscribe();
   }

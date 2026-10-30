@@ -11,7 +11,7 @@
 }
 
 .public-session-shell {
-  width: min(1100px, 100%);
+  width: min(1380px, 100%);
   margin: 0 auto;
 }
 
@@ -43,8 +43,9 @@
 
 .session-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
-  gap: 2rem;
+  /* Session details get ~60% of the desktop width; RSVP stays comfortable. */
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+  gap: clamp(1rem, 2.4vw, 2rem);
   align-items: start;
 }
 
@@ -192,26 +193,9 @@ h1 {
 }
 
 .state-card { padding: 2rem; }
-.error-state p { color: #cbd5e1; }
-.error-state a { color: #7dd3fc; }
 
-.retry-action {
-  display: block;
-  margin: 1rem 0;
-  padding: .8rem 1.1rem;
-  border: 0;
-  border-radius: .8rem;
-  background: #f8fafc;
-  color: #0f172a;
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-}
-.retry-action:hover { background: #dbeafe; }
-.retry-action:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
-
-@media (max-width: 800px) {
-  .session-layout { grid-template-columns: 1fr; }
+@media (max-width: 1030px) {
+  .session-layout { grid-template-columns: minmax(0, 1fr); }
   .public-header { margin-bottom: 2rem; }
 }
 
@@ -219,3 +203,226 @@ h1 {
   .public-session-page { padding: 5.5rem 1rem 3rem; }
   .session-facts { grid-template-columns: 1fr; }
 }
+
+.public-location-link { display:grid;gap:5px;min-width:0;max-width:100%;color:#f8fafc;text-decoration:none;font-weight:750; }
+.public-location-link strong {display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;line-height:1.45;}
+.public-location-map {color:#7dd3fc;font-size:.77rem;font-weight:700;text-decoration:underline;text-underline-offset:.17rem;}
+.public-location-link:hover { color: #7dd3fc; }
+.public-location-link:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+
+/* Public, no-login four-stage RSVP: mobile-first, no change to signed-in flow. */
+.guest-rsvp {
+  display:grid;gap:12px;min-width:0;margin:6px 0 18px;
+  padding:18px;border:1px solid #236879;border-radius:18px;
+  background:linear-gradient(145deg,#0b3546,#082432);
+  box-shadow:inset 0 1px rgba(255,255,255,.05);
+}
+.guest-rsvp h2{margin:2px 0;color:#effefa;font-size:clamp(1.25rem,2vw,1.5rem)}
+.guest-rsvp h3{margin:5px 0;font-size:1.05rem;color:#e5fff7}
+.guest-rsvp-kicker{color:#5cf3d6;letter-spacing:.12em;font-size:.72rem;font-weight:850}
+.guest-rsvp p{font-size:.84rem;line-height:1.55;margin:0;color:#b5d6dc}
+.guest-rsvp label{display:block;margin:6px 0 0;font-size:.8rem;font-weight:800;color:#d7f8f2}
+.guest-rsvp select,.guest-rsvp input,.guest-rsvp textarea{
+  box-sizing:border-box;width:100%;min-width:0;max-width:100%;
+  border-radius:11px;border:1px solid #377684;
+  padding:12px 13px;background:#082939;color:#fff;font:inherit
+}
+.guest-rsvp select option{color:#fff;background:#092b39}
+.guest-rsvp textarea{resize:vertical}
+.guest-rsvp-primary{
+  display:grid;place-items:center;min-height:44px;text-align:center;
+  padding:11px 15px;margin-top:3px;border:0;border-radius:12px;
+  background:#29e3c3;color:#073340;font:inherit;font-weight:850;
+  cursor:pointer;text-decoration:none
+}
+.guest-rsvp-primary:disabled{opacity:.5;cursor:not-allowed}
+.guest-rsvp-back{
+  justify-self:start;border:1px solid #3b7b84;border-radius:10px;
+  background:#174657;color:#e9fff8;padding:9px 12px;cursor:pointer;font:inherit
+}
+.guest-rsvp-identity{
+  text-align:center;padding:16px;border:1px solid #2d988a;border-radius:12px;
+  background:#0c4450;color:#effff8;font-weight:850;font-size:1.1rem
+}
+.guest-rsvp .guest-rsvp-hint{color:#b4dce2;font-size:.77rem}
+.guest-rsvp .guest-rsvp-error{color:#ffb9ba}
+.invitation-inline-login {display:grid;gap:.7rem;min-width:0}
+.invitation-inline-login label {font-size:.86rem;font-weight:800;color:#e2f3f7}
+.invitation-inline-login input {
+  width:100%;min-width:0;min-height:45px;box-sizing:border-box;padding:.75rem .9rem;
+  border:1px solid rgba(125,211,252,.45);border-radius:.8rem;
+  background:rgba(5,29,43,.72);color:#fff;font:inherit;
+}
+.invitation-inline-login input:focus-visible {outline:3px solid #7dd3fc;outline-offset:2px}
+.invitation-have-account,.invitation-no-account,.invitation-first-confirm {width:100%;min-height:48px}
+.invitation-other-login {margin-top:.35rem}
+.invite-auth-divider {
+  display:flex;align-items:center;gap:.75rem;margin:.3rem 0;color:#c6e6ed;
+  font-size:.79rem;font-weight:750
+}
+.invite-auth-divider::before,.invite-auth-divider::after {
+  content:'';height:1px;flex:1;background:rgba(125,211,252,.25)
+}
+.invite-google-auth {display:grid;gap:.65rem;min-width:0}
+.invite-google-button {display:flex;justify-content:center;min-height:42px;max-width:100%;overflow:hidden}
+.invite-google-auth p {margin:0}
+.invite-google-onboarding {display:grid;gap:.6rem;padding:.8rem;border:1px solid rgba(125,211,252,.3);border-radius:.75rem}
+.invite-mfa-form input {font-size:1.14rem;font-weight:800;letter-spacing:.18em;font-variant-numeric:tabular-nums}
+.invite-mfa-countdown {display:flex;align-items:center;justify-content:space-between;gap:.7rem;
+  padding:.7rem .85rem;border:1px solid rgba(125,211,252,.28);border-radius:.75rem;
+  background:rgba(125,211,252,.07)}
+.invite-mfa-countdown strong {font-size:1.1rem;color:#91fff0;font-variant-numeric:tabular-nums}
+.guest-rsvp .invite-mfa-feedback {color:#a7f3d0}
+.invite-mfa-resend {justify-self:stretch;min-height:44px}
+@media(max-width:480px){
+  .invite-google-button {justify-content:flex-start}
+  .invite-mfa-countdown {flex-wrap:wrap}
+}
+.member-rsvp {
+  display:grid;gap:.75rem;padding:1.2rem;margin:.95rem 0 0;border:1px solid rgba(46,216,181,.38);
+  border-radius:1rem;background:linear-gradient(125deg,rgba(7,53,63,.72),rgba(8,28,45,.7));
+}
+.member-rsvp h2 {margin:0;font-size:clamp(1.25rem,2vw,1.5rem)}
+.member-rsvp p {margin:0;color:#d0e4e8;line-height:1.55}
+.member-rsvp .guest-cancel-link {justify-self:start;margin:0;min-height:44px}
+.member-presence-status {
+  display:inline-flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
+  border:1px solid rgba(52,211,153,.4);border-radius:.8rem;
+  background:rgba(16,185,129,.1);color:#b9f6ca;font-weight:800;
+}
+.member-presence-status-dot {width:.65rem;height:.65rem;border-radius:50%;background:#34d399;flex:none}
+.member-rsvp .member-cancel-action {
+  display:inline-flex;align-items:center;justify-content:center;
+  width:100%;box-sizing:border-box;min-height:46px;padding:.75rem 1rem;
+  border:1px solid rgba(251,113,133,.65);border-radius:.8rem;
+  color:#fecdd3;background:rgba(127,29,29,.15);font-weight:800;text-decoration:none;
+}
+.member-rsvp .member-cancel-action:hover {background:rgba(127,29,29,.27);color:#fff}
+.member-rsvp .guest-cancel-confirm {display:grid;gap:.75rem;width:100%}
+.member-rsvp .guest-cancel-confirm :is(button) {min-height:44px}
+
+.member-rsvp .guest-rsvp-primary {width:100%}
+.member-rsvp-notice {color:#b9f6ca!important}
+.member-rsvp :is(button,a):focus-visible {outline:3px solid #7dd3fc;outline-offset:2px}
+.guest-rsvp-upgrade{display:grid;gap:9px;border-top:1px solid #326473;padding-top:17px}
+.guest-rsvp-upgrade .guest-rsvp-primary{margin:7px 0}
+.guest-rsvp :is(button,a,select,input,textarea):focus-visible{
+  outline:2px solid #83ffe7;outline-offset:3px
+}
+@media(max-width:420px){.guest-rsvp{padding:13px}.join-panel{padding:1rem}}
+
+
+/* Organizer-issued signed invitations alone can display confirmed players.
+   Match the compact participant chips in the authenticated session view. */
+.guest-confirmed-roster{
+  display:grid;gap:12px;margin-top:22px;padding:clamp(14px,2.3vw,20px);
+  min-width:0;border:1px solid rgba(56,202,194,.34);border-radius:16px;
+  background:linear-gradient(135deg,rgba(11,61,70,.53),rgba(10,39,54,.52));
+}
+.guest-confirmed-roster-header{display:flex;align-items:start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.guest-confirmed-roster-header h2{font-size:1.08rem;line-height:1.3;margin:0 0 4px}
+.guest-confirmed-roster-header p,.guest-confirmed-roster-empty{color:#bdd6dd;font-size:.84rem;line-height:1.55;margin:0}
+.guest-confirmed-roster-refresh{
+  border:1px solid rgba(127,224,227,.4);border-radius:999px;
+  padding:8px 14px;background:rgba(27,88,100,.55);color:#e4fdfd;
+  font:inherit;font-size:.82rem;font-weight:800;cursor:pointer;
+}
+.guest-confirmed-roster-refresh:disabled{opacity:.55;cursor:wait}
+.guest-confirmed-roster-refresh:focus-visible{outline:2px solid #8affea;outline-offset:3px}
+.guest-confirmed-roster-chips{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.guest-confirmed-player{
+  display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap;
+  max-width:100%;min-width:0;padding:7px 9px;border:1px solid rgba(77,208,188,.35);
+  border-radius:12px;background:rgba(20,88,85,.5);line-height:1.4;color:#ecfffa;
+}
+.guest-confirmed-player--account{border-color:rgba(104,190,239,.36);background:rgba(28,76,104,.48)}
+.guest-confirmed-player strong{font-size:.84rem;overflow-wrap:anywhere;min-width:0}
+.guest-confirmed-player small{
+  padding:3px 8px;border-radius:999px;color:#75fbdc;background:rgba(28,233,185,.12);
+  font-size:.64rem;font-weight:850;letter-spacing:.035em;line-height:1.25;
+}
+.guest-confirmed-player--account small{color:#b4e5ff;background:rgba(71,166,228,.17)}
+.guest-confirmed-roster-error{font-size:.84rem;color:#ffbdc0}
+.guest-rsvp .guest-rsvp-confirmed-identity{
+  padding:10px 12px;border:1px solid rgba(72,232,192,.4);
+  border-radius:10px;background:rgba(45,223,182,.10);color:#dffef5;overflow-wrap:anywhere;
+}
+.guest-rsvp-confirmed-identity strong{display:block;color:#fff;font-size:1.02rem;margin-top:3px}
+@media(max-width:460px){
+ .guest-confirmed-roster-header{align-items:stretch}
+ .guest-confirmed-roster-refresh{width:100%}
+ .guest-confirmed-player{flex:1 1 145px;justify-content:space-between}
+}
+
+/* The organiser's arrival instructions are only rendered for a validated
+   APPROVED/LINKED guest receipt, never from the shareable invitation token. */
+.guest-private-meeting-point {
+  min-width:0;display:grid;gap:8px;padding:14px;
+  border:1px solid rgba(79,226,188,.5);border-radius:13px;
+  background:rgba(17,83,76,.47);
+}
+.guest-private-meeting-point h3 {margin:0;color:#e7fff6;font-size:1rem}
+.guest-rsvp .guest-private-meeting-point p {
+  margin:0;color:#fff;line-height:1.55;font-weight:750;
+  overflow-wrap:anywhere;white-space:pre-wrap;
+}
+.guest-private-meeting-point small {color:#bddbd9;line-height:1.5}
+.guest-meeting-refresh {max-width:100%;min-height:42px;white-space:normal}
+
+/* RSVP fills its column; the session details take priority in desktop width. */
+.session-layout > .join-panel{width:100%;box-sizing:border-box}
+.guest-reservation-actions{display:grid;gap:12px;min-width:0}
+.guest-change-panel{display:grid;gap:10px;padding:15px;min-width:0;
+  border:1px solid rgba(104,216,201,.32);border-radius:14px;
+  background:rgba(8,37,51,.72)}
+.guest-change-panel h3{margin:0}
+.guest-change-panel label{font-weight:750}
+.guest-change-panel .guest-rsvp-primary{width:100%}
+.guest-change-player-button{justify-self:stretch;width:100%;text-align:center;font-weight:800}
+.guest-cancel-link{justify-self:start;padding:8px 3px;background:transparent;border:0;
+  color:#f5b7bb;font:inherit;font-size:.83rem;text-decoration:underline;
+  text-underline-offset:3px;cursor:pointer}
+.guest-cancel-link:hover{color:#ffdedf}
+.guest-cancel-confirm{display:grid;gap:10px;padding:14px;
+  border:1px solid rgba(248,113,113,.4);border-radius:12px;
+  background:rgba(100,20,33,.15)}
+.guest-cancel-danger{min-height:44px;padding:10px 14px;
+  border:1px solid rgba(248,113,113,.6);border-radius:10px;
+  background:#6c2334;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+.guest-reservation-actions :is(button,select,input):focus-visible{
+  outline:2px solid #8affe5;outline-offset:3px
+}
+.guest-reservation-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:1030px){.session-layout>.join-panel{max-width:none}}
+
+.guest-saved-bookings{display:grid;gap:8px;padding:12px;border:1px solid rgba(104,216,201,.35);border-radius:13px;background:rgba(24,88,89,.22)}
+.guest-saved-bookings h3{margin:0;font-size:1rem}
+.guest-saved-booking{justify-self:stretch;width:100%;text-align:left;font-weight:800}
+.guest-saved-booking:hover{border-color:rgba(119,245,216,.7)}
+
+/* Cancelled guests can reclaim a seat without navigating away, while capacity
+   remains enforced by the API's transactional guest registration. */
+.guest-rejoin-actions{display:grid;gap:9px;min-width:0;margin-top:14px}
+.guest-rejoin-actions .guest-rejoin-button{width:100%;max-width:100%;overflow-wrap:anywhere}
+.guest-rejoin-actions .guest-rsvp-hint{line-height:1.6}
+
+.invite-chat-placeholder{
+ display:grid;gap:5px;margin-top:18px;padding:18px;
+ background:rgba(10,42,55,.7);border:1px solid rgba(73,194,194,.3);
+ border-radius:16px;min-height:84px;
+}
+.invite-chat-placeholder strong{color:#e8fcfa;font-size:1.05rem}
+.invite-chat-placeholder span{color:#b6d6dd;font-size:.83rem}
+
+/* Public error: clear action spacing and mobile stacking. */
+.error-state{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:clamp(24px,3vw,36px)}
+.error-state h1{margin:0;font-size:clamp(1.9rem,4vw,3rem);line-height:1.15;overflow-wrap:anywhere}
+.error-state .error-description{margin:0;max-width:68ch;color:#cbd5e1;line-height:1.6;overflow-wrap:anywhere}
+.error-actions{display:flex;align-items:stretch;flex-wrap:wrap;gap:12px;width:100%;min-width:0;margin-top:12px}
+.error-actions>:is(button,a){box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:46px;min-width:0;max-width:100%;margin:0;padding:11px 18px;border-radius:12px;font:inherit;font-size:.9rem;font-weight:800;line-height:1.35;text-decoration:none;text-align:center;white-space:normal;overflow-wrap:anywhere}
+.error-actions>.retry-action{border:1px solid #47e0c4;background:#3ce7c8;color:#08323b;cursor:pointer}
+.error-actions>.retry-action:hover{background:#82f9df}
+.error-actions>.error-home-action{border:1px solid #68cdcb70;background:#2b677733;color:#e1faf6}
+.error-actions>.error-home-action:hover{border-color:#64e2d0;background:#3182865c;color:#fff}
+.error-actions>:is(button,a):focus-visible{outline:2px solid #83ffe7;outline-offset:3px}
+@media(max-width:500px){.error-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}.error-actions>:is(button,a){width:100%}}

@@ -1,0 +1,35 @@
+<section class="management-block competition-settings">
+  <div class="section-heading">
+    <div>
+      <span class="section-kicker">{{ 'communities.competitionSettings' | t }}</span>
+      <h3>{{ 'communities.rankingsModule' | t }}</h3>
+    </div>
+    <app-community-switch class="competition-settings-switch"
+      [checked]="enabled"
+      [label]="(enabled ? 'communities.enabled' : 'communities.disabled') | t"
+      (checkedChange)="enabledChange.emit($event)"
+    ></app-community-switch>
+  </div>
+
+  <p>{{ 'communities.rankingsOptionalHint' | t }}</p>
+
+  <div class="points-settings">
+    <label>
+      <span>{{ 'communities.winPoints' | t }}</span>
+      <input type="number" min="0" [ngModel]="winPoints" (ngModelChange)="winPointsChange.emit($event)">
+    </label>
+    <label>
+      <span>{{ 'communities.drawPoints' | t }}</span>
+      <input type="number" min="0" [ngModel]="drawPoints" (ngModelChange)="drawPointsChange.emit($event)">
+    </label>
+    <label>
+      <span>{{ 'communities.lossPoints' | t }}</span>
+      <input type="number" min="0" [ngModel]="lossPoints" (ngModelChange)="lossPointsChange.emit($event)">
+    </label>
+  </div>
+
+  <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+    [disabled]="saving" (click)="saveRequested.emit()">
+    {{ (saving ? 'communities.savingCompetition' : 'communities.saveCompetition') | t }}
+  </button>
+</section>

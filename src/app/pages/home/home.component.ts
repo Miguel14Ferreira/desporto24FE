@@ -10,7 +10,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 @Component({
     selector: 'app-home',
     templateUrl: './home.component.html',
-    styleUrls: ['./home.component.css'],
+    styleUrls: ['./home.component.css', './home-concept-one-refresh.css'],
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })

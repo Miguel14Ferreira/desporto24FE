@@ -1,0 +1,51 @@
+:host { display:block; min-width:0; }
+/* Karting race classification — desktop-first, readable, scrollable on mobile. */
+.karting-race-table-wrap {
+  width: 100%; max-width: 100%; min-width: 0;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  margin-top: .85rem;
+  border: 1px solid rgba(148, 163, 184, .2);
+  border-radius: .8rem;
+}
+.karting-race-table {
+  width: 100%; min-width: 44rem;
+  border-collapse: collapse; font-size: .8rem;
+}
+.karting-race-table th, .karting-race-table td {
+  text-align: left; padding: .8rem .65rem;
+  border-bottom: 1px solid rgba(148,163,184,.15); vertical-align: middle;
+}
+.karting-race-table th {
+  background: rgba(10, 28, 44, .93); font-size: .69rem;
+  color: #a7b9cb; text-transform: uppercase;
+  letter-spacing: .045em; font-weight: 850;
+}
+.karting-race-table tbody tr:last-child td { border-bottom: 0; }
+.karting-race-table tbody tr.is-race-winner { background: rgba(251,191,36,.07); }
+.karting-race-table tbody tr.is-disqualified,
+.karting-race-table tbody tr.is-not-finished { background: rgba(127, 29, 29, .06); }
+.karting-race-position {
+  display: inline-flex; min-width: 2.5rem; align-items: center; justify-content: center;
+  padding: .33rem .5rem; border-radius: .48rem;
+  background: rgba(16,185,129,.11);
+  border: 1px solid rgba(16,185,129,.31); color: #bbf7d0;
+  font-weight: 850;
+}
+.karting-race-position.is-status {
+  background: rgba(148,163,184,.08); border-color: rgba(148,163,184,.3);
+  color: #e2e8f0;
+}
+.karting-race-driver { min-width: 10rem; overflow-wrap: anywhere; }
+.karting-race-driver strong { color: #f8fafc; }
+.karting-race-driver small, .karting-race-clock small {
+  display: block; margin-top: .25rem; color: #9eb2c7;
+  font-size: .68rem; line-height: 1.4;
+}
+.karting-race-driver .karting-race-penalty { color: #fbbf24; }
+.karting-race-clock { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.karting-race-clock strong { color: #e2e8f0; }
+.karting-race-award { color: #86efac; font-weight: 900; font-variant-numeric: tabular-nums; }
+@media(max-width: 720px) {
+  .karting-race-table { min-width: 39rem; }
+  .karting-race-table th, .karting-race-table td { padding: .65rem .5rem; }
+}

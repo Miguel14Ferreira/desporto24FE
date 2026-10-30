@@ -6,6 +6,7 @@ import {
   ClosedUserReportStatus
 } from '../model/admin-user-report';
 import { AdminUserReportsService } from '../../services/admin-user-reports.service';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 @Component({
   selector: 'app-admin-user-reports',
@@ -44,7 +45,7 @@ export class AdminUserReportsComponent implements OnInit {
         next: reports => this.reports = reports,
         error: () => {
           this.reports = [];
-          this.errorMessage = 'Não foi possível carregar os reports.';
+          this.errorMessage = t('adminReports.loadError');
         }
       });
   }
@@ -70,14 +71,14 @@ export class AdminUserReportsComponent implements OnInit {
           this.reports = this.reports.filter(item => item.id !== report.id);
         },
         error: () => {
-          this.errorMessage = 'Não foi possível atualizar o report.';
+          this.errorMessage = t('adminReports.updateError');
         }
       });
   }
 
   formatDate(value: string | null): string {
     if (!value) {
-      return 'Data indisponível';
+      return t('adminReports.dateUnavailable');
     }
 
     const date = new Date(value);

@@ -6,7 +6,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { GoogleRegistrationRequest } from '../model/google-auth-response';
-import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { COUNTRY_CALLING_CODES, COUNTRY_SELECT_CHOICES, countryNameFromLabel } from '../../shared/country-calling-codes';
 import { safeLoginReturnUrl } from '../../shared/safe-login-return-url';
 
 @Component({
@@ -38,6 +38,7 @@ export class GoogleOnboardingComponent implements OnInit {
   readonly minBirthDate = this.dateYearsAgo(120);
 
   readonly countryOptions = COUNTRY_CALLING_CODES;
+  readonly countrySelectChoices = COUNTRY_SELECT_CHOICES;
 
   constructor(
     private authenticationService: AuthenticationService,

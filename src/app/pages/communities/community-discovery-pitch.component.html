@@ -1,0 +1,52 @@
+<section class="community-pitch" aria-labelledby="community-pitch-title">
+  <div class="community-pitch-copy">
+    <p class="community-pitch-eyebrow">{{ 'communities.pitchEyebrow' | t }}</p>
+    <h2 id="community-pitch-title">{{ 'communities.pitchTitle' | t }}</h2>
+    <p class="community-pitch-lead">{{ 'communities.pitchLead' | t }}</p>
+    <p class="community-pitch-promise">{{ 'communities.pitchPromise' | t }}</p>
+
+    <div class="community-pitch-actions">
+      <a class="primary-action button-link jynlo-action jynlo-action--primary"
+         routerLink="/menu/communities/create">
+        {{ 'communities.pitchCreate' | t }}
+      </a>
+      <button type="button" class="secondary-action button-link jynlo-action jynlo-action--neutral"
+         [disabled]="communitySearchLoading" (click)="exploreRequested.emit()">
+        {{ 'communities.pitchExplore' | t }}
+      </button>
+    </div>
+    <p class="community-pitch-onboarding">{{ 'communities.pitchOnboarding' | t }}</p>
+  </div>
+
+  <div class="community-pitch-benefits"
+       role="list" [attr.aria-label]="'communities.pitchBenefitsLabel' | t">
+    <article class="community-pitch-benefit" role="listitem">
+      <span class="community-pitch-benefit-icon" aria-hidden="true">⚽</span>
+      <div>
+        <h3>{{ 'communities.pitchGamesTitle' | t }}</h3>
+        <p>{{ 'communities.pitchGamesText' | t }}</p>
+      </div>
+    </article>
+    <article class="community-pitch-benefit" role="listitem">
+      <span class="community-pitch-benefit-icon" aria-hidden="true">🏆</span>
+      <div>
+        <h3>{{ 'communities.pitchTournamentsTitle' | t }}</h3>
+        <p>{{ 'communities.pitchTournamentsText' | t }}</p>
+      </div>
+    </article>
+    <article class="community-pitch-benefit" role="listitem">
+      <span class="community-pitch-benefit-icon" aria-hidden="true">📊</span>
+      <div>
+        <h3>{{ 'communities.pitchRankingsTitle' | t }}</h3>
+        <p>{{ 'communities.pitchRankingsText' | t }}</p>
+      </div>
+    </article>
+    <article class="community-pitch-benefit" role="listitem">
+      <span class="community-pitch-benefit-icon" aria-hidden="true">🤝</span>
+      <div>
+        <h3>{{ 'communities.pitchGroupTitle' | t }}</h3>
+        <p>{{ 'communities.pitchGroupText' | t }}</p>
+      </div>
+    </article>
+  </div>
+</section>

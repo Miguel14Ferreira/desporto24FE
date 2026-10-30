@@ -1,0 +1,54 @@
+name: Jynlo QA inbox contract tests
+
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'scripts/qa/jynlo-inbox-live-qa.cjs'
+      - 'scripts/qa/jynlo-inbox-live-qa.test.cjs'
+      - 'scripts/qa/jynlo-inbox-live-browser.cjs'
+      - 'scripts/qa/jynlo-inbox-live-browser.test.cjs'
+      - 'scripts/qa/jynlo-read-receipts-live-browser.cjs'
+      - 'scripts/qa/jynlo-read-receipts-live-browser.test.cjs'
+      - 'scripts/qa/jynlo-session-live-browser.cjs'
+      - 'scripts/qa/jynlo-session-live-browser.test.cjs'
+      - 'scripts/qa/jynlo-notifications-live-readonly.cjs'
+      - 'scripts/qa/jynlo-notifications-live-readonly.test.cjs'
+      - '.github/workflows/notification-live-readonly.yml'
+      - 'scripts/qa/jynlo-email-live-preflight.cjs'
+      - 'scripts/qa/jynlo-email-live-preflight.test.cjs'
+      - 'scripts/qa/jynlo-email-optout-live-once.cjs'
+      - 'scripts/qa/jynlo-email-optout-live-once.test.cjs'
+      - '.github/workflows/qa-inbox-contract.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inbox-qa-contract-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  qa-contract:
+    name: QA friendship and inbox API contracts (mock only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check scripts/qa/jynlo-inbox-live-qa.cjs
+      - run: node --test scripts/qa/jynlo-inbox-live-qa.test.cjs
+      - run: node --check scripts/qa/jynlo-inbox-live-browser.cjs
+      - run: node --test scripts/qa/jynlo-inbox-live-browser.test.cjs
+      - run: node --check scripts/qa/jynlo-read-receipts-live-browser.cjs
+      - run: node --test scripts/qa/jynlo-read-receipts-live-browser.test.cjs
+      - run: node --check scripts/qa/jynlo-session-live-browser.cjs
+      - run: node --test scripts/qa/jynlo-session-live-browser.test.cjs
+      - run: node --check scripts/qa/jynlo-notifications-live-readonly.cjs
+      - run: node --test scripts/qa/jynlo-notifications-live-readonly.test.cjs
+      - run: node --check scripts/qa/jynlo-email-live-preflight.cjs
+      - run: node --test scripts/qa/jynlo-email-live-preflight.test.cjs
+      - run: node --check scripts/qa/jynlo-email-optout-live-once.cjs
+      - run: node --test scripts/qa/jynlo-email-optout-live-once.test.cjs

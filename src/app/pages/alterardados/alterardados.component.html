@@ -1,8 +1,7 @@
-<section class="edit-page">
+<section class="edit-page jynlo-c1 jynlo-secondary">
   <div class="edit-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
         <h1>{{ 'profile.edit.title' | t }}</h1>
         <p class="subtitle">{{ 'profile.edit.subtitle' | t }}</p>
       </div>
@@ -160,18 +159,15 @@
 
           <label>
             <span>{{ 'common.country' | t }} *</span>
-            <select
-              name="country"
-              [(ngModel)]="profile.country"
-              required
-              [disabled]="saving"
-              [attr.aria-invalid]="fieldErrors.country ? 'true' : 'false'"
-              (change)="clearFieldError('country')">
-              <option value="">{{ 'register.select' | t }}</option>
-              @for (item of countryOptions; track item.label) {
-                <option [value]="countryName(item.label)">{{ countryName(item.label) }}</option>
-              }
-            </select>
+            <app-jynlo-select
+              name="country" [(ngModel)]="profile.country"
+              [options]="countrySelectChoices" [searchable]="true"
+              [ariaLabel]="'common.country' | t"
+              [placeholder]="'register.select' | t"
+              [required]="true" [disabled]="saving" [blocked]="saving"
+              [invalid]="!!fieldErrors.country"
+              (picked)="clearFieldError('country')"
+            ></app-jynlo-select>
             @if (fieldErrors.country) {
               <small class="field-error">{{ fieldErrors.country }}</small>
             }
@@ -221,16 +217,21 @@
 
           <label>
             <span>{{ 'common.gender' | t }}</span>
-            <select name="gender" [(ngModel)]="profile.gender" [disabled]="saving">
-              <option [ngValue]="null">{{ 'profile.gender.none' | t }}</option>
-              <option value="masculino">{{ 'register.male' | t }}</option>
-              <option value="feminino">{{ 'register.female' | t }}</option>
-              <option value="outro">{{ 'register.other' | t }}</option>
-            </select>
+            <app-jynlo-select name="gender" [(ngModel)]="profile.gender"
+              [options]="[
+                {value: '', label: ('profile.gender.none' | t)},
+                {value: 'masculino', label: ('register.male' | t)},
+                {value: 'feminino', label: ('register.female' | t)},
+                {value: 'outro', label: ('register.other' | t)}
+              ]"
+              [ariaLabel]="'common.gender' | t" [placeholder]="'profile.gender.none' | t"
+              [disabled]="saving" [blocked]="saving">
+            </app-jynlo-select>
           </label>
 
           <div class="full-width sport-selector">
             <span class="field-label">{{ 'profile.favoriteSports' | t }}</span>
+            <p class="sport-selection-count">{{ 'profile.favoriteSportsSelected' | t:{ count: selectedSports.length } }}</p>
 
             @if (selectedSports.length > 0) {
               <div class="sport-chips">
@@ -256,7 +257,6 @@
               autocomplete="off"
               [disabled]="saving"
               (keydown)="onSportSearchKeydown($event)"
-              (blur)="clearInvalidSportQuery()"
               [placeholder]="'profile.favoriteSportsSearch' | t">
 
             @if (sportSuggestions.length > 0) {
@@ -273,20 +273,25 @@
               </div>
             }
 
+            @if (sportFeedbackKey) {
+              <p class="sport-selection-feedback" role="status" aria-live="polite">{{ sportFeedbackKey | t }}</p>
+            }
             <small>{{ 'profile.favoriteSportsHint' | t }}</small>
           </div>
 
           <label>
             <span>{{ 'profile.skillLevel' | t }}</span>
-            <select
-              name="skillLevel"
-              [(ngModel)]="profile.skillLevel"
-              [disabled]="saving">
-              <option [ngValue]="null">{{ 'profile.skillLevel.none' | t }}</option>
-              <option value="BEGINNER">{{ 'profile.level.BEGINNER' | t }}</option>
-              <option value="INTERMEDIATE">{{ 'profile.level.INTERMEDIATE' | t }}</option>
-              <option value="ADVANCED">{{ 'profile.level.ADVANCED' | t }}</option>
-            </select>
+            <app-jynlo-select name="skillLevel" [(ngModel)]="profile.skillLevel"
+              [options]="[
+                {value: '', label: ('profile.skillLevel.none' | t)},
+                {value: 'BEGINNER', label: ('profile.level.BEGINNER' | t)},
+                {value: 'INTERMEDIATE', label: ('profile.level.INTERMEDIATE' | t)},
+                {value: 'ADVANCED', label: ('profile.level.ADVANCED' | t)}
+              ]"
+              [ariaLabel]="'profile.skillLevel' | t"
+              [placeholder]="'profile.skillLevel.none' | t"
+              [disabled]="saving" [blocked]="saving">
+            </app-jynlo-select>
           </label>
 
           <label>
@@ -417,6 +422,100 @@
             </div>
           </section>
         }
+
+        <section class="device-sessions" aria-labelledby="device-sessions-heading">
+          <header class="device-sessions__header">
+            <div>
+              <span class="section-kicker">{{ 'profile.sessions.kicker' | t }}</span>
+              <h2 id="device-sessions-heading">{{ 'profile.sessions.title' | t }}</h2>
+              <p>{{ 'profile.sessions.hint' | t }}</p>
+            </div>
+            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+              [disabled]="deviceSessionsLoading || !!revokingDeviceId"
+              (click)="loadDeviceSessions()">
+              {{ 'profile.sessions.refresh' | t }}
+            </button>
+          </header>
+
+          @if (deviceSessionsLoading) {
+            <p class="device-sessions__state" role="status">{{ 'profile.sessions.loading' | t }}</p>
+          }
+          @if (deviceSessionsError) {
+            <p class="device-sessions__error" role="alert">{{ deviceSessionsError }}</p>
+          }
+          @if (!deviceSessionsLoading && deviceSessions.length === 0 && !deviceSessionsError) {
+            <p class="device-sessions__state">{{ 'profile.sessions.empty' | t }}</p>
+          }
+
+          <div class="device-sessions__list">
+            @for (session of deviceSessions; track session.id) {
+              <article class="device-session">
+                <div class="device-session__content">
+                  <div class="device-session__name">
+                    <strong>{{ session.device }}</strong>
+                    @if (session.current) {
+                      <span class="device-session__current">{{ 'profile.sessions.current' | t }}</span>
+                    }
+                  </div>
+                  @if (session.createdAt) {
+                    <small>{{ 'profile.sessions.since' | t }} {{ session.createdAt | date:'mediumDate' }}</small>
+                  }
+                  <small>{{ 'profile.sessions.expires' | t }} {{ session.expiresAt | date:'mediumDate' }}</small>
+                </div>
+
+                @if (pendingRevokeId === session.id) {
+                  <div class="device-session__confirm">
+                    <small>{{ 'profile.sessions.confirm' | t }}</small>
+                    <div class="device-session__actions">
+                      <button type="button" class="danger-action jynlo-action jynlo-action--danger"
+                        [disabled]="!!revokingDeviceId"
+                        (click)="revokeDevice(session)">
+                        {{ 'profile.sessions.end' | t }}
+                      </button>
+                      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                        [disabled]="!!revokingDeviceId"
+                        (click)="cancelRevokeDevice()">
+                        {{ 'common.cancel' | t }}
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                    [disabled]="!!revokingDeviceId"
+                    (click)="confirmRevokeDevice(session.id)">
+                    {{ 'profile.sessions.end' | t }}
+                  </button>
+                }
+              </article>
+            }
+          </div>
+
+          @if (hasOtherDeviceSessions) {
+            <div class="device-sessions__bulk">
+              @if (pendingRevokeOtherDevices) {
+                <div class="device-sessions__bulk-confirm" role="group" [attr.aria-label]="'profile.sessions.othersConfirm' | t">
+                  <p>{{ 'profile.sessions.othersConfirm' | t }}</p>
+                  <div class="device-session__actions">
+                    <button type="button" class="danger-action jynlo-action jynlo-action--danger"
+                      [disabled]="revokingOtherDevices" (click)="revokeOtherDevices()">
+                      {{ 'profile.sessions.others' | t }}
+                    </button>
+                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                      [disabled]="revokingOtherDevices" (click)="cancelRevokeOtherDevices()">
+                      {{ 'common.cancel' | t }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                  [disabled]="deviceSessionsLoading || !!revokingDeviceId || revokingOtherDevices"
+                  (click)="confirmRevokeOtherDevices()">
+                  {{ 'profile.sessions.others' | t }}
+                </button>
+              }
+            </div>
+          }
+        </section>
 
         <section class="danger-zone">
           <div class="danger-zone__copy">

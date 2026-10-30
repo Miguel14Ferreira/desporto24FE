@@ -8,6 +8,13 @@ describe('safeLoginReturnUrl', () => {
       .toBe('/menu/notifications?view=requests');
   });
 
+  it('permits only a strict same-app guest link after login', () => {
+    const link='/sessions/42?guest='+'A'.repeat(43);
+    expect(safeLoginReturnUrl(link)).toBe(link);
+    expect(safeLoginReturnUrl(link+'&next=https://evil.test')).toBe('/menu/feed');
+    expect(safeLoginReturnUrl('/sessions/42?guest=bad')).toBe('/menu/feed');
+  });
+
   it('defaults to the feed when the link is absent', () => {
     expect(safeLoginReturnUrl(null)).toBe('/menu/feed');
   });

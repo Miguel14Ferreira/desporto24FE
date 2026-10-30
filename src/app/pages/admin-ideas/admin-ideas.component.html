@@ -1,19 +1,19 @@
-<section class="admin-ideas-page">
+<section class="admin-ideas-page jynlo-c1 jynlo-admin">
   <div class="admin-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Administração</p>
-        <h1>Ideias e sugestões</h1>
+        <p class="eyebrow">{{ 'adminIdeas.eyebrow' | t }}</p>
+        <h1>{{ 'adminIdeas.title' | t }}</h1>
         <p class="subtitle">
-          Gere o feedback enviado pela comunidade. Tens {{ newCount }} ideia{{ newCount === 1 ? '' : 's' }} nova{{ newCount === 1 ? '' : 's' }}.
+          {{ (newCount === 1 ? 'adminIdeas.subtitleOne' : 'adminIdeas.subtitleMany') | t:{ count: newCount } }}
         </p>
       </div>
 
       <div class="header-actions">
         <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="load()" [disabled]="loading">
-          Atualizar
+          {{ 'adminIdeas.refresh' | t }}
         </button>
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">Voltar ao Admin</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">{{ 'adminIdeas.back' | t }}</a>
       </div>
     </header>
 
@@ -22,13 +22,13 @@
     }
 
     @if (loading) {
-      <div class="state-card">A carregar ideias...</div>
+      <div class="state-card">{{ 'adminIdeas.loading' | t }}</div>
     }
 
     @if (!loading && ideas.length === 0 && !errorMessage) {
       <div class="state-card">
-        <strong>Ainda não existem ideias.</strong>
-        <p>Quando alguém enviar uma sugestão, ela aparecerá aqui.</p>
+        <strong>{{ 'adminIdeas.emptyTitle' | t }}</strong>
+        <p>{{ 'adminIdeas.emptyText' | t }}</p>
       </div>
     }
 
@@ -57,8 +57,8 @@
         <aside class="idea-detail">
           @if (!selected) {
             <div class="detail-placeholder">
-              <h2>Seleciona uma ideia</h2>
-              <p>Abre uma sugestão para veres todos os detalhes e alterares o estado.</p>
+              <h2>{{ 'adminIdeas.selectTitle' | t }}</h2>
+              <p>{{ 'adminIdeas.selectText' | t }}</p>
             </div>
           }
 
@@ -71,7 +71,7 @@
                   </span>
                   <h2>{{ selected.subject }}</h2>
                 </div>
-                <button type="button" class="close-detail" (click)="close()">×</button>
+                <button type="button" class="close-detail" [attr.aria-label]="'adminIdeas.closeDetails' | t" [title]="'adminIdeas.closeDetails' | t" (click)="close()">×</button>
               </div>
 
               <div class="submitter">
@@ -85,12 +85,12 @@
               <p class="idea-message">{{ selected.problem }}</p>
 
               <div class="meta-row">
-                <span>Recebida em</span>
+                <span>{{ 'adminIdeas.receivedAt' | t }}</span>
                 <strong>{{ formatDate(selected.createdAt) }}</strong>
               </div>
 
               <div class="status-actions">
-                <span>Estado</span>
+                <span>{{ 'adminIdeas.statusField' | t }}</span>
                 <div class="status-buttons">
                   @for (status of statuses; track status) {
                     <button class="jynlo-action jynlo-action--neutral"
@@ -104,8 +104,8 @@
                 </div>
               </div>
 
-              <a class="email-action jynlo-action jynlo-action--neutral" [href]="'mailto:' + selected.email + '?subject=DESPORTO24 - ' + selected.subject">
-                Responder por email
+              <a class="email-action jynlo-action jynlo-action--neutral" [href]="'mailto:' + selected.email + '?subject=Jynlo - ' + selected.subject">
+                {{ 'adminIdeas.replyEmail' | t }}
               </a>
             </div>
           }

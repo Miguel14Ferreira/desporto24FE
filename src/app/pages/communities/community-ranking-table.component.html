@@ -1,0 +1,54 @@
+@if (rows.length > 0) {
+  <div class="ranking-table-wrap">
+    <table class="ranking-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>{{ 'communities.player' | t }}</th>
+          <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th>
+          <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th>
+          <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+          <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th>
+          <th>{{ 'communities.pointsShort' | t }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows; track $index) {
+          <tr [class.podium]="$index < 3">
+            <td><strong>{{ $index + 1 }}</strong></td>
+            <td>
+              <button type="button" class="ranking-player ranking-player--interactive"
+                [attr.title]="(row.username ? 'communities.identity.openProfileHint' : 'historicalStats.hint') | t"
+                (click)="openPlayer(row)">
+                <span class="ranking-player__avatar" aria-hidden="true">
+                  <span>{{ initials(row) }}</span>
+                  @if (avatarUrl(row); as photo) {
+                    <img [src]="photo" alt="" loading="lazy" (error)="avatarFailed($event)">
+                  }
+                </span>
+                <span class="ranking-player__identity">
+                  <strong>{{ row.fullName || row.username }}</strong>
+                  @if (row.username) {
+                    <span>@{{ row.username }}</span>
+                  } @else {
+                    <span>{{ 'communities.identity.unlinked' | t }}</span>
+                  }
+                </span>
+              </button>
+            </td>
+            <td>{{ row.games }}</td>
+            <td>{{ row.wins }}</td>
+            <td>{{ row.draws }}</td>
+            <td>{{ row.losses }}</td>
+            <td class="points-cell">{{ row.points }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <div class="module-empty compact">
+    <h3>{{ 'communities.noRanking' | t }}</h3>
+    <p>{{ 'communities.noRankingText' | t }}</p>
+  </div>
+}

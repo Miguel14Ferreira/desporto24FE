@@ -1,0 +1,26 @@
+/* Isolated feature settings; permissions/API mutations stay in CommunitiesComponent. */
+:host {display:block;}
+h3 {margin:0;}
+/* Reuse original parent action styling within Angular style encapsulation. */
+.primary-action,.secondary-action {
+  border-radius:.75rem;
+  padding:.75rem 1rem;
+  font:inherit;
+  font-weight:900;
+  cursor:pointer;
+}
+.primary-action { border:0; background:#f8fafc; color:#0f172a; }
+.secondary-action { border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#fff; }
+
+/* Community feature management stays in Home even when every optional module is off. */
+.community-feature-settings { padding: 1rem; margin: 1rem 0; border: 1px solid rgba(0,230,118,.2); border-radius: 1rem; background: rgba(15,23,42,.72); }
+.community-feature-settings-title { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.community-feature-settings-title h3 { margin: 0 0 .3rem; }
+.community-feature-settings-title p { margin: 0; max-width: 51rem; color: #b6cada; font-size: .9rem; line-height: 1.5; }
+.feature-settings-choices { display: grid; gap: .65rem; margin: 1rem 0; }
+.feature-settings-choices label { display: flex; align-items: center; flex-wrap: wrap; gap: .55rem; padding: .75rem; border: 1px solid rgba(148,163,184,.2); border-radius: .65rem; cursor: pointer; }
+.feature-settings-choices input { width: 1.1rem; height: 1.1rem; accent-color: #00e676; }
+.feature-settings-choices small, .feature-settings-caption { color: #b6cada; font-size: .8rem; }
+.feature-settings-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: .8rem; }
+.feature-settings-success { margin-top: .7rem; color: #86efac; }
+.feature-settings-error { margin-top: .7rem; color: #fecaca; }

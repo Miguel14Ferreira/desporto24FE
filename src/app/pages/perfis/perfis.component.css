@@ -632,3 +632,733 @@ h1 {
   margin: 0;
   color: #94a3b8;
 }
+
+
+/* Approved Jynlo Concept One Premium profile composition: scope to the public
+ * profile route so people search and other desktop screens remain unchanged. */
+.community-page.profile-page-open .community-shell{
+  width:min(1340px,100%);
+  max-width:none;
+}
+.community-page.profile-page-open .back-to-search{
+  margin-bottom:24px;
+  min-height:42px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 19px;
+  border-radius:999px;
+  border:1px solid #378b99;
+  background:#0b3543;
+  color:#eafffa;
+}
+.community-page.profile-page-open .back-to-search:hover{background:#155362}
+.community-page.profile-page-open .profile-detail{
+  --profile-accent:#35e5c7;
+  max-width:none;
+  width:100%;
+  overflow:hidden;
+  margin:0 auto;
+  padding:clamp(22px,2.7vw,38px);
+  border:1px solid #276879;
+  border-radius:24px;
+  background:
+    radial-gradient(ellipse at 90% 0%,rgba(13,94,108,.22),transparent 48%),
+    linear-gradient(150deg,#0b3544,#092d3c 63%,#062937);
+  color:#f1fffc;
+  box-shadow:0 24px 65px #00162066;
+}
+.community-page.profile-page-open .profile-detail::before{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  pointer-events:none;
+  background:linear-gradient(90deg,#24dabb,#278da2 70%,transparent);
+}
+.community-page.profile-page-open .profile-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:clamp(18px,2.3vw,32px);
+  padding:8px 0 30px;
+  margin-bottom:26px;
+  border-bottom:1px solid #326575;
+}
+.community-page.profile-page-open .detail-heading{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  gap:clamp(20px,2.5vw,35px);
+  margin:0;
+  padding:0;
+  border:0;
+}
+.community-page.profile-page-open .large-avatar{
+  width:clamp(140px,14vw,205px);
+  height:clamp(140px,14vw,205px);
+  flex:0 0 clamp(140px,14vw,205px);
+  border:1px solid #3998a4;
+  border-radius:21px;
+  overflow:hidden;
+  background:#155262;
+  box-shadow:0 12px 24px #00152055;
+  color:#baffef;
+  font-size:3.5rem;
+}
+.community-page.profile-page-open .large-avatar img{
+  width:100%;height:100%;object-fit:cover;
+}
+.community-page.profile-page-open .profile-identity{
+  min-width:0;
+  flex:1;
+}
+.community-page.profile-page-open .profile-identity .eyebrow{
+  color:#37f3d2;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.18em;
+  margin:0 0 12px;
+}
+.community-page.profile-page-open .profile-identity h1{
+  color:white;
+  font-size:clamp(2.15rem,3.4vw,3.65rem);
+  font-weight:850;
+  letter-spacing:-.055em;
+  line-height:1.08;
+  margin:0 0 9px;
+  overflow-wrap:anywhere;
+}
+.community-page.profile-page-open .profile-display-name{
+  font-size:1.13rem!important;
+  color:#bce5ea!important;
+  margin:0!important;
+}
+.community-page.profile-page-open .profile-headline-details{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;
+}
+.community-page.profile-page-open .profile-headline-details span{
+  border:1px solid #376c77;
+  border-radius:999px;
+  padding:5px 10px;
+  background:#103e4d;
+  color:#caeee9;
+  font-size:.75rem;
+}
+.community-page.profile-page-open .social-summary{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  margin-top:20px;
+}
+.community-page.profile-page-open .social-summary>div{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  min-width:0;
+  border:1px solid #2d6574;
+  border-radius:13px;
+  padding:10px 14px;
+  background:#0a2d3b;
+}
+.community-page.profile-page-open .social-summary strong{
+  font-size:1.16rem;
+  color:#fff;
+}
+.community-page.profile-page-open .social-summary span{
+  color:#b0d3d9;
+  font-size:.8rem;
+}
+.community-page.profile-page-open .follows-you-badge{
+  border-radius:999px;
+  padding:8px 13px;
+  margin:0;
+  background:#184c61;
+  color:#e9fbff!important;
+  font-size:.8rem;
+}
+.community-page.profile-page-open .detail-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:0;
+  padding:0;
+  border:0;
+  max-width:600px;
+}
+.community-page.profile-page-open .detail-actions>.jynlo-action,
+.community-page.profile-page-open .detail-actions>.friend-status,
+.community-page.profile-page-open .detail-actions>.profile-invite-trigger{
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  min-height:48px;
+  padding:12px 18px;
+  border-radius:13px;
+  font-size:.86rem;
+  font-weight:800;
+  line-height:1.2;
+  text-decoration:none;
+  text-align:center;
+  white-space:nowrap;
+}
+.community-page.profile-page-open .detail-actions>.profile-invite-trigger{
+  gap:8px;
+  border:1px solid #33a39f;
+  background:#103f4c;
+  color:#f0fff9;
+  cursor:pointer;
+}
+.community-page.profile-page-open .detail-actions>.profile-invite-trigger:hover{
+  background:#196070;
+}
+.community-page.profile-page-open .profile-invite-trigger span{
+  line-height:1;
+  font-size:1.35rem;
+}
+.community-page.profile-page-open .detail-actions>.friend-status:disabled{
+  opacity:1;
+  cursor:default;
+}
+.community-page.profile-page-open .profile-meta{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:17px;
+  margin:0 0 28px;
+}
+.community-page.profile-page-open .profile-meta:empty{display:none}
+.community-page.profile-page-open .profile-meta>.profile-meta-card{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  min-width:0;
+  min-height:114px;
+  padding:18px 20px;
+  border:1px solid #2c7183;
+  border-radius:17px;
+  background:linear-gradient(150deg,#0b3545,#072a38);
+}
+.community-page.profile-page-open .profile-stat-icon{
+  display:grid;
+  flex:0 0 54px;
+  place-items:center;
+  width:54px;
+  height:54px;
+  border:1px solid #246b7a;
+  border-radius:14px;
+  background:linear-gradient(145deg,#0e4a5c,#0d394b);
+  color:#e0ffff;
+}
+.community-page.profile-page-open .profile-stat-icon svg{
+  display:block;
+  width:25px;
+  height:25px;
+}
+.community-page.profile-page-open .profile-meta-copy{
+  display:grid;
+  gap:6px;
+  min-width:0;
+}
+.community-page.profile-page-open .profile-meta-copy span{
+  color:#b3d9df;
+  font-size:.8rem;
+  margin:0;
+}
+.community-page.profile-page-open .profile-meta-copy strong{
+  font-size:1.03rem;
+  color:#fff;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.community-page.profile-page-open .public-activity{
+  margin:0;
+  padding:22px;
+  border:1px solid #2397aa;
+  border-radius:20px;
+  background:linear-gradient(145deg,#0d4455,#103b4c 70%,#0b3545);
+}
+.community-page.profile-page-open .public-activity>.section-kicker{
+  font-size:.77rem;
+  letter-spacing:.17em;
+  color:#38eed0;
+}
+.community-page.profile-page-open .public-activity-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:13px;
+  margin-top:17px;
+}
+.community-page.profile-page-open .public-activity-grid>.profile-activity-card{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  padding:17px;
+  min-width:0;
+  min-height:110px;
+  border:1px solid #327388;
+  border-radius:15px;
+  background:#082d3c;
+}
+.community-page.profile-page-open .profile-activity-copy{
+  display:grid;
+  min-width:0;
+  gap:5px;
+}
+.community-page.profile-page-open .profile-activity-copy strong{
+  font-size:1.75rem;
+  font-weight:850;
+  line-height:1;
+  color:#fff;
+}
+.community-page.profile-page-open .profile-activity-copy span{
+  color:#b8d9e2;
+  font-size:.76rem;
+  line-height:1.35;
+}
+.community-page.profile-page-open .public-bio{
+  margin:0 0 24px;
+  padding:17px 20px;
+  border-left:3px solid #36dcc5;
+  background:#0b3442;
+  border-radius:10px;
+  color:#cee7e9;
+}
+.community-page.profile-page-open .profile-safety{
+  margin-top:26px;
+  padding:24px 0 0;
+  border-top:1px solid #326575;
+}
+.community-page.profile-page-open .profile-safety summary{
+  color:#a8cbd8;
+  font-size:.93rem;
+  padding:4px 0;
+}
+.community-page.profile-page-open .profile-invite-panel{
+  margin:-7px 0 26px;
+}
+.community-page.profile-page-open .profile-detail button:focus-visible,
+.community-page.profile-page-open .profile-detail a:focus-visible{
+  outline:2px solid #93ffe8;
+  outline-offset:3px;
+}
+@media(max-width:1220px){
+  .community-page.profile-page-open .profile-hero{
+    grid-template-columns:1fr;
+    align-items:start;
+  }
+  .community-page.profile-page-open .detail-actions{
+    justify-content:flex-start;
+    max-width:none;
+  }
+}
+@media(max-width:920px){
+  .community-page.profile-page-open .profile-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .community-page.profile-page-open .public-activity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .community-page.profile-page-open .profile-detail{padding:18px;border-radius:18px}
+  .community-page.profile-page-open .back-to-search{margin-bottom:18px}
+  .community-page.profile-page-open .profile-hero{gap:20px;padding:2px 0 22px;margin-bottom:20px}
+  .community-page.profile-page-open .detail-heading{align-items:flex-start;flex-direction:row;gap:14px}
+  .community-page.profile-page-open .large-avatar{
+    width:88px;height:88px;flex:0 0 88px;border-radius:16px;font-size:2.2rem;
+  }
+  .community-page.profile-page-open .profile-identity h1{
+    font-size:clamp(1.45rem,6vw,2.4rem);
+  }
+  .community-page.profile-page-open .profile-identity .eyebrow{margin-bottom:6px}
+  .community-page.profile-page-open .profile-display-name{font-size:.89rem!important}
+  .community-page.profile-page-open .social-summary{gap:6px;margin-top:11px}
+  .community-page.profile-page-open .social-summary>div{padding:7px 9px;gap:6px}
+  .community-page.profile-page-open .social-summary strong{font-size:.98rem}
+  .community-page.profile-page-open .social-summary span{font-size:.69rem}
+  .community-page.profile-page-open .detail-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .community-page.profile-page-open .detail-actions>.jynlo-action,
+  .community-page.profile-page-open .detail-actions>.friend-status,
+  .community-page.profile-page-open .detail-actions>.profile-invite-trigger{
+    width:100%;min-width:0;white-space:normal;padding:11px;font-size:.79rem;
+  }
+  .community-page.profile-page-open .profile-meta{
+    grid-template-columns:1fr;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .community-page.profile-page-open .profile-meta>.profile-meta-card{min-height:85px;padding:14px;gap:14px}
+  .community-page.profile-page-open .profile-stat-icon{width:45px;height:45px;flex-basis:45px}
+  .community-page.profile-page-open .profile-stat-icon svg{width:22px;height:22px}
+  .community-page.profile-page-open .public-activity{padding:15px;border-radius:15px}
+  .community-page.profile-page-open .public-activity-grid{gap:9px;margin-top:12px}
+  .community-page.profile-page-open .public-activity-grid>.profile-activity-card{
+    min-height:98px;align-items:flex-start;flex-direction:column;gap:9px;padding:12px;
+  }
+  .community-page.profile-page-open .profile-activity-copy strong{font-size:1.35rem}
+  .community-page.profile-page-open .profile-activity-copy span{font-size:.7rem}
+}
+@media(max-width:360px){
+  .community-page.profile-page-open .detail-heading{flex-direction:column}
+  .community-page.profile-page-open .detail-actions{grid-template-columns:1fr}
+}
+/* Invitation picker only fetches eligible owned/admin communities and own public sessions. */
+.profile-invite-panel{
+  margin:2px 0 18px;padding:20px;border:1px solid #408579;border-radius:17px;
+  background:#123c46;box-shadow:0 8px 24px #00131c33
+}
+.profile-invite-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.profile-invite-header h2{font-size:1.14rem;margin:5px 0;color:white}
+.profile-invite-header p{font-size:.83rem;color:#b8dade;margin:0 0 14px}
+.profile-invite-close{display:grid;place-items:center;width:36px;height:36px;
+  flex:0 0 36px;border:1px solid #3b6c72;border-radius:10px;
+  background:#174652;color:#e9fffb;cursor:pointer;font-size:1.35rem
+}
+.profile-invite-tabs{display:flex;gap:8px;border-bottom:1px solid #397078;margin-bottom:13px}
+.profile-invite-tabs button{border:0;border-bottom:2px solid transparent;padding:10px 14px;
+  background:transparent;color:#b7d6dc;cursor:pointer;font-weight:750}
+.profile-invite-tabs button.active{border-color:#43e5c9;color:#82ffe8}
+.profile-invite-options{display:grid;gap:8px;max-height:350px;overflow:auto}
+.profile-invite-option{display:flex;align-items:center;gap:12px;padding:12px;
+  border:1px solid #2c5864;border-radius:12px;background:#092c3b}
+.profile-invite-option-icon{display:grid;place-items:center;background:#194b57;
+  flex:0 0 42px;height:42px;border-radius:12px;font-size:1.1rem}
+.profile-invite-option-info{display:grid;gap:4px;flex:1;min-width:0}
+.profile-invite-option-info strong{overflow-wrap:anywhere;color:#f2fffb;font-size:.86rem}
+.profile-invite-option-info small{color:#9dc5ca;font-size:.74rem}
+.profile-invite-option button{border:0;border-radius:10px;background:#37dabc;
+  color:#062c35;font-size:.79rem;font-weight:850;padding:10px 12px;cursor:pointer}
+.profile-invite-option button:disabled{opacity:.65;cursor:default}
+.profile-invite-state,.profile-invite-error,.profile-invite-success{font-size:.85rem;padding:12px;margin:0}
+.profile-invite-state{color:#b5d3d8}
+.profile-invite-error{color:#ffc1b7}.profile-invite-success{color:#80f5d7}
+.profile-detail button:focus-visible,.profile-detail a:focus-visible{
+  outline:2px solid #84ffe7;outline-offset:3px
+}
+@media(max-width:850px){
+  .community-page .profile-detail .profile-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .community-page .profile-detail{padding:16px;border-radius:18px}
+  .community-page .profile-detail .detail-heading{flex-direction:row;align-items:flex-start;gap:15px}
+  .community-page .profile-detail .large-avatar{
+    width:86px;height:86px;flex-basis:86px;border-radius:17px;font-size:2rem
+  }
+  .community-page .profile-detail .profile-identity h1{font-size:clamp(1.55rem,6vw,2.1rem)}
+  .community-page .profile-detail .social-summary{gap:7px}
+  .community-page .profile-detail .social-summary>div{padding:8px}
+  .community-page .profile-detail .detail-actions>a,
+  .community-page .profile-detail .detail-actions>button{flex:1 1 auto}
+  .community-page .profile-detail .profile-meta{grid-template-columns:1fr 1fr}
+  .profile-invite-panel{padding:14px}
+  .profile-invite-option{gap:9px;padding:9px}
+}
+@media(max-width:390px){
+  .community-page .profile-detail .detail-heading{flex-direction:column}
+  .community-page .profile-detail .profile-meta{grid-template-columns:1fr}
+  .profile-invite-option-icon{display:none}
+}
+
+/* Layout consistency pass: the back link is a block-level action, not inline-flex.
+   Inline vertical margins did not separate it from the profile card. */
+.community-page.profile-page-open a.back-to-search {
+  display: flex !important;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 var(--jynlo-space-xl);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Avoid fixed-width action columns and clipped relationship messages. */
+.community-page.profile-page-open .profile-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  column-gap: clamp(24px, 3.2vw, 48px);
+  row-gap: 14px;
+  align-items: center;
+}
+.community-page.profile-page-open .detail-heading,
+.community-page.profile-page-open .profile-identity {
+  min-width: 0;
+}
+.community-page.profile-page-open .detail-actions {
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-end;
+  align-content: center;
+  gap: 12px;
+}
+.community-page.profile-page-open .detail-actions > .jynlo-action,
+.community-page.profile-page-open .detail-actions > .friend-status,
+.community-page.profile-page-open .detail-actions > .profile-invite-trigger {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.community-page.profile-page-open .profile-relationship-feedback {
+  grid-column: 2;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid rgba(95, 194, 186, .3);
+  border-radius: 12px;
+  background: rgba(15, 66, 78, .8);
+  color: #c4e8e5;
+  text-align: left;
+  line-height: 1.5;
+}
+.community-page.profile-page-open .profile-relationship-feedback--error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-color: rgba(252, 165, 165, .32);
+  color: #ffd5d5;
+}
+.community-page.profile-page-open .profile-relationship-feedback--error > span {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.community-page.profile-page-open .profile-relationship-feedback--error > button {
+  flex: 0 1 auto;
+  white-space: normal;
+  max-width: 100%;
+}
+
+/* No negative offset between the invitation panel and header actions. */
+.community-page.profile-page-open .profile-invite-panel {
+  margin: var(--jynlo-space-lg) 0 var(--jynlo-space-xl);
+}
+.community-page.profile-page-open .profile-invite-header {
+  flex-wrap: wrap;
+  row-gap: var(--jynlo-space-md);
+}
+.community-page.profile-page-open .profile-invite-tabs {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.community-page.profile-page-open .profile-invite-option {
+  min-width: 0;
+}
+.community-page.profile-page-open .profile-invite-option > button {
+  max-width: 100%;
+  white-space: normal;
+}
+@media (max-width: 1220px) {
+  .community-page.profile-page-open .profile-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--jynlo-space-lg);
+  }
+  .community-page.profile-page-open .detail-actions {
+    justify-content: flex-start;
+  }
+  .community-page.profile-page-open .profile-relationship-feedback {
+    grid-column: 1;
+  }
+}
+@media (max-width: 650px) {
+  .community-page.profile-page-open a.back-to-search { margin-bottom: var(--jynlo-space-lg); }
+  .community-page.profile-page-open .profile-hero { gap: var(--jynlo-space-md); }
+  .community-page.profile-page-open .detail-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--jynlo-space-sm);
+  }
+  .community-page.profile-page-open .detail-actions > .jynlo-action,
+  .community-page.profile-page-open .detail-actions > .friend-status,
+  .community-page.profile-page-open .detail-actions > .profile-invite-trigger {
+    width: 100%;
+  }
+  .community-page.profile-page-open .profile-relationship-feedback {
+    padding: 12px;
+  }
+  .community-page.profile-page-open .profile-invite-panel {
+    margin: var(--jynlo-space-lg) 0;
+  }
+}
+@media (max-width: 390px) {
+  .community-page.profile-page-open .detail-actions {
+    grid-template-columns: 1fr;
+  }
+  .community-page.profile-page-open .profile-invite-option {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .community-page.profile-page-open .profile-invite-option button {
+    width: 100%;
+  }
+}
+
+/* Profile relationships and actions: status chips above two balanced CTAs.
+ * Keep all profile routes consistent without affecting friend lists or search. */
+.community-page.profile-page-open .detail-actions.profile-actions-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  justify-content: stretch;
+  justify-self: end;
+  width: 100%;
+  max-width: 420px;
+  gap: 12px;
+}
+.community-page.profile-page-open .profile-relationship-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.community-page.profile-page-open .profile-relationship-row .profile-follow-toggle,
+.community-page.profile-page-open .profile-friend-badge,
+.community-page.profile-page-open .profile-relation-note {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: .79rem;
+  font-weight: 780;
+  line-height: 1.3;
+  white-space: normal;
+  text-align: center;
+}
+.community-page.profile-page-open .profile-relationship-row .profile-follow-toggle {
+  border: 1px solid #478d97;
+  background: rgba(21, 74, 87, .72);
+  color: #d5f9f4;
+  cursor: pointer;
+}
+.community-page.profile-page-open .profile-relationship-row .profile-follow-toggle:hover:not(:disabled) {
+  background: rgba(44, 120, 124, .5);
+  border-color: #53d8c7;
+}
+.community-page.profile-page-open .profile-relationship-row .profile-follow-toggle:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+.community-page.profile-page-open .profile-friend-badge {
+  gap: 7px;
+  border: 1px solid rgba(95, 205, 185, .42);
+  background: rgba(21, 96, 83, .24);
+  color: #b4f5de;
+}
+.community-page.profile-page-open .profile-friend-check {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  border-radius: 50%;
+  background: #2fd7ae;
+  color: #082f34;
+  font-size: .77rem;
+  font-weight: 900;
+}
+.community-page.profile-page-open .profile-relation-note {
+  background: rgba(84, 156, 170, .14);
+  color: #c5e3e7;
+  border: 1px solid rgba(101, 174, 185, .36);
+}
+.community-page.profile-page-open .profile-primary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+}
+.community-page.profile-page-open .profile-primary-actions > :only-child {
+  grid-column: 1 / -1;
+}
+.community-page.profile-page-open .profile-primary-actions > .primary-action,
+.community-page.profile-page-open .profile-primary-actions > .profile-invite-trigger {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  min-height: 50px;
+  margin: 0;
+  padding: 12px 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 13px;
+  font-size: .85rem;
+  font-weight: 820;
+  line-height: 1.3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.community-page.profile-page-open .profile-primary-actions > .primary-action {
+  border: 1px solid #49e7c7;
+  background: linear-gradient(120deg,#42eacb,#26cbb3);
+  color: #062b33;
+  box-shadow: 0 7px 19px rgba(20, 190, 155, .16);
+}
+.community-page.profile-page-open .profile-primary-actions > .primary-action:hover:not(:disabled) {
+  background: linear-gradient(120deg,#78f9de,#43dec3);
+}
+.community-page.profile-page-open .profile-primary-actions > .primary-action:disabled {
+  opacity: .68;
+  cursor: default;
+  box-shadow: none;
+}
+.community-page.profile-page-open .profile-primary-actions > .profile-invite-trigger {
+  border: 1px solid #48b9ad;
+  background: rgba(27, 97, 108, .28);
+  color: #ddfff7;
+}
+.community-page.profile-page-open .profile-primary-actions > .profile-invite-trigger:hover {
+  background: rgba(43, 127, 132, .48);
+  border-color: #5ce2cb;
+}
+.community-page.profile-page-open .profile-primary-actions > .profile-invite-trigger[aria-expanded="true"] {
+  border-color: #65efcf;
+  background: rgba(45, 139, 131, .45);
+}
+.community-page.profile-page-open .profile-primary-actions .profile-cta-icon {
+  display: block;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+.community-page.profile-page-open .profile-primary-actions .profile-invite-trigger span {
+  font-size: 1.25rem;
+  font-weight: 750;
+  line-height: .9;
+}
+@media (max-width: 1220px) {
+  .community-page.profile-page-open .detail-actions.profile-actions-panel {
+    justify-self: start;
+  }
+  .community-page.profile-page-open .profile-relationship-row {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 650px) {
+  .community-page.profile-page-open .detail-actions.profile-actions-panel {
+    width: 100%;
+    max-width: none;
+    gap: 10px;
+  }
+  .community-page.profile-page-open .profile-primary-actions {
+    gap: 8px;
+  }
+  .community-page.profile-page-open .profile-primary-actions > .primary-action,
+  .community-page.profile-page-open .profile-primary-actions > .profile-invite-trigger {
+    min-height: 48px;
+    padding: 10px 9px;
+    font-size: .79rem;
+  }
+}

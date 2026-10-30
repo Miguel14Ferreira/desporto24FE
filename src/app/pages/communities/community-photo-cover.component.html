@@ -1,0 +1,44 @@
+<div class="community-avatar community-avatar--large"
+                    [class.community-avatar--animated]="animated">
+                    @if (photoUrl) {
+                      @if (showAll) {
+                        <img class="community-cover-backdrop" [src]="photoUrl"
+                          alt="" aria-hidden="true" loading="lazy">
+                      }
+                      <img class="community-cover-foreground" [src]="photoUrl" [alt]="name"
+                        [style.object-fit]="fit"
+                        [style.object-position]="position"
+                        [style.transform-origin]="origin"
+                        [style.transform]="zoom">
+                    } @else {
+                      <span>{{ initials }}</span>
+                    }
+                  </div>
+
+                  @if (canManage) {
+                    <div class="community-photo-actions">
+                      <label class="community-photo-action jynlo-action jynlo-action--neutral" [class.disabled]="updating">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif,.gif"
+                          [disabled]="updating"
+                          (change)="photoSelected.emit($event)">
+                        <span>{{ 'communities.changePhoto' | t }}</span>
+                      </label>
+                      @if (photoUrl) {
+                        <button type="button"
+                          class="community-photo-action jynlo-action jynlo-action--neutral"
+                          [disabled]="updating"
+                          (click)="adjustRequested.emit()">
+                          {{ 'communities.adjustPhoto' | t }}
+                        </button>
+                        <button
+                          type="button"
+                          class="community-photo-action community-photo-remove jynlo-action jynlo-action--danger"
+                          [disabled]="updating"
+                          (click)="removeRequested.emit()">
+                          {{ 'communities.removePhoto' | t }}
+                        </button>
+                      }
+                    </div>
+                  }

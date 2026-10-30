@@ -67,14 +67,13 @@
 
         <label>
           <span>{{ 'common.country' | t }} *</span>
-          <select
-            name="country"
-            [(ngModel)]="country"
-            [disabled]="loading">
-            @for (item of countryOptions; track item.label) {
-              <option [value]="countryName(item.label)">{{ countryName(item.label) }}</option>
-            }
-          </select>
+          <app-jynlo-select
+            name="country" [(ngModel)]="country"
+            [options]="countrySelectChoices" [searchable]="true"
+            [ariaLabel]="'common.country' | t"
+            [placeholder]="'register.select' | t"
+            [required]="true" [disabled]="loading" [blocked]="loading"
+          ></app-jynlo-select>
         </label>
 
         <div class="full-width phone-field">
@@ -101,12 +100,16 @@
 
         <label>
           <span>{{ 'common.gender' | t }}</span>
-          <select name="gender" [(ngModel)]="gender" [disabled]="loading">
-            <option value="">{{ 'register.select' | t }}</option>
-            <option value="masculino">{{ 'register.male' | t }}</option>
-            <option value="feminino">{{ 'register.female' | t }}</option>
-            <option value="outro">{{ 'register.other' | t }}</option>
-          </select>
+          <app-jynlo-select name="gender" [(ngModel)]="gender"
+            [options]="[
+              {value: '', label: ('register.select' | t)},
+              {value: 'masculino', label: ('register.male' | t)},
+              {value: 'feminino', label: ('register.female' | t)},
+              {value: 'outro', label: ('register.other' | t)}
+            ]"
+            [ariaLabel]="'common.gender' | t" [placeholder]="'register.select' | t"
+            [disabled]="loading" [blocked]="loading">
+          </app-jynlo-select>
         </label>
 
         <div class="full-width legal-consent">

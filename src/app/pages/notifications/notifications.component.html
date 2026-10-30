@@ -1,8 +1,7 @@
-<section class="notifications-page">
+<section class="notifications-page jynlo-c1 jynlo-secondary">
   <div class="notifications-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Jynlo</p>
         <h1>{{ 'notifications.title' | t }}</h1>
         <p class="subtitle">
           {{ unreadCount === 1 ? ('notifications.unreadOne' | t:{ count: unreadCount }) : ('notifications.unreadMany' | t:{ count: unreadCount }) }}
@@ -10,6 +9,11 @@
       </div>
 
       <div class="header-actions">
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+          [attr.aria-expanded]="preferencesOpen"
+          (click)="openPreferences()">
+          {{ 'notifications.preferences.button' | t }}
+        </button>
         @if (!loading && notifications.length > 0) {
           @if (!clearAllConfirming) {
             <button
@@ -46,12 +50,138 @@
       </div>
     </header>
 
+    @if (preferencesOpen) {
+      <section class="notification-preferences" aria-labelledby="notifications-preferences-title">
+        <div class="notification-preferences__heading">
+          <div>
+            <h2 id="notifications-preferences-title">{{ 'notifications.preferences.title' | t }}</h2>
+            <p>{{ 'notifications.preferences.description' | t }}</p>
+          </div>
+          <button type="button" class="secondary-button jynlo-action jynlo-action--neutral"
+            (click)="openPreferences()" [attr.aria-label]="'notifications.preferences.close' | t">
+            {{ 'notifications.preferences.close' | t }}
+          </button>
+        </div>
+        @if (preferencesError) {
+          <p role="alert" class="preferences-error">{{ preferencesError }}
+            @if (preferencesRefreshFailed) {
+              <button type="button" class="secondary-button" (click)="loadPreferences()">
+                {{ 'common.retry' | t }}
+              </button>
+            }
+          </p>
+        }
+        @if (preferencesSuccess) {
+          <p role="status" class="preferences-success">{{ preferencesSuccess }}</p>
+        }
+        @if (preferencesLoading) {
+          <p>{{ 'notifications.loading' | t }}</p>
+        }
+        @if (preferences; as prefs) {
+          <div class="notification-preferences__table">
+            <div class="notification-preferences__labels" aria-hidden="true">
+              <strong>{{ 'notifications.preferences.category' | t }}</strong>
+              <strong>{{ 'notifications.preferences.inApp' | t }}</strong>
+              <strong>{{ 'notifications.preferences.email' | t }}</strong>
+            </div>
+            <div class="notification-preferences__row notification-preferences__all">
+              <strong>{{ 'notifications.preferences.all' | t }}</strong>
+              <label>
+                <span class="sr-only">{{ 'notifications.preferences.allInApp' | t }}</span>
+                <input type="checkbox" [checked]="prefs.inAppEnabled"
+                  [disabled]="preferencesSaving || preferencesLoading || preferencesRefreshFailed"
+                  (change)="changeGlobal('inApp', $any($event.target).checked)">
+              </label>
+              <label>
+                <span class="sr-only">{{ 'notifications.preferences.allEmail' | t }}</span>
+                <input type="checkbox" [checked]="prefs.emailEnabled"
+                  [disabled]="preferencesSaving || preferencesLoading || preferencesRefreshFailed"
+                  (change)="changeGlobal('email', $any($event.target).checked)">
+              </label>
+            </div>
+            @for (type of preferenceTypes; track type) {
+              <div class="notification-preferences__row">
+                <span>{{ ('notifications.preferences.type.' + type) | t }}</span>
+                <label>
+                  <span class="sr-only">{{ ('notifications.preferences.type.' + type) | t }} — {{ 'notifications.preferences.inApp' | t }}</span>
+                  <input type="checkbox" [checked]="preferenceEnabled(type, 'inApp')"
+                    [disabled]="preferencesSaving || preferencesLoading || preferencesRefreshFailed || !prefs.inAppEnabled"
+                    (change)="changeType(type, 'inApp', $any($event.target).checked)">
+                </label>
+                <label>
+                  <span class="sr-only">{{ ('notifications.preferences.type.' + type) | t }} — {{ 'notifications.preferences.email' | t }}</span>
+                  <input type="checkbox" [checked]="preferenceEnabled(type, 'email')"
+                    [disabled]="preferencesSaving || preferencesLoading || preferencesRefreshFailed || !prefs.emailEnabled"
+                    (change)="changeType(type, 'email', $any($event.target).checked)">
+                </label>
+              </div>
+            }
+          </div>
+          <p class="notification-preferences__note">{{ 'notifications.preferences.securityNote' | t }}</p>
+        }
+      </section>
+    }
+
     @if (actionSuccess) {
       <div class="feedback success-feedback">{{ actionSuccess }}</div>
     }
 
     @if (actionError) {
       <div class="feedback error-feedback">{{ actionError }}</div>
+    }
+
+    @if (pendingInvites.length > 0) {
+      <section class="session-invites-inbox" aria-labelledby="session-invites-title">
+        <div class="session-invites-heading">
+          <div>
+            <span class="eyebrow">{{ 'inviteCenter.eyebrow' | t }}</span>
+            <h2 id="session-invites-title">{{ 'inviteCenter.title' | t }}</h2>
+            <p>{{ 'inviteCenter.help' | t }}</p>
+          </div>
+          <span class="session-invites-count">{{ pendingInvites.length }}</span>
+        </div>
+        <div class="session-invites-grid">
+          @for (invite of pendingInvites; track invite.id) {
+            <article class="session-invite-card">
+              <div class="session-invite-overline">
+                <span>{{ 'inviteCenter.from' | t:{ organizer: invite.inviterUsername } }}</span>
+                <span class="session-invite-status">{{ 'inviteCenter.pending' | t }}</span>
+              </div>
+              <h3>{{ invite.sport || ('inviteCenter.sportFallback' | t) }}</h3>
+              <div class="session-invite-facts">
+                @if (invite.gameDate) {
+                  <span><span aria-hidden="true">📅</span> {{ invite.gameDate | date:'dd/MM/yyyy · HH:mm' }}</span>
+                }
+                @if (invite.city) {
+                  <span><span aria-hidden="true">📍</span> {{ invite.city }}</span>
+                }
+                @if (pendingInviteRemaining(invite); as remaining) {
+                  <span><span aria-hidden="true">👥</span>
+                    {{ 'inviteCenter.places' | t:{ count: remaining } }}</span>
+                } @else if (pendingInviteRemaining(invite) === 0) {
+                  <span><span aria-hidden="true">👥</span> {{ 'inviteCenter.full' | t }}</span>
+                }
+              </div>
+              <div class="session-invite-actions">
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                  [disabled]="actionLoadingId !== null"
+                  (click)="respondToPendingInvite(invite, true)">
+                  {{ (actionLoadingId === -invite.id ? 'inviteCenter.processing' : 'inviteCenter.going') | t }}
+                </button>
+                <button type="button" class="secondary-button jynlo-action jynlo-action--neutral"
+                  [disabled]="actionLoadingId !== null"
+                  (click)="respondToPendingInvite(invite, false)">
+                  {{ 'inviteCenter.notGoing' | t }}
+                </button>
+                <a class="session-invite-details jynlo-action jynlo-action--neutral"
+                  [routerLink]="['/menu/events',invite.sessionId]">
+                  {{ 'inviteCenter.details' | t }}
+                </a>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
     }
 
     @if (loading) {
@@ -65,7 +195,7 @@
       </div>
     }
 
-    @if (!loading && !errorMessage && notifications.length === 0) {
+    @if (!loading && !errorMessage && notifications.length === 0 && pendingInvites.length === 0) {
       <div class="state-card">
         <h2>{{ 'notifications.emptyTitle' | t }}</h2>
         <p>{{ 'notifications.emptyText' | t }}</p>
@@ -117,11 +247,11 @@
               <p class="detail-message">{{ notificationMessage(selected) }}</p>
 
               @if (selected.greeting) {
-                <p>{{ selected.greeting }}</p>
+                <p>{{ legacyBrand(selected.greeting) }}</p>
               }
 
               @if (selected.signature) {
-                <p class="signature">{{ selected.signature }}</p>
+                <p class="signature">{{ legacyBrand(selected.signature) }}</p>
               }
 
               <span class="created-at">{{ formatCreatedAt(selected.createdAt) }}</span>
@@ -167,11 +297,11 @@
                 @if (pendingInviteFor(selected); as invite) {
                   <button type="button" class="primary-action jynlo-action jynlo-action--primary"
                     [disabled]="actionLoadingId !== null" (click)="respondToInvite(selected, true)">
-                    {{ actionLoadingId === selected.id ? 'A processar...' : 'Aceitar convite' }}
+                    {{ (actionLoadingId === selected.id ? 'inviteCenter.processing' : 'inviteCenter.going') | t }}
                   </button>
                   <button type="button" class="secondary-button jynlo-action jynlo-action--neutral"
                     [disabled]="actionLoadingId !== null" (click)="respondToInvite(selected, false)">
-                    Recusar convite
+                    {{ 'inviteCenter.notGoing' | t }}
                   </button>
                 }
 
@@ -181,7 +311,18 @@
                       ? 'notifications.reviewSession'
                       : selected.type === 'WAITLIST_PROMOTED'
                         ? 'notifications.viewParticipationStatus'
-                        : 'notifications.openSession') | t }}
+                        : selected.type === 'SESSION_MEETING_POINT_UPDATED'
+                          ? 'notifications.viewMeetingPoint'
+                          : 'notifications.openSession') | t }}
+                  </button>
+                }
+
+                @if (selected.type === 'VENUE_EDIT_DECISION'
+                     && selected.venueId !== null && selected.venueId !== undefined) {
+                  <button type="button"
+                    class="primary-action jynlo-action jynlo-action--primary"
+                    (click)="openVenueDecision(selected)">
+                    {{ 'notifications.openVenue' | t }}
                   </button>
                 }
 

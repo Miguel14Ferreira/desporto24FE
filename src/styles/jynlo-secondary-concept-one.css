@@ -1,0 +1,233 @@
+/*
+ * Jynlo Concept 1 — secondary desktop journeys.
+ * Scoped rollout only. No API/auth/state transitions change.
+ * Uses the same foundations as Communities, Games, Profiles and Social Feed.
+ */
+body .jynlo-c1.jynlo-secondary {
+  background:
+    radial-gradient(ellipse 65% 430px at 92% 8%, rgba(20, 135, 139, .14), transparent 78%),
+    linear-gradient(150deg, var(--jynlo-ui-canvas), #0b2335 66%, #071523);
+  color: var(--jynlo-ui-text);
+  padding-top: 6.3rem;
+}
+body .jynlo-c1.jynlo-secondary :is(
+  .notifications-shell,.friends-shell,.chat-shell,.edit-shell,
+  .create-shell,.dashboard-shell
+) {
+  width: min(var(--jynlo-ui-container), 100%);
+  max-width: 100%;
+}
+body .jynlo-c1.jynlo-secondary :is(.chat-shell,.edit-shell,.create-shell) { max-width: 1050px; }
+body .jynlo-c1.jynlo-secondary :is(.page-header,.create-header,.dashboard-header,.chat-header) {
+  gap: 1.4rem;
+  margin-bottom: 1.7rem;
+}
+body .jynlo-c1.jynlo-secondary :is(.page-header h1,.create-header h1,.dashboard-header h1,.chat-header h1) {
+  font-weight: 850;
+  font-size: clamp(2.35rem, 4.35vw, 3.8rem);
+  letter-spacing: -.045em;
+  line-height: 1.08;
+}
+body .jynlo-c1.jynlo-secondary :is(.eyebrow,.section-kicker,.step,.action-kicker) {
+  color: var(--jynlo-ui-brand);
+  font-weight: 850;
+  letter-spacing: .13em;
+}
+body .jynlo-c1.jynlo-secondary :is(.page-header .subtitle,.dashboard-header .subtitle,.create-header > div > p:last-child) {
+  color: var(--jynlo-ui-muted);
+  max-width: 58ch;
+  line-height: 1.65;
+}
+body .jynlo-c1.jynlo-secondary .jynlo-action--primary {
+  --jynlo-action-bg: var(--jynlo-ui-brand);
+  --jynlo-action-border: var(--jynlo-ui-brand);
+  --jynlo-action-hover: #83f4cf;
+  --jynlo-action-text: var(--jynlo-ui-brand-text);
+}
+body .jynlo-c1.jynlo-secondary .jynlo-action--neutral {
+  --jynlo-action-bg: rgba(145, 195, 210, .075);
+  --jynlo-action-border: rgba(145, 195, 210, .27);
+  --jynlo-action-hover: rgba(145, 195, 210, .17);
+  --jynlo-action-text: #e9f5fc;
+}
+body .jynlo-c1.jynlo-secondary .jynlo-action:focus-visible,
+body .jynlo-c1.jynlo-secondary :is(a,button,input,select,textarea):focus-visible {
+  outline: 2px solid var(--jynlo-ui-brand);
+  outline-offset: 3px;
+}
+body .jynlo-c1.jynlo-secondary :is(.state-card,.status-card,.feedback,.create-panel,.edit-card,.chat-card,.notification-detail,.notification-card,.friend-card,.hero-action,.dashboard-card) {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .jynlo-c1.jynlo-secondary :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+  border-color: rgba(147, 199, 211, .27);
+  border-radius: var(--jynlo-ui-radius-sm);
+  background: rgba(7, 24, 40, .8);
+  color: var(--jynlo-ui-text);
+}
+body .jynlo-c1.jynlo-secondary :is(input,select,textarea):disabled { opacity: .6; }
+body .jynlo-c1.jynlo-secondary :is(.error-feedback,.error-state,.blocked-banner,.danger-zone) {
+  border-color: rgba(248, 113, 113, .45);
+}
+body .jynlo-c1.jynlo-secondary :is(.state-card,.status-card,.feedback) { padding: 1.2rem; }
+
+/* Dashboard: clear routing hierarchy, no artificial counters. */
+body .dashboard-page.jynlo-c1 .dashboard-shell { max-width: 1170px; }
+body .dashboard-page.jynlo-c1 .primary-actions {
+  gap: 1.1rem;
+  margin-bottom: 1.6rem;
+}
+body .dashboard-page.jynlo-c1 .hero-action {
+  min-height: 175px;
+  padding: clamp(1.35rem, 2.6vw, 2.1rem);
+  background:
+    radial-gradient(ellipse at 93% 5%, rgba(65, 233, 176, .14), transparent 55%),
+    linear-gradient(125deg, #112a3f, #0e2634);
+  border-color: rgba(65, 233, 176, .23);
+}
+body .dashboard-page.jynlo-c1 .hero-action strong {
+  font-size: clamp(1.35rem, 2.3vw, 1.9rem);
+  letter-spacing: -.035em;
+}
+body .dashboard-page.jynlo-c1 .dashboard-grid { gap: 1rem; }
+body .dashboard-page.jynlo-c1 .dashboard-card { padding: 1.4rem; }
+body .dashboard-page.jynlo-c1 .profile-link {
+  background: var(--jynlo-ui-surface-raised);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+}
+
+/* Notifications: strengthen read/unread and detailed contents without hiding security actions. */
+body .notifications-page.jynlo-c1 .notifications-shell { max-width: 1200px; }
+body .notifications-page.jynlo-c1 .notifications-grid { gap: 1.2rem; }
+body .notifications-page.jynlo-c1 .notification-list { gap: .65rem; }
+body .notifications-page.jynlo-c1 .notification-card { padding: 1.1rem; }
+body .notifications-page.jynlo-c1 .notification-card.unread {
+  background: linear-gradient(120deg, rgba(65, 233, 176, .11), #13293c);
+  border-color: rgba(65, 233, 176, .35);
+}
+body .notifications-page.jynlo-c1 .notification-card:hover,
+body .notifications-page.jynlo-c1 .notification-card.active {
+  border-color: var(--jynlo-ui-brand);
+}
+body .notifications-page.jynlo-c1 .notification-detail {
+  padding: clamp(1.3rem, 2.5vw, 2rem);
+  background: var(--jynlo-ui-surface-glass);
+}
+body .notifications-page.jynlo-c1 .unread-dot { background: var(--jynlo-ui-brand); }
+
+/* Friends: social portraits with recognizable actions and thoughtful empty states. */
+body .friends-page.jynlo-c1 .friends-shell { max-width: 1170px; }
+body .friends-page.jynlo-c1 .friend-grid { gap: 1.1rem; }
+body .friends-page.jynlo-c1 .friend-card { padding: 1.2rem; }
+body .friends-page.jynlo-c1 .friend-card:hover { border-color: rgba(65, 233, 176, .42); }
+body .friends-page.jynlo-c1 .avatar {
+  border: 2px solid rgba(65, 233, 176, .32);
+  background: linear-gradient(145deg, #154353, #102639);
+  overflow: hidden;
+}
+body .friends-page.jynlo-c1 .friend-copy strong { color: #f0fcff; }
+body .friends-page.jynlo-c1 .friend-more__menu {
+  border-color: var(--jynlo-ui-outline);
+  background: #132a3c;
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .friends-page.jynlo-c1 .friend-filter { max-width: 650px; }
+
+/* Direct messaging: readable persistent conversation without changing polling or privacy. */
+body .chat-page.jynlo-c1 .chat-shell { max-width: 940px; }
+body .chat-page.jynlo-c1 .back-link { color: #b7ffe5; }
+body .chat-page.jynlo-c1 .chat-card { overflow: hidden; }
+body .chat-page.jynlo-c1 .message-list {
+  background: linear-gradient(150deg, #0c1e2d, #0e2736);
+}
+body .chat-page.jynlo-c1 .message {
+  border-radius: 1.1rem;
+  background: rgba(149, 193, 206, .1);
+  border: 1px solid rgba(149, 193, 206, .12);
+}
+body .chat-page.jynlo-c1 .message.own-message {
+  background: rgba(65, 233, 176, .13);
+  border-color: rgba(65, 233, 176, .22);
+}
+body .chat-page.jynlo-c1 .composer {
+  border-top: 1px solid var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface);
+}
+body .chat-page.jynlo-c1 .composer textarea { border-radius: var(--jynlo-ui-radius-sm); }
+body .chat-page.jynlo-c1 .sync-status { color: #b0e5d8; }
+
+/* Profile settings: make avatar and complex fields feel intentional. */
+body .edit-page.jynlo-c1 .edit-shell { max-width: 1040px; }
+body .edit-page.jynlo-c1 .edit-card { padding: clamp(1.2rem, 3vw, 2.3rem); }
+body .edit-page.jynlo-c1 .photo-panel {
+  padding: clamp(1rem, 2.3vw, 1.6rem);
+  border-radius: var(--jynlo-ui-radius-md);
+  border-color: var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .edit-page.jynlo-c1 .photo-preview {
+  --avatar-side: clamp(116px, 13vw, 148px);
+  width: var(--avatar-side);
+  height: var(--avatar-side);
+  flex: 0 0 var(--avatar-side);
+  aspect-ratio: 1 / 1;
+  border-radius: 1.15rem;
+  border: 2px solid rgba(65, 233, 176, .26);
+  overflow: hidden;
+}
+body .edit-page.jynlo-c1 :is(.profile-completion-card,.mfa-setting,.mfa-setup-card,.danger-zone) {
+  border-radius: var(--jynlo-ui-radius-md);
+}
+body .edit-page.jynlo-c1 .profile-completion-card { border-color: var(--jynlo-ui-outline); background: var(--jynlo-ui-surface-raised); }
+body .edit-page.jynlo-c1 .sport-chip {
+  background: rgba(65, 233, 176, .1);
+  border-color: rgba(65, 233, 176, .27);
+}
+body .edit-page.jynlo-c1 .form-actions { padding-top: .85rem; }
+
+/* Community creation: generous media preview with a balanced form. */
+body .create-community-page.jynlo-c1 .create-shell { max-width: 1050px; }
+body .create-community-page.jynlo-c1 .create-panel { padding: clamp(1.35rem, 3.1vw, 2.5rem); }
+body .create-community-page.jynlo-c1 .panel-heading h2 { font-size: clamp(1.45rem, 2.4vw, 2rem); letter-spacing: -.035em; }
+body .create-community-page.jynlo-c1 .community-photo-field {
+  gap: clamp(1.1rem, 3vw, 2.1rem);
+  border-color: var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .create-community-page.jynlo-c1 .community-photo-preview {
+  width: clamp(190px, 25vw, 325px);
+  height: auto;
+  aspect-ratio: 3 / 2;
+  border-radius: var(--jynlo-ui-radius-md);
+  overflow: hidden;
+}
+body .create-community-page.jynlo-c1 .community-photo-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+body .create-community-page.jynlo-c1 .sport-tag { border-color: rgba(65, 233, 176, .28); }
+body .create-community-page.jynlo-c1 .creation-note { border-color: var(--jynlo-ui-outline); }
+
+@media (max-width: 800px) {
+  body .jynlo-c1.jynlo-secondary { padding: 6rem 1rem 3rem; }
+  body .dashboard-page.jynlo-c1 .dashboard-header,
+  body .edit-page.jynlo-c1 .photo-panel,
+  body .create-community-page.jynlo-c1 .community-photo-field {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  body .create-community-page.jynlo-c1 .community-photo-preview { width: min(100%, 325px); }
+  body .edit-page.jynlo-c1 .photo-preview { --avatar-side: 124px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .dashboard-page.jynlo-c1 .hero-action,
+  body .friends-page.jynlo-c1 .friend-card { transform: none; transition: none; }
+}
+
+body .edit-page.jynlo-c1 .photo-preview img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }

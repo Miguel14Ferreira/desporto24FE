@@ -1,0 +1,48 @@
+<div #root class="compare-picker" [class.compare-picker--b]="side === 'B'">
+  <div class="picker-heading">
+    <span class="picker-label">{{ label }}</span>
+    @if (selectedKey) {
+      <button type="button" class="picker-clear"
+        [attr.title]="'communities.clearComparisonHelp' | t"
+        (click)="clear()">
+        <span aria-hidden="true">×</span> {{ 'communities.clearCompare' | t }}
+      </button>
+    }
+  </div>
+  <button #trigger type="button" class="picker-trigger"
+    aria-haspopup="listbox" [attr.aria-expanded]="open"
+    [attr.aria-label]="label + ': ' + (selection ? playerName(selection!.row) : ('communities.selectPlayer' | t))"
+    (click)="toggle()">
+    <span class="picker-side" aria-hidden="true">{{ side }}</span>
+    <span class="picker-value" [class.picker-placeholder]="!selection">
+      {{ selection ? playerName(selection!.row) : ('communities.selectPlayer' | t) }}
+    </span>
+    @if (selection) {
+      <span class="picker-points">{{ selection!.row.points }} {{ 'communities.pointsShort' | t }}</span>
+    }
+    <span class="picker-chevron" aria-hidden="true" [class.picker-chevron--open]="open">⌄</span>
+  </button>
+  @if (open) {
+    <div class="picker-popover">
+      <input #search type="search" class="picker-search"
+        [attr.aria-label]="'communities.searchPlayer' | t"
+        [placeholder]="'communities.searchPlayer' | t"
+        [(ngModel)]="searchTerm" (keydown)="searchKey($event)" autocomplete="off">
+      <div class="picker-options" role="listbox" [attr.aria-label]="label">
+        @for (item of filteredPlayers; track item.key) {
+          <button #optionButton type="button" role="option" class="picker-option"
+            [class.picker-option--selected]="selectedKey === item.key"
+            [attr.aria-selected]="selectedKey === item.key"
+            (click)="choose(item.key)" (keydown)="optionKey($event, $index)">
+            <span class="picker-rank">{{ item.index + 1 }}</span>
+            <span class="picker-player">{{ playerName(item.row) }}</span>
+            <span class="picker-option-points">{{ item.row.points }} {{ 'communities.pointsShort' | t }}</span>
+            @if (selectedKey === item.key) { <span class="picker-check" aria-hidden="true">✓</span> }
+          </button>
+        } @empty {
+          <p class="picker-empty">{{ 'communities.noPlayerFound' | t }}</p>
+        }
+      </div>
+    </div>
+  }
+</div>

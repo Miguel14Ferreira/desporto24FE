@@ -1,0 +1,71 @@
+/* Isolated rendering of session summaries inside a community.
+   Community enrollment and visibility rules stay with the parent component. */
+:host { display: block; }
+.community-session-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(0, 1.9fr);
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: .85rem;
+  background: rgba(255,255,255,.035);
+  color: inherit;
+  text-decoration: none;
+}
+
+.community-session-card:hover {
+  border-color: rgba(125,211,252,.35);
+  background: rgba(125,211,252,.055);
+}
+
+.community-session-main,
+.community-session-meta {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+
+.community-session-main {
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .2rem;
+}
+
+.community-session-main span,
+.community-session-meta {
+  color: #94a3b8;
+  font-size: .8rem;
+}
+
+.community-session-meta {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  min-width: 0;
+  row-gap: .55rem;
+  column-gap: .8rem;
+  line-height: 1.45;
+}
+.community-session-meta > span { white-space: normal; }
+.community-session-main strong {font-size:1rem;color:#f2fffd;}
+.community-session-main span {line-height:1.5;}
+
+
+.competition-badge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: .3rem .55rem;
+  background: rgba(74, 222, 128, .12);
+  color: #bbf7d0;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+@media (max-width: 700px) {
+  .community-session-card {grid-template-columns:minmax(0,1fr);}
+  .community-session-meta {justify-content:flex-start;}
+
+}
+

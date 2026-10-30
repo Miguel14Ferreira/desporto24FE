@@ -1,0 +1,246 @@
+<section class="group-page jynlo-c1">
+ <header class="group-top">
+   <div>
+     <h1>{{ 'groups.title' | t }}</h1>
+     <p>{{ 'groups.subtitle' | t }}</p>
+   </div>
+   <a routerLink="/menu/messages" class="group-back">← {{ 'inbox.title' | t }}</a>
+ </header>
+ <div class="group-layout">
+   <aside class="group-sidebar">
+     <button type="button" class="group-create-button" (click)="openCreate()">
+       <span aria-hidden="true">＋</span>{{ 'groups.create' | t }}
+     </button>
+     @if (loading) {<p role="status">{{ 'common.loading' | t }}</p>}
+     @if (error) {<p role="alert">{{ error }}</p>}
+     @for (group of groups; track group.id) {
+       <button type="button" class="group-entry" [class.current]="selected?.id===group.id"
+           (click)="select(group)">
+         <span class="group-circle" aria-hidden="true">
+           @if(photoUrl(group); as avatar){<img [src]="avatar" alt="" loading="lazy">}
+           @else {👥}
+         </span>
+         <span><strong>{{ group.title }}</strong><small>{{ group.members.length }} {{ 'groups.members' | t }}</small></span>
+       </button>
+     } @empty {
+       @if (!loading) { <p class="group-empty">{{ 'groups.empty' | t }}</p> }
+     }
+   </aside>
+   <main class="group-chat">
+     @if (selected; as group) {
+       <header class="group-chat-header">
+         <div class="group-header-info">
+           <span class="group-header-avatar" aria-hidden="true">
+             @if(photoUrl(group); as avatar){<img [src]="avatar" alt="">}
+             @else {👥}
+           </span>
+           <div>
+             <h2>{{ group.title }}</h2>
+             <p>{{ group.members.length }} {{ 'groups.members' | t }}</p>
+           </div>
+         </div>
+         <div class="group-header-actions">
+           <button class="group-header-button" type="button" [disabled]="muteLoading"
+             [attr.aria-label]="(selectedMuted ? 'chat.unmuteConversation' : 'chat.muteConversation') | t"
+             [attr.title]="(selectedMuted ? 'chat.unmuteConversation' : 'chat.muteConversation') | t"
+             (click)="toggleMute()">
+             {{ selectedMuted ? '🔕' : '🔔' }}
+             {{ (selectedMuted ? 'chat.unmuteConversation' : 'chat.muteConversation') | t }}
+           </button>
+           @if (isCreator) {
+             <input #groupPhotoInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+               class="group-photo-input" [attr.aria-label]="'groups.changePhoto' | t"
+               (change)="uploadPhoto($event)">
+             <button class="group-header-button" type="button" [disabled]="photoUploading"
+               (click)="groupPhotoInput.click()">
+               {{ photoUploading ? ('groups.uploadingPhoto' | t) : ('groups.changePhoto' | t) }}
+             </button>
+             <button class="group-header-button" type="button" (click)="openRename()">{{ 'groups.rename' | t }}</button>
+             <button class="group-header-button" type="button" (click)="openAdd()">
+               <span aria-hidden="true">＋</span> {{ 'groups.addMembers' | t }}
+             </button>
+           } @else {
+             <button class="group-header-button" type="button" (click)="askRemove(me)">{{ 'groups.leave' | t }}</button>
+           }
+         </div>
+       </header>
+       @if(muteError){<p class="group-error" role="alert">{{muteError}}</p>}
+       <div class="group-member-links" [attr.aria-label]="'groups.members' | t">
+         @for (m of group.members; track m.username) {
+           <div class="group-member-chip">
+             <a [routerLink]="['/menu/perfis',m.username]" [title]="m.displayName">
+               @if(m.profilePicUrl){<img class="group-member-avatar" [src]="m.profilePicUrl" alt="" loading="lazy">}
+               {{ m.displayName }} @if(m.admin){ <span aria-hidden="true">★</span> }
+             </a>
+             @if (isCreator && !m.admin) {
+               <button type="button" class="group-member-remove" (click)="askRemove(m.username)"
+                  [attr.aria-label]="('groups.removeMember' | t) + ': ' + m.displayName"
+                  [title]="'groups.removeMember' | t">×</button>
+             }
+           </div>
+         }
+       </div>
+       <div class="group-message-list" role="log" aria-live="polite">
+         @if (loadingMessages) {<p role="status">{{ 'common.loading' | t }}</p>}
+         @if (hasMore) {
+           <button type="button" class="group-more" (click)="older()" [disabled]="loadingMessages">
+             {{ 'groups.olderMessages' | t }}
+           </button>
+         }
+         @for (message of messages; track message.id) {
+           <article class="group-bubble" [class.mine]="message.sender.toLowerCase()===me">
+             <a [routerLink]="['/menu/perfis',message.sender]">{{ message.sender }}</a>
+             <p>{{ message.text }}</p>
+             <time>{{ message.createdAt | date:'dd/MM HH:mm' }}</time>
+           </article>
+         } @empty {
+           @if(!loadingMessages){<p class="group-empty">{{ 'groups.noMessages' | t }}</p>}
+         }
+       </div>
+       @if(groupError){<p role="alert" class="group-error">{{ groupError }}</p>}
+       <form class="group-compose" (ngSubmit)="send()">
+         <textarea name="draft" [(ngModel)]="draft" rows="2" maxlength="2000"
+           [placeholder]="'groups.messagePlaceholder' | t"></textarea>
+         <button type="submit" [disabled]="busy || !draft.trim()">{{ 'chat.send' | t }}</button>
+       </form>
+     } @else {
+       <div class="group-welcome">
+         <span aria-hidden="true">👥</span>
+         <h2>{{ 'groups.welcomeTitle' | t }}</h2>
+         <p>{{ 'groups.welcomeText' | t }}</p>
+       </div>
+     }
+   </main>
+ </div>
+ @if (showRename) {
+   <div class="group-modal-backdrop" (click)="showRename=false" (keydown.escape)="showRename=false">
+     <section class="group-modal" role="dialog" aria-modal="true"
+       [attr.aria-label]="'groups.rename' | t"
+       (click)="$event.stopPropagation()" (keydown.escape)="showRename=false">
+       <header>
+         <h2>{{ 'groups.rename' | t }}</h2>
+         <button type="button" (click)="showRename=false" [attr.aria-label]="'common.close' | t">×</button>
+       </header>
+       <form (ngSubmit)="rename()">
+         <label>{{ 'groups.name' | t }}
+           <input type="text" name="renameTitle" maxlength="90" [(ngModel)]="renameTitle">
+         </label>
+         @if(groupError){<p class="group-error" role="alert">{{groupError}}</p>}
+         <footer>
+           <button type="button" class="group-cancel" (click)="showRename=false">{{ 'common.cancel' | t }}</button>
+           <button type="submit" class="group-submit"
+             [disabled]="busy || renameTitle.trim().length<2 || renameTitle.trim().length>90">{{ 'groups.rename' | t }}</button>
+         </footer>
+       </form>
+     </section>
+   </div>
+ }
+ @if (removingUsername) {
+   <div class="group-modal-backdrop" (click)="removingUsername=null" (keydown.escape)="removingUsername=null">
+     <section class="group-modal" role="alertdialog" aria-modal="true"
+       [attr.aria-label]="'groups.removeMember' | t"
+       (click)="$event.stopPropagation()" (keydown.escape)="removingUsername=null">
+       <header>
+         <h2>{{ removingUsername.toLowerCase()===me ? ('groups.leave' | t) : ('groups.removeMember' | t) }}</h2>
+         <button type="button" (click)="removingUsername=null" [attr.aria-label]="'common.close' | t">×</button>
+       </header>
+       <p>{{ (removingUsername.toLowerCase()===me ? 'groups.leaveConfirm' : 'groups.removeConfirm') | t }} <strong>{{ removingUsername }}</strong></p>
+       @if(groupError){<p class="group-error" role="alert">{{groupError}}</p>}
+       <footer>
+         <button type="button" class="group-cancel" (click)="removingUsername=null">{{ 'common.cancel' | t }}</button>
+         <button type="button" class="group-submit" [disabled]="busy" (click)="confirmRemove()">
+           {{ removingUsername.toLowerCase()===me ? ('groups.leave' | t) : ('groups.removeMember' | t) }}
+         </button>
+       </footer>
+     </section>
+   </div>
+ }
+ @if (showCreate || showAdd) {
+   <div class="group-modal-backdrop" (click)="closeInviteDialog()"
+       (keydown.escape)="closeInviteDialog()">
+     <section class="group-modal group-invite-modal" role="dialog" aria-modal="true"
+        aria-labelledby="group-invite-title"
+        (click)="$event.stopPropagation()" (keydown.escape)="closeInviteDialog()">
+       <header class="group-invite-heading">
+         <div class="group-invite-heading-copy">
+           <span class="group-invite-kicker">{{ 'groups.inviteKicker' | t }}</span>
+           <h2 id="group-invite-title">{{ (showAdd ? 'groups.addMembers' : 'groups.create') | t }}</h2>
+           <p>{{ (showAdd ? 'groups.addMembersDescription' : 'groups.createDescription') | t }}</p>
+         </div>
+         <button type="button" class="group-modal-close" [attr.aria-label]="'common.close' | t"
+           [disabled]="busy" (click)="closeInviteDialog()">×</button>
+       </header>
+
+       @if (showCreate) {
+         <div class="group-invite-name-section">
+           <label for="group-invite-name">{{ 'groups.name' | t }}</label>
+           <input id="group-invite-name" type="text" maxlength="90"
+             [(ngModel)]="title" [ngModelOptions]="{standalone:true}"
+             [placeholder]="'groups.namePlaceholder' | t" [disabled]="busy">
+         </div>
+       }
+
+       <div class="group-invite-friends-head">
+         <div>
+           <strong>{{ 'groups.selectFriends' | t }}</strong>
+           <span>{{ 'groups.selectedFriends' | t:{ count: selectedNames.size } }}</span>
+         </div>
+       </div>
+
+       <div class="group-friend-search-wrap">
+         <label for="group-friend-search">{{ 'groups.searchFriends' | t }}</label>
+         <div class="group-friend-search-field">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+             <circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path>
+           </svg>
+           <input id="group-friend-search" type="search"
+             [(ngModel)]="friendSearch" [ngModelOptions]="{standalone:true}"
+             [placeholder]="'groups.searchFriendsPlaceholder' | t"
+             [disabled]="busy" autocomplete="off">
+           @if (friendSearch) {
+             <button type="button" class="group-friend-search-clear"
+               [disabled]="busy" [attr.aria-label]="'groups.clearSearch' | t"
+               (click)="clearFriendSearch()">×</button>
+           }
+         </div>
+       </div>
+
+       <div class="group-friend-options" role="group" [attr.aria-label]="'groups.selectFriends' | t">
+         @for (friend of filteredInviteFriends; track friend.username) {
+           <label class="group-friend" [class.is-selected]="selectedNames.has(friend.username.toLowerCase())">
+             <span class="group-friend-avatar" aria-hidden="true">
+               @if (friend.profilePicUrl) {
+                 <img [src]="friend.profilePicUrl" alt="" loading="lazy">
+               } @else {
+                 {{ (friend.nickname || friend.fullName || friend.username).slice(0,1).toUpperCase() }}
+               }
+             </span>
+             <span class="group-friend-details">
+               <strong>{{ friend.nickname || friend.fullName || friend.username }}</strong>
+               <small>@{{ friend.username }}</small>
+             </span>
+             <input type="checkbox" [checked]="selectedNames.has(friend.username.toLowerCase())"
+                [disabled]="busy" (change)="toggle(friend.username)">
+           </label>
+         } @empty {
+           <p class="group-invite-empty" role="status">
+             {{ (invitedFriends.length ? 'groups.noSearchResults' : 'groups.noFriends') | t }}
+           </p>
+         }
+       </div>
+
+       @if (groupError) { <p class="group-error" role="alert">{{ groupError }}</p> }
+       <footer class="group-invite-actions">
+         <button type="button" class="group-cancel" [disabled]="busy"
+             (click)="closeInviteDialog()">{{ 'common.cancel' | t }}</button>
+         <button type="button" class="group-submit"
+             [disabled]="busy || !selectedNames.size || (showCreate && (title.trim().length<2 || title.trim().length>90))"
+             (click)="showCreate ? create() : add()">
+           {{ (showAdd ? 'groups.addMembers' : 'groups.create') | t }}
+         </button>
+       </footer>
+     </section>
+   </div>
+ }
+</section>

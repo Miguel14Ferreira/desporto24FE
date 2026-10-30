@@ -1,0 +1,26 @@
+/* Three routes share the same compact, accessible season selector. */
+:host{display:block;min-width:190px;}
+.season-filter {
+  display: grid;
+  gap: .25rem;
+  min-width: 190px;
+}
+
+.season-filter > span {
+  color: #94a3b8;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.season-filter select {
+  height: 40px;
+  padding: 0 .65rem;
+}
+
+
+select{
+  width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);
+  border-radius:.75rem;background:rgba(255,255,255,.06);
+  color:#fff;font:inherit;
+}
+@media(max-width:900px){:host{width:100%;min-width:0;}.season-filter{width:100%;min-width:0;}}

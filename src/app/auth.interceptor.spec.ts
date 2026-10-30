@@ -6,7 +6,7 @@ import {
   HttpResponse
 } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { forkJoin, of, throwError } from 'rxjs';
 
 import { AuthInterceptor } from './auth.interceptor';
 import { environment } from '../environment/environment';
@@ -281,4 +281,71 @@ describe('AuthInterceptor', () => {
       }
     });
   });
+
+  it('coordinates two tabs so the same refresh cookie is not consumed twice', (done) => {
+    if (!navigator.locks?.request) {
+      pending('Web Locks API not available in this browser');
+      return;
+    }
+
+    const jwt = (marker: string) => {
+      const encode = (value: object) => btoa(JSON.stringify(value))
+        .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      return encode({ alg: 'HS512', typ: 'JWT' }) + '.'
+        + encode({ sub: 'same-user', exp: Math.floor(Date.now() / 1000) + 3600, marker })
+        + '.fixture';
+    };
+
+    const oldToken = jwt('old');
+    const freshToken = jwt('fresh');
+    localStorage.setItem('t', oldToken);
+    const anotherTab = new AuthInterceptor(router, backend);
+    backend.handle.and.returnValue(of(new HttpResponse({
+      status: 200, body: { token: freshToken }
+    })));
+
+    const next = {
+      handle: (request: HttpRequest<unknown>) => {
+        return request.headers.get('Authorization') === 'Bearer ' + oldToken
+          ? throwError(() => new HttpErrorResponse({ status: 401 }))
+          : of(new HttpResponse({ status: 200, body: [] }));
+      }
+    } as HttpHandler;
+
+    const request = new HttpRequest('GET', environment.apiUrl + '/api/communities/mine');
+    forkJoin([
+      interceptor.intercept(request, next),
+      anotherTab.intercept(request, next)
+    ]).subscribe({
+      next: () => {
+        expect(backend.handle).toHaveBeenCalledTimes(1);
+        expect(localStorage.getItem('t')).toBe(freshToken);
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      },
+      error: done.fail
+    });
+  });
+
+  it('does not erase a newer cross-tab token after an old refresh is rejected', (done) => {
+    localStorage.setItem('t', 'old-access-token');
+    const next = {
+      handle: () => throwError(() => new HttpErrorResponse({ status: 401 }))
+    } as HttpHandler;
+    backend.handle.and.callFake(() => {
+      localStorage.setItem('t', 'token-from-another-tab');
+      return throwError(() => new HttpErrorResponse({ status: 400 }));
+    });
+
+    interceptor.intercept(new HttpRequest('GET', '/api/sessions/1'), next)
+      .subscribe({
+        next: () => done.fail('Old request must fail'),
+        error: () => {
+          expect(localStorage.getItem('t')).toBe('token-from-another-tab');
+          expect(router.navigate).not.toHaveBeenCalled();
+          done();
+        }
+      });
+  });
+
 });

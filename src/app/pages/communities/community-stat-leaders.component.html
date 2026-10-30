@@ -1,0 +1,27 @@
+<div class="stats-grid">
+                    <article class="stat-card">
+                      <span>{{ 'communities.stat.leader' | t }}</span>
+                      <strong>{{ leader?.fullName || leader?.username || '—' }}</strong>
+                      <small>{{ leader?.points || 0 }} {{ 'communities.pointsShort' | t }}</small>
+                    </article>
+                    <article class="stat-card">
+                      <span>{{ 'communities.stat.goals' | t }}</span>
+                      <strong>{{ goals?.fullName || goals?.username || '—' }}</strong>
+                      <small>{{ goals?.goals || 0 }}</small>
+                    </article>
+                    <article class="stat-card">
+                      <span>{{ 'communities.stat.assists' | t }}</span>
+                      <strong>{{ assists?.fullName || assists?.username || '—' }}</strong>
+                      <small>{{ assists?.assists || 0 }}</small>
+                    </article>
+                    <article class="stat-card">
+                      <span>MVP</span>
+                      <strong>{{ mvps?.fullName || mvps?.username || '—' }}</strong>
+                      <small>{{ mvps?.mvps || 0 }}</small>
+                    </article>
+                    <article class="stat-card">
+                      <span>{{ 'communities.stat.cleanSheets' | t }}</span>
+                      <strong>{{ cleanSheets?.fullName || cleanSheets?.username || '—' }}</strong>
+                      <small>{{ cleanSheets?.cleanSheets || 0 }}</small>
+                    </article>
+                  </div>

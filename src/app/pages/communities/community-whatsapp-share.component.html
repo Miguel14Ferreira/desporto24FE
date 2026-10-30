@@ -1,0 +1,24 @@
+<section class="whatsapp-group-share" [attr.aria-label]="'communities.whatsappGroupTitle' | t">
+                <div>
+                  <h3>{{ 'communities.whatsappGroupTitle' | t }}</h3>
+                  <p>{{ 'communities.whatsappGroupHint' | t }}</p>
+                  @if (visibility === 'PRIVATE') {
+                    <p class="whatsapp-group-share-note">{{ 'communities.whatsappPrivateHint' | t }}</p>
+                  }
+                </div>
+                <div class="row-actions">
+                  <button type="button"
+                    class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
+                    (click)="shareRequested.emit()">
+                    {{ 'communities.whatsappShareButton' | t }}
+                  </button>
+                  <button type="button"
+                    class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                    (click)="copyRequested.emit()">
+                    {{ 'communities.whatsappCopyButton' | t }}
+                  </button>
+                </div>
+                @if (feedback) {
+                  <p class="whatsapp-group-share-feedback" role="status">{{ feedback }}</p>
+                }
+              </section>

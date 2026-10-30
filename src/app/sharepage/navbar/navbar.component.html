@@ -1,14 +1,17 @@
 <nav class="site-nav">
   <div class="site-nav__shell">
-    <a class="brand" [routerLink]="authenticated ? '/menu/feed' : '/home'" aria-label="Jynlo">Jynl<span>o</span></a>
+    <a class="brand" [routerLink]="authenticated ? '/menu/feed' : '/home'" aria-label="Jynlo">
+      <img class="brand__mark" src="/assets/jynlo-icon-approved.webp" alt="" width="36" height="36">
+      <span class="brand__wordmark">JYNLO</span>
+    </a>
 
     <div class="site-nav__links">
       @if (authenticated) {
         <a class="desktop-primary-link" routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
         <a routerLink="/menu/discover" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
-        <a class="mobile-only-link" routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
+        <a class="nav-activities-link" routerLink="/menu/events" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
         <a class="nav-communities-link" routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
-        <a class="mobile-only-link" routerLink="/menu/friendList" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
+        <a class="mobile-only-link" routerLink="/menu/messages" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
         <a class="desktop-primary-link nav-create-action jynlo-action jynlo-action--accent" routerLink="/menu/createEvent" routerLinkActive="active-link">{{ 'feed.createSession' | t }}</a>
         <a class="notification-link" routerLink="/menu/notifications" routerLinkActive="active-link">
           {{ 'menu.notifications' | t }}
@@ -18,15 +21,45 @@
         </a>
 
         <details class="account-menu">
-          <summary class="jynlo-action jynlo-action--neutral"><span aria-hidden="true">☰</span> Menu</summary>
+          <summary class="jynlo-action jynlo-action--neutral account-identity-trigger"
+            [attr.aria-label]="'nav.account.activeAs' | t:{ username: activeAccountUsername }">
+            <span class="account-identity-avatar" aria-hidden="true">
+              @if (accountImage(); as picture) {
+                <img [src]="picture" alt="" loading="lazy">
+              } @else {
+                <span>{{ accountInitials }}</span>
+              }
+            </span>
+            <span class="account-identity-copy">
+              <small>{{ 'nav.account.active' | t }}</small>
+              <strong>@{{ activeAccountUsername || ('nav.account.profile' | t) }}</strong>
+            </span>
+            <span class="account-identity-chevron" aria-hidden="true">⌄</span>
+          </summary>
           <div class="account-menu__panel">
+            <div class="account-menu__identity">
+              <span class="account-identity-avatar account-identity-avatar--large" aria-hidden="true">
+                @if (accountImage(); as picture) {
+                  <img [src]="picture" alt="" loading="lazy">
+                } @else {
+                  <span>{{ accountInitials }}</span>
+                }
+              </span>
+              <div class="account-menu__identity-copy">
+                <span class="account-menu__status"><span aria-hidden="true">●</span> {{ 'nav.account.active' | t }}</span>
+                <strong>{{ accountDisplayName || ('nav.account.profile' | t) }}</strong>
+                <small>@{{ activeAccountUsername || ('nav.account.profile' | t) }}</small>
+              </div>
+            </div>
+            <div class="account-menu__divider" aria-hidden="true"></div>
             <a class="mobile-only-link" routerLink="/menu/feed" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.feed' | t }}</a>
-            <a class="desktop-primary-link" routerLink="/menu/my-sessions" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.activities' | t }}</a>
-            <a class="desktop-primary-link" routerLink="/menu/friendList" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.messages' | t }}</a>
-            <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.profile' | t }}</a>
+            <a class="desktop-primary-link" routerLink="/menu/my-sessions" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'mySessions.title' | t }}</a>
+            <a class="desktop-primary-link" routerLink="/menu/messages" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.messages' | t }}</a>
+            <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.account.viewProfile' | t }}</a>
             @if (admin) {
               <a routerLink="/menu/admin" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'admin.eyebrow' | t }}</a>
             }
+            <div class="account-menu__divider" aria-hidden="true"></div>
             <div class="language-switch" aria-label="Language selector">
               <button type="button" [class.active-language]="i18n.currentLanguage === 'pt'" (click)="setLanguage('pt')">PT</button>
               <span>/</span>
@@ -68,3 +101,33 @@
     </div>
   </div>
 </nav>
+
+@if (authenticated && chatToast; as notice) {
+  <aside class="jynlo-chat-toast" role="status" aria-live="polite"
+    [attr.aria-label]="i18n.translate('notification.chatSubject', { username: notice.relatedUsername || '' })">
+    <span class="jynlo-chat-toast__icon" aria-hidden="true">✉</span>
+    <div class="jynlo-chat-toast__content">
+      <strong>{{ i18n.translate('notification.chatSubject', { username: notice.relatedUsername || '' }) }}</strong>
+      <p>{{ toastMessage(notice) }}</p>
+      <button type="button" class="jynlo-chat-toast__open" (click)="openChatToast()">
+        {{ 'chat.toastOpen' | t }}
+      </button>
+    </div>
+    <button type="button" class="jynlo-chat-toast__close"
+      [attr.aria-label]="'chat.toastDismiss' | t" (click)="dismissChatToast()">×</button>
+  </aside>
+} @else if (authenticated && groupToast; as notice) {
+  <aside class="jynlo-chat-toast" role="status" aria-live="polite"
+    [attr.aria-label]="groupToastTitle(notice)">
+    <span class="jynlo-chat-toast__icon" aria-hidden="true">✉</span>
+    <div class="jynlo-chat-toast__content">
+      <strong>{{ groupToastTitle(notice) }}</strong>
+      <p>{{ groupToastMessage(notice) }}</p>
+      <button type="button" class="jynlo-chat-toast__open" (click)="openGroupToast()">
+        {{ 'chat.toastOpen' | t }}
+      </button>
+    </div>
+    <button type="button" class="jynlo-chat-toast__close"
+      [attr.aria-label]="'chat.toastDismiss' | t" (click)="dismissGroupToast()">×</button>
+  </aside>
+}

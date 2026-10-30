@@ -1,0 +1,91 @@
+<section class="records-section">
+  <div class="section-heading">
+    <div>
+      <span class="section-kicker">{{ 'communities.recordsKicker' | t }}</span>
+      <h3>{{ 'communities.recordsTitle' | t }}</h3>
+    </div>
+  </div>
+
+  <div class="records-grid">
+    <article class="record-card">
+      <span>{{ 'communities.record.mostGames' | t }}</span>
+      <strong>{{ mostGames?.fullName || mostGames?.username || '—' }}</strong>
+      <small>{{ mostGames?.games || 0 }} {{ 'communities.gamesShort' | t }}</small>
+    </article>
+    <article class="record-card">
+      <span>{{ 'communities.record.bestWinRate' | t }}</span>
+      <strong>{{ bestWinRate?.fullName || bestWinRate?.username || '—' }}</strong>
+      <small>{{ bestWinRate?.winRate || 0 }}%</small>
+    </article>
+    <article class="record-card">
+      <span>{{ 'communities.record.bestStreak' | t }}</span>
+      <strong>{{ bestWinStreak?.fullName || bestWinStreak?.username || '—' }}</strong>
+      <small>{{ bestWinStreak?.bestWinStreak || 0 }} {{ 'communities.winsShort' | t }}</small>
+    </article>
+  </div>
+</section>
+
+<section class="performance-section">
+  <div class="section-heading">
+    <div>
+      <span class="section-kicker">{{ 'communities.chartKicker' | t }}</span>
+      <h3>{{ 'communities.pointsChart' | t }}</h3>
+    </div>
+  </div>
+
+  <div class="points-chart">
+    @for (row of rows.slice(0, 10); track $index) {
+      <div class="points-chart-row">
+        <div class="points-chart-label">
+          <strong>{{ row.fullName || row.username }}</strong>
+          <span>{{ row.points }} {{ 'communities.pointsShort' | t }}</span>
+        </div>
+        <div class="points-chart-track">
+          <span [style.width.%]="pointsBarWidth(row)"></span>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+<section class="compare-section">
+  <div class="section-heading">
+    <div>
+      <span class="section-kicker">{{ 'communities.compareKicker' | t }}</span>
+      <h3>{{ 'communities.comparePlayers' | t }}</h3>
+    </div>
+  </div>
+
+  <div class="compare-selectors">
+    <app-community-compare-picker
+      [label]="'communities.playerA' | t" side="A" [rows]="rows"
+      [selectedKey]="compareSelectionA"
+      (selectionChange)="compareAChange.emit($event)"
+      (clearRequested)="clearRequested.emit('A')"
+    ></app-community-compare-picker>
+    <span class="versus">VS</span>
+    <app-community-compare-picker
+      [label]="'communities.playerB' | t" side="B" [rows]="rows"
+      [selectedKey]="compareSelectionB"
+      (selectionChange)="compareBChange.emit($event)"
+      (clearRequested)="clearRequested.emit('B')"
+    ></app-community-compare-picker>
+  </div>
+
+  @if (comparePlayerA && comparePlayerB) {
+    <div class="compare-table">
+      <div class="compare-head">
+        <strong>{{ comparePlayerA?.fullName || comparePlayerA?.username }}</strong>
+        <span>{{ 'communities.metric' | t }}</span>
+        <strong>{{ comparePlayerB?.fullName || comparePlayerB?.username }}</strong>
+      </div>
+      <div><strong>{{ comparePlayerA?.points }}</strong><span>{{ 'communities.pointsShort' | t }}</span><strong>{{ comparePlayerB?.points }}</strong></div>
+      <div><strong>{{ comparePlayerA?.games }}</strong><span>{{ 'communities.gamesShort' | t }}</span><strong>{{ comparePlayerB?.games }}</strong></div>
+      <div><strong>{{ comparePlayerA?.wins }}</strong><span>{{ 'communities.winsShort' | t }}</span><strong>{{ comparePlayerB?.wins }}</strong></div>
+      <div><strong>{{ comparePlayerA?.goals }}</strong><span>{{ 'communities.goals' | t }}</span><strong>{{ comparePlayerB?.goals }}</strong></div>
+      <div><strong>{{ comparePlayerA?.assists }}</strong><span>{{ 'communities.assists' | t }}</span><strong>{{ comparePlayerB?.assists }}</strong></div>
+      <div><strong>{{ comparePlayerA?.mvps }}</strong><span>MVP</span><strong>{{ comparePlayerB?.mvps }}</strong></div>
+      <div><strong>{{ comparePlayerA?.winRate }}%</strong><span>{{ 'communities.winRate' | t }}</span><strong>{{ comparePlayerB?.winRate }}%</strong></div>
+    </div>
+  }
+</section>

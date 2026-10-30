@@ -1,55 +1,30 @@
-<section class="feed-page">
-  <div class="feed-shell">
-    <header class="page-header">
+<section class="feed-page jynlo-c1 jynlo-social jynlo-entry-premium jynlo-feed-premium">
+  <div class="feed-shell feed-v3-shell">
+    <div class="feed-layout jynlo-premium-feed-grid">
+      <div class="feed-main">
+    <header class="page-header jynlo-feed-hero feed-v3-welcome">
       <div>
-        <p class="eyebrow">Jynlo</p>
-        <h1>{{ 'feed.title' | t }}</h1>
-        <p class="subtitle">{{ 'feed.subtitle' | t }}</p>
+        <span class="feed-v3-greeting">{{ 'feed.v3.greeting' | t }} {{ currentUsername || ('nav.account.profile' | t) }} 👋</span>
+        <h1>{{ 'feed.v3.welcome' | t }}</h1>
+        <p class="subtitle">{{ 'feed.v3.tagline' | t }}</p>
       </div>
-
+      <a class="feed-hero-cta jynlo-premium-btn jynlo-premium-btn--primary" routerLink="/menu/createEvent">
+        <span aria-hidden="true">+</span> {{ 'week.create' | t }}
+      </a>
     </header>
 
-    <section class="week-hub" [attr.aria-label]="'week.title' | t">
+    <app-social-stories></app-social-stories>
+
+    <section class="week-hub jynlo-premium-week" [attr.aria-label]="'week.title' | t">
       <div class="week-hub-heading">
         <div>
           <p class="week-hub-eyebrow">{{ 'week.eyebrow' | t }}</p>
           <h2>{{ 'week.title' | t }}</h2>
           <p>{{ 'week.subtitle' | t }}</p>
         </div>
-        <a class="jynlo-action jynlo-action--accent week-hub-create"
-           routerLink="/menu/createEvent">{{ 'week.create' | t }} <span aria-hidden="true">↗</span></a>
+        <a class="jynlo-action jynlo-action--neutral week-hub-create jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
+           routerLink="/menu/my-sessions">{{ 'week.allMyGames' | t }} <span aria-hidden="true">↗</span></a>
       </div>
-      <section class="week-recruit" [attr.aria-label]="'week.recruitTitle' | t">
-        <div class="week-recruit-copy">
-          <span class="week-recruit-label">{{ 'week.recruitKicker' | t }}</span>
-          <strong>{{ 'week.recruitTitle' | t }}</strong>
-          <p>{{ 'week.recruitHint' | t }}</p>
-        </div>
-        <div class="week-recruit-actions">
-          <label class="week-recruit-field">
-            <span>{{ 'week.alreadyConfirmed' | t }}</span>
-            <input type="number" min="1" max="99" step="1" name="weekConfirmed"
-              [(ngModel)]="quickConfirmedPlayers" [attr.aria-label]="'week.alreadyConfirmed' | t">
-          </label>
-          <label class="week-recruit-field">
-            <span>{{ 'week.missing' | t }}</span>
-            <input type="number" min="1" max="99" step="1" name="weekMissing"
-              [(ngModel)]="quickMissingPlayers" [attr.aria-label]="'week.missing' | t">
-          </label>
-          <a class="jynlo-action jynlo-action--primary week-recruit-cta"
-             [routerLink]="quickRecruitValid ? '/menu/createEvent' : null"
-             [queryParams]="quickRecruitValid
-               ? { intent: 'findPlayers', confirmed: quickConfirmedPlayers, missing: quickMissingPlayers }
-               : null"
-             [class.week-recruit-disabled]="!quickRecruitValid"
-             [attr.aria-disabled]="!quickRecruitValid">
-            {{ 'week.recruitAction' | t }} <span aria-hidden="true">→</span>
-          </a>
-        </div>
-        @if (!quickRecruitValid) {
-          <small class="week-recruit-error" role="status">{{ 'week.recruitValidation' | t }}</small>
-        }
-      </section>
       <div class="week-hub-grid">
         <article class="week-hub-card" aria-label="Os teus próximos jogos">
           <div class="week-card-heading"><span aria-hidden="true">▦</span><h3>{{ 'week.upcoming' | t }}</h3></div>
@@ -67,7 +42,7 @@
                 <small>{{ 'week.confirmed' | t }}</small>
               </a>
               @if (canPromoteWeekGame(session)) {
-                <a class="week-share-action jynlo-action jynlo-action--neutral"
+                <a class="week-share-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
                    [routerLink]="['/menu/events', session.id]"
                    [queryParams]="{ promote: '1' }">
                   {{ 'week.promoteVacancies' | t:{
@@ -130,16 +105,14 @@
       </div>
     </section>
 
-    <div class="feed-layout">
-      <div class="feed-main">
     @if (!loading && !errorMessage && items.length === 0) {
       <div class="state-card feed-empty-state">
         <h2>{{ 'feed.emptyTitle' | t }}</h2>
         <p>{{ 'feed.emptyText' | t }}</p>
         <nav class="feed-empty-actions" [attr.aria-label]="'feed.emptyTitle' | t">
-          <a class="jynlo-action jynlo-action--primary" routerLink="/menu/discover">{{ 'menu.findSessions' | t }}</a>
-          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
-          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/createEvent">{{ 'menu.createSession' | t }}</a>
+          <a class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" routerLink="/menu/discover">{{ 'menu.findSessions' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/createEvent">{{ 'menu.createSession' | t }}</a>
         </nav>
       </div>
     }
@@ -156,7 +129,7 @@
             <strong>{{ newSession.sport }} · {{ newSession.city }}</strong>
             <span>{{ newSession.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
           </div>
-          <button type="button" class="postgame-detach jynlo-action jynlo-action--neutral"
+          <button type="button" class="postgame-detach jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
                   [disabled]="posting" (click)="detachNewSession()">{{ 'feed.postGameDetach' | t }}</button>
         </div>
         <p class="composer-hint" role="status">{{ 'feed.newSessionHint' | t }}</p>
@@ -168,13 +141,13 @@
             <strong>{{ completedSession.sport }} · {{ completedSession.city }}</strong>
             <span>{{ completedSession.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
           </div>
-          <button type="button" class="postgame-detach jynlo-action jynlo-action--neutral" [disabled]="posting"
+          <button type="button" class="postgame-detach jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small" [disabled]="posting"
                   (click)="detachPostGameSession()">{{ 'feed.postGameDetach' | t }}</button>
         </div>
         <p class="composer-hint" role="status">{{ 'feed.postGameHint' | t }}</p>
         <div class="postgame-prompts" role="group" [attr.aria-label]="'feed.postGamePromptsLabel' | t">
           @for (promptKey of postGamePromptKeys; track promptKey) {
-            <button type="button" class="postgame-prompt jynlo-action jynlo-action--neutral"
+            <button type="button" class="postgame-prompt jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
                     [disabled]="posting" (click)="applyPostGamePrompt(promptKey)">
               {{ promptKey | t }}
             </button>
@@ -193,7 +166,7 @@
           <img [src]="postImagePreview" [alt]="'feed.imagePreviewAlt' | t">
           <button
             type="button"
-            class="remove-image"
+            class="remove-image jynlo-premium-btn jynlo-premium-btn--danger jynlo-premium-btn--small"
             [disabled]="posting"
             (click)="removePostImage()">
             {{ 'feed.removeImage' | t }}
@@ -205,27 +178,27 @@
         <div class="composer-image-preview">
           <video [src]="postVideoPreview" controls preload="metadata" playsinline
             [attr.aria-label]="'feed.videoPreviewAlt' | t"></video>
-          <button type="button" class="remove-image" [disabled]="posting"
+          <button type="button" class="remove-image jynlo-premium-btn jynlo-premium-btn--danger jynlo-premium-btn--small" [disabled]="posting"
             (click)="removePostVideo()">{{ 'feed.removeVideo' | t }}</button>
         </div>
       }
 
       <div class="composer-actions">
-        <label class="image-picker jynlo-action" [class.disabled]="posting">
+        <label class="image-picker jynlo-action jynlo-premium-btn jynlo-premium-btn--quiet" [class.disabled]="posting">
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
             [disabled]="posting"
             (change)="onPostImageChange($event)">
-          <span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
+          <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4"/><path d="m3 17 5.5-5.5 3.6 3.6 3-3L21 18"/></svg><span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
         </label>
-        <label class="image-picker jynlo-action" [class.disabled]="posting">
+        <label class="image-picker jynlo-action jynlo-premium-btn jynlo-premium-btn--quiet" [class.disabled]="posting">
           <input type="file" accept="video/mp4,video/webm" [disabled]="posting"
             (change)="onPostVideoChange($event)">
-          <span>{{ postVideoPreview ? ('feed.changeVideo' | t) : ('feed.addVideo' | t) }}</span>
+          <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="m17 10 4-3v10l-4-3"/></svg><span>{{ postVideoPreview ? ('feed.changeVideo' | t) : ('feed.addVideo' | t) }}</span>
         </label>
         <button
-          class="jynlo-action jynlo-action--primary"
+          class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
           type="button"
           [disabled]="posting || !postContent.trim()"
           (click)="publish()">
@@ -238,6 +211,7 @@
       <div class="feedback error-feedback">{{ actionError }}</div>
     }
 
+    <div class="feed-v3-post-heading"><h2>{{ 'feed.v3.latest' | t }}</h2><a class="feed-inline-link" routerLink="/menu/discover">{{ 'nav.discover' | t }} <span aria-hidden="true">↗</span></a></div>
     @if (loading) {
       <div class="state-card">{{ 'feed.loading' | t }}</div>
     }
@@ -245,7 +219,7 @@
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="load()">{{ 'common.retry' | t }}</button>
+        <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -277,7 +251,7 @@
                    && item.authorUsername === currentUsername) {
                 <button
                   type="button"
-                  class="delete-post jynlo-action jynlo-action--danger"
+                  class="delete-post jynlo-action jynlo-action--danger jynlo-premium-btn jynlo-premium-btn--danger jynlo-premium-btn--small"
                   [disabled]="hidingAttendanceSessionId !== null"
                   (click)="hideAttendanceActivity(item)">
                   {{ hidingAttendanceSessionId === item.sessionId
@@ -288,7 +262,7 @@
               @if (item.type === 'POST' && item.authorUsername === currentUsername) {
                 <button
                   type="button"
-                  class="delete-post jynlo-action jynlo-action--danger"
+                  class="delete-post jynlo-action jynlo-action--danger jynlo-premium-btn jynlo-premium-btn--danger jynlo-premium-btn--small"
                   [disabled]="deletingPostId !== null"
                   (click)="deletePost(item)">
                   {{ deletingPostId === item.postId ? ('common.processing' | t) : ('feed.delete' | t) }}
@@ -331,37 +305,39 @@
                @if (item.sessionId !== null) {
                   <button
                     type="button"
-                    class="share-session jynlo-action jynlo-action--neutral"
+                    class="share-session jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
                     [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
                     [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
-                    <span aria-hidden="true">↗</span>
+                    <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
                     {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                   </button>
                 }
                 <button
                   type="button"
+                  class="feed-post-reaction"
                   [class.active]="item.likedByMe"
                   [disabled]="interactionLoadingPostId !== null"
                   [attr.aria-label]="item.likedByMe ? ('feed.unlikeAction' | t) : ('feed.likeAction' | t)"
                   [attr.aria-pressed]="item.likedByMe"
                   (click)="toggleLike(item)">
-                  <span aria-hidden="true">{{ item.likedByMe ? '♥' : '♡' }}</span>
+                  <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.3 5.3 0 0 0-7.5 0L12 5.9l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.9a5.3 5.3 0 0 0 0-7.5Z"/></svg>
                   {{ item.likeCount }}
                 </button>
 
                 <button
                   type="button"
+                  class="feed-post-reaction"
                   [attr.aria-label]="item.postId !== null && openCommentPosts.has(item.postId)
                     ? ('feed.hideCommentsAction' | t) : ('feed.showCommentsAction' | t)"
                   [attr.aria-expanded]="item.postId !== null && openCommentPosts.has(item.postId)"
                   (click)="toggleComments(item)">
-                  <span aria-hidden="true">💬</span>
+                  <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8 8 0 0 1-8.5 8.5H4l2-3.8A8 8 0 1 1 21 11.5Z"/></svg>
                   {{ item.commentCount }}
                 </button>
 
                 @if (item.authorUsername !== currentUsername) {
-                  <button class="jynlo-action jynlo-action--neutral"
+                  <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small feed-report-action"
                     type="button"
                     [disabled]="reportingPostId !== null || (item.postId !== null && reportedPostIds.has(item.postId))"
                     (click)="reportPost(item)">
@@ -406,7 +382,7 @@
                       @if (comment.authorUsername === currentUsername) {
                         <button
                           type="button"
-                          class="delete-comment"
+                          class="delete-comment jynlo-premium-btn jynlo-premium-btn--danger jynlo-premium-btn--small"
                           [disabled]="deletingCommentId !== null"
                           (click)="deleteComment(item, comment)">
                           {{ deletingCommentId === comment.id ? ('common.processing' | t) : '×' }}
@@ -414,7 +390,7 @@
                       } @else {
                         <button
                           type="button"
-                          class="delete-comment"
+                          class="delete-comment jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
                           [disabled]="reportingCommentId !== null || reportedCommentIds.has(comment.id)"
                           (click)="reportComment(item, comment)">
                           {{ reportedCommentIds.has(comment.id)
@@ -432,7 +408,7 @@
                       [ngModel]="commentDrafts[item.postId] || ''"
                       (ngModelChange)="commentDrafts[item.postId] = $event"
                       [placeholder]="'feed.commentPlaceholder' | t">
-                    <button class="jynlo-action jynlo-action--neutral"
+                    <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                       type="button"
                       [disabled]="interactionLoadingPostId !== null || !(commentDrafts[item.postId] || '').trim()"
                       (click)="submitComment(item)">
@@ -473,11 +449,11 @@
                 <div class="post-actions">
                   <button
                                       type="button"
-                                      class="share-session jynlo-action jynlo-action--neutral"
+                                      class="share-session jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
                                       [disabled]="sharingSessionId !== null"
                                       (click)="shareSession(item)"
                                       [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
-                                      <span aria-hidden="true">↗</span>
+                                      <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
                                       {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                                     </button>
                 </div>
@@ -508,11 +484,11 @@
                 <div class="post-actions">
                   <button
                     type="button"
-                    class="share-session jynlo-action jynlo-action--neutral"
+                    class="share-session jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small"
                     [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
                     [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
-                    <span aria-hidden="true">↗</span>
+                    <svg class="feed-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
                     {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                   </button>
                 </div>
@@ -525,7 +501,7 @@
                   <input id="feed-share-link" #shareLinkInput type="text"
                          [value]="manualShareUrl" readonly
                          [attr.aria-label]="'publicSession.shareLink' | t">
-                  <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">{{ 'publicSession.selectLink' | t }}</button>
+                  <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small" type="button" (click)="shareLinkInput.select()">{{ 'publicSession.selectLink' | t }}</button>
                 </div>
               </div>
             }
@@ -537,7 +513,10 @@
 
       <aside class="feed-sidebar" [attr.aria-label]="'discover.title' | t">
         <section class="state-card feed-discovery-card">
-          <h2>{{ (suggestedSessions.length > 0 ? 'feed.suggestedSessionsTitle' : 'menu.findSessions') | t }}</h2>
+          <div class="feed-v3-side-heading">
+            <h2>{{ (suggestedSessions.length > 0 ? 'feed.suggestedSessionsTitle' : 'menu.findSessions') | t }}</h2>
+            <a class="feed-inline-link" routerLink="/menu/events">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+          </div>
           @if (suggestedSessions.length > 0) {
             <div class="feed-suggested-sessions">
               @for (session of suggestedSessions; track session.id) {
@@ -552,13 +531,16 @@
               }
             </div>
           }
-          <a class="jynlo-action jynlo-action--neutral feed-sidebar-link" routerLink="/menu/events">
+          <a class="jynlo-action jynlo-action--neutral feed-sidebar-link jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/events">
             {{ 'discover.when.action' | t }} →
           </a>
         </section>
 
         <section class="state-card feed-discovery-card">
-          <h2>{{ 'discover.who.title' | t }}</h2>
+          <div class="feed-v3-side-heading">
+            <h2>{{ 'discover.who.title' | t }}</h2>
+            <a class="feed-inline-link" routerLink="/menu/perfis">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+          </div>
           @if (suggestedPeople.length > 0) {
             <div class="feed-suggested-people">
               @for (profile of suggestedPeople; track profile.username) {
@@ -576,16 +558,43 @@
                     <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
                     <small>@{{ profile.username }}</small>
                     @if (profile.favoriteSports) {
-                      <small>{{ profile.favoriteSports }}</small>
+                      <app-venue-sports-badges [sports]="profile.favoriteSports"
+                        [limit]="2" [compact]="true"></app-venue-sports-badges>
                     }
                   </span>
                 </a>
               }
             </div>
           }
-          <a class="jynlo-action jynlo-action--neutral feed-sidebar-link" routerLink="/menu/perfis">
+          <a class="jynlo-action jynlo-action--neutral feed-sidebar-link jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/perfis">
             {{ 'feed.findPeople' | t }} →
           </a>
+        </section>
+        <section class="state-card feed-discovery-card feed-v3-community-panel">
+          <div class="feed-v3-side-heading">
+            <h2>{{ 'feed.v3.communities' | t }}</h2>
+            <a class="feed-inline-link" routerLink="/menu/communities">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+          </div>
+          @if (myWeekCommunities.length > 0) {
+            <div class="feed-v3-communities">
+              @for (community of myWeekCommunities; track community.id) {
+                <a [routerLink]="['/menu/communities', community.id]" class="feed-v3-community-row"
+                   [attr.title]="community.name" [attr.aria-label]="community.name">
+                  <span class="feed-v3-community-avatar" aria-hidden="true">{{ community.name.charAt(0).toUpperCase() }}</span>
+                  <span><strong>{{ community.name }}</strong><small>{{ community.memberCount }} {{ 'week.members' | t }}</small></span>
+                  <span class="feed-v3-community-chevron" aria-hidden="true">↗</span>
+                </a>
+              }
+            </div>
+          } @else {
+            <p class="feed-v3-side-empty">{{ 'week.noCommunities' | t }}</p>
+          }
+        </section>
+        <section class="feed-v3-join-card">
+          <img src="/assets/jynlo-icon-approved.webp" width="65" height="65" alt="" loading="lazy">
+          <h2>{{ 'feed.v3.joinTitle' | t }}</h2>
+          <p>{{ 'feed.v3.joinHint' | t }}</p>
+          <a class="jynlo-premium-btn jynlo-premium-btn--primary feed-v3-join-action" routerLink="/menu/communities">{{ 'feed.v3.exploreCommunities' | t }}</a>
         </section>
       </aside>
     </div>

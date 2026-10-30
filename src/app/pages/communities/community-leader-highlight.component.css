@@ -1,0 +1,47 @@
+/* Read-only current leader highlight used in the community Home tab. */
+:host {display:block;}
+.leader-highlight {
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 1rem;
+  background: rgba(255,255,255,.035);
+}
+.section-kicker {
+  margin: 0 0 .2rem;
+  color: #7dd3fc;
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.leader-highlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: .85rem;
+  padding: 1rem 1.1rem;
+}
+
+.leader-highlight h3 {
+  margin-top: .15rem;
+  font-size: 1.35rem;
+}
+
+.leader-highlight p {
+  margin: .25rem 0 0;
+  color: #94a3b8;
+}
+
+.leader-score {
+  min-width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(125,211,252,.12);
+  color: #bae6fd;
+  font-size: 1.45rem;
+  font-weight: 950;
+}
+

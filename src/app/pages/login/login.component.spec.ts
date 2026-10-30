@@ -295,6 +295,30 @@ describe('LoginComponent', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/feed');
   });
 
+  it('shows username, email or mobile number in the same accessible login field', () => {
+    const form = fixture.nativeElement.querySelector('.login-card form') as HTMLFormElement;
+    const input = form.querySelector('input[name="username"]') as HTMLInputElement;
+    const label = input.closest('label') as HTMLLabelElement;
+    expect(label.textContent).toContain('email');
+    expect(label.textContent).toContain('telemóvel');
+    expect(input.autocomplete).toBe('username');
+    expect(input.placeholder).toContain('email');
+    expect(input.type).toBe('text');
+  });
+
+  it('submits username, email and mobile identifiers using the existing login contract', () => {
+    for (const identifier of [
+      'fixture-user', 'fixture@example.test', '912345678', '+351 912 345 678'
+    ]) {
+      component.username = ' ' + identifier + ' ';
+      component.password = 'fixture-password';
+      component.onLogin();
+
+      expect(auth.login).toHaveBeenCalledWith(identifier, 'fixture-password');
+      expect(auth.saveToken).toHaveBeenCalledWith('jwt-token');
+    }
+  });
+
   it('should store the MFA challenge instead of a JWT', () => {
     auth.login.and.returnValue(of({
       mfaRequired: true,

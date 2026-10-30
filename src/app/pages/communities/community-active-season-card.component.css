@@ -1,0 +1,40 @@
+/* Presentation-only active season close confirmation; all actions belong to the parent. */
+:host{display:block;}
+.row-actions{display:flex;flex-wrap:wrap;gap:.45rem;}
+.danger-action,.secondary-action{border-radius:.75rem;padding:.75rem 1rem;font:inherit;font-weight:900;cursor:pointer;}
+.secondary-action{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;}
+.danger-action{border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.08);color:#fecaca;}
+.small{padding:.5rem .7rem;font-size:.82rem;}
+
+.active-season-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: .8rem;
+  padding: .85rem .95rem;
+  border: 1px solid rgba(74,222,128,.20);
+  border-radius: .85rem;
+  background: rgba(74,222,128,.055);
+}
+
+.active-season-card > div:first-child {
+  display: grid;
+  gap: .2rem;
+}
+
+.active-season-card span {
+  color: #94a3b8;
+  font-size: .8rem;
+}
+
+.season-close-confirmation {
+  display: grid;
+  justify-items: end;
+  gap: .45rem;
+  text-align: right;
+}
+@media(max-width:900px){
+  .active-season-card{align-items:stretch;flex-direction:column;}
+  .season-close-confirmation{justify-items:stretch;text-align:left;}
+}

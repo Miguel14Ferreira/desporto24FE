@@ -1,0 +1,282 @@
+/*
+ * Jynlo Concept 1 — social, people, discover and public landing.
+ * Opt-in page roots only. Design foundations are shared with Communities/Games.
+ * All profile permissions, publication controls and navigation remain untouched.
+ */
+body .jynlo-c1.jynlo-social {
+  background:
+    radial-gradient(ellipse 66% 470px at 92% 5%, rgba(20, 135, 139, .16), transparent 78%),
+    linear-gradient(153deg, var(--jynlo-ui-canvas), #0b2234 67%, #071523);
+  color: var(--jynlo-ui-text);
+  padding-top: 6.3rem;
+}
+body .jynlo-c1.jynlo-social :is(.profile-shell,.community-shell,.feed-shell,.discover-shell,.home-shell) {
+  width: min(var(--jynlo-ui-container), 100%);
+  max-width: 100%;
+}
+body .jynlo-c1.jynlo-social :is(.page-header,.discover-header) h1 {
+  font-size: clamp(2.5rem, 4.6vw, 4rem);
+  font-weight: 850;
+  letter-spacing: -.045em;
+  line-height: 1.08;
+}
+body .jynlo-c1.jynlo-social :is(.eyebrow,.section-kicker,.week-hub-eyebrow,.pillar-heading p) {
+  color: var(--jynlo-ui-brand);
+  font-weight: 850;
+  letter-spacing: .13em;
+}
+body .jynlo-c1.jynlo-social :is(.subtitle,.page-header .subtitle) {
+  max-width: 55ch;
+  color: var(--jynlo-ui-muted);
+  line-height: 1.65;
+}
+body .jynlo-c1.jynlo-social .jynlo-action--primary {
+  --jynlo-action-bg: var(--jynlo-ui-brand);
+  --jynlo-action-border: var(--jynlo-ui-brand);
+  --jynlo-action-hover: #83f4cf;
+  --jynlo-action-text: var(--jynlo-ui-brand-text);
+}
+body .jynlo-c1.jynlo-social .jynlo-action--neutral {
+  --jynlo-action-bg: rgba(140, 185, 204, .075);
+  --jynlo-action-border: rgba(140, 185, 204, .28);
+  --jynlo-action-hover: rgba(140, 185, 204, .16);
+  --jynlo-action-text: #e0f2fa;
+}
+body .jynlo-c1.jynlo-social .jynlo-action:focus-visible,
+body .jynlo-c1.jynlo-social :is(input,select,textarea,button):focus-visible {
+  outline: 2px solid var(--jynlo-ui-brand);
+  outline-offset: 3px;
+}
+body .jynlo-c1.jynlo-social :is(.state-card,.feedback,.empty-card) {
+  border-color: var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface-glass);
+}
+body .jynlo-c1.jynlo-social :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+  border-color: rgba(158, 204, 217, .25);
+  border-radius: var(--jynlo-ui-radius-sm);
+  background: rgba(8, 25, 40, .7);
+  color: var(--jynlo-ui-text);
+}
+
+/* Personal profile — strong identity and understated earned achievements. */
+body .profile-page.jynlo-c1 .profile-card {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-lg);
+  background:
+    radial-gradient(ellipse at 87% 6%, rgba(65, 233, 176, .11), transparent 52%),
+    var(--jynlo-ui-surface);
+  box-shadow: var(--jynlo-ui-shadow);
+  padding: clamp(1.3rem, 3vw, 2.5rem);
+}
+body .profile-page.jynlo-c1 .identity { gap: clamp(1.25rem, 3vw, 2.3rem); }
+body .profile-page.jynlo-c1 .identity .avatar {
+  width: clamp(120px, 14vw, 190px);
+  height: clamp(120px, 14vw, 190px);
+  flex: 0 0 auto;
+  border: 3px solid rgba(65, 233, 176, .3);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, .25);
+  border-radius: 1.4rem;
+  overflow: hidden;
+}
+body .profile-page.jynlo-c1 .identity .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+body .profile-page.jynlo-c1 .identity-copy h2 {
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -.04em;
+}
+body .profile-page.jynlo-c1 .favorite-sport-chip {
+  border: 1px solid rgba(65, 233, 176, .23);
+  border-radius: 999px;
+  background: rgba(65, 233, 176, .085);
+}
+body .profile-page.jynlo-c1 :is(.profile-completion-card,.bio-card,.reliability-card) {
+  border-radius: var(--jynlo-ui-radius-md);
+  border-color: var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .profile-page.jynlo-c1 .activity-grid > div {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-sm);
+  background: rgba(129, 184, 208, .075);
+}
+body .profile-page.jynlo-c1 .activity-grid strong { color: #a8ffe0; }
+
+/* People discovery and member profile: cards + airy filter form. */
+body .community-page.jynlo-c1 .community-shell { max-width: 1180px; }
+body .community-page.jynlo-c1 :is(.search-bar,.profile-detail,.profile-card) {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-lg);
+  background: var(--jynlo-ui-surface);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .community-page.jynlo-c1 .partner-search {
+  padding: clamp(1.15rem, 2.5vw, 2rem);
+}
+body .community-page.jynlo-c1 .profile-grid { gap: 1.1rem; }
+body .community-page.jynlo-c1 .profile-grid .profile-card {
+  transition: border-color .18s ease, transform .18s ease;
+}
+body .community-page.jynlo-c1 .profile-grid .profile-card:hover {
+  border-color: rgba(65, 233, 176, .4);
+  transform: translateY(-2px);
+}
+body .community-page.jynlo-c1 .profile-grid .avatar {
+  border: 2px solid rgba(65, 233, 176, .23);
+}
+body .community-page.jynlo-c1 .profile-detail {
+  padding: clamp(1.4rem, 3vw, 2.4rem);
+  background:
+    radial-gradient(ellipse at 87% 8%, rgba(65, 233, 176, .09), transparent 54%),
+    var(--jynlo-ui-surface);
+}
+body .community-page.jynlo-c1 .profile-detail .large-avatar {
+  /* .avatar (44px) and .large-avatar (84px) previously retained a small
+     flex-basis: the new height grew but the flex item stayed very narrow. */
+  --jynlo-profile-avatar-size: clamp(125px, 15vw, 195px);
+  width: var(--jynlo-profile-avatar-size);
+  height: var(--jynlo-profile-avatar-size);
+  flex: 0 0 var(--jynlo-profile-avatar-size);
+  min-width: var(--jynlo-profile-avatar-size);
+  min-height: var(--jynlo-profile-avatar-size);
+  aspect-ratio: 1 / 1;
+  border-radius: 1.4rem;
+  overflow: hidden;
+  place-items: center;
+}
+body .community-page.jynlo-c1 .profile-detail .large-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+body .community-page.jynlo-c1 .profile-detail .profile-identity {
+  min-width: 0;
+}
+body .community-page.jynlo-c1 .profile-detail .profile-identity h1 {
+  overflow-wrap: anywhere;
+}
+body .community-page.jynlo-c1 .profile-identity h1 {
+  font-size: clamp(2.1rem, 3.6vw, 3.2rem);
+  letter-spacing: -.04em;
+}
+body .community-page.jynlo-c1 :is(.profile-meta > div,.public-activity-grid > div) {
+  border-radius: var(--jynlo-ui-radius-sm);
+  border-color: var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface-raised);
+}
+
+/* Home/landing — identity and previews use real content only. */
+body .home-page.jynlo-c1 .hero { gap: clamp(2rem, 5vw, 4rem); }
+body .home-page.jynlo-c1 .hero h1 {
+  font-size: clamp(3.2rem, 6vw, 5.8rem);
+  letter-spacing: -.06em;
+  line-height: .98;
+}
+body .home-page.jynlo-c1 .brand-lockup span { color: var(--jynlo-ui-brand); }
+body .home-page.jynlo-c1 :is(.flow-card,.community-teaser,.public-discovery,.preview-panel) {
+  border-radius: var(--jynlo-ui-radius-lg);
+  border-color: var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface);
+}
+body .home-page.jynlo-c1 .community-teaser {
+  background:
+    radial-gradient(ellipse at 88% 12%, rgba(65, 233, 176, .12), transparent 55%),
+    linear-gradient(125deg, #10273b, #11343d);
+}
+body .home-page.jynlo-c1 :is(.preview-search,.preview-item) {
+  border-color: var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+}
+
+/* Discover where/when/who — consistent product facets. */
+body .discover-page.jynlo-c1 .discover-shell { max-width: var(--jynlo-ui-container); }
+body .discover-page.jynlo-c1 :is(.discover-search,.pillar-panel,.state-card) {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-lg);
+  background: var(--jynlo-ui-surface);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .discover-page.jynlo-c1 .pillar-panel.featured-panel {
+  background:
+    radial-gradient(ellipse at 95% 5%, rgba(65, 233, 176, .085), transparent 50%),
+    var(--jynlo-ui-surface);
+}
+body .discover-page.jynlo-c1 .pillar-heading h2 {
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  letter-spacing: -.025em;
+}
+body .discover-page.jynlo-c1 .result-card {
+  border-color: var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .discover-page.jynlo-c1 .result-card:hover {
+  border-color: rgba(65, 233, 176, .43);
+}
+body .discover-page.jynlo-c1 .result-count {
+  color: #a8ffe0;
+  background: rgba(65, 233, 176, .1);
+}
+
+/* Social home feed: give real posts visual weight, keep composer prominent. */
+body .feed-page.jynlo-c1 .feed-shell { max-width: var(--jynlo-ui-container); }
+body .feed-page.jynlo-c1 :is(.week-hub,.composer,.feed-card,.feed-discovery-card,.week-hub-card,.postgame-session-card) {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-lg);
+  background: var(--jynlo-ui-surface);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .feed-page.jynlo-c1 .week-hub {
+  background:
+    radial-gradient(ellipse at 95% 8%, rgba(65, 233, 176, .105), transparent 53%),
+    var(--jynlo-ui-surface);
+  padding: clamp(1.3rem, 2.8vw, 2.2rem);
+}
+body .feed-page.jynlo-c1 .week-hub-heading h2 {
+  font-size: clamp(1.45rem, 2.5vw, 2.1rem);
+  letter-spacing: -.03em;
+}
+body .feed-page.jynlo-c1 .week-hub-card {
+  background: rgba(135, 186, 205, .07);
+  box-shadow: none;
+}
+body .feed-page.jynlo-c1 .feed-layout { gap: clamp(1.1rem, 2vw, 1.6rem); }
+body .feed-page.jynlo-c1 .feed-list { gap: 1.2rem; }
+body .feed-page.jynlo-c1 .feed-card {
+  padding: clamp(1.1rem, 2vw, 1.65rem);
+}
+body .feed-page.jynlo-c1 .post-image {
+  border-radius: var(--jynlo-ui-radius-md);
+}
+body .feed-page.jynlo-c1 .composer {
+  padding: clamp(1.15rem, 2.3vw, 1.8rem);
+}
+body .feed-page.jynlo-c1 .composer :is(textarea,input) {
+  border-color: rgba(151, 195, 210, .25);
+  background: #0b2031;
+}
+body .feed-page.jynlo-c1 .week-card-link,
+body .feed-page.jynlo-c1 .feed-author-link {
+  color: var(--jynlo-ui-brand);
+}
+
+@media (max-width: 780px) {
+  body .jynlo-c1.jynlo-social { padding: 6rem 1rem 3rem; }
+  body .profile-page.jynlo-c1 .identity,
+  body .community-page.jynlo-c1 .profile-detail .detail-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  body .feed-page.jynlo-c1 .feed-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .community-page.jynlo-c1 .profile-grid .profile-card {
+    transition: none;
+    transform: none;
+  }
+}

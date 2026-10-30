@@ -1,6 +1,7 @@
 import { CommunitiesComponent } from './communities.component';
 import { of, Subject } from 'rxjs';
 import { SessionSummary } from '../model/session-summary';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 describe('CommunitiesComponent public session eligibility', () => {
   let component: CommunitiesComponent;
@@ -22,6 +23,747 @@ describe('CommunitiesComponent public session eligibility', () => {
       audience: 'COMMUNITY_ONLY',
       status: 'OPEN'
     };
+  });
+
+
+
+  it('hides discontinued 2026 speed-skating Final B only when creating new rounds', () => {
+    Object.defineProperty(component, 'canRecordInlineSpeedWithoutRankings',
+      { configurable: true, value: false });
+    const codes = component.eventOptions('Patinagem de Velocidade').map(x => x.code);
+    expect(codes).toContain('INLINE_TRACK_500D_FINAL_A');
+    expect(codes).toContain('INLINE_ROAD_LAP_FINAL_A');
+    expect(codes).not.toContain('INLINE_TRACK_500D_FINAL_B');
+    expect(codes).not.toContain('INLINE_ROAD_LAP_FINAL_B');
+
+    // An old form may still be open when the page is updated; reject it before API calls.
+    component.selected = { id: 27, name: 'Patinagem', sport: 'Patinagem de Velocidade' } as any;
+    component.roundEventTypeDraft = 'INLINE_TRACK_500D_FINAL_B';
+    component.roundSaving = false;
+    component.createRound();
+    expect(component.errorMessage).toBe(t('feedback.communities.inlineFinalBDiscontinued'));
+  });
+
+  it('retains community detail routing and hides the mine selector in detail mode', () => {
+    (component as any).isDetailMode = true;
+    expect(component.detailMode()).toBeTrue();
+    expect(component.showMineView()).toBeFalse();
+
+    const navigate = jasmine.createSpy('navigate');
+    (component as any).router = { navigate };
+    component.backToCommunities();
+    expect(navigate).toHaveBeenCalledOnceWith(['/menu/communities']);
+  });
+
+  it('keeps regular standings and tournament history explanations and column abbreviations translated PT/EN', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      expect(t('communities.tournaments.overview.standingsSeparateHint'))
+        .toContain('Tournaments have separate results.');
+      expect(['playedCol', 'winsCol', 'drawsCol', 'lossesCol'].map(k =>
+        t('communities.tournaments.finalUi.' + k))).toEqual(['P', 'W', 'D', 'L']);
+      localStorage.setItem('d24-language', 'pt');
+      expect(t('communities.tournaments.overview.standingsSeparateHint'))
+        .toContain('Os torneios têm resultados independentes.');
+      expect(['playedCol', 'winsCol', 'drawsCol', 'lossesCol'].map(k =>
+        t('communities.tournaments.finalUi.' + k))).toEqual(['J', 'V', 'E', 'D']);
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+
+  it('flags original Excel preview rows by destination and format without modifying results or saving', () => {
+    const tied = {
+      sourceRow: 8, home: 'Águias', away: 'Leões',
+      homeScore: 1, awayScore: 1, sourceRound: 'Final',
+      sourceDate: '2023-06-07', potentialDuplicate: true
+    };
+    const leagueDraw = {
+      ...tied, sourceRow: 9, sourceRound: 'Jornada 1', potentialDuplicate: false
+    };
+    const snapshot = JSON.stringify([tied, leagueDraw]);
+    component.matchPreview = {
+      sheetName: 'Dados', sourceRows: 2, acceptedRows: 2,
+      potentialDuplicates: 1, warnings: [], rows: [tied, leagueDraw]
+    };
+    component.matchArchiveDestination = 'ARCHIVE';
+    component.matchArchiveFormat = 'KNOCKOUT';
+    expect(component.importMatchReviewFlags(tied)).toEqual(['possible-duplicate']);
+    expect(component.importMatchReviewCount).toBe(1);
+
+    component.matchArchiveDestination = 'TOURNAMENT';
+    component.matchArchiveFormat = 'LEAGUE';
+    expect(component.importMatchReviewFlags(tied)).toEqual(['possible-duplicate']);
+    component.matchArchiveFormat = 'KNOCKOUT';
+    expect(component.importMatchReviewFlags(tied)).toEqual(['possible-duplicate', 'tied-knockout']);
+    expect(component.importMatchReviewFlags(leagueDraw)).toEqual([]);
+    expect(component.importMatchReviewCount).toBe(1);
+    expect(JSON.stringify(component.matchPreview.rows)).toBe(snapshot);
+
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      expect(t('communities.matches.previewReviewNotice', { count: 1 }))
+        .toContain('Source matches flagged for review: 1.');
+      localStorage.setItem('d24-language', 'pt');
+      expect(t('communities.matches.previewReviewNotice', { count: 1 }))
+        .toContain('Partidas sinalizadas para revisão no ficheiro: 1.');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+  it('translates the 2026 six-skater qualifying heat limit in PT and EN', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(t('feedback.communities.speedSkatingFirstHeatLimit'))
+        .toContain('no máximo 6');
+      localStorage.setItem('d24-language', 'en');
+      expect(t('feedback.communities.speedSkatingFirstHeatLimit'))
+        .toContain('at most 6');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+  it('offers BO3 heat awards on documented relegation only, without accepting DQ', () => {
+    const bracket={format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-Q1',status:'IN_PROGRESS',
+        riderA:'r1',riderB:'r24',riderC:null,riderD:null}]} as any;
+    const incident={seriesKey:'SP53-Q1',heatNumber:2,incidentType:'FALL',
+      status:'ADJUDICATION_REQUIRED',sanctionType:'RELEGATION',
+      sanctionedUsername:'r1'} as any;
+    expect(component.sprintIsBo3Award(incident)).toBeTrue();
+    expect(component.sprintCanConfirmOfficialAward(bracket,incident)).toBeTrue();
+    expect(component.sprintAwardEligibleWinner(bracket,incident)).toBe('r24');
+    expect(component.sprintCanConfirmOfficialAward(bracket,{
+      ...incident,sanctionType:'DISQUALIFICATION'})).toBeFalse();
+    expect(component.sprintCanConfirmOfficialAward(bracket,{
+      ...incident,heatNumber:4})).toBeFalse();
+    expect(component.sprintCanConfirmOfficialAward(bracket,{
+      ...incident,status:'OFFICIAL_HEAT_AWARDED'})).toBeFalse();
+    const language=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.awardBo3NotSeries')).toContain('não atribui automaticamente');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.awardBo3NotSeries')).toContain('does not automatically');
+    } finally {
+      if(language===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',language);
+    }
+  });
+
+  it('requires explicit chair request, signed panel review and manual outcome with PT/EN', () => {
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintReviewBracketId=53;
+    component.sprintReviewIncidentId=7;
+    component.sprintReviewMode='REQUEST';
+    component.sprintReviewPresident='Fictional Panel President';
+    component.sprintReviewReference='Fictional chair request 2026/100';
+    component.sprintReviewReason='Formal review requested after viewing the available evidence';
+    component.sprintReviewJudgeRefereeConfirmed=false;
+    const ask=jasmine.createSpy('requestOfficialReview').and.returnValue(of({action:'REQUESTED'}));
+    const decide=jasmine.createSpy('resolveOfficialReview').and.returnValue(of({action:'OVERTURNED'}));
+    (component as any).communityService={
+      requestSprintOfficialReview:ask,resolveSprintOfficialReview:decide
+    };
+    spyOn<any>(component,'loadSprintReviewHistory').and.stub();
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintReview();
+    expect(ask).not.toHaveBeenCalled();
+    component.sprintReviewJudgeRefereeConfirmed=true;
+    component.saveSprintReview();
+    expect(ask).toHaveBeenCalledWith(12,44,53,7,jasmine.objectContaining({
+      originalJudgeRefereeDecision:true,
+      presidentName:'Fictional Panel President'
+    }));
+    component.sprintReviewMode='DECIDE';
+    component.sprintReviewOutcome='';
+    component.sprintReviewReference='Fictional final record 2026/102';
+    component.sprintReviewPanelReference='Fictional full panel review 2026/101';
+    component.sprintReviewReason='Panel reviewed evidence and president explicitly overturned original ruling';
+    component.saveSprintReview();
+    expect(decide).not.toHaveBeenCalled();
+    component.sprintReviewOutcome='OVERTURNED';
+    component.saveSprintReview();
+    expect(decide).toHaveBeenCalledWith(12,44,53,7,jasmine.objectContaining({
+      outcome:'OVERTURNED',
+      panelReviewReference:'Fictional full panel review 2026/101',
+      presidentDecisionReference:'Fictional final record 2026/102'
+    }));
+    const prev=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.reviewOverturnedBlock')).toContain('Não é criado');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.reviewOverturnedBlock')).toContain('No replacement winner');
+    } finally {
+      if(prev===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prev);
+    }
+  });
+
+  it('requires an explicitly ranked panel record for incident-time placings, PT/EN', () => {
+    const incident={
+      id:8,seriesKey:'SP53-A1',heatNumber:1,incidentType:'PUNCTURE',
+      status:'POSITIONS_PENDING',decisionType:'OFFICIAL_RESULT_TO_RECORD',
+      decisionReference:'Synthetic first commissaires decision 2026/401'
+    };
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',
+        riderC:null,riderD:null,status:'READY',winner:null}],
+      incidents:[incident]
+    } as any;
+    expect(component.sprintCanRatifyPositions(bracket,incident as any)).toBeTrue();
+    expect(component.sprintCanRatifyPositions(bracket,{
+      ...incident,status:'RESTART_PENDING'
+    } as any)).toBeFalse();
+    expect(component.sprintCanRatifyPositions({...bracket,matches:[
+      {...bracket.matches[0],riderC:'r9'}]},incident as any)).toBeFalse();
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.editSprintOfficialPositions(53,8);
+    expect(component.sprintPositionsFirstRider).toBe('');
+    expect(component.sprintPositionsSecondRider).toBe('');
+    expect(component.sprintPositionsPanelConfirmed).toBeFalse();
+    component.sprintPositionsReference='Synthetic second panel positions record 2026/402';
+    component.sprintPositionsReason='Commissaires officially place rider 24 ahead at the incident';
+    const save=jasmine.createSpy('ratifySprintIncidentPositions')
+      .and.returnValue(of({...incident,status:'OFFICIAL_POSITIONS'}));
+    (component as any).communityService={ratifySprintIncidentPositions:save};
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintOfficialPositions();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintPositionsFirstRider='r24';
+    component.sprintPositionsSecondRider='r24';
+    component.sprintPositionsPanelConfirmed=true;
+    component.saveSprintOfficialPositions();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintPositionsSecondRider='r1';
+    component.sprintPositionsReference=incident.decisionReference;
+    component.saveSprintOfficialPositions();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintPositionsReference='Synthetic second panel positions record 2026/402';
+    component.saveSprintOfficialPositions();
+    expect(save).toHaveBeenCalledWith(12,44,53,8,jasmine.objectContaining({
+      orderedRiders:['r24','r1'],panelPositionsConfirmed:true
+    }));
+    const prev=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.positionsNoRace')).toContain('não foi disputada');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.positionsNoRace')).toContain('no additional heat');
+    } finally {
+      if(prev===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prev);
+    }
+  });
+
+  it('requires explicit non-fault rider, inside/outside choice and second record', () => {
+    const incident={
+      id:8,seriesKey:'SP53-A1',heatNumber:1,incidentType:'FALL',
+      status:'FAULT_START_PENDING',decisionType:'UNINTENTIONAL_FALL',
+      decisionReference:'Synthetic first panel finding 2026/601'
+    };
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',
+        riderC:null,riderD:null,status:'READY',winner:null}],
+      incidents:[incident]
+    } as any;
+    expect(component.sprintCanConfirmFaultStart(bracket,incident as any)).toBeTrue();
+    expect(component.sprintCanConfirmFaultStart(bracket,{
+      ...incident,status:'RESTART_PENDING'
+    } as any)).toBeFalse();
+    expect(component.sprintCanConfirmFaultStart({...bracket,matches:[
+      {...bracket.matches[0],riderC:'r3'}]},incident as any)).toBeFalse();
+
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.editSprintFaultStart(53,8);
+    expect(component.sprintFaultRider).toBe('');
+    expect(component.sprintFaultStartPosition).toBe('');
+    expect(component.sprintFaultChoiceConfirmed).toBeFalse();
+    component.sprintFaultReference='Synthetic second panel record 2026/602';
+    component.sprintFaultReason='The rider not at fault expressly chooses the outside starting position';
+    const save=jasmine.createSpy('confirmUnintentionalFallStart')
+      .and.returnValue(of({...incident,status:'FAULT_START_OK'}));
+    (component as any).communityService={confirmUnintentionalFallStart:save};
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintFaultStart();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintFaultRider='r1';
+    component.sprintFaultStartPosition='OUTSIDE';
+    component.saveSprintFaultStart();
+    expect(save).not.toHaveBeenCalled();
+    expect(component.sprintNonFaultRider(bracket,incident as any)).toBe('r24');
+    component.sprintFaultChoiceConfirmed=true;
+    component.sprintFaultReference=incident.decisionReference;
+    component.saveSprintFaultStart();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintFaultReference='Synthetic second panel record 2026/602';
+    component.saveSprintFaultStart();
+    expect(save).toHaveBeenCalledWith(12,44,53,8,jasmine.objectContaining({
+      faultRider:'r1',nonFaultRider:'r24',nonFaultStartPosition:'OUTSIDE',
+      nonFaultChoiceConfirmed:true
+    }));
+    const prior=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.faultPendingNotice')).toContain('ciclista sem culpa');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.faultPendingNotice')).toContain('not at fault');
+    } finally {
+      if(prior===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prior);
+    }
+  });
+
+
+  it('documents UCI pre-sprint contact before unlocking a two-up heat', () => {
+    const incident={
+      id:9,seriesKey:'SP53-A1',heatNumber:1,
+      incidentType:'PRE_SPRINT_OPPONENT_CONTACT',
+      status:'FAULT_START_PENDING',decisionType:'PRE_SPRINT_RESTART',
+      decisionReference:'First pre sprint official report 2026/701'
+    };
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',
+        riderC:null,riderD:null,status:'READY',winner:null}],
+      incidents:[incident]
+    } as any;
+    expect(component.sprintIsPreSprintIncident(incident as any)).toBeTrue();
+    expect(component.sprintCanConfirmFaultStart(bracket,incident as any)).toBeTrue();
+    expect(component.sprintCanConfirmFaultStart({...bracket,matches:[
+      {...bracket.matches[0],riderC:'r3'}]},incident as any)).toBeFalse();
+    expect(component.sprintCanConfirmFaultStart(bracket,{
+      ...incident,decisionType:'UNINTENTIONAL_FALL'
+    } as any)).toBeFalse();
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.editSprintDecision(53,9);
+    expect(component.sprintDecisionType).toBe('PRE_SPRINT_RESTART');
+    component.editSprintFaultStart(53,9);
+    expect(component.sprintFaultRider).toBe('');
+    expect(component.sprintFaultStartPosition).toBe('');
+    expect(component.sprintPreSprintBeforeConfirmed).toBeFalse();
+    expect(component.sprintPreSprintStoppedConfirmed).toBeFalse();
+    component.sprintFaultReference='Independent second pre sprint record 2026/702';
+    component.sprintFaultReason='The non-fault rider explicitly chooses inside after the starter stops';
+    component.sprintFaultRider='r1';
+    component.sprintFaultStartPosition='INSIDE';
+    component.sprintFaultChoiceConfirmed=true;
+    const choice=jasmine.createSpy('confirmPreSprintStart')
+      .and.returnValue(of({...incident,status:'FAULT_START_OK'}));
+    (component as any).communityService={confirmPreSprintStart:choice};
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintFaultStart();
+    expect(choice).not.toHaveBeenCalled();
+    component.sprintPreSprintBeforeConfirmed=true;
+    component.saveSprintFaultStart();
+    expect(choice).not.toHaveBeenCalled();
+    component.sprintPreSprintStoppedConfirmed=true;
+    component.sprintFaultReference=incident.decisionReference;
+    component.saveSprintFaultStart();
+    expect(choice).not.toHaveBeenCalled();
+    component.sprintFaultReference='Independent second pre sprint record 2026/702';
+    component.saveSprintFaultStart();
+    expect(choice).toHaveBeenCalledWith(12,44,53,9,jasmine.objectContaining({
+      incidentRider:'r1',nonFaultRider:'r24',nonFaultStartPosition:'INSIDE',
+      nonFaultChoiceConfirmed:true,beforeSprintConfirmed:true,starterStoppedConfirmed:true
+    }));
+    const prior=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.preSprintPending')).toContain('ciclista sem culpa');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.preSprintPending')).toContain('non-fault');
+    } finally {
+      if(prior===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prior);
+    }
+  });
+
+
+  it('guards UCI 3.2.048(4) rulings and requires a separate non-fault start choice', () => {
+    const incident={
+      id:10,seriesKey:'SP53-A1',heatNumber:1,
+      incidentType:'FLAGRANT_BEFORE_BELL',status:'PENDING',decisionType:null,
+      decisionReference:null
+    };
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',
+        riderC:null,riderD:null,status:'READY',winner:null}],
+      incidents:[incident]
+    } as any;
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.editSprintDecision(53,10);
+    expect(component.sprintFlagrantOffender).toBe('');
+    expect(component.sprintFlagrantSanction).toBe('');
+    expect(component.sprintFlagrantCutoffConfirmed).toBeFalse();
+    expect(component.sprintFlagrantStarterConfirmed).toBeFalse();
+    component.sprintDecisionReference='Fictional first panel ruling 2026/801';
+    component.sprintDecisionReason='Starter stopped a flagrant infringement before the bell';
+    const first=jasmine.createSpy('ruleFlagrantSprintIncident')
+      .and.returnValue(of({...incident,status:'FLAGRANT_START_PENDING'}));
+    const second=jasmine.createSpy('confirmFlagrantNoSanctionStart')
+      .and.returnValue(of({...incident,status:'FLAGRANT_START_OK'}));
+    (component as any).communityService={
+      ruleFlagrantSprintIncident:first,confirmFlagrantNoSanctionStart:second
+    };
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintDecision();
+    expect(first).not.toHaveBeenCalled();
+    component.sprintFlagrantOffender='r1';
+    component.sprintFlagrantSanction='NONE';
+    component.saveSprintDecision();
+    expect(first).not.toHaveBeenCalled();
+    component.sprintFlagrantCutoffConfirmed=true;
+    component.saveSprintDecision();
+    expect(first).not.toHaveBeenCalled();
+    component.sprintFlagrantStarterConfirmed=true;
+    component.saveSprintDecision();
+    expect(first).toHaveBeenCalledWith(12,44,53,10,jasmine.objectContaining({
+      offendingRider:'r1',sanction:'NONE',
+      beforeBellOrSprintConfirmed:true,starterStoppedConfirmed:true
+    }));
+    const pending={...incident,status:'FLAGRANT_START_PENDING',
+      decisionType:'FLAGRANT_RULING',decisionReference:'Fictional first panel ruling 2026/801',
+      flagrantOffendingRider:'r1',flagrantBeforeCutoffConfirmed:true,
+      flagrantStarterStoppedConfirmed:true};
+    bracket.incidents=[pending];
+    expect(component.sprintCanConfirmFlagrantStart(bracket,pending as any)).toBeTrue();
+    expect(component.sprintCanConfirmFlagrantStart({...bracket,
+      matches:[{...bracket.matches[0],riderC:'r3'}]},pending as any)).toBeFalse();
+    expect(component.sprintCanConfirmFlagrantStart(bracket,{
+      ...pending,status:'ADJUDICATION_REQUIRED',sanctionType:'RELEGATION'
+    } as any)).toBeFalse();
+    component.editSprintFlagrantStart(53,10);
+    expect(component.sprintFlagrantStartPosition).toBe('');
+    expect(component.sprintFlagrantStartChoiceConfirmed).toBeFalse();
+    component.sprintFlagrantStartPosition='OUTSIDE';
+    component.sprintFlagrantStartChoiceConfirmed=true;
+    component.sprintFlagrantStartReference=pending.decisionReference;
+    component.sprintFlagrantStartReason='The rider not at fault chooses the outer starting position';
+    component.saveSprintFlagrantStart();
+    expect(second).not.toHaveBeenCalled();
+    component.sprintFlagrantStartReference='Distinct second panel record 2026/802';
+    component.saveSprintFlagrantStart();
+    expect(second).toHaveBeenCalledWith(12,44,53,10,jasmine.objectContaining({
+      nonFaultRider:'r24',nonFaultStartPosition:'OUTSIDE',nonFaultChoiceConfirmed:true
+    }));
+    const prior=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.flagrantPending')).toContain('adversário');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.flagrantPending')).toContain('opponent');
+    } finally {
+      if(prior===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',prior);
+    }
+  });
+
+  it('requires a separate neutral-mishap restart and cannot invent a Sprint winner', () => {
+    const bracket={
+      id:53,format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-A1',riderA:'r1',riderB:'r24',riderC:null,
+        riderD:null,status:'READY',winner:null}],
+      incidents:[{id:7,seriesKey:'SP53-A1',heatNumber:1,
+        incidentType:'PUNCTURE',decisionType:'RESTART_REQUIRED',
+        status:'RESTART_PENDING'}]
+    } as any;
+    const incident=bracket.incidents[0];
+    expect(component.sprintCanAuthorizeNeutralRestart(bracket,incident)).toBeTrue();
+    expect(component.sprintCanAuthorizeNeutralRestart(bracket,{
+      ...incident,status:'POSITIONS_PENDING'
+    })).toBeFalse();
+    expect(component.sprintCanAuthorizeNeutralRestart(bracket,{
+      ...incident,incidentType:'RULE_INFRINGEMENT'
+    })).toBeFalse();
+    expect(component.sprintCanAuthorizeNeutralRestart({...bracket,
+      matches:[{...bracket.matches[0],riderC:'r9'}]},incident)).toBeFalse();
+    expect(component.sprintNeutralCause(incident)).toBe('PUNCTURE');
+    expect(component.sprintNeutralCause({...incident,incidentType:'FALL'}))
+      .toBe('NO_FAULT_FALL');
+    expect(component.sprintNeutralCause({...incident,incidentType:'BICYCLE_DEFECT'}))
+      .toBe('ESSENTIAL_BICYCLE_BREAKAGE');
+
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[bracket];
+    component.sprintNeutralBracketId=53;
+    component.sprintNeutralIncidentId=7;
+    component.sprintNeutralReference='Second documented panel ruling 2026/84';
+    component.sprintNeutralReason='Panel explicitly authorizes a neutral restart in original order';
+    component.sprintNeutralNoFaultConfirmed=false;
+    component.sprintNeutralOrderConfirmed=false;
+    component.sprintIncidentSaving=false;
+    const save=jasmine.createSpy('authorizeNeutralSprintRestart')
+      .and.returnValue(of({...incident,status:'NEUTRAL_RESTART_OK'}));
+    (component as any).communityService={authorizeNeutralSprintRestart:save};
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+    component.saveSprintNeutralRestart();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintNeutralNoFaultConfirmed=true;
+    component.saveSprintNeutralRestart();
+    expect(save).not.toHaveBeenCalled();
+    component.sprintNeutralOrderConfirmed=true;
+    component.saveSprintNeutralRestart();
+    expect(save).toHaveBeenCalledWith(12,44,53,7,jasmine.objectContaining({
+      cause:'PUNCTURE',orderedRiders:['r1','r24'],noFaultConfirmed:true
+    }));
+    const original=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.neutralNoWinner')).toContain('Não atribui vencedor');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.neutralNoWinner')).toContain('Does not assign a winner');
+    } finally {
+      if(original===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',original);
+    }
+  });
+
+  it('keeps overturned BO3 closed until explicit continuation with real riders and heat', () => {
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[{
+      id:53,
+      incidents:[{id:7,seriesKey:'SP53-Q2',heatNumber:1,
+        status:'OFFICIAL_SERIES_AWARDED'}],
+      matches:[{seriesKey:'SP53-Q2',riderA:'r1',riderB:'r24',
+        status:'READY',winner:null}]
+    } as any];
+    component.sprintReviewBracketId=53;
+    component.sprintReviewIncidentId=7;
+    component.sprintReviewHistory=[{
+      id:101,incidentId:7,action:'OVERTURNED',
+      officialName:'Fictional President',
+      officialReference:'Synthetic official chair revocation 2026/111',
+      panelReference:'Synthetic panel review 2026/110',
+      reason:'The series result is overturned',
+      recordedBy:'fixture_owner',recordedAt:'2026-10-26T00:00:00Z'
+    }];
+    component.sprintReviewMode='RECTIFY';
+    component.sprintReviewPresident='Fictional President';
+    component.sprintReviewReference='Synthetic new continuation document 2026/112';
+    component.sprintReviewReason='Both riders can continue after a recorded annulment';
+    const write=jasmine.createSpy('rectifySprintOfficialReview')
+      .and.returnValue(of({action:'RECTIFIED'}));
+    (component as any).communityService={rectifySprintOfficialReview:write};
+    spyOn<any>(component,'loadSprintReviewHistory').and.stub();
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+
+    // Neither cyclist order nor reinstatement nor next heat may be assumed.
+    component.saveSprintReview();
+    expect(write).not.toHaveBeenCalled();
+    component.sprintReviewSanctionAnnulledConfirmed=true;
+    component.sprintReviewRiderOrderConfirmed=true;
+    component.saveSprintReview();
+    expect(write).not.toHaveBeenCalled();
+    component.sprintReviewNextHeatNumber=1;
+    component.saveSprintReview();
+    expect(write).toHaveBeenCalledWith(12,44,53,7,jasmine.objectContaining({
+      orderedRiders:['r1','r24'],nextHeatNumber:1,
+      overturnedDecisionReference:'Synthetic official chair revocation 2026/111',
+      sanctionAnnulledByPresident:true
+    }));
+    const current=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.rectifyNoFake')).toContain('Sem nova vitória');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.rectifyNoFake')).toContain('No winner');
+    } finally {
+      if(current===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',current);
+    }
+  });
+
+  it('requires a documented full-series decision for BO3 disqualification', () => {
+    const bracket={format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-Q1',status:'IN_PROGRESS',
+        riderA:'r1',riderB:'r24',riderC:null,riderD:null}]} as any;
+    const incident={seriesKey:'SP53-Q1',heatNumber:2,incidentType:'FALL',
+      status:'ADJUDICATION_REQUIRED',sanctionType:'DISQUALIFICATION',
+      sanctionedUsername:'r24'} as any;
+    expect(component.sprintCanConfirmSeriesVerdict(bracket,incident)).toBeTrue();
+    expect(component.sprintCanConfirmOfficialAward(bracket,incident)).toBeFalse();
+    expect(component.sprintAwardEligibleWinner(bracket,incident)).toBe('r1');
+    expect(component.sprintCanConfirmSeriesVerdict(bracket,{
+      ...incident,sanctionType:'RELEGATION'})).toBeFalse();
+    expect(component.sprintCanConfirmSeriesVerdict(bracket,{
+      ...incident,status:'OFFICIAL_SERIES_AWARDED'})).toBeFalse();
+    expect(component.sprintCanConfirmSeriesVerdict({...bracket,
+      interruption:{stage:'BEFORE_QUARTERS'}},incident)).toBeFalse();
+    const previous=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.seriesVerdictExplain')).toContain('desclassificação');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.seriesVerdictNoFake')).toContain('awarded the series');
+    } finally {
+      if(previous===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',previous);
+    }
+  });
+
+  it('clears hidden circuit metrics for flying 200m without changing Scratch history', () => {
+    component.roundEntries = [
+      { lapsCompleted: 3, bestLapSeconds: 10.25 } as any,
+      { lapsCompleted: 4, bestLapSeconds: 9.89 } as any
+    ];
+    component.roundEventTypeDraft = 'TRACK_SCRATCH';
+    component.onRoundEventTypeChange();
+    expect(component.roundEntries[0].lapsCompleted).toBe(3);
+    component.roundEventTypeDraft = 'TRACK_FLYING_200';
+    component.onRoundEventTypeChange();
+    expect(component.roundEntries.map(e => [e.lapsCompleted, e.bestLapSeconds]))
+      .toEqual([[null, null], [null, null]]);
+  });
+
+  it('detects uploaded GIF avatars even with CDN query strings or a fragment', () => {
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/communities/8/avatar.gif')).toBeTrue();
+    expect(component.isAnimatedCommunityAvatar('/media/communities/8/avatar.GIF?v=2')).toBeTrue();
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/a.gif#asset')).toBeTrue();
+  });
+
+  it('leaves static photos, missing photos and non-GIF paths using their existing crop', () => {
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.jpg')).toBeFalse();
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.webp?v=3')).toBeFalse();
+    expect(component.isAnimatedCommunityAvatar(null)).toBeFalse();
+    expect(component.isAnimatedCommunityAvatar(undefined)).toBeFalse();
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.gif.backup')).toBeFalse();
+  });
+
+  it('keeps rankings activation as an explicit saved setting, independent of switch styling', () => {
+    const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
+      .and.returnValue(of({ rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 }));
+    component.selected = { id: 7, myRole: 'OWNER' } as any;
+    component.competition = { settings: { rankingsEnabled: true } } as any;
+    component.competitionSaving = false;
+    component.rankingsEnabledDraft = true;
+    component.winPointsDraft = 3;
+    component.drawPointsDraft = 1;
+    component.lossPointsDraft = 0;
+    component.selectedSeasonId = null;
+    (component as any).communityService = { updateCompetitionSettings };
+    spyOn(component as any, 'replaceCommunity');
+    spyOn(component, 'loadCompetition');
+
+    component.rankingsEnabledDraft = false;
+    expect(updateCompetitionSettings).not.toHaveBeenCalled();
+    expect(component.competition?.settings.rankingsEnabled).toBeTrue();
+
+    component.saveCompetitionSettings();
+    expect(updateCompetitionSettings).toHaveBeenCalledOnceWith(7, {
+      rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0
+    });
+    expect(component.competition?.settings.rankingsEnabled).toBeFalse();
+  });
+
+  it('shows a new chat arrival counter only for the opened community', () => {
+    component.selected = { id: 7 } as any;
+    component.activeTab = 'chat';
+    component.timelineEntries = [];
+    component.newMessagesPending = 0;
+    (component as any).readSync = { markVisible: jasmine.createSpy('markVisible') };
+    const log = { scrollHeight: 900, scrollTop: 20, clientHeight: 230 };
+    component.communityChatLog = { nativeElement: log } as any;
+    const incoming = { id: 14, communityId: 7, username: 'bea',
+      kind: 'CHAT', body: 'Olá!', createdAt: '2026-10-23T09:00:00Z' };
+    component.onCommunityChatRealtime(incoming as any);
+    component.onCommunityChatRealtime(incoming as any);
+    component.onCommunityChatRealtime({ ...incoming, id: 15, communityId: 8 } as any);
+    expect(component.newMessagesPending).toBe(1);
+    expect(log.scrollTop).toBe(20);
+    component.jumpToLatestMessages();
+    expect(log.scrollTop).toBe(900);
+    expect(component.newMessagesPending).toBe(0);
+  });
+
+  it('selects chat-only reply quotes and clears only on explicit cancellation', () => {
+    const group = { id: 7, name: 'CNG' };
+    component.selected = group as any;
+    component.activeTab = 'chat';
+    component.timelineSending = false;
+    component.chatDeliveryUncertain = false;
+    const entry = { id: 21, communityId: 7, kind: 'CHAT', username: 'ana',
+      body: 'Vamos jogar?', createdAt: new Date().toISOString() };
+    component.replyToCommunityMessage(entry as any);
+    expect(component.replyingToCommunityMessage?.id).toBe(21);
+    component.cancelCommunityReply();
+    expect(component.replyingToCommunityMessage).toBeNull();
+    component.replyToCommunityMessage({ ...entry, communityId: 9 } as any);
+    expect(component.replyingToCommunityMessage).toBeNull();
+    component.replyToCommunityMessage({ ...entry, kind: 'POST' } as any);
+    expect(component.replyingToCommunityMessage).toBeNull();
+  });
+
+  it('shows Portuguese labels for standard English Excel headers without changing source mappings', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.importColumnHeaderLabel('Player')).toBe('Nome do jogador');
+      expect(component.importColumnHeaderLabel('WIN')).toBe('Vitória');
+      expect(component.importColumnHeaderLabel('Draw')).toBe('Empate');
+      expect(component.importColumnHeaderLabel('loss')).toBe('Derrota');
+      expect(component.importColumnHeaderLabel('Wins')).toBe('Vitórias');
+      expect(component.importColumnHeaderLabel('Custom Excel Header')).toBe('Custom Excel Header');
+      component.importMappings = [{ columnIndex: 0, header: 'Player', field: 'PLAYER', confidence: 1 }];
+      expect(component.importColumnHeaderLabel(component.importMappings[0].header)).toBe('Nome do jogador');
+      expect(component.importMappings[0].header).toBe('Player');
+      expect(component.importMappings[0].field).toBe('PLAYER');
+    } finally {
+      if (previous == null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+  it('localizes WIN/DRAW/LOSS in normalized Excel previews but retains internal result codes', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.importPreviewResultLabel({ result: 'WIN' })).toBe('Vitória');
+      expect(component.importPreviewResultLabel({ result: 'DRAW' })).toBe('Empate');
+      expect(component.importPreviewResultLabel({ result: 'LOSS' })).toBe('Derrota');
+      expect(component.importPreviewResultLabel({ win: true })).toBe('Vitória');
+      expect(component.importPreviewResultLabel({ draw: true })).toBe('Empate');
+      expect(component.importPreviewResultLabel({ loss: true })).toBe('Derrota');
+      expect(component.importPreviewResultLabel({})).toBe('—');
+      expect(component.importPreviewResultLabel({ result: 'PENDING' })).toBe('PENDING');
+      localStorage.setItem('d24-language', 'en');
+      expect(component.importColumnHeaderLabel('Player')).toBe('Player name');
+      expect(component.importPreviewResultLabel({ result: 'WIN' })).toBe('Win');
+    } finally {
+      if (previous == null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
   });
 
   it('accepts Excel, CSV and TSV history files regardless of extension casing', () => {
@@ -139,6 +881,20 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component['suggestMatchField']('Golos Casa', 'IGNORE')).toBe('HOME_SCORE');
     expect(component['suggestMatchField']('Golos Fora', 'IGNORE')).toBe('AWAY_SCORE');
     expect(component['suggestMatchField']('Jornada', 'IGNORE')).toBe('ROUND');
+    // A historical knockout Excel is likely to name the phase column Fase,
+    // not Jornada. The importer must keep it for source-stage navigation.
+    for (const header of [
+      'Fase', 'Fase do torneio', 'Fase da competição', 'Fase eliminatória',
+      'Eliminatória', 'Etapa', 'Stage', 'Phase', 'Knockout Round',
+      'Round name', 'Meia-final'
+    ]) {
+      const expected = header === 'Meia-final' ? 'IGNORE' : 'ROUND';
+      expect(component['suggestMatchField'](header, 'IGNORE'))
+        .withContext(header).toBe(expected);
+    }
+    expect(component['suggestMatchField']('Fase', 'DATE')).toBe('ROUND');
+    expect(component['suggestMatchField']('Fase de grupos', 'IGNORE')).toBe('IGNORE');
+
     expect(component['suggestMatchField']('Equipa', 'PLAYER')).toBe('IGNORE');
     component.importMappings = [{ columnIndex: 0, header: 'Equipa A', field: 'HOME', confidence: 1 }];
     component.matchPreview = { sheetName: 'Dados', sourceRows: 1, acceptedRows: 1,
@@ -150,6 +906,27 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selectImportMode('STANDINGS');
     expect(component.matchPreview).toBeUndefined();
     expect(component.importMode).toBe('STANDINGS');
+  });
+
+  it('maps Fase to source ROUND across sheet inspection and retains the original header', () => {
+    component.importMode = 'MATCHES';
+    component.importPreview = {
+      fileName: 'torneio.xlsx',
+      sheets: [{
+        name: 'Torneio 2024', nonEmptyRows: 7, structure: 'TABULAR',
+        headers: ['Casa', 'Fora', 'Resultado', 'Data', 'Fase'],
+        sampleRows: [['Águias', 'Lobos', '2-1', '2024-04-01', 'Quartos de final']],
+        columnSuggestions: [
+          { columnIndex: 3, header: 'Data', field: 'DATE', confidence: 1 },
+          { columnIndex: 4, header: 'Fase', field: 'DATE', confidence: 0.3 }
+        ]
+      }]
+    };
+    component.selectImportSheet('Torneio 2024');
+    expect(component.importMappings.map(mapping => mapping.field))
+      .toEqual(['HOME', 'AWAY', 'SCORE', 'DATE', 'ROUND']);
+    expect(component.importMappings[4].header).toBe('Fase');
+    expect(component.importSheetName).toBe('Torneio 2024');
   });
 
   it('only previews historical matches and never invokes any persistence endpoint', () => {
@@ -697,6 +1474,20 @@ describe('CommunitiesComponent public session eligibility', () => {
       .toBe('@TMF14');
   });
 
+  it('keeps the ranking empty until results exist unless zero-game members are requested', () => {
+    component.competition = { standings: [
+      { profileId: 17, username: 'TMF14', fullName: 'Miguel Ferreira', games: 0, points: 0 }
+    ] } as any;
+    component.showAllStandings = false;
+
+    expect(component.displayedRankings).toEqual([]);
+    component.showAllStandings = true;
+    expect(component.displayedRankings).toHaveSize(1);
+    expect(component.displayedRankings[0].username).toBe('TMF14');
+    component.showAllStandings = false;
+    expect(component.displayedRankings).toEqual([]);
+  });
+
   it('keeps non-participants out of rankings by default but allows showing every member', () => {
     component.competition = { standings: [
       { profileId: null, username: null, fullName: 'Ferreirinha', games: 3, points: 6 },
@@ -829,6 +1620,37 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.canOpenSessionToPublic(session)).toBeFalse();
   });
 
+  it('lets managers return a public future session to members-only even when full', () => {
+    session.audience = 'PUBLIC';
+    expect(component.canRestrictSessionToMembers(session)).toBeTrue();
+    session.participantCount = session.maxParticipants;
+    session.status = 'FULL';
+    expect(component.canRestrictSessionToMembers(session)).toBeTrue();
+    session.status = 'CANCELLED';
+    expect(component.canRestrictSessionToMembers(session)).toBeFalse();
+    session.status = 'OPEN';
+    session.gameDate = new Date(Date.now() - 60_000).toISOString();
+    expect(component.canRestrictSessionToMembers(session)).toBeFalse();
+    session.gameDate = new Date(Date.now() + 3600_000).toISOString();
+    session.audience = 'COMMUNITY_ONLY';
+    expect(component.canRestrictSessionToMembers(session)).toBeFalse();
+    session.audience = 'PUBLIC';
+    (component.canManage as jasmine.Spy).and.returnValue(false);
+    expect(component.canRestrictSessionToMembers(session)).toBeFalse();
+  });
+
+  it('changes the audience only for the selected community after the API accepts it', () => {
+    component.selected = { id: 12 } as any;
+    component.communitySessions = [session];
+    session.audience = 'PUBLIC';
+    const update = jasmine.createSpy('restrictSessionToMembers').and.returnValue(
+      of({...session,audience:'COMMUNITY_ONLY'}));
+    (component as any).communityService = { restrictSessionToMembers:update };
+    component.restrictSessionToMembers(session);
+    expect(update).toHaveBeenCalledOnceWith(12,42);
+    expect(component.communitySessions[0].audience).toBe('COMMUNITY_ONLY');
+  });
+
   it('hides the action for non-managers', () => {
     (component.canManage as jasmine.Spy).and.returnValue(false);
     expect(component.canOpenSessionToPublic(session)).toBeFalse();
@@ -907,6 +1729,26 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.canBrowseHistoricalArchives).toBeTrue();
   });
 
+  it('allows admins to configure member session creation without modifying past games', () => {
+    const group = { id: 7, name: 'Grupo', membersCanCreateSessions: true, myRole: 'OWNER' } as any;
+    component.selected = group;
+    component.communities = [group];
+    (component.canManage as jasmine.Spy).and.returnValue(true);
+    const save = jasmine.createSpy('updateSessionCreationPolicy').and.returnValue(
+      of({ ...group, membersCanCreateSessions: false }));
+    (component as any).communityService = { updateSessionCreationPolicy: save };
+    component.editSessionPolicy();
+    expect(component.sessionPolicyDraft).toBeTrue();
+    component.sessionPolicyDraft = false;
+    component.saveSessionPolicy();
+    expect(save).toHaveBeenCalledOnceWith(7, false);
+    expect(component.selected?.membersCanCreateSessions).toBeFalse();
+    expect(component.sessionPolicyEditing).toBeFalse();
+    (component.canManage as jasmine.Spy).and.returnValue(false);
+    component.editSessionPolicy();
+    expect(component.sessionPolicyEditing).toBeFalse();
+  });
+
   it('allows manager to configure independent modules and saves without clearing history', () => {
     const original = { id: 7, rankingsEnabled: true,
       individualTournamentsEnabled: true, teamTournamentsEnabled: false } as any;
@@ -954,6 +1796,112 @@ describe('CommunitiesComponent public session eligibility', () => {
     (component.canManage as jasmine.Spy).and.returnValue(false);
     component.editSports();
     expect(component.editingSports).toBeFalse();
+  });
+
+  it('offers real World Skate 2026 heat recording when optional standings are disabled', () => {
+    component.selected = {
+      id: 7, name: 'Patinagem', sport: 'Patinagem de Velocidade',
+      sports: ['Patinagem de Velocidade', 'Futebol'],
+      rankingsEnabled: false, individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeTrue();
+    expect(component.newRoundSport).toBe('Patinagem de Velocidade');
+    const options = component.eventOptions(component.newRoundSport).map(e => e.code);
+    expect(options).toContain('INLINE_TRACK_500D_FIRST_ROUND');
+    expect(options).toContain('INLINE_ROAD_LAP_SEMI_HEAT');
+    expect(options).toContain('INLINE_TRACK_500D_FINAL_A');
+    expect(options).not.toContain('INLINE_TRACK_200_TT');
+    expect(options).not.toContain('INLINE_TRACK_500D_FINAL_B');
+    expect(component.eventOptions('Futebol')).toEqual([]);
+  });
+
+  it('records skating for an existing competition even when it differs from community sports', () => {
+    component.selected = {
+      id: 9, sport: 'Futebol', sports: ['Futebol'],
+      rankingsEnabled: false, individualTournamentsEnabled: true
+    } as any;
+    component.speedTournamentPresent = true;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeTrue();
+    expect(component.newRoundSport).toBe('Patinagem de Velocidade');
+    expect(component.eventOptions(component.newRoundSport).map(option => option.code))
+      .toContain('INLINE_ROAD_LAP_FIRST_ROUND');
+    component.speedTournamentPresent = false;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+  });
+
+  it('does not expose standalone heat recording to a disabled or unrelated community', () => {
+    component.selected = {
+      id: 8, sport: 'Futebol', rankingsEnabled: false,
+      individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+    component.selected = {
+      id: 8, sport: 'Patinagem de Velocidade', rankingsEnabled: false,
+      individualTournamentsEnabled: false
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+  });
+
+  it('keeps all existing World Skate event choices when general rankings remain active', () => {
+    component.selected = {
+      id: 7, sport: 'Patinagem de Velocidade',
+      rankingsEnabled: true, individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+    expect(component.eventOptions('Patinagem de Velocidade').map(e => e.code))
+      .toContain('INLINE_TRACK_200_TT');
+  });
+
+
+  it('keeps backend import validation details in PT and translates unknown errors in EN', () => {
+    const original = localStorage.getItem('d24-language');
+    try {
+      const failure = { error: { message: 'Linha 4: mapeamento inválido' }, status: 422 };
+      localStorage.setItem('d24-language', 'pt');
+      expect((component as any).importRequestError(failure, 'communities.archive.previewError'))
+        .toBe('Linha 4: mapeamento inválido');
+      localStorage.setItem('d24-language', 'en');
+      expect((component as any).importRequestError(failure, 'communities.archive.previewError'))
+        .toBe('We could not analyse these standings. Check the Name and Points columns.');
+      expect((component as any).importRequestError(failure, 'communities.matches.confirmError'))
+        .toBe('Could not save these historical matches.');
+      localStorage.setItem('d24-language', 'pt');
+      expect((component as any).importRequestError({ error: { message: '  ' } }, 'communities.import.inspectError'))
+        .toBe('Não foi possível analisar este ficheiro.');
+      expect((component as any).importRequestError({
+        error: { message: 'x'.repeat(241) }
+      }, 'communities.import.inspectError')).toBe('Não foi possível analisar este ficheiro.');
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
+    }
+  });
+
+  it('localizes community feature changes and preserves saved module settings', () => {
+    const original = localStorage.getItem('d24-language');
+    const saved = { id: 7, rankingsEnabled: false,
+      individualTournamentsEnabled: true, teamTournamentsEnabled: true } as any;
+    component.selected = saved;
+    component.communities = [saved];
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(saved));
+    (component as any).communityService = { updateFeatures: update };
+    spyOn(component as any, 'loadCompetition');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      component.editFeatures();
+      component.saveFeatures();
+      expect(component.featuresFeedback).toBe('Features updated. Existing history has been preserved.');
+      expect(update).toHaveBeenCalledOnceWith(7, {
+        rankingsEnabled: false, individualTournamentsEnabled: true, teamTournamentsEnabled: true
+      });
+      localStorage.setItem('d24-language', 'pt');
+      component.editFeatures();
+      component.saveFeatures();
+      expect(component.featuresFeedback).toBe('Funcionalidades atualizadas. O histórico foi preservado.');
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
+    }
   });
 
 });

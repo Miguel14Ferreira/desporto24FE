@@ -1,0 +1,380 @@
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { NEVER, of, throwError } from 'rxjs';
+import { SocialStoriesComponent } from './social-stories.component';
+import { SocialStoriesService } from '../../services/social-stories.service';
+import { DirectChatService } from '../../services/direct-chat.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
+import { SocialStory } from '../model/social-story';
+import { I18nService, preloadEnglishTranslations } from '../../i18n/i18n.service';
+
+describe('SocialStoriesComponent', () => {
+  let fixture: ComponentFixture<SocialStoriesComponent>;
+  let component: SocialStoriesComponent;
+  let api: jasmine.SpyObj<SocialStoriesService>;
+  let communities: jasmine.SpyObj<CommunityGroupsService>;
+  let direct: jasmine.SpyObj<DirectChatService>;
+
+  const picture: SocialStory = {
+    id: 9, authorUsername: 'joao', displayName: 'João', avatarUrl: null,
+    communityId: null, communityName: null, communityPhotoUrl: null,
+    caption: 'Grande jogo', mediaUrl: '/media/stories/9.jpg', video: false,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 86400000).toISOString(), canDelete: true
+  };
+
+  beforeEach(async () => {
+    api = jasmine.createSpyObj<SocialStoriesService>('SocialStoriesService', ['feed', 'mine', 'get', 'publish', 'delete']);
+    api.feed.and.returnValue(of([picture]));
+    direct = jasmine.createSpyObj<DirectChatService>('DirectChatService', ['send']);
+    direct.send.and.returnValue(of({} as any));
+    api.mine.and.returnValue(of([picture]));
+    communities = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine']);
+    communities.mine.and.returnValue(of([
+      { id: 3, name: 'CNG', visibility: 'PUBLIC', myRole: 'ADMIN' },
+      { id: 4, name: 'Privada', visibility: 'PRIVATE', myRole: 'OWNER' },
+      { id: 5, name: 'Sem permissão', visibility: 'PUBLIC', myRole: 'MEMBER' }
+    ] as any));
+    await TestBed.configureTestingModule({
+      imports: [SocialStoriesComponent],
+      providers: [
+        { provide: SocialStoriesService, useValue: api },
+        { provide: DirectChatService, useValue: direct },
+        { provide: CommunityGroupsService, useValue: communities },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } }
+      ]
+    }).compileComponents();
+    fixture = TestBed.createComponent(SocialStoriesComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('shows active Stories and only offers public communities managed by the viewer', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    expect(component.storyGroups).toHaveSize(1);
+    expect(component.storyGroups[0].name).toBe('@joao');
+    expect(component.groups.map(c => c.id)).toEqual([3]);
+    expect(fixture.nativeElement.querySelectorAll('.story-bubble').length).toBe(1);
+  }));
+
+  it('uses the shared premium hierarchy for Story creation and media controls', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    const root = fixture.nativeElement as HTMLElement;
+    const create = root.querySelector('.story-add-action') as HTMLButtonElement;
+    const retry = root.querySelector('.story-retry') as HTMLButtonElement;
+    expect(create.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(retry.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+
+    create.click();
+    fixture.detectChanges();
+    const file = root.querySelector('.story-file') as HTMLLabelElement;
+    expect(file.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    expect(file.querySelector('input[type="file"]')).not.toBeNull();
+    expect(root.querySelector('.story-primary.jynlo-premium-btn--primary')).not.toBeNull();
+  }));
+
+  it('hides the audience selector when personal profile is the only publication target', fakeAsync(() => {
+    communities.mine.and.returnValue(of([
+      { id: 4, name: 'Comunidade privada', visibility: 'PRIVATE', myRole: 'OWNER' },
+      { id: 5, name: 'Comunidade pública', visibility: 'PUBLIC', myRole: 'MEMBER' }
+    ] as any));
+    fixture.detectChanges();
+    tick();
+    (fixture.nativeElement.querySelector('.story-add-action') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.groups).toHaveSize(0);
+    expect(fixture.nativeElement.querySelector('#storyAudience')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Publicar como');
+    const media = fixture.nativeElement.querySelector('.story-file');
+    expect(media).toBeTruthy();
+    expect(media.querySelector('input[type="file"]')).toBeTruthy();
+  }));
+
+  it('preserves choosing a community when the member can publish community Stories', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    (fixture.nativeElement.querySelector('.story-add-action') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const audience = fixture.nativeElement.querySelector('#storyAudience') as HTMLSelectElement;
+    expect(audience).not.toBeNull();
+    expect(Array.from(audience.options).map(option => option.value)).toEqual(['', '3']);
+    audience.value = '3';
+    audience.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.communityId).toBe('3');
+  }));
+
+
+  it('uses the shared Jynlo accent and primary styles for both Story actions', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    const createButton = fixture.nativeElement.querySelector('.story-add-action') as HTMLButtonElement;
+    expect(createButton.classList.contains('jynlo-action')).toBeTrue();
+    expect(createButton.classList.contains('jynlo-action--accent')).toBeTrue();
+    createButton.click();
+    fixture.detectChanges();
+    const publishButton = fixture.nativeElement.querySelector('.story-primary') as HTMLButtonElement;
+    expect(publishButton).toBeTruthy();
+    expect(publishButton.classList.contains('jynlo-action')).toBeTrue();
+    expect(publishButton.classList.contains('jynlo-action--primary')).toBeTrue();
+    expect(publishButton.disabled).toBeTrue();
+    const mediaInput = fixture.nativeElement.querySelector('.story-file input[type="file"]') as HTMLInputElement;
+    const photo = new File(['image'], 'story.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(mediaInput, 'files', { configurable: true, value: [photo] });
+    mediaInput.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.file).toBe(photo);
+    expect(publishButton.disabled).toBeFalse();
+  }));
+
+  it('keeps personal Stories available without displaying the redundant 24-hour counter', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.mineEntries).toHaveSize(1);
+    expect(api.mine).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.story-my-status')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Stories publicadas por ti nas últimas 24 horas');
+    expect(fixture.nativeElement.querySelectorAll('.story-bubble').length).toBe(1);
+  }));
+
+  it('groups several Stories from the same author and lets viewers move between them', fakeAsync(() => {
+    const older = { ...picture, id: 8, createdAt: new Date(Date.now() - 1000).toISOString() };
+    api.feed.and.returnValue(of([picture, older]));
+    fixture.detectChanges();
+    tick();
+    expect(component.storyGroups).toHaveSize(1);
+    expect(component.storyGroups[0].stories).toHaveSize(2);
+    component.openGroup(component.storyGroups[0]);
+    expect(component.activeStory?.id).toBe(8);
+    component.next();
+    expect(component.activeStory?.id).toBe(9);
+    component.next();
+    expect(component.activeStory).toBeNull();
+  }));
+
+  it('shows the community name rather than the author username in the Stories rail', fakeAsync(() => {
+    api.feed.and.returnValue(of([{...picture, communityId: 3, communityName: 'CNG'}]));
+    api.mine.and.returnValue(of([]));
+    fixture.detectChanges();
+    tick();
+    expect(component.storyGroups[0].name).toBe('CNG');
+  }));
+
+  it('replaces native confirmation with a modal and cancels without deleting', fakeAsync(() => {
+    const nativeConfirm = spyOn(window, 'confirm');
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    fixture.detectChanges();
+    component.requestDeleteStory();
+    fixture.detectChanges();
+    expect(component.deleteConfirmOpen).toBeTrue();
+    expect(fixture.nativeElement.querySelector('[role="alertdialog"]')).toBeTruthy();
+    expect(nativeConfirm).not.toHaveBeenCalled();
+    expect(api.delete).not.toHaveBeenCalled();
+    component.cancelDeleteStory();
+    fixture.detectChanges();
+    expect(component.deleteConfirmOpen).toBeFalse();
+    expect(component.activeStory?.id).toBe(9);
+    expect(api.delete).not.toHaveBeenCalled();
+    component.close();
+  }));
+
+  it('deletes only after confirming and removes its entries from both feeds', fakeAsync(() => {
+    api.delete.and.returnValue(of(void 0));
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    component.requestDeleteStory();
+    expect(api.delete).not.toHaveBeenCalled();
+    component.confirmDeleteStory();
+    tick();
+    expect(api.delete).toHaveBeenCalledOnceWith(9);
+    expect(component.activeStory).toBeNull();
+    expect(component.deleteConfirmOpen).toBeFalse();
+    expect(component.entries).toEqual([]);
+    expect(component.mineEntries).toEqual([]);
+  }));
+
+  it('keeps the confirmation visible on a delete error rather than silently closing', fakeAsync(() => {
+    api.delete.and.returnValue(throwError(() => new Error('server error')));
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    component.requestDeleteStory();
+    component.confirmDeleteStory();
+    tick();
+    fixture.detectChanges();
+    expect(api.delete).toHaveBeenCalledTimes(1);
+    expect(component.activeStory?.id).toBe(9);
+    expect(component.deleteConfirmOpen).toBeTrue();
+    expect(component.deleteError).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.story-confirm-error')).toBeTruthy();
+    component.cancelDeleteStory();
+    component.close();
+  }));
+
+  it('prevents navigation while confirmation is open and restores the Story on Escape', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    component.requestDeleteStory();
+    component.next();
+    expect(component.activeStory?.id).toBe(9);
+    component.escape();
+    expect(component.deleteConfirmOpen).toBeFalse();
+    expect(component.activeStory?.id).toBe(9);
+    component.close();
+  }));
+
+  it('blocks unsupported media and oversized videos in the browser', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    for (const file of [
+      new File(['invalid'], 'a.gif', { type: 'image/gif' }),
+      new File([new Uint8Array(20 * 1024 * 1024 + 1)], 'a.mp4', { type: 'video/mp4' })
+    ]) {
+      const input = document.createElement('input');
+      Object.defineProperty(input, 'files', { value: [file], configurable: true });
+      component.pickFile({ target: input } as unknown as Event);
+      expect(component.file).toBeNull();
+      expect(component.error).toBeTruthy();
+    }
+  }));
+
+  it('does not leave the loading indicator stuck when the API times out', fakeAsync(() => {
+    api.feed.and.returnValue(NEVER);
+    fixture.detectChanges();
+    tick(10001);
+    fixture.detectChanges();
+    expect(component.loading).toBeFalse();
+    expect(component.error).toBeTruthy();
+    expect(component.storyGroups).toHaveSize(1); // Author-owned fallback
+    expect(component.mineEntries).toHaveSize(1);
+  }));
+
+  it('shows an owned active story when discovery returns an empty result', fakeAsync(() => {
+    api.feed.and.returnValue(of([]));
+    fixture.detectChanges();
+    tick();
+    expect(component.mineEntries).toHaveSize(1);
+    expect(component.storyGroups).toHaveSize(1);
+  }));
+
+  it('displays the @username and hides the native video player controls and dates', fakeAsync(() => {
+    api.feed.and.returnValue(of([{ ...picture, video: true }]));
+    api.mine.and.returnValue(of([]));
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.activeStory).not.toBeNull();
+    const dialog = fixture.nativeElement.querySelector('.story-dialog') as HTMLElement;
+    expect(dialog).withContext('active=' + component.activeStory?.id + ' html=' + fixture.nativeElement.innerHTML.slice(-2300)).not.toBeNull();
+    expect(dialog.textContent).toContain('@joao');
+    expect(dialog.querySelector('video')?.hasAttribute('controls')).toBeFalse();
+    expect(dialog.querySelector('.story-progress-track')).toBeTruthy();
+    expect(dialog.textContent).not.toContain('dd/MM');
+    expect(dialog.querySelector('.story-dialog-footer')).toBeNull();
+    component.close();
+  }));
+
+  it('advances a loaded photo when its seven-second story duration expires', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    component.onImageLoaded();
+    tick(7100);
+    expect(component.activeStory).toBeNull();
+  }));
+
+  it('sends an explicit Story reply through existing private chat with the Story link', fakeAsync(() => {
+    const other = { ...picture, canDelete: false };
+    api.feed.and.returnValue(of([other]));
+    api.mine.and.returnValue(of([]));
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    component.replyText = 'Boa!';
+    component.replyToStory();
+    tick();
+    expect(direct.send).toHaveBeenCalledWith('joao', jasmine.stringMatching(/Boa![\s\S]*story=9/));
+    expect(component.replyText).toBe('');
+    component.close();
+  }));
+
+  it('excludes expired stories from the visual rail', fakeAsync(() => {
+    api.feed.and.returnValue(of([{...picture, expiresAt: new Date(Date.now() - 1000).toISOString()}]));
+    api.mine.and.returnValue(of([]));
+    fixture.detectChanges();
+    tick();
+    expect(component.storyGroups).toHaveSize(0);
+  }));
+
+  it('translates the complete Stories panel when switching PT → EN → PT without navigation', async () => {
+    await preloadEnglishTranslations();
+    const i18n = TestBed.inject(I18nService);
+    const initial = localStorage.getItem('d24-language');
+    try {
+      api.feed.and.returnValue(of([]));
+      api.mine.and.returnValue(of([]));
+      i18n.setLanguage('pt');
+      fixture.detectChanges();
+
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.stories-panel');
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Momentos desportivos');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Tentar novamente');
+      expect(panel.querySelector('.stories-empty')?.textContent).toContain('Ainda não há Stories');
+
+      i18n.setLanguage('en');
+      fixture.detectChanges();
+
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Sporting moments');
+      expect(panel.querySelector('.stories-heading p')?.textContent?.trim())
+        .toBe('Your friends’ and communities’ best moments, for 24 hours.');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.story-add-action')?.textContent?.trim()).toContain('Create Story');
+      expect(panel.querySelector('.stories-empty')?.textContent?.trim())
+        .toBe('No Stories yet. Share the first moment!');
+      (panel.querySelector('.story-add-action') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(panel.querySelector('.story-file')?.textContent).toContain('Choose photo or video');
+      expect(panel.querySelector('label[for="storyCaption"]')?.textContent?.trim()).toBe('Caption (optional)');
+
+      i18n.setLanguage('pt');
+      fixture.detectChanges();
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Momentos desportivos');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Tentar novamente');
+    } finally {
+      i18n.setLanguage(initial === 'en' ? 'en' : 'pt');
+      if (initial === null) localStorage.removeItem('d24-language');
+    }
+  });
+
+  it('renders the English Stories texts on the first Feed load', async () => {
+    await preloadEnglishTranslations();
+    const i18n = TestBed.inject(I18nService);
+    const initial = localStorage.getItem('d24-language');
+    try {
+      i18n.setLanguage('en');
+      api.feed.and.returnValue(of([]));
+      api.mine.and.returnValue(of([]));
+      fixture.detectChanges();
+
+      const panel: HTMLElement = fixture.nativeElement.querySelector('.stories-panel');
+      expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Sporting moments');
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.story-add-action')?.textContent).toContain('Create Story');
+      expect(panel.querySelector('.stories-empty')?.textContent?.trim())
+        .toBe('No Stories yet. Share the first moment!');
+    } finally {
+      i18n.setLanguage(initial === 'en' ? 'en' : 'pt');
+      if (initial === null) localStorage.removeItem('d24-language');
+    }
+  });
+
+});

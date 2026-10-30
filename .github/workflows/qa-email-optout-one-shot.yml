@@ -1,0 +1,55 @@
+name: Jynlo controlled QA optional-email one-shot
+
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - '.github/workflows/qa-email-optout-one-shot.yml'
+  push:
+    branches: [preview/render-fullstack]
+    paths:
+      - '.github/workflows/qa-email-optout-one-shot.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-optional-email-one-shot
+  cancel-in-progress: false
+
+jobs:
+  offline-contract:
+    if: github.event_name == 'pull_request'
+    name: Email QA safety contract (mock only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check scripts/qa/jynlo-email-optout-live-once.cjs
+      - run: node --test scripts/qa/jynlo-email-optout-live-once.test.cjs
+
+  live-qa-one-shot:
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/preview/render-fullstack' &&
+      github.run_attempt == 1 &&
+      contains(github.event.head_commit.message, '[JYNLO_QA_EMAIL_ONCE_20261026]')
+    name: One-time two-account QA email experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
+      JYNLO_QA_EMAIL_SEND_CONSENT: QA_ONLY_SEND_AND_CLEAN
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate mock contract before contacting LIVE
+        run: node --test scripts/qa/jynlo-email-optout-live-once.test.cjs
+      - name: Execute guarded QA-only experiment (never auto-retry)
+        run: node scripts/qa/jynlo-email-optout-live-once.cjs

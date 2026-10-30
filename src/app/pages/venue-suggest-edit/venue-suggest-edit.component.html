@@ -1,0 +1,129 @@
+<section class="venue-edit-page jynlo-c1 jynlo-social">
+  <div class="venue-edit-shell">
+    <a class="venue-edit-back" [routerLink]="['/menu/venues', venueId]">
+      ← {{ 'venue.edit.back' | t }}
+    </a>
+    <header class="venue-edit-header">
+      <span>{{ 'venue.edit.eyebrow' | t }}</span>
+      <h1>{{ 'venue.edit.title' | t }}</h1>
+      <p>{{ 'venue.edit.intro' | t }}</p>
+    </header>
+
+    @if (loading) {
+      <div class="venue-edit-state" role="status">{{ 'venue.detail.loading' | t }}</div>
+    } @else if (loadError || !venue) {
+      <div class="venue-edit-state" role="alert">{{ 'venue.detail.error' | t }}</div>
+    } @else {
+      <div class="venue-edit-venue">
+        <strong>{{ venue.name }}</strong>
+        <span>{{ venue.city }} · {{ venue.district || '—' }}</span>
+      </div>
+
+      @if (last) {
+        <div class="venue-edit-status" role="status">
+          <strong>{{ ('venue.edit.status.' + last.status) | t }}</strong>
+          <p>{{ ('venue.edit.statusHint.' + last.status) | t }}</p>
+          @if (last.decisionNote) {
+            <p><strong>{{ 'venue.edit.adminResponse' | t }}:</strong> {{ last.decisionNote }}</p>
+          }
+        </div>
+      }
+
+      @if (submitted) {
+        <div class="venue-edit-success" role="status">
+          {{ 'venue.edit.sent' | t }}
+        </div>
+      } @else if (last?.status !== 'PENDING') {
+        <form (ngSubmit)="submit()" class="venue-edit-form">
+          <h2>{{ 'venue.edit.whatToCorrect' | t }}</h2>
+          <p>{{ 'venue.edit.onlyChanges' | t }}</p>
+
+          <div class="venue-edit-grid">
+            @for (field of fields; track field.key) {
+              <label>
+                <span>{{ field.label | t }}</span>
+                <input [type]="field.key === 'website' ? 'url' : 'text'"
+                  [name]="field.key" [(ngModel)]="draft[field.key]"
+                  [maxlength]="field.limit"
+                  [attr.inputmode]="field.key === 'latitude' || field.key === 'longitude' ? 'decimal' : null"
+                  autocomplete="off" />
+                @if (field.key === 'contact') {
+                  <small class="venue-edit-contact-hint">{{ 'venue.visit.editContactHint' | t }}</small>
+                }
+              </label>
+            }
+            <label>
+              <span>{{ 'venue.create.districtLabel' | t }}</span>
+              <select name="district" [(ngModel)]="draft.district">
+                <option value="">{{ 'venue.create.districtUnknown' | t }}</option>
+                @for (district of districts; track district) {
+                  <option [value]="district">{{ district }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <div class="venue-edit-sports">
+            <h3>{{ 'venue.detail.sports' | t }}</h3>
+            <div class="venue-edit-tags">
+              @for (sport of selectedSports; track sport) {
+                <button type="button" (click)="removeSport(sport)"
+                  [attr.aria-label]="('venue.edit.removeSport' | t) + ': ' + sport">
+                  {{ sport }} ×
+                </button>
+              }
+            </div>
+            <label>
+              <span>{{ 'venue.edit.addSport' | t }}</span>
+              <input type="search" name="sportSearch" [(ngModel)]="sportSearch"
+                [placeholder]="'venue.sportFilterPlaceholder' | t" />
+            </label>
+            <div class="venue-edit-sport-results">
+              @for (sport of visibleSports; track sport) {
+                <button type="button" (click)="addSport(sport)">+ {{ sport }}</button>
+              }
+            </div>
+          </div>
+
+          <p class="venue-edit-contact-hint">{{ 'venue.edit.gpsHint' | t }}</p>
+
+          <label class="venue-edit-source">
+            <span>{{ 'venue.edit.sourceUrl' | t }}@if (evidenceRequired) { *}</span>
+            <input type="url" name="sourceUrl" [(ngModel)]="sourceUrl"
+              [required]="evidenceRequired" maxlength="500" autocomplete="off"
+              inputmode="url" placeholder="https://…"
+              [attr.aria-invalid]="sourceUrlInvalid || (sourceUrl.trim().length > 0 && !validContactSource)" />
+            <small class="venue-edit-contact-hint">{{ 'venue.edit.sourceHint' | t }}</small>
+          </label>
+          @if (sourceUrlInvalid) {
+            <p class="venue-edit-error" role="alert">{{ (evidenceRequired
+              ? 'venue.edit.sourceRequired' : 'venue.edit.sourceInvalid') | t }}</p>
+          }
+
+          <label class="venue-edit-reason">
+            <span>{{ 'venue.edit.reason' | t }} *</span>
+            <textarea name="reason" [(ngModel)]="reason" required minlength="10"
+              maxlength="1000" rows="4" [placeholder]="'venue.edit.reasonHint' | t"></textarea>
+          </label>
+
+          @if (missingChanges) {
+            <p class="venue-edit-error" role="alert">{{ 'venue.edit.noChanges' | t }}</p>
+          }
+          @if (duplicatePending) {
+            <p class="venue-edit-error" role="alert">{{ 'venue.edit.pendingExists' | t }}</p>
+          }
+          @if (submitError) {
+            <p class="venue-edit-error" role="alert">{{ 'venue.edit.submitError' | t }}</p>
+          }
+          <div class="venue-edit-actions">
+            <span>{{ 'venue.edit.changesCount' | t:{ count: changeCount } }}</span>
+            <button class="jynlo-action jynlo-action--primary" type="submit"
+              [disabled]="submitting || changeCount === 0 || reason.trim().length < 10">
+              {{ (submitting ? 'venue.edit.sending' : 'venue.edit.send') | t }}
+            </button>
+          </div>
+        </form>
+      }
+    }
+  </div>
+</section>

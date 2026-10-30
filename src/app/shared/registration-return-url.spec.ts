@@ -50,6 +50,24 @@ describe('registration invitation return URLs', () => {
     }
   });
 
+  it('preserves only strict organizer guest invitations across account registration', () => {
+    const safe='/sessions/42?guest='+'A'.repeat(43);
+    expect(registrationSessionId(safe)).toBe(42);
+    rememberRegistrationDestination(safe);
+    expect(takeRegistrationDestination()).toBe(safe);
+    expect(takeRegistrationDestination()).toBeNull();
+    for (const malicious of [
+      '/sessions/42?guest=short',
+      '/sessions/42?guest='+'A'.repeat(43)+'&redirect=https://evil.test',
+      '/sessions/0?guest='+'A'.repeat(43),
+      'https://evil.test/sessions/42?guest='+'A'.repeat(43),
+      '/sessions/42%2fadmin?guest='+'A'.repeat(43)
+    ]) {
+      rememberRegistrationDestination(malicious);
+      expect(takeRegistrationDestination()).withContext(malicious).toBeNull();
+    }
+  });
+
   it('rejects malicious, malformed and non-invitation destinations', () => {
     const bad = [
       'https://example.test/menu/communities/42',

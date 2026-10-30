@@ -2,6 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { Router } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { Events2Component } from './events2.component';
+import { LocationMethodSelectorComponent } from '../../shared/location-method-selector/location-method-selector.component';
 import { Venue } from '../model/venue';
 import { VenueService, VenueSuggestionPage } from '../../services/venue.service';
 import { SessionService } from '../../services/session.service';
@@ -21,13 +22,13 @@ describe('Create session venue server autocomplete', () => {
 
   beforeEach(async () => {
     venues = jasmine.createSpyObj<VenueService>('VenueService', [
-      'suggest', 'search', 'create', 'listPhotos', 'resolveMapLink'
+      'suggest', 'search', 'submitSuggestion', 'listPhotos', 'resolveMapLink'
     ]);
     venues.suggest.and.returnValue(of(page([])));
     venues.listPhotos.and.returnValue(of([]));
     await TestBed.configureTestingModule({
       declarations: [Events2Component],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, LocationMethodSelectorComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: VenueService, useValue: venues },
@@ -100,8 +101,13 @@ describe('Create session venue server autocomplete', () => {
     tick(1);
     expect(venues.suggest).toHaveBeenCalledWith('Pavilhão', '', 'Padel', 0, 'Porto');
     fixture.detectChanges();
-    expect((fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement).disabled)
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    expect((host.querySelector('button[role="combobox"]') as HTMLButtonElement).disabled)
       .toBeFalse();
+    (host.querySelector('button[role="combobox"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    tick();
+    expect((host.querySelector('input[type="search"]') as HTMLInputElement).disabled).toBeFalse();
     pending.next(page([venue(4, 'Pavilhão')]));
     pending.complete();
     expect(component.venueOptions.map(v => v.id)).toEqual([4]);
@@ -164,4 +170,80 @@ describe('Create session venue server autocomplete', () => {
     component.confirmVenueSelection();
     expect(component.selectedVenueId).toBeNull();
   });
+
+  it('renders two same-name venues as separate clickable results with stable IDs', fakeAsync(() => {
+    venues.suggest.and.returnValue(of(page([
+      venue(501, 'Pavilhão Municipal', 'Porto'),
+      venue(777, 'Pavilhão Municipal', 'Porto')
+    ])));
+    component.sport = 'Padel';
+    component.loadVenues();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    (host.querySelector('.jynlo-select__trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const results = host.querySelectorAll(
+      'button[role="option"]'
+    ) as NodeListOf<HTMLButtonElement>;
+    expect(results.length).toBe(2);
+    expect(results[0].textContent).toContain('Pavilhão Municipal');
+    expect(results[1].textContent).toContain('Pavilhão Municipal');
+    results[1].click();
+
+    expect(component.selectedVenueId).toBe(777);
+    expect(component.venueSearch).toBe('Pavilhão Municipal · Porto');
+  }));
+
+  it('shows the unverified OSM source and GPS-only address without inventing a street', fakeAsync(() => {
+    const gpsOnly = {
+      ...venue(2026, 'Campo Desportivo da Fonte'),
+      address: null,
+      latitude: 41.15,
+      longitude: -8.6,
+      informationSource: 'OPENSTREETMAP'
+    } as unknown as Venue;
+    venues.suggest.and.returnValue(of(page([gpsOnly])));
+    component.sport = 'Padel';
+    component.loadVenues();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement.querySelector('app-jynlo-select[name="venueSearch"]') as HTMLElement;
+    (host.querySelector('.jynlo-select__trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    const result = host.querySelector('button[role="option"]') as HTMLButtonElement;
+    expect(result).not.toBeNull();
+    expect(result.textContent).toContain('morada por confirmar');
+    expect(result.textContent).toContain('OpenStreetMap');
+    expect(result.textContent).not.toContain('null');
+    result.click();
+    fixture.detectChanges();
+    expect(component.selectedVenueId).toBe(2026);
+    expect(host.querySelector('button[role="option"]')).toBeNull();
+  }));
+
+  it('does not leave outdated search-result buttons active during debounce', fakeAsync(() => {
+    venues.suggest.and.returnValues(
+      of(page([venue(10, 'Campo Antigo')])),
+      of(page([venue(11, 'Campo Novo')]))
+    );
+    component.sport = 'Padel';
+    component.loadVenues();
+    expect(component.venues.map(v => v.id)).toEqual([10]);
+    component.onVenueSearchChanged('Campo Novo');
+    expect(component.venues).toEqual([]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector(
+      'app-jynlo-select[name="venueSearch"] button[role="option"]')).toBeNull();
+    tick(300);
+    expect(component.venues.map(v => v.id)).toEqual([11]);
+  }));
 });

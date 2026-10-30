@@ -1,4 +1,4 @@
-<section class="admin-page">
+<section class="admin-page jynlo-c1 jynlo-admin">
   <div class="admin-shell">
     <header class="page-header">
       <div>
@@ -122,6 +122,281 @@
           </article>
         </div>
       </ng-container>
+
+
+      <section class="venue-quality" [attr.aria-label]="'adminVenueQuality.title' | t">
+        <div class="overview-heading">
+          <div>
+            <h3>{{ 'adminVenueQuality.title' | t }}</h3>
+            <p>{{ 'adminVenueQuality.intro' | t }}</p>
+          </div>
+          <button class="jynlo-action jynlo-action--neutral" type="button"
+            [attr.aria-expanded]="qualityOpen" (click)="toggleVenueQuality()">
+            {{ (qualityOpen ? 'adminVenueQuality.hide' : 'adminVenueQuality.show') | t }}
+          </button>
+        </div>
+        <ng-container *ngIf="qualityOpen">
+          <p *ngIf="qualityLoading && !quality" role="status" class="overview-status">
+            {{ 'adminVenueQuality.loading' | t }}
+          </p>
+          <div *ngIf="qualityError" class="overview-error" role="alert">
+            <p>{{ qualityError }}</p>
+            <button type="button" class="jynlo-action jynlo-action--neutral"
+              [disabled]="qualityLoading" (click)="loadVenueQuality()">{{ 'common.retry' | t }}</button>
+          </div>
+          <ng-container *ngIf="quality as report">
+            <p class="overview-updated">{{ 'adminVenueQuality.updated' | t }}:
+              {{ report.generatedAt | date:'dd/MM/yyyy HH:mm' }}</p>
+            <div class="overview-grid">
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.total' | t }}</span>
+                <strong>{{ report.venues | number }}</strong>
+              </article>
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.noSport' | t }}</span>
+                <strong>{{ report.withoutSport | number }}</strong>
+              </article>
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.noGps' | t }}</span>
+                <strong>{{ report.withoutCoordinates | number }}</strong>
+              </article>
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.noAddress' | t }}</span>
+                <strong>{{ report.withoutAddress | number }}</strong>
+              </article>
+              <article class="overview-card">
+                <span>{{ 'adminVenueQuality.noLocation' | t }}</span>
+                <strong>{{ report.withoutAddressAndCoordinates | number }}</strong>
+                <small>{{ 'adminVenueQuality.noLocationHint' | t }}</small>
+              </article>
+            </div>
+            <h3>{{ 'adminVenueQuality.byDistrict' | t }}</h3>
+            <div class="venue-quality-table-wrap">
+              <table class="venue-quality-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ 'adminVenueQuality.district' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.total' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.noSport' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.noGps' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.noAddress' | t }}</th>
+                    <th scope="col">{{ 'adminVenueQuality.noLocation' | t }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let district of report.districts">
+                    <th scope="row">{{ district.district === 'Sem distrito' ? ('adminVenueQuality.unknownDistrict' | t) : district.district }}</th>
+                    <td>{{ district.venues | number }}</td>
+                    <td>{{ district.withoutSport | number }}</td>
+                    <td>{{ district.withoutCoordinates | number }}</td>
+                    <td>{{ district.withoutAddress | number }}</td>
+                    <td>{{ district.withoutAddressAndCoordinates | number }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="overview-updated">{{ 'adminVenueQuality.caution' | t }}</p>
+            <section class="venue-gps-review" [attr.aria-label]="'adminVenueGps.title' | t">
+              <div class="overview-heading">
+                <div>
+                  <h3>{{ 'adminVenueGps.title' | t }}</h3>
+                  <p>{{ 'adminVenueGps.intro' | t }}</p>
+                </div>
+                <button type="button" class="jynlo-action jynlo-action--neutral"
+                  (click)="toggleGpsReview()" [attr.aria-expanded]="gpsOpen">
+                  {{ (gpsOpen ? 'adminVenueGps.hide' : 'adminVenueGps.show') | t }}
+                </button>
+              </div>
+              <ng-container *ngIf="gpsOpen">
+                <div class="venue-gps-review-filter">
+                  <label for="admin-gps-district">{{ 'adminVenueQuality.district' | t }}</label>
+                  <select id="admin-gps-district" [value]="gpsDistrict"
+                    [disabled]="gpsLoading" (change)="selectGpsDistrict($any($event.target).value)">
+                    <option value="">{{ 'adminVenueGps.all' | t }}</option>
+                    <option *ngFor="let row of report.districts" [value]="row.district"
+                      [disabled]="!row.withoutCoordinates || row.district === 'Sem distrito'">
+                      {{ row.district === 'Sem distrito' ? ('adminVenueQuality.unknownDistrict' | t) : row.district }}
+                    </option>
+                  </select>
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="gpsLoading" [attr.aria-pressed]="gpsOnlyWithEvidence"
+                    (click)="toggleGpsEvidenceOnly()">
+                    {{ (gpsOnlyWithEvidence ? 'adminVenueGps.showAll' : 'adminVenueGps.showInvestigated') | t }}
+                  </button>
+                </div>
+                <p *ngIf="gpsLoading" role="status" class="overview-status">{{ 'adminVenueGps.loading' | t }}</p>
+                <div *ngIf="gpsError" role="alert" class="overview-error">
+                  <p>{{ gpsError }}</p>
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="gpsLoading" (click)="loadGpsReview()">{{ 'common.retry' | t }}</button>
+                </div>
+                <ng-container *ngIf="gpsPage as review">
+                  <p *ngIf="!review.venues.length" class="overview-updated">
+                    {{ (gpsOnlyWithEvidence ? 'adminVenueGps.noInvestigated' : 'adminVenueGps.empty') | t }}
+                  </p>
+                  <div *ngIf="review.venues.length" class="venue-quality-table-wrap">
+                    <table class="venue-quality-table venue-gps-review-table">
+                      <thead><tr>
+                        <th scope="col">{{ 'adminVenueGps.venue' | t }}</th>
+                        <th scope="col">{{ 'adminVenueGps.source' | t }}</th>
+                        <th scope="col">{{ 'adminVenueGps.action' | t }}</th>
+                      </tr></thead>
+                      <tbody><tr *ngFor="let item of review.venues">
+                        <td>
+                          <strong>{{ item.name }}</strong>
+                          <small>{{ item.city }} · {{ item.district || ('adminVenueQuality.unknownDistrict' | t) }}</small>
+                          <small>{{ item.address || ('adminVenueGps.noAddress' | t) }}</small>
+                          <div class="venue-gps-research" *ngIf="gpsAddressReviewVisible(item.addressReview)">
+                            <strong>{{ 'adminVenueGps.addressIssue' | t }}</strong>
+                            <small>{{ 'adminVenueGps.addressCaution' | t }}</small>
+                            <small>{{ item.addressReview?.venueLocationToCheck }}</small>
+                            <a *ngIf="gpsOfficialLink(item.addressReview?.equipmentSourceUrl) as source"
+                              [href]="source" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.addressEquipment' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.addressReview?.marketSourceUrl) as source"
+                              [href]="source" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.addressMarket' | t }}
+                            </a>
+                          </div>
+                        </td>
+                        <td>
+                          <small>{{ item.informationSource || '—' }}</small>
+                          <small>{{ item.sourceReference || ('adminVenueGps.noReference' | t) }}</small>
+                          <a *ngIf="gpsSourceLink(item.sourceReference) as source"
+                            [href]="source" target="_blank" rel="noopener noreferrer"
+                            class="jynlo-action jynlo-action--neutral">
+                            {{ 'adminVenueGps.openOsm' | t }}
+                          </a>
+                          <a *ngIf="gpsOfficialLink(item.sourceWebsite) as official"
+                            [href]="official" target="_blank" rel="noopener noreferrer"
+                            class="jynlo-action jynlo-action--neutral">
+                            {{ 'adminVenueGps.openOfficial' | t }}
+                          </a>
+                          <div class="venue-gps-research" *ngIf="gpsFacilityContextKey(item.facilityContextReview) as contextKey">
+                            <strong>{{ 'adminVenueGps.contextTitle' | t }}</strong>
+                            <small>{{ contextKey | t }}</small>
+                            <small>{{ 'adminVenueGps.contextWarning' | t }}</small>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.officialSourceUrl) as primary"
+                              [href]="primary" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.contextPrimary' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.relatedSourceUrl) as related"
+                              [href]="related" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.contextRelated' | t }}
+                            </a>
+                          </div>
+                          <div class="venue-gps-research"
+                            *ngIf="gpsRodoviaCartographyVisible(item.facilityContextReview?.cartographyReview)">
+                            <strong>{{ 'adminVenueGps.rodoviaMapTitle' | t }}</strong>
+                            <small>{{ 'adminVenueGps.rodoviaMapCaution' | t }}</small>
+                            <small>{{ 'adminVenueGps.rodoviaTreePointWarning' | t }}</small>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.nonPitchTreeReportUrl) as treeReport"
+                              [href]="treeReport" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaTreePointReport' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.officialGeoportalUrl) as geoportal"
+                              [href]="geoportal" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaOfficialGeoportal' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.municipalGuideUrl) as guide"
+                              [href]="guide" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaMunicipalGuide' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.parkAreaUrl) as park"
+                              [href]="park" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaParkArea' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.cartographyReview?.sportsBuildingUrl) as building"
+                              [href]="building" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaBuildingArea' | t }}
+                            </a>
+                          </div>
+                          <div class="venue-gps-research"
+                            *ngIf="gpsRodoviaNumberingVisible(item.facilityContextReview?.numberingPlanReview)">
+                            <strong>{{ 'adminVenueGps.rodoviaNumberingTitle' | t }}</strong>
+                            <small>{{ 'adminVenueGps.rodoviaNumberingWarning' | t }}</small>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.numberingPlanReview?.signageGalleryUrl) as sign"
+                              [href]="sign" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaNumberingSign' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.facilityContextReview?.numberingPlanReview?.fieldOneScheduleUrl) as schedule"
+                              [href]="schedule" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.rodoviaFieldOneSchedule' | t }}
+                            </a>
+                          </div>
+                          <div class="venue-gps-research" *ngIf="gpsPossibleDuplicateVisible(item.possibleDuplicateReview)">
+                            <strong>{{ 'adminVenueGps.duplicateTitle' | t }}</strong>
+                            <small>{{ 'adminVenueGps.duplicateCaution' | t }}</small>
+                            <a [routerLink]="['/menu/venues', item.possibleDuplicateReview?.relatedVenueId]"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.duplicateOther' | t }}:
+                              {{ item.possibleDuplicateReview?.relatedVenueName }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.possibleDuplicateReview?.officialSourceUrl) as official"
+                              [href]="official" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.duplicateOfficial' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.possibleDuplicateReview?.mapSourceUrl) as mapSource"
+                              [href]="mapSource" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.duplicateMap' | t }}
+                            </a>
+                          </div>
+                          <div class="venue-gps-research" *ngIf="gpsResearchMapUrl(item.researchCandidate) as mapUrl">
+                            <strong>{{ 'adminVenueGps.researchTitle' | t }}</strong>
+                            <small>{{ item.researchCandidate?.latitude }}, {{ item.researchCandidate?.longitude }}</small>
+                            <small>{{ gpsResearchWarningKey(item.researchCandidate) | t }}</small>
+                            <a [href]="mapUrl" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.researchMap' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.researchCandidate?.officialSourceUrl) as source"
+                              [href]="source" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.researchOfficial' | t }}
+                            </a>
+                            <a *ngIf="gpsOfficialLink(item.researchCandidate?.secondarySourceUrl) as source"
+                              [href]="source" target="_blank" rel="noopener noreferrer"
+                              class="jynlo-action jynlo-action--neutral">
+                              {{ 'adminVenueGps.researchRegional' | t }}
+                            </a>
+                          </div>
+                        </td>
+                        <td><a class="jynlo-action jynlo-action--neutral"
+                          [routerLink]="['/menu/venues', item.id, 'suggest-edit']">
+                          {{ 'adminVenueGps.review' | t }}</a></td>
+                      </tr></tbody>
+                    </table>
+                  </div>
+                  <div class="venue-gps-review-pages">
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [disabled]="gpsLoading || review.page === 0"
+                      (click)="loadGpsReview(review.page - 1)">{{ 'venue.catalog.previous' | t }}</button>
+                    <span>{{ 'venue.catalog.page' | t }} {{ review.page + 1 }}</span>
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [disabled]="gpsLoading || !review.hasMore"
+                      (click)="loadGpsReview(review.page + 1)">{{ 'venue.catalog.next' | t }}</button>
+                  </div>
+                  <p class="overview-updated">{{ 'adminVenueGps.warning' | t }}</p>
+                </ng-container>
+              </ng-container>
+            </section>
+          </ng-container>
+        </ng-container>
+      </section>
 
       <div class="growth-trends" aria-label="Evolução semanal da Jynlo">
         <div class="growth-trends-heading">

@@ -5,8 +5,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, map, Observable, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
+import { chatMediaPreviewKey } from '../../shared/chat-media-preview';
 import { JoinSessionResponse, PendingSessionInvite, SessionService } from '../../services/session.service';
-import { NotificationApiService } from '../../services/notification-api.service';
+import { NotificationApiService, NotificationPreferences } from '../../services/notification-api.service';
 import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
@@ -26,6 +27,24 @@ export class NotificationsComponent implements OnInit {
   pendingInvites: PendingSessionInvite[] = [];
   unreadCount = 0;
   selected?: AppNotification;
+
+  // Optional alerts only. Security-critical profile changes are always sent,
+  // while routine profile updates no longer generate inbox notifications.
+  readonly preferenceTypes = [
+    'COMMUNITY_INVITE', 'COMMUNITY_JOIN_REQUEST', 'COMMUNITY_JOIN_ACCEPTED',
+    'COMMUNITY_JOIN_REJECTED', 'SESSION_INVITE', 'WAITLIST_PROMOTED',
+    'SESSION_REMOVED', 'SESSION_CANCELLED', 'SESSION_MEETING_POINT_UPDATED',
+    'SESSION_POST_GAME_REVIEW',
+    'ATTENDANCE_DISPUTE_ACCEPTED', 'ATTENDANCE_DISPUTE_REJECTED',
+    'CHAT_MESSAGE', 'VENUE_EDIT_DECISION', 'FRIEND_REQUEST', 'OTHER'
+  ] as const;
+  preferencesOpen = false;
+  preferencesLoading = false;
+  preferencesRefreshFailed = false;
+  preferencesSaving = false;
+  preferencesError = '';
+  preferencesSuccess = '';
+  preferences?: NotificationPreferences;
 
   loading = false;
   actionLoadingId: number | null = null;
@@ -47,6 +66,79 @@ export class NotificationsComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+  }
+
+  openPreferences(): void {
+    this.preferencesOpen = !this.preferencesOpen;
+    // Always re-fetch on open: settings may have changed on another device.
+    if (this.preferencesOpen) this.loadPreferences();
+  }
+
+  loadPreferences(): void {
+    // Never replace local settings with a stale GET while a PUT is in flight.
+    if (this.preferencesLoading || this.preferencesSaving) return;
+    this.preferencesLoading = true;
+    this.preferencesRefreshFailed = false;
+    this.preferencesError = '';
+    this.notificationService.preferences().pipe(
+      timeout(10_000), finalize(() => this.preferencesLoading = false)
+    ).subscribe({
+      next: settings => this.preferences = settings,
+      error: () => {
+        this.preferencesRefreshFailed = true;
+        this.preferencesError = t('notifications.preferences.loadError');
+      }
+    });
+  }
+
+  preferenceEnabled(type: string, channel: 'inApp' | 'email'): boolean {
+    const list = channel === 'inApp' ? this.preferences?.disabledInAppTypes
+      : this.preferences?.disabledEmailTypes;
+    return !list?.includes(type);
+  }
+
+  changeGlobal(channel: 'inApp' | 'email', enabled: boolean): void {
+    if (!this.preferences || this.preferencesLoading || this.preferencesSaving || this.preferencesRefreshFailed) return;
+    const next = { ...this.preferences,
+      [channel === 'inApp' ? 'inAppEnabled' : 'emailEnabled']: enabled };
+    this.savePreferences(next);
+  }
+
+  changeType(type: string, channel: 'inApp' | 'email', enabled: boolean): void {
+    if (!this.preferences || this.preferencesLoading || this.preferencesSaving || this.preferencesRefreshFailed) return;
+    const key = channel === 'inApp' ? 'disabledInAppTypes' : 'disabledEmailTypes';
+    const disabled = new Set(this.preferences[key]);
+    if (enabled) disabled.delete(type); else disabled.add(type);
+    this.savePreferences({ ...this.preferences, [key]: [...disabled] });
+  }
+
+  private savePreferences(next: NotificationPreferences): void {
+    if (!this.preferences || this.preferencesSaving) return;
+    this.preferencesSaving = true;
+    this.preferencesError = '';
+    this.preferencesSuccess = '';
+    this.notificationService.updatePreferences(next).pipe(
+      timeout(10_000), finalize(() => this.preferencesSaving = false)
+    ).subscribe({
+      next: settings => {
+        this.preferences = settings;
+        this.preferencesSuccess = t('notifications.preferences.saved');
+        // Backend decides visibility and unread counts, including old alerts.
+        this.notificationService.mine().pipe(timeout(10_000)).subscribe({
+          next: items => {
+            this.notifications = [...items].sort(
+              (a, b) => this.timestamp(b.createdAt) - this.timestamp(a.createdAt)
+            );
+            if (this.selected && !this.notifications.some(item => item.id === this.selected?.id)) {
+              this.selected = undefined;
+            }
+            this.updateUnreadCount();
+          },
+          error: () => this.load()
+        });
+      },
+      error: () => this.preferencesError = t('notifications.preferences.saveError')
+    });
   }
 
   load(): void {
@@ -81,7 +173,8 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
-          this.pendingInvites = [];
+          // A failure to load optional alert history must not hide a valid,
+          // authenticated session invitation already returned by its own API.
           this.updateUnreadCount();
           this.errorMessage = t('feedback.notifications.loadError');
         }
@@ -174,12 +267,29 @@ export class NotificationsComponent implements OnInit {
     );
   }
 
+  /** Work both from a notification detail and from the independent invite inbox.
+   *  An invitation remains accessible when optional notification alerts are off. */
   respondToInvite(notification: AppNotification, accept: boolean): void {
     const invite = this.pendingInviteFor(notification);
-    if (!invite || this.actionLoadingId !== null) {
-      return;
+    if (invite) this.decideInvite(invite, accept, notification.id);
+  }
+
+  respondToPendingInvite(invite: PendingSessionInvite, accept: boolean): void {
+    if (!this.pendingInvites.some(item => item.id === invite.id)) return;
+    this.decideInvite(invite, accept, -invite.id);
+  }
+
+  pendingInviteRemaining(invite: PendingSessionInvite): number | null {
+    if (typeof invite.maxParticipants !== 'number' || invite.maxParticipants <= 0 ||
+        typeof invite.participantCount !== 'number' || invite.participantCount < 0) {
+      return null;
     }
-    this.actionLoadingId = notification.id;
+    return Math.max(0, invite.maxParticipants - invite.participantCount);
+  }
+
+  private decideInvite(invite: PendingSessionInvite, accept: boolean, loadingId: number): void {
+    if (this.actionLoadingId !== null) return;
+    this.actionLoadingId = loadingId;
     this.actionError = '';
     this.actionSuccess = '';
     const operation: Observable<JoinSessionResponse | null> = accept
@@ -190,12 +300,11 @@ export class NotificationsComponent implements OnInit {
         this.pendingInvites = this.pendingInvites.filter(item => item.id !== invite.id);
         this.actionSuccess = accept
           ? ((result && 'state' in result && result.state === 'WAITLISTED')
-              ? 'Convite aceite. Ficaste na lista de espera.'
-              : 'Convite aceite. Estás inscrito na sessão.')
-          : 'Convite recusado.';
+              ? t('inviteCenter.waitlisted') : t('inviteCenter.joined'))
+          : t('inviteCenter.declined');
       },
       error: (error: HttpErrorResponse) => {
-        this.actionError = this.errorFrom(error, 'Não foi possível responder ao convite.');
+        this.actionError = this.errorFrom(error, t('inviteCenter.error'));
         if (error.status === 404 || error.status === 409) {
           this.sessionService.pendingInvites().pipe(timeout(10_000))
             .subscribe({ next: invites => this.pendingInvites = invites });
@@ -218,6 +327,15 @@ export class NotificationsComponent implements OnInit {
       return;
     }
 
+    if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
+      // A scoped navigation hint, never a private location in the URL.
+      // The session API checks current membership again after navigation.
+      this.router.navigate(['/menu/events', notification.sessionId], {
+        queryParams: { meetingPoint: '1' }
+      });
+      return;
+    }
+
     this.router.navigate(['/menu/events', notification.sessionId]);
   }
 
@@ -229,7 +347,23 @@ export class NotificationsComponent implements OnInit {
     this.router.navigate(['/menu/communities']);
   }
 
+  /** Existing notifications can contain the retired brand; keep the source
+   * record unchanged while consistently showing Jynlo in the interface. */
+  legacyBrand(text: string | null | undefined): string {
+    return (text ?? '').replace(/DESPORTO24/gi, 'Jynlo');
+  }
+
   notificationSubject(notification: AppNotification): string {
+    if (notification.type === 'CHAT_MESSAGE' && notification.relatedUsername?.trim()) {
+      return t('notification.chatSubject', { username: notification.relatedUsername.trim() });
+    }
+    if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
+      return t('notification.meetingPointChangedSubject');
+    }
+    if (notification.type === 'VENUE_EDIT_DECISION') {
+      return t(notification.subject.includes('aprovada')
+        ? 'notification.venueEditApprovedSubject' : 'notification.venueEditRejectedSubject');
+    }
     const joinCommunity = this.joinNotificationCommunityName(notification);
     if (joinCommunity) {
       const subjectKeys: Record<string, string> = {
@@ -242,10 +376,32 @@ export class NotificationsComponent implements OnInit {
     const community = this.invitedCommunityName(notification);
     return community
       ? t('notification.communityInviteSubject', { community })
-      : notification.subject;
+      : this.legacyBrand(notification.subject);
   }
 
   notificationMessage(notification: AppNotification): string {
+    // Direct chat stores GIPHY as a typed message; notification cards should
+    // show a human-readable summary, including for existing saved alerts.
+    // Never render the payload JSON or a third-party URL in the notification.
+    const chatMediaKey = chatMediaPreviewKey(notification.message,
+      notification.type === 'CHAT_MESSAGE' ? notification.relatedUsername : null);
+    if (chatMediaKey) {
+      return t(chatMediaKey, { username: notification.relatedUsername?.trim() ?? '' });
+    }
+    if (notification.type === 'SESSION_MEETING_POINT_UPDATED') {
+      // Never render meeting instructions from the alert itself. Always send
+      // players to session details where the API re-checks membership.
+      return t('notification.meetingPointChangedMessage');
+    }
+    if (notification.type === 'VENUE_EDIT_DECISION') {
+      const parts = notification.message.match(/^A tua proposta para "(.+)" foi (aprovada|rejeitada)\.(?: Justificação: ([\s\S]*))?$/);
+      if (parts) {
+        const base = t(parts[2] === 'aprovada'
+          ? 'notification.venueEditApprovedMessage' : 'notification.venueEditRejectedMessage',
+          { venue: parts[1] });
+        return parts[3] ? base + ' ' + t('notification.venueEditReason', { reason: parts[3] }) : base;
+      }
+    }
     const joinCommunity = this.joinNotificationCommunityName(notification);
     if (joinCommunity) {
       if (notification.type === 'COMMUNITY_JOIN_REQUEST' && notification.relatedUsername) {
@@ -266,7 +422,7 @@ export class NotificationsComponent implements OnInit {
           username: notification.relatedUsername,
           community
         })
-      : notification.message;
+      : this.legacyBrand(notification.message);
   }
 
   private joinNotificationCommunityName(notification: AppNotification): string | null {
@@ -307,34 +463,34 @@ export class NotificationsComponent implements OnInit {
     }
   }
 
+  openVenueDecision(notification: AppNotification): void {
+    if (notification.type !== 'VENUE_EDIT_DECISION'
+        || typeof notification.venueId !== 'number'
+        || !Number.isSafeInteger(notification.venueId)
+        || notification.venueId <= 0) return;
+    void this.router.navigate(['/menu/venues', notification.venueId]);
+  }
+
   openChat(notification: AppNotification): void {
     if (!notification.relatedUsername) {
       return;
     }
 
-    this.router.navigate(['/menu/friendList/chat', notification.relatedUsername]);
+    void this.router.navigate(['/menu/messages'], {
+      queryParams: { kind: 'direct', id: notification.relatedUsername }
+    });
   }
 
   canProtectAccount(notification: AppNotification): boolean {
-    if (notification.updateProfile) {
-      return true;
-    }
-
-    const subject = (notification.subject || '').toLocaleLowerCase();
-    const message = (notification.message || '').toLocaleLowerCase();
-    const content = subject + ' ' + message;
-
-    return content.includes('palavra-passe alterada')
-      || content.includes('password changed')
-      || content.includes('alteração de email')
-      || content.includes('email changed')
-      || content.includes('autenticação multifator')
-      || content.includes('multi-factor authentication')
-      || content.includes('perfil atualizado')
-      || content.includes('profile updated');
+    // Legacy profile-update notices set updateProfile=true even for sports,
+    // photos and biographies. Never offer a destructive account lock based on
+    // that flag, or on free-text message contents.
+    const subject = (notification.subject || '').trim().toLocaleLowerCase();
+    return /^(palavra-passe alterada|password changed|alteração de email|email changed|email address changed|autenticação multifator (?:ativada|desativada)|multi-factor authentication (?:enabled|disabled))\b/i.test(subject);
   }
 
   requestAccountBlock(): void {
+    if (!this.selected || !this.canProtectAccount(this.selected)) return;
     this.accountBlockConfirming = true;
     this.actionError = '';
   }
@@ -344,7 +500,8 @@ export class NotificationsComponent implements OnInit {
   }
 
   blockAccountAccess(): void {
-    if (!this.selected || this.actionLoadingId !== null) {
+    if (!this.selected || !this.canProtectAccount(this.selected)
+        || this.actionLoadingId !== null) {
       return;
     }
 
@@ -475,6 +632,8 @@ export class NotificationsComponent implements OnInit {
         return t('notification.session');
       case 'SESSION_CANCELLED':
         return t('notification.sessionCancelled');
+      case 'SESSION_MEETING_POINT_UPDATED':
+        return t('notification.meetingPointChangedType');
       case 'SESSION_POST_GAME_REVIEW':
         return t('notification.postGameReview');
       case 'SESSION_INVITE':
@@ -489,6 +648,8 @@ export class NotificationsComponent implements OnInit {
         return t('notification.communityJoinRejected');
       case 'CHAT_MESSAGE':
         return t('notification.chatMessage');
+      case 'VENUE_EDIT_DECISION':
+        return t('notification.venueEditType');
       default:
         return notification.friendRequest ? t('notification.friendRequest') : t('notification.generic');
     }

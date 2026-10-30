@@ -12,7 +12,7 @@
       <div class="feedback success-feedback">{{ successMessage }}</div>
     }
 
-    <form (ngSubmit)="resetPassword()">
+    <form method="post" (ngSubmit)="resetPassword()">
       <label>
         <span>{{ 'password.new' | t }}</span>
         <div class="password-field">

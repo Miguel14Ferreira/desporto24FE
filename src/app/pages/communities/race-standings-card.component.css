@@ -1,0 +1,20 @@
+:host { display:block; min-width:0; }
+p { margin:0;color:#cbd5e1;line-height:1.5; }
+h6 { margin:0; }
+.t-muted { padding:.5rem 0;font-size:.85rem;color:#94a3b8 !important; }
+.race-standings-section {
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, .22);
+  border-radius: .85rem;
+  background: rgba(14, 31, 48, .68);
+  min-width: 0;
+}
+.race-standings-section { display: grid; gap: .85rem; }
+.race-standings-section .t-table-scroll { overflow-x: auto; }
+.race-standings-section table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+.race-standings-section th, .race-standings-section td {
+  padding: .7rem .55rem; text-align: left;
+  border-bottom: 1px solid rgba(148,163,184,.19);
+}
+.race-standings-section th { color: #bcd1df; font-size: .77rem; }
+.race-standings-section td strong { color: #a7f3d0; }

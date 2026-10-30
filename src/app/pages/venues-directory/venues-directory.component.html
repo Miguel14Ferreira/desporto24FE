@@ -1,0 +1,148 @@
+<section class="venue-directory-page jynlo-c1 jynlo-social">
+  <div class="venue-directory-shell">
+    <header class="venue-directory-hero">
+      <div>
+        <span class="venue-directory-eyebrow">{{ 'venue.catalog.kicker' | t }}</span>
+        <h1>{{ 'venue.catalog.title' | t }}</h1>
+        <p>{{ 'venue.catalog.description' | t }}</p>
+      </div>
+      <a class="venue-directory-add" routerLink="/menu/venues/new">{{ 'venue.catalog.add' | t }} <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <form class="venue-directory-filters" (ngSubmit)="search(0)">
+      <label>
+        <span>{{ 'venue.catalog.name' | t }}</span>
+        <input name="name" [(ngModel)]="name" [placeholder]="'venue.catalog.nameHint' | t" maxlength="120" autocomplete="off">
+      </label>
+      <label>
+        <span>{{ 'venue.catalog.district' | t }}</span>
+        <select name="district" [(ngModel)]="district">
+          <option value="">{{ 'venue.catalog.allDistricts' | t }}</option>
+          @for (option of districts; track option) { <option [value]="option">{{ option }}</option> }
+        </select>
+      </label>
+      <label>
+        <span>{{ 'venue.catalog.city' | t }}</span>
+        <input name="city" [(ngModel)]="city" maxlength="100" [placeholder]="'venue.catalog.cityHint' | t">
+      </label>
+      <label>
+        <span>{{ 'venue.catalog.sport' | t }}</span>
+        <input name="sport" [(ngModel)]="sport" maxlength="90" list="catalog-sports"
+               [placeholder]="'venue.catalog.sportHint' | t">
+        <datalist id="catalog-sports">
+          @for (item of sportsCatalog; track item) { <option [value]="item"></option> }
+        </datalist>
+      </label>
+      <div class="venue-directory-actions">
+        <button class="venue-directory-search" type="submit" [disabled]="loading">{{ 'venue.catalog.search' | t }}</button>
+        @if (showReset) {
+          <button class="venue-directory-clear" type="button" (click)="reset()" [disabled]="loading">
+            {{ 'venue.catalog.clear' | t }}
+          </button>
+        }
+      </div>
+    </form>
+
+    <div class="venue-directory-result-heading">
+      <div>
+        <h2>{{ 'venue.catalog.results' | t }}</h2>
+        <p>{{ (nearbyMode ? 'venue.catalog.nearby.resultsHint' : 'venue.catalog.resultsHint') | t }}</p>
+      </div>
+      @if (!loading && !loadError) {
+        <span>{{ 'venue.catalog.page' | t }} {{ page + 1 }} · {{ venues.length }} {{ 'venue.catalog.onThisPage' | t }}</span>
+      }
+    </div>
+
+    @if (canSearchNearby) {
+      <div class="venue-directory-nearby" role="group" [attr.aria-label]="'venue.catalog.nearby.title' | t">
+        <p>{{ 'venue.catalog.nearby.sparse' | t }}</p>
+        <button class="venue-directory-clear" type="button" (click)="searchNearby(0)">
+          {{ 'venue.catalog.nearby.action' | t }}
+        </button>
+      </div>
+    }
+    @if (nearbyMode) {
+      <div class="venue-directory-nearby" role="group" [attr.aria-label]="'venue.catalog.nearby.title' | t">
+        <div>
+          <strong>{{ 'venue.catalog.nearby.title' | t }}: {{ city }}</strong>
+          <p>{{ 'venue.catalog.nearby.disclaimer' | t }}</p>
+        </div>
+        <label>
+          {{ 'venue.catalog.nearby.radius' | t }}
+          <select [value]="nearbyRadiusKm" [disabled]="loading"
+                  (change)="setNearbyRadius(+$any($event.target).value)">
+            <option [value]="10">10 km</option>
+            <option [value]="25">25 km</option>
+            <option [value]="50">50 km</option>
+          </select>
+        </label>
+        <button class="venue-directory-clear" type="button" (click)="search(0)" [disabled]="loading">
+          {{ 'venue.catalog.nearby.back' | t }}
+        </button>
+      </div>
+    }
+    @if (loading) {
+      <div class="venue-directory-state" role="status">{{ 'venue.catalog.loading' | t }}</div>
+    } @else if (loadError) {
+      <div class="venue-directory-state" role="alert">
+        <p>{{ 'venue.catalog.error' | t }}</p>
+        <button class="venue-directory-clear" type="button" (click)="browsePage(page)">{{ 'common.retry' | t }}</button>
+      </div>
+    } @else if (venues.length === 0) {
+      <div class="venue-directory-state">
+        <h3>{{ (nearbyMode ? (nearbyReferenceAvailable
+          ? 'venue.catalog.nearby.empty' : 'venue.catalog.nearby.noReference')
+          : 'venue.catalog.empty') | t }}</h3>
+        @if (!nearbyMode) { <p>{{ 'venue.catalog.emptyHint' | t }}</p> }
+      </div>
+    } @else {
+      <div class="venue-directory-grid">
+        @for (venue of venues; track venue.id) {
+          <a class="venue-directory-card" [routerLink]="['/menu/venues', venue.id]"
+             [queryParams]="{ page: page, name: name, city: city, district: district, sport: sport,
+               nearby: nearbyMode ? 1 : null, radiusKm: nearbyMode ? nearbyRadiusKm : null }">
+            <div class="venue-directory-card-top">
+              <span class="venue-directory-icon" aria-hidden="true">⌖</span>
+              <span class="venue-directory-origin">{{ (venue.informationSource === 'OPENSTREETMAP'
+                ? 'venue.detail.sourceOpenStreetMap' : venue.informationSource === 'OFFICIAL'
+                ? 'venue.detail.sourceOfficial' : 'venue.detail.sourceCommunity') | t }}</span>
+            </div>
+            <h3>{{ venue.name }}</h3>
+            <p class="venue-directory-location">📍 {{ venue.city }}@if (venue.district && venue.district !== venue.city) {, {{ venue.district }}}</p>
+            @if (nearbyMode && nearbyDistanceById[venue.id] != null) {
+              <p class="venue-directory-distance">{{ nearbyDistanceById[venue.id] | number:'1.1-1' }} km · {{ 'venue.catalog.nearby.straightLine' | t }}</p>
+            }
+            @if (venueAddress(venue)) {
+              <p class="venue-directory-address">{{ venueAddress(venue) }}</p>
+            } @else {
+              <p class="venue-directory-address venue-directory-address-unconfirmed">
+                {{ 'venue.detail.postalAddressUnknown' | t }}
+              </p>
+            }
+            <div class="venue-directory-tags">
+              @if (venue.sports) {
+                <app-venue-sports-badges [sports]="venue.sports" [limit]="3"
+                  [compact]="true"></app-venue-sports-badges>
+              } @else {
+                <span>{{ 'venue.catalog.sportUnknown' | t }}</span>
+              }
+            </div>
+            <div class="venue-directory-card-link">{{ 'venue.catalog.viewDetails' | t }} <span aria-hidden="true">→</span></div>
+          </a>
+        }
+      </div>
+      <nav class="venue-directory-pagination" [attr.aria-label]="'venue.catalog.pagination' | t">
+        <button type="button" (click)="browsePage(page-1)" [disabled]="page === 0 || loading">
+          ← {{ 'venue.catalog.previous' | t }}
+        </button>
+        <span>{{ 'venue.catalog.page' | t }} {{ page + 1 }}</span>
+        <button type="button" (click)="browsePage(page+1)" [disabled]="!hasMore || loading">
+          {{ 'venue.catalog.next' | t }} →
+        </button>
+      </nav>
+    }
+    <p class="venue-directory-source">{{ 'venue.catalog.dataNotice' | t }}
+      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>
+    </p>
+  </div>
+</section>

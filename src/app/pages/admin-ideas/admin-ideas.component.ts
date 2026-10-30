@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize, retry, timeout } from 'rxjs';
 
 import { AdminIdea, IdeaStatus } from '../model/admin-idea';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { AdminIdeasService } from '../../services/admin-ideas.service';
 
 @Component({
@@ -58,7 +59,7 @@ export class AdminIdeasComponent implements OnInit {
         error: () => {
           this.ideas = [];
           this.newCount = 0;
-          this.errorMessage = 'Não foi possível carregar as ideias.';
+          this.errorMessage = t('adminIdeas.loadError');
         }
       });
   }
@@ -93,24 +94,18 @@ export class AdminIdeasComponent implements OnInit {
           }
         },
         error: () => {
-          this.errorMessage = 'Não foi possível atualizar o estado da ideia.';
+          this.errorMessage = t('adminIdeas.updateError');
         }
       });
   }
 
   statusLabel(status: IdeaStatus): string {
-    switch (status) {
-      case 'NEW': return 'Nova';
-      case 'IN_REVIEW': return 'Em análise';
-      case 'PLANNED': return 'Planeada';
-      case 'REJECTED': return 'Rejeitada';
-      case 'IMPLEMENTED': return 'Implementada';
-    }
+    return t('adminIdeas.status.' + status);
   }
 
   formatDate(value: string | null): string {
     if (!value) {
-      return 'Data indisponível';
+      return t('adminIdeas.dateUnavailable');
     }
 
     const date = new Date(value);

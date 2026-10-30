@@ -1,0 +1,55 @@
+/*
+ * Jynlo design language — Concept 1 (desktop-first).
+ * These tokens/classes are additive. Existing pages retain their current
+ * styling until their deliberate visual migration.
+ */
+:root {
+  --jynlo-ui-canvas: #071523;
+  --jynlo-ui-surface: #0f1e31;
+  --jynlo-ui-surface-raised: #14273b;
+  --jynlo-ui-surface-glass: rgba(16, 31, 49, .9);
+  --jynlo-ui-outline: rgba(154, 192, 208, .16);
+  --jynlo-ui-outline-focus: rgba(65, 233, 176, .7);
+  --jynlo-ui-text: #f7fbff;
+  --jynlo-ui-muted: #b1c5d4;
+  --jynlo-ui-subtle: #8ba6b9;
+  --jynlo-ui-brand: #41e9b0;
+  --jynlo-ui-brand-text: #062c2b;
+  --jynlo-ui-sky: #74d8ff;
+  --jynlo-ui-radius-sm: .75rem;
+  --jynlo-ui-radius-md: 1.1rem;
+  --jynlo-ui-radius-lg: 1.6rem;
+  --jynlo-ui-shadow: 0 20px 45px rgba(1, 10, 23, .23);
+  --jynlo-ui-gutter: clamp(1rem, 2.5vw, 2.25rem);
+  --jynlo-ui-container: 1240px;
+}
+
+.jynlo-ui-surface {
+  background: var(--jynlo-ui-surface-glass);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-lg);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+.jynlo-ui-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.jynlo-ui-overline {
+  color: var(--jynlo-ui-brand);
+  font-weight: 850;
+  font-size: .72rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.jynlo-ui-eyecatching-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (prefers-reduced-motion: reduce) {
+  .jynlo-ui-surface, .jynlo-ui-eyecatching-image { transition: none; }
+}

@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { NotificationsComponent } from './notifications.component';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { SessionService } from '../../services/session.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
@@ -74,9 +75,14 @@ describe('NotificationsComponent', () => {
   beforeEach(async () => {
     service = jasmine.createSpyObj<NotificationApiService>(
       'NotificationApiService',
-      ['mine', 'markRead', 'delete', 'deleteAll', 'acceptFriendRequest', 'rejectFriendRequest', 'blockOwnAccount']
+      ['mine', 'markRead', 'delete', 'deleteAll', 'acceptFriendRequest', 'rejectFriendRequest', 'blockOwnAccount', 'preferences', 'updatePreferences']
     );
     service.mine.and.returnValue(of([notificationFixture()]));
+    service.preferences.and.returnValue(of({
+      inAppEnabled: true, emailEnabled: true,
+      disabledInAppTypes: [], disabledEmailTypes: []
+    }));
+    service.updatePreferences.and.callFake(prefs => of(prefs));
     service.markRead.and.returnValue(of(void 0));
     service.delete.and.returnValue(of(void 0));
     service.deleteAll.and.returnValue(of(void 0));
@@ -111,6 +117,20 @@ describe('NotificationsComponent', () => {
     router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
     fixture.detectChanges();
+  });
+
+  it('preserves notification selection and the preferences control in Premium layout', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.notifications-page.jynlo-c1.jynlo-secondary')).not.toBeNull();
+    expect(root.querySelector('.notifications-grid .notification-card')).not.toBeNull();
+    expect(root.querySelector('.notifications-grid .notification-detail')).not.toBeNull();
+    const preferences = root.querySelector<HTMLButtonElement>('.header-actions button[aria-expanded]');
+    expect(preferences?.getAttribute('aria-expanded')).toBe('false');
+    preferences!.click();
+    fixture.detectChanges();
+    expect(preferences?.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelector('.notification-preferences__table input[type="checkbox"]')).not.toBeNull();
+    expect(service.delete).not.toHaveBeenCalled();
   });
 
   it('labels a post-game reminder and links to its session', () => {
@@ -180,6 +200,94 @@ describe('NotificationsComponent', () => {
         localStorage.setItem('d24-language', previousLanguage);
       }
     }
+  });
+
+  it('shows a friendly GIF preview for existing raw GIPHY alerts in PT/EN and keeps chat navigation', () => {
+    const previous = localStorage.getItem('d24-language');
+    const payload='[JYNLO:GIPHY:1]'+JSON.stringify({
+      id:'XdUMQuuiaAEkOUtezd',
+      p:'https://giphy.com/gifs/animated-thumbs-up-joeyahlbum-XdUMQuuiaAEkOUtezd',
+      a:'joeyahlbum',c:''
+    });
+    const notice={...notificationFixture(),type:'CHAT_MESSAGE',
+      subject:'Nova mensagem de TMF14',relatedUsername:'TMF14',message:payload};
+    try {
+      localStorage.setItem('d24-language','pt');
+      component.notifications=[notice];
+      component.selected=notice;
+      fixture.detectChanges();
+      const page=fixture.nativeElement as HTMLElement;
+      expect(component.notificationMessage(notice)).toBe('TMF14 enviou-te um GIF 🎞️');
+      expect(component.notificationSubject(notice)).toBe('Nova mensagem de TMF14');
+      expect(page.textContent).toContain('TMF14 enviou-te um GIF');
+      expect(page.textContent).not.toContain('JYNLO:GIPHY:1');
+      expect(page.textContent).not.toContain('XdUMQuuiaAEkOUtezd');
+      expect(page.textContent).not.toContain('giphy.com');
+      component.openChat(notice);
+      expect(router.navigate).toHaveBeenCalledWith(['/menu/messages'],{
+        queryParams:{kind:'direct',id:'TMF14'}
+      });
+      localStorage.setItem('d24-language','en');
+      expect(component.notificationMessage(notice)).toBe('TMF14 sent you a GIF 🎞️');
+      expect(component.notificationSubject(notice)).toBe('New message from TMF14');
+      expect(component.notificationMessage({...notice,message:'🎞️ GIF'}))
+        .toBe('TMF14 sent you a GIF 🎞️');
+      expect(component.notificationMessage({...notice,relatedUsername:null,message:'🎞️ GIF'}))
+        .toBe('Sent you a GIF 🎞️');
+      // Ordinary chat text is not modified or confused with GIF envelopes.
+      expect(component.notificationMessage({...notice,message:'Vamos jogar amanhã?'}))
+        .toBe('Vamos jogar amanhã?');
+    } finally {
+      if(previous===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',previous);
+    }
+  });
+
+  it('localizes photo, voice, PDF and file alerts without exposing names', () => {
+    const previous = localStorage.getItem('d24-language');
+    const base = {...notificationFixture(), type: 'CHAT_MESSAGE', relatedUsername: 'TMF14'};
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.notificationMessage({...base, message:'🖼️ Fotografia'}))
+        .toBe('TMF14 enviou-te uma fotografia 🖼️');
+      expect(component.notificationMessage({...base, message:'🎤 Mensagem de voz'}))
+        .toBe('TMF14 enviou-te uma mensagem de voz 🎤');
+      expect(component.notificationMessage({...base, message:'📄 Documento'}))
+        .toBe('TMF14 enviou-te um documento 📄');
+      expect(component.notificationMessage({...base, message:'📎 Anexo'}))
+        .toBe('TMF14 enviou-te um ficheiro 📎');
+      localStorage.setItem('d24-language', 'en');
+      expect(component.notificationMessage({...base, message:'🖼️ Fotografia'}))
+        .toBe('TMF14 sent you a photo 🖼️');
+      expect(component.notificationMessage({...base, message:'🎤 Mensagem de voz'}))
+        .toBe('TMF14 sent you a voice message 🎤');
+      expect(component.notificationMessage({...base, message:'📄 Documento'}))
+        .toBe('TMF14 sent you a document 📄');
+      expect(component.notificationMessage({...base, message:'📎 Anexo'}))
+        .toBe('TMF14 sent you a file 📎');
+      expect(component.notificationMessage({...base, message:'Olá! 😀'})).toBe('Olá! 😀');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+  it('never shows malformed GIF envelope payloads in saved notifications', () => {
+    const notice={...notificationFixture(),type:'CHAT_MESSAGE',
+      relatedUsername:'TMF14',message:'[JYNLO:GIPHY:1]{broken-json}'};
+    expect(component.notificationMessage(notice)).not.toContain('{broken-json}');
+    expect(component.notificationMessage({...notice,type:'OTHER'}))
+      .not.toContain('[JYNLO:GIPHY:1]');
+  });
+
+  it('opens chat notifications directly in the unified inbox', () => {
+    const notice = { ...notificationFixture(), type: 'CHAT_MESSAGE', relatedUsername: 'ana' };
+    component.openChat(notice);
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/messages'],
+      { queryParams: { kind: 'direct', id: 'ana' } });
+    (router.navigate as jasmine.Spy).calls.reset();
+    component.openChat({ ...notice, relatedUsername: null });
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('opens a new join request notification directly in member management', () => {
@@ -308,6 +416,42 @@ describe('NotificationsComponent', () => {
     });
   });
 
+  it('shows a private meeting-point change alert in both languages without disclosing its text', () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    const notice = {
+      ...notificationFixture(), id: 321, sessionId: 12,
+      type: 'SESSION_MEETING_POINT_UPDATED',
+      subject: 'Ponto de encontro atualizado',
+      message: 'O organizador alterou as indicações de chegada. Abre a sessão para consultares a informação atual.'
+    };
+    try {
+      component.notifications = [notice];
+      component.selected = notice;
+      localStorage.setItem('d24-language', 'pt');
+      fixture.detectChanges();
+      expect(component.typeLabel(notice)).toBe('Ponto de encontro');
+      expect(component.notificationSubject(notice)).toBe('Ponto de encontro atualizado');
+      expect(component.notificationMessage(notice)).toContain('Abre a sessão');
+      const detail = fixture.nativeElement as HTMLElement;
+      expect(detail.textContent).not.toContain('Portão secreto');
+      const button = Array.from(detail.querySelectorAll('button'))
+        .find(el => el.textContent?.includes('Ver ponto de encontro')) as HTMLButtonElement;
+      expect(button).toBeDefined();
+      button.click();
+      expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12], {
+        queryParams: { meetingPoint: '1' }
+      });
+
+      localStorage.setItem('d24-language', 'en');
+      expect(component.typeLabel(notice)).toBe('Meeting point');
+      expect(component.notificationSubject(notice)).toBe('Meeting point updated');
+      expect(component.notificationMessage(notice)).toContain('Open the session');
+    } finally {
+      if (previousLanguage === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previousLanguage);
+    }
+  });
+
   it('keeps ordinary session notifications pointing to session details', () => {
     component.openSession({ ...notificationFixture(), type: 'SESSION_CANCELLED' });
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12]);
@@ -331,21 +475,31 @@ describe('NotificationsComponent', () => {
     expect(component.actionSuccess).toContain('aceite');
   });
 
+  it('does not offer a misleading preference switch for retired profile-update alerts', () => {
+    expect(component.preferenceTypes).not.toContain('PROFILE_UPDATE' as any);
+  });
+
   it('should offer account protection for suspicious security notifications', () => {
     const securityNotification = securityNotificationFixture();
 
     expect(component.canProtectAccount(securityNotification)).toBeTrue();
   });
 
-  it('should offer account protection on profile update notifications', () => {
-    const profileUpdate = {
-      ...securityNotificationFixture(),
-      subject: 'Perfil atualizado',
-      message: 'Foram atualizados dados do teu perfil.',
-      updateProfile: true
-    };
-
-    expect(component.canProtectAccount(profileUpdate)).toBeTrue();
+  it('never offers account blocking on old routine profile notices', () => {
+    for (const subject of ['Perfil atualizado', 'Profile updated']) {
+      const profileUpdate = {
+        ...securityNotificationFixture(),
+        subject,
+        message: 'Foram atualizados os seguintes dados do teu perfil: Desportos favoritos.',
+        updateProfile: true
+      };
+      expect(component.canProtectAccount(profileUpdate)).toBeFalse();
+      component.selected = profileUpdate;
+      component.requestAccountBlock();
+      expect(component.accountBlockConfirming).toBeFalse();
+      component.blockAccountAccess();
+      expect(service.blockOwnAccount).not.toHaveBeenCalled();
+    }
   });
 
   it('should offer account protection on password change notifications', () => {
@@ -357,6 +511,26 @@ describe('NotificationsComponent', () => {
     };
 
     expect(component.canProtectAccount(passwordChange)).toBeTrue();
+  });
+
+  it('offers account protection for email changes even in legacy profile notices', () => {
+    const emailChange = {
+      ...securityNotificationFixture(),
+      subject: 'Alteração de email',
+      message: 'O endereço de email associado à tua conta foi alterado.',
+      updateProfile: true
+    };
+    expect(component.canProtectAccount(emailChange)).toBeTrue();
+  });
+
+  it('does not treat a security keyword buried in an ordinary message as proof', () => {
+    const ordinary = {
+      ...securityNotificationFixture(),
+      subject: 'Perfil atualizado',
+      message: 'Para ajuda, procura a secção de alteração de email.',
+      updateProfile: true
+    };
+    expect(component.canProtectAccount(ordinary)).toBeFalse();
   });
 
   it('should not expose account blocking for unrelated notifications', () => {
@@ -384,4 +558,210 @@ describe('NotificationsComponent', () => {
     expect(component.notifications.length).toBe(0);
     expect(component.actionSuccess).toContain('rejeitado');
   });
+  it('shows venue edit decisions in both languages and links to the exact venue', () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    const decision = {
+      ...notificationFixture(), id: 125, sessionId: null, venueId: 75,
+      type: 'VENUE_EDIT_DECISION',
+      subject: 'Sugestão de recinto rejeitada',
+      message: 'A tua proposta para "Pavilhão Municipal" foi rejeitada. Justificação: Informação não confirmada.'
+    };
+    try {
+      component.notifications = [decision];
+      component.selected = decision;
+      localStorage.setItem('d24-language', 'pt');
+      fixture.detectChanges();
+      expect(component.typeLabel(decision)).toBe('Alteração a recinto');
+      expect(component.notificationSubject(decision)).toBe('Alteração rejeitada');
+      expect(component.notificationMessage(decision)).toContain('Pavilhão Municipal');
+      expect(component.notificationMessage(decision)).toContain('Informação não confirmada.');
+      const button = Array.from(fixture.nativeElement.querySelectorAll('button'))
+        .find((element: any) => element.textContent.includes('Ver recinto')) as HTMLButtonElement;
+      expect(button).toBeDefined();
+      button.click();
+      expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 75]);
+
+      localStorage.setItem('d24-language', 'en');
+      expect(component.typeLabel(decision)).toBe('Venue edit');
+      expect(component.notificationSubject(decision)).toBe('Edit rejected');
+      expect(component.notificationMessage(decision)).toContain('Your suggested change to Pavilhão Municipal was rejected.');
+      expect(component.notificationMessage(decision)).toContain('Admin response: Informação não confirmada.');
+      (router.navigate as jasmine.Spy).calls.reset();
+      component.openVenueDecision({ ...decision, venueId: -1 });
+      expect(router.navigate).not.toHaveBeenCalled();
+      component.openVenueDecision({ ...decision, venueId: Number.MAX_SAFE_INTEGER + 1 });
+      expect(router.navigate).not.toHaveBeenCalled();
+    } finally {
+      if (previousLanguage === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previousLanguage);
+    }
+  });
+
+  it('supports independent opt-out of venue edit decision in-app and email alerts', () => {
+    component.openPreferences();
+    expect(component.preferenceTypes).toContain('VENUE_EDIT_DECISION');
+    component.changeType('VENUE_EDIT_DECISION', 'inApp', false);
+    expect(component.preferenceEnabled('VENUE_EDIT_DECISION', 'inApp')).toBeFalse();
+    expect(component.preferenceEnabled('VENUE_EDIT_DECISION', 'email')).toBeTrue();
+    component.changeType('VENUE_EDIT_DECISION', 'email', false);
+    expect(component.preferenceEnabled('VENUE_EDIT_DECISION', 'email')).toBeFalse();
+    expect(service.updatePreferences).toHaveBeenCalledWith(jasmine.objectContaining({
+      disabledInAppTypes: ['VENUE_EDIT_DECISION'],
+      disabledEmailTypes: ['VENUE_EDIT_DECISION']
+    }));
+  });
+
+  it('shows all in-app and email alert types with per-type persistent switches', () => {
+    component.openPreferences();
+    expect(service.preferences).toHaveBeenCalled();
+    expect(component.preferenceTypes).toContain('FRIEND_REQUEST');
+    expect(component.preferenceTypes).toContain('CHAT_MESSAGE');
+    expect(component.preferenceTypes).toContain('COMMUNITY_JOIN_REQUEST');
+    component.changeType('COMMUNITY_JOIN_REQUEST', 'inApp', false);
+    expect(service.updatePreferences).toHaveBeenCalledWith(jasmine.objectContaining({
+      inAppEnabled: true, emailEnabled: true,
+      disabledInAppTypes: ['COMMUNITY_JOIN_REQUEST']
+    }));
+    expect(component.preferenceEnabled('COMMUNITY_JOIN_REQUEST', 'inApp')).toBeFalse();
+    expect(component.preferenceEnabled('COMMUNITY_JOIN_REQUEST', 'email')).toBeTrue();
+    component.changeGlobal('email', false);
+    expect(service.updatePreferences).toHaveBeenCalledWith(jasmine.objectContaining({
+      emailEnabled: false
+    }));
+    expect(component.preferences?.emailEnabled).toBeFalse();
+  });
+
+
+  it('fetches preferences again when reopened, including changes from another device', () => {
+    service.preferences.and.returnValues(
+      of({ inAppEnabled: true, emailEnabled: true,
+        disabledInAppTypes: [], disabledEmailTypes: [] }),
+      of({ inAppEnabled: false, emailEnabled: false,
+        disabledInAppTypes: ['CHAT_MESSAGE'], disabledEmailTypes: ['COMMUNITY_INVITE'] })
+    );
+
+    component.openPreferences();
+    expect(component.preferences?.inAppEnabled).toBeTrue();
+    component.openPreferences();
+    component.openPreferences();
+
+    expect(service.preferences).toHaveBeenCalledTimes(2);
+    expect(component.preferences?.inAppEnabled).toBeFalse();
+    expect(component.preferences?.emailEnabled).toBeFalse();
+    expect(component.preferences?.disabledInAppTypes).toContain('CHAT_MESSAGE');
+    expect(component.preferences?.disabledEmailTypes).toContain('COMMUNITY_INVITE');
+  });
+
+  it('disables preference switches and ignores stale edits while reloading', () => {
+    component.openPreferences();
+    component.openPreferences();
+
+    const refresh = new Subject<{
+      inAppEnabled: boolean;
+      emailEnabled: boolean;
+      disabledInAppTypes: string[];
+      disabledEmailTypes: string[];
+    }>();
+    service.preferences.and.returnValue(refresh.asObservable());
+    component.openPreferences();
+    expect(component.preferencesLoading).toBeTrue();
+
+    fixture.detectChanges();
+    const toggles = Array.from(
+      fixture.nativeElement.querySelectorAll('.notification-preferences input[type="checkbox"]')
+    ) as HTMLInputElement[];
+    expect(toggles.length).toBeGreaterThan(2);
+    expect(toggles.every(input => input.disabled)).toBeTrue();
+
+    const writes = service.updatePreferences.calls.count();
+    component.changeGlobal('email', false);
+    component.changeType('CHAT_MESSAGE', 'inApp', false);
+    expect(service.updatePreferences.calls.count()).toBe(writes);
+
+    refresh.next({ inAppEnabled: true, emailEnabled: false,
+      disabledInAppTypes: ['CHAT_MESSAGE'], disabledEmailTypes: [] });
+    refresh.complete();
+    expect(component.preferencesLoading).toBeFalse();
+    expect(component.preferences?.emailEnabled).toBeFalse();
+    expect(component.preferenceEnabled('CHAT_MESSAGE', 'inApp')).toBeFalse();
+  });
+
+  it('does not allow overwriting newer settings after a failed refresh and offers retry', () => {
+    component.openPreferences();
+    component.openPreferences();
+    service.preferences.and.returnValue(throwError(() => new Error('Offline')));
+    component.openPreferences();
+
+    expect(component.preferencesRefreshFailed).toBeTrue();
+    expect(component.preferencesError).toBeTruthy();
+    fixture.detectChanges();
+    const toggles = Array.from(
+      fixture.nativeElement.querySelectorAll('.notification-preferences input[type="checkbox"]')
+    ) as HTMLInputElement[];
+    expect(toggles.length).toBeGreaterThan(0);
+    expect(toggles.every(input => input.disabled)).toBeTrue();
+    const retry = fixture.nativeElement.querySelector('.preferences-error button') as HTMLButtonElement;
+    expect(retry).toBeTruthy();
+
+    component.changeGlobal('inApp', false);
+    component.changeType('CHAT_MESSAGE', 'email', false);
+    expect(service.updatePreferences).not.toHaveBeenCalled();
+
+    service.preferences.and.returnValue(of({
+      inAppEnabled: false, emailEnabled: true,
+      disabledInAppTypes: ['CHAT_MESSAGE'], disabledEmailTypes: []
+    }));
+    retry.click();
+    expect(component.preferencesRefreshFailed).toBeFalse();
+    expect(component.preferences?.inAppEnabled).toBeFalse();
+    expect(component.preferences?.disabledInAppTypes).toContain('CHAT_MESSAGE');
+  });
+
+  it('does not discard current preferences if server update fails', () => {
+    component.openPreferences();
+    const current = component.preferences;
+    service.updatePreferences.and.returnValue(
+      throwError(() => new Error('Offline')));
+    component.changeType('CHAT_MESSAGE', 'email', false);
+    expect(component.preferences).toEqual(current);
+    expect(component.preferencesError).toBeTruthy();
+  });
+
+
+  it('shows complete game invitations even when the notification list has no matching alert', () => {
+    component.notifications=[];
+    component.pendingInvites=[{
+      id:86,sessionId:42,inviterUsername:'rui',
+      createdAt:new Date().toISOString(),
+      sport:'Futebol',city:'Lisboa',gameDate:'2026-12-05T18:00:00Z',
+      maxParticipants:10,participantCount:8,status:'OPEN'
+    }];
+    fixture.detectChanges();
+    const page=fixture.nativeElement as HTMLElement;
+    const invitation=page.querySelector('.session-invite-card');
+    expect(invitation?.textContent).toContain('Futebol');
+    expect(invitation?.textContent).toContain('Lisboa');
+    expect(invitation?.textContent).toContain('2 vagas');
+    expect(page.querySelectorAll('.session-invite-actions button').length).toBe(2);
+    expect(page.querySelector('.notifications.emptyTitle')).toBeNull();
+  });
+
+  it('accepts an app invite through existing enrollment without impersonating a historical player', () => {
+    const sessions=TestBed.inject(SessionService);
+    const accept=spyOn(sessions,'acceptInvite').and.returnValue(of({
+      state:'PARTICIPANT',waitlistPosition:null
+    }));
+    const invitation={id:90,sessionId:42,inviterUsername:'rui',
+      createdAt:new Date().toISOString(),sport:'Futebol'};
+    component.pendingInvites=[invitation];
+    fixture.detectChanges();
+    const acceptButton=fixture.nativeElement.querySelector(
+      '.session-invite-actions .primary-action') as HTMLButtonElement;
+    expect(acceptButton).toBeTruthy();
+    acceptButton.click();
+    expect(accept).toHaveBeenCalledOnceWith(42,90);
+    expect(component.pendingInvites).toEqual([]);
+    expect(component.actionSuccess).toContain('inscrito');
+  });
+
 });

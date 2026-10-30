@@ -25,11 +25,41 @@ export class DirectChatService {
     );
   }
 
-  send(username: string, text: string): Observable<DirectChatMessage> {
+  send(username: string, text: string, replyToMessageId?: number): Observable<DirectChatMessage> {
     return this.http.post<DirectChatMessage>(
       this.baseUrl + '/' + encodeURIComponent(username),
-      { text: text.trim() }
+      { text: text.trim(), ...(replyToMessageId ? { replyToMessageId } : {}) }
     );
+  }
+
+  editMessage(username: string, messageId: number, text: string): Observable<DirectChatMessage> {
+    return this.http.put<DirectChatMessage>(this.baseUrl + '/' + encodeURIComponent(username)
+      + '/messages/' + messageId, {text});
+  }
+
+  deleteMessage(username: string, messageId: number): Observable<DirectChatMessage> {
+    return this.http.delete<DirectChatMessage>(this.baseUrl + '/' + encodeURIComponent(username)
+      + '/messages/' + messageId);
+  }
+
+  attachmentsAvailable(username: string): Observable<{ available: boolean }> {
+    return this.http.get<{ available: boolean }>(this.baseUrl + '/'
+      + encodeURIComponent(username) + '/attachments/availability');
+  }
+
+  sendAttachment(username: string, file: File, caption: string,
+                 replyToMessageId?: number): Observable<DirectChatMessage> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    if (caption.trim()) form.append('caption', caption.trim());
+    if (replyToMessageId) form.append('replyToMessageId', String(replyToMessageId));
+    return this.http.post<DirectChatMessage>(this.baseUrl + '/'
+      + encodeURIComponent(username) + '/attachments', form);
+  }
+
+  downloadAttachment(username: string, messageId: number): Observable<Blob> {
+    return this.http.get(this.baseUrl + '/'
+      + encodeURIComponent(username) + '/attachments/' + messageId, {responseType:'blob'});
   }
 
   info(username: string): Observable<DirectChatInfo> {

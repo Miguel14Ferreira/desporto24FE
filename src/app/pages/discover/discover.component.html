@@ -1,10 +1,15 @@
-<section class="discover-page">
+<section class="discover-page jynlo-c1 jynlo-social">
   <div class="discover-shell">
+
     <header class="discover-header">
-      <div>
-        <p class="eyebrow">{{ 'discover.eyebrow' | t }}</p>
+      <div class="discover-intro">
         <h1>{{ 'discover.title' | t }}</h1>
         <p class="subtitle">{{ 'discover.subtitle' | t }}</p>
+      </div>
+      <div class="explore-header-actions">
+        <a class="explore-header-link" routerLink="/menu/feed">
+          <span aria-hidden="true">←</span> {{ 'discover.explore.backToFeed' | t }}
+        </a>
       </div>
     </header>
 
@@ -13,7 +18,6 @@
         <strong>{{ 'discover.question' | t }}</strong>
         <span>{{ 'discover.questionHint' | t }}</span>
       </div>
-
       <div class="search-fields">
         <label>
           <span>{{ 'events.sport' | t }}</span>
@@ -31,7 +35,6 @@
             }
           </datalist>
         </label>
-
         <label>
           <span>{{ 'common.location' | t }}</span>
           <input
@@ -42,18 +45,51 @@
             autocomplete="address-level2"
             [placeholder]="'discover.locationPlaceholder' | t">
         </label>
-
-        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="loading">
+        <button class="explore-search-submit jynlo-action jynlo-action--primary" type="submit" [disabled]="loading">
+          <span aria-hidden="true">⌕</span>
           {{ loading ? ('discover.searching' | t) : ('discover.search' | t) }}
         </button>
       </div>
-
-      @if (sport || location) {
-        <button type="button" class="clear-button jynlo-action jynlo-action--neutral" (click)="clear()">
-          {{ 'events.clear' | t }}
-        </button>
-      }
+      <div class="explore-search-footer">
+        <div class="explore-sports" role="group" [attr.aria-label]="'discover.explore.quickSports' | t">
+          <span>{{ 'discover.explore.quickSports' | t }}</span>
+          @for (quick of quickSports; track quick) {
+            <button type="button" class="explore-chip" [class.is-selected]="sport.trim() === quick"
+              [attr.aria-pressed]="sport.trim() === quick" (click)="selectQuickSport(quick)">
+              {{ quick }}
+            </button>
+          }
+        </div>
+        @if (sport || location) {
+          <button type="button" class="clear-button jynlo-action jynlo-action--neutral" (click)="clear()">
+            {{ 'events.clear' | t }} <span aria-hidden="true">×</span>
+          </button>
+        }
+      </div>
     </form>
+
+    <nav class="explore-category-nav" role="group" [attr.aria-label]="'discover.explore.categories' | t">
+      <button type="button" [class.is-active]="activeTab === 'all'" [attr.aria-pressed]="activeTab === 'all'"
+        (click)="setCategory('all')">{{ 'discover.explore.all' | t }}</button>
+      <button type="button" [class.is-active]="activeTab === 'venues'" [attr.aria-pressed]="activeTab === 'venues'"
+        (click)="setCategory('venues')">{{ 'discover.explore.venues' | t }}
+        @if (initialized && !venuesLoadError) {
+          <span class="explore-tab-count" [attr.title]="venuesHasMore ? ('discover.where.moreResults' | t) : null">
+            {{ venues.length }}{{ venuesHasMore ? '+' : '' }}
+          </span>
+        }
+      </button>
+      <button type="button" [class.is-active]="activeTab === 'sessions'" [attr.aria-pressed]="activeTab === 'sessions'"
+        (click)="setCategory('sessions')">{{ 'discover.explore.sessions' | t }}
+        @if (initialized && !sessionsLoadError) { <span class="explore-tab-count">{{ sessions.length }}</span> }
+      </button>
+      <button type="button" [class.is-active]="activeTab === 'people'" [attr.aria-pressed]="activeTab === 'people'"
+        (click)="setCategory('people')">{{ 'discover.explore.people' | t }}
+        @if (initialized && !peopleLoadError) { <span class="explore-tab-count">{{ people.length }}</span> }
+      </button>
+      <button type="button" [class.is-active]="activeTab === 'communities'" [attr.aria-pressed]="activeTab === 'communities'"
+        (click)="setCategory('communities')">{{ 'discover.explore.communities' | t }}</button>
+    </nav>
 
     @if (loading) {
       <div class="state-card">{{ 'discover.loading' | t }}</div>
@@ -65,9 +101,9 @@
           <strong>{{ 'discover.error.title' | t }}</strong>
           <span>{{ 'discover.error.text' | t }}</span>
           <span>
-            @if (venuesLoadError) { Recintos indisponíveis. }
-            @if (sessionsLoadError) { Sessões indisponíveis. }
-            @if (peopleLoadError) { Jogadores indisponíveis. }
+            @if (venuesLoadError) { {{ 'discover.error.venuesUnavailable' | t }} }
+            @if (sessionsLoadError) { {{ 'discover.error.sessionsUnavailable' | t }} }
+            @if (peopleLoadError) { {{ 'discover.error.peopleUnavailable' | t }} }
           </span>
         </div>
         <button class="jynlo-action jynlo-action--neutral" type="button" (click)="search()">
@@ -78,17 +114,75 @@
 
 
     @if (!loading && initialized) {
-      <div class="discovery-grid">
-        <section class="pillar-panel">
-          <header class="pillar-heading">
-            <div class="pillar-icon">📍</div>
-            <div>
-              <p>{{ 'discover.where.kicker' | t }}</p>
-              <h2>{{ 'discover.where.title' | t }}</h2>
-            </div>
-            <span class="result-count">{{ venues.length }}</span>
-          </header>
 
+      @if (activeTab === 'all') {
+        <section class="explore-spotlight" aria-labelledby="explore-spotlight-heading">
+          <div class="explore-spotlight-copy">
+            <p class="explore-spotlight-kicker">{{ 'discover.explore.spotlightKicker' | t }}</p>
+            <h2 id="explore-spotlight-heading">
+              {{ (sessions.length > 0 ? 'discover.explore.spotlightSessions' : 'discover.explore.spotlightEmpty') | t }}
+            </h2>
+            <p>{{ (sessions.length > 0 ? 'discover.explore.spotlightSessionsHint' : 'discover.explore.spotlightEmptyHint') | t }}</p>
+            <div class="explore-spotlight-actions">
+              @if (sessions.length > 0) {
+                <button type="button" class="explore-main-cta" (click)="setCategory('sessions')">
+                  {{ 'discover.explore.openSessions' | t }} <span aria-hidden="true">→</span>
+                </button>
+              } @else {
+                <a class="explore-main-cta" routerLink="/menu/createEvent"
+                  [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
+                  {{ 'discover.when.createAction' | t }} <span aria-hidden="true">→</span>
+                </a>
+              }
+              <button type="button" class="explore-secondary-cta" (click)="setCategory('venues')">
+                {{ 'discover.explore.openVenues' | t }} <span aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </div>
+          <div class="explore-spotlight-art" aria-hidden="true">
+            <div class="explore-art-orbit explore-art-orbit-one"></div>
+            <div class="explore-art-orbit explore-art-orbit-two"></div>
+            <div class="explore-art-center"><span>✦</span></div>
+            <span class="explore-art-pin explore-art-pin-one">✦</span>
+            <span class="explore-art-pin explore-art-pin-two">●</span>
+            <span class="explore-art-pin explore-art-pin-three">●</span>
+          </div>
+        </section>
+      }
+
+      @if (activeTab === 'communities') {
+        <section class="explore-community-entry">
+          <span class="explore-community-icon" aria-hidden="true">👥</span>
+          <div>
+            <p class="eyebrow">{{ 'discover.explore.communities' | t }}</p>
+            <h2>{{ 'discover.explore.communityHeadline' | t }}</h2>
+            <p>{{ 'discover.explore.communityDescription' | t }}</p>
+            <a routerLink="/menu/communities" class="explore-main-cta">
+              {{ 'discover.explore.communityAction' | t }} <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </section>
+      }
+
+      <div class="explore-results-heading"
+        [attr.hidden]="(activeTab === 'communities' || activeTab === 'people' || (activeTab === 'all' && !showSection('sessions') && !showSection('people'))) ? '' : null">
+        <div>
+          <p class="eyebrow">{{ 'discover.explore.resultsKicker' | t }}</p>
+          <h2>{{ (activeTab === 'all' ? 'discover.explore.allResults' : activeTab === 'venues' ? 'discover.where.title' : activeTab === 'sessions' ? 'discover.when.title' : 'discover.who.title') | t }}</h2>
+        </div>
+        <span>{{ 'discover.explore.refineHint' | t }}</span>
+      </div>
+
+      @if (activeTab === 'venues' && !venuesLoadError) {
+        <section class="explore-map-panel" [attr.aria-label]="'discover.explore.mapSection' | t">
+          <div class="explore-map-header">
+            <div>
+              <p class="eyebrow">{{ 'discover.explore.mapKicker' | t }}</p>
+              <h3>{{ 'discover.explore.mapHeadline' | t }}</h3>
+              <p>{{ 'discover.explore.mapHint' | t }}</p>
+            </div>
+            <span class="explore-map-count">{{ mapAvailableVenues.length }} {{ 'discover.explore.mapLocations' | t }}</span>
+          </div>
           <div class="discover-nearby discover-nearby--venues">
             @if (!nearbyVenuePosition) {
               <button type="button" class="jynlo-action jynlo-action--neutral"
@@ -116,57 +210,81 @@
             }
           </div>
 
-          @if (topVenues.length === 0) {
-            <div class="pillar-empty">
-              <strong>{{ 'discover.where.emptyTitle' | t }}</strong>
-              <span>{{ 'discover.where.emptyText' | t }}</span>
+
+          @if (mapAvailableVenues.length > 0) {
+          <div class="explore-map-layout">
+            <div class="explore-map-picks" role="group" [attr.aria-label]="'discover.explore.mapChoose' | t">
+              @for (venue of mapAvailableVenues; track venue.id) {
+                <button type="button" class="explore-map-pick" [class.is-active]="focusedMapVenue?.id === venue.id"
+                  [attr.aria-pressed]="focusedMapVenue?.id === venue.id" (click)="selectMapVenue(venue.id)">
+                  <span class="explore-map-pick-dot" aria-hidden="true">⌖</span>
+                  <span class="explore-map-pick-text"><strong>{{ venue.name }}</strong><small>{{ venue.city }}</small></span>
+                  <span aria-hidden="true">›</span>
+                </button>
+              }
             </div>
+            <div class="explore-map-canvas">
+              @if (focusedVenueMapUrl; as mapUrl) {
+                <iframe [src]="mapUrl" loading="lazy"
+                  [title]="'discover.explore.mapTitle' | t:{ name: focusedMapVenue?.name || '' }"
+                  referrerpolicy="no-referrer"></iframe>
+                <div class="explore-map-caption">
+                  <small>{{ 'discover.explore.mapDisclaimer' | t }}
+                    <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>
+                  </small>
+                  <a [routerLink]="['/menu/venues', focusedMapVenue!.id]">
+                    {{ 'discover.explore.mapDetails' | t }} <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+              }
+            </div>
+          </div>
           } @else {
-            <div class="result-list">
-              @for (venue of topVenues; track venue.id) {
-                <a class="result-card venue-card" [routerLink]="['/menu/venues', venue.id]">
-                  <div>
-                    <strong>{{ venue.name }}</strong>
-                    <span>{{ venue.city }}</span>
-                  </div>
-                  <div class="tags">
-                    @if (venue.venueType) {
-                      <span>{{ venue.venueType }}</span>
-                    }
-                    @if (venue.ownershipType) {
-                      <span>
-                        {{ venue.ownershipType === 'PUBLIC'
-                          ? ('venue.ownership.public' | t)
-                          : ('venue.ownership.private' | t) }}
-                      </span>
-                    }
-                    @if (venue.surfaceType) {
-                      <span>{{ venue.surfaceType }}</span>
-                    }
-                    <span>{{ venueEnvironmentTranslationKey(venue) | t }}</span>
-                    @if (venue.parking) {
-                      <span>🅿 {{ 'venue.parking' | t }}</span>
-                    }
-                  </div>
-                </a>
+            <div class="pillar-empty explore-map-empty" role="status">
+              @if (venues.length > 0) {
+                <strong>{{ 'discover.explore.mapNoCoordsTitle' | t }}</strong>
+                <span>{{ 'discover.explore.mapNoCoordsText' | t }}</span>
+              } @else {
+                <strong>{{ 'discover.where.emptyTitle' | t }}</strong>
+                @if (nearbyVenuePosition) {
+                  <span>{{ 'discover.where.nearbyEmptyText' | t }}</span>
+                  @if (nearbyVenueRadiusKm < 50) {
+                    <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--radius"
+                      (click)="changeNearbyVenueRadius(50)">{{ 'discover.where.widenRadius' | t }}</button>
+                  }
+                } @else if (sport.trim() || location.trim()) {
+                  <span>{{ 'discover.where.filteredEmptyText' | t }}</span>
+                  @if (sport.trim() && location.trim()) {
+                    <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--sport"
+                      (click)="broadenVenueSearch('sport')">{{ 'discover.where.removeSport' | t }}</button>
+                    <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--city"
+                      (click)="broadenVenueSearch('city')">{{ 'discover.where.removeCity' | t }}</button>
+                  } @else {
+                    <button type="button" class="pillar-action jynlo-action jynlo-action--neutral venue-broaden--all"
+                      (click)="broadenVenueSearch('all')">{{ 'discover.where.removeFilters' | t }}</button>
+                  }
+                } @else {
+                  <span>{{ 'discover.where.emptyText' | t }}</span>
+                }
               }
             </div>
           }
 
-          @if (venues.length > 4) {
-            <button type="button" class="pillar-action jynlo-action jynlo-action--neutral" (click)="toggleAllVenues()">
-              {{ (showAllVenues ? 'discover.where.showLess' : 'discover.where.showAll') | t }}
-              <span>{{ showAllVenues ? '↑' : '↓' }}</span>
-            </button>
-          }
-
-          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues/new"
-             [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
-            {{ 'discover.where.action' | t }} <span>→</span>
-          </a>
+          <div class="explore-map-actions">
+            <a class="explore-main-cta" routerLink="/menu/venues"
+              [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
+              {{ 'discover.where.showAll' | t }} <span aria-hidden="true">→</span>
+            </a>
+            <a class="explore-secondary-cta" routerLink="/menu/venues/new"
+              [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
+              {{ 'discover.where.action' | t }} <span aria-hidden="true">→</span>
+            </a>
+          </div>
         </section>
+      }
 
-        <section class="pillar-panel featured-panel">
+      <div class="discovery-grid" [class.is-focused]="activeTab !== 'all'">
+        <section class="pillar-panel featured-panel" id="explore-sessions" [attr.hidden]="showSection('sessions') ? null : ''">
           <header class="pillar-heading">
             <div class="pillar-icon">📅</div>
             <div>
@@ -219,7 +337,9 @@
             <div class="result-list">
               @for (session of topSessions; track session.id) {
                 <a class="result-card session-card" [routerLink]="['/menu/events', session.id]"
-                   [queryParams]="sessionEntryAction(session) === 'details' ? null : { join: '1' }">
+                   [queryParams]="{ from: 'discover', sport: sport.trim(), city: location.trim(),
+                      player: playerName.trim() || null,
+                      join: sessionEntryAction(session) === 'details' ? null : '1' }">
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
                     <span>{{ session.city }} · {{ (sessionDisplayDate(session) | date:'dd/MM HH:mm') || ('publicSession.notSpecified' | t) }}</span>
@@ -260,16 +380,17 @@
             <button type="button" class="jynlo-action jynlo-action--neutral"
               [attr.aria-expanded]="showAllSessions"
               (click)="toggleAllSessions()">
-              {{ showAllSessions ? 'Ver menos sessões' : 'Ver todas as ' + sessions.length + ' sessões' }}
+              {{ showAllSessions ? ('discover.when.showLess' | t) : ('discover.when.showAllCount' | t:{ count: sessions.length }) }}
             </button>
           }
 
-          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/events"
+             [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
             {{ 'discover.when.action' | t }} <span>→</span>
           </a>
         </section>
 
-        <section class="pillar-panel">
+        <section class="pillar-panel" id="explore-people" [attr.hidden]="showSection('people') ? null : ''">
           <header class="pillar-heading">
             <div class="pillar-icon">👥</div>
             <div>
@@ -310,13 +431,6 @@
             <div class="pillar-empty people-empty">
               <strong>{{ 'discover.who.emptyTitle' | t }}</strong>
               <span>{{ (appliedPlayerName ? 'discover.who.emptyNameText' : 'discover.who.emptyText') | t }}</span>
-              @if (!peopleLoadError && !playerSearchError && !appliedPlayerName) {
-                <a class="jynlo-action jynlo-action--primary people-empty-recruit"
-                   routerLink="/menu/createEvent"
-                   [queryParams]="{ intent: 'findPlayers', sport: sport.trim() || null, city: location.trim() || null }">
-                  {{ 'discover.who.recruitAction' | t }} <span aria-hidden="true">→</span>
-                </a>
-              }
             </div>
           } @else {
             <div class="result-list">
@@ -365,7 +479,7 @@
         </section>
       </div>
 
-      <section class="discover-flow">
+      <section class="discover-flow" [attr.hidden]="activeTab !== 'all' ? '' : null">
         <span>{{ 'discover.flow.find' | t }}</span>
         <b>→</b>
         <span>{{ 'discover.flow.play' | t }}</span>

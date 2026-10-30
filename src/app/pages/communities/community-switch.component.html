@@ -1,0 +1,4 @@
+<label class="community-switch">
+  <input type="checkbox" [ngModel]="checked" (ngModelChange)="checkedChange.emit($event)">
+  <span>{{ label }}</span>
+</label>

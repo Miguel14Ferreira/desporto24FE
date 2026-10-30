@@ -42,6 +42,6 @@ describe('NotFoundComponent', () => {
     authenticated.detectChanges();
 
     expect(authenticated.componentInstance.destination).toBe('/menu');
-    expect(authenticated.componentInstance.actionLabel).toContain('dashboard');
+    expect(authenticated.nativeElement.textContent).toContain('Voltar ao painel');
   });
 });

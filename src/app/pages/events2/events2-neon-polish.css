@@ -1,0 +1,275 @@
+/*
+ * Jynlo Create Session · Neon Glass refinements.
+ * This opt-in layer is loaded last on Events2Component only.
+ * No logic, validators, coordinates, venue queries or ngModel are changed.
+ */
+:host .create-page.jynlo-games {
+  --create-accent:#28e6cf;
+  --create-edge:rgba(50,206,203,.26);
+  --create-quiet:#b4d3da;
+  --create-ink:#effffc;
+}
+:host .create-page.jynlo-games .create-shell {
+  width:min(1080px,100%);
+  min-width:0;
+  box-sizing:border-box;
+}
+:host .create-page.jynlo-games .page-header {
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:0 0 17px;
+  margin-bottom:20px;
+  border-bottom:1px solid rgba(91,208,205,.18);
+}
+:host .create-page.jynlo-games .page-header > div:first-child {min-width:0;flex:1 1 320px;}
+:host .create-page.jynlo-games .page-header h1 {letter-spacing:-.048em;}
+:host .create-page.jynlo-games .page-header .subtitle {
+  margin-top:8px;max-width:65ch;line-height:1.55;
+}
+:host .create-page.jynlo-games .header-actions {
+  display:flex;align-items:center;justify-content:flex-end;
+  flex-wrap:wrap;gap:9px;min-width:0;
+}
+:host .create-page.jynlo-games .header-actions > a {
+  min-height:42px!important;line-height:1.3;
+}
+:host .create-page.jynlo-games .create-card {
+  display:grid;
+  gap:0;
+  padding:clamp(16px,2.3vw,26px);
+  border:1px solid rgba(42,209,203,.31);
+  border-radius:21px;
+  background:
+    radial-gradient(ellipse 480px 310px at 100% 0%,rgba(7,134,140,.10),transparent 85%),
+    linear-gradient(142deg,rgba(11,43,59,.97),rgba(6,28,44,.98));
+  box-shadow:0 18px 45px rgba(0,12,24,.19),inset 0 1px 0 rgba(190,255,250,.04);
+  min-width:0;
+}
+:host .create-page.jynlo-games .create-card > * {max-width:100%;min-width:0;box-sizing:border-box;}
+:host .create-page.jynlo-games :is(
+  .create-mode-panel,.create-share-panel,.create-preset-panel,
+  .create-preset-save-editor,.create-meeting-point-panel,.venue-section,
+  .photo-section,.recruit-availability,.session-minimum-picker
+) {
+  border:1px solid var(--create-edge);
+  border-radius:16px;
+  background:linear-gradient(145deg,rgba(11,52,66,.74),rgba(7,34,51,.78));
+  box-shadow:none;
+}
+:host .create-page.jynlo-games :is(.create-mode-panel,.create-share-panel,.create-preset-panel) {
+  margin-bottom:17px;
+  padding:clamp(15px,1.8vw,20px);
+}
+:host .create-page.jynlo-games .section-kicker {
+  color:#54efd8;letter-spacing:.09em;font-size:.73rem;
+}
+:host .create-page.jynlo-games :is(.create-mode-intro,.create-preset-heading,.create-share-panel > div:first-child) h2 {
+  margin:0;color:#f2fffd;
+  font-size:clamp(1.04rem,1.65vw,1.29rem);
+  line-height:1.33;
+}
+:host .create-page.jynlo-games :is(.create-mode-intro,.create-preset-heading,.create-share-panel > div:first-child) p {
+  color:#b7d4db;line-height:1.5;
+}
+:host .create-page.jynlo-games .create-mode-grid {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;
+}
+:host .create-page.jynlo-games .create-mode-option {
+  box-sizing:border-box;min-width:0;min-height:112px;
+  grid-template-columns:42px minmax(0,1fr);
+  gap:6px 13px;padding:15px;
+  border:1px solid rgba(81,177,192,.33);
+  border-radius:13px;
+  background:rgba(4,30,46,.63);
+  transition:border-color .15s ease,background-color .15s ease;
+}
+:host .create-page.jynlo-games .create-mode-option > strong {
+  color:#f1fffc;overflow-wrap:anywhere;line-height:1.28;
+}
+:host .create-page.jynlo-games .create-mode-option > small {color:#b9d5dc;line-height:1.45;}
+:host .create-page.jynlo-games .create-mode-option-icon {
+  border:1px solid rgba(46,220,205,.38);
+  border-radius:12px;color:#4ef2d8;
+  background:rgba(31,184,180,.10);
+}
+:host .create-page.jynlo-games .create-mode-option:is(.active,[aria-pressed="true"]) {
+  background:linear-gradient(135deg,rgba(20,104,107,.50),rgba(9,60,74,.65));
+  border-color:#4be7d3;
+  box-shadow:inset 0 0 0 1px rgba(67,222,205,.19);
+}
+:host .create-page.jynlo-games .create-mode-option:is(:focus-visible,:hover:not(:disabled)) {
+  border-color:#83ffdf;outline-offset:3px;
+}
+:host .create-page.jynlo-games .create-share-grid {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+}
+:host .create-page.jynlo-games .create-share-community {
+  display:flex;gap:10px;align-items:flex-start;
+  padding:12px;
+  min-width:0;box-sizing:border-box;
+  border-radius:12px;border:1px solid rgba(55,164,181,.29);
+  background:rgba(5,34,50,.70);
+}
+:host .create-page.jynlo-games .create-share-community.selected {
+  border-color:rgba(54,235,205,.72);
+  background:rgba(26,111,111,.29);
+}
+:host .create-page.jynlo-games .create-share-community span {min-width:0;}
+:host .create-page.jynlo-games .create-share-community strong {
+  overflow-wrap:anywhere;line-height:1.3;
+}
+:host .create-page.jynlo-games .create-share-community input[type=checkbox] {
+  width:19px;height:19px;min-width:19px;margin:2px 0 0;accent-color:#24e1c7;
+}
+:host .create-page.jynlo-games .create-preset-fields {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+:host .create-page.jynlo-games .create-preset-fields > label,
+:host .create-page.jynlo-games :is(.form-grid,.venue-create-grid) > label {
+  min-width:0;max-width:100%;
+}
+:host .create-page.jynlo-games .create-card .form-grid {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;
+  margin-block:0 20px;
+}
+:host .create-page.jynlo-games .create-card .form-grid > label {
+  display:flex;flex-direction:column;align-items:stretch;gap:7px;
+}
+:host .create-page.jynlo-games .create-card .form-grid > label > span {
+  display:flex;align-items:center;
+  min-height:19px;line-height:1.35;
+}
+:host .create-page.jynlo-games .create-card :is(
+  .form-grid,.venue-create-grid,.create-preset-fields,.nested-field,
+  .create-meeting-point-panel,.create-preset-save-editor
+) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea) {
+  box-sizing:border-box;max-width:100%;min-width:0;width:100%;
+  min-height:47px;
+  border:1px solid rgba(32,187,186,.47);
+  border-radius:11px;
+  background:rgba(4,39,51,.80);
+  color:#f4fffa;
+}
+:host .create-page.jynlo-games .create-card :is(input,select,textarea):focus-visible {
+  outline:2px solid #9affea;outline-offset:2px;
+}
+:host .create-page.jynlo-games .create-card :is(input,select,textarea):disabled {
+  cursor:not-allowed;opacity:.58;
+}
+:host .create-page.jynlo-games .create-card app-jynlo-select.create-premium-select {
+  display:block;width:100%;min-width:0;max-width:100%;
+}
+:host .create-page.jynlo-games .session-minimum-picker {
+  grid-column:1/-1;box-sizing:border-box;
+  padding:13px 15px;
+}
+:host .create-page.jynlo-games .session-minimum-custom input {
+  width:min(220px,100%);
+}
+:host .create-page.jynlo-games .recruit-availability {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  box-sizing:border-box;padding:13px;gap:11px;margin-bottom:18px;
+}
+:host .create-page.jynlo-games .recruit-availability > * {
+  box-sizing:border-box;min-width:0;
+}
+:host .create-page.jynlo-games :is(.location-section,.venue-section,.photo-section,.create-meeting-point-panel) {
+  padding:clamp(14px,1.7vw,19px);margin-block:0 18px;box-sizing:border-box;
+}
+:host .create-page.jynlo-games .venue-heading {
+  align-items:flex-start;gap:12px;
+}
+:host .create-page.jynlo-games .venue-heading > * {min-width:0;}
+:host .create-page.jynlo-games .venue-results-list {
+  display:grid;grid-template-columns:minmax(0,1fr);gap:7px;
+}
+:host .create-page.jynlo-games .venue-result-option {
+  min-width:0;max-width:100%;border-radius:11px;
+  border:1px solid rgba(73,167,184,.17);
+  background:rgba(10,49,65,.67);
+}
+:host .create-page.jynlo-games .venue-result-option:hover:not(:disabled) {
+  border-color:rgba(63,232,212,.60);
+}
+:host .create-page.jynlo-games .venue-create-grid {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+:host .create-page.jynlo-games .options-grid {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+  margin-block:0 18px;
+}
+:host .create-page.jynlo-games .option-card {
+  box-sizing:border-box;min-width:0;
+  padding:15px;border-radius:14px;
+  border:1px solid var(--create-edge);
+  background:rgba(7,37,54,.74);
+}
+:host .create-page.jynlo-games .toggle-row {
+  align-items:flex-start;gap:11px;
+}
+:host .create-page.jynlo-games .toggle-row input[type=checkbox] {
+  accent-color:#2cead0;
+}
+:host .create-page.jynlo-games .photo-section {
+  display:grid;gap:13px;
+  border:1px solid var(--create-edge);
+}
+:host .create-page.jynlo-games .photo-section .upload-button {
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;max-width:100%;width:max-content;
+  box-sizing:border-box;padding:9px 15px;
+  border:1px solid rgba(83,181,190,.43);
+  border-radius:11px;background:rgba(9,59,70,.58);
+  color:#cbf9ed;text-align:center;font-weight:730;cursor:pointer;
+}
+:host .create-page.jynlo-games .photo-section .upload-button:hover {
+  background:rgba(24,103,105,.35);border-color:#52e6d1;
+}
+:host .create-page.jynlo-games .photo-section .upload-button.is-disabled {
+  opacity:.55;cursor:not-allowed;pointer-events:none;
+}
+:host .create-page.jynlo-games .photo-section .upload-button:focus-within {
+  outline:3px solid #9cfde7;outline-offset:3px;
+}
+:host .create-page.jynlo-games .create-card > .form-actions {
+  display:flex;align-items:center;justify-content:flex-end;
+  flex-wrap:wrap;gap:10px;margin-top:9px;
+  padding-top:18px;border-top:1px solid rgba(75,191,192,.21);
+}
+:host .create-page.jynlo-games .create-card > .form-actions > * {
+  flex:0 1 auto;min-height:46px!important;
+  max-width:100%;white-space:normal;
+}
+:host .create-page.jynlo-games .create-card > .form-actions > button[type=submit] {
+  min-width:190px;
+}
+@media(max-width:760px) {
+  :host .create-page.jynlo-games .page-header {align-items:flex-start;}
+  :host .create-page.jynlo-games .create-card .form-grid,
+  :host .create-page.jynlo-games .create-share-grid,
+  :host .create-page.jynlo-games .create-preset-fields,
+  :host .create-page.jynlo-games .venue-create-grid {
+    grid-template-columns:minmax(0,1fr);
+  }
+  :host .create-page.jynlo-games .create-mode-grid {grid-template-columns:minmax(0,1fr);}
+  :host .create-page.jynlo-games .recruit-availability {grid-template-columns:minmax(0,1fr);}
+  :host .create-page.jynlo-games .create-card > .form-actions > * {
+    flex:1 1 160px;
+  }
+}
+@media(max-width:560px) {
+  :host .create-page.jynlo-games .create-shell {width:100%;}
+  :host .create-page.jynlo-games .header-actions {width:100%;}
+  :host .create-page.jynlo-games .header-actions > * {flex:1 1 120px;}
+  :host .create-page.jynlo-games .create-card {padding:12px;}
+  :host .create-page.jynlo-games .create-mode-option {min-height:95px;}
+  :host .create-page.jynlo-games .create-card > .form-actions {align-items:stretch;}
+  :host .create-page.jynlo-games .create-card > .form-actions > * {
+    flex:1 1 100%;width:100%;
+  }
+  :host .create-page.jynlo-games .photo-section .upload-button {
+    width:100%;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  :host .create-page.jynlo-games .create-mode-option {transition:none;}
+}

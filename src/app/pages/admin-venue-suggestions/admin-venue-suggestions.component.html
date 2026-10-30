@@ -1,0 +1,110 @@
+<section class="admin-venue-page jynlo-c1 jynlo-admin">
+  <div class="admin-venue-shell">
+    <header class="admin-venue-header">
+      <div>
+        <p>{{ 'admin.eyebrow' | t }}</p>
+        <h1>{{ 'venue.admin.title' | t }}</h1>
+        <span>{{ 'venue.admin.subtitle' | t }}</span>
+      </div>
+      <div class="admin-venue-nav">
+        <a routerLink="/menu/admin/venue-edits" class="admin-venue-back">{{ 'venue.edit.admin.title' | t }}</a>
+        <a routerLink="/menu/admin" class="admin-venue-back">← {{ 'adminHub.back' | t }}</a>
+      </div>
+    </header>
+
+    <div class="admin-venue-summary">
+      <span>{{ 'venue.admin.pending' | t }}</span>
+      <strong>{{ suggestions.length }}</strong>
+    </div>
+
+    @if (loading) {
+      <div class="admin-venue-state" role="status">{{ 'venue.catalog.loading' | t }}</div>
+    } @else if (loadError) {
+      <div class="admin-venue-state" role="alert">
+        <p>{{ 'venue.admin.error' | t }}</p>
+        <button type="button" (click)="load()">{{ 'venue.admin.retry' | t }}</button>
+      </div>
+    } @else if (!suggestions.length) {
+      <div class="admin-venue-state">{{ 'venue.admin.empty' | t }}</div>
+    } @else {
+      <div class="admin-venue-list">
+        @for (suggestion of suggestions; track suggestion.id) {
+          <button type="button" class="admin-venue-item" (click)="open(suggestion)">
+            <span>
+              <strong>{{ suggestion.venue.name }}</strong>
+              <small>📍 {{ suggestion.venue.city }} · {{ suggestion.venue.district || '—' }}</small>
+              <small>{{ 'venue.admin.submitter' | t }} @{{ suggestion.submittedByUsername }}</small>
+            </span>
+            <span class="admin-venue-view">→</span>
+          </button>
+        }
+      </div>
+    }
+    <nav class="admin-venue-pages">
+      <button type="button" (click)="load(page - 1)" [disabled]="page === 0 || loading">
+        ← {{ 'venue.admin.previous' | t }}
+      </button>
+      <span>{{ 'venue.catalog.page' | t }} {{ page + 1 }}</span>
+      <button type="button" (click)="load(page + 1)" [disabled]="!hasMore || loading">
+        {{ 'venue.admin.next' | t }} →
+      </button>
+    </nav>
+
+    @if (selected; as suggestion) {
+      <div class="admin-venue-overlay" (click)="close()">
+        <section class="admin-venue-dialog" role="dialog" aria-modal="true" [attr.aria-label]="'venue.admin.title' | t"
+          (click)="$event.stopPropagation()">
+          <header>
+            <div>
+              <span>{{ 'venue.admin.pending' | t }} #{{ suggestion.id }}</span>
+              <h2>{{ suggestion.venue.name }}</h2>
+            </div>
+            <button type="button" class="admin-venue-close" [disabled]="updatingId !== null" (click)="close()" aria-label="Fechar">×</button>
+          </header>
+          <dl class="admin-venue-info">
+            <div><dt>{{ 'venue.detail.city' | t }}</dt><dd>{{ suggestion.venue.city }} / {{ suggestion.venue.district || '—' }}</dd></div>
+            <div><dt>{{ 'venue.admin.address' | t }}</dt><dd>{{ suggestion.venue.address || '—' }}</dd></div>
+            <div><dt>{{ 'venue.admin.sports' | t }}</dt><dd>@if (suggestion.venue.sports) {
+              <app-venue-sports-badges [sports]="suggestion.venue.sports"
+                [limit]="6" [expandable]="true"></app-venue-sports-badges>
+            } @else { — }</dd></div>
+            <div><dt>{{ 'venue.admin.coordinates' | t }}</dt><dd>{{ suggestion.venue.latitude ?? '—' }}, {{ suggestion.venue.longitude ?? '—' }}</dd></div>
+            <div><dt>{{ 'venue.admin.submitter' | t }}</dt><dd>@{{ suggestion.submittedByUsername }}</dd></div>
+            <div><dt>{{ 'venue.detail.addedAt' | t }}</dt><dd>{{ suggestion.submittedAt | date:'medium' }}</dd></div>
+          </dl>
+          <details>
+            <summary>{{ 'venue.admin.optional' | t }}</summary>
+            <dl class="admin-venue-info">
+              <div><dt>{{ 'venue.type' | t }}</dt><dd>{{ suggestion.venue.venueType || '—' }}</dd></div>
+              <div><dt>{{ 'venue.environment' | t }}</dt><dd>{{ suggestion.venue.environmentType || '—' }}</dd></div>
+              <div><dt>{{ 'venue.services' | t }}</dt><dd>{{ suggestion.venue.services || '—' }}</dd></div>
+              <div><dt>{{ 'venue.openingHours' | t }}</dt><dd>{{ suggestion.venue.openingHours || '—' }}</dd></div>
+              <div><dt>{{ 'venue.priceInfo' | t }}</dt><dd>{{ suggestion.venue.priceInfo || '—' }}</dd></div>
+              <div><dt>{{ 'venue.website' | t }}</dt><dd>{{ suggestion.venue.website || '—' }}</dd></div>
+              <div><dt>{{ 'venue.contact' | t }}</dt><dd>{{ suggestion.venue.contact || '—' }}</dd></div>
+            </dl>
+          </details>
+          @if (actionError) {
+            <p role="alert" class="admin-venue-error">{{ 'venue.admin.actionError' | t }}</p>
+          }
+          @if (action) {
+            <div class="admin-venue-confirm" role="alertdialog" aria-modal="true">
+              <p>{{ (action === 'approve' ? 'venue.admin.approveQuestion' : 'venue.admin.rejectQuestion') | t }}</p>
+              <div class="admin-venue-actions">
+                <button type="button" (click)="cancel()" [disabled]="updatingId !== null">{{ 'common.cancel' | t }}</button>
+                <button type="button" [class.danger]="action === 'reject'" [disabled]="updatingId !== null" (click)="confirm()">
+                  {{ 'venue.admin.confirm' | t }}
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="admin-venue-actions">
+              <button type="button" class="danger" (click)="propose('reject')">{{ 'venue.admin.reject' | t }}</button>
+              <button type="button" class="approve" (click)="propose('approve')">{{ 'venue.admin.approve' | t }}</button>
+            </div>
+          }
+        </section>
+      </div>
+    }
+  </div>
+</section>

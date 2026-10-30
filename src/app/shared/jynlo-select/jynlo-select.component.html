@@ -1,0 +1,51 @@
+<div #root class="jynlo-select" [class.jynlo-select--violet]="accent === 'violet'"
+    [class.jynlo-select--invalid]="invalid" [class.jynlo-select--disabled]="disabled">
+  <button #trigger type="button" class="jynlo-select__trigger"
+    role="combobox" aria-haspopup="listbox"
+    [attr.aria-expanded]="open" [attr.aria-controls]="open ? listId : null"
+    [attr.aria-label]="ariaLabel || placeholder" [attr.aria-required]="required"
+    [attr.aria-invalid]="invalid"
+    [disabled]="disabled" (click)="toggle()" (keydown)="triggerKey($event)">
+    <span class="jynlo-select__value" [class.jynlo-select__placeholder]="isPlaceholder">
+      {{ displayValue }}
+    </span>
+    <span class="jynlo-select__chevron" aria-hidden="true" [class.jynlo-select__chevron--open]="open">⌄</span>
+  </button>
+  @if (open) {
+    <div class="jynlo-select__popover" [class.jynlo-select__popover--above]="openAbove"
+      [style.left.px]="popoverLeft" [style.width.px]="popoverWidth"
+      [style.top.px]="openAbove ? null : popoverTop"
+      [style.bottom.px]="openAbove ? popoverBottom : null"
+      [style.max-height.px]="popoverMaxHeight">
+      @if (searchable) {
+        <input #filterInput class="jynlo-select__search" type="search"
+          [attr.aria-label]="ariaLabel || placeholder"
+          [placeholder]="placeholder" [ngModel]="query" (ngModelChange)="onSearchChanged($event)"
+          [ngModelOptions]="{standalone:true}"
+          (keydown)="searchKey($event)" autocomplete="off" aria-autocomplete="list"
+          [attr.aria-controls]="listId">
+      }
+      <div class="jynlo-select__options" role="listbox" [id]="listId"
+        [attr.aria-label]="ariaLabel || placeholder">
+        @for (item of visibleOptions; track item.value + ':' + $index) {
+          <button #optionButton type="button" class="jynlo-select__option"
+            role="option" [attr.aria-selected]="item.value === value"
+            [class.jynlo-select__option--active]="item.value === value"
+            [disabled]="loading" (click)="choose(item.value)" (keydown)="optionKey($event, $index)">
+            <span class="jynlo-select__option-text">
+              <span class="jynlo-select__option-label">{{ item.label }}</span>
+              @if (item.description) {
+                <span class="jynlo-select__option-description">{{ item.description }}</span>
+              }
+            </span>
+            @if (item.value === value) {
+              <span class="jynlo-select__selected" aria-hidden="true">✓</span>
+            }
+          </button>
+        } @empty {
+          <p class="jynlo-select__empty" role="status">{{ loading ? loadingLabel : emptyLabel }}</p>
+        }
+      </div>
+    </div>
+  }
+</div>

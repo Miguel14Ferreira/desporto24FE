@@ -1,0 +1,60 @@
+<form class="inbox-history-search-form" (ngSubmit)="searchRequested.emit(0)">
+                <label for="inbox-message-query">{{ 'inbox.searchMessages' | t }}</label>
+                <input id="inbox-message-query" type="search" name="messageQuery"
+                  [ngModel]="messageSearchTerm" (ngModelChange)="termChanged.emit($event)"
+                  minlength="2" maxlength="80" autocomplete="off"
+                  [placeholder]="'inbox.messageSearchPlaceholder' | t">
+                <button type="submit" class="jynlo-action jynlo-action--secondary"
+                  [disabled]="messageSearchLoading || messageSearchTerm.trim().length < 2">
+                  {{ 'inbox.findMessages' | t }}
+                </button>
+              </form>
+              @if (messageSearchLoading) {
+                <p role="status" class="inbox-history-search-status">{{ 'inbox.messageSearchLoading' | t }}</p>
+              } @else if (messageSearchError) {
+                <p role="alert" class="inbox-history-search-status">{{ 'inbox.messageSearchError' | t }}</p>
+              } @else if (!messageSearchSearched) {
+                <p class="inbox-history-search-status">{{ 'inbox.messageSearchHint' | t }}</p>
+              }
+              @if (messageSearchResults.length > 0) {
+                <div class="inbox-history-search-results" [attr.aria-label]="'inbox.searchResults' | t">
+                  @for (result of messageSearchResults; track result.id) {
+                    <article class="inbox-history-search-result"
+                      [class.is-selected]="selectedSearchResultId === result.id">
+                      <div class="inbox-history-search-meta">
+                        <strong>{{ result.sender }}</strong>
+                        <time>{{ dateFormatter(result.createdAt) }}</time>
+                      </div>
+                      <p>{{ previewFormatter(result.text) }}</p>
+                      <button type="button" class="inbox-search-result-open"
+                        [attr.aria-pressed]="selectedSearchResultId === result.id"
+                        (click)="locateRequested.emit(result)">
+                        {{ 'inbox.locateSearchResult' | t }}
+                      </button>
+                      @if (selectedSearchResultId === result.id && historyLocateLoading) {
+                        <p class="inbox-history-search-note" role="status">
+                          {{ 'inbox.historyContextLoading' | t }}
+                        </p>
+                      }
+                      @if (selectedSearchResultId === result.id && historyLocateError) {
+                        <p class="inbox-history-search-note" role="alert">
+                          {{ 'inbox.historyContextError' | t }}
+                        </p>
+                      }
+                      @if (composerAllowed && !sending && !deliveryUncertain) {
+                        <button type="button" class="inbox-search-result-reply"
+                          (click)="replyRequested.emit(result)">{{ 'chat.replyToMessage' | t }}</button>
+                      }
+                    </article>
+                  }
+                </div>
+                @if (messageSearchHasMore) {
+                  <button type="button" class="inbox-search-more" [disabled]="messageSearchLoading"
+                    (click)="searchRequested.emit(messageSearchPage + 1)">
+                    {{ 'inbox.moreSearchResults' | t }}
+                  </button>
+                }
+              } @else if (messageSearchSearched && !messageSearchLoading && !messageSearchError
+                && messageSearchResults.length === 0) {
+                <p class="inbox-history-search-status">{{ 'inbox.messageSearchNoResults' | t }}</p>
+              }

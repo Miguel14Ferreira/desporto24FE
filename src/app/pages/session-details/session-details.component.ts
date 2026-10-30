@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewChecked, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, NgZone, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { catchError, concatMap, finalize, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
+import { catchError, concatMap, finalize, forkJoin, from, map, mergeMap, of, retry, Subscription, TimeoutError, timeout, toArray } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityService } from '../../services/community.service';
@@ -10,27 +10,140 @@ import { DirectChatService } from '../../services/direct-chat.service';
 import { FriendSummary } from '../model/friend-summary';
 import { SessionDetail } from '../model/session-detail';
 import { appTranslate as t } from '../../i18n/i18n.service';
+import { compactSessionShareMessage } from '../../shared/session-share-message';
+import { venueHasPortugueseCoordinates, venueDirectionsUrl, VenueTravelMode } from '../../shared/venue-public-contact';
+import { venueUsableAddress } from '../../shared/venue-location';
+import { playerAvatarInitials, playerAvatarUrl } from '../../shared/player-avatar';
+import { suggestedMinimumPlayers } from '../../shared/session-minimum-players';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionContext, PostGameCommunitySuggestion, SessionTeamSuggestion, SessionTeamScoreSource, SessionGuestRequest, SessionConfirmedGuest } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatTypingTracker } from '../../services/chat-typing-tracker';
+import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
+import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 
 @Component({
   selector: 'app-session-details',
   templateUrl: './session-details.component.html',
-  styleUrls: ['./session-details.component.css'],
+  styleUrls: ['./session-details.component.css', './session-details-concept-one-premium.css', './session-details-invite-layout.css', './session-details-neon-polish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
 export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild('chatMessageList') chatMessageList?: ElementRef<HTMLElement>;
+  @ViewChild('sessionComposer') sessionComposer?: ElementRef<HTMLTextAreaElement>;
   private readonly messageDateFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'short',
     timeStyle: 'short'
   });
   session?: SessionDetail;
+  sessionContext: SessionContext | null = null;
+  sessionContextLoading = false;
+  sessionContextError = '';
+  invitePanelOpen = false;
+
+  /** After a completed game, offer membership only if the backend verifies attendance. */
+  postGameCommunities: PostGameCommunitySuggestion[] = [];
+  postGameCommunitiesLoading = false;
+  postGameCommunityBusyId: number | null = null;
+  postGameCommunityFeedback = '';
+  postGameCommunityError = '';
+  private loadedPostGameCommunitySessionId: number | null = null;
+
+  private postGameDismissKey(communityId: number): string {
+    return 'jynlo:postgame-community-dismiss:' +
+      (this.currentUsername || 'anonymous').toLowerCase() + ':' +
+      (this.session?.id || 0) + ':' + communityId;
+  }
+
+  private wasPostGameCommunityDismissed(communityId: number): boolean {
+    try { return localStorage.getItem(this.postGameDismissKey(communityId)) === '1'; }
+    catch { return false; }
+  }
+
+  dismissPostGameCommunity(communityId: number): void {
+    try { localStorage.setItem(this.postGameDismissKey(communityId), '1'); }
+    catch { /* Private browsing can disable storage; the card still closes. */ }
+    this.postGameCommunities = this.postGameCommunities.filter(group => group.id !== communityId);
+  }
+
+  private loadPostGameCommunities(sessionId: number): void {
+    if (this.loadedPostGameCommunitySessionId === sessionId || this.postGameCommunitiesLoading) return;
+    this.loadedPostGameCommunitySessionId = sessionId;
+    this.postGameCommunitiesLoading = true;
+    this.sessionService.postGameCommunities(sessionId).pipe(
+      timeout(10_000), finalize(() => this.postGameCommunitiesLoading = false)
+    ).subscribe({
+      next: groups => {
+        if (this.session?.id !== sessionId) return;
+        this.postGameCommunities = groups.filter(group => !this.wasPostGameCommunityDismissed(group.id));
+      },
+      // Fail closed: attendance is verified by the API. An ineligible player
+      // must not see this promotion or an unexplained red error.
+      error: () => { this.postGameCommunities = []; }
+    });
+  }
+
+  joinPostGameCommunity(group: PostGameCommunitySuggestion): void {
+    if (!this.session || this.postGameCommunityBusyId !== null
+        || !this.postGameCommunities.some(item => item.id === group.id)) return;
+    this.postGameCommunityBusyId = group.id;
+    this.postGameCommunityError = '';
+    this.postGameCommunityFeedback = '';
+    this.sessionService.joinCommunityAfterGame(this.session.id, group.id).pipe(
+      timeout(10_000), finalize(() => this.postGameCommunityBusyId = null)
+    ).subscribe({
+      next: result => {
+        this.postGameCommunities = this.postGameCommunities.filter(item => item.id !== group.id);
+        this.postGameCommunityFeedback = t(result.state === 'REQUESTED'
+          ? 'sessionDetail.postGameCommunity.requested' : 'sessionDetail.postGameCommunity.joined');
+      },
+      error: error => {
+        if (error instanceof HttpErrorResponse && (error.status === 403 || error.status === 409)) {
+          // Member, already requested, or no longer eligible. Do not keep offering.
+          this.postGameCommunities = this.postGameCommunities.filter(item => item.id !== group.id);
+        } else {
+          this.postGameCommunityError = t('sessionDetail.postGameCommunity.error');
+        }
+      }
+    });
+  }
+
+  private loadSessionContext(sessionId: number): void {
+    this.sessionContextLoading = true;
+    this.sessionContextError = '';
+    this.sessionService.context(sessionId).pipe(
+      timeout(10_000),
+      finalize(() => { if (this.session?.id === sessionId) this.sessionContextLoading = false; })
+    ).subscribe({
+      next: context => {
+        if (this.session?.id === sessionId) this.sessionContext = context;
+      },
+      error: () => {
+        if (this.session?.id === sessionId) this.sessionContextError = t('sessionDetail.communityContextError');
+      }
+    });
+  }
+
+  showInvitePanel(): boolean {
+    return this.canShareGuestInvites() && (this.showCreationSharePanel() || this.invitePanelOpen);
+  }
+
+  toggleInvitePanel(): void {
+    if (!this.canShareGuestInvites()) return;
+    if (this.showInvitePanel()) {
+      this.creationShareDismissed = true;
+      this.invitePanelOpen = false;
+    } else {
+      this.invitePanelOpen = true;
+    }
+  }
+
   messages: SessionMessage[] = [];
+  replyingToSessionMessage: SessionMessage | null = null;
   creatorReliability?: ReliabilitySummary;
   participants: SessionParticipant[] = [];
   sessionParticipants: SessionParticipant[] = [];
@@ -40,8 +153,17 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   loading = false;
   actionLoading = false;
+  registrationClock = Date.now();
+  private registrationClockTimer?: ReturnType<typeof setInterval>;
   chatLoading = false;
   messageSending = false;
+  chatRealtimeConnected = false;
+  chatEverConnected = false;
+  chatDeliveryUncertain = false;
+  chatDeliveryChecking = false;
+  private pendingChatDelivery?: { text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number };
+  private scrollChatToBottomRequested = false;
+  newMessagesPending = 0;
   reliabilityLoading = false;
   participantsLoading = false;
   sessionParticipantsLoading = false;
@@ -50,6 +172,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   removeLoadingId: number | null = null;
   pendingRemovalId: number | null = null;
   pendingFutureExclusionId: number | null = null;
+  pendingFutureExclusionReason: OrganizerExclusionReason | '' = '';
+  readonly futureExclusionReasons: readonly OrganizerExclusionReason[] = [
+    'NO_SHOW', 'UNSPORTING_CONDUCT', 'DISRESPECTFUL_BEHAVIOUR', 'ABUSIVE_BEHAVIOUR', 'OTHER'
+  ];
+
   futureExclusionUpdatingId: number | null = null;
   futureExclusions: Record<number, boolean | null> = {};
   showProblemReport = false;
@@ -57,6 +184,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   problemDetails = '';
   showAttendanceManager = false;
   teamSuggestion?: SessionTeamSuggestion;
+  teamsScoreSource: SessionTeamScoreSource = 'FORM';
   teamsLoading = false;
   teamsConfirming = false;
   teamSuggestionPendingConfirmation = false;
@@ -75,10 +203,56 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   ratingSuccess = '';
   ratingLoadedSessionId: number | null = null;
 
+  // Venue stars are separate from the overall session rating.
+  // Only confirmed attendees can edit; the venue summary is anonymous.
+  selectedVenueScore: number | null = null;
+  myVenueScore: number | null = null;
+  venueRatingLoading = false;
+  venueRatingSaving = false;
+  venueRatingDismissed = false;
+  venueRatingCollapsedByExisting = false;
+  venueRatingError = '';
+  venueRatingSuccess = '';
+  venueRatingLoadedSessionId: number | null = null;
+
+  // Post-game appreciation is private, optional, positive-only and unrelated to stars.
+  readonly complimentTypes: readonly PlayerComplimentType[] =
+    ['FAIR_PLAY', 'GREAT_TEAMMATE', 'POSITIVE_ENERGY'];
+  complimentsOpen = false;
+  complimentsLoading = false;
+  complimentSavingUsername: string | null = null;
+  complimentsLoadedSessionId: number | null = null;
+  complimentsSent: PlayerCompliment[] = [];
+  complimentsReceived: PlayerCompliment[] = [];
+  complimentsError = '';
+  complimentsSuccess = '';
+
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
+  detailRefreshWarning = '';
+  joinOutcomeUnknown = false;
+  joinStatusChecking = false;
+  joinStatusMessage = '';
   inviteFriendsOpen = false;
+  guestLinkUrl = '';
+  guestLinkWorking = false;
+  guestPanelError = '';
+  guestPanelSuccess = '';
+  guestRequests: SessionGuestRequest[] = [];
+  /** Read-only confirmed guest identities for logged-in attendees. */
+  memberConfirmedGuests: SessionConfirmedGuest[] = [];
+  memberConfirmedGuestsLoading = false;
+  memberConfirmedGuestsError = '';
+  guestRequestsLoading = false;
+  guestRequestBusyId: number | null = null;
+  guestRequestsLoadedForSession: number | null = null;
+  guestCancellationPendingId: number | null = null;
+  guestRosterSuccess = '';
+  guestRosterError = '';
+  private guestRequestsRefreshing = false;
+  private participantRosterRefreshing = false;
+
   inviteFriendsLoading = false;
   inviteSendingTo: string | null = null;
   formalInviteSendingTo: string | null = null;
@@ -87,6 +261,106 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   inviteFeedback = '';
   inviteError = '';
   sharingSession = false;
+  cancelSessionConfirmOpen = false;
+  cancelSessionWorking = false;
+  meetingPointEditing = false;
+  meetingPointDraft = '';
+  meetingPointSaving = false;
+  meetingPointError = '';
+  meetingPointSuccess = '';
+
+  /** Edit only future, active sessions owned by the authenticated user. */
+  canEditMeetingPoint(): boolean {
+    if (!this.session || !this.isCreator()
+        || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) return false;
+    const kickoff = Date.parse(this.session.gameDate);
+    return Number.isFinite(kickoff) && kickoff > Date.now();
+  }
+
+  beginMeetingPointEdit(): void {
+    if (!this.canEditMeetingPoint() || this.meetingPointSaving) return;
+    this.meetingPointDraft = this.session?.meetingPointInstructions || '';
+    this.meetingPointError = '';
+    this.meetingPointSuccess = '';
+    this.meetingPointEditing = true;
+  }
+
+  discardMeetingPointEdit(): void {
+    if (this.meetingPointSaving) return;
+    this.meetingPointEditing = false;
+    this.meetingPointDraft = '';
+    this.meetingPointError = '';
+  }
+
+  saveMeetingPoint(): void {
+    if (!this.meetingPointEditing || !this.canEditMeetingPoint()
+        || !this.sessionId || this.meetingPointSaving) return;
+    if (this.meetingPointDraft.length > 240
+        || /[\u0000-\u001F\u007F]/.test(this.meetingPointDraft)) {
+      this.meetingPointError = t('sessionDetail.meetingPointInvalid');
+      return;
+    }
+    const instructions = this.meetingPointDraft.trim() || null;
+    if (instructions === (this.session?.meetingPointInstructions || null)) {
+      this.discardMeetingPointEdit();
+      return;
+    }
+    const sessionId = this.sessionId;
+    this.meetingPointSaving = true;
+    this.meetingPointError = '';
+    this.meetingPointSuccess = '';
+    this.sessionService.updateMeetingPoint(sessionId, instructions)
+      .pipe(timeout(10000), finalize(() => this.meetingPointSaving = false))
+      .subscribe({
+        next: detail => {
+          if (this.sessionId !== sessionId) return;
+          this.session = detail;
+          this.meetingPointEditing = false;
+          this.meetingPointDraft = '';
+          this.meetingPointSuccess = t('sessionDetail.meetingPointSaved');
+        },
+        error: error => {
+          this.meetingPointError = this.errorFrom(error, t('sessionDetail.meetingPointSaveError'));
+        }
+      });
+  }
+
+  canCancelOwnSession(): boolean {
+    return !!this.session && this.isCreator()
+      && (this.session.status === 'OPEN' || this.session.status === 'FULL');
+  }
+
+  requestCancelOwnSession(): void {
+    if (!this.canCancelOwnSession() || this.cancelSessionWorking) return;
+    this.cancelSessionConfirmOpen = true;
+    this.actionError = '';
+  }
+
+  dismissCancelOwnSession(): void {
+    if (!this.cancelSessionWorking) this.cancelSessionConfirmOpen = false;
+  }
+
+  confirmCancelOwnSession(): void {
+    if (!this.canCancelOwnSession() || !this.cancelSessionConfirmOpen
+        || this.cancelSessionWorking || !this.sessionId) return;
+    this.cancelSessionWorking = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+    this.sessionService.cancel(this.sessionId).pipe(
+      timeout(10000), finalize(() => this.cancelSessionWorking = false)
+    ).subscribe({
+      next: () => {
+        if (this.session) this.session = {...this.session, status: 'CANCELLED'};
+        this.cancelSessionConfirmOpen = false;
+        this.promotionOpen = false;
+        this.creationShareDismissed = true;
+        this.actionSuccess = t('feedback.sessions.cancelled');
+      },
+      error: error => {
+        this.actionError = this.errorFrom(error, t('feedback.sessions.cancelError'));
+      }
+    });
+  }
   creationShareDismissed = false;
   promotionOpen = false;
   shareFeedback = '';
@@ -108,9 +382,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private sessionId?: number;
   private currentUsername: string | null = null;
   private pendingJoinScroll = false;
+  private pendingChatScroll = false;
   private pendingMembershipScroll = false;
+  private pendingMeetingPointScroll = false;
   private readonly jwtHelper = new JwtHelperService();
+  private readonly router = inject(Router);
+  private readonly readSync = inject(ChatReadSyncService);
+  private readonly zone = inject(NgZone);
   private readonly realtimeSubscriptions = new Subscription();
+  readonly typing: ChatTypingTracker;
 
   constructor(
     private route: ActivatedRoute,
@@ -119,15 +399,44 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     private directChatService: DirectChatService,
     private reliabilityService: ReliabilityService,
     private realtimeService: DirectChatRealtimeService
-  ) {}
+  ) {
+    this.typing = new ChatTypingTracker(realtimeService);
+  }
+
+
+  // Only a known, internal navigation source can change the back destination.
+  get backToPath(): string {
+    return this.route.snapshot.queryParamMap?.get('from') === 'discover'
+      ? '/menu/discover' : '/menu/events';
+  }
+
+  get backQueryParams(): { sport: string; city: string; player?: string } | null {
+    const params = this.route.snapshot.queryParamMap;
+    if (params?.get('from') !== 'discover') return null;
+    const player = params.get('player')?.trim();
+    return {
+      sport: params.get('sport') ?? '',
+      city: params.get('city') ?? '',
+      ...(player ? { player } : {})
+    };
+  }
+
+  get backLabelKey(): string {
+    return this.backToPath === '/menu/discover'
+      ? 'discover.backFromProfile' : 'sessionDetail.back';
+  }
 
   ngOnInit(): void {
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
+    this.pendingChatScroll = this.route.snapshot.queryParamMap?.get('chat') === '1';
     this.pendingMembershipScroll = this.route.snapshot.queryParamMap?.get('membership') === '1';
+    this.pendingMeetingPointScroll = this.route.snapshot.queryParamMap?.get('meetingPoint') === '1';
     this.promotionOpen = this.route.snapshot.queryParamMap?.get('promote') === '1';
     this.currentUsername = this.readCurrentUsername();
 
-    const rawId = this.route.snapshot.paramMap.get('id');
+    // In a lazy-loaded empty child route, the :id may live on the parent snapshot.
+    const rawId = this.route.snapshot.paramMap.get('id')
+      ?? this.route.parent?.snapshot.paramMap.get('id');
     const id = rawId && /^[1-9]\d*$/.test(rawId) ? Number(rawId) : NaN;
     if (!Number.isSafeInteger(id)) {
       this.errorMessage = t('feedback.session.invalid');
@@ -135,8 +444,25 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }
 
     this.sessionId = id;
+    if (this.pendingChatScroll) {
+      void this.router.navigate(['/menu/messages'], {
+        queryParams: { kind: 'session', id }, replaceUrl: true
+      });
+      return;
+    }
     this.restoreRatingDismissal();
     this.loadSession();
+    // Run the clock outside Angular so fixture.whenStable() and browser
+    // navigation do not wait forever for a persistent repeating task.
+    this.zone.runOutsideAngular(() => {
+      this.registrationClockTimer = setInterval(
+        () => this.zone.run(() => {
+          this.registrationClock = Date.now();
+          // Reconcile reservations, confirmed guests and players while this tab is visible.
+          // Silent refresh keeps the roster cards mounted instead of flashing loaders.
+          this.syncVisibleRoster();
+        }), 15000);
+    });
     this.realtimeService.connect();
 
     this.realtimeSubscriptions.add(
@@ -146,25 +472,74 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         }
 
         this.appendMessageIfMissing(message);
+        if (this.chatDeliveryUncertain && this.matchesPendingChatDelivery(message)) {
+          this.confirmChatDelivery();
+        }
       })
     );
 
     this.realtimeSubscriptions.add(
       this.realtimeService.connected$.subscribe(connected => {
-        if (connected && this.canAccessChat()) {
-          this.refreshMessages(false);
+        this.chatRealtimeConnected = connected;
+        if (connected) {
+          this.chatEverConnected = true;
+          // The session details page has no chat log. Only the inbox loads it.
         }
       })
     );
   }
 
+  /** Read-only automatic reconciliation; never changes or cancels a booking. */
+  syncVisibleRoster(): void {
+    if (document.hidden || this.loading || !this.session
+        || (!this.session.joined && !this.isCreator())) return;
+    this.loadSession(false);
+    if (this.isCreator()) this.loadGuestRequests(true);
+  }
+
+  @HostListener('window:focus')
+  @HostListener('document:visibilitychange')
+  onRosterVisibleAgain(): void {
+    this.syncVisibleRoster();
+  }
+
   ngOnDestroy(): void {
+    if (this.registrationClockTimer) clearInterval(this.registrationClockTimer);
+    this.typing.destroy();
     this.realtimeSubscriptions.unsubscribe();
   }
 
   ngAfterViewChecked(): void {
+    if (this.scrollChatToBottomRequested && this.chatMessageList?.nativeElement) {
+      const el = this.chatMessageList.nativeElement;
+      el.scrollTop = el.scrollHeight;
+      this.scrollChatToBottomRequested = false;
+      this.newMessagesPending = 0;
+    }
+    this.markVisibleMessagesRead();
     if (this.loading || !this.session) {
       return;
+    }
+
+    if (this.pendingChatScroll) {
+      this.pendingChatScroll = false;
+      if (this.canAccessChat()) {
+        document.getElementById('session-chat')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    if (this.pendingMeetingPointScroll) {
+      // Consume exactly once after a successful authorised detail fetch.
+      // Outdated alerts may refer to a note that has been removed, or a
+      // participant who left. Never focus or scroll to private content then.
+      this.pendingMeetingPointScroll = false;
+      if (this.session.canSeeExactAddress && this.session.meetingPointInstructions) {
+        const meetingPoint = document.getElementById('session-meeting-point');
+        if (meetingPoint) {
+          meetingPoint.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          meetingPoint.focus({ preventScroll: true });
+        }
+      }
     }
 
     if (this.pendingMembershipScroll) {
@@ -214,32 +589,90 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     if (!this.canJoinSession() || !this.sessionId || this.actionLoading) {
       return;
     }
-
     if (this.session!.privateGame && !this.joinPassword.trim()) {
       this.actionError = t('feedback.session.privatePassword');
       this.actionSuccess = '';
       return;
     }
-
     this.actionLoading = true;
     this.actionError = '';
     this.actionSuccess = '';
+    this.joinStatusMessage = '';
 
     this.sessionService.join(this.sessionId, this.joinPassword)
-      .pipe(
-        timeout(10_000),
-        finalize(() => this.actionLoading = false)
-      )
+      .pipe(timeout(10_000), finalize(() => this.actionLoading = false))
       .subscribe({
         next: response => {
           this.joinPassword = '';
+          this.joinOutcomeUnknown = false;
           this.actionSuccess = this.joinSuccessMessage(response);
+          // The POST result is authoritative even if the follow-up details GET fails.
+          if (this.session) {
+            this.session = {
+              ...this.session,
+              joined: response.state === 'PARTICIPANT',
+              waitlisted: response.state === 'WAITLISTED',
+              waitlistPosition: response.state === 'WAITLISTED' ? response.waitlistPosition : null
+            };
+          }
           this.loadSession(false);
         },
         error: error => {
-          this.actionError = this.errorFrom(error, t('feedback.session.joinError'));
+          if (this.isUncertainJoinError(error)) {
+            // Timeout or lost response can follow a successful server-side commit.
+            // Block repeat POSTs until a separate GET verifies the actual membership.
+            this.joinOutcomeUnknown = true;
+            this.joinStatusMessage = t('feedback.session.joinChecking');
+            this.verifyJoinOutcome();
+          } else {
+            this.actionError = this.errorFrom(error, t('feedback.session.joinError'));
+          }
         }
       });
+  }
+
+  verifyJoinOutcome(): void {
+    if (!this.joinOutcomeUnknown || this.joinStatusChecking || !this.sessionId) return;
+    this.joinStatusChecking = true;
+    this.joinStatusMessage = t('feedback.session.joinChecking');
+    this.sessionService.detail(this.sessionId)
+      .pipe(timeout(10_000), retry({ count: 1 }),
+        finalize(() => this.joinStatusChecking = false))
+      .subscribe({
+        next: detail => {
+          this.session = detail;
+          if (detail.joined || detail.waitlisted) {
+            this.joinOutcomeUnknown = false;
+            this.joinStatusMessage = '';
+            this.actionSuccess = this.joinSuccessMessage({
+              state: detail.waitlisted ? 'WAITLISTED' : 'PARTICIPANT',
+              waitlistPosition: detail.waitlisted ? detail.waitlistPosition : null
+            });
+            this.actionError = '';
+            if (detail.joined) {
+              this.loadSessionParticipants();
+            }
+          } else {
+            // A new POST is only possible after a successful verification GET.
+            this.joinOutcomeUnknown = false;
+            this.joinStatusMessage = t('feedback.session.joinNotConfirmed');
+          }
+        },
+        error: () => {
+          // Keep repeat POST disabled until membership can be checked.
+          this.joinStatusMessage = t('feedback.session.joinVerificationUnavailable');
+        }
+      });
+  }
+
+  private isUncertainJoinError(error: unknown): boolean {
+    if (error instanceof TimeoutError) return true;
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 0 || error.status === 408 || error.status === 429
+        || error.status >= 500;
+    }
+    // Unknown client failures are not proof the server rolled back the transaction.
+    return true;
   }
 
   leaveSession(): void {
@@ -263,6 +696,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.actionSuccess = wasWaitlisted
             ? t('feedback.session.leftWaitlist')
             : t('feedback.session.left');
+          if (this.session) {
+            this.session = { ...this.session, joined: false, waitlisted: false, waitlistPosition: null };
+          }
           this.loadSession(false);
         },
         error: error => {
@@ -281,14 +717,201 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   canRatePostGame(): boolean {
-    if (!this.session?.joined
+    if (!this.session?.joined || !this.currentUsername
       || this.session.status === 'CANCELLED'
       || this.session.problemType === 'NOT_OCCURRED') {
       return false;
     }
+
+    // Registration alone does not prove participation. Only confirmed
+    // attendees should see the editor; the backend checks the stored
+    // attendance timestamp independently before accepting any rating.
+    const attended = this.sessionParticipants.some(participant =>
+      participant.username.toLowerCase() === this.currentUsername!.toLowerCase()
+      && participant.attendanceStatus === 'ATTENDED'
+    );
+    if (!attended) return false;
+
     const kickoff = Date.parse(this.session.gameDate);
     return Number.isFinite(kickoff)
       && kickoff + (2 * 60 * 60 * 1000) <= Date.now();
+  }
+
+  canRateVenuePostGame(): boolean {
+    return this.canRatePostGame() && !!this.session?.venue?.id;
+  }
+
+  /** A username is the stable identity exposed by the roster; its id is a participation id. */
+  eligibleComplimentPlayers(): SessionParticipant[] {
+    if (!this.canRatePostGame() || !this.currentUsername) return [];
+    const me = this.currentUsername.toLowerCase();
+    return this.sessionParticipants.filter(participant =>
+      participant.attendanceStatus === 'ATTENDED'
+      && participant.username.toLowerCase() !== me
+    );
+  }
+
+  canOfferCompliments(): boolean {
+    return this.eligibleComplimentPlayers().length > 0;
+  }
+
+  toggleCompliments(): void {
+    if (!this.canOfferCompliments()) return;
+    this.complimentsOpen = !this.complimentsOpen;
+    if (this.complimentsOpen) this.loadCompliments();
+  }
+
+  loadCompliments(): void {
+    if (!this.sessionId || !this.canOfferCompliments() || this.complimentsLoading
+        || this.complimentSavingUsername
+        || this.complimentsLoadedSessionId === this.sessionId) return;
+
+    const sessionId = this.sessionId;
+    this.complimentsLoading = true;
+    this.complimentsError = '';
+    forkJoin({
+      sent: this.sessionService.sentCompliments(sessionId),
+      received: this.sessionService.receivedCompliments(sessionId)
+    }).pipe(
+      timeout(10_000),
+      finalize(() => this.complimentsLoading = false)
+    ).subscribe({
+      next: ({ sent, received }) => {
+        if (this.sessionId !== sessionId) return;
+        this.complimentsSent = sent;
+        this.complimentsReceived = received;
+        this.complimentsLoadedSessionId = sessionId;
+      },
+      error: () => {
+        if (this.sessionId === sessionId) {
+          this.complimentsError = t('sessionDetail.complimentsLoadError');
+        }
+      }
+    });
+  }
+
+  myCompliment(recipientUsername: string): PlayerCompliment | undefined {
+    return this.complimentsSent.find(item =>
+      item.recipientUsername.toLowerCase() === recipientUsername.toLowerCase());
+  }
+
+  complimentLabel(type: PlayerComplimentType): string {
+    return t('sessionDetail.compliment.' + type);
+  }
+
+  giveCompliment(participant: SessionParticipant, type: PlayerComplimentType): void {
+    if (!this.sessionId || !this.complimentsOpen || this.complimentsLoading
+        || this.complimentsLoadedSessionId !== this.sessionId
+        || this.complimentSavingUsername
+        || !this.eligibleComplimentPlayers().some(player =>
+          player.username.toLowerCase() === participant.username.toLowerCase())
+        || !this.complimentTypes.includes(type)
+        || this.myCompliment(participant.username)?.type === type) return;
+
+    const sessionId = this.sessionId;
+    this.complimentSavingUsername = participant.username;
+    this.complimentsError = '';
+    this.complimentsSuccess = '';
+    this.sessionService.giveCompliment(sessionId, participant.username, type)
+      .pipe(timeout(10_000), finalize(() => this.complimentSavingUsername = null))
+      .subscribe({
+        next: compliment => {
+          if (this.sessionId !== sessionId
+              || compliment.recipientUsername.toLowerCase() !== participant.username.toLowerCase()) return;
+          this.complimentsSent = [
+            ...this.complimentsSent.filter(item =>
+              item.recipientUsername.toLowerCase() !== participant.username.toLowerCase()),
+            compliment
+          ];
+          this.complimentsSuccess = t('sessionDetail.complimentsSaved');
+        },
+        error: () => {
+          if (this.sessionId === sessionId) {
+            this.complimentsError = t('sessionDetail.complimentsSaveError');
+          }
+        }
+      });
+  }
+
+  loadMyVenueRating(): void {
+    if (!this.sessionId || !this.canRateVenuePostGame()
+      || this.venueRatingLoading || this.venueRatingSaving
+      || this.venueRatingLoadedSessionId === this.sessionId) return;
+
+    const sessionId = this.sessionId;
+    const venueId = this.session?.venue?.id;
+    this.venueRatingLoading = true;
+    this.venueRatingError = '';
+    this.sessionService.myVenueRating(sessionId)
+      .pipe(timeout(10_000), finalize(() => this.venueRatingLoading = false))
+      .subscribe({
+        next: rating => {
+          if (this.sessionId !== sessionId || this.session?.venue?.id !== venueId) return;
+          this.venueRatingLoadedSessionId = sessionId;
+          this.myVenueScore = rating?.score ?? null;
+          this.selectedVenueScore = this.myVenueScore;
+          this.venueRatingCollapsedByExisting = this.myVenueScore !== null;
+        },
+        error: () => {
+          this.venueRatingError = t('feedback.venue.ratingLoadError');
+        }
+      });
+  }
+
+  selectVenueScore(score: number): void {
+    if (!this.canRateVenuePostGame() || this.venueRatingLoading || this.venueRatingSaving
+      || this.venueRatingLoadedSessionId !== this.sessionId
+      || !Number.isInteger(score) || score < 1 || score > 5) return;
+    this.selectedVenueScore = score;
+    this.venueRatingError = '';
+    this.venueRatingSuccess = '';
+  }
+
+  canSaveVenueRating(): boolean {
+    return this.canRateVenuePostGame()
+      && !this.venueRatingLoading && !this.venueRatingSaving
+      && this.venueRatingLoadedSessionId === this.sessionId
+      && this.selectedVenueScore !== null
+      && this.selectedVenueScore >= 1 && this.selectedVenueScore <= 5
+      && this.selectedVenueScore !== this.myVenueScore;
+  }
+
+  saveVenueRating(): void {
+    if (!this.sessionId || !this.canSaveVenueRating() || this.selectedVenueScore === null) return;
+    const sessionId = this.sessionId;
+    const venueId = this.session?.venue?.id;
+    const wasRated = this.myVenueScore !== null;
+    this.venueRatingSaving = true;
+    this.venueRatingError = '';
+    this.venueRatingSuccess = '';
+    this.sessionService.rateVenue(sessionId, this.selectedVenueScore)
+      .pipe(timeout(10_000), finalize(() => this.venueRatingSaving = false))
+      .subscribe({
+        next: (saved: MyVenueRating) => {
+          if (this.sessionId !== sessionId || saved.venueId !== venueId) return;
+          this.myVenueScore = saved.score;
+          this.selectedVenueScore = saved.score;
+          this.venueRatingLoadedSessionId = sessionId;
+          this.venueRatingSuccess = t(wasRated
+            ? 'feedback.venue.ratingUpdated' : 'feedback.venue.ratingSaved');
+        },
+        error: () => {
+          this.venueRatingError = t('feedback.venue.ratingSaveError');
+        }
+      });
+  }
+
+  dismissVenueRating(): void {
+    if (this.venueRatingSaving) return;
+    this.venueRatingDismissed = true;
+    this.venueRatingError = '';
+  }
+
+  reopenVenueRating(): void {
+    if (!this.canRateVenuePostGame()) return;
+    this.venueRatingDismissed = false;
+    this.venueRatingCollapsedByExisting = false;
+    this.loadMyVenueRating();
   }
 
   loadMyOverallRating(): void {
@@ -526,24 +1149,38 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       });
   }
 
-  loadSessionParticipants(): void {
+  loadSessionParticipants(silent = false): void {
     if (!this.sessionId || !this.session
-        || (!this.session.joined && !this.isCreator()) || this.sessionParticipantsLoading) {
+        || (!this.session.joined && !this.isCreator()) || this.participantRosterRefreshing) {
       return;
     }
 
-    this.sessionParticipantsLoading = true;
-    this.sessionParticipantsError = '';
+    this.participantRosterRefreshing = true;
+    if (!silent) {
+      this.sessionParticipantsLoading = true;
+      this.sessionParticipantsError = '';
+    }
 
     this.sessionService.participants(this.sessionId)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.sessionParticipantsLoading = false)
+        finalize(() => {
+          this.participantRosterRefreshing = false;
+          if (!silent) this.sessionParticipantsLoading = false;
+        })
       )
       .subscribe({
         next: participants => {
           this.sessionParticipants = participants;
+          // The initial session load runs before the participant roster.
+          // Load private rating only after the API confirms actual attendance.
+          if (this.canRatePostGame() && !this.ratingDismissed) {
+            this.loadMyOverallRating();
+          }
+          if (this.canRateVenuePostGame() && !this.venueRatingDismissed) {
+            this.loadMyVenueRating();
+          }
           if (this.isCreator()) {
             this.participants = participants;
           }
@@ -552,6 +1189,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
         },
         error: error => {
+          // A temporary background network error must not erase the last valid roster.
+          if (silent) return;
           this.sessionParticipants = [];
           this.teamAParticipants = [];
           this.teamBParticipants = [];
@@ -706,14 +1345,28 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     });
   }
 
+  availableFutureExclusionReasons(participant: SessionParticipant): OrganizerExclusionReason[] {
+    return this.futureExclusionReasons.filter(reason =>
+      reason !== 'NO_SHOW' || participant.attendanceStatus === 'NO_SHOW'
+    );
+  }
+
+  chooseFutureExclusionReason(participant: SessionParticipant, value: string): void {
+    if (this.pendingFutureExclusionId !== participant.id
+      || this.futureExclusionUpdatingId !== null) return;
+    const selected = value as OrganizerExclusionReason;
+    this.pendingFutureExclusionReason =
+      this.availableFutureExclusionReasons(participant).includes(selected) ? selected : '';
+  }
+
   requestFutureExclusion(participant: SessionParticipant): void {
     if (!this.isCreator() || !this.canRemoveParticipant(participant)
-      || participant.attendanceStatus !== 'NO_SHOW'
       || this.futureExclusions[participant.id] !== false
       || this.futureExclusionUpdatingId !== null) {
       return;
     }
     this.pendingFutureExclusionId = participant.id;
+    this.pendingFutureExclusionReason = '';
     this.participantManagementError = '';
     this.participantManagementSuccess = '';
   }
@@ -721,12 +1374,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   cancelFutureExclusion(): void {
     if (this.futureExclusionUpdatingId === null) {
       this.pendingFutureExclusionId = null;
+      this.pendingFutureExclusionReason = '';
     }
   }
 
   confirmFutureExclusion(participant: SessionParticipant): void {
     if (!this.sessionId || !this.isCreator() || !this.canRemoveParticipant(participant)
-      || participant.attendanceStatus !== 'NO_SHOW'
+      || !this.pendingFutureExclusionReason
+      || !this.availableFutureExclusionReasons(participant).includes(this.pendingFutureExclusionReason)
       || this.pendingFutureExclusionId !== participant.id
       || this.futureExclusions[participant.id] !== false
       || this.futureExclusionUpdatingId !== null || this.attendanceUpdatingId !== null
@@ -735,12 +1390,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.futureExclusionUpdatingId = participant.id;
     this.participantManagementError = '';
-    this.sessionService.excludeFromFutureSessions(this.sessionId, participant.id)
+    this.sessionService.excludeFromFutureSessions(this.sessionId, participant.id, this.pendingFutureExclusionReason as OrganizerExclusionReason)
       .pipe(timeout(10_000), finalize(() => this.futureExclusionUpdatingId = null))
       .subscribe({
         next: result => {
           this.futureExclusions[participant.id] = result.excluded;
           this.pendingFutureExclusionId = null;
+          this.pendingFutureExclusionReason = '';
           this.participantManagementSuccess =
             t('feedback.session.futureExclusionSaved', { username: participant.username });
         },
@@ -769,6 +1425,30 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         error: error => this.participantManagementError =
           this.errorFrom(error, t('feedback.session.futureExclusionError'))
       });
+  }
+
+  /** Only another registered player can be removed; the owner keeps organiser control. */
+  canCancelRegisteredPresence(participant: SessionParticipant): boolean {
+    return this.isCreator()
+      && !!this.session
+      && (this.session.status === 'OPEN' || this.session.status === 'FULL')
+      && this.canRemoveParticipant(participant);
+  }
+
+  minimumToPlay(): number {
+    if (!this.session) return 0;
+    const minimum = this.session.minParticipants;
+    return Number.isSafeInteger(minimum) && minimum! >= 2
+      && minimum! <= this.session.maxParticipants
+      ? minimum! : suggestedMinimumPlayers(this.session.sport, this.session.maxParticipants);
+  }
+
+  visibleConfirmedForMinimum(): number {
+    return this.session?.participantCount ?? 0;
+  }
+
+  MathMax(a: number, b: number): number {
+    return Math.max(a, b);
   }
 
   canRemoveParticipant(participant: SessionParticipant): boolean {
@@ -803,6 +1483,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       !this.sessionId
       || !this.isCreator()
       || !this.canRemoveParticipant(participant)
+      || this.pendingRemovalId !== participant.id
       || this.removeLoadingId !== null
       || this.attendanceBulkUpdating
       || this.futureExclusionUpdatingId !== null
@@ -829,6 +1510,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
           this.participantManagementSuccess =
             t('feedback.session.removed', { username: participant.username });
+          this.loadSession(false);
         },
         error: error => {
           this.participantManagementError = this.errorFrom(
@@ -874,6 +1556,38 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return attendanceAvailableAt <= Date.now();
   }
 
+  @HostListener('window:scroll')
+  @HostListener('window:focus')
+  @HostListener('document:visibilitychange')
+  onSessionChatScroll(): void {
+    if (this.isNearChatBottom()) this.newMessagesPending = 0;
+    this.markVisibleMessagesRead();
+  }
+
+  jumpToLatestMessages(): void {
+    const log = this.chatMessageList?.nativeElement;
+    if (!log) return;
+    log.scrollTop = log.scrollHeight;
+    this.newMessagesPending = 0;
+    this.markVisibleMessagesRead();
+  }
+
+  private markVisibleMessagesRead(): void {
+    // Session details can be opened without opening/seeing the chat.
+    // The session details screen no longer renders a chat log. Never mark
+    // hidden messages as read; the unified inbox owns read acknowledgements.
+    if (!this.chatMessageList?.nativeElement || !this.sessionId || !this.canAccessChat()
+        || this.chatLoading || this.chatError || this.messages.length === 0) return;
+    const highestId = this.messages.reduce((max, message) => Math.max(max, message.id), 0);
+    this.readSync.markVisible('session', this.sessionId,
+      highestId, this.chatMessageList?.nativeElement);
+  }
+
+  private isNearChatBottom(): boolean {
+    const el = this.chatMessageList?.nativeElement;
+    return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  }
+
   refreshMessages(showLoading = true): void {
     if (!this.sessionId || !this.canAccessChat() || this.chatLoading) {
       return;
@@ -895,17 +1609,40 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         })
       )
       .subscribe({
-        next: messages => this.messages = this.sortedMessages(messages),
+        next: messages => {
+          // A websocket event may arrive while HTTP is still in flight.
+          const follow = this.messages.length === 0 || this.isNearChatBottom();
+          this.messages = this.sortedMessages([
+            ...this.messages.filter(existing => !messages.some(incoming => incoming.id === existing.id)),
+            ...messages
+          ]);
+          if (follow) this.scrollChatToBottomRequested = true;
+          if (this.chatDeliveryUncertain &&
+              this.messages.some(message => this.matchesPendingChatDelivery(message))) {
+            this.confirmChatDelivery();
+          }
+        },
         error: error => {
           this.chatError = this.errorFrom(error, t('feedback.session.chatLoadError'));
         }
       });
   }
 
+  replyToSessionMessage(message: SessionMessage): void {
+    if (!this.canSendChat() || this.messageSending || this.chatDeliveryUncertain) return;
+    this.replyingToSessionMessage = message;
+    this.sessionComposer?.nativeElement.focus({ preventScroll: true });
+  }
+
+  cancelSessionReply(): void {
+    if (!this.messageSending && !this.chatDeliveryUncertain) this.replyingToSessionMessage = null;
+  }
+
   sendMessage(): void {
+    this.typing.stop();
     const body = this.messageBody.trim();
 
-    if (!this.sessionId || !this.canSendChat() || this.messageSending) {
+    if (!this.sessionId || !this.canSendChat() || this.messageSending || this.chatDeliveryUncertain) {
       return;
     }
 
@@ -921,9 +1658,18 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
     this.messageSending = true;
     this.chatError = '';
+    const replyId = this.replyingToSessionMessage?.id ?? null;
+    this.sessionComposer?.nativeElement.focus({ preventScroll: true });
+    const pending = {
+      text: body, replyToMessageId: replyId,
+      knownIds: new Set(this.messages.map(message => message.id)),
+      startedAt: Date.now()
+    };
 
-    this.sessionService.postMessage(this.sessionId, body)
-      .pipe(
+    const send = replyId
+      ? this.sessionService.postMessage(this.sessionId, body, replyId)
+      : this.sessionService.postMessage(this.sessionId, body);
+    send.pipe(
         timeout(10_000),
         finalize(() => this.messageSending = false)
       )
@@ -931,17 +1677,98 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         next: message => {
           this.appendMessageIfMissing(message);
           this.messageBody = '';
+          this.replyingToSessionMessage = null;
           this.showEmojiPicker = false;
+          this.chatDeliveryUncertain = false;
+          this.pendingChatDelivery = undefined;
+          this.scrollChatToBottomRequested = true;
         },
         error: error => {
-          this.chatError = this.errorFrom(error, t('feedback.chat.sendError'));
+          if (this.isUncertainChatSendError(error)) {
+            // Timeout / dropped response can occur after a committed POST.
+            // Keep the draft and do not automatically issue another POST.
+            this.pendingChatDelivery = pending;
+            this.chatDeliveryUncertain = true;
+            this.chatError = t('chat.sendUncertain');
+            this.verifyChatDelivery();
+          } else {
+            this.chatError = this.errorFrom(error, t('feedback.chat.sendError'));
+          }
         }
       });
   }
 
+  verifyChatDelivery(): void {
+    if (!this.chatDeliveryUncertain || this.chatDeliveryChecking
+        || !this.pendingChatDelivery || !this.sessionId || !this.canAccessChat()) return;
+    const existing = this.messages.find(message => this.matchesPendingChatDelivery(message));
+    if (existing) {
+      this.confirmChatDelivery();
+      return;
+    }
+    this.chatDeliveryChecking = true;
+    this.sessionService.messages(this.sessionId)
+      .pipe(timeout(10_000), finalize(() => this.chatDeliveryChecking = false))
+      .subscribe({
+        next: messages => {
+          const follow = this.isNearChatBottom();
+          this.messages = this.sortedMessages([
+            ...this.messages.filter(existing => !messages.some(incoming => incoming.id === existing.id)),
+            ...messages
+          ]);
+          if (follow) this.scrollChatToBottomRequested = true;
+          if (this.messages.some(message => this.matchesPendingChatDelivery(message))) {
+            this.confirmChatDelivery();
+          } else {
+            this.chatError = t('chat.sendUnconfirmed');
+          }
+        },
+        error: () => { this.chatError = t('chat.verifyUnavailable'); }
+      });
+  }
+
+  resumeChatAfterUncertainSend(): void {
+    if (this.chatDeliveryChecking) return;
+    this.pendingChatDelivery = undefined;
+    this.chatDeliveryUncertain = false;
+    this.chatError = t('chat.sendRetryWarning');
+  }
+
+  private confirmChatDelivery(): void {
+    this.pendingChatDelivery = undefined;
+    this.chatDeliveryUncertain = false;
+    this.messageBody = '';
+    this.replyingToSessionMessage = null;
+    this.chatError = '';
+    this.scrollChatToBottomRequested = true;
+  }
+
+  private matchesPendingChatDelivery(message: SessionMessage): boolean {
+    const pending = this.pendingChatDelivery;
+    if (!pending || pending.knownIds.has(message.id)
+        || !this.sessionId || message.sessionId !== this.sessionId
+        || !this.isOwnMessage(message) || message.body !== pending.text) return false;
+    const sentAt = Date.parse(message.createdAt);
+    return Number.isFinite(sentAt) && sentAt >= pending.startedAt - 60_000
+      && (message.replyToMessageId ?? null) === pending.replyToMessageId;
+  }
+
+  private isUncertainChatSendError(error: unknown): boolean {
+    if (error instanceof TimeoutError) return true;
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500;
+    }
+    return true;
+  }
+
+  onTypingInput(): void {
+    if (this.sessionId != null) this.typing.input('session', this.sessionId,
+      this.messageBody, this.canSendChat() && !this.messageSending && !this.chatDeliveryUncertain);
+  }
+
   onChatEnter(event: Event): void {
     const keyboardEvent = event as KeyboardEvent;
-    if (keyboardEvent.shiftKey) {
+    if (keyboardEvent.shiftKey || keyboardEvent.isComposing || keyboardEvent.keyCode === 229) {
       return;
     }
 
@@ -958,6 +1785,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.messageBody += emoji;
       this.showEmojiPicker = false;
     }
+  }
+
+  dayLabelAt(index: number): string {
+    const current = this.messages[index];
+    return current ? chatDaySeparator(current.createdAt,
+      index > 0 ? this.messages[index - 1].createdAt : null) : '';
+  }
+
+  continuesGroupAt(index: number): boolean {
+    if (index <= 0) return false;
+    const current = this.messages[index], before = this.messages[index - 1];
+    return chatContinuesGroup(current.senderUsername, current.createdAt,
+      before.senderUsername, before.createdAt);
   }
 
   messageDate(message: SessionMessage): string {
@@ -978,7 +1818,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
 
+    const follow = this.isNearChatBottom() || this.isOwnMessage(message);
     this.messages = this.sortedMessages([...this.messages, message]);
+    if (follow) {
+      this.newMessagesPending = 0;
+      this.scrollChatToBottomRequested = true;
+    } else {
+      this.newMessagesPending++;
+    }
   }
 
   private sortedMessages(messages: SessionMessage[]): SessionMessage[] {
@@ -990,7 +1837,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   canAccessChat(): boolean {
-    return Boolean(this.session?.joined);
+    return Boolean(this.session?.joined || this.isCreator());
   }
 
   canSendChat(): boolean {
@@ -1001,10 +1848,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       return false;
     }
 
-    // Mirror the backend chat window; history remains readable after closure.
+    // No session chat from kick-off onward.
     const kickoff = Date.parse(this.session.gameDate);
-    return Number.isFinite(kickoff)
-      && Date.now() < kickoff + (2 * 60 * 60 * 1000);
+    return Number.isFinite(kickoff) && Date.now() < kickoff;
   }
 
   isOwnMessage(message: SessionMessage): boolean {
@@ -1171,22 +2017,26 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.session
       && this.isCreator()
       && this.session.communityId
+      && this.session.teamBalanceSupported === true
       && this.isFull()
       && this.session.status !== 'CANCELLED'
       && this.session.status !== 'COMPLETED'
     );
   }
 
-  generateTeams(): void {
-    if (!this.sessionId || !this.canGenerateTeams() || this.teamsLoading) {
+  generateTeams(source: SessionTeamScoreSource = 'FORM'): void {
+    if (!this.sessionId || !this.canGenerateTeams() || this.teamsLoading || this.teamsConfirming) {
       return;
     }
 
     this.teamsLoading = true;
     this.teamsError = '';
     this.teamsSuccess = '';
+    this.teamsScoreSource = source;
+    this.teamSuggestion = undefined;
+    this.teamSuggestionPendingConfirmation = false;
 
-    this.sessionService.teamSuggestion(this.sessionId)
+    this.sessionService.teamSuggestion(this.sessionId, source)
       .pipe(
         timeout(10_000),
         finalize(() => this.teamsLoading = false)
@@ -1219,7 +2069,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.teamsError = '';
     this.teamsSuccess = '';
 
-    this.sessionService.confirmTeams(this.sessionId)
+    this.sessionService.confirmTeams(this.sessionId, this.teamsScoreSource)
       .pipe(
         timeout(10_000),
         finalize(() => this.teamsConfirming = false)
@@ -1230,6 +2080,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.teamSuggestionPendingConfirmation = false;
           this.teamsSuccess = t('feedback.session.teamsConfirmed');
           this.loadSessionParticipants();
+          if (this.isCreator()) this.loadGuestRequests();
         },
         error: error => {
           this.teamsError = this.errorFrom(error, t('feedback.session.teamsConfirmError'));
@@ -1241,8 +2092,207 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return code === 'A' ? this.teamAParticipants : this.teamBParticipants;
   }
 
+  private loadMemberConfirmedGuests(silent = false): void {
+    if (!this.sessionId || !this.session?.joined || this.isCreator()
+        || this.memberConfirmedGuestsLoading) return;
+    const id=this.sessionId;
+    this.memberConfirmedGuestsLoading=true;
+    if (!silent) this.memberConfirmedGuestsError='';
+    this.sessionService.confirmedGuests(id)
+      .pipe(timeout(10000),finalize(()=>this.memberConfirmedGuestsLoading=false))
+      .subscribe({
+        next: rows => {
+          if (this.session?.id !== id || !this.session.joined) return;
+          this.memberConfirmedGuestsError = '';
+          this.memberConfirmedGuests=Array.isArray(rows)
+            ? rows.filter(g=>Number.isSafeInteger(g?.id) && typeof g?.name==='string'
+                && (g.teamCode===null || g.teamCode==='A' || g.teamCode==='B'))
+            : [];
+        },
+        error: () => {
+          if (this.session?.id !== id || silent) return;
+          this.memberConfirmedGuests=[];
+          this.memberConfirmedGuestsError=t('sessionDetail.confirmedGuestsError');
+        }
+      });
+  }
+
+  /** Confirmed guests are real reserved places, even before they create accounts. */
+  confirmedGuestParticipants(): SessionGuestRequest[] {
+    if (this.isCreator()) return this.guestRequests.filter(g => g.status === 'APPROVED');
+    if (!this.session?.joined) return [];
+    return this.memberConfirmedGuests.map(guest=>({
+      id:guest.id,name:guest.name,teamCode:guest.teamCode,
+      status:'APPROVED' as const,note:''
+    }));
+  }
+
+  visiblePlayerCount(): number {
+    return this.sessionParticipants.length + this.confirmedGuestParticipants().length;
+  }
+
+  refreshVisiblePlayers(silent = false): void {
+    this.loadSessionParticipants(silent);
+    if (this.isCreator()) this.loadGuestRequests(silent);
+    else this.loadMemberConfirmedGuests(silent);
+    // The confirmed count in the detail header also includes external people.
+    this.loadSession(false);
+  }
+
+  guestTeamParticipants(code: 'A' | 'B'): SessionGuestRequest[] {
+    return this.confirmedGuestParticipants().filter(guest=>guest.teamCode===code);
+  }
+
   hasConfirmedTeams(): boolean {
-    return this.confirmedTeams;
+    return this.confirmedTeams
+      || this.guestTeamParticipants('A').length > 0
+      || this.guestTeamParticipants('B').length > 0;
+  }
+
+  canShareGuestInvites(): boolean {
+    return !!this.session && this.isCreator()
+      && (this.session.audience === 'PUBLIC' || this.session.audience === 'COMMUNITY_ONLY')
+      && !this.session.privateGame
+      && (this.session.status === 'OPEN' || this.session.status === 'FULL')
+      && Date.parse(this.session.gameDate) > Date.now();
+  }
+
+  openRegisteredInvitePicker(): void {
+    if (!this.canFindPlayers()) return;
+    if (!this.inviteFriendsOpen) this.toggleFriendInvites();
+    this.scrollToPlayerSearch();
+  }
+
+  createGuestLink(): void {
+    if (!this.sessionId || !this.canShareGuestInvites() || this.guestLinkWorking) return;
+    this.guestLinkWorking=true;
+    this.guestPanelError='';
+    this.guestPanelSuccess='';
+    this.sessionService.issueGuestLink(this.sessionId).pipe(
+      timeout(10000),finalize(()=>this.guestLinkWorking=false)
+    ).subscribe({
+      next:({token})=>{
+        this.guestLinkUrl=new URL('/sessions/'+this.sessionId+'?guest='+encodeURIComponent(token),
+          window.location.origin).href;
+        this.guestPanelSuccess=t('guestAdmin.newLink');
+        this.loadGuestRequests();
+      },
+      error:()=>{this.guestPanelError=t('guestAdmin.linkError');}
+    });
+  }
+
+  get guestLinkWhatsAppUrl(): string {
+    return this.guestLinkUrl
+      ? 'https://wa.me/?text='+encodeURIComponent(this.compactShareText()+'\n'+this.guestLinkUrl)
+      : '';
+  }
+
+  async copyGuestLink(): Promise<void> {
+    if (!this.guestLinkUrl) return;
+    try {
+      await navigator.clipboard.writeText(this.guestLinkUrl);
+      this.guestPanelSuccess=t('guestAdmin.copied');
+    } catch {
+      this.guestPanelError=t('guestAdmin.copyError');
+    }
+  }
+
+  loadGuestRequests(silent = false): void {
+    if (!this.sessionId || !this.isCreator() || this.guestRequestsRefreshing
+        || this.guestRequestBusyId !== null) return;
+    this.guestRequestsRefreshing = true;
+    if (!silent) {
+      this.guestRequestsLoading = true;
+      this.guestPanelError = '';
+    }
+    const id = this.sessionId;
+    this.sessionService.guestRequests(id).pipe(
+      timeout(10000),
+      finalize(() => {
+        this.guestRequestsRefreshing = false;
+        if (!silent) this.guestRequestsLoading = false;
+      })
+    ).subscribe({
+      next: rows => {
+        if (id === this.sessionId) {
+          this.guestRequests = rows;
+          if (this.guestCancellationPendingId !== null &&
+              !rows.some(g => g.id === this.guestCancellationPendingId && g.status === 'APPROVED')) {
+            this.guestCancellationPendingId = null;
+          }
+        }
+      },
+      error: () => {
+        if (silent || id !== this.sessionId) return; // Keep the last good list on transient errors.
+        this.guestRequestsLoadedForSession = null;
+        this.guestPanelError = t('guestAdmin.loadError');
+      }
+    });
+  }
+
+  canCancelGuestPresence(guest: SessionGuestRequest): boolean {
+    return guest.status === 'APPROVED' && this.canShareGuestInvites();
+  }
+
+  requestGuestCancellation(guest: SessionGuestRequest): void {
+    if (!this.canCancelGuestPresence(guest) || this.guestRequestBusyId !== null) return;
+    this.guestCancellationPendingId = guest.id;
+    this.guestRosterSuccess = '';
+    this.guestRosterError = '';
+  }
+
+  dismissGuestCancellation(): void {
+    if (this.guestRequestBusyId !== null) return;
+    this.guestCancellationPendingId = null;
+  }
+
+  confirmGuestCancellation(guest: SessionGuestRequest): void {
+    if (this.guestCancellationPendingId !== guest.id
+        || !this.canCancelGuestPresence(guest)) return;
+    this.cancelApprovedGuest(guest);
+  }
+
+  reviewGuest(request:SessionGuestRequest,approve:boolean): void {
+    if(!this.sessionId || !this.isCreator() || this.guestRequestBusyId!==null
+      || request.status!=='PENDING') return;
+    this.guestRequestBusyId=request.id;
+    this.guestPanelError='';
+    this.guestPanelSuccess='';
+    this.sessionService.reviewGuestRequest(this.sessionId,request.id,approve).pipe(
+      timeout(10000),finalize(()=>this.guestRequestBusyId=null)
+    ).subscribe({
+      next:updated=>{
+        this.guestRequests=this.guestRequests.map(g=>g.id===updated.id?updated:g);
+        this.guestPanelSuccess=t('guestAdmin.saved');
+        this.teamSuggestion=undefined;
+        this.teamSuggestionPendingConfirmation=false;
+        this.loadSession(false);
+      },
+      error:()=>{this.guestPanelError=t('guestAdmin.decisionError');}
+    });
+  }
+
+  cancelApprovedGuest(request:SessionGuestRequest): void {
+    if(!this.sessionId || !this.isCreator() || this.guestRequestBusyId!==null
+      || request.status!=='APPROVED' || !this.canShareGuestInvites()) return;
+    this.guestRequestBusyId=request.id;
+    this.guestPanelError='';
+    this.guestPanelSuccess='';
+    this.sessionService.cancelGuestRequest(this.sessionId,request.id).pipe(
+      timeout(10000),finalize(()=>this.guestRequestBusyId=null)
+    ).subscribe({
+      next:updated=>{
+        this.guestRequests=this.guestRequests.map(g=>g.id===updated.id?updated:g);
+        this.guestCancellationPendingId = null;
+        this.guestRosterError = '';
+        this.guestRosterSuccess = t('guestAdmin.cancelled');
+        this.teamSuggestion = undefined;
+        this.teamSuggestionPendingConfirmation = false;
+        this.loadSession(false);
+        this.loadGuestRequests(true);
+      },
+      error: () => { this.guestRosterError = t('guestAdmin.cancelError'); }
+    });
   }
 
   canPromoteSession(): boolean {
@@ -1254,14 +2304,22 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       && Date.parse(session.gameDate) > Date.now();
   }
 
+  /** Public sessions may be shared openly; restricted links work only for authorized users. */
+  canOpenOrganizerShare(): boolean {
+    return !!this.session && this.isCreator()
+      && (this.session.status === 'OPEN' || this.session.status === 'FULL')
+      && Date.parse(this.session.gameDate) > Date.now()
+      && this.session.id > 0;
+  }
+
   showCreationSharePanel(): boolean {
     return !this.creationShareDismissed
       && this.route.snapshot.queryParamMap?.get('created') === '1'
-      && this.canPromoteSession();
+      && this.canOpenOrganizerShare();
   }
 
   togglePromotionPanel(): void {
-    if (this.canPromoteSession()) {
+    if (this.canOpenOrganizerShare()) {
       this.promotionOpen = !this.promotionOpen;
     }
   }
@@ -1270,26 +2328,32 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.creationShareDismissed = true;
   }
 
+  private compactShareText(): string {
+    return compactSessionShareMessage({
+      sport: this.session?.sport,
+      city: this.session?.city,
+      gameDate: this.session?.gameDate,
+      remainingPlaces: this.session?.status === 'OPEN' && this.session.maxParticipants != null
+        && this.session.participantCount != null
+        ? Math.max(0, this.session.maxParticipants - this.session.participantCount) : null
+    }, document.documentElement.lang === 'en' ? 'en-GB' : 'pt-PT');
+  }
+
+  /** Never use the public /sessions route for member-only or password-protected games. */
+  organizerShareUrl(): string | null {
+    if (!this.session || !this.canOpenOrganizerShare()) return null;
+    if (this.canShareSession()) return this.publicShareUrl();
+    return new URL('/menu/events/' + this.session.id, window.location.origin).href;
+  }
+
   whatsappShareUrl(): string | null {
-    const url = this.publicShareUrl();
-    if (!url || !this.session || !this.canPromoteSession()) {
-      return null;
-    }
-    const invitation = t('publicSession.whatsappSportCity', {
-      sport: this.session.sport, city: this.session.city
-    });
-    const date = new Date(this.session.gameDate);
-    const when = Number.isFinite(date.getTime())
-      ? '\n' + t('publicSession.shareWhen', {
-          date: new Intl.DateTimeFormat(document.documentElement.lang === 'en' ? 'en-GB' : 'pt-PT', {
-            dateStyle: 'short', timeStyle: 'short'
-          }).format(date)
-        }) : '';
-    return 'https://wa.me/?text=' + encodeURIComponent(invitation + when + '\n' + url);
+    const url = this.organizerShareUrl();
+    if (!url) return null;
+    return 'https://wa.me/?text=' + encodeURIComponent(this.compactShareText() + '\n' + url);
   }
 
   async copyPublicShareLink(): Promise<void> {
-    const url = this.publicShareUrl();
+    const url = this.organizerShareUrl();
     if (!url || this.sharingSession) {
       return;
     }
@@ -1341,7 +2405,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         try {
           await navigator.share({
             title: 'Sessão de ' + this.session!.sport + ' na Jynlo',
-            text: 'Vem jogar connosco na Jynlo!',
+            text: this.compactShareText(),
             url
           });
           this.shareFeedback = 'Partilhado';
@@ -1383,14 +2447,45 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return Number.isFinite(startTime) && startTime > Date.now();
   }
 
+  registrationPending(): boolean {
+    if (!this.session || this.session.joined && !this.isCreator()) return false;
+    if (this.session.registrationOpeningMode === 'MANUAL') return true;
+    if (this.session.registrationOpeningMode === 'SCHEDULED') {
+      const when = Date.parse(this.session.registrationOpensAt ?? '');
+      return !Number.isFinite(when) || this.registrationClock < when;
+    }
+    return false;
+  }
+
+  openCallup(): void {
+    if (!this.sessionId || !this.session || !this.isCreator()
+        || this.session.registrationOpeningMode !== 'MANUAL' || this.actionLoading) return;
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+    this.sessionService.openRegistration(this.sessionId)
+      .pipe(timeout(10000), finalize(() => this.actionLoading = false))
+      .subscribe({
+        next: detail => {
+          this.session = detail;
+          this.actionSuccess = t('sessionDetail.callupOpened');
+          this.loadSession(false);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('sessionDetail.callupOpenError'));
+        }
+      });
+  }
+
   canJoinSession(): boolean {
-    if (!this.session || this.session.joined || this.session.waitlisted
+    if (this.joinOutcomeUnknown || !this.session || this.session.joined || this.session.waitlisted
       || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
       return false;
     }
 
     const startTime = Date.parse(this.session.gameDate);
-    return Number.isFinite(startTime) && startTime > Date.now();
+    return !this.registrationPending()
+      && Number.isFinite(startTime) && startTime > Date.now();
   }
 
   joinButtonLabel(): string {
@@ -1503,14 +2598,73 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return `Sessão de ${this.session?.sport ?? 'desporto'} no Desporto24.${creator}`;
   }
 
-  private calendarLocation(): string {
-    if (!this.session) {
-      return '';
-    }
+  /** The session endpoint supplies profile photos only to authorised attendees. */
+  rosterAvatar(url: string | null | undefined): string | null {
+    return playerAvatarUrl(url, environment.apiUrl);
+  }
 
-    return this.session.canSeeExactAddress && this.session.address
-      ? this.session.address
-      : this.session.city;
+  rosterInitials(name: string): string {
+    return playerAvatarInitials(name);
+  }
+
+  rosterAvatarFailed(event: Event): void {
+    (event.target as HTMLImageElement).remove();
+  }
+
+  /** GPS can identify a venue site without certifying its public entrance. */
+  hasVenueMapCoordinates(): boolean {
+    return !!this.session?.canSeeExactAddress
+      && venueHasPortugueseCoordinates(this.session.venue?.latitude,
+                                      this.session.venue?.longitude);
+  }
+
+  /** No route link for viewers without exact-location permission. Even when
+   * authorised, a venue GPS point is not a certified building entrance.
+   */
+  exactDirectionsUrl(mode: VenueTravelMode): string | null {
+    if (!this.hasVenueMapCoordinates()) return null;
+    return venueDirectionsUrl(this.session?.venue?.latitude, this.session?.venue?.longitude, mode);
+  }
+
+  /** Only share precise coordinates with people authorised by the session API.
+   * Many Jynlo venues have verified catalogue GPS but no postal address: a
+   * missing street must not disable their navigation link.
+   */
+  exactGoogleMapsUrl(): string | null {
+    if (!this.session?.canSeeExactAddress) return null;
+    const lat = this.session.venue?.latitude;
+    const lon = this.session.venue?.longitude;
+    const hasGps = this.hasVenueMapCoordinates();
+    const address = venueUsableAddress(this.session.address);
+    if (!hasGps && !address) return null;
+    const query = hasGps ? lat + ',' + lon : address + ', ' + this.session.city;
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+  }
+
+  /** Never present an OSM GPS-only location as a confirmed postal address. */
+  exactLocationLabel(): string {
+    const address = venueUsableAddress(this.session?.address);
+    return address && this.session?.venue?.locationStatus !== 'GPS_ONLY_ADDRESS_UNKNOWN'
+      ? address : t('sessionDetail.openMaps');
+  }
+
+  /** Calendar exports must obey the same server-controlled visibility rule
+   * as the map link. If the venue has GPS but no postal address, preserve the
+   * coordinates for authorised attendees instead of degrading to city only.
+   * Coordinates identify a catalogue point, NOT a certified venue entrance.
+   */
+  private calendarLocation(): string {
+    const session = this.session;
+    if (!session) return '';
+    if (!session.canSeeExactAddress) return session.city;
+
+    const address = venueUsableAddress(session.address);
+    if (address) return address;
+
+    const latitude = session.venue?.latitude;
+    const longitude = session.venue?.longitude;
+    return venueHasPortugueseCoordinates(latitude, longitude)
+      ? latitude + ',' + longitude : session.city;
   }
 
   private calendarStartUtc(): string {
@@ -1544,6 +2698,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.loading = true;
     }
     this.errorMessage = '';
+    this.detailRefreshWarning = '';
 
     this.sessionService.detail(this.sessionId)
       .pipe(
@@ -1558,10 +2713,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       .subscribe({
         next: session => {
           this.session = session;
-          if (this.canRatePostGame() && !this.ratingDismissed) {
-            this.loadMyOverallRating();
+          if (!this.sessionContext && !this.sessionContextLoading) this.loadSessionContext(session.id);
+          if (session.status === 'COMPLETED' && session.joined && !this.isCreator()) {
+            this.loadPostGameCommunities(session.id);
+          } else {
+            this.postGameCommunities = [];
           }
-
+          if (this.canShareGuestInvites()
+              && this.guestRequestsLoadedForSession !== session.id) {
+            this.guestRequestsLoadedForSession = session.id;
+            this.loadGuestRequests();
+          }
+          // Rating eligibility is determined after the participant roster loads,
+          // not from the joined flag alone.
           if (session.creatorUsername) {
             this.loadCreatorReliability(session.creatorUsername);
           }
@@ -1577,10 +2741,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           }
 
           if (session.joined || this.isCreator()) {
-            // The existing backend endpoint authorizes the creator independently
-            // of membership. Do not require the organiser to reserve a playing spot.
-            this.loadSessionParticipants();
+            // Creator has organizer guest controls; ordinary members get only a
+            // minimal approved-guest display roster from a separately guarded API.
+            this.loadSessionParticipants(!showPageLoader);
+            if (session.joined && !this.isCreator()) this.loadMemberConfirmedGuests(!showPageLoader);
           } else {
+            this.memberConfirmedGuests=[];
+            this.memberConfirmedGuestsError='';
             this.sessionParticipants = [];
             this.teamAParticipants = [];
             this.teamBParticipants = [];
@@ -1588,15 +2755,17 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
             this.sessionParticipantsError = '';
           }
 
-          if (session.joined) {
-            this.refreshMessages();
-          } else {
-            // Roster visibility does not confer chat access.
-            this.messages = [];
-            this.chatError = '';
-          }
+          // Never fetch a hidden chat on session details.
+          this.messages = [];
+          this.chatError = '';
         },
-        error: () => this.errorMessage = t('feedback.session.detailsError')
+        error: () => {
+          if (showPageLoader) {
+            this.errorMessage = t('feedback.session.detailsError');
+          } else {
+            this.detailRefreshWarning = t('feedback.session.detailsRefreshError');
+          }
+        }
       });
   }
 

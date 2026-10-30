@@ -72,7 +72,8 @@ describe('FriendsComponent', () => {
   it('keeps all friend-card actions on the same pill style and tracks expanded state', () => {
     const root: HTMLElement = fixture.nativeElement;
     const profile = root.querySelector('.friend-actions a[href*="/menu/perfis"]') as HTMLAnchorElement;
-    const chat = root.querySelector('.friend-actions a[href*="/menu/friendList/chat"]') as HTMLAnchorElement;
+    const chat = root.querySelector('.friend-actions a[href*="/menu/messages?kind=direct"]') as HTMLAnchorElement;
+    expect(chat.getAttribute('href')).toContain('id=ana');
     const more = root.querySelector('.friend-more__trigger') as HTMLButtonElement;
 
     expect(profile.classList.contains('jynlo-action')).toBeTrue();

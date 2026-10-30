@@ -1,22 +1,22 @@
-<section class="tournaments" aria-label="Torneios da comunidade">
+<section class="tournaments" [attr.aria-label]="'communities.tournaments.overview.sectionLabel' | t">
   <div class="tournament-hero">
     <div>
-      <p class="tournament-eyebrow">Competição entre membros</p>
-      <h3>Competições da comunidade</h3>
-      <p>Organizem desafios individuais ou torneios por equipas. Os jogos semanais e as estatísticas habituais continuam independentes das competições.</p>
-      @if (selected && !isTeamCompetition) {
+      <p class="tournament-eyebrow">{{ 'communities.tournaments.overview.eyebrow' | t }}</p>
+      <h3>{{ 'communities.tournaments.overview.title' | t }}</h3>
+      <p>{{ 'communities.tournaments.overview.description' | t }}</p>
+      @if (selected && !isTeamCompetition && !isInlineSpeedCompetition) {
         <p class="t-sport-note" role="note">{{ scoring.note }}</p>
       }
     </div>
     <div class="competition-hero-actions">
       @if (canManage && !showGuide && !showIndividualCreate && !showTeamCreate) {
-        <button type="button" class="t-btn t-btn-primary" (click)="showGuide = true">Criar competição</button>
+        <button type="button" class="t-btn t-btn-primary" (click)="showGuide = true">{{ 'communities.tournaments.overview.create' | t }}</button>
       }
       @if (!showGuide) {
-        <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = true">Como funciona?</button>
+        <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = true">{{ 'communities.tournaments.overview.how' | t }}</button>
       }
       @if (selected) {
-        <span class="tournament-type">{{ selected.sport || 'Modalidade por definir' }} · {{ isTeamCompetition ? 'Por equipas' : 'Liga individual' }}</span>
+        <span class="tournament-type">{{ selected.sport || ('communities.tournaments.overview.sportUndefined' | t) }} · {{ (isTeamCompetition ? 'communities.tournaments.overview.teamFormat' : 'communities.tournaments.overview.individualFormat') | t }}</span>
       }
     </div>
   </div>
@@ -30,151 +30,195 @@
 
 
   @if (showGuide) {
-    <section class="competition-guide" aria-label="Como funcionam as competições">
-      <div class="guide-intro">
-        <span class="tournament-eyebrow">Antes de começar</span>
-        <h4>Como querem competir?</h4>
-        <p>Não há um tamanho mínimo obrigatório para organizar uma competição. Escolham o formato que combina convosco.</p>
-      </div>
-      <div class="guide-options">
-        <article class="guide-option">
-          <div class="guide-option-top">
-            <span aria-hidden="true">👤</span><strong>Individual</strong>
-            <span class="guide-tag">Disponível</span>
-          </div>
-          <p>Cada participante compete por si numa liga de todos contra todos. Indicada para pequenos desafios e modalidades individuais.</p>
-          <p class="guide-example">Ex.: 6 amigos numa liga de ténis.</p>
-          @if (canManage && community.individualTournamentsEnabled !== false) {
-            <button type="button" class="t-btn t-btn-primary"
-              (click)="startIndividualCreation()">Criar liga individual</button>
-          } @else if (canManage) {
-            <p class="guide-coming">Para permitir ligas individuais, ativa esta funcionalidade no início da comunidade.</p>
-          }
-        </article>
-        <article class="guide-option">
-          <div class="guide-option-top">
-            <span aria-hidden="true">👥</span><strong>Por equipas</strong>
-            <span class="guide-tag">Ligas e taças disponíveis</span>
-          </div>
-          <p>Escolham a modalidade e os jogadores por equipa. Criem equipas reais com os membros da comunidade.</p>
-          <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
-          <p>Podem organizar ligas de todos contra todos ou taças por eliminatórias, com plantéis e resultados registados. As fases de grupos ainda não estão disponíveis.</p>
-          @if (canManage && community.teamTournamentsEnabled !== false) {
-            <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
-          } @else if (canManage) {
-            <p class="guide-coming">Ativa primeiro os torneios por equipas nas funcionalidades da comunidade.</p>
-          }
-        </article>
-      </div>
-      <div class="guide-community-note" role="note">
-        <strong>Jogam sempre com a mesma malta?</strong>
-        <p>Usem Classificação e Estatísticas para guardar jornadas semanais, épocas e histórico importado de Excel, CSV ou TSV. Não é preciso criar um torneio. E mesmo com 10 ou 11 pessoas, podem criar uma competição quando quiserem.</p>
-      </div>
-      <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = false">Fechar explicação</button>
-    </section>
+    <app-competition-guide
+      [canManage]="canManage"
+      [individualEnabled]="community.individualTournamentsEnabled !== false"
+      [teamEnabled]="community.teamTournamentsEnabled !== false"
+      (individualSelected)="startIndividualCreation()"
+      (teamSelected)="startTeamCreation()"
+      (closeRequested)="showGuide = false"
+    ></app-competition-guide>
   }
 
   @if (canManage && (showIndividualCreate || showTeamCreate)) {
-    <div class="create-tournament">
-      <div>
-        <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
-        @if (showTeamCreate) {
-          <p>Escolhe uma liga todos contra todos ou uma taça por eliminatórias.
-            Depois define a modalidade e os plantéis.</p>
-        } @else {
-          <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
-        }
-        <button type="button" class="t-btn t-btn-secondary"
-          (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">Voltar às opções</button>
+    <section class="create-tournament" [attr.aria-label]="'communities.tournaments.createUi.region' | t">
+      <div class="create-tournament-heading">
+        <div class="create-tournament-intro">
+          <p class="tournament-eyebrow">{{ 'communities.tournaments.createUi.new' | t }}</p>
+          <h4>{{ (showTeamCreate ? 'communities.tournaments.createUi.teamTitle' : (isInlineSpeedDraft ? 'communities.inlineSpeed.createTitle' : 'communities.tournaments.createUi.individualTitle')) | t }}</h4>
+          @if (showTeamCreate) {
+            <p>{{ 'communities.tournaments.createUi.teamIntro' | t }}</p>
+          } @else {
+            <p>{{ (isInlineSpeedDraft ? 'communities.inlineSpeed.createIntro' : 'communities.tournaments.createUi.individualIntro') | t }}</p>
+          }
+        </div>
+        <span class="create-kind-pill">{{ (showTeamCreate ? 'communities.tournaments.createUi.formatPill' : 'communities.tournaments.createUi.individualPill') | t }}</span>
       </div>
+
       <div class="create-controls">
-        <label for="new-tournament-name">Nome do torneio</label>
+        <section class="create-step create-step-identity" [attr.aria-label]="'communities.tournaments.createUi.identityRegion' | t">
+          <div class="create-step-heading">
+            <span class="create-step-index" aria-hidden="true">01</span>
+            <div>
+              <h5>{{ 'communities.tournaments.createUi.identityTitle' | t }}</h5>
+              <p>{{ 'communities.tournaments.createUi.identityHint' | t }}</p>
+            </div>
+          </div>
+          <div class="create-top-fields">
+            <div class="create-field">
+        <label for="new-tournament-name">{{ 'communities.tournaments.createUi.nameLabel' | t }}</label>
         <input id="new-tournament-name" [(ngModel)]="nameDraft" maxlength="120"
           [attr.aria-invalid]="nameTooShort ? 'true' : null"
           [attr.aria-describedby]="nameTooShort ? 'tournament-name-hint' : null"
-          placeholder="Ex.: Liga de Outono" autocomplete="off">
+          [placeholder]="'communities.tournaments.createUi.sportNamePlaceholder' | t" autocomplete="off">
         @if (nameTooShort) {
           <p id="tournament-name-hint" class="field-validation" role="status">
-            O nome deve ter pelo menos 2 caracteres.
+            {{ 'communities.tournaments.createUi.nameError' | t }}
           </p>
         }
-        <label for="new-tournament-sport-search">Modalidade do torneio</label>
-        <p class="sport-choice-hint">Escolhe a modalidade desta competição. Podes usar uma diferente das modalidades da comunidade.</p>
+            </div>
+            <div class="create-field">
+        <span class="sport-field-label" id="tournament-sport-label">{{ 'communities.tournaments.createUi.sportLabel' | t }}</span>
+        <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.sportHint' | t }}</p>
         @if (sportDraft) {
-          <div class="chosen-sport" role="status">
-            <span>{{ sportDraft }}</span>
+          <div class="chosen-sport" role="group" aria-labelledby="tournament-sport-label">
+            <span class="chosen-sport-value">
+              <strong>{{ sportDraft }}</strong>
+              <small>{{ 'communities.tournaments.createUi.selectedSport' | t }}</small>
+            </span>
             <button type="button" class="t-btn t-btn-secondary t-btn-small"
-              [disabled]="busy" (click)="sportDraft = ''">Alterar</button>
+              [disabled]="busy" [attr.aria-expanded]="editingSport"
+              [attr.aria-controls]="editingSport ? 'tournament-sport-options' : null"
+              (click)="toggleSportEditor()">{{ (editingSport ? 'communities.tournaments.createUi.sportToggleCancel' : 'communities.tournaments.createUi.sportToggleChange') | t }}</button>
           </div>
         }
-        @if (communitySportOptions.length) {
-          <div class="t-community-sports" role="group" aria-label="Modalidades da comunidade">
+        @if (!sportDraft || editingSport) {
+          <div id="tournament-sport-options" class="sport-options">
+        @if (showCommunitySportShortcuts) {
+          <div class="t-community-sports" role="group" [attr.aria-label]="'communities.tournaments.createUi.communitySports' | t">
             @for (item of communitySportOptions.slice(0, 6); track item) {
               <button type="button" class="t-sport-chip" [disabled]="busy"
                 [attr.aria-pressed]="sportDraft === item"
                 (click)="chooseSport(item)">{{ item }}</button>
             }
             @if (communitySportOptions.length > 6) {
-              <span class="t-sport-muted">+{{ communitySportOptions.length - 6 }} modalidades pesquisáveis</span>
+              <span class="t-sport-muted">{{ 'communities.tournaments.createUi.moreSports' | t:{count: communitySportOptions.length - 6} }}</span>
             }
           </div>
         }
         <input id="new-tournament-sport-search" type="search" [(ngModel)]="sportSearch"
           [disabled]="busy" maxlength="100" autocomplete="off"
-          placeholder="Pesquisar outra modalidade"
+          [placeholder]="'communities.tournaments.createUi.sportSearchPlaceholder' | t"
+          aria-labelledby="tournament-sport-label"
           aria-describedby="tournament-sport-hint">
-        <p id="tournament-sport-hint" class="sport-choice-hint">Pesquisa e seleciona uma modalidade no catálogo.</p>
+        <p id="tournament-sport-hint" class="sport-choice-hint">{{ 'communities.tournaments.createUi.searchHint' | t }}</p>
         @if (suggestedSports.length) {
-          <div class="t-sport-suggestions" role="group" aria-label="Sugestões de modalidades">
+          <div class="t-sport-suggestions" role="group" [attr.aria-label]="'communities.tournaments.createUi.suggestions' | t">
             @for (item of suggestedSports; track item) {
               <button type="button" class="t-sport-chip" [disabled]="busy"
                 (click)="chooseSport(item)">{{ item }}</button>
             }
           </div>
         } @else if (sportSearch.trim()) {
-          <p class="sport-choice-hint">Não foram encontradas modalidades. Tenta outra pesquisa.</p>
+          <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.sportsEmpty' | t }}</p>
         }
-        @if (showTeamCreate) {
-          <fieldset class="t-points-rules">
-            <legend>Formato do torneio</legend>
-            <div class="t-community-sports" role="group" aria-label="Formato do torneio">
-              <button type="button" class="t-sport-chip" [disabled]="busy"
-                [attr.aria-pressed]="teamFormatDraft === 'LEAGUE'"
-                (click)="teamFormatDraft = 'LEAGUE'">Campeonato todos contra todos</button>
-              <button type="button" class="t-sport-chip" [disabled]="busy"
-                [attr.aria-pressed]="teamFormatDraft === 'KNOCKOUT'"
-                (click)="teamFormatDraft = 'KNOCKOUT'">Eliminatórias (taça)</button>
+          </div>
+        }
             </div>
+          </div>
+          @if (creationSportNoticeKey; as noticeKey) {
+            <p class="create-sport-notice" role="note">{{ noticeKey | t }}</p>
+          }
+        </section>
+
+        @if (showTeamCreate) {
+          <section class="create-step create-step-format" [attr.aria-label]="'communities.tournaments.createUi.formatRegion' | t">
+            <div class="create-step-heading">
+              <span class="create-step-index" aria-hidden="true">02</span>
+              <div>
+                <h5>{{ 'communities.tournaments.createUi.formatTitle' | t }}</h5>
+                <p>{{ 'communities.tournaments.createUi.formatHint' | t }}</p>
+              </div>
+            </div>
+          <fieldset class="t-points-rules">
+            <legend>{{ 'communities.tournaments.createUi.formatLegend' | t }}</legend>
+            <app-competition-format-chooser
+              [selectedFormat]="teamFormatDraft"
+              [disabled]="busy"
+              (formatSelected)="teamFormatDraft = $event"
+            ></app-competition-format-chooser>
+            @if (teamFormatDraft === 'GROUP_KNOCKOUT') {
+              <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.groupsHint' | t }}</p>
+              <label id="group-count-label">{{ 'communities.tournaments.createUi.groupCount' | t }}</label>
+              <div class="t-community-sports" role="group" aria-labelledby="group-count-label">
+                <button type="button" class="t-sport-chip" [disabled]="busy"
+                  [attr.aria-pressed]="teamGroupCountDraft === 2"
+                  (click)="teamGroupCountDraft = 2">{{ 'communities.tournaments.createUi.twoGroups' | t }}</button>
+                <button type="button" class="t-sport-chip" [disabled]="busy"
+                  [attr.aria-pressed]="teamGroupCountDraft === 4"
+                  (click)="teamGroupCountDraft = 4">{{ 'communities.tournaments.createUi.fourGroups' | t }}</button>
+              </div>
+            }
             @if (teamFormatDraft === 'KNOCKOUT') {
-              <p class="sport-choice-hint">Sorteio de 2 a 32 equipas. Há entradas diretas na primeira ronda quando necessário.
-                Cada jogo tem de ter vencedor. Os vencedores avançam até à final.</p>
+              <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.knockoutHint' | t }}</p>
             }
           </fieldset>
-          <label for="new-team-size">Jogadores por equipa</label>
-          <input id="new-team-size" type="number" min="1" max="30" step="1"
-            [(ngModel)]="teamSizeDraft" [disabled]="busy" aria-describedby="team-size-hint">
-          <p id="team-size-hint" class="sport-choice-hint">De 1 a 30 jogadores por equipa. Podes criar até 32 equipas.</p>
           @if (teamFormatDraft === 'LEAGUE') {
-          <label id="tournament-legs-label">Número de voltas</label>
+          <label id="tournament-legs-label">{{ 'communities.tournaments.createUi.legsLabel' | t }}</label>
           <div class="t-community-sports" role="group" aria-labelledby="tournament-legs-label">
             <button type="button" class="t-sport-chip" [disabled]="busy"
               [attr.aria-pressed]="roundRobinLegsDraft === 1"
-              (click)="roundRobinLegsDraft = 1">Uma volta</button>
+              (click)="roundRobinLegsDraft = 1">{{ 'communities.tournaments.createUi.oneLeg' | t }}</button>
             <button type="button" class="t-sport-chip" [disabled]="busy"
               [attr.aria-pressed]="roundRobinLegsDraft === 2"
-              (click)="roundRobinLegsDraft = 2">Duas voltas (casa e fora)</button>
+              (click)="roundRobinLegsDraft = 2">{{ 'communities.tournaments.createUi.twoLegs' | t }}</button>
           </div>
-          <p class="sport-choice-hint">Uma volta: cada par de equipas joga uma vez.
-            Duas voltas: joga-se também o confronto inverso, com casa e fora trocados.
-            A escolha fica definida ao criar o torneio e não muda depois de publicares as jornadas.</p>
+          <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.legsHint' | t }}</p>
           }
+          </section>
         }
-        @if (showTeamCreate && teamFormatDraft === 'LEAGUE') {
+
+        @if (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT') {
+          <section class="create-step create-step-rules" [attr.aria-label]="'communities.tournaments.createUi.rulesRegion' | t">
+            <div class="create-step-heading">
+              <span class="create-step-index" aria-hidden="true">{{ showTeamCreate ? '03' : '02' }}</span>
+              <div>
+                <h5>{{ (isInlineSpeedDraft ? 'communities.inlineSpeed.createRulesTitle' : 'communities.tournaments.classificationTitle') | t }}</h5>
+                <p>{{ (isInlineSpeedDraft ? 'communities.inlineSpeed.createRulesHint' : 'communities.tournaments.classificationText') | t }}</p>
+              </div>
+            </div>
+            <app-tournament-classification-note kind="profile"
+              [heading]="isInlineSpeedDraft ? ('communities.inlineSpeed.createFormat' | t) : classificationProfile.heading"
+              [description]="sportFormatWarning"
+              [fields]="isInlineSpeedDraft ? ('communities.inlineSpeed.createFields' | t) : classificationProfile.fields"
+              [unsupported]="!isSportFormatSupported"
+            ></app-tournament-classification-note>
+            @if (isInlineSpeedDraft) {
+              <app-tournament-classification-note kind="inline"></app-tournament-classification-note>
+            } @else if (isRaceChampionshipDraft) {
+              <app-tournament-classification-note kind="race" [raceSport]="raceSportLabel(sportDraft)"></app-tournament-classification-note>
+            } @else {
+            <details class="create-advanced-rules">
+              <summary>
+                <span>
+                  <strong>{{ 'communities.tournaments.adjustRules' | t }}</strong>
+                  @if (classificationProfile.scoringMode === 'CHESS_HALF_POINTS') {
+                    <small>{{ 'communities.tournaments.createUi.chessSummary' | t }}</small>
+                  } @else {
+                    <small>{{ 'communities.tournaments.currentPoints' | t:{ win: winPointsDraft, draw: drawPointsDraft, loss: lossPointsDraft } }}</small>
+                  }
+                  @if (!validPointRules) {
+                    <small class="field-validation">{{ 'communities.tournaments.invalidPointsHint' | t }}</small>
+                  }
+                </span>
+              </summary>
+              <div class="create-advanced-fields">
+
+        @if (isSportFormatSupported && showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
           <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
-            <legend>Critério de desempate</legend>
+            <legend>{{ 'communities.tournaments.createUi.tiebreakTitle' | t }}</legend>
             <p id="t-tiebreak-help" class="sport-choice-hint">
-              Em igualdade de pontos, escolhe o primeiro critério usado na classificação.
-              Os restantes critérios também se aplicam. A regra é definida na criação.
+              {{ 'communities.tournaments.createUi.tiebreakHint' | t }}
             </p>
             <div class="t-tiebreak-choices">
               @for (choice of teamTieBreakChoices; track choice.value) {
@@ -189,57 +233,84 @@
             </div>
           </fieldset>
         }
-        @if (!showTeamCreate || teamFormatDraft === 'LEAGUE') {
+        @if (isSportFormatSupported && (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT')) {
+          @if (classificationProfile.scoringMode === 'CHESS_HALF_POINTS') {
+            <app-tournament-classification-note kind="chess"></app-tournament-classification-note>
+          } @else {
         <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
-          <legend>Regras de pontuação</legend>
+          <legend>{{ 'communities.tournaments.createUi.pointsLegend' | t }}</legend>
           <p id="t-points-rules-help" class="sport-choice-hint">
-            Define os pontos atribuídos na classificação por cada resultado. Valor inicial: 3 / 1 / 0.
-            Estas regras ficam associadas ao torneio.
+            {{ 'communities.tournaments.createUi.pointsHint' | t }}
           </p>
           <div class="t-points-fields">
             <label for="tournament-win-points">
-              Vitória
+              {{ 'communities.tournaments.createUi.win' | t }}
               <input id="tournament-win-points" type="number" min="0" max="100" step="1"
                 [(ngModel)]="winPointsDraft" [disabled]="busy"
                 [attr.aria-invalid]="!validPointRules ? 'true' : null">
             </label>
             <label for="tournament-draw-points">
-              Empate
+              {{ 'communities.tournaments.createUi.draw' | t }}
               <input id="tournament-draw-points" type="number" min="0" max="100" step="1"
                 [(ngModel)]="drawPointsDraft" [disabled]="busy"
                 [attr.aria-invalid]="!validPointRules ? 'true' : null">
             </label>
             <label for="tournament-loss-points">
-              Derrota
+              {{ 'communities.tournaments.createUi.loss' | t }}
               <input id="tournament-loss-points" type="number" min="0" max="100" step="1"
                 [(ngModel)]="lossPointsDraft" [disabled]="busy"
                 [attr.aria-invalid]="!validPointRules ? 'true' : null">
             </label>
           </div>
           @if (!validPointRules) {
-            <p class="field-validation" role="status">Introduz valores inteiros entre 0 e 100.</p>
+            <p class="field-validation" role="status">{{ 'communities.tournaments.createUi.pointsError' | t }}</p>
           }
         </fieldset>
+          }
         }
+              </div>
+            </details>
+            }
+          </section>
+        }
+
+        @if (!isSportFormatSupported && showTeamCreate && teamFormatDraft === 'KNOCKOUT') {
+          <div class="classification-profile classification-notice" role="status">
+            <strong>{{ classificationProfile.heading }}</strong>
+            <p>{{ sportFormatWarning }}</p>
+            <small>{{ classificationProfile.fields }}</small>
+            <p>{{ 'communities.tournaments.createUi.unsupportedShort' | t }}</p>
+          </div>
+        }
+
+        <div class="create-actions">
+          <button type="button" class="t-btn t-btn-secondary"
+            (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">{{ 'communities.tournaments.createUi.back' | t }}</button>
         <button type="button" class="t-btn t-btn-primary"
-          [disabled]="busy || (teamFormatDraft === 'LEAGUE' && !validPointRules)
+          [disabled]="busy || !isSportFormatSupported
+            || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules && !isInlineSpeedDraft)
             || nameDraft.trim().length < 2 || !sportDraft
-            || (showTeamCreate && (!teamSizeDraft || teamSizeDraft < 1 || teamSizeDraft > 30))"
+"
           (click)="showTeamCreate ? createTeamCompetition() : create()">
-          {{ showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual' }}
+          {{ !isSportFormatSupported ? ('communities.tournaments.createUi.createButtonUnavailable' | t)
+              : (showTeamCreate ? ('communities.tournaments.createUi.createButtonTeams' | t)
+                  : (isInlineSpeedDraft ? ('communities.inlineSpeed.createButton' | t)
+                    : (isRaceChampionshipDraft ? ('communities.karting.createButton' | t)
+                    : ('communities.tournaments.createUi.createButtonIndividual' | t)))) }}
         </button>
+        </div>
       </div>
-    </div>
+    </section>
   }
 
   <div class="tournament-browser">
-    <aside class="tournament-sidebar" aria-label="Lista de torneios">
+    <aside class="tournament-sidebar" [attr.aria-label]="'communities.tournaments.detailUi.listLabel' | t">
       <div class="sidebar-title">
-        <h4>Competições existentes</h4>
+        <h4>{{ 'communities.tournaments.detailUi.existingTitle' | t }}</h4>
         <span>{{ tournaments.length }}</span>
       </div>
       @if (!loading && !tournaments.length && !error) {
-        <p class="t-muted">Esta comunidade ainda não tem competições. @if (!canManage) {O organizador poderá criá-los aqui.}</p>
+        <p class="t-muted">{{ 'communities.tournaments.detailUi.empty' | t }} @if (!canManage) { {{ 'communities.tournaments.detailUi.emptyMemberHint' | t }} }</p>
       }
       @for (tournament of tournaments; track tournament.id) {
         <button type="button" class="tournament-option"
@@ -247,79 +318,312 @@
           [attr.aria-pressed]="selected?.id === tournament.id"
           (click)="selectTournament(tournament)">
           <strong>{{ tournament.name }}</strong>
-          <small>{{ tournament.sport || 'Sem modalidade definida' }} ·
-              {{ tournament.entryType === 'TEAM' ? 'Por equipas' : 'Individual' }} ·
-              {{ tournament.entryType === 'TEAM' && tournament.status === 'DRAFT'
-                  ? 'Em preparação' : formatStatus(tournament.status) }}</small>
+          @if (tournament.historicalArchiveId) {
+            <small class="historical-tournament-badge">{{ 'communities.matches.tournamentHistoricalBadge' | t }}</small>
+          }
+          <small>{{ tournament.sport || ('communities.tournaments.overview.sportUndefined' | t) }} ·
+              {{ (tournament.entryType === 'TEAM' ? 'communities.tournaments.overview.teamFormat' : 'communities.tournaments.overview.individualTitle') | t }} ·
+              {{ isInlineSpeedTournament(tournament) ? speedTournamentStatus(tournament.status)
+                  : (tournament.entryType === 'TEAM' && tournament.status === 'DRAFT'
+                    ? ('communities.tournaments.detailUi.preparing' | t) : formatStatus(tournament.status)) }}</small>
         </button>
       }
-      @if (loading) { <p class="t-muted" role="status">A carregar torneios…</p> }
+      @if (hasKartingCompetitions) {
+        <app-karting-palmares [tournaments]="kartingPalmares" [selectedId]="selected?.id ?? null"
+          [hasMore]="tournamentsHasMore" (tournamentSelected)="selectTournament($event)"></app-karting-palmares>
+      }
+      @if (loading) { <p class="t-muted" role="status">{{ 'communities.tournaments.detailUi.loading' | t }}</p> }
       @if (tournamentsHasMore) {
         <button class="t-btn t-btn-secondary t-btn-wide" type="button"
-          [disabled]="loading" (click)="loadTournaments()">Ver mais torneios</button>
+          [disabled]="loading" (click)="loadTournaments()">{{ 'communities.tournaments.detailUi.showMore' | t }}</button>
       }
       @if (!tournaments.length && error) {
         <button class="t-btn t-btn-secondary" type="button" [disabled]="loading"
-          (click)="loadTournaments(true)">Tentar novamente</button>
+          (click)="loadTournaments(true)">{{ 'communities.tournaments.detailUi.retry' | t }}</button>
       }
     </aside>
 
     <div class="tournament-detail">
       @if (!selected) {
-        <div class="empty-tournament">Seleciona uma competição para veres participantes, confrontos e classificação.</div>
+        <div class="empty-tournament">{{ 'communities.tournaments.detailUi.selectCompetition' | t }}</div>
       } @else {
         <header class="tournament-heading">
           <div>
             <span class="tournament-state" [class.is-finished]="selected.status === 'COMPLETED'">
-              {{ isTeamCompetition && selected.status === 'DRAFT' ? 'Em preparação' : formatStatus(selected.status) }}
+              {{ isInlineSpeedCompetition ? speedTournamentStatus(selected.status)
+                : (isTeamCompetition && selected.status === 'DRAFT'
+                  ? ('communities.tournaments.detailUi.preparing' | t) : formatStatus(selected.status)) }}
             </span>
             <h4>{{ selected.name }}</h4>
-            <span class="t-tournament-sport">{{ selected.sport || 'Modalidade não definida' }}</span>
+            <span class="t-tournament-sport">{{ selected.sport || ('communities.tournaments.overview.sportUndefined' | t) }}</span>
             @if (isTeamCompetition) {
-              @if (selected.format === 'KNOCKOUT') {
-                <p>Eliminatórias · {{ selected.playersPerTeam }} jogadores por equipa · Eliminação simples</p>
+              @if (selected.format === 'GROUP_KNOCKOUT') {
+                <p>{{ 'communities.tournaments.detailUi.groupsKnockout' | t }} · {{ 'communities.tournaments.detailUi.groupsCount' | t:{count:selected.groupCount ?? 0} }} ·
+                  @if (selected.playersPerTeam != null) {
+                    {{ 'communities.tournaments.detailUi.teamSize' | t:{count:selected.playersPerTeam} }}
+                  } @else {
+                    {{ 'communities.tournaments.detailUi.flexibleRosters' | t }}
+                  }</p>
+                <p>{{ 'communities.tournaments.detailUi.groupQualification' | t }}</p>
+              } @else if (selected.format === 'KNOCKOUT') {
+                <p>{{ 'communities.tournaments.detailUi.knockout' | t }} · {{ (selected.playersPerTeam != null ? 'communities.tournaments.detailUi.teamSize' : 'communities.tournaments.detailUi.flexibleRosters') | t:{count:selected.playersPerTeam ?? 0} }} · {{ 'communities.tournaments.detailUi.singleElimination' | t }}</p>
               } @else {
-                <p>Campeonato por equipas · {{ selected.playersPerTeam }} jogadores por equipa ·
-                  {{ (selected.roundRobinLegs ?? 1) === 2 ? 'Duas voltas (casa e fora)' : 'Uma volta' }}</p>
-                <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
-                <p>Desempate prioritário: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }}</p>
+                <p>{{ 'communities.tournaments.detailUi.teamLeague' | t }} · {{ (selected.playersPerTeam != null ? 'communities.tournaments.detailUi.teamSize' : 'communities.tournaments.detailUi.flexibleRosters') | t:{count:selected.playersPerTeam ?? 0} }} ·
+                  {{ ((selected.roundRobinLegs ?? 1) === 2 ? 'communities.tournaments.detailUi.twoLegs' : 'communities.tournaments.detailUi.oneLeg') | t }}</p>
+                <p>{{ 'communities.tournaments.detailUi.pointsSummary' | t:{win:selected.winPoints,draw:selected.drawPoints,loss:selected.lossPoints} }}</p>
+                <p>{{ 'communities.tournaments.detailUi.tiePriority' | t:{criterion:teamTieBreakLabel(selected.teamTieBreakPriority)} }}</p>
               }
             } @else {
-              <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
+              @if (isInlineSpeedCompetition) {
+                <p>{{ 'communities.inlineSpeed.detailSummary' | t }}</p>
+              } @else if (isRaceCompetition) {
+                <p>{{ raceSportLabel(selected.sport) }} · {{ 'communities.karting.title' | t }}</p>
+              } @else if (isChessTournament) {
+                <p>{{ 'communities.tournaments.detailUi.chessPoints' | t }}</p>
+              } @else {
+                <p>{{ 'communities.tournaments.detailUi.pointsSummary' | t:{win:selected.winPoints,draw:selected.drawPoints,loss:selected.lossPoints} }}</p>
+              }
             }
           </div>
           <div class="tournament-heading-actions">
             @if (isMember) {
               <button type="button" class="t-btn t-btn-secondary" (click)="loadDetails()"
-                [disabled]="detailsLoading || busy">Atualizar</button>
+                [disabled]="detailsLoading || busy">{{ 'communities.tournaments.detailUi.refresh' | t }}</button>
             }
             @if (canManage && selected.status !== 'COMPLETED') {
               @if (confirmAction === 'delete') {
-                <div class="competition-delete-confirm" role="group" aria-label="Confirmar eliminação">
-                  <p>Eliminar “{{ selected.name }}”? As inscrições e confrontos sem resultados serão apagados. As estatísticas gerais da comunidade não serão afetadas.</p>
+                <div class="competition-delete-confirm" role="group" [attr.aria-label]="'communities.tournaments.detailUi.deleteLabel' | t">
+                  <p>{{ 'communities.tournaments.detailUi.deleteWarning' | t:{name:selected.name} }}</p>
                   <button type="button" class="t-btn t-btn-danger"
-                    [disabled]="busy" (click)="deleteSelected()">Sim, eliminar competição</button>
+                    [disabled]="busy" (click)="deleteSelected()">{{ 'communities.tournaments.detailUi.deleteConfirm' | t }}</button>
                   <button type="button" class="t-btn t-btn-secondary"
-                    [disabled]="busy" (click)="confirmAction = null">Cancelar</button>
+                    [disabled]="busy" (click)="confirmAction = null">{{ 'communities.tournaments.finalUi.cancel' | t }}</button>
                 </div>
               } @else {
                 <button type="button" class="t-btn t-btn-danger-outline"
-                  [disabled]="busy" (click)="confirmAction = 'delete'">Eliminar competição</button>
+                  [disabled]="busy" (click)="confirmAction = 'delete'">{{ 'communities.tournaments.detailUi.deleteAction' | t }}</button>
               }
             }
           </div>
         </header>
 
-        @if (!isTeamCompetition && selected.status === 'COMPLETED') {
+        @if (selected.historicalArchiveId) {
+          <section class="t-section historical-tournament-details"
+              [attr.aria-label]="'communities.matches.tournamentHistoricalBadge' | t">
+            <div class="t-section-heading">
+              <div>
+                <h5>{{ 'communities.matches.tournamentHistoricalBadge' | t }}</h5>
+                <p>{{ 'communities.matches.tournamentReadOnlyNote' | t }}</p>
+              </div>
+              <span class="tournament-state">{{ selected.format === 'LEAGUE'
+                ? ('communities.matches.tournamentLeague' | t)
+                : ('communities.matches.tournamentKnockout' | t) }}</span>
+            </div>
+            @if (detailsLoading) {
+              <p class="t-muted" role="status">{{ 'communities.archive.loading' | t }}</p>
+            } @else if (historicalArchive; as archive) {
+              <p class="t-muted">{{ archive.rows.length }} {{ 'communities.matches.matchesCount' | t }}
+                · {{ archive.sourceFilename }}</p>
+              @if (historicalOutcome; as outcome) {
+                <div class="historical-outcome" [class.historical-outcome--estimated]="!!outcome.winner">
+                  <span class="historical-outcome-icon" aria-hidden="true">{{ outcome.winner ? '🏆' : 'ⓘ' }}</span>
+                  <div class="historical-outcome-copy">
+                    @if (outcome.winner) {
+                      <strong>{{ 'communities.matches.outcome.estimatedTitle' | t }}: {{ outcome.winner }}</strong>
+                      <p>{{ 'communities.matches.outcome.estimatedNote' | t }}</p>
+                    } @else {
+                      <strong>{{ 'communities.matches.outcome.unconfirmedTitle' | t }}</strong>
+                      <p>{{ ('communities.matches.outcome.' + outcome.reason) | t }}</p>
+                    }
+                  </div>
+                </div>
+              }
+              @if (selected.format === 'KNOCKOUT' && historicalKnockoutPhases.length > 0) {
+                <section class="t-section historical-phases-summary"
+                  [attr.aria-label]="'communities.matches.historicalPhases.title' | t">
+                  <div class="t-section-heading">
+                    <div>
+                      <h5>{{ 'communities.matches.historicalPhases.title' | t }}</h5>
+                      <p>{{ 'communities.matches.historicalPhases.note' | t }}</p>
+                    </div>
+                  </div>
+                  <div class="historical-phase-cards">
+                    @for (phase of historicalKnockoutPhases; track phase.phase) {
+                      <article class="historical-phase-card"
+                        [class.historical-phase-card--review]="phase.requiresReview">
+                        <div class="historical-phase-card-heading">
+                          <strong>{{ ('communities.matches.historicalPhases.' + phase.phase) | t }}</strong>
+                          <span class="historical-phase-card-count">{{ phase.matchCount }} / {{ phase.singleLegReference }}</span>
+                        </div>
+                        <p class="historical-phase-card-status">
+                          {{ (phase.requiresReview
+                            ? 'communities.matches.historicalPhases.needsReview'
+                            : 'communities.matches.historicalPhases.sourceFound') | t }}
+                        </p>
+                        @if (phase.sourceLabels.length) {
+                          <p class="historical-phase-card-labels">{{ phase.sourceLabels.join(' · ') }}</p>
+                        }
+                        @if (phase.reviewArchiveIndices.length > 0) {
+                          <div class="historical-phase-review-shortcut">
+                            <span class="historical-phase-review-count">
+                              {{ phase.reviewArchiveIndices.length }}
+                              {{ (phase.reviewArchiveIndices.length === 1
+                                ? 'communities.matches.historicalPhases.flaggedMatchOne'
+                                : 'communities.matches.historicalPhases.flaggedMatchMany') | t }}
+                            </span>
+                            <button type="button"
+                              class="t-btn t-btn-secondary historical-phase-review-jump"
+                              (click)="showNextHistoricalReview(phase)">
+                              {{ 'communities.matches.historicalPhases.goToReview' | t }}
+                              @if (historicalReviewCursor[phase.phase] >= 0) {
+                                ({{ historicalReviewCursor[phase.phase] + 1 }}/{{ phase.reviewArchiveIndices.length }})
+                              }
+                            </button>
+                          </div>
+                        }
+                        @if (phase.firstArchiveIndex !== null) {
+                          <button type="button" class="t-btn t-btn-secondary historical-phase-jump"
+                            (click)="showHistoricalKnockoutPhase(phase.firstArchiveIndex)">
+                            {{ 'communities.matches.historicalPhases.goTo' | t }}
+                          </button>
+                        }
+                      </article>
+                    }
+                  </div>
+                  <p class="t-muted historical-phase-legend">
+                    {{ 'communities.matches.historicalPhases.legend' | t }}
+                  </p>
+                </section>
+              }
+              @if (selected.format === 'LEAGUE') {
+                <section class="t-section" [attr.aria-label]="'communities.tournaments.classificationTitle' | t">
+                  <div class="t-section-heading">
+                    <div>
+                      <h5>{{ 'communities.tournaments.classificationTitle' | t }}</h5>
+                      @if (canEstimateHistoricalLeagueTable) {
+                        <p>{{ 'communities.matches.tournamentEstimatedStandings' | t }}</p>
+                      } @else {
+                        <p class="t-muted" role="note">{{ 'communities.matches.historicalStandingsUnavailable' | t }}</p>
+                      }
+                    </div>
+                  </div>
+                  @if (canEstimateHistoricalLeagueTable) {
+                  <div class="standings-scroll">
+                    <table class="standings-table">
+                      <thead><tr>
+                        <th scope="col">#</th>
+                        <th scope="col">{{ 'communities.matches.participant' | t }}</th>
+                        <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th>
+                        <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th>
+                        <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                        <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th>
+                        <th scope="col" [title]="historicalScoreLabels.forTitle">{{ historicalScoreLabels.forAbbrev }}</th>
+                        <th scope="col" [title]="historicalScoreLabels.againstTitle">{{ historicalScoreLabels.againstAbbrev }}</th>
+                        <th scope="col" [title]="historicalScoreLabels.differenceTitle">{{ historicalScoreLabels.differenceAbbrev }}</th>
+                        <th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th>
+                      </tr></thead>
+                      <tbody>
+                        @for (row of historicalLeagueTable; track row.name) {
+                          <tr>
+                            <td [title]="row.tiedOnPoints ? ('communities.matches.historicalPointsTie' | t) : null">{{ row.tiedOnPoints ? '=' : '' }}{{ row.rank }}</td>
+                            <th scope="row">{{ row.name }}</th>
+                            <td>{{ row.played }}</td><td>{{ row.won }}</td>
+                            <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>
+                            <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                            <td>{{ row.difference }}</td><td class="points-cell">{{ row.points }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  }
+                </section>
+              } @else {
+                <p class="t-muted">{{ 'communities.matches.knockoutNoTable' | t }}</p>
+              }
+              <section #historicalArchiveFixtures class="t-section historical-archive-fixtures" [attr.aria-label]="'communities.matches.archivesTitle' | t">
+                <div class="t-section-heading">
+                  <div>
+                    <h5>{{ 'communities.matches.archivesTitle' | t }}</h5>
+                    <p>{{ 'communities.matches.tournamentFixtureNote' | t }}</p>
+                    <p>{{ 'communities.matches.historicalSourceGroupingNote' | t }}</p>
+                  </div>
+                </div>
+                <div class="standings-scroll">
+                  <table class="standings-table">
+                    <thead><tr>
+                      <th scope="col">{{ 'communities.matches.date' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.home' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.score' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.away' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.review' | t }}</th>
+                    </tr></thead>
+                    <tbody>
+                      @for (group of historicalArchivePageGroups; track group.firstSourceRow) {
+                        <tr class="historical-source-group">
+                          <th scope="rowgroup" colspan="5">
+                            <span class="historical-source-group-kind">{{ (selected.format === 'KNOCKOUT'
+                              ? 'communities.matches.historicalSourcePhase'
+                              : 'communities.matches.historicalSourceRound') | t }}</span>
+                            <strong>{{ group.sourceRound || ('communities.matches.historicalNoSourceRound' | t) }}</strong>
+                            <span class="historical-source-group-count">{{ group.rows.length }} {{ 'communities.matches.matchesCount' | t }}</span>
+                          </th>
+                        </tr>
+                        @for (match of group.rows; track match.sourceRow) {
+                          @let reviewFlags = historicalMatchReviewFlags(match, selected.format === 'KNOCKOUT');
+                          <tr [attr.data-historical-source-row]="match.sourceRow"
+                            [class.historical-match-row--review]="reviewFlags.length > 0">
+                            <td>{{ match.sourceDate || '—' }}</td>
+                            <th scope="row">{{ match.home }}</th>
+                            <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
+                            <td>{{ match.away }}</td>
+                            <td class="historical-match-review-cell">
+                              @if (reviewFlags.length > 0) {
+                                @for (flag of reviewFlags; track flag) {
+                                  <span class="historical-match-review-flag">
+                                    {{ (flag === 'possible-duplicate'
+                                      ? 'communities.matches.possibleRepeat'
+                                      : 'communities.matches.historicalKnockoutTieReview') | t }}
+                                  </span>
+                                }
+                              } @else {
+                                <span class="historical-match-review-empty">—</span>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                @if (archive.rows.length > 50) {
+                  <div class="historical-tournament-pages">
+                    <button type="button" class="t-btn t-btn-secondary"
+                      [disabled]="historicalArchivePage === 0"
+                      (click)="historicalArchivePage = historicalArchivePage - 1">{{ 'communities.matches.previous' | t }}</button>
+                    <span>{{ historicalArchivePage * 50 + 1 }}–{{ (historicalArchivePage + 1) * 50 < archive.rows.length
+                      ? (historicalArchivePage + 1) * 50 : archive.rows.length }} / {{ archive.rows.length }}</span>
+                    <button type="button" class="t-btn t-btn-secondary"
+                      [disabled]="(historicalArchivePage + 1) * 50 >= archive.rows.length"
+                      (click)="historicalArchivePage = historicalArchivePage + 1">{{ 'communities.matches.next' | t }}</button>
+                  </div>
+                }
+              </section>
+            } @else {
+              <p class="t-muted">{{ 'communities.matches.detailError' | t }}</p>
+            }
+          </section>
+        } @else {
+        @if (!isTeamCompetition && selected.status === 'COMPLETED' && !isRaceCompetition) {
           <div class="champion" role="status">
             <span aria-hidden="true">🏆</span>
             <div>
               @if (selected.championTied) {
-                <strong>Empate no primeiro lugar</strong>
-                <p>O torneio terminou com igualdade nos critérios de desempate.</p>
+                <strong>{{ 'communities.tournaments.finalUi.individualTieTitle' | t }}</strong>
+                <p>{{ 'communities.tournaments.finalUi.individualTieHelp' | t }}</p>
               } @else {
-                <strong>Campeão: {{ selected.championDisplayName || selected.championUsername }}</strong>
-                <p>{{ selected.championPoints }} pontos · Torneio concluído</p>
+                <strong>{{ 'communities.tournaments.finalUi.individualChampion' | t }} {{ selected.championDisplayName || selected.championUsername }}</strong>
+                <p>{{ formatTournamentPoints(selected.championPoints) }} {{ 'communities.tournaments.finalUi.individualFinished' | t }}</p>
               }
             </div>
           </div>
@@ -330,14 +634,14 @@
             <span aria-hidden="true">🏆</span>
             <div>
               @if (selected.championTied) {
-                <strong>Empate no primeiro lugar entre equipas</strong>
-                <p>O campeonato terminou empatado nos critérios desportivos.</p>
+                <strong>{{ 'communities.tournaments.finalUi.teamTieTitle' | t }}</strong>
+                <p>{{ 'communities.tournaments.finalUi.teamTieHelp' | t }}</p>
               } @else {
-                <strong>Equipa campeã: {{ selected.championTeamName }}</strong>
-                @if (isKnockout) {
-                  <p>Taça concluída · Campeão das eliminatórias</p>
+                <strong>{{ 'communities.tournaments.finalUi.teamChampion' | t }} {{ selected.championTeamName }}</strong>
+                @if (isCupFormat) {
+                  <p>{{ 'communities.tournaments.finalUi.teamCupFinished' | t }}</p>
                 } @else {
-                  <p>{{ selected.championPoints }} pontos · Campeonato concluído</p>
+                  <p>{{ selected.championPoints }} {{ 'communities.tournaments.finalUi.teamLeagueFinished' | t }}</p>
                 }
               }
             </div>
@@ -346,42 +650,66 @@
 
         @if (isTeamCompetition) {
           @if (!isMember) {
-            <div class="notice notice-info" role="status">Adere à comunidade para consultar os plantéis desta competição.</div>
+            <div class="notice notice-info" role="status">{{ 'communities.tournaments.teamUi.memberOnly' | t }}</div>
           } @else if (detailsLoading) {
-            <p class="t-muted" role="status">A carregar equipas e plantéis…</p>
+            <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.loading' | t }}</p>
           } @else {
-            <section class="t-section team-roster-section" aria-label="Equipas da competição">
+            <section class="t-section team-roster-section" [attr.aria-label]="'communities.tournaments.teamUi.region' | t">
               <div class="t-section-heading">
                 <div>
-                  <h5>Equipas e plantéis</h5>
-                  <p>{{ teams.length }} equipas criadas · {{ readyTeamCount }} com o plantel completo</p>
+                  <h5>{{ 'communities.tournaments.teamUi.title' | t }}</h5>
+                  <p>{{ 'communities.tournaments.teamUi.summary' | t:{teams:teams.length,ready:readyTeamCount} }}</p>
                 </div>
               </div>
               <div class="guide-community-note" role="note">
-                <strong>{{ selected.status === 'DRAFT' ? 'Primeiro organizamos as equipas.' : 'Calendário publicado.' }}</strong>
-                <p>Todos os jogadores são membros reais da comunidade. Um membro só pode integrar uma equipa nesta competição.
-                  {{ selected.status === 'DRAFT'
-                    ? 'Quando todas as equipas estiverem completas, publica os confrontos.'
-                    : (isKnockout ? 'Regista os vencedores de cada ronda até à final.' : 'Regista os resultados nas jornadas e acompanha a tabela classificativa.') }}</p>
+                <strong>{{ (selected.status === 'DRAFT' ? 'communities.tournaments.teamUi.draftStatus' : 'communities.tournaments.teamUi.publishedStatus') | t }}</strong>
+                <p>{{ 'communities.tournaments.teamUi.membersHelp' | t }}
+                  @if (selected.playersPerTeam == null) { {{ 'communities.tournaments.teamUi.flexRosterHint' | t }} }
+                  {{ (selected.status === 'DRAFT' ? 'communities.tournaments.teamUi.draftHint' : (isCupFormat ? 'communities.tournaments.teamUi.cupHint' : 'communities.tournaments.teamUi.leagueHint')) | t }}</p>
               </div>
               @if (teamsLoadError) {
-                <p class="field-validation" role="alert">Não foi possível carregar os plantéis. Usa Atualizar para tentar novamente.</p>
+                <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.loadError' | t }}</p>
               }
               @if (canManage && selected.status === 'DRAFT') {
                 <div class="team-create-row">
-                  <label for="new-team-name">Nome da nova equipa</label>
+                  <label for="new-team-name">{{ 'communities.tournaments.teamUi.teamName' | t }}</label>
                   <div class="team-create-actions">
                     <input id="new-team-name" [(ngModel)]="teamNameDraft" maxlength="100"
-                      autocomplete="off" placeholder="Ex.: Equipa Verde" [disabled]="busy || detailsLoading">
+                      autocomplete="off" [placeholder]="'communities.tournaments.teamUi.teamExample' | t" [disabled]="busy || detailsLoading">
                     <button type="button" class="t-btn t-btn-primary" (click)="createTournamentTeam()"
                       [disabled]="busy || detailsLoading || !teamNameDraft.trim() || teams.length >= 32">
-                      Adicionar equipa
+                      {{ 'communities.tournaments.teamUi.createTeam' | t }}
                     </button>
                   </div>
                 </div>
               }
               @if (teams.length === 0 && !teamsLoadError) {
-                <p class="t-muted">Ainda não existem equipas. O organizador pode começar por criar a primeira.</p>
+                <p class="t-muted">{{ 'communities.tournaments.teamUi.emptyTeams' | t }}</p>
+              }
+              @if (invitedTeamId && selected.id === invitedTournamentId && invitedTeam) {
+                <section class="team-invite-accept" [attr.aria-label]="'communities.tournaments.teamUi.inviteRegion' | t">
+                  <div>
+                    <strong>🏆 {{ 'communities.tournaments.teamUi.invited' | t:{team:invitedTeam.name} }}</strong>
+                    <p>{{ selected.name }} · {{ community.name }}</p>
+                    @if (myTeam?.id === invitedTeam.id) {
+                      <p class="team-invite-confirmed" role="status">{{ 'communities.tournaments.teamUi.alreadyMember' | t }}</p>
+                    } @else if (myTeam) {
+                      <p role="status">{{ 'communities.tournaments.teamUi.otherTeam' | t:{team:myTeam.name} }}</p>
+                    } @else if (selected.status !== 'DRAFT') {
+                      <p role="status">{{ 'communities.tournaments.teamUi.rosterClosed' | t }}</p>
+                    } @else if (isTeamRosterFull(invitedTeam)) {
+                      <p role="status">{{ 'communities.tournaments.teamUi.teamFull' | t }}</p>
+                    } @else {
+                      <p>{{ 'communities.tournaments.teamUi.confirmInviteHint' | t }}</p>
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="busy || detailsLoading" (click)="acceptInvitedTeam()">
+                        {{ (busy ? 'communities.tournaments.teamUi.accepting' : 'communities.tournaments.teamUi.acceptInvite') | t }}
+                      </button>
+                    }
+                  </div>
+                </section>
+              } @else if (invitedTeamId && selected.id === invitedTournamentId && !teamsLoadError && !detailsLoading) {
+                <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.invalidInvite' | t }}</p>
               }
               <div class="team-roster-grid">
                 @for (team of teams; track team.id) {
@@ -389,16 +717,16 @@
                     <div class="team-roster-heading">
                       <div>
                         <h6>{{ team.name }}</h6>
-                        <span class="tournament-state">{{ team.players.length }} / {{ team.playersPerTeam }} jogadores</span>
+                        <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
                       </div>
                       @if (canManageTeamRoster && team.players.length === 0) {
                         <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
-                          [disabled]="detailsLoading" [attr.aria-label]="'Eliminar equipa ' + team.name"
-                          (click)="deleteTournamentTeam(team)">Eliminar equipa vazia</button>
+                          [disabled]="detailsLoading" [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}"
+                          (click)="deleteTournamentTeam(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
                       }
                     </div>
                     @if (!team.players.length) {
-                      <p class="t-muted">Ainda não foram adicionados jogadores.</p>
+                      <p class="t-muted">{{ 'communities.tournaments.teamUi.noPlayers' | t }}</p>
                     }
                     <div class="players-list">
                       @for (player of team.players; track player.profileId) {
@@ -407,28 +735,50 @@
                             <small>&#64;{{ player.username }}</small></div>
                           @if (canManageTeamRoster) {
                             <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                              [attr.aria-label]="'Remover ' + player.username + ' da equipa ' + team.name"
-                              (click)="removeTeamPlayer(team, player.profileId)">Remover</button>
+                              [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}"
+                              (click)="removeTeamPlayer(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
                           }
                         </div>
                       }
                     </div>
-                    @if (canManageTeamRoster && team.players.length < team.playersPerTeam) {
-                      <div class="team-player-assign">
-                        <label [for]="'team-player-' + team.id">Adicionar membro à equipa {{ team.name }}</label>
-                        <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]" [disabled]="busy || detailsLoading">
-                          <option [ngValue]="null">Seleciona um membro</option>
-                          @for (member of availableTeamMembers; track member.profileId) {
-                            <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
-                          }
-                        </select>
-                        <button type="button" class="t-btn t-btn-primary"
-                          [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
-                          (click)="assignTeamPlayer(team)">Adicionar jogador</button>
-                        @if (!availableTeamMembers.length) {
-                          <p class="t-muted">Não há mais membros disponíveis para atribuir.</p>
+                    @if (canManageTeamRoster && !isTeamRosterFull(team)) {
+                      <div class="team-share-invite">
+                        <strong>{{ 'communities.tournaments.teamUi.invitePlayers' | t }}</strong>
+                        <p>{{ 'communities.tournaments.teamUi.inviteHint' | t }}</p>
+                        <div class="team-share-actions">
+                          <a class="t-btn t-btn-primary" [href]="teamWhatsAppUrl(team)"
+                            target="_blank" rel="noopener noreferrer"
+                            [attr.aria-label]="'communities.tournaments.teamUi.whatsappAria' | t:{team:team.name}">
+                            WhatsApp
+                          </a>
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy || detailsLoading" (click)="copyTeamInvite(team)">
+                            {{ 'communities.tournaments.teamUi.copy' | t }}
+                          </button>
+                        </div>
+                        <label [for]="'team-invite-link-' + team.id">{{ 'communities.tournaments.teamUi.teamLink' | t }}</label>
+                        <input [id]="'team-invite-link-' + team.id" type="text" readonly
+                          [value]="teamInviteUrl(team)" (click)="$any($event.target).select()">
+                        @if (inviteCopyFeedback[team.id]) {
+                          <p role="status">{{ inviteCopyFeedback[team.id] }}</p>
                         }
+                        <p class="t-muted">{{ 'communities.tournaments.teamUi.joinCommunity' | t }}</p>
                       </div>
+                      <details class="team-manual-assign">
+                        <summary>{{ 'communities.tournaments.teamUi.manualAssign' | t }}</summary>
+                        <div class="team-player-assign">
+                          <label [for]="'team-player-' + team.id">{{ 'communities.tournaments.teamUi.communityMember' | t }}</label>
+                          <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]" [disabled]="busy || detailsLoading">
+                            <option [ngValue]="null">{{ 'communities.tournaments.teamUi.selectMember' | t }}</option>
+                            @for (member of availableTeamMembers; track member.profileId) {
+                              <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
+                            }
+                          </select>
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
+                            (click)="assignTeamPlayer(team)">{{ 'communities.tournaments.teamUi.addPlayer' | t }}</button>
+                        </div>
+                      </details>
                     }
                   </article>
                 }
@@ -436,61 +786,62 @@
               @if (canManage && selected.status === 'DRAFT') {
                 <div class="team-schedule-action">
                   <div>
-                    <strong>{{ isKnockout ? 'Prontos para sortear as eliminatórias?' : 'Prontos para começar o campeonato?' }}</strong>
-                    @if (isKnockout) {
-                      <p>Sortear os primeiros confrontos e entradas diretas. Os vencedores avançam automaticamente.
-                        Publicar fecha os plantéis.</p>
+                    <strong>{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.readyGroups' : (isKnockout ? 'communities.tournaments.fixturesUi.readyKnockout' : 'communities.tournaments.fixturesUi.readyLeague')) | t }}</strong>
+                    @if (isGroupKnockout) {
+                      <p>{{ 'communities.tournaments.fixturesUi.groupPublishHint' | t }}</p>
+                    } @else if (isKnockout) {
+                      <p>{{ 'communities.tournaments.fixturesUi.knockoutPublishHint' | t }}</p>
                     } @else {
-                      <p>Gera o calendário de {{ (selected.roundRobinLegs ?? 1) === 2
-                        ? 'duas voltas, com jogos em casa e fora' : 'uma volta entre todas as equipas' }}.
-                        A publicação fecha os plantéis e fixa as regras da competição.</p>
+                      <p>{{ ((selected.roundRobinLegs ?? 1) === 2 ? 'communities.tournaments.fixturesUi.twoLegPublishHint' : 'communities.tournaments.fixturesUi.oneLegPublishHint') | t }}</p>
                     }
-                    @if (teams.length < 2) {
-                      <p class="field-validation" role="status">Cria pelo menos duas equipas.</p>
+                    @if (teams.length < (isGroupKnockout ? (selected.groupCount ?? 2) * 2 : 2)) {
+                      <p class="field-validation" role="status">{{ 'communities.tournaments.fixturesUi.minTeams' | t:{count:(isGroupKnockout ? (selected.groupCount ?? 2) * 2 : 2)} }}</p>
                     } @else if (readyTeamCount !== teams.length) {
                       <p class="field-validation" role="status">
-                        Completa os plantéis das {{ teams.length - readyTeamCount }} equipas em falta.
+                        {{ (selected.playersPerTeam == null ? 'communities.tournaments.fixturesUi.missingMembers' : 'communities.tournaments.fixturesUi.incompleteRosters') | t:{count:teams.length - readyTeamCount} }}
                       </p>
                     }
                   </div>
                   @if (confirmAction === 'schedule') {
                     <div class="confirm-actions">
                       <button type="button" class="t-btn t-btn-primary" [disabled]="!canPublishTeamSchedule"
-                        (click)="publishTeamSchedule()">{{ isKnockout ? 'Sim, sortear eliminatórias' : 'Sim, publicar jornadas por equipas' }}</button>
+                        (click)="publishTeamSchedule()">{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.confirmGroups' : (isKnockout ? 'communities.tournaments.fixturesUi.confirmKnockout' : 'communities.tournaments.fixturesUi.confirmLeague')) | t }}</button>
                       <button type="button" class="t-btn t-btn-secondary" [disabled]="busy"
-                        (click)="confirmAction = null">Cancelar</button>
+                        (click)="confirmAction = null">{{ 'communities.tournaments.fixturesUi.cancel' | t }}</button>
                     </div>
                   } @else {
                     <button type="button" class="t-btn t-btn-primary" [disabled]="!canPublishTeamSchedule"
-                      (click)="confirmAction = 'schedule'">{{ isKnockout ? 'Sortear eliminatórias' : 'Gerar jornadas entre equipas' }}</button>
+                      (click)="confirmAction = 'schedule'">{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.publishGroups' : (isKnockout ? 'communities.tournaments.fixturesUi.publishKnockout' : 'communities.tournaments.fixturesUi.publishLeague')) | t }}</button>
                   }
                 </div>
               }
             </section>
             @if (selected.status !== 'DRAFT') {
-              <section class="t-section team-fixtures-section" aria-label="Jornadas entre equipas">
+              <section class="t-section team-fixtures-section" [attr.aria-label]="'communities.tournaments.fixturesUi.fixturesRegion' | t">
                 <div class="t-section-heading">
                   <div>
-                    <h5>{{ isKnockout ? 'Quadro de eliminatórias' : 'Jornadas e confrontos entre equipas' }}</h5>
-                    @if (isKnockout) {
-                      <p>O vencedor de cada jogo avança. Não são aceites empates nas eliminatórias.</p>
+                    <h5>{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.groupsTitle' : (isKnockout ? 'communities.tournaments.fixturesUi.knockoutTitle' : 'communities.tournaments.fixturesUi.leagueTitle')) | t }}</h5>
+                    @if (isGroupKnockout) {
+                      <p>{{ 'communities.tournaments.fixturesUi.groupsHelp' | t }}</p>
+                    } @else if (isKnockout) {
+                      <p>{{ 'communities.tournaments.fixturesUi.knockoutHelp' | t }}</p>
                     } @else {
-                      <p>Campeonato todos contra todos. Os resultados atualizam automaticamente a classificação.</p>
+                      <p>{{ 'communities.tournaments.fixturesUi.leagueHelp' | t }}</p>
                     }
                   </div>
                 </div>
                 @if (teamMatchesError) {
-                  <p class="field-validation" role="alert">Não foi possível consultar os confrontos. Tenta novamente.</p>
-                  <button class="t-btn t-btn-secondary" type="button" (click)="loadTeamMatches(true)">Tentar novamente</button>
+                  <p class="field-validation" role="alert">{{ 'communities.tournaments.fixturesUi.matchesError' | t }}</p>
+                  <button class="t-btn t-btn-secondary" type="button" (click)="loadTeamMatches(true)">{{ 'communities.tournaments.fixturesUi.retry' | t }}</button>
                 }
                 @if (teamMatchesLoading) {
-                  <p class="t-muted" role="status">A carregar jornadas…</p>
+                  <p class="t-muted" role="status">{{ 'communities.tournaments.fixturesUi.loading' | t }}</p>
                 }
                 @if (!teamMatchesLoading && !teamMatches.length && !teamMatchesError) {
-                  <p class="t-muted">Ainda não existem confrontos.</p>
+                  <p class="t-muted">{{ 'communities.tournaments.fixturesUi.empty' | t }}</p>
                 }
                 @if (isKnockout && knockoutFirstRoundByes.length) {
-                  <p class="t-muted">Entrada direta na segunda ronda:
+                  <p class="t-muted">{{ 'communities.tournaments.fixturesUi.bye' | t }}
                     @for (team of knockoutFirstRoundByes; track team.id; let last = $last) {
                       <strong>{{ team.name }}</strong>{{ last ? '' : ', ' }}
                     }
@@ -498,8 +849,9 @@
                 }
                 <div class="team-fixtures-list">
                   @for (game of teamMatches; track game.id; let index = $index) {
-                    @if (index === 0 || teamMatches[index - 1].roundNumber !== game.roundNumber) {
-                      <h6>{{ isKnockout ? 'Ronda' : 'Jornada' }} {{ game.roundNumber }}</h6>
+                    @if (index === 0 || teamMatches[index - 1].roundNumber !== game.roundNumber
+                          || teamMatches[index - 1].groupNumber !== game.groupNumber) {
+                      <h6>{{ teamMatchStageLabel(game) }}</h6>
                     }
                     <div class="team-fixture">
                        <strong>{{ game.homeTeamName }}</strong>
@@ -507,7 +859,7 @@
                        <strong>{{ game.awayTeamName }}</strong>
                        <span class="tournament-state">
                          {{ game.status === 'COMPLETED'
-                           ? game.homeScore + ' : ' + game.awayScore : 'Por disputar' }}
+                           ? game.homeScore + ' : ' + game.awayScore : ('communities.tournaments.fixturesUi.pending' | t) }}
                        </span>
                        @if (canManage && selected.status === 'IN_PROGRESS' && !isPastKnockoutRound(game)) {
                          <div class="team-score-edit">
@@ -516,7 +868,7 @@
                              <input type="number" min="0" max="999" step="1"
                                [ngModel]="teamScoreDraft(game).home"
                                (ngModelChange)="setTeamScore(game, 'home', $event)"
-                               [attr.aria-label]="'Golos de ' + game.homeTeamName"
+                               [attr.aria-label]="'communities.tournaments.fixturesUi.goalsFor' | t:{team:game.homeTeamName}"
                                [attr.aria-invalid]="isTeamScoreInvalid(game) && !validScore(teamScoreDraft(game).home) ? 'true' : null"
                                [disabled]="busy">
                            </label>
@@ -526,21 +878,19 @@
                              <input type="number" min="0" max="999" step="1"
                                [ngModel]="teamScoreDraft(game).away"
                                (ngModelChange)="setTeamScore(game, 'away', $event)"
-                               [attr.aria-label]="'Golos de ' + game.awayTeamName"
+                               [attr.aria-label]="'communities.tournaments.fixturesUi.goalsFor' | t:{team:game.awayTeamName}"
                                [attr.aria-invalid]="isTeamScoreInvalid(game) && !validScore(teamScoreDraft(game).away) ? 'true' : null"
                                [disabled]="busy">
                            </label>
                            <button type="button" class="t-btn t-btn-primary t-btn-small"
                              [disabled]="busy || !validScore(teamScoreDraft(game).home) || !validScore(teamScoreDraft(game).away)
-                                || (isKnockout && teamScoreDraft(game).home === teamScoreDraft(game).away)"
-                             [attr.aria-label]="(game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado entre ' + game.homeTeamName + ' e ' + game.awayTeamName"
+                                || (isEliminationMatch(game) && teamScoreDraft(game).home === teamScoreDraft(game).away)"
+                             [attr.aria-label]="(game.status === 'COMPLETED' ? 'communities.tournaments.fixturesUi.correctAria' : 'communities.tournaments.fixturesUi.saveAria') | t:{home:game.homeTeamName,away:game.awayTeamName}"
                              (click)="saveTeamScore(game)">
-                             {{ game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}
+                             {{ (game.status === 'COMPLETED' ? 'communities.tournaments.fixturesUi.correct' : 'communities.tournaments.fixturesUi.save') | t }}
                            </button>
                            @if (isTeamScoreInvalid(game)) {
-                             <p class="field-validation" role="status">{{ isKnockout
-                                ? 'A eliminatória exige um vencedor e marcadores inteiros entre 0 e 999.'
-                                : 'Indica dois marcadores inteiros entre 0 e 999.' }}</p>
+                             <p class="field-validation" role="status">{{ (isEliminationMatch(game) ? 'communities.tournaments.fixturesUi.invalidKnockout' : 'communities.tournaments.fixturesUi.invalidScore') | t }}</p>
                            }
                          </div>
                        }
@@ -549,37 +899,93 @@
                 </div>
                 @if (teamMatchesHasMore) {
                   <button type="button" class="t-btn t-btn-secondary" [disabled]="teamMatchesLoading || busy"
-                    (click)="loadTeamMatches()">Ver mais confrontos</button>
+                    (click)="loadTeamMatches()">{{ 'communities.tournaments.fixturesUi.more' | t }}</button>
                 }
               </section>
-              @if (!isKnockout) {
-              <section class="t-section team-standings-section" aria-label="Classificação por equipas">
+              @if (isGroupKnockout) {
+                <section class="t-section team-standings-section" [attr.aria-label]="'communities.tournaments.finalUi.groupStandingsAria' | t">
+                  <div class="t-section-heading">
+                    <div>
+                      <h5>{{ 'communities.tournaments.finalUi.groupStandings' | t }}</h5>
+                      <p>{{ 'communities.tournaments.finalUi.groupStandingsHint' | t }}</p>
+                    </div>
+                    <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                      [disabled]="teamGroupsLoading" (click)="loadGroupStandings()">{{ 'communities.tournaments.finalUi.refresh' | t }}</button>
+                  </div>
+                  @if (teamGroupsLoading) {
+                    <p class="t-muted" role="status">{{ 'communities.tournaments.finalUi.groupsLoading' | t }}</p>
+                  }
+                  @if (teamGroupsError) {
+                    <p class="field-validation" role="alert">{{ 'communities.tournaments.finalUi.groupsError' | t }}</p>
+                  }
+                  @if (teamGroups; as groups) {
+                    @if (groups.knockoutStarted) {
+                      <p class="t-muted">{{ 'communities.tournaments.finalUi.groupsComplete' | t }}</p>
+                    }
+                    @for (group of groups.groups; track group.groupNumber) {
+                      <h6>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group: groupLabel(group.groupNumber)} }}</h6>
+                      <div class="standings-scroll">
+                        <table class="standings-table team-standings-table"
+                          [attr.aria-label]="'communities.tournaments.finalUi.groupTableLabel' | t:{group: groupLabel(group.groupNumber)}">
+                          <thead>
+                            <tr>
+                              <th scope="col">#</th><th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
+                              <th scope="col">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                              <th scope="col">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.forCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.againstCol' | t }}</th>
+                              <th scope="col">{{ 'communities.tournaments.finalUi.differenceCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (row of group.standings; track row.teamId) {
+                              <tr>
+                                <td>{{ row.position }}</td>
+                                <th scope="row">{{ row.teamName }}
+                                  @if (groups.knockoutStarted && row.position <= 2) {
+                                    <span class="tournament-state">{{ 'communities.tournaments.finalUi.qualified' | t }}</span>
+                                  }
+                                </th>
+                                <td>{{ row.played }}</td><td>{{ row.won }}</td><td>{{ row.drawn }}</td>
+                                <td>{{ row.lost }}</td><td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                                <td>{{ row.goalDifference }}</td><td><strong>{{ row.points }}</strong></td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  }
+                </section>
+              }
+              @if (selected.format === 'LEAGUE') {
+              <section class="t-section team-standings-section" [attr.aria-label]="'communities.tournaments.finalUi.teamStandings' | t">
                 <div class="t-section-heading">
                   <div>
-                    <h5>Classificação por equipas</h5>
-                    <p>Vitória: {{ teamStandings?.winPoints ?? selected.winPoints }} ·
-                      Empate: {{ teamStandings?.drawPoints ?? selected.drawPoints }} ·
-                      Derrota: {{ teamStandings?.lossPoints ?? selected.lossPoints }} pontos</p>
-                    <p>Desempate: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }} primeiro</p>
+                    <h5>{{ 'communities.tournaments.finalUi.teamStandings' | t }}</h5>
+                    <p>{{ 'communities.tournaments.finalUi.teamRules' | t:{
+                      win: (teamStandings?.winPoints ?? selected.winPoints),
+                      draw: (teamStandings?.drawPoints ?? selected.drawPoints),
+                      loss: (teamStandings?.lossPoints ?? selected.lossPoints)
+                    } }}</p>
+                    <p>{{ 'communities.tournaments.fixturesUi.tiebreak' | t:{criterion:teamTieBreakLabel(selected.teamTieBreakPriority)} }}</p>
                   </div>
                   <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                    [disabled]="teamStandingsLoading" (click)="loadTeamStandings()">Atualizar</button>
+                    [disabled]="teamStandingsLoading" (click)="loadTeamStandings()">{{ 'communities.tournaments.finalUi.refresh' | t }}</button>
                 </div>
                 @if (teamStandingsLoading) {
-                  <p class="t-muted" role="status">A atualizar classificação…</p>
+                  <p class="t-muted" role="status">{{ 'communities.tournaments.finalUi.teamLoading' | t }}</p>
                 }
                 @if (teamStandingsError) {
-                  <p class="field-validation" role="alert">Não foi possível carregar a classificação por equipas.</p>
+                  <p class="field-validation" role="alert">{{ 'communities.tournaments.finalUi.teamError' | t }}</p>
                 }
                 @if (teamStandings; as table) {
-                  <p class="t-muted">{{ table.completedMatches }} / {{ table.totalMatches }} confrontos concluídos</p>
+                  <p class="t-muted">{{ 'communities.tournaments.finalUi.completedMatches' | t:{completed: table.completedMatches, total: table.totalMatches} }}</p>
                   <div class="standings-scroll">
-                    <table class="standings-table team-standings-table" aria-label="Classificação por equipas">
+                    <table class="standings-table team-standings-table" [attr.aria-label]="'communities.tournaments.finalUi.teamStandings' | t">
                       <thead>
-                        <tr><th scope="col">#</th><th scope="col">Equipa</th>
-                          <th scope="col">J</th><th scope="col">V</th><th scope="col">E</th>
-                          <th scope="col">D</th><th scope="col">GM</th><th scope="col">GS</th>
-                          <th scope="col">DG</th><th scope="col">Pts</th></tr>
+                        <tr><th scope="col">#</th><th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
+                          <th scope="col">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                          <th scope="col">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.forCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.againstCol' | t }}</th>
+                          <th scope="col">{{ 'communities.tournaments.finalUi.differenceCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th></tr>
                       </thead>
                       <tbody>
                         @for (row of table.standings; track row.teamId) {
@@ -599,57 +1005,574 @@
               @if (canManage && selected.status === 'IN_PROGRESS') {
                 <div class="complete-action">
                   <div>
-                    <h5>Encerrar campeonato por equipas</h5>
-                    <p>É necessário concluir todos os confrontos.
-                      Depois de encerrado, os resultados ficam bloqueados
-                      e a equipa campeã é registada.</p>
+                    <h5>{{ 'communities.tournaments.finalUi.completeTeamTitle' | t }}</h5>
+                    <p>{{ 'communities.tournaments.finalUi.completeTeamHelp' | t }}</p>
                   </div>
                   @if (confirmAction === 'completeTeam') {
                     <div class="confirm-actions">
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="busy || !canCompleteTeam"
-                        (click)="completeTeam()">Sim, encerrar campeonato</button>
+                        (click)="completeTeam()">{{ 'communities.tournaments.finalUi.completeTeamConfirm' | t }}</button>
                       <button type="button" class="t-btn t-btn-secondary"
-                        (click)="confirmAction = null">Cancelar</button>
+                        (click)="confirmAction = null">{{ 'communities.tournaments.finalUi.cancel' | t }}</button>
                     </div>
                   } @else {
                     <button type="button" class="t-btn t-btn-secondary"
                       [disabled]="!canCompleteTeam"
-                      (click)="confirmAction = 'completeTeam'">Encerrar campeonato por equipas</button>
+                      (click)="confirmAction = 'completeTeam'">{{ 'communities.tournaments.finalUi.completeTeamTitle' | t }}</button>
                   }
                 </div>
               }
               }
             }
           }
+        } @else if (isInlineSpeedCompetition) {
+          @if (!isMember) {
+            <p class="notice notice-info">{{ 'communities.inlineSpeed.memberOnly' | t }}</p>
+          } @else if (detailsLoading) {
+            <p role="status" class="t-muted">{{ 'communities.inlineSpeed.loading' | t }}</p>
+          } @else if (speedError || !speedOverview) {
+            <div class="notice notice-info" role="status">
+              {{ 'communities.inlineSpeed.loadError' | t }}
+              <button type="button" class="t-btn t-btn-secondary" (click)="loadInlineSpeed()">{{ 'common.retry' | t }}</button>
+            </div>
+          } @else {
+            <section class="t-section inline-speed-progression" [attr.aria-label]="'communities.inlineSpeed.title' | t">
+              <div class="t-section-heading">
+                <div>
+                  <h5>{{ 'communities.inlineSpeed.title' | t }}</h5>
+                  <p>{{ 'communities.inlineSpeed.description' | t }}</p>
+                </div>
+                <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                  [disabled]="busy" (click)="loadInlineSpeed()">{{ 'communities.inlineSpeed.refresh' | t }}</button>
+              </div>
+              <p class="notice notice-info" role="note">{{ 'communities.inlineSpeed.judgeNotice' | t }}</p>
+              @if (!speedOverview.linkedHeats.length) {
+                <p class="t-muted">{{ 'communities.inlineSpeed.noLinkedHeats' | t }}</p>
+              }
+              @for (heat of speedOverview.linkedHeats; track heat.roundId) {
+                <div class="race-round-card inline-speed-heat">
+                  <div class="race-round-header">
+                    <div>
+                      <strong>{{ speedStageName(speedStage(heat.eventType)) }} ·
+                        {{ 'communities.inlineSpeed.heat' | t }} {{ heat.heatNumber }}</strong>
+                      <small>{{ heat.name }}</small>
+                    </div>
+                    @if (canManage && selected.status !== 'COMPLETED') {
+                      <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                        [disabled]="busy" (click)="unlinkSpeedHeat(heat.roundId)">
+                        {{ 'communities.inlineSpeed.unlink' | t }}
+                      </button>
+                    }
+                  </div>
+                  <div class="t-table-scroll">
+                    <table>
+                      <thead>
+                        <tr><th scope="col">{{ 'communities.inlineSpeed.place' | t }}</th>
+                          <th scope="col">{{ 'communities.inlineSpeed.skater' | t }}</th>
+                          <th scope="col">{{ 'communities.inlineSpeed.time' | t }}</th></tr>
+                      </thead>
+                      <tbody>
+                        @for (skater of heat.skaters; track skater.playerId) {
+                          <tr>
+                            <td>{{ skater.disqualified ? 'DSQ' : (skater.position ?? '—') }}</td>
+                            <td>{{ skater.name }}</td>
+                            <td>{{ skater.seconds == null ? '—' : (skater.seconds | number:'1.2-2') + ' s' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
+              @if (canManage && selected.status !== 'COMPLETED') {
+                <div class="race-available">
+                  <h6>{{ 'communities.inlineSpeed.addHeat' | t }}</h6>
+                  @if (!speedOverview.availableHeats.length) {
+                    <p class="t-muted">{{ 'communities.inlineSpeed.noAvailableHeatsDetailed' | t }}</p>
+                  }
+                  @for (heat of speedOverview.availableHeats; track heat.roundId) {
+                    <div class="race-available-row">
+                      <span>
+                        <strong>{{ heat.name }}</strong>
+                        <small>{{ speedStageName(speedStage(heat.eventType)) }} · {{ heat.skaters.length }}
+                          {{ 'communities.inlineSpeed.skaters' | t }}</small>
+                      </span>
+                      <label>
+                        {{ 'communities.inlineSpeed.heat' | t }}
+                        <input type="number" min="1" [max]="speedMaximumHeats(heat.eventType)"
+                          [name]="'inline-speed-heat-' + heat.roundId"
+                          [(ngModel)]="speedHeats[heat.roundId]" [disabled]="busy"
+                          class="inline-speed-heat-number">
+                      </label>
+                      <button type="button" class="t-btn t-btn-primary t-btn-small"
+                        [disabled]="busy" (click)="linkSpeedHeat(heat.roundId)">
+                        {{ 'communities.inlineSpeed.link' | t }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+              @for (proposal of speedOverview.proposals; track proposal.sourceStage) {
+                <section class="t-section inline-speed-proposal" [attr.aria-label]="speedStageName(proposal.sourceStage)">
+                  <div class="t-section-heading">
+                    <div>
+                      <h6>{{ speedStageName(proposal.sourceStage) }} →
+                        {{ speedStageName(proposal.targetStage) }}</h6>
+                      <p>{{ speedProposalWarning(proposal) }}</p>
+                    </div>
+                  </div>
+                  @if (speedDecision(proposal.sourceStage); as decision) {
+                    <p class="notice" [class.notice-info]="!decision.stale" [class.notice-error]="decision.stale"
+                      role="status">
+                      {{ (decision.stale ? 'communities.inlineSpeed.stale' : 'communities.inlineSpeed.confirmed') | t }}
+                      · {{ decision.confirmedBy }}
+                    </p>
+                  }
+                  @if (proposal.sourceStage === 'FIRST') {
+                    @if (speedOverview.trials?.length) {
+                      <details class="t-muted inline-speed-trial-history">
+                        <summary>{{ 'communities.inlineSpeed.trialHistory' | t }}
+                          ({{ speedOverview.trials?.length }})</summary>
+                        @for (trial of speedOverview.trials ?? []; track trial.id) {
+                          <article class="race-round-card"
+                            [attr.id]="'inline-speed-trial-' + trial.id">
+                            <strong>{{ 'communities.inlineSpeed.trialTitle' | t }} #{{ trial.id }}</strong>
+                            <small>{{ trial.heldAt | date:'short' }} · {{ trial.recordedBy }}</small>
+                            @if (trial.stale) {
+                              <p class="notice notice-error">{{ 'communities.inlineSpeed.tieOutdated' | t }}</p>
+                            }
+                            <p>{{ trial.officialReference }} · {{ trial.reason }}</p>
+                            @if (speedTrialUsedRevisions(trial.id).length) {
+                              <p class="t-muted">
+                                {{ 'communities.inlineSpeed.trialLinkedRevisions' | t }}:
+                                {{ speedTrialUsedRevisions(trial.id).join(', ') }}
+                              </p>
+                            } @else {
+                              <p class="t-muted">{{ 'communities.inlineSpeed.trialNotLinked' | t }}</p>
+                            }
+                            <ol>
+                              @for (result of trial.results; track result.playerId) {
+                                <li>{{ result.place }}.º
+                                  {{ speedTieSkaterNames([result.playerId]) }}
+                                  @if (result.seconds !== null) {
+                                    · {{ result.seconds }} s
+                                  }
+                                </li>
+                              }
+                            </ol>
+                          </article>
+                        }
+                      </details>
+                    }
+                    @if (canManage && selected.status !== 'COMPLETED' && !speedDecision('FIRST')
+                         && speedTrialCandidates().length >= 3
+                         && speedTrialCandidates().length <= 6) {
+                      <div class="inline-speed-trial-panel">
+                        <p class="t-muted">{{ 'communities.inlineSpeed.trialIntro' | t }}</p>
+                        @if (!speedTrialOpen) {
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy" (click)="openSpeedTrial()">
+                            {{ 'communities.inlineSpeed.trialOpen' | t }}
+                          </button>
+                        } @else {
+                          <label class="inline-speed-judge-reason">
+                            {{ 'communities.inlineSpeed.trialDate' | t }}
+                            <input type="datetime-local" name="speed-trial-date"
+                              [(ngModel)]="speedTrialHeldAt" [disabled]="busy">
+                          </label>
+                          <label class="inline-speed-judge-reason">
+                            {{ 'communities.inlineSpeed.trialReference' | t }}
+                            <input type="text" maxlength="500" name="speed-trial-reference"
+                              [(ngModel)]="speedTrialReference" [disabled]="busy">
+                          </label>
+                          <label class="inline-speed-judge-reason">
+                            {{ 'communities.inlineSpeed.trialReason' | t }}
+                            <textarea rows="2" maxlength="500" name="speed-trial-reason"
+                              [(ngModel)]="speedTrialReason" [disabled]="busy"></textarea>
+                          </label>
+                          <p class="t-muted">{{ 'communities.inlineSpeed.trialResults' | t }}</p>
+                          @for (skater of speedTrialCandidates(); track skater.playerId) {
+                            <div class="inline-speed-selection-row">
+                              <strong>{{ skater.name }}</strong>
+                              <label>
+                                {{ 'communities.inlineSpeed.trialPlace' | t }}
+                                <input type="number" min="1" max="6" step="1"
+                                  [name]="'speed-trial-place-' + skater.playerId"
+                                  [(ngModel)]="speedTrialPlaces[skater.playerId]" [disabled]="busy">
+                              </label>
+                              <label>
+                                {{ 'communities.inlineSpeed.trialSeconds' | t }}
+                                <input type="number" min="0.001" max="999999" step="0.001"
+                                  [name]="'speed-trial-seconds-' + skater.playerId"
+                                  [(ngModel)]="speedTrialTimes[skater.playerId]" [disabled]="busy">
+                              </label>
+                            </div>
+                          }
+                          <p class="t-muted">{{ 'communities.inlineSpeed.trialAttestation' | t }}</p>
+                          <button type="button" class="t-btn t-btn-primary"
+                            [disabled]="busy" (click)="recordSpeedTrial()">
+                            {{ 'communities.inlineSpeed.trialSave' | t }}
+                          </button>
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy" (click)="speedTrialOpen = false">
+                            {{ 'communities.tournaments.finalUi.cancel' | t }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
+                  @if (speedTieBreak(proposal.sourceStage); as ruling) {
+                    <p class="notice" [class.notice-error]="ruling.stale"
+                      [class.notice-info]="!ruling.stale" role="status">
+                      {{ (ruling.stale ? 'communities.inlineSpeed.tiebreakStale'
+                        : 'communities.inlineSpeed.tiebreakSaved') | t }}
+                      · {{ ruling.confirmedBy }}
+                    </p>
+                    <p class="t-muted">{{ ruling.reason }}</p>
+                    @if (ruling.evidenceType && ruling.evidenceReference) {
+                      <p class="t-muted">{{ speedEvidenceLabel(ruling.evidenceType) }}
+                        · {{ ruling.evidenceReference }}</p>
+                    }
+                    @if (ruling.trialOrderExceptionReason) {
+                      <p class="notice notice-info">
+                        {{ 'communities.inlineSpeed.trialOrderExceptionAudited' | t }}:
+                        {{ ruling.trialOrderExceptionReason }}
+                      </p>
+                    }
+                    @if (ruling.trialIds?.length) {
+                      <p class="t-muted">
+                        {{ 'communities.inlineSpeed.trialUsedInCurrent' | t }}:
+                        @for (id of ruling.trialIds ?? []; track id) {
+                          <a [attr.href]="'#inline-speed-trial-' + id">#{{ id }}</a>
+                        }
+                      </p>
+                    }
+                    @if (ruling.revisions?.length) {
+                      <details class="t-muted">
+                        <summary>{{ 'communities.inlineSpeed.tieHistory' | t }}
+                          ({{ ruling.revisions?.length }})</summary>
+                        <ol>
+                          @for (revision of ruling.revisions ?? []; track revision.revision) {
+                            <li>
+                              {{ 'communities.inlineSpeed.tieVersion' | t }} {{ revision.revision }}
+                              · {{ revision.confirmedBy }}
+                              · {{ revision.confirmedAt | date:'short' }}
+                              @if (revision.stale) {
+                                · {{ 'communities.inlineSpeed.tieOutdated' | t }}
+                              }
+                              <p>{{ revision.reason }}</p>
+                              @if (revision.trialOrderExceptionReason) {
+                                <p class="t-muted">
+                                  {{ 'communities.inlineSpeed.trialOrderExceptionAudited' | t }}:
+                                  {{ revision.trialOrderExceptionReason }}
+                                </p>
+                              }
+                              @if (revision.evidenceType && revision.evidenceReference) {
+                                <small>{{ speedEvidenceLabel(revision.evidenceType) }}:
+                                  {{ revision.evidenceReference }}</small>
+                              } @else {
+                                <small>{{ 'communities.inlineSpeed.evidence.legacy' | t }}</small>
+                              }
+                              @if (revision.trialIds?.length) {
+                                <p class="t-muted">
+                                  {{ 'communities.inlineSpeed.trialLinkedRevisions' | t }}
+                                  {{ revision.revision }}:
+                                  @for (id of revision.trialIds ?? []; track id) {
+                                    <a [attr.href]="'#inline-speed-trial-' + id">#{{ id }}</a>
+                                  }
+                                </p>
+                              }
+                              <small>{{ 'communities.inlineSpeed.tieSelected' | t }}:
+                                {{ speedTieSkaterNames(revision.selectedPlayerIds) }}</small>
+                            </li>
+                          }
+                        </ol>
+                      </details>
+                    }
+                    @if (speedCanAmendTie(proposal) && !speedTieCorrectionOpen) {
+                      <button type="button" class="t-btn"
+                        [disabled]="busy" (click)="startSpeedTieCorrection(proposal)">
+                        {{ 'communities.inlineSpeed.tieCorrect' | t }}
+                      </button>
+                    }
+                  }
+                  @if (!proposal.ready || (speedTieCorrectionOpen && speedCanAmendTie(proposal))) {
+                    @if ((isSpeedMultiwayTie(proposal) || (speedTieCorrectionOpen && speedCanAmendTie(proposal)))
+                      && canManage && selected.status !== 'COMPLETED') {
+                      <p class="t-muted">{{ 'communities.inlineSpeed.tiebreakIntro' | t }}</p>
+                      <p class="t-muted">{{ 'communities.inlineSpeed.candidates' | t }}:
+                        {{ speedSelections['FIRST']?.length ?? 0 }} / 16</p>
+                      <div class="inline-speed-selection">
+                        @for (skater of speedTieCandidates(); track skater.playerId) {
+                          <label class="inline-speed-selection-row">
+                            <input type="checkbox"
+                              [checked]="speedChosen('FIRST', skater.playerId)"
+                              [disabled]="busy || speedTieGuaranteed(skater)"
+                              (change)="toggleSpeedChosen('FIRST', skater.playerId)">
+                            {{ skater.name }}
+                            <small>({{ skater.seconds }} s)
+                              @if (speedTieGuaranteed(skater)) {
+                                · {{ 'communities.inlineSpeed.tiebreakAlreadyQualified' | t }}
+                              }
+                            </small>
+                          </label>
+                        }
+                      </div>
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.reason' | t }}
+                        <small>{{ 'communities.inlineSpeed.tiebreakEvidenceHint' | t }}</small>
+                        <textarea rows="3" maxlength="500"
+                          [name]="'inline-speed-tiebreak-reason'"
+                          [(ngModel)]="speedReasons['FIRST']" [disabled]="busy"
+                          [placeholder]="'communities.inlineSpeed.reasonPlaceholder' | t"></textarea>
+                      </label>
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.evidenceType' | t }}
+                        <select name="inline-speed-evidence-type" [(ngModel)]="speedEvidenceType"
+                          [disabled]="busy">
+                          <option value="">{{ 'communities.inlineSpeed.evidenceSelect' | t }}</option>
+                          <option value="PHOTO_FINISH">{{ 'communities.inlineSpeed.evidence.PHOTO_FINISH' | t }}</option>
+                          <option value="VIDEO_REVIEW">{{ 'communities.inlineSpeed.evidence.VIDEO_REVIEW' | t }}</option>
+                          <option value="OFFICIAL_MINUTES">{{ 'communities.inlineSpeed.evidence.OFFICIAL_MINUTES' | t }}</option>
+                          <option value="TIEBREAK_TRIAL">{{ 'communities.inlineSpeed.evidence.TIEBREAK_TRIAL' | t }}</option>
+                          <option value="OTHER">{{ 'communities.inlineSpeed.evidence.OTHER' | t }}</option>
+                        </select>
+                      </label>
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.evidenceReference' | t }}
+                        <small>{{ 'communities.inlineSpeed.evidenceReferenceHint' | t }}</small>
+                        <textarea rows="2" maxlength="500" name="inline-speed-evidence-reference"
+                          [(ngModel)]="speedEvidenceReference" [disabled]="busy"></textarea>
+                      </label>
+                      @if (speedAvailableTieTrials().length) {
+                        <fieldset class="inline-speed-trial-links">
+                          <legend>{{ 'communities.inlineSpeed.trialLinkHeading' | t }}</legend>
+                          <p class="t-muted">{{ 'communities.inlineSpeed.trialLinkHint' | t }}</p>
+                          @for (trial of speedAvailableTieTrials(); track trial.id) {
+                            <label class="inline-speed-selection-row">
+                              <input type="checkbox"
+                                [checked]="speedTrialLinked(trial.id)"
+                                [disabled]="busy || (!speedTrialLinked(trial.id) && speedTieTrialIds.length >= 10)"
+                                (change)="toggleSpeedTrialLink(trial.id, !speedTrialLinked(trial.id))">
+                              <span>
+                                #{{ trial.id }} · {{ trial.heldAt | date:'short' }}
+                                · {{ trial.officialReference }}
+                              </span>
+                            </label>
+                          }
+                        </fieldset>
+                      }
+                      @if (speedTrialOrderConflicts().length) {
+                        <div class="notice notice-info" role="status">
+                          <strong>{{ 'communities.inlineSpeed.trialOrderWarning' | t }}</strong>
+                          <p class="t-muted">{{ 'communities.inlineSpeed.trialOrderWarningHint' | t }}</p>
+                          @for (conflict of speedTrialOrderConflicts(); track conflict.trialId + ':' + conflict.chosenId + ':' + conflict.excludedId) {
+                            <p>
+                              #{{ conflict.trialId }} —
+                              {{ speedTieSkaterNames([conflict.chosenId]) }}
+                              ({{ conflict.chosenPlace }}.º)
+                              / {{ speedTieSkaterNames([conflict.excludedId]) }}
+                              ({{ conflict.excludedPlace }}.º)
+                            </p>
+                          }
+                        </div>
+                        <label class="inline-speed-judge-reason">
+                          {{ 'communities.inlineSpeed.trialOrderExceptionReason' | t }}
+                          <textarea rows="3" maxlength="500" name="inline-speed-trial-order-exception"
+                            [(ngModel)]="speedTrialOrderExceptionReason" [disabled]="busy"></textarea>
+                        </label>
+                      }
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="busy || (speedSelections['FIRST']?.length ?? 0) !== 16"
+                        (click)="resolveSpeedTie(proposal)">
+                        {{ 'communities.inlineSpeed.tiebreakConfirm' | t }}
+                      </button>
+                    } @else {
+                      <p class="t-muted">{{ 'communities.inlineSpeed.awaitingHeats' | t }}</p>
+                    }
+                  } @else {
+                    <p class="t-muted">{{ 'communities.inlineSpeed.candidates' | t }}:
+                      {{ proposal.playerIds.length }} / {{ proposal.expectedCount }}</p>
+                    <div class="inline-speed-selection">
+                      @for (skater of speedStageSkaters(proposal.sourceStage); track skater.playerId) {
+                        <label class="inline-speed-selection-row">
+                          <input type="checkbox" [checked]="speedChosen(proposal.sourceStage, skater.playerId)"
+                            [disabled]="busy || !canManage || selected.status === 'COMPLETED' || skater.disqualified"
+                            (change)="toggleSpeedChosen(proposal.sourceStage, skater.playerId)">
+                          {{ skater.name }}
+                          @if (skater.disqualified) {
+                            <small>{{ 'communities.inlineSpeed.dqNotSelectable' | t }}</small>
+                          }
+                        </label>
+                      }
+                    </div>
+                    @if (canManage && selected.status !== 'COMPLETED') {
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.reason' | t }}
+                        @if (proposal.sourceStage === 'FIRST') {
+                          <small>{{ 'communities.inlineSpeed.firstRoundAttestation' | t }}</small>
+                          @if (proposal.targetStage === 'QUARTER') {
+                            <small>{{ 'communities.inlineSpeed.exceptionSeventeenthHint' | t }}</small>
+                          }
+                        }
+                        <textarea rows="2" maxlength="500"
+                          [name]="'inline-speed-reason-' + proposal.sourceStage"
+                          [(ngModel)]="speedReasons[proposal.sourceStage]" [disabled]="busy"
+                          [placeholder]="'communities.inlineSpeed.reasonPlaceholder' | t"></textarea>
+                      </label>
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="busy || !(speedSelections[proposal.sourceStage]?.length)"
+                        (click)="confirmSpeedStage(proposal)">
+                        {{ 'communities.inlineSpeed.confirm' | t }}
+                      </button>
+                    }
+                  }
+                </section>
+              }
+            </section>
+          }
+        } @else if (isRaceCompetition) {
+          @if (!isMember) {
+            <div class="notice notice-info">{{ 'communities.karting.joinToView' | t }}</div>
+          } @else if (detailsLoading) {
+            <p class="t-muted" role="status">{{ 'communities.karting.loading' | t }}</p>
+          } @else if (raceError || !raceOverview) {
+            <div class="notice notice-info" role="status">
+              {{ 'communities.karting.loadError' | t }}
+              <button type="button" class="t-btn t-btn-secondary" (click)="loadRaceOverview()">{{ 'common.retry' | t }}</button>
+            </div>
+          } @else {
+            <section class="t-section race-championship" [attr.aria-label]="'communities.karting.sectionLabel' | t">
+              <div class="t-section-heading">
+                <div>
+                  <h5>{{ raceSportLabel(selected.sport) }} · {{ 'communities.karting.racesTitle' | t }}</h5>
+                  <p>{{ 'communities.karting.racesHelp' | t }}</p>
+                  @if (selected.sport === 'BMX') {
+                    <p>{{ 'communities.race.bmxRacingOnly' | t }}</p>
+                  }
+                  @if (selected.sport === 'Ciclismo de Estrada') {
+                    <p>{{ 'communities.roadCycling.championshipNotice' | t }}</p>
+                  }
+                  @if (selected.sport === 'Ciclismo de Pista') {
+                    <p>{{ 'communities.trackCycling.championshipNotice' | t }}</p>
+                  }
+                  @if (selected.sport === 'Ciclismo' || selected.sport === 'Mountain Bike' || selected.sport === 'Ciclocrosse') {
+                    <p>{{ 'communities.race.communityScoring' | t }}</p>
+                  }
+                </div>
+              </div>
+              @if (selected.status === 'COMPLETED' && finalKartingPodium.length) {
+                <app-karting-podium [tournament]="selected" [podium]="finalKartingPodium"></app-karting-podium>
+              }
+              <div class="race-points-panel">
+                <strong>{{ 'communities.karting.pointsTitle' | t }}</strong>
+                @if (canManage && selected.status === 'DRAFT' && !raceOverview.linkedRaces.length) {
+                  <div class="race-points-editor">
+                    <label for="karting-race-points">{{ 'communities.karting.pointsLabel' | t }}</label>
+                    <input id="karting-race-points" type="text" [(ngModel)]="racePointsDraft"
+                      [disabled]="busy" placeholder="25,18,15,12,10,8,6,4,2,1">
+                    <button type="button" class="t-btn t-btn-secondary" [disabled]="busy"
+                      (click)="saveRacePoints()">{{ 'communities.karting.savePoints' | t }}</button>
+                  </div>
+                } @else {
+                  <p>{{ raceOverview.pointsByPlace.join(' · ') }} {{ 'communities.karting.points' | t }}</p>
+                }
+              </div>
+              @if (!raceOverview.linkedRaces.length) {
+                <p class="t-muted">{{ 'communities.karting.noLinkedRaces' | t }}</p>
+              }
+              @for (race of raceOverview.linkedRaces; track race.id) {
+                <div class="race-round-card">
+                  <div class="race-round-header">
+                    <strong>{{ race.name }}</strong>
+                    <small>{{ race.playedAt | date:'dd/MM/yyyy' }}</small>
+                    @if (canManage && selected.status !== 'COMPLETED') {
+                      <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                        [disabled]="busy" (click)="unlinkTournamentRace(race.id)">{{ 'communities.karting.unlink' | t }}</button>
+                    }
+                  </div>
+                  @if (race.entries.length) {
+                    <app-karting-race-table [race]="race" [sport]="selected.sport" [pointsByPlace]="raceOverview.pointsByPlace"></app-karting-race-table>
+                  } @else {
+                    <p class="t-muted">{{ 'communities.tournaments.kartingNoRecordedResults' | t }}</p>
+                  }
+                </div>
+              }
+              @if (canManage && selected.status !== 'COMPLETED') {
+                <div class="race-available">
+                  <h6>{{ 'communities.karting.addRace' | t }}</h6>
+                  @if (!raceOverview.availableRaces.length) {
+                    <p class="t-muted">{{ 'communities.karting.noAvailableRaces' | t }}</p>
+                  }
+                  @for (race of raceOverview.availableRaces; track race.id) {
+                    <div class="race-available-row">
+                      <span><strong>{{ race.name }}</strong>
+                        <small>{{ race.playedAt | date:'dd/MM/yyyy' }} · {{ race.entries.length }} {{ 'communities.karting.participants' | t }}</small></span>
+                      <button type="button" class="t-btn t-btn-primary t-btn-small" [disabled]="busy"
+                        (click)="linkTournamentRace(race.id)">{{ 'communities.karting.link' | t }}</button>
+                    </div>
+                  }
+                </div>
+              }
+              <app-race-standings-card [standings]="raceOverview.standings"></app-race-standings-card>
+              @if (selected.status === 'COMPLETED') {
+                <div class="race-archive-notice" role="status">
+                  <strong>{{ 'communities.karting.archiveTitle' | t }}</strong>
+                  <p>{{ 'communities.karting.archiveDescription' | t:{date: (selected.completedAt | date:'dd/MM/yyyy') || '—'} }}</p>
+                </div>
+              } @else if (canManage) {
+                <div class="complete-action race-complete-action">
+                  <strong>{{ 'communities.karting.closeTitle' | t }}</strong>
+                  <p>{{ 'communities.karting.closeHelp' | t }}</p>
+                  @if (confirmAction === 'completeRace') {
+                    <div class="confirm-actions">
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="!canCompleteRace" (click)="completeRace()">
+                        {{ 'communities.karting.closeConfirm' | t }}
+                      </button>
+                      <button type="button" class="t-btn t-btn-secondary"
+                        [disabled]="busy" (click)="confirmAction = null">{{ 'communities.tournaments.finalUi.cancel' | t }}</button>
+                    </div>
+                  } @else {
+                    <button type="button" class="t-btn t-btn-primary"
+                      [disabled]="!canCompleteRace"
+                      (click)="confirmAction = 'completeRace'">{{ 'communities.karting.closeAction' | t }}</button>
+                    @if (!canCompleteRace) {
+                      <p class="field-validation" role="status">{{ 'communities.karting.closeDisabled' | t }}</p>
+                    }
+                  }
+                </div>
+              }
+            </section>
+          }
         } @else if (!isMember) {
           <div class="notice notice-info" role="status">
-            Para consultar jogadores, jornadas e classificações, adere primeiro a esta comunidade.
-            Podes fazê-lo na área de apresentação da comunidade.
+            {{ 'communities.tournaments.individualUi.joinNotice' | t }}
           </div>
         } @else if (detailsLoading) {
-          <p class="t-muted" role="status">A carregar participantes, jornadas e classificação…</p>
+          <p class="t-muted" role="status">{{ 'communities.tournaments.individualUi.loading' | t }}</p>
         } @else {
-          <section class="t-section" aria-label="Inscrições">
+          <section class="t-section" [attr.aria-label]="'communities.tournaments.individualUi.playersRegion' | t">
             <div class="t-section-heading">
               <div>
-                <h5 #playersHeading tabindex="-1">Participantes</h5>
-                <p>{{ confirmedCount }} confirmados nesta lista · {{ participants.length }} inscrições apresentadas</p>
+                <h5 #playersHeading tabindex="-1">{{ 'communities.tournaments.individualUi.playersHeading' | t }}</h5>
+                <p>{{ 'communities.tournaments.individualUi.playersSummary' | t:{confirmed:confirmedCount,total:participants.length} }}</p>
               </div>
               @if (selected.status === 'DRAFT') {
                 @if (myEnrollment) {
                   <button type="button" class="t-btn t-btn-secondary"
-                    [disabled]="busy" (click)="leave()">Cancelar a minha inscrição</button>
+                    [disabled]="busy" (click)="leave()">{{ 'communities.tournaments.individualUi.leave' | t }}</button>
                 } @else if (participantsHasMore) {
-                  <span class="t-muted">Consulta as restantes inscrições para verificar se já estás inscrito.</span>
+                  <span class="t-muted">{{ 'communities.tournaments.individualUi.enrollHelp' | t }}</span>
                 } @else {
                   <button type="button" class="t-btn t-btn-primary"
-                    [disabled]="busy" (click)="join()">Pedir inscrição</button>
+                    [disabled]="busy" (click)="join()">{{ 'communities.tournaments.individualUi.join' | t }}</button>
                 }
               }
             </div>
             @if (!participants.length) {
-              <p class="t-muted">Ainda não existem inscrições neste torneio.</p>
+              <p class="t-muted">{{ 'communities.tournaments.individualUi.emptyPlayers' | t }}</p>
             }
             <div class="players-list">
               @for (person of participants; track person.profileId) {
@@ -662,12 +1585,12 @@
                     <div class="player-actions">
                       @if (person.status === 'PENDING') {
                         <button type="button" class="t-btn t-btn-primary t-btn-small"
-                          [attr.aria-label]="'Confirmar inscrição de ' + (person.displayName || person.username)"
-                          [disabled]="busy" (click)="confirm(person)">Confirmar</button>
+                          [attr.aria-label]="'communities.tournaments.individualUi.confirmAria' | t:{player:(person.displayName || person.username)}"
+                          [disabled]="busy" (click)="confirm(person)">{{ 'communities.tournaments.individualUi.confirm' | t }}</button>
                       }
                       <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                        [attr.aria-label]="'Remover ' + (person.displayName || person.username) + ' do torneio'"
-                        [disabled]="busy" (click)="remove(person)">Remover</button>
+                        [attr.aria-label]="'communities.tournaments.individualUi.removeAria' | t:{player:(person.displayName || person.username)}"
+                        [disabled]="busy" (click)="remove(person)">{{ 'communities.tournaments.individualUi.remove' | t }}</button>
                     </div>
                   }
                 </div>
@@ -675,53 +1598,53 @@
             </div>
             @if (participantsHasMore) {
               <button type="button" class="t-btn t-btn-secondary"
-                [disabled]="busy" (click)="loadMoreParticipants()">Ver mais jogadores</button>
+                [disabled]="busy" (click)="loadMoreParticipants()">{{ 'communities.tournaments.individualUi.loadMorePlayers' | t }}</button>
             }
             @if (canManage && selected.status === 'DRAFT') {
               <div class="schedule-action">
                 <div>
-                  <strong>Pronto para começar?</strong>
-                  <p>Publicar o calendário fecha as inscrições e cria todos os confrontos da liga.</p>
+                  <strong>{{ 'communities.tournaments.individualUi.ready' | t }}</strong>
+                  <p>{{ 'communities.tournaments.individualUi.publishHelp' | t }}</p>
                   @if (participantsHasMore) {
                     <p class="field-validation" role="status">
-                      Carrega todas as inscrições antes de publicar o calendário.
+                      {{ 'communities.tournaments.individualUi.rosterPage' | t }}
                     </p>
                   } @else if (rosterReady && confirmedCount > 32) {
                     <p class="field-validation" role="status">
-                      Esta versão permite no máximo 32 jogadores confirmados. Remove jogadores antes de continuar.
+                      {{ 'communities.tournaments.individualUi.maxPlayers' | t }}
                     </p>
                   } @else if (rosterReady && confirmedCount < 2) {
-                    <p class="t-muted">Confirma pelo menos dois jogadores para iniciar a liga.</p>
+                    <p class="t-muted">{{ 'communities.tournaments.individualUi.minimumPlayers' | t }}</p>
                   }
                 </div>
                 @if (confirmAction === 'schedule') {
                   <div class="confirm-actions">
                     <button type="button" class="t-btn t-btn-primary"
-                      [disabled]="!canPublishSchedule" (click)="publishSchedule()">Sim, publicar calendário</button>
-                    <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">Cancelar</button>
+                      [disabled]="!canPublishSchedule" (click)="publishSchedule()">{{ 'communities.tournaments.individualUi.publishConfirm' | t }}</button>
+                    <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">{{ 'communities.tournaments.individualUi.cancel' | t }}</button>
                   </div>
                 } @else {
                   <button type="button" class="t-btn t-btn-primary"
                     [disabled]="!canPublishSchedule"
-                    (click)="confirmAction = 'schedule'">Gerar jornadas</button>
+                    (click)="confirmAction = 'schedule'">{{ 'communities.tournaments.individualUi.publish' | t }}</button>
                 }
               </div>
             }
           </section>
 
           @if (selected.status !== 'DRAFT') {
-            <section class="t-section" aria-label="Jornadas">
+            <section class="t-section" [attr.aria-label]="'communities.tournaments.individualUi.fixturesRegion' | t">
               <div class="t-section-heading">
                 <div>
-                  <h5>Confrontos e resultados</h5>
-                  <p>Os resultados destes confrontos atualizam a classificação individual desta competição.</p>
+                  <h5>{{ 'communities.tournaments.individualUi.fixturesHeading' | t }}</h5>
+                  <p>{{ 'communities.tournaments.individualUi.fixturesHelp' | t }}</p>
                 </div>
               </div>
-              @if (!matches.length) { <p class="t-muted">Não existem jogos para apresentar.</p> }
+              @if (!matches.length) { <p class="t-muted">{{ 'communities.tournaments.individualUi.emptyMatches' | t }}</p> }
               <div class="match-list">
                 @for (match of matches; track match.id) {
                   <article class="match-card">
-                    <span class="match-round">Jornada {{ match.roundNumber }}</span>
+                    <span class="match-round">{{ 'communities.tournaments.stageUi.leagueRound' | t:{round:match.roundNumber} }}</span>
                     <div class="match-teams">
                       <strong>&#64;{{ match.homeUsername }}</strong>
                       <span class="vs">VS</span>
@@ -729,8 +1652,21 @@
                     </div>
                     @if (canManage && selected.status === 'IN_PROGRESS') {
                       <div class="score-edit">
+                        @if (isChessTournament) {
+                          <label class="chess-outcome">
+                            <span>{{ 'communities.tournaments.individualUi.chessResult' | t }}</span>
+                            <select [ngModel]="chessOutcome(match)"
+                              (ngModelChange)="setChessOutcome(match, $event)"
+                              [disabled]="busy" [attr.aria-label]="'communities.tournaments.individualUi.chessResultAria' | t:{home:match.homeUsername,away:match.awayUsername}">
+                              <option value="">{{ 'communities.tournaments.individualUi.chessPlaceholder' | t }}</option>
+                              <option value="WHITE">{{ 'communities.tournaments.individualUi.whiteWin' | t:{player:match.homeUsername} }}</option>
+                              <option value="DRAW">{{ 'communities.tournaments.individualUi.chessDraw' | t }}</option>
+                              <option value="BLACK">{{ 'communities.tournaments.individualUi.blackWin' | t:{player:match.awayUsername} }}</option>
+                            </select>
+                          </label>
+                        } @else {
                         <label>
-                          <span>Casa</span>
+                          <span>{{ 'communities.tournaments.individualUi.home' | t }}</span>
                           <input type="number" min="0" max="999" step="1"
                             [ngModel]="scoreDraft(match).home"
                             (ngModelChange)="setScore(match, 'home', $event)"
@@ -740,7 +1676,7 @@
                         </label>
                         <span class="score-separator">:</span>
                         <label>
-                          <span>Fora</span>
+                          <span>{{ 'communities.tournaments.individualUi.away' | t }}</span>
                           <input type="number" min="0" max="999" step="1"
                             [ngModel]="scoreDraft(match).away"
                             (ngModelChange)="setScore(match, 'away', $event)"
@@ -748,19 +1684,20 @@
                             [attr.aria-describedby]="isScoreInvalid(match) ? 'match-score-error-' + match.id : null"
                             [disabled]="busy" [attr.aria-label]="scoring.scoreInput + ' ' + match.awayUsername">
                         </label>
+                        }
                         <button class="t-btn t-btn-primary t-btn-small" type="button"
-                          [attr.aria-label]="(match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado da jornada ' + match.roundNumber + ' entre ' + match.homeUsername + ' e ' + match.awayUsername"
-                          [disabled]="busy || !validScore(scoreDraft(match).home) || !validScore(scoreDraft(match).away)"
-                          (click)="saveScore(match)">{{ match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}</button>
+                          [attr.aria-label]="(match.status === 'COMPLETED' ? 'communities.tournaments.individualUi.correctAria' : 'communities.tournaments.individualUi.saveAria') | t:{round:match.roundNumber,home:match.homeUsername,away:match.awayUsername}"
+                          [disabled]="busy || !validTournamentScore(match)"
+                          (click)="saveScore(match)">{{ (match.status === 'COMPLETED' ? 'communities.tournaments.individualUi.correct' : 'communities.tournaments.individualUi.save') | t }}</button>
                       </div>
                       @if (isScoreInvalid(match)) {
                         <p class="field-validation" [id]="'match-score-error-' + match.id" role="status">
-                          Indica dois marcadores inteiros entre 0 e 999.
+                          {{ (isChessTournament ? 'communities.tournaments.individualUi.chessInvalid' : 'communities.tournaments.individualUi.scoreInvalid') | t }}
                         </p>
                       }
                     } @else {
                       <strong class="match-score">
-                        {{ match.status === 'COMPLETED' ? match.homeScore + ' : ' + match.awayScore : 'Por disputar' }}
+                        {{ match.status === 'COMPLETED' ? displayTournamentResult(match) : ('communities.tournaments.individualUi.pending' | t) }}
                       </strong>
                     }
                   </article>
@@ -768,35 +1705,39 @@
               </div>
               @if (matchesHasMore) {
                 <button type="button" class="t-btn t-btn-secondary"
-                  [disabled]="busy" (click)="loadMoreMatches()">Carregar mais jogos</button>
+                  [disabled]="busy" (click)="loadMoreMatches()">{{ 'communities.tournaments.individualUi.loadMoreMatches' | t }}</button>
               }
             </section>
           }
 
-          <section class="t-section" aria-label="Classificação do torneio">
+          <section class="t-section" [attr.aria-label]="'communities.tournaments.individualUi.standingsRegion' | t">
             <div class="t-section-heading">
               <div>
-                <h5>Classificação</h5>
-                <p>Classificação apenas desta competição: pontos, {{ scoring.differenceTitle.toLowerCase() }}, {{ scoring.forTitle.toLowerCase() }} e vitórias.</p>
+                <h5>{{ 'communities.tournaments.individualUi.standings' | t }}</h5>
+                <p>{{ isChessTournament
+                  ? ('communities.tournaments.individualUi.chessHelp' | t)
+                  : ('communities.tournaments.individualUi.generalHelp' | t:{difference:scoring.differenceTitle.toLowerCase(),forScore:scoring.forTitle.toLowerCase()}) }}</p>
               </div>
               @if (standings) {
-                <span class="tournament-state">{{ standings.completedMatches }} / {{ standings.totalMatches }} confrontos concluídos</span>
+                <span class="tournament-state">{{ 'communities.tournaments.individualUi.completed' | t:{completed:standings.completedMatches,total:standings.totalMatches} }}</span>
               }
             </div>
             @if (standings?.standings?.length) {
               <div class="standings-scroll">
-                <table class="standings-table" aria-label="Classificação do torneio">
+                <table class="standings-table" [attr.aria-label]="'communities.tournaments.individualUi.standingsRegion' | t">
                   <thead>
                     <tr>
-                      <th scope="col">#</th><th scope="col">Participante</th>
-                      <th scope="col" title="Jogos">J</th>
-                      <th scope="col" title="Vitórias">V</th>
-                      <th scope="col" title="Empates">E</th>
-                      <th scope="col" title="Derrotas">D</th>
-                      <th scope="col" [title]="scoring.forTitle">{{ scoring.forAbbrev }}</th>
-                      <th scope="col" [title]="scoring.againstTitle">{{ scoring.againstAbbrev }}</th>
-                      <th scope="col" [title]="scoring.differenceTitle">{{ scoring.differenceAbbrev }}</th>
-                      <th scope="col">Pts</th>
+                      <th scope="col">#</th><th scope="col">{{ 'communities.tournaments.individualUi.playerCol' | t }}</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th>
+                      @if (!isChessTournament) {
+                        <th scope="col" [title]="scoring.forTitle">{{ scoring.forAbbrev }}</th>
+                        <th scope="col" [title]="scoring.againstTitle">{{ scoring.againstAbbrev }}</th>
+                        <th scope="col" [title]="scoring.differenceTitle">{{ scoring.differenceAbbrev }}</th>
+                      }
+                      <th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -806,37 +1747,41 @@
                         <th scope="row">{{ playerLabel(row) }}</th>
                         <td>{{ row.played }}</td><td>{{ row.won }}</td>
                         <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>
-                        <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
-                        <td>{{ row.goalDifference }}</td><td class="points-cell">{{ row.points }}</td>
+                        @if (!isChessTournament) {
+                          <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                          <td>{{ row.goalDifference }}</td>
+                        }
+                        <td class="points-cell">{{ formatTournamentPoints(row.points) }}</td>
                       </tr>
                     }
                   </tbody>
                 </table>
               </div>
             } @else {
-              <p class="t-muted">A classificação aparece quando houver jogadores confirmados.</p>
+              <p class="t-muted">{{ 'communities.tournaments.individualUi.emptyStandings' | t }}</p>
             }
           </section>
 
           @if (canManage && selected.status === 'IN_PROGRESS') {
             <div class="complete-action">
               <div>
-                <h5>Encerrar torneio</h5>
-                <p>Depois de concluído, os resultados ficam bloqueados e o campeão é registado.</p>
+                <h5>{{ 'communities.tournaments.finalUi.completeIndividualTitle' | t }}</h5>
+                <p>{{ 'communities.tournaments.finalUi.completeIndividualHelp' | t }}</p>
               </div>
               @if (confirmAction === 'complete') {
                 <div class="confirm-actions">
                   <button type="button" class="t-btn t-btn-primary" [disabled]="busy || !canComplete"
-                    (click)="complete()">Sim, encerrar</button>
-                  <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">Cancelar</button>
+                    (click)="complete()">{{ 'communities.tournaments.finalUi.completeIndividualConfirm' | t }}</button>
+                  <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">{{ 'communities.tournaments.finalUi.cancel' | t }}</button>
                 </div>
               } @else {
                 <button type="button" class="t-btn t-btn-secondary"
                   [disabled]="busy || !canComplete"
-                  (click)="confirmAction = 'complete'">Encerrar torneio</button>
+                  (click)="confirmAction = 'complete'">{{ 'communities.tournaments.finalUi.completeIndividualTitle' | t }}</button>
               }
             </div>
           }
+        }
         }
       }
     </div>

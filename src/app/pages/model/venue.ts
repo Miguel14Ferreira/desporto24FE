@@ -1,6 +1,11 @@
 export type VenueOwnershipType = 'PUBLIC' | 'PRIVATE';
 export type VenueInformationSource = 'COMMUNITY' | 'OFFICIAL' | 'OPENSTREETMAP';
 export type VenueEnvironmentType = 'INDOOR' | 'OUTDOOR' | 'BOTH';
+/** Additive API field; absent while older backend versions are LIVE. */
+export type VenueLocationStatus =
+  | 'GPS_ONLY_ADDRESS_UNKNOWN'
+  | 'ADDRESS_PROVIDED_UNVERIFIED'
+  | 'LOCATION_UNKNOWN';
 
 export interface Venue {
   id: number;
@@ -8,6 +13,7 @@ export interface Venue {
   city: string;
   district?: string | null;
   address: string;
+  locationStatus?: VenueLocationStatus;
   sports: string | null;
   venueType: string | null;
   ownershipType: VenueOwnershipType | null;
@@ -57,7 +63,7 @@ export interface CreateVenueRequest {
   name: string;
   city: string;
   district?: string | null;
-  address: string;
+  address: string | null;
   sports: string | null;
   venueType?: string | null;
   ownershipType?: VenueOwnershipType | null;

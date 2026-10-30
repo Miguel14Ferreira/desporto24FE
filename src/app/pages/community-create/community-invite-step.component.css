@@ -132,3 +132,23 @@ h1 { margin: 1rem 0 .65rem; font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 
   font-size: .78rem; font-weight: 800;
 }
 @media (max-width: 560px) { .competition-onboarding-option { min-height: 0; } }
+
+/* Optional third onboarding step: pick a real venue after competition setup. */
+.venue-onboarding-choices {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+.venue-onboarding-choice {display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:100px;padding:16px;border:1px solid #497183;border-radius:14px;background:#123646;color:#effffc;text-align:left;font:inherit;cursor:pointer}
+.venue-onboarding-choice strong {font-weight:850;font-size:1rem}
+.venue-onboarding-choice span {font-size:.88rem;color:#bad6dd;line-height:1.5}
+.venue-onboarding-choice.selected {border-color:#40e1c3;background:#15534f}
+.venue-onboarding-choice:focus-visible {outline:2px solid #a5fce6;outline-offset:3px}
+.venue-onboarding-picker {margin-top:20px;padding:clamp(12px,2vw,20px);border:1px solid #326978;border-radius:16px;background:#0b2d3e}
+@media(max-width:600px){.venue-onboarding-choices{grid-template-columns:1fr}}
+
+/* Reuse the session-creation location picker after the competition step. */
+.venue-onboarding-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+.venue-onboarding-choice{display:flex;min-width:0;min-height:112px;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;padding:17px;border:1px solid rgba(125,211,252,.28);border-radius:15px;background:#103242;color:#f0ffff;font:inherit;cursor:pointer}
+.venue-onboarding-choice strong{font-size:1rem}
+.venue-onboarding-choice span{color:#b5d6df;line-height:1.45;font-size:.88rem}
+.venue-onboarding-choice.selected{background:rgba(20,116,98,.28);border-color:#39e5c1}
+.venue-onboarding-choice:focus-visible{outline:2px solid #99f5df;outline-offset:3px}
+.venue-onboarding-picker{border:1px solid rgba(61,194,179,.26);border-radius:16px;padding:clamp(14px,2vw,20px);background:#0c2939}
+@media(max-width:560px){.venue-onboarding-choices{grid-template-columns:1fr}.venue-onboarding-choice{min-height:0}}

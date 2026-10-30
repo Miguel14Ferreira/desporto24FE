@@ -5,10 +5,10 @@ import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
-import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
+import { DeviceSession, MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { SPORTS_CATALOG, sportIcon } from '../../shared/sports-catalog';
-import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { COUNTRY_CALLING_CODES, COUNTRY_SELECT_CHOICES, countryNameFromLabel } from '../../shared/country-calling-codes';
 import { calculateProfileCompletion } from '../../shared/profile-completion';
 
 @Component({
@@ -20,6 +20,13 @@ import { calculateProfileCompletion } from '../../shared/profile-completion';
 })
 export class AlterardadosComponent implements OnInit {
   profile?: MyProfile;
+  deviceSessions: DeviceSession[] = [];
+  deviceSessionsLoading = false;
+  deviceSessionsError = '';
+  revokingDeviceId: string | null = null;
+  pendingRevokeId: string | null = null;
+  pendingRevokeOtherDevices = false;
+  revokingOtherDevices = false;
   photo?: File;
   photoPreview = '';
 
@@ -41,12 +48,14 @@ export class AlterardadosComponent implements OnInit {
   successMessage = '';
   toastMessage = '';
   sportQuery = '';
+  sportFeedbackKey = '';
   selectedSports: string[] = [];
   sportSuggestions: string[] = [];
   fieldErrors: Partial<Record<'email' | 'dateOfBirth' | 'country' | 'phone' | 'bio', string>> = {};
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly iconForSport = sportIcon;
   readonly countryOptions = COUNTRY_CALLING_CODES;
+  readonly countrySelectChoices = COUNTRY_SELECT_CHOICES;
   private toastTimer?: ReturnType<typeof setTimeout>;
 
   readonly maxBirthDate = this.dateYearsAgo(18);
@@ -60,6 +69,85 @@ export class AlterardadosComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadDeviceSessions();
+  }
+
+  get hasOtherDeviceSessions(): boolean {
+    return this.deviceSessions.some(session => session.current)
+      && this.deviceSessions.some(session => !session.current);
+  }
+
+  confirmRevokeOtherDevices(): void {
+    if (this.revokingOtherDevices || this.revokingDeviceId || !this.hasOtherDeviceSessions) return;
+    this.pendingRevokeOtherDevices = true;
+  }
+
+  cancelRevokeOtherDevices(): void {
+    if (!this.revokingOtherDevices) this.pendingRevokeOtherDevices = false;
+  }
+
+  revokeOtherDevices(): void {
+    if (!this.pendingRevokeOtherDevices || !this.hasOtherDeviceSessions
+        || this.revokingOtherDevices || this.revokingDeviceId) return;
+    this.revokingOtherDevices = true;
+    this.deviceSessionsError = '';
+    this.myProfileService.revokeOtherDeviceSessions()
+      .pipe(timeout(10_000), finalize(() => this.revokingOtherDevices = false))
+      .subscribe({
+        next: () => {
+          this.deviceSessions = this.deviceSessions.filter(session => session.current);
+          this.pendingRevokeOtherDevices = false;
+          this.pendingRevokeId = null;
+          this.showToast(t('profile.sessions.othersRevoked'));
+        },
+        error: () => this.deviceSessionsError = t('profile.sessions.othersError')
+      });
+  }
+
+  loadDeviceSessions(): void {
+    this.deviceSessionsLoading = true;
+    this.deviceSessionsError = '';
+    this.myProfileService.getDeviceSessions()
+      .pipe(timeout(10_000), finalize(() => this.deviceSessionsLoading = false))
+      .subscribe({
+        next: sessions => {
+          this.deviceSessions = sessions;
+          this.pendingRevokeOtherDevices = false;
+          this.pendingRevokeId = null;
+        },
+        error: () => this.deviceSessionsError = t('profile.sessions.loadError')
+      });
+  }
+
+  confirmRevokeDevice(id: string): void {
+    if (this.revokingOtherDevices) return;
+    if (this.revokingDeviceId) return;
+    this.pendingRevokeId = id;
+  }
+
+  cancelRevokeDevice(): void {
+    this.pendingRevokeId = null;
+  }
+
+  revokeDevice(session: DeviceSession): void {
+    if (this.revokingOtherDevices) return;
+    if (this.pendingRevokeId !== session.id || this.revokingDeviceId) return;
+    this.revokingDeviceId = session.id;
+    this.deviceSessionsError = '';
+    this.myProfileService.revokeDeviceSession(session.id)
+      .pipe(timeout(10_000), finalize(() => this.revokingDeviceId = null))
+      .subscribe({
+        next: () => {
+          if (session.current) {
+            this.authenticationService.logOut();
+            return;
+          }
+          this.deviceSessions = this.deviceSessions.filter(item => item.id !== session.id);
+          this.pendingRevokeId = null;
+          this.showToast(t('profile.sessions.revoked'));
+        },
+        error: () => this.deviceSessionsError = t('profile.sessions.revokeError')
+      });
   }
 
   load(): void {
@@ -249,6 +337,7 @@ export class AlterardadosComponent implements OnInit {
     }
 
     this.selectedSports = [...this.selectedSports, sport];
+    this.sportFeedbackKey = 'profile.favoriteSportsAdded';
     this.sportQuery = '';
     this.syncFavoriteSports();
     this.updateSportSuggestions();
@@ -256,6 +345,7 @@ export class AlterardadosComponent implements OnInit {
 
   removeSport(sport: string): void {
     this.selectedSports = this.selectedSports.filter(item => item !== sport);
+    this.sportFeedbackKey = 'profile.favoriteSportsRemoved';
     this.syncFavoriteSports();
     this.updateSportSuggestions();
   }
@@ -274,7 +364,7 @@ export class AlterardadosComponent implements OnInit {
     if (exactMatch) {
       this.addSport(exactMatch);
     } else {
-      this.sportQuery = '';
+      this.sportFeedbackKey = 'profile.favoriteSportsNotFound';
       this.updateSportSuggestions();
     }
   }

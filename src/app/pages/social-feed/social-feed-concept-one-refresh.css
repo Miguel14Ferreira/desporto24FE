@@ -1,0 +1,27 @@
+:host { --feed-teal:#28debf; --feed-border:rgba(93,181,189,.26); }
+.feed-page {background:radial-gradient(ellipse at 85% 7%,rgba(29,150,146,.16),transparent 44%),linear-gradient(165deg,#061b29,#092a3a 63%,#071e2e);color:#f0fbfe;}
+.feed-shell {width:min(1340px,100%);}
+.feed-layout {grid-template-columns:minmax(0,1fr) minmax(265px,310px);gap:15px;}
+.page-header {margin-bottom:1.3rem;}
+.page-header h1 {letter-spacing:-.035em;color:#f2ffff;}
+.page-header .eyebrow,.week-hub-eyebrow {color:var(--feed-teal);}
+.page-header .subtitle {color:#bed9e2;}
+.composer,.feed-card,.state-card,.feed-discovery-card,.feed-suggested-sessions,.week-hub-card,.week-recruit {border-color:var(--feed-border);border-radius:18px;background:linear-gradient(155deg,rgba(17,54,70,.97),rgba(8,38,53,.97));box-shadow:0 12px 32px rgba(0,16,27,.18);}
+.feed-card {padding:1.15rem;}
+.composer {padding:1.15rem;}
+.composer textarea {background:#082737;border:1px solid #3a6c79;border-radius:12px;color:#edfffd;}
+.composer textarea:focus {border-color:var(--feed-teal);}
+.feed-page .jynlo-action--primary,.feed-page .jynlo-action--accent {--jynlo-action-border:rgba(40,222,191,.63);--jynlo-action-bg:rgba(40,222,191,.16);--jynlo-action-hover:rgba(40,222,191,.25);--jynlo-action-text:#91fae4;}
+.feed-author-link:hover .author-copy strong,.feed-author-link:focus-visible .author-copy strong {color:var(--feed-teal);}
+.avatar,.feed-suggested-avatar {background:linear-gradient(155deg,#235b66,#18485c);color:#a4f7e6;}
+.post-content {color:#e2f0f4;}
+.feed-suggested-person,.state-card .feed-suggested-session,.session-preview {border-color:rgba(85,177,179,.25);background:rgba(18,71,81,.25);border-radius:14px;}
+.feed-suggested-person:hover,.session-preview:hover {border-color:rgba(40,222,191,.64);background:rgba(20,92,96,.33);}
+.session-preview {border-left:3px solid var(--feed-teal);}
+.session-preview>div:last-child strong {background:var(--feed-teal);color:#083637;}
+.activity-label {background:rgba(40,222,191,.13);color:#94f6df;}
+.week-card-link,.feed-suggested-link-label {color:#65e5d2;}
+.feed-page a:focus-visible,.feed-page button:focus-visible,.feed-page input:focus-visible {outline:2px solid #95f5df;outline-offset:2px;}
+@media(max-width:960px){.feed-layout {grid-template-columns:1fr;}.feed-shell {width:min(800px,100%);}}
+@media(max-width:600px){.feed-page {padding-inline:12px;}.feed-card,.composer {padding:.85rem;}}
+@media(prefers-reduced-motion:reduce){.feed-suggested-person,.session-preview {transition:none;}.session-preview:hover {transform:none;}}

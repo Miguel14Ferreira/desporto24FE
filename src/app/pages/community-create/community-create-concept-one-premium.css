@@ -1,0 +1,86 @@
+/* Concept One Premium — community onboarding. No changes to form controls. */
+:host {--community-accent:#28debf;--community-border:rgba(97,184,185,.27);}
+.create-community-page.jynlo-community-create-premium {
+  background:radial-gradient(ellipse at 82% 5%,rgba(29,151,145,.16),transparent 44%),
+    linear-gradient(165deg,#061b29,#092a3a 63%,#071e2e);color:#f0fbfe;
+}
+.jynlo-community-create-premium .create-shell {width:min(1040px,100%);}
+.jynlo-community-create-premium .create-header {
+  gap:1.5rem;padding:clamp(1.25rem,3vw,2rem);
+  border:1px solid var(--community-border);border-radius:20px;
+  background:linear-gradient(115deg,rgba(17,74,81,.85),rgba(10,44,60,.93));
+  box-shadow:0 16px 38px rgba(0,15,27,.18);
+}
+.jynlo-community-create-premium .create-header h1 {letter-spacing:-.04em;line-height:1.1;}
+.jynlo-community-create-premium .eyebrow,
+.jynlo-community-create-premium .step {color:#80f4dd;}
+.jynlo-community-create-premium .create-header>div>p:last-child {color:#c0dce3;line-height:1.6;}
+.jynlo-community-create-premium .create-panel,
+.jynlo-community-create-premium .feedback {
+  border:1px solid var(--community-border);border-radius:20px;
+  background:linear-gradient(155deg,rgba(17,54,70,.97),rgba(8,38,53,.97));
+  box-shadow:0 14px 36px rgba(0,16,27,.2);
+}
+.jynlo-community-create-premium .create-panel {padding:clamp(1.15rem,3vw,2rem);}
+.jynlo-community-create-premium .panel-heading {border-bottom-color:rgba(100,180,184,.2);}
+.jynlo-community-create-premium .panel-heading h2 {letter-spacing:-.025em;color:#f3fffe;}
+.jynlo-community-create-premium .panel-heading>p,
+.jynlo-community-create-premium .community-photo-copy>p,
+.jynlo-community-create-premium .field-help,
+.jynlo-community-create-premium .creation-note p {color:#b7d5de;}
+.jynlo-community-create-premium .community-photo-field {border-bottom-color:rgba(100,180,184,.18);}
+.jynlo-community-create-premium .community-photo-preview {
+  border:1px solid rgba(40,222,191,.34);border-radius:17px;
+  background:linear-gradient(135deg,rgba(40,222,191,.18),rgba(40,135,149,.15));color:#a1fbe6;
+}
+.jynlo-community-create-premium .form-grid input,
+.jynlo-community-create-premium .form-grid textarea,
+.jynlo-community-create-premium .form-grid select {
+  border-color:#3c6e7b;background:#092737;color:#f4ffff;border-radius:12px;
+}
+.jynlo-community-create-premium .form-grid input:focus-visible,
+.jynlo-community-create-premium .form-grid textarea:focus-visible,
+.jynlo-community-create-premium .form-grid select:focus-visible {
+  outline:2px solid #9af8e1;outline-offset:2px;border-color:#4ce8c9;
+}
+.jynlo-community-create-premium .creation-note {
+  border:1px solid rgba(40,222,191,.22);border-radius:14px;
+  background:rgba(40,222,191,.07);
+}
+/* The quota banner and the setup form are independent panels.
+   Give them breathing room, without affecting notes inside the form. */
+.jynlo-community-create-premium .creation-note[role="status"] + .create-panel {
+  margin-block-start:24px;
+}
+.jynlo-community-create-premium .note-icon {background:rgba(40,222,191,.15);color:#9bf7e1;}
+.jynlo-community-create-premium .sport-tag {
+  border-color:rgba(40,222,191,.45);background:rgba(40,222,191,.12);color:#a6fbe7;
+}
+.jynlo-community-create-premium .sport-suggestions button {
+  border-color:rgba(97,184,185,.32);background:#12394a;border-radius:11px;
+}
+.jynlo-community-create-premium .sport-suggestions button:hover,
+.jynlo-community-create-premium .sport-suggestions button:focus-visible {
+  outline:2px solid #91f5df;outline-offset:2px;border-color:#28debf;
+}
+.jynlo-community-create-premium .jynlo-action--primary {
+  --jynlo-action-border:rgba(40,222,191,.65);
+  --jynlo-action-bg:rgba(40,222,191,.17);
+  --jynlo-action-hover:rgba(40,222,191,.28);
+  --jynlo-action-text:#95f8e2;
+}
+.jynlo-community-create-premium a:focus-visible,
+.jynlo-community-create-premium button:focus-visible,
+.jynlo-community-create-premium .photo-picker:focus-within {
+  outline:2px solid #9af8e1;outline-offset:3px;
+}
+@media(max-width:720px){
+  .jynlo-community-create-premium .create-header {padding:1.1rem;}
+  .jynlo-community-create-premium .create-header>button {width:100%;}
+  .jynlo-community-create-premium .create-panel {padding:1.1rem;}
+  .jynlo-community-create-premium .creation-note[role="status"] + .create-panel {margin-block-start:20px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .jynlo-community-create-premium button,
+  .jynlo-community-create-premium input {transition:none;}
+}

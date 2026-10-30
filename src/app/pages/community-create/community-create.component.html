@@ -1,4 +1,4 @@
-<section class="create-community-page">
+<section class="create-community-page jynlo-c1 jynlo-secondary jynlo-community-create-premium">
   <div class="create-shell">
     <header class="create-header">
       <div>
@@ -14,6 +14,18 @@
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
+    }
+
+    @if (quota) {
+      <section class="creation-note" role="status">
+        <span class="note-icon">◎</span>
+        <div>
+          <strong>{{ 'communityCreate.quotaOwned' | t:{ count: quota.owned, limit: quota.limit } }}</strong>
+          @if (!quota.canCreate) {
+            <p class="feedback error-feedback">{{ 'communityCreate.quotaReached' | t }}</p>
+          }
+        </div>
+      </section>
     }
 
     <form class="create-panel" (ngSubmit)="create()">
@@ -69,14 +81,14 @@
         </label>
 
         <div class="field-group sport-selection full-width">
-          <label for="community-sport-search">Modalidades da comunidade (opcional)</label>
-          <p class="field-help">Escolhe uma ou várias modalidades. Também podes começar sem nenhuma e adicionar mais tarde.</p>
+          <label for="community-sport-search">{{ 'communityCreate.sportsLabel' | t }}</label>
+          <p class="field-help">{{ 'communityCreate.sportsHint' | t }}</p>
           @if (sports.length) {
-            <div class="sport-tags" aria-label="Modalidades selecionadas">
+            <div class="sport-tags" [attr.aria-label]="'communityCreate.selectedSports' | t">
               @for (item of sports; track item) {
                 <span class="sport-tag">{{ item }}
                   <button type="button" [disabled]="saving"
-                    [attr.aria-label]="'Remover ' + item" (click)="removeSport(item)">×</button>
+                    [attr.aria-label]="'communityCreate.removeSport' | t:{ sport: item }" (click)="removeSport(item)">×</button>
                 </span>
               }
             </div>
@@ -84,9 +96,9 @@
           <input id="community-sport-search" name="sportSearch"
             [(ngModel)]="sportSearch" autocomplete="off"
             [disabled]="saving || sports.length >= 128"
-            placeholder="Pesquisar modalidade, ex.: padel">
+            [placeholder]="'communityCreate.sportSearchPlaceholder' | t">
           @if (sportSuggestions.length) {
-            <div class="sport-suggestions" role="group" aria-label="Sugestões de modalidades">
+            <div class="sport-suggestions" role="group" [attr.aria-label]="'communityCreate.sportSuggestions' | t">
               @for (item of sportSuggestions; track item) {
                 <button type="button" [disabled]="saving" (click)="addSport(item)">
                   <span>{{ item }}</span><span aria-hidden="true">+</span>
@@ -138,7 +150,7 @@
         <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="saving" (click)="cancel()">
           {{ 'common.cancel' | t }}
         </button>
-        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="saving || !name.trim()">
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="saving || !name.trim() || quota?.canCreate === false">
           {{ saving ? ('communityCreate.creating' | t) : ('communityCreate.create' | t) }}
         </button>
       </div>

@@ -1,0 +1,141 @@
+/* Concept One Premium community presentation. No business logic or tab layout changes. */
+:host{--community-premium-teal:#28debf;--community-premium-line:rgba(94,179,184,.28)}
+.communities-page.jynlo-community-main-premium{
+  background:radial-gradient(ellipse at 81% 6%,rgba(27,147,141,.17),transparent 44%),
+    linear-gradient(165deg,#061b29,#092a3a 63%,#071e2e);color:#f0fbfe
+}
+.jynlo-community-main-premium .communities-shell{width:min(1320px,100%)}
+.jynlo-community-main-premium .page-header{
+  padding:clamp(1.15rem,2.5vw,1.8rem);border:1px solid var(--community-premium-line);
+  border-radius:20px;background:linear-gradient(110deg,rgba(17,73,79,.85),rgba(9,44,62,.94));
+  box-shadow:0 15px 36px rgba(0,16,27,.2)
+}
+.jynlo-community-main-premium .page-header h1{letter-spacing:-.04em;line-height:1.1}
+.jynlo-community-main-premium .eyebrow,.jynlo-community-main-premium .section-kicker{color:#83f4dd}
+.jynlo-community-main-premium .subtitle{color:#b9d8df}
+.jynlo-community-main-premium.community-detail-page .detail-page-toolbar{
+  margin-bottom:.8rem
+}
+.jynlo-community-main-premium .community-card,
+.jynlo-community-main-premium .create-card,
+.jynlo-community-main-premium .invites-card,
+.jynlo-community-main-premium .community-detail,
+.jynlo-community-main-premium .state-card,
+.jynlo-community-main-premium .feedback{
+  border:1px solid var(--community-premium-line);border-radius:18px;
+  background:linear-gradient(153deg,rgba(17,54,70,.96),rgba(9,38,53,.96));
+  box-shadow:0 14px 36px rgba(0,17,29,.17)
+}
+.jynlo-community-main-premium .community-card{
+  transition:border-color .15s,background-color .15s
+}
+.jynlo-community-main-premium .community-card:hover,
+.jynlo-community-main-premium .community-card.active{
+  border-color:rgba(40,222,191,.7);background:rgba(19,82,86,.43)
+}
+.jynlo-community-main-premium .community-card-copy strong{color:#f1fffc}
+.jynlo-community-main-premium .community-card span,
+.jynlo-community-main-premium .community-card small{color:#bed8df}
+.jynlo-community-main-premium .community-avatar{
+  background:linear-gradient(140deg,#235a66,#173e54);color:#a9f7e9
+}
+.jynlo-community-main-premium .list-heading span,
+.jynlo-community-main-premium .visibility,
+.jynlo-community-main-premium .role-badge{
+  border:1px solid rgba(40,222,191,.28);background:rgba(40,222,191,.12);color:#a3f8e4
+}
+.jynlo-community-main-premium.community-detail-page .community-detail{
+  padding:clamp(1rem,2.5vw,1.65rem);min-width:0
+}
+.jynlo-community-main-premium .detail-header{
+  gap:clamp(1rem,3vw,2rem);padding:0 0 1.4rem;
+  border-color:rgba(91,175,181,.23)
+}
+.jynlo-community-main-premium .community-detail-copy h2{
+  color:#f1fffc;letter-spacing:-.035em;line-height:1.13;overflow-wrap:anywhere
+}
+.jynlo-community-main-premium .community-detail-copy p{color:#bbd7de;line-height:1.6}
+.jynlo-community-main-premium.community-detail-page .community-photo-block .community-avatar--large{
+  border:1px solid rgba(40,222,191,.26);border-radius:17px
+}
+.jynlo-community-main-premium .community-tab-panel,
+.jynlo-community-main-premium .community-feed-card,
+.jynlo-community-main-premium .community-feed-composer,
+.jynlo-community-main-premium .stat-card,
+.jynlo-community-main-premium .round-card{
+  border-color:rgba(96,176,182,.24);border-radius:16px;
+  background:rgba(10,41,55,.65)
+}
+.jynlo-community-main-premium .community-feed-composer textarea,
+.jynlo-community-main-premium .community-discovery input{
+  border-color:#3c6e7c;background:#092738;color:#f2fffd
+}
+.jynlo-community-main-premium .sport-tag{
+  border-color:rgba(40,222,191,.34);background:rgba(40,222,191,.11);color:#b1f9e9
+}
+.jynlo-community-main-premium .jynlo-action--primary{
+  --jynlo-action-border:rgba(40,222,191,.65);
+  --jynlo-action-bg:rgba(40,222,191,.17);
+  --jynlo-action-hover:rgba(40,222,191,.27);
+  --jynlo-action-text:#9cf6e2
+}
+.jynlo-community-main-premium a:focus-visible,
+.jynlo-community-main-premium button:focus-visible,
+.jynlo-community-main-premium input:focus-visible,
+.jynlo-community-main-premium textarea:focus-visible{
+  outline:2px solid #a1fae4;outline-offset:3px
+}
+/* Detail-only section rhythm: keep toolbar, hero, tabs and content distinct.
+   Avoid generic card margins, which break grids and nested tournament tables. */
+.jynlo-community-main-premium.community-detail-page .detail-page-toolbar {
+  margin-bottom:24px;
+}
+.jynlo-community-main-premium.community-detail-page .detail-header + app-community-tabs {
+  display:block;
+  margin-top:24px;
+}
+.jynlo-community-main-premium.community-detail-page .community-tab-panel {
+  margin-top:24px;
+}
+.jynlo-community-main-premium.community-detail-page app-community-tabs +
+:is(app-community-feature-settings,app-community-whatsapp-share) {
+  display:block;
+  margin-top:24px;
+}
+@media(max-width:800px){
+  .jynlo-community-main-premium .page-header{padding:1.1rem}
+  .jynlo-community-main-premium.community-detail-page .community-detail{padding:1rem}
+  .jynlo-community-main-premium .detail-header{flex-wrap:wrap}
+  .jynlo-community-main-premium.community-detail-page .detail-page-toolbar {
+    margin-bottom:20px;
+  }
+  .jynlo-community-main-premium.community-detail-page .community-tab-panel,
+  .jynlo-community-main-premium.community-detail-page .detail-header + app-community-tabs,
+  .jynlo-community-main-premium.community-detail-page app-community-tabs +
+  :is(app-community-feature-settings,app-community-whatsapp-share) {
+    margin-top:20px;
+  }
+
+}
+@media(prefers-reduced-motion:reduce){
+  .jynlo-community-main-premium .community-card{transition:none}
+}
+
+
+/* Top-level season and match-day layout; keep internal tables compact. */
+.jynlo-community-main-premium.community-detail-page .community-tab-panel > .season-dashboard {
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.jynlo-community-main-premium.community-detail-page .season-dashboard > .round-history {
+  margin-top: 24px;
+}
+@media (max-width:800px) {
+  .jynlo-community-main-premium.community-detail-page .community-tab-panel > .season-dashboard {
+    margin-top: 20px;
+    padding-top: 20px;
+  }
+  .jynlo-community-main-premium.community-detail-page .season-dashboard > .round-history {
+    margin-top: 20px;
+  }
+}

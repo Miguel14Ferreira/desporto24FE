@@ -1,8 +1,7 @@
-<section class="my-sessions-page">
+<section class="my-sessions-page jynlo-c1 jynlo-games jynlo-sessions-premium">
   <div class="page-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Jynlo</p>
         <h1>{{ 'mySessions.title' | t }}</h1>
         <p class="subtitle">{{ 'mySessions.subtitle' | t }}</p>
       </div>
@@ -33,106 +32,202 @@
     }
 
     @if (!loading && !errorMessage) {
-      @if (nextJoinedSession; as session) {
-        <section class="next-session-highlight" aria-labelledby="next-joined-session-title">
-          <div>
-            <span class="section-kicker">{{ 'mySessions.nextConfirmed' | t }}</span>
-            <h2 id="next-joined-session-title">{{ session.sport }} · {{ session.city }}</h2>
-            <p>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }} · {{ 'mySessions.players' | t:{ count: session.participantCount + '/' + session.maxParticipants } }}</p>
+      <nav class="session-view-tabs" role="tablist" [attr.aria-label]="'mySessions.viewTabsLabel' | t">
+        <button type="button" role="tab" id="tab-upcoming" aria-controls="panel-upcoming"
+          [attr.aria-selected]="activeTab === 'upcoming'" [class.is-active]="activeTab === 'upcoming'"
+          (click)="selectTab('upcoming')">
+          <span>{{ 'mySessions.tabUpcoming' | t }}</span><small>{{ upcomingCreated.length }}</small>
+        </button>
+        <button type="button" role="tab" id="tab-history" aria-controls="panel-history"
+          [attr.aria-selected]="activeTab === 'history'" [class.is-active]="activeTab === 'history'"
+          (click)="selectTab('history')">
+          <span>{{ 'mySessions.tabHistory' | t }}</span><small>{{ historicalCreated.length }}</small>
+        </button>
+        <button type="button" role="tab" id="tab-participation" aria-controls="panel-participation"
+          [attr.aria-selected]="activeTab === 'participation'" [class.is-active]="activeTab === 'participation'"
+          (click)="selectTab('participation')">
+          <span>{{ 'mySessions.tabParticipation' | t }}</span><small>{{ joinedOtherSessions.length + waitlistedOtherSessions.length }}</small>
+        </button>
+      </nav>
+
+      @if (activeTab === 'upcoming') {
+        <section id="panel-upcoming" role="tabpanel" aria-labelledby="tab-upcoming" class="session-section">
+          <div class="section-heading">
+            <div>
+              <span class="section-kicker">{{ 'mySessions.organisation' | t }}</span>
+              <h2>{{ 'mySessions.upcomingTitle' | t }}</h2>
+              <p class="session-section-summary">{{ 'mySessions.upcomingHelp' | t }}</p>
+            </div>
+            <span class="count-badge">{{ upcomingCreated.length }}</span>
           </div>
-          <a class="jynlo-action jynlo-action--primary" [routerLink]="['/menu/events', session.id]"
-             [queryParams]="{ membership: '1' }">{{ 'mySessions.viewParticipation' | t }} →</a>
+          @if (upcomingCreated.length === 0) {
+            <div class="empty-card">
+              <p>{{ 'mySessions.noUpcoming' | t }}</p>
+              <a class="jynlo-action jynlo-action--primary" routerLink="/menu/createEvent">{{ 'mySessions.create' | t }}</a>
+              @if (historicalCreated.length) {
+                <button type="button" class="jynlo-action jynlo-action--neutral" (click)="selectTab('history')">{{ 'mySessions.tabHistory' | t }}</button>
+              }
+            </div>
+          } @else {
+            <div class="session-grid upcoming-grid">
+              @for (session of upcomingCreated; track session.id) {
+                <article class="session-card upcoming-card">
+                  <div class="card-top">
+                    <div>
+                      <span class="sport">{{ session.sport }} · {{ session.city }}</span>
+                      <h3>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }}</h3>
+                    </div>
+                    <span class="status" [class.status-full]="session.status === 'FULL'">{{ sessionStatusLabel(session) }}</span>
+                  </div>
+                  <div class="upcoming-meta">
+                    <div><span>{{ 'mySessions.participants' | t }}</span><strong>{{ session.participantCount }}/{{ session.maxParticipants }}</strong></div>
+                    <div><span>{{ 'mySessions.vacancies' | t }}</span><strong>{{ vacancies(session) }}</strong></div>
+                    <div><span>{{ 'mySessions.price' | t }}</span>
+                      <strong>@if (session.priceAmount > 0) { {{ session.priceAmount | number:'1.2-2' }} € } @else { {{ 'common.free' | t }} }</strong>
+                    </div>
+                  </div>
+                  <div class="card-actions">
+                    <a class="jynlo-action jynlo-action--primary" [routerLink]="['/menu/events',session.id]">{{ 'mySessions.manageSession' | t }}</a>
+                    @if (canCancel(session)) {
+                      <button type="button" class="danger-action jynlo-action jynlo-action--danger" (click)="requestCancel(session)">
+                        {{ 'mySessions.cancelSession' | t }}
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
         </section>
       }
-      <section class="session-section">
-        <div class="section-heading">
-          <div>
-            <span class="section-kicker">{{ 'mySessions.organisation' | t }}</span>
-            <h2>{{ 'mySessions.createdByMe' | t }}</h2>
-          </div>
-          <span class="count-badge">{{ data.created.length }}</span>
-        </div>
 
-        @if (data.created.length === 0) {
-          <div class="empty-card">
-            <p>{{ 'mySessions.noneCreated' | t }}</p>
-            <a class="jynlo-action jynlo-action--primary" routerLink="/menu/createEvent">{{ 'mySessions.createFirst' | t }}</a>
+      @if (activeTab === 'history') {
+        <section id="panel-history" role="tabpanel" aria-labelledby="tab-history" class="session-section">
+          <div class="section-heading">
+            <div>
+              <span class="section-kicker">{{ 'mySessions.organisation' | t }}</span>
+              <h2>{{ 'mySessions.historyTitle' | t }}</h2>
+              <p class="session-section-summary">{{ 'mySessions.historyHelp' | t }}</p>
+            </div>
+            <span class="count-badge">{{ historicalCreated.length }}</span>
           </div>
-        } @else {
-          <div class="session-grid">
-            @for (session of data.created; track session.id) {
-              <article class="session-card">
-                <div class="card-top">
-                  <div>
-                    <span class="sport">{{ session.sport }}</span>
-                    <h3>{{ session.city }}</h3>
-                  </div>
-                  <span class="status">{{ session.status }}</span>
-                </div>
-
-                <div class="meta-grid">
-                  <div>
-                    <span>{{ 'mySessions.date' | t }}</span>
-                    <strong>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }}</strong>
-                  </div>
-                  <div>
-                    <span>{{ 'mySessions.participants' | t }}</span>
-                    <strong>{{ session.participantCount }}/{{ session.maxParticipants }}</strong>
-                  </div>
-                  <div>
-                    <span>{{ 'mySessions.vacancies' | t }}</span>
-                    <strong>{{ vacancies(session) }}</strong>
-                  </div>
-                  <div>
-                    <span>{{ 'mySessions.price' | t }}</span>
-                    <strong>
-                      @if (session.priceAmount > 0) {
-                        {{ session.priceAmount | number:'1.2-2' }} €
-                      } @else {
-                        {{ 'common.free' | t }}
+          @if (historicalCreated.length === 0) {
+            <div class="empty-card"><p>{{ 'mySessions.noHistory' | t }}</p></div>
+          } @else {
+            <div class="history-filters">
+              <label class="history-filter search">
+                <span>{{ 'mySessions.searchHistory' | t }}</span>
+                <input type="search" name="historyQuery" [(ngModel)]="historyQuery"
+                  (ngModelChange)="historyShown=8" [placeholder]="'mySessions.searchPlaceholder' | t" />
+              </label>
+              <label class="history-filter">
+                <span>{{ 'mySessions.filterSport' | t }}</span>
+                <select name="historySport" [(ngModel)]="historySport" (ngModelChange)="historyShown=8">
+                  <option value="">{{ 'mySessions.allSports' | t }}</option>
+                  @for (sport of historySports; track sport) { <option [value]="sport">{{ sport }}</option> }
+                </select>
+              </label>
+              <label class="history-filter">
+                <span>{{ 'mySessions.filterStatus' | t }}</span>
+                <select name="historyStatus" [(ngModel)]="historyStatus" (ngModelChange)="historyShown=8">
+                  <option value="all">{{ 'mySessions.allStatuses' | t }}</option>
+                  <option value="COMPLETED">{{ 'mySessions.statusCompleted' | t }}</option>
+                  <option value="CANCELLED">{{ 'mySessions.statusCancelled' | t }}</option>
+                  <option value="past">{{ 'mySessions.statusPast' | t }}</option>
+                </select>
+              </label>
+              <label class="history-filter">
+                <span>{{ 'mySessions.dateFrom' | t }}</span>
+                <input type="date" name="historyFrom" [(ngModel)]="historyFrom" (ngModelChange)="historyShown=8" />
+              </label>
+              <label class="history-filter">
+                <span>{{ 'mySessions.dateTo' | t }}</span>
+                <input type="date" name="historyTo" [(ngModel)]="historyTo" (ngModelChange)="historyShown=8" />
+              </label>
+              @if (historyCommunityIds.length) {
+                <label class="history-filter">
+                  <span>{{ 'mySessions.community' | t }}</span>
+                  <select name="historyCommunityId" [(ngModel)]="historyCommunityId" (ngModelChange)="historyShown=8">
+                    <option value="">{{ 'mySessions.allCommunities' | t }}</option>
+                    @for (id of historyCommunityIds; track id) { <option [value]="id">{{ communityLabel(id) }}</option> }
+                  </select>
+                </label>
+              }
+            </div>
+            @if (filteredHistory.length === 0) {
+              <div class="empty-card history-no-results">
+                <p>{{ 'mySessions.noHistoryMatches' | t }}</p>
+                <button type="button" class="jynlo-action jynlo-action--neutral" (click)="resetHistoryFilters()">{{ 'mySessions.resetFilters' | t }}</button>
+              </div>
+            } @else {
+              <div class="history-list">
+                @for (session of visibleHistory; track session.id) {
+                  <article class="history-row">
+                    <div class="history-main">
+                      <strong>{{ session.sport }} · {{ session.city }}</strong>
+                      <span>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }}</span>
+                    </div>
+                    <span class="history-status" [class.is-cancelled]="session.status === 'CANCELLED'"
+                      [class.is-completed]="session.status === 'COMPLETED'">{{ sessionStatusLabel(session) }}</span>
+                    <div class="history-actions">
+                      <a [routerLink]="['/menu/events', session.id]" class="jynlo-action jynlo-action--neutral">{{ 'mySessions.details' | t }}</a>
+                      @if (canCancel(session)) {
+                        <button type="button" class="danger-action jynlo-action jynlo-action--danger" (click)="requestCancel(session)">
+                          {{ 'mySessions.cancelSession' | t }}
+                        </button>
                       }
-                    </strong>
-                  </div>
-                </div>
-
-                <div class="card-actions">
-                  <a class="jynlo-action jynlo-action--neutral" [routerLink]="['/menu/events', session.id]">{{ 'mySessions.details' | t }}</a>
-                  @if (canCancel(session)) {
-                    <button type="button" class="danger-action jynlo-action jynlo-action--danger" (click)="requestCancel(session)">
-                      {{ 'mySessions.cancelSession' | t }}
-                    </button>
-                  }
-                </div>
-              </article>
+                    </div>
+                  </article>
+                }
+              </div>
+              <div class="history-footer">
+                <span>{{ 'mySessions.historyShowing' | t:{shown:visibleHistory.length,total:filteredHistory.length} }}</span>
+                @if (visibleHistory.length < filteredHistory.length) {
+                  <button type="button" class="jynlo-action jynlo-action--neutral" (click)="showMoreHistory()">{{ 'mySessions.showMore' | t }}</button>
+                }
+              </div>
             }
-          </div>
-        }
-      </section>
+          }
+        </section>
+      }
 
+      @if (activeTab === 'participation') {
+        <section id="panel-participation" role="tabpanel" aria-labelledby="tab-participation" class="session-section">
+          @if (nextJoinedSession; as session) {
+            <section class="next-session-highlight" aria-labelledby="next-joined-session-title">
+              <div>
+                <span class="section-kicker">{{ 'mySessions.nextConfirmed' | t }}</span>
+                <h2 id="next-joined-session-title">{{ session.sport }} · {{ session.city }}</h2>
+                <p>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }} · {{ 'mySessions.players' | t:{ count: session.participantCount + '/' + session.maxParticipants } }}</p>
+              </div>
+              <a class="jynlo-action jynlo-action--primary" [routerLink]="['/menu/events', session.id]"
+                [queryParams]="{ membership: '1' }">{{ 'mySessions.viewParticipation' | t }} →</a>
+            </section>
+          }
       <section class="session-section">
         <div class="section-heading">
           <div>
             <span class="section-kicker">{{ 'mySessions.participation' | t }}</span>
             <h2>{{ 'mySessions.joined' | t }}</h2>
           </div>
-          <span class="count-badge">{{ data.joined.length }}</span>
+          <span class="count-badge">{{ joinedOtherSessions.length }}</span>
         </div>
 
-        @if (data.joined.length === 0) {
+        @if (joinedOtherSessions.length === 0) {
           <div class="empty-card">
             <p>{{ 'mySessions.noneJoined' | t }}</p>
             <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'mySessions.findSession' | t }}</a>
           </div>
         } @else {
           <div class="session-grid">
-            @for (session of data.joined; track session.id) {
+            @for (session of joinedOtherSessions; track session.id) {
               <article class="session-card">
                 <div class="card-top">
                   <div>
                     <span class="sport">{{ session.sport }}</span>
                     <h3>{{ session.city }}</h3>
                   </div>
-                  <span class="status">{{ session.status }}</span>
+                  <span class="status">{{ sessionStatusLabel(session) }}</span>
                 </div>
 
                 <div class="compact-meta">
@@ -156,16 +251,16 @@
             <span class="section-kicker">{{ 'mySessions.waiting' | t }}</span>
             <h2>{{ 'mySessions.waitlist' | t }}</h2>
           </div>
-          <span class="count-badge">{{ data.waitlisted.length }}</span>
+          <span class="count-badge">{{ waitlistedOtherSessions.length }}</span>
         </div>
 
-        @if (data.waitlisted.length === 0) {
+        @if (waitlistedOtherSessions.length === 0) {
           <div class="empty-card">
             <p>{{ 'mySessions.noneWaitlist' | t }}</p>
           </div>
         } @else {
           <div class="session-grid">
-            @for (session of data.waitlisted; track session.id) {
+            @for (session of waitlistedOtherSessions; track session.id) {
               <article class="session-card">
                 <div class="card-top">
                   <div>
@@ -177,7 +272,7 @@
 
                 <div class="compact-meta">
                   <span>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }}</span>
-                  <span>{{ session.participantCount }}/{{ session.maxParticipants }} jogadores</span>
+                  <span>{{ 'mySessions.players' | t:{ count: session.participantCount + '/' + session.maxParticipants } }}</span>
                 </div>
 
                 <div class="card-actions">
@@ -198,15 +293,19 @@
           </div>
         }
       </section>
+
+        </section>
+      }
     }
 
+    @if (activeTab === 'participation') {
     <section class="session-section attendance-section">
       <div class="section-heading">
         <div>
           <span class="section-kicker">{{ 'profileData.reliability' | t }}</span>
           <h2>{{ 'mySessions.attendanceHistory' | t }}</h2>
         </div>
-        <span class="count-badge">{{ attendanceHistory.length }}</span>
+        <span class="count-badge">{{ externalAttendanceHistory.length }}</span>
       </div>
 
       @if (attendanceLoading) {
@@ -220,15 +319,15 @@
         </div>
       }
 
-      @if (!attendanceLoading && !attendanceError && attendanceHistory.length === 0) {
+      @if (!attendanceLoading && !attendanceError && externalAttendanceHistory.length === 0) {
         <div class="empty-card">
           <p>{{ 'mySessions.noAttendance' | t }}</p>
         </div>
       }
 
-      @if (!attendanceLoading && !attendanceError && attendanceHistory.length > 0) {
+      @if (!attendanceLoading && !attendanceError && externalAttendanceHistory.length > 0) {
         <div class="attendance-list">
-          @for (item of attendanceHistory; track item.participantId) {
+          @for (item of externalAttendanceHistory; track item.participantId) {
             <article class="attendance-card">
               <div class="attendance-main">
                 <div>
@@ -276,6 +375,8 @@
       }
     </section>
 
+    }
+
     @if (pendingCancelId !== null) {
       <div class="modal-backdrop">
         <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
@@ -318,7 +419,7 @@
               class="secondary-button jynlo-action jynlo-action--neutral"
               [disabled]="disputeLoading"
               (click)="dismissDispute()">
-              Cancelar
+              {{ 'mySessions.cancelBack' | t }}
             </button>
             <button
               type="button"

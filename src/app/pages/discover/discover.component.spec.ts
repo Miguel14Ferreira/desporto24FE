@@ -17,7 +17,7 @@ describe('DiscoverComponent', () => {
   let communityService: jasmine.SpyObj<CommunityService>;
 
   beforeEach(async () => {
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest']);
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['discover']);
     communityService = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
@@ -25,6 +25,7 @@ describe('DiscoverComponent', () => {
     );
 
     venueService.search.and.returnValue(of([]));
+    venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     sessionService.discover.and.returnValue(of([]));
     communityService.publicProfile.and.returnValue(of({
       username: 'miguel',
@@ -59,6 +60,42 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
   });
 
+
+  it('keeps the Explore title without repeating the navbar brand', () => {
+    const header = fixture.nativeElement.querySelector('.discover-header') as HTMLElement;
+    expect(header.querySelector('.eyebrow')).toBeNull();
+    expect(header.querySelector('h1')).not.toBeNull();
+  });
+
+  it('keeps sport and locality when opening all activities, including clearing them', () => {
+    const fullList = (): HTMLAnchorElement =>
+      fixture.nativeElement.querySelector('a.pillar-action[href^="/menu/events"]');
+
+    expect(fullList().getAttribute('href')).toBe('/menu/events?sport=Padel&city=Lisboa');
+
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.search();
+    fixture.detectChanges();
+    expect(fullList().getAttribute('href')).toBe('/menu/events?sport=T%C3%A9nis&city=Sintra');
+
+    component.clear();
+    fixture.detectChanges();
+    expect(fullList().getAttribute('href')).toBe('/menu/events');
+  });
+
+  it('shows only unavailable result categories in the shared error panel', () => {
+    component.venuesLoadError = true;
+    component.sessionsLoadError = false;
+    component.peopleLoadError = true;
+    fixture.detectChanges();
+
+    const error = fixture.nativeElement.querySelector('.discover-error') as HTMLElement;
+    expect(error.textContent).toContain('Recintos indisponíveis.');
+    expect(error.textContent).toContain('Jogadores indisponíveis.');
+    expect(error.textContent).not.toContain('Sessões indisponíveis.');
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -66,7 +103,7 @@ describe('DiscoverComponent', () => {
   it('prefills sport and locality from the profile and uses both when searching', () => {
     expect(component.sport).toBe('Padel');
     expect(component.location).toBe('Lisboa');
-    expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
     expect(sessionService.discover).toHaveBeenCalledWith(
       jasmine.objectContaining({
         sport: 'Padel',
@@ -104,7 +141,7 @@ describe('DiscoverComponent', () => {
       expect(page.componentInstance.location).toBe('Sintra');
       expect(page.componentInstance.playerName).toBe('Ana');
       expect(page.componentInstance.appliedPlayerName).toBe('Ana');
-      expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
+      expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Sintra', 'Ténis', 0);
       expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
       const link: HTMLAnchorElement = page.nativeElement.querySelector('.person-card');
       expect(link.getAttribute('href'))
@@ -130,7 +167,7 @@ describe('DiscoverComponent', () => {
       expect(page.componentInstance.sport).toBe('');
       expect(page.componentInstance.location).toBe('');
       expect(page.componentInstance.playerName).toBe('');
-      expect(venueService.search).toHaveBeenCalledWith(undefined, undefined);
+      expect(venueService.suggest).toHaveBeenCalledWith(undefined, undefined, undefined, 0);
       page.destroy();
     } finally {
       Object.defineProperty(route.snapshot, 'queryParamMap', {
@@ -162,7 +199,7 @@ describe('DiscoverComponent', () => {
 
     expect(page.componentInstance.sport).toBe('Ténis');
     expect(page.componentInstance.location).toBe('Sintra');
-    expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Sintra', 'Ténis', 0);
     page.destroy();
   });
 
@@ -178,7 +215,7 @@ describe('DiscoverComponent', () => {
 
     expect(page.componentInstance.sport).toBe('Padel');
     expect(page.componentInstance.location).toBe('Porto');
-    expect(venueService.search).toHaveBeenCalledWith('Porto', 'Padel');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Porto', 'Padel', 0);
     page.destroy();
   });
 
@@ -194,7 +231,7 @@ describe('DiscoverComponent', () => {
 
     expect(page.componentInstance.sport).toBe('');
     expect(page.componentInstance.location).toBe('');
-    expect(venueService.search).toHaveBeenCalledWith(undefined, undefined);
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, undefined, undefined, 0);
     page.destroy();
   });
 
@@ -234,7 +271,7 @@ describe('DiscoverComponent', () => {
     component.onLocationChange('Sintra');
     component.search();
     expect(component.nearbyVenuePosition).toBeNull();
-    expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Padel');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Sintra', 'Padel', 0);
   });
 
   it('keeps the normal venue search when location permission is denied', () => {
@@ -247,12 +284,13 @@ describe('DiscoverComponent', () => {
       }
     });
     try {
+      component.setCategory('venues');
       component.enableNearbyVenues();
       fixture.detectChanges();
       expect(component.nearbyVenuePosition).toBeNull();
       expect(component.nearbyVenueError).toBe('unavailable');
       expect(fixture.nativeElement.querySelector('.discover-nearby--venues [role="alert"]')).not.toBeNull();
-      expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+      expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
     } finally {
       if (original) {
         Object.defineProperty(navigator, 'geolocation', original);
@@ -301,7 +339,7 @@ describe('DiscoverComponent', () => {
         sport: 'Padel', city: undefined, latitude: 38.72, longitude: -9.14,
         radiusKm: 25, sort: 'distance'
       }));
-      expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+      expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
       expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ sport: 'Padel', location: 'Lisboa' }));
     } finally {
       if (original) {
@@ -371,30 +409,31 @@ describe('DiscoverComponent', () => {
     }
   });
 
-  it('offers recruiting players through a public session when no people match', () => {
-    expect(component.people).toEqual([]);
+  it('keeps the Jogadores tab focused on finding profiles rather than creating sessions', () => {
+    component.setCategory('people');
     fixture.detectChanges();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('#explore-people');
+    expect(panel).not.toBeNull();
+    expect(panel.textContent).toContain('Não encontrámos jogadores com estes critérios');
+    expect(panel.querySelector('.people-empty-recruit')).toBeNull();
+    expect(panel.querySelector('a[href*="/menu/createEvent"]')).toBeNull();
 
-    const recruit: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.people-empty-recruit');
-    expect(recruit?.getAttribute('href'))
-      .toBe('/menu/createEvent?intent=findPlayers&sport=Padel&city=Lisboa');
-    expect(recruit?.textContent).toContain('Encontrar jogadores');
+    const heading: HTMLElement = fixture.nativeElement.querySelector('.explore-results-heading');
+    expect(heading.hasAttribute('hidden')).toBeTrue();
+    expect(panel.querySelector('.pillar-heading h2')?.textContent).toContain('Pessoas para conhecer');
+    const directory: HTMLAnchorElement = panel.querySelector('a[href^="/menu/perfis?"]')!;
+    expect(directory.textContent).toContain('Ver todos os jogadores');
+    expect(directory.getAttribute('href')).toBe('/menu/perfis?from=discover&sport=Padel&city=Lisboa');
   });
 
-  it('passes changed discovery filters to the existing Find Players mode', () => {
-    component.onSportChange('Ténis');
-    component.onLocationChange('Sintra');
-    component.search();
+  it('does not duplicate the people heading in the focused tab while keeping other headings', () => {
+    component.setCategory('people');
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.explore-results-heading').hasAttribute('hidden')).toBeTrue();
 
-    let recruit: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.people-empty-recruit');
-    expect(recruit?.getAttribute('href'))
-      .toBe('/menu/createEvent?intent=findPlayers&sport=T%C3%A9nis&city=Sintra');
-
-    component.clear();
+    component.setCategory('venues');
     fixture.detectChanges();
-    recruit = fixture.nativeElement.querySelector('.people-empty-recruit');
-    expect(recruit?.getAttribute('href')).toBe('/menu/createEvent?intent=findPlayers');
+    expect(fixture.nativeElement.querySelector('.explore-results-heading').hasAttribute('hidden')).toBeFalse();
   });
 
   it('explains unmatched name searches without suggesting a recruiting session', () => {
@@ -433,7 +472,7 @@ describe('DiscoverComponent', () => {
       profilePicUrl: null, joinDateDisplay: null
     };
     communityService.findProfiles.and.returnValue(of([teammate]));
-    const venueCalls = venueService.search.calls.count();
+    const venueCalls = venueService.suggest.calls.count();
     const sessionCalls = sessionService.discover.calls.count();
 
     component.playerName = '  Ana  ';
@@ -443,7 +482,7 @@ describe('DiscoverComponent', () => {
     expect(component.people).toEqual([teammate]);
     expect(component.topPeople).toEqual([teammate]);
     expect(component.appliedPlayerName).toBe('Ana');
-    expect(venueService.search.calls.count()).toBe(venueCalls);
+    expect(venueService.suggest.calls.count()).toBe(venueCalls);
     expect(sessionService.discover.calls.count()).toBe(sessionCalls);
   });
 
@@ -502,7 +541,7 @@ describe('DiscoverComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(4);
 
     const toggle = (): HTMLButtonElement => fixture.nativeElement.querySelector('.people-toggle');
-    expect(toggle().textContent).toContain('Ver todos os jogadores');
+    expect(toggle().textContent).toContain('Mostrar mais jogadores');
     toggle().click();
     fixture.detectChanges();
 
@@ -633,6 +672,8 @@ describe('DiscoverComponent', () => {
   });
 
   it('carries the selected sport and locality into venue creation', () => {
+    component.setCategory('venues');
+    fixture.detectChanges();
     const addVenueLink = (): HTMLAnchorElement =>
       fixture.nativeElement.querySelector('a[href^="/menu/venues/new"]');
 
@@ -707,6 +748,30 @@ describe('DiscoverComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-empty-create')).toBeNull();
   });
 
+  it('preserves discovery filters on session links without an automatic join action', () => {
+    sessionService.discover.and.returnValue(of([{
+      id: 71, sport: 'Ténis', city: 'Sintra',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(), distanceKm: null,
+      participantCount: 1, maxParticipants: 4, priceAmount: 0,
+      privateGame: false, status: 'OPEN'
+    }]));
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.playerName = 'Ana';
+    component.search();
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('.session-card') as HTMLAnchorElement;
+    const url = new URL(link.getAttribute('href')!, 'https://jynlo.test');
+    expect(url.pathname).toBe('/menu/events/71');
+    expect(url.searchParams.get('from')).toBe('discover');
+    expect(url.searchParams.get('sport')).toBe('Ténis');
+    expect(url.searchParams.get('city')).toBe('Sintra');
+    expect(url.searchParams.get('player')).toBe('Ana');
+    expect(url.searchParams.get('join')).toBe('1');
+    expect(sessionService.discover).toHaveBeenCalled();
+  });
+
   it('shows a clear participation link with price and distance without joining automatically', () => {
     const session = {
       id: 31, sport: 'Padel', city: 'Lisboa',
@@ -719,7 +784,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.session-card');
-    expect(link?.getAttribute('href')).toBe('/menu/events/31?join=1');
+    expect(link?.getAttribute('href')).toBe('/menu/events/31?from=discover&sport=Padel&city=Lisboa&join=1');
     expect(link?.textContent).toContain('Ver e participar');
     expect(link?.textContent).toMatch(/5[,.]00\s*€/);
     expect(link?.textContent).toMatch(/3[,.]4\s*km/);
@@ -738,7 +803,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     let link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Já estás inscrito');
-    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    expect(link.getAttribute('href')).toBe('/menu/events/32?from=discover&sport=Padel&city=Lisboa');
     expect(link.textContent).toContain('Grátis');
     expect(link.textContent).not.toContain('Ver e participar');
 
@@ -747,7 +812,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     link = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Em lista de espera');
-    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    expect(link.getAttribute('href')).toBe('/menu/events/32?from=discover&sport=Padel&city=Lisboa');
     expect(link.textContent).not.toContain('Ver e participar');
   });
 
@@ -763,7 +828,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
-    expect(link.getAttribute('href')).toBe('/menu/events/33?join=1');
+    expect(link.getAttribute('href')).toBe('/menu/events/33?from=discover&sport=Padel&city=Lisboa&join=1');
     expect(link.textContent).toContain('Entrar na lista de espera');
     expect(link.textContent).toContain('Lotado');
     expect(link.textContent).not.toContain('1 vagas');
@@ -788,7 +853,7 @@ describe('DiscoverComponent', () => {
       return fixture.nativeElement.querySelector('.session-card') as HTMLAnchorElement;
     };
 
-    expect(renderCard({}).getAttribute('href')).toBe('/menu/events/34?join=1');
+    expect(renderCard({}).getAttribute('href')).toBe('/menu/events/34?from=discover&sport=Padel&city=Lisboa&join=1');
     expect(renderCard({ status: 'FULL', joinedByViewer: true }).textContent)
       .toContain('Já estás inscrito');
     expect(renderCard({ status: 'FULL', waitlistedByViewer: true }).textContent)
@@ -809,7 +874,7 @@ describe('DiscoverComponent', () => {
     ]) {
       const card = renderCard(overrides);
       expect(card.getAttribute('href')).withContext(JSON.stringify(overrides))
-        .toBe('/menu/events/34');
+        .toBe('/menu/events/34?from=discover&sport=Padel&city=Lisboa');
       expect(card.textContent).not.toContain('Entrar na lista de espera');
       if (overrides.gameDate === 'invalid') {
         expect(card.textContent).toContain('Por indicar');
@@ -837,11 +902,152 @@ describe('DiscoverComponent', () => {
     expect(component.showAllVenues).toBeFalse();
   });
 
+
+
+  it('shows a lower-bound count when the paginated response has more venues', () => {
+    const venues = Array.from({ length: 36 }, (_, i) => ({
+      id: i + 1, name: 'Venue ' + i, city: 'Lisboa'
+    } as any));
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: true }));
+    component.search();
+    fixture.detectChanges();
+    // The category tab now carries the catalogue count, not a second venue card.
+    const count: HTMLElement = fixture.nativeElement.querySelector(
+      '.explore-category-nav button:nth-child(2) .explore-tab-count'
+    );
+    expect(component.venuesHasMore).toBeTrue();
+    expect(count.textContent?.replace(/\s/g, '')).toBe('36+');
+    expect(count.title).toContain('Existem mais recintos');
+
+    venueService.suggest.and.returnValue(of({ venues: venues.slice(0, 2), page: 0, hasMore: false }));
+    component.search();
+    fixture.detectChanges();
+    expect(count.textContent?.replace(/\s/g, '')).toBe('2');
+  });
+
+  it('preserves relevance order from the paginated API, even when first-page metadata differs', () => {
+    const venues = [
+      { id: 1, name: 'A', city: 'Grande Lisboa', sports: 'Padel',
+        latitude: 38.7, longitude: -9.1, address: 'Rua A', venueType: 'Campo' },
+      { id: 2, name: 'B', city: 'Lisboa', sports: null, latitude: null,
+        longitude: null, address: '', venueType: null },
+      { id: 3, name: 'C', city: 'Lisboa', sports: 'Padel',
+        latitude: 38.7, longitude: -9.1, address: '', venueType: 'Campo' }
+    ] as any[];
+    // Only the server can rank records beyond the currently loaded page.
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: true }));
+    component.search();
+    expect(component.venues.map(venue => venue.id)).toEqual([1, 2, 3]);
+    expect(component.topVenues.map(venue => venue.id)).toEqual([1, 2, 3]);
+    expect(component.venuesHasMore).toBeTrue();
+  });
+
+  it('never rearranges the distance-ordered nearby venues', () => {
+    venueService.search.and.returnValue(of([
+      { id: 1, name: 'A', city: 'Lisboa', sports: null } as any,
+      { id: 2, name: 'B', city: 'Lisboa', sports: 'Padel' } as any
+    ]));
+    component.nearbyVenuePosition = { latitude: 38.72, longitude: -9.14 };
+    component.search();
+    expect(component.venues.map(venue => venue.id)).toEqual([1, 2]);
+    expect(component.venuesHasMore).toBeFalse();
+  });
+
+  it('offers explicit alternatives inside the map when a combined search has no venues', () => {
+    component.setCategory('venues');
+    component.search();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.venue-broaden--sport')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.venue-broaden--city')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Experimenta alargar um filtro');
+
+    const before = venueService.suggest.calls.count();
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.venue-broaden--sport');
+    button.click();
+    expect(component.sport).toBe('');
+    expect(component.location).toBe('Lisboa');
+    expect(venueService.suggest.calls.count()).toBe(before + 1);
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', undefined, 0);
+  });
+
+  it('does not call extra fallback searches or claim no venues when API is unavailable', () => {
+    venueService.suggest.and.returnValue(throwError(() => new Error('offline')));
+    const before = venueService.suggest.calls.count();
+    component.search();
+    fixture.detectChanges();
+    expect(component.venuesLoadError).toBeTrue();
+    expect(venueService.suggest.calls.count()).toBe(before + 1);
+    expect(fixture.nativeElement.querySelector('.venue-broaden--sport')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.explore-map-panel')).toBeNull();
+  });
+
+  it('suggests increasing the GPS radius inside the map without dropping other filters', () => {
+    component.setCategory('venues');
+    component.nearbyVenuePosition = { latitude: 38.72, longitude: -9.14 };
+    component.nearbyVenueRadiusKm = 25;
+    component.search();
+    fixture.detectChanges();
+
+    const radius: HTMLButtonElement = fixture.nativeElement.querySelector('.venue-broaden--radius');
+    expect(radius).not.toBeNull();
+    radius.click();
+    expect(component.nearbyVenueRadiusKm).toBe(50);
+    expect(component.sport).toBe('Padel');
+    expect(component.location).toBe('Lisboa');
+    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel', 38.72, -9.14, 50);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.venue-broaden--radius')).toBeNull();
+  });
+
+  it('uses bounded venue suggestions for the preview, keeping filters on the full-catalogue link', () => {
+    const venues = Array.from({ length: 36 }, (_, index) => ({
+      id: index + 1, name: 'Recinto ' + index, city: 'Lisboa'
+    } as any));
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: true }));
+
+    component.search();
+    component.setCategory('venues');
+    fixture.detectChanges();
+
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
+    expect(venueService.search).not.toHaveBeenCalled();
+    expect(component.topVenues.length).toBe(4);
+    const directory: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href^="/menu/venues?"]');
+    expect(directory.getAttribute('href')).toBe('/menu/venues?sport=Padel&city=Lisboa');
+  });
+
+  it('keeps GPS-based nearby searches on the geo endpoint', () => {
+    const pagedCalls = venueService.suggest.calls.count();
+    component.nearbyVenuePosition = { latitude: 38.72, longitude: -9.14 };
+    component.search();
+
+    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel', 38.72, -9.14, 25);
+    expect(venueService.suggest.calls.count()).toBe(pagedCalls);
+  });
+
+  it('ignores late paginated venue results after switching filters', () => {
+    const delayed = new Subject<{ venues: any[]; page: number; hasMore: boolean }>();
+    venueService.suggest.and.returnValues(
+      delayed.asObservable(),
+      of({ venues: [{ id: 101, name: 'Recinto novo', city: 'Sintra' } as any], page: 0, hasMore: false })
+    );
+
+    component.onLocationChange('Porto');
+    component.search();
+    component.onLocationChange('Sintra');
+    component.search();
+    delayed.next({ venues: [{ id: 100, name: 'Recinto antigo', city: 'Porto' } as any], page: 0, hasMore: false });
+    delayed.complete();
+
+    expect(component.venues.map(venue => venue.id)).toEqual([101]);
+    expect(component.topVenues.map(venue => venue.id)).toEqual([101]);
+  });
+
   it('expands and collapses venue results', () => {
     const venues = Array.from({ length: 6 }, (_, index) => ({
       id: index + 1
     } as any));
-    venueService.search.and.returnValue(of(venues));
+    venueService.suggest.and.returnValue(of({ venues, page: 0, hasMore: false }));
     component.search();
 
     expect(component.venues).toEqual(venues);
@@ -855,27 +1061,134 @@ describe('DiscoverComponent', () => {
   });
 
   it('should show an availability error when a discover request still fails after retry', () => {
-    venueService.search.and.returnValue(
+    venueService.suggest.and.returnValue(
       throwError(() => new Error('API unavailable'))
     );
 
     component.search();
 
-    expect(venueService.search).toHaveBeenCalled();
+    expect(venueService.suggest).toHaveBeenCalled();
     expect(component.venuesLoadError).toBeTrue();
     expect(component.initialized).toBeTrue();
   });
 
   it('should clear the availability error when a retry search succeeds', () => {
-    venueService.search.and.returnValue(
+    venueService.suggest.and.returnValue(
       throwError(() => new Error('API unavailable'))
     );
     component.search();
     expect(component.venuesLoadError).toBeTrue();
 
-    venueService.search.and.returnValue(of([]));
+    venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     component.search();
 
     expect(component.venuesLoadError).toBeFalse();
   });
+  it('focuses categories without reloading and shows the venue map only once in Recintos', () => {
+    const calls = venueService.suggest.calls.count();
+    const sessionsPanel: HTMLElement = fixture.nativeElement.querySelector('#explore-sessions');
+    const peoplePanel: HTMLElement = fixture.nativeElement.querySelector('#explore-people');
+
+    expect(component.activeTab).toBe('all');
+    expect(sessionsPanel.hasAttribute('hidden')).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.explore-map-panel')).toBeNull();
+
+    component.setCategory('sessions');
+    fixture.detectChanges();
+    expect(sessionsPanel.hasAttribute('hidden')).toBeFalse();
+    expect(peoplePanel.hasAttribute('hidden')).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.explore-map-panel')).toBeNull();
+
+    component.setCategory('people');
+    fixture.detectChanges();
+    expect(peoplePanel.hasAttribute('hidden')).toBeFalse();
+    component.setCategory('venues');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.explore-map-panel').length).toBe(1);
+    expect(sessionsPanel.hasAttribute('hidden')).toBeTrue();
+    expect(fixture.nativeElement.querySelector('#explore-venues')).toBeNull();
+    expect(venueService.suggest.calls.count()).toBe(calls);
+  });
+
+  it('shows only the map and venue actions in Recintos, with no duplicated cards or title', () => {
+    component.venues = [
+      { id: 77, name: 'Recinto de teste', city: 'Lisboa', latitude: 38.72, longitude: -9.14 }
+    ] as any;
+    component.initialized = true;
+    fixture.detectChanges();
+
+    const resultsHeading: HTMLElement = fixture.nativeElement.querySelector('.explore-results-heading');
+    expect(fixture.nativeElement.querySelector('.explore-map-panel')).toBeNull();
+    expect(resultsHeading.hasAttribute('hidden')).toBeTrue();
+
+    component.setCategory('venues');
+    fixture.detectChanges();
+    const map: HTMLElement = fixture.nativeElement.querySelector('.explore-map-panel');
+    expect(map).not.toBeNull();
+    expect(resultsHeading.hasAttribute('hidden')).toBeFalse();
+    expect(map.querySelector('.explore-map-pick')?.textContent).toContain('Recinto de teste');
+    expect(fixture.nativeElement.querySelectorAll('.explore-map-panel').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.venue-card')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#explore-venues')).toBeNull();
+    expect(map.querySelector('a[href="/menu/venues?sport=Padel&city=Lisboa"]')).not.toBeNull();
+    expect(map.querySelector('a[href="/menu/venues/new?sport=Padel&city=Lisboa"]')).not.toBeNull();
+    expect(map.querySelectorAll('.discover-nearby--venues').length).toBe(1);
+
+    component.setCategory('all');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.explore-map-panel')).toBeNull();
+  });
+
+  it('keeps actions and a useful empty state if no venue has valid GPS coordinates', () => {
+    component.venues = [
+      { id: 91, name: 'Sem GPS', city: 'Lisboa', latitude: null, longitude: null }
+    ] as any;
+    component.initialized = true;
+    component.setCategory('venues');
+    fixture.detectChanges();
+    const map: HTMLElement = fixture.nativeElement.querySelector('.explore-map-panel');
+    expect(map).not.toBeNull();
+    expect(map.querySelector('.explore-map-layout')).toBeNull();
+    expect(map.querySelector('.explore-map-empty')?.textContent).toContain('não têm coordenadas');
+    expect(map.querySelector('a[href^="/menu/venues?"]')).not.toBeNull();
+    expect(map.querySelector('a[href^="/menu/venues/new?"]')).not.toBeNull();
+  });
+
+  it('uses sport quick picks as real search filters and allows toggling them off', () => {
+    const calls = venueService.suggest.calls.count();
+    component.selectQuickSport('Futebol');
+    expect(component.sport).toBe('Futebol');
+    expect(venueService.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Futebol', 0);
+    component.selectQuickSport('Futebol');
+    expect(component.sport).toBe('');
+    expect(venueService.suggest.calls.count()).toBe(calls + 2);
+  });
+
+  it('shows the community entry only in the community category', () => {
+    expect(fixture.nativeElement.querySelector('.explore-community-entry')).toBeNull();
+    component.setCategory('communities');
+    fixture.detectChanges();
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('.explore-community-entry a');
+    expect(link.getAttribute('href')).toBe('/menu/communities');
+    expect(fixture.nativeElement.querySelector('.explore-map-panel')).toBeNull();
+  });
+
+  it('shows a real venue map only for validated GPS locations and keeps the selection in sync', () => {
+    component.venues = [
+      { id: 100, name: 'Recinto A', city: 'Lisboa', latitude: 38.72, longitude: -9.14 },
+      { id: 101, name: 'Sem coordenadas', city: 'Lisboa', latitude: null, longitude: null },
+      { id: 102, name: 'Recinto B', city: 'Porto', latitude: 41.15, longitude: -8.61 }
+    ] as any;
+    component.setCategory('venues');
+    fixture.detectChanges();
+    expect(component.mapAvailableVenues.length).toBe(2);
+    const map: HTMLElement = fixture.nativeElement.querySelector('.explore-map-panel');
+    expect(map).not.toBeNull();
+    expect(map.querySelectorAll('.explore-map-pick').length).toBe(2);
+    component.selectMapVenue(102);
+    fixture.detectChanges();
+    expect(component.focusedMapVenue?.id).toBe(102);
+    expect(map.querySelector('a[href="/menu/venues/102"]')).not.toBeNull();
+  });
+
 });

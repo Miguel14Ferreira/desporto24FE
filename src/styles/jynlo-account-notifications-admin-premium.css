@@ -1,0 +1,223 @@
+/*
+ * Concept One Premium — account hub, notifications and admin operations.
+ * Pure presentation: existing Angular templates, routes, status conditions,
+ * permissions, warning/destructive actions and confirmation flows are intact.
+ * Use only opted-in page roots. Imported after the previous premium phases.
+ */
+body .jynlo-c1:is(.dashboard-page,.notifications-page,.jynlo-admin) {
+  --premium-ops-surface: #123445;
+  --premium-ops-surface-deep: #0b283a;
+  --premium-ops-border: rgba(106,194,195,.25);
+  --premium-ops-border-hover: rgba(65,233,196,.53);
+  --premium-ops-mint: #32e4c4;
+  --premium-ops-muted: #bfd8df;
+  --premium-ops-shadow: 0 16px 36px rgba(0,10,22,.19);
+  background:
+    radial-gradient(ellipse 48% 460px at 91% 5%,rgba(35,158,146,.14),transparent 74%),
+    linear-gradient(155deg,#061b29 4%,#082737 66%,#061b2a 100%);
+  color: #f5feff;
+}
+body .jynlo-c1:is(.dashboard-page,.notifications-page,.jynlo-admin)
+  :is(.dashboard-header h1,.page-header h1,.players-shell > header h1,.admin-venue-header h1,.admin-edit-shell h1) {
+  color: #f5feff;
+  font-weight: 850;
+  letter-spacing: -.045em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+body .jynlo-c1:is(.dashboard-page,.notifications-page,.jynlo-admin)
+  :is(.eyebrow,.section-kicker,.action-kicker,.admin-venue-header > div > p,.admin-edit-shell header > span) {
+  color: var(--premium-ops-mint);
+}
+body .jynlo-c1:is(.dashboard-page,.notifications-page,.jynlo-admin)
+  :is(.subtitle,.dashboard-header .subtitle,.admin-edit-shell header p,.admin-venue-header > div > span) {
+  color: var(--premium-ops-muted);
+  line-height: 1.65;
+}
+body .jynlo-c1:is(.dashboard-page,.notifications-page,.jynlo-admin) .jynlo-action--primary {
+  --jynlo-action-bg: var(--premium-ops-mint);
+  --jynlo-action-border: var(--premium-ops-mint);
+  --jynlo-action-text: #05342e;
+  --jynlo-action-hover: #77f8d9;
+}
+body .jynlo-c1:is(.dashboard-page,.notifications-page,.jynlo-admin) .jynlo-action--neutral {
+  --jynlo-action-bg: #113a48;
+  --jynlo-action-border: rgba(116,191,195,.35);
+  --jynlo-action-text: #ebfbfa;
+  --jynlo-action-hover: #205465;
+}
+body .jynlo-c1:is(.dashboard-page,.notifications-page,.jynlo-admin)
+  :is(a,button,input,select,textarea):focus-visible {
+  outline: 2px solid #81f8de;
+  outline-offset: 3px;
+}
+
+/* Authenticated account hub: real actions, notification badge and admin visibility. */
+body .dashboard-page.jynlo-c1 .dashboard-shell { width: min(1250px,100%); }
+body .dashboard-page.jynlo-c1 .hero-action {
+  border: 1px solid rgba(92,209,190,.29);
+  border-radius: 19px;
+  background:
+    radial-gradient(ellipse at 94% 8%,rgba(50,228,196,.13),transparent 59%),
+    linear-gradient(145deg,#123c48,#0b293a);
+  box-shadow: var(--premium-ops-shadow);
+}
+body .dashboard-page.jynlo-c1 .dashboard-grid { gap: 1rem; }
+body .dashboard-page.jynlo-c1 .dashboard-card {
+  border: 1px solid var(--premium-ops-border);
+  border-radius: 17px;
+  background: linear-gradient(148deg,var(--premium-ops-surface),var(--premium-ops-surface-deep));
+  box-shadow: 0 12px 28px rgba(0,10,22,.14);
+}
+body .dashboard-page.jynlo-c1 :is(.dashboard-card,.hero-action):is(:hover,:focus-visible) {
+  border-color: var(--premium-ops-border-hover);
+}
+body .dashboard-page.jynlo-c1 .dashboard-card .card-icon {
+  background: rgba(50,228,196,.12);
+  color: #a8f9e3;
+}
+body .dashboard-page.jynlo-c1 :is(.dashboard-card p,.hero-action p) {
+  color: var(--premium-ops-muted);
+}
+body .dashboard-page.jynlo-c1 .notification-count {
+  background: #32e4c4;
+  color: #06342d;
+}
+body .dashboard-page.jynlo-c1 .status-card:not(.error-state) {
+  border-color: var(--premium-ops-border);
+  background: var(--premium-ops-surface-deep);
+}
+
+/* Notifications: selected/unread semantics and privacy preferences stay intact. */
+body .notifications-page.jynlo-c1 .notifications-shell {
+  width: min(1260px,100%);
+  max-width: 1260px;
+}
+body .notifications-page.jynlo-c1 .notifications-grid { gap: 1.15rem; }
+body .notifications-page.jynlo-c1 .notification-card,
+body .notifications-page.jynlo-c1 .notification-detail,
+body .notifications-page.jynlo-c1 .notification-preferences,
+body .notifications-page.jynlo-c1 .state-card:not(.error-state) {
+  border: 1px solid var(--premium-ops-border);
+  border-radius: 18px;
+  background: linear-gradient(150deg,var(--premium-ops-surface),var(--premium-ops-surface-deep));
+  box-shadow: var(--premium-ops-shadow);
+}
+body .notifications-page.jynlo-c1 .notification-card {
+  padding: 1.1rem;
+  min-height: 112px;
+}
+body .notifications-page.jynlo-c1 .notification-card:is(:hover,.active,:focus-visible) {
+  border-color: var(--premium-ops-border-hover);
+  background: linear-gradient(150deg,#184956,#0e3243);
+}
+body .notifications-page.jynlo-c1 .notification-card.unread {
+  box-shadow: inset 3px 0 0 #32e4c4,0 12px 28px rgba(0,10,22,.14);
+}
+body .notifications-page.jynlo-c1 .notification-card :is(p,.created-at),
+body .notifications-page.jynlo-c1 .detail-message,
+body .notifications-page.jynlo-c1 .notification-preferences__note {
+  color: var(--premium-ops-muted);
+}
+body .notifications-page.jynlo-c1 .unread-dot { background: var(--premium-ops-mint); }
+body .notifications-page.jynlo-c1 .type-badge {
+  background: rgba(50,228,196,.12);
+  color: #b5ffea;
+}
+body .notifications-page.jynlo-c1 .notification-preferences__row {
+  border-top-color: rgba(119,186,195,.22);
+}
+body .notifications-page.jynlo-c1 .notification-preferences__all {
+  background: rgba(25,117,114,.19);
+}
+body .notifications-page.jynlo-c1 .notification-preferences__row input {
+  accent-color: var(--premium-ops-mint);
+}
+/* Do not restyle alert feedback, dangerous actions, disabled controls or confirmations. */
+
+/* Operations home, cases, audits and searches. No status coloring changes. */
+body .jynlo-c1.jynlo-admin :is(.admin-shell,.players-shell) {
+  width: min(1250px,100%);
+  max-width: 1250px;
+}
+body .admin-page.jynlo-c1 .admin-card,
+body .jynlo-admin.admin-page :is(.platform-overview,.overview-card,.growth-chart,.dispute-card,.reason-card),
+body .admin-ideas-page.jynlo-c1 :is(.idea-card,.idea-detail),
+body .admin-reports-page.jynlo-c1 .report-card,
+body .players-page.jynlo-c1 :is(.search-form,.table-scroll) {
+  border: 1px solid var(--premium-ops-border);
+  border-radius: 17px;
+  background: linear-gradient(150deg,var(--premium-ops-surface),var(--premium-ops-surface-deep));
+  box-shadow: 0 13px 30px rgba(0,10,22,.16);
+}
+body .admin-page.jynlo-c1 .admin-card:is(:hover,:focus-visible),
+body .admin-ideas-page.jynlo-c1 .idea-card:is(:hover,.active,:focus-visible) {
+  border-color: var(--premium-ops-border-hover);
+}
+body .admin-page.jynlo-c1 .admin-card .card-icon {
+  background: rgba(50,228,196,.12);
+  color: #9df5df;
+}
+body .admin-page.jynlo-c1 .admin-card p,
+body .admin-ideas-page.jynlo-c1 .idea-message {
+  color: var(--premium-ops-muted);
+}
+body .players-page.jynlo-c1 .table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #477e85 rgba(5,25,36,.7);
+}
+body .players-page.jynlo-c1 .table-scroll th { color: #c2dee5; }
+body .players-page.jynlo-c1 .search-row input {
+  border-color: rgba(136,197,209,.35);
+  background: #082838;
+}
+body .jynlo-admin.admin-page .growth-bar {
+  border-radius: 5px 5px 0 0;
+}
+/* Preserve chart series colors, role decisions, warnings and case status. */
+
+/* Venue moderation and history: reinforce surface hierarchy, not decisions. */
+body .admin-venue-page.jynlo-c1 .admin-venue-shell,
+body .admin-edit-page.jynlo-c1 .admin-edit-shell {
+  width: min(1220px,100%);
+  max-width: 1220px;
+}
+body .admin-venue-page.jynlo-c1 :is(.admin-venue-summary,.admin-venue-item,.admin-venue-state),
+body .admin-edit-page.jynlo-c1 :is(.admin-edit-item,.admin-edit-state,.admin-edit-history-meta) {
+  border-color: var(--premium-ops-border);
+  border-radius: 17px;
+  background: linear-gradient(150deg,var(--premium-ops-surface),var(--premium-ops-surface-deep));
+  box-shadow: 0 11px 27px rgba(0,10,22,.13);
+}
+body .admin-venue-page.jynlo-c1 .admin-venue-item:is(:hover,:focus-visible),
+body .admin-edit-page.jynlo-c1 .admin-edit-item:is(:hover,:focus-visible) {
+  border-color: var(--premium-ops-border-hover);
+}
+body .admin-venue-page.jynlo-c1 .admin-venue-dialog,
+body .admin-edit-page.jynlo-c1 .admin-edit-dialog {
+  border-color: rgba(115,194,200,.34);
+  border-radius: 21px;
+  background: #0b2b3b;
+  color: #f6fffe;
+}
+/* Preserve overlay positioning, modal focus, manual source checks and confirmations. */
+@media (max-width: 850px) {
+  body .notifications-page.jynlo-c1 .notifications-shell,
+  body .jynlo-c1.jynlo-admin :is(.admin-shell,.players-shell) { width: 100%; }
+  body .dashboard-page.jynlo-c1 .dashboard-shell { width: 100%; }
+}
+@media (max-width: 620px) {
+  body .notifications-page.jynlo-c1 .notification-card { padding: .9rem; }
+  body .jynlo-c1:is(.dashboard-page,.notifications-page,.jynlo-admin)
+    :is(.dashboard-header h1,.page-header h1,.players-shell > header h1) {
+    overflow-wrap: break-word;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .dashboard-page.jynlo-c1 :is(.dashboard-card,.hero-action),
+  body .notifications-page.jynlo-c1 .notification-card,
+  body .admin-page.jynlo-c1 .admin-card {
+    transition: none;
+    transform: none;
+  }
+}

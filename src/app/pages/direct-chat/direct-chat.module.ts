@@ -5,6 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { DirectChatComponent } from './direct-chat.component';
+import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 
 const routes: Routes = [
   { path: '', component: DirectChatComponent }
@@ -12,6 +13,6 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [DirectChatComponent],
-  imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe]
+  imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe, ChatReactionsComponent]
 })
 export class DirectChatModule {}

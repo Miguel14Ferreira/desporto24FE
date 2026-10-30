@@ -21,7 +21,9 @@ export class CommunityInviteStepComponent implements OnInit {
   loadError = false;
   inviteLink = '';
   copyFeedback = '';
-  step: 'invite' | 'competition' = 'invite';
+  step: 'invite' | 'competition' | 'venue' = 'invite';
+  habitualVenueChoice: 'yes' | 'no' | null = null;
+  habitualVenueSaved = false;
   // Sessions are always available; these three optional features can be combined.
   readonly activityOptions = ['individual', 'teams', 'statistics'] as const;
   selectedActivities = new Set<'individual' | 'teams' | 'statistics'>();
@@ -94,9 +96,42 @@ export class CommunityInviteStepComponent implements OnInit {
   }
 
   backToInvite(): void {
-    if (!this.competitionSaving) {
-      this.step = 'invite';
+    if (!this.competitionSaving) this.step = 'invite';
+  }
+
+  continueToVenue(): void {
+    if (!this.community || !this.canGenerate()) {
+      this.continueToCommunity();
+      return;
     }
+    this.habitualVenueChoice = this.hasHabitualLocation() ? 'yes' : null;
+    this.step = 'venue';
+  }
+
+  hasHabitualLocation(): boolean {
+    const group = this.community;
+    if (!group) return false;
+    if (group.defaultVenueId != null && group.defaultVenueId > 0) return true;
+    return (group.habitualLocationSource === 'GPS' || group.habitualLocationSource === 'MAPS')
+      && group.habitualLatitude != null && group.habitualLongitude != null
+      && Number.isFinite(group.habitualLatitude) && Number.isFinite(group.habitualLongitude)
+      && Math.abs(group.habitualLatitude) <= 90 && Math.abs(group.habitualLongitude) <= 180;
+  }
+
+  backToCompetition(): void {
+    if (!this.competitionSaving) this.step = 'competition';
+  }
+
+  setHabitualVenueChoice(choice: 'yes' | 'no'): void {
+    if (!this.canGenerate()) return;
+    this.habitualVenueChoice = choice;
+  }
+
+  onHabitualVenueSaved(group: CommunityGroup): void {
+    if (this.communityId !== group.id) return;
+    this.community = group;
+    this.habitualVenueChoice = this.hasHabitualLocation() ? 'yes' : null;
+    this.habitualVenueSaved = this.hasHabitualLocation();
   }
 
   chooseActivity(activity: 'individual' | 'teams' | 'statistics'): void {
@@ -132,7 +167,10 @@ export class CommunityInviteStepComponent implements OnInit {
       teamTournamentsEnabled: this.selectedActivities.has('teams')
     }).pipe(timeout(10_000), finalize(() => this.competitionSaving = false))
       .subscribe({
-        next: () => this.continueToCommunity(),
+        next: group => {
+          if (group?.id === this.communityId) this.community = group;
+          this.continueToVenue();
+        },
         error: () => this.competitionError = t('communityInviteStep.competitionSaveError')
       });
   }

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, Optional } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, catchError, finalize, forkJoin, of, retry, timeout } from 'rxjs';
+import { Observable, catchError, finalize, forkJoin, map, of, retry, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityService } from '../../services/community.service';
@@ -8,10 +9,13 @@ import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
+import { venueHasPortugueseCoordinates, venueOsmEmbedUrl } from '../../shared/venue-public-contact';
 import { CommunityProfile } from '../model/community-profile';
 import { environment } from 'src/environment/environment';
 import { SessionSummary } from '../model/session-summary';
 import { Venue } from '../model/venue';
+
+type ExploreCategory = 'all' | 'venues' | 'sessions' | 'people' | 'communities';
 
 @Component({
   selector: 'app-discover',
@@ -21,6 +25,57 @@ import { Venue } from '../model/venue';
   standalone: false
 })
 export class DiscoverComponent implements OnInit {
+  activeTab: ExploreCategory = 'all';
+  readonly quickSports = ['Padel', 'Futebol', 'Ténis'];
+  selectedMapVenueId: number | null = null;
+  private cachedVenueMapSource = '';
+  private cachedTrustedVenueMap: SafeResourceUrl | null = null;
+
+  get mapAvailableVenues(): Venue[] {
+    return this.venues.filter(venue => venueHasPortugueseCoordinates(venue.latitude, venue.longitude)).slice(0, 8);
+  }
+
+  get focusedMapVenue(): Venue | null {
+    const mapped = this.mapAvailableVenues;
+    return mapped.find(venue => venue.id === this.selectedMapVenueId) || mapped[0] || null;
+  }
+
+  get focusedVenueMapUrl(): SafeResourceUrl | null {
+    const venue = this.focusedMapVenue;
+    if (!venue || !this.sanitizer) return null;
+    const source = venueOsmEmbedUrl(venue.latitude!, venue.longitude!);
+    if (!source) return null;
+    if (source !== this.cachedVenueMapSource) {
+      this.cachedVenueMapSource = source;
+      this.cachedTrustedVenueMap = this.sanitizer.bypassSecurityTrustResourceUrl(source);
+    }
+    return this.cachedTrustedVenueMap;
+  }
+
+  selectMapVenue(id: number): void {
+    if (this.mapAvailableVenues.some(venue => venue.id === id)) this.selectedMapVenueId = id;
+  }
+
+
+  setCategory(category: ExploreCategory): void {
+    this.activeTab = category;
+  }
+
+  showSection(category: 'venues' | 'sessions' | 'people'): boolean {
+    // Venues have their own dedicated tab (and map); do not duplicate them
+    // in "For you", where sessions and players are the useful recommendations.
+    if (category === 'venues') return this.activeTab === 'venues';
+    if (this.activeTab === category) return true;
+    if (this.activeTab !== 'all') return false;
+    if (category === 'sessions') return !this.sessionsLoadError && this.sessions.length > 0;
+    return !this.peopleLoadError && this.people.length > 0;
+  }
+
+  selectQuickSport(value: string): void {
+    this.onSportChange(this.sport.trim() === value ? '' : value);
+    this.search();
+  }
+
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly venueEnvironmentTranslationKey = venueEnvironmentTranslationKey;
 
@@ -33,6 +88,7 @@ export class DiscoverComponent implements OnInit {
   private sportEdited = false;
   private locationEdited = false;
   venues: Venue[] = [];
+  venuesHasMore = false;
   topVenueResults: Venue[] = [];
   sessions: SessionSummary[] = [];
   topSessionResults: SessionSummary[] = [];
@@ -68,7 +124,8 @@ export class DiscoverComponent implements OnInit {
     private venueService: VenueService,
     private sessionService: SessionService,
     private communityService: CommunityService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    @Optional() private readonly sanitizer: DomSanitizer | null
   ) {}
 
   ngOnInit(): void {
@@ -263,6 +320,7 @@ export class DiscoverComponent implements OnInit {
     this.venuesLoadError = false;
     this.sessionsLoadError = false;
     this.peopleLoadError = false;
+    this.venuesHasMore = false;
 
     forkJoin({
       venues: this.withRecovery(
@@ -270,9 +328,11 @@ export class DiscoverComponent implements OnInit {
           ? this.venueService.search(
               undefined, sport || undefined,
               this.nearbyVenuePosition.latitude, this.nearbyVenuePosition.longitude,
-              this.nearbyVenueRadiusKm)
-          : this.venueService.search(location || undefined, sport || undefined),
-        [] as Venue[], 'venues', requestId
+              this.nearbyVenueRadiusKm).pipe(map(venues => ({ venues, hasMore: false })))
+          // The regular preview uses the bounded catalogue; never imply its page is the total.
+          : this.venueService.suggest(undefined, location || undefined, sport || undefined, 0)
+              .pipe(map(page => ({ venues: page.venues, hasMore: page.hasMore }))),
+        { venues: [] as Venue[], hasMore: false }, 'venues', requestId
       ),
       sessions: this.withRecovery(
         this.sessionService.discover({
@@ -301,8 +361,11 @@ export class DiscoverComponent implements OnInit {
       }))
       .subscribe(({ venues, sessions, people }) => {
         if (requestId !== this.searchRequestId) return;
-        this.venues = venues;
-        this.topVenueResults = venues.slice(0, 4);
+        // The API now ranks the entire paginated catalogue before slicing;
+        // do not re-rank within page 0 or disturb GPS distance ordering.
+        this.venues = venues.venues;
+        this.venuesHasMore = venues.hasMore;
+        this.topVenueResults = venues.venues.slice(0, 4);
         this.sessions = sessions;
         this.topSessionResults = sessions.slice(0, 4);
         if (peopleRequestId === this.peopleRequestId) {
@@ -310,6 +373,18 @@ export class DiscoverComponent implements OnInit {
           this.topPeopleResults = people.slice(0, 4);
         }
       });
+  }
+
+
+  /** Offer controlled, explicit filter relaxation only after a genuine empty search. */
+  broadenVenueSearch(filter: 'sport' | 'city' | 'all'): void {
+    if (filter === 'all') {
+      this.clear();
+      return;
+    }
+    if (filter === 'sport') this.onSportChange('');
+    if (filter === 'city') this.onLocationChange('');
+    this.search();
   }
 
   searchPlayers(): void {

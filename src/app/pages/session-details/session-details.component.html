@@ -1,6 +1,6 @@
-<section class="detail-page">
+<section class="detail-page jynlo-c1 jynlo-games jynlo-session-detail-premium">
   <div class="detail-shell">
-    <a class="back-link" routerLink="/menu/events">← {{ 'sessionDetail.back' | t }}</a>
+    <a class="back-link" [routerLink]="backToPath" [queryParams]="backQueryParams">← {{ backLabelKey | t }}</a>
 
     @if (loading) {
       <div class="state-card">{{ 'sessionDetail.loading' | t }}</div>
@@ -25,17 +25,21 @@
         }
 
         <div class="detail-content">
-          @if (showCreationSharePanel() || (promotionOpen && canPromoteSession())) {
-            <section class="session-created-share" [attr.aria-label]="(showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t">
-              <strong>{{ (showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t }}</strong>
-              <p>{{ (showCreationSharePanel() ? 'sessionDetail.createdShareHint' : 'sessionDetail.promotionHint') | t }}</p>
+          @if (!canShareGuestInvites() && (showCreationSharePanel() || (promotionOpen && canOpenOrganizerShare()))) {
+            <section class="session-created-share" [attr.aria-label]="('sessionDetail.invitePlayers') | t">
+              <strong>{{ ('sessionDetail.invitePlayers') | t }}</strong>
+              <p>{{ (canShareSession()
+                  ? (showCreationSharePanel() ? 'sessionDetail.createdShareHint' : 'sessionDetail.promotionHint')
+                  : 'sessionDetail.restrictedShareHint') | t }}</p>
               <div class="session-created-actions">
                 <a class="jynlo-action jynlo-action--primary" [href]="whatsappShareUrl()"
                    target="_blank" rel="noopener noreferrer">{{ 'publicSession.shareWhatsApp' | t }}</a>
                 <button class="jynlo-action jynlo-action--neutral" type="button" (click)="copyPublicShareLink()"
                         [disabled]="sharingSession">{{ 'sessionDetail.copyLink' | t }}</button>
-                <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
-                   [queryParams]="{ shareSession: session.id }">{{ 'sessionDetail.publishFeed' | t }}</a>
+                @if (canShareSession()) {
+                  <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
+                     [queryParams]="{ shareSession: session.id }">{{ 'sessionDetail.publishFeed' | t }}</a>
+                }
                 @if (showCreationSharePanel()) {
                   <button class="jynlo-action jynlo-action--neutral" type="button"
                           (click)="dismissCreationShare()">{{ 'sessionDetail.continueDetails' | t }}</button>
@@ -45,7 +49,7 @@
               @if (shareFeedback) { <p class="share-feedback" role="status">{{ shareFeedback }}</p> }
               @if (manualShareUrl) {
                 <div class="manual-share-link">
-                  <label for="session-share-url">Ligação pública da sessão</label>
+                  <label for="session-share-url">{{ 'sessionDetail.sessionLink' | t }}</label>
                   <div class="manual-share-controls">
                     <input id="session-share-url" #shareLinkInput type="text" [value]="manualShareUrl"
                            readonly aria-label="Ligação pública da sessão para copiar">
@@ -69,6 +73,76 @@
             </div>
           </div>
 
+          @if (sessionContext && (sessionContext.communities.length > 0 || sessionContext.seasonGame)) {
+            <section class="session-community-context" [attr.aria-label]="'sessionDetail.contextTitle' | t">
+              @if (sessionContext.communities.length > 0) {
+                <div class="session-community-context-row">
+                  <span class="session-context-label">{{ 'sessionDetail.communityLabels' | t }}</span>
+                  <div class="session-community-links">
+                    @for (community of sessionContext.communities; track community.id) {
+                      <a routerLink="/menu/communities"
+                         [queryParams]="{ community: community.id }">{{ community.name }}</a>
+                    }
+                  </div>
+                </div>
+              }
+              <div class="session-community-context-row">
+                <span class="session-context-label">{{ 'sessionDetail.seasonLabel' | t }}</span>
+                @if (sessionContext.seasonGame) {
+                  <strong class="season-game-yes">{{ 'sessionDetail.seasonYes' | t }}
+                    @if (sessionContext.seasonName) { · {{ sessionContext.seasonName }} }
+                  </strong>
+                } @else {
+                  <span>{{ 'sessionDetail.seasonNo' | t }}</span>
+                }
+              </div>
+            </section>
+          } @else if (sessionContextError && (session.communityId || session.audience === 'COMMUNITY_ONLY')) {
+            <p class="session-context-error" role="status">{{ sessionContextError }}</p>
+          }
+
+          @if (postGameCommunities.length > 0) {
+            <section class="session-post-game-community" aria-labelledby="post-game-community-title">
+              <div class="session-post-game-community-heading">
+                <span class="section-kicker">{{ 'sessionDetail.postGameCommunity.kicker' | t }}</span>
+                <h2 id="post-game-community-title">{{ 'sessionDetail.postGameCommunity.title' | t }}</h2>
+                <p>{{ 'sessionDetail.postGameCommunity.help' | t }}</p>
+              </div>
+              <div class="session-post-game-community-choices">
+                @for (group of postGameCommunities; track group.id) {
+                  <div class="session-post-game-community-option">
+                    <div class="session-post-game-community-copy">
+                      <strong>{{ group.name }}</strong>
+                      <span>{{ (group.requiresApproval
+                        ? 'sessionDetail.postGameCommunity.approval'
+                        : 'sessionDetail.postGameCommunity.open') | t }}</span>
+                    </div>
+                    <div class="session-post-game-community-actions">
+                      <button type="button" class="jynlo-action jynlo-action--primary"
+                              [disabled]="postGameCommunityBusyId !== null"
+                              (click)="joinPostGameCommunity(group)">
+                        {{ (group.requiresApproval
+                          ? 'sessionDetail.postGameCommunity.request'
+                          : 'sessionDetail.postGameCommunity.join') | t }}
+                      </button>
+                      <button type="button" class="jynlo-action jynlo-action--neutral"
+                              [disabled]="postGameCommunityBusyId !== null"
+                              (click)="dismissPostGameCommunity(group.id)">
+                        {{ 'sessionDetail.postGameCommunity.notNow' | t }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+          @if (postGameCommunityFeedback) {
+            <p class="session-post-game-community-success" role="status">{{ postGameCommunityFeedback }}</p>
+          }
+          @if (postGameCommunityError) {
+            <p class="session-post-game-community-error" role="alert">{{ postGameCommunityError }}</p>
+          }
+
           @if (session.joined) {
             <div id="session-membership" class="membership-status" role="status">
               <strong>{{ 'sessionDetail.joinedTitle' | t }}</strong>
@@ -85,6 +159,18 @@
           }
 
           <div class="session-top-actions">
+            @if (canAccessChat()) {
+              @if (canSendChat()) {
+                <a class="jynlo-action jynlo-action--primary"
+                   [routerLink]="['/menu/messages']"
+                   [queryParams]="{ kind: 'session', id: session.id }">
+                  <span aria-hidden="true">💬</span> {{ 'sessionDetail.openChat' | t }}
+                </a>
+              } @else {
+                <span class="jynlo-action jynlo-action--neutral"
+                      role="status">{{ 'sessionDetail.chatUnavailable' | t }}</span>
+              }
+            }
             @if (canJoinSession()) {
               <button type="button" class="join-shortcut" (click)="scrollToParticipation()">
                 {{ isFull() ? ('sessionDetail.viewWaitlist' | t) : ('sessionDetail.viewJoin' | t) }}
@@ -102,13 +188,18 @@
                                            : 'sessionDetail.overallRatingReopen') | t }}
               </button>
             }
-            @if (canPromoteSession() && !showCreationSharePanel()) {
+            @if (canShareGuestInvites()) {
+              <button type="button" class="share-session-action session-invite-toggle jynlo-action jynlo-action--primary"
+                      [attr.aria-expanded]="showInvitePanel()" (click)="toggleInvitePanel()">
+                {{ (showInvitePanel() ? 'sessionDetail.hideInvites' : 'sessionDetail.invitePlayers') | t }}
+              </button>
+            } @else if (canOpenOrganizerShare() && !showCreationSharePanel()) {
               <button type="button" class="share-session-action open-promotion-button jynlo-action jynlo-action--neutral"
                       [attr.aria-expanded]="promotionOpen" (click)="togglePromotionPanel()">
-                {{ (promotionOpen ? 'sessionDetail.hidePromotion' : 'sessionDetail.promoteGame') | t }}
+                {{ (promotionOpen ? 'sessionDetail.hideInvites' : 'sessionDetail.invitePlayers') | t }}
               </button>
             }
-            @if (canShareSession() && !canPromoteSession()) {
+            @if (canShareSession() && !canOpenOrganizerShare()) {
               <button type="button" class="share-session-action jynlo-action jynlo-action--neutral"
                       [disabled]="sharingSession" (click)="shareSession()">
                 {{ sharingSession ? 'A partilhar...' : 'Partilhar sessão' }}
@@ -118,7 +209,7 @@
               }
               @if (manualShareUrl && !canPromoteSession()) {
                 <div class="manual-share-link">
-                  <label for="session-share-url">Ligação pública da sessão</label>
+                  <label for="session-share-url">{{ 'sessionDetail.sessionLink' | t }}</label>
                   <div class="manual-share-controls">
                     <input id="session-share-url" #shareLinkInput type="text"
                            [value]="manualShareUrl" readonly
@@ -128,7 +219,103 @@
                 </div>
               }
             }
+            @if (canCancelOwnSession()) {
+              <button type="button" class="jynlo-action jynlo-action--danger session-cancel-button"
+                      [disabled]="cancelSessionWorking"
+                      (click)="requestCancelOwnSession()">{{ 'mySessions.cancelSession' | t }}</button>
+            }
           </div>
+          @if (showInvitePanel()) {
+              <section class="guest-organizer-panel" [attr.aria-label]="'guestAdmin.title' | t">
+                <header>
+                  <span class="section-kicker">{{ 'guestAdmin.eyebrow' | t }}</span>
+                  <h2>{{ 'guestAdmin.title' | t }}</h2>
+                  <p>{{ 'guestAdmin.help' | t }}</p>
+                </header>
+                <div class="invite-choice-guide">
+                  <div class="invite-choice-member">
+                    <span class="section-kicker">{{ 'guestAdmin.registeredBadge' | t }}</span>
+                    <strong>{{ 'guestAdmin.registeredTitle' | t }}</strong>
+                    <p>{{ 'guestAdmin.registeredHelp' | t }}</p>
+                    @if (canFindPlayers()) {
+                      <button type="button" class="jynlo-action jynlo-action--neutral"
+                        (click)="openRegisteredInvitePicker()">
+                        {{ 'guestAdmin.registeredAction' | t }}
+                      </button>
+                    }
+                  </div>
+                  <div class="invite-choice-guest">
+                    <span class="section-kicker">{{ 'guestAdmin.guestBadge' | t }}</span>
+                    <strong>{{ 'guestAdmin.guestTitle' | t }}</strong>
+                    <p>{{ 'guestAdmin.guestHelp' | t }}</p>
+                  </div>
+                </div>
+                <div class="guest-organizer-actions">
+                  <button type="button" class="jynlo-action jynlo-action--primary"
+                    [disabled]="guestLinkWorking" (click)="createGuestLink()">
+                    {{ (guestLinkWorking ? 'guestAdmin.creating' : 'guestAdmin.generate') | t }}
+                  </button>
+
+                </div>
+                <p class="guest-organizer-hint">{{ 'guestAdmin.rotateWarning' | t }}</p>
+                @if (guestLinkUrl) {
+                  <div class="guest-organizer-link">
+                    <label for="guest-organizer-share-url">{{ 'guestAdmin.shareLink' | t }}</label>
+                    <input id="guest-organizer-share-url" type="text" readonly [value]="guestLinkUrl"
+                      #guestLinkField (click)="guestLinkField.select()"/>
+                    <div class="guest-organizer-actions">
+                      <button type="button" class="jynlo-action jynlo-action--neutral"
+                        (click)="copyGuestLink()">{{ 'guestAdmin.copy' | t }}</button>
+                      <a [href]="guestLinkWhatsAppUrl" target="_blank" rel="noopener noreferrer"
+                        class="jynlo-action jynlo-action--primary">{{ 'guestAdmin.whatsApp' | t }}</a>
+                    </div>
+                  </div>
+                }
+                @if (guestPanelError) {<p class="guest-organizer-error" role="alert">{{ guestPanelError }}</p>}
+                @if (guestPanelSuccess) {<p class="guest-organizer-success" role="status">{{ guestPanelSuccess }}</p>}
+                @if (guestRequestsLoading) {
+                  <p role="status">{{ 'guestAdmin.loading' | t }}</p>
+                } @else {
+                  @for (guest of guestRequests; track guest.id) {
+                    <div class="guest-organizer-row">
+                      <div>
+                        <strong>{{ guest.name }}</strong>
+                        <span>{{ ('guestAdmin.status.' + guest.status) | t }}</span>
+                        @if(guest.note){<small>{{ guest.note }}</small>}
+                        @if(guest.teamCode){<small>{{ 'guestAdmin.team' | t }} {{ guest.teamCode }}</small>}
+                      </div>
+                      @if (guest.status === 'PENDING') {
+                        <div class="guest-organizer-actions">
+                          <button type="button" class="jynlo-action jynlo-action--primary"
+                            [disabled]="guestRequestBusyId!==null"
+                            (click)="reviewGuest(guest,true)">{{ 'guestAdmin.approve' | t }}</button>
+                          <button type="button" class="jynlo-action jynlo-action--neutral"
+                            [disabled]="guestRequestBusyId!==null"
+                            (click)="reviewGuest(guest,false)">{{ 'guestAdmin.reject' | t }}</button>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+              </section>
+            }
+
+          @if (cancelSessionConfirmOpen && canCancelOwnSession()) {
+            <section class="session-cancel-confirm" role="dialog" aria-modal="false"
+                     aria-labelledby="session-cancel-title">
+              <h3 id="session-cancel-title">{{ 'mySessions.cancelTitle' | t }}</h3>
+              <p>{{ 'mySessions.cancelText' | t }}</p>
+              <div class="session-cancel-actions">
+                <button type="button" class="jynlo-action jynlo-action--neutral"
+                        [disabled]="cancelSessionWorking"
+                        (click)="dismissCancelOwnSession()">{{ 'common.cancel' | t }}</button>
+                <button type="button" class="jynlo-action jynlo-action--danger"
+                        [disabled]="cancelSessionWorking"
+                        (click)="confirmCancelOwnSession()">{{ (cancelSessionWorking
+                          ? 'mySessions.cancelling' : 'mySessions.confirmCancel') | t }}</button>
+              </div>
+            </section>
+          }
 
           @if (organizerPreparation(); as preparation) {
             <section class="organizer-preparation" aria-labelledby="organizer-preparation-title">
@@ -161,38 +348,55 @@
           }
 
           @if (canFindPlayers()) {
-            <div id="session-player-search" class="session-player-search" role="region" aria-label="Procurar jogadores">
-              <strong>Faltam {{ missingPlayers() }} jogadores</strong>
+            <section id="session-player-search" class="session-player-search" role="region" aria-label="Procurar jogadores">
+              <div class="session-player-search-header">
+                <div class="session-player-search-heading">
+                  <span class="section-kicker">{{ 'sessionDetail.organizerKicker' | t }}</span>
+                  <h3>Encontrar jogadores para a sessão</h3>
+                  <p>Faltam {{ missingPlayers() }} jogadores para completar a equipa.</p>
+                </div>
+                <a class="jynlo-action jynlo-action--primary" routerLink="/menu/perfis"
+                   [queryParams]="{ from: 'people', sport: session.sport, city: session.city }">
+                  Procurar jogadores
+                </a>
+              </div>
               @if (canShareSession()) {
-                <button type="button" class="jynlo-action jynlo-action--neutral"
-                        (click)="toggleFriendInvites()">Convidar amigos</button>
-                @if (inviteFriendsOpen) {
-                  <div class="session-friend-invites">
-                    @if (inviteFriendsLoading) { <p>A carregar amigos...</p> }
-                    @if (!inviteFriendsLoading && inviteFriends.length === 0 && !inviteError) {
-                      <p>Não tens amigos disponíveis para convidar.</p>
-                    }
-                    @for (friend of inviteFriends; track friend.username) {
-                      <div>
-                        <span>@{{ friend.username }}</span>
-                        <button type="button" class="jynlo-action jynlo-action--neutral"
-                          [disabled]="inviteSendingTo !== null"
-                          (click)="sendSessionInvite(friend.username)">Enviar mensagem</button>
-                        <button type="button" class="jynlo-action jynlo-action--neutral"
-                          [disabled]="formalInviteSendingTo !== null || formalInvitedFriends.has(friend.username)"
-                          (click)="sendFormalSessionInvite(friend.username)">{{ formalInvitedFriends.has(friend.username) ? 'Convite enviado' : 'Enviar convite' }}</button>
-                      </div>
-                    }
-                    @if (inviteFeedback) { <p role="status">{{ inviteFeedback }}</p> }
-                    @if (inviteError) { <p role="alert">{{ inviteError }}</p> }
+                <div class="session-friend-invite-section">
+                  <div class="session-friend-invite-heading">
+                    <div>
+                      <h4>Convidar amigos</h4>
+                      <p>Escolhe os jogadores que queres convidar diretamente.</p>
+                    </div>
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [attr.aria-expanded]="inviteFriendsOpen"
+                      (click)="toggleFriendInvites()">{{ inviteFriendsOpen ? 'Ocultar amigos' : 'Ver amigos' }}</button>
                   </div>
-                }
+                  @if (inviteFriendsOpen) {
+                    <div class="session-friend-invites">
+                      @if (inviteFriendsLoading) { <p>A carregar amigos...</p> }
+                      @if (!inviteFriendsLoading && inviteFriends.length === 0 && !inviteError) {
+                        <p>Não tens amigos disponíveis para convidar.</p>
+                      }
+                      @for (friend of inviteFriends; track friend.username) {
+                        <div class="session-friend-invite-row">
+                          <span class="session-friend-invite-name">@{{ friend.username }}</span>
+                          <div class="session-friend-invite-actions">
+                            <button type="button" class="jynlo-action jynlo-action--neutral"
+                              [disabled]="inviteSendingTo !== null"
+                              (click)="sendSessionInvite(friend.username)">Enviar mensagem</button>
+                            <button type="button" class="jynlo-action jynlo-action--neutral"
+                              [disabled]="formalInviteSendingTo !== null || formalInvitedFriends.has(friend.username)"
+                              (click)="sendFormalSessionInvite(friend.username)">{{ formalInvitedFriends.has(friend.username) ? 'Convite enviado' : 'Enviar convite' }}</button>
+                          </div>
+                        </div>
+                      }
+                      @if (inviteFeedback) { <p role="status">{{ inviteFeedback }}</p> }
+                      @if (inviteError) { <p role="alert">{{ inviteError }}</p> }
+                    </div>
+                  }
+                </div>
               }
-              <a class="jynlo-action jynlo-action--primary" routerLink="/menu/perfis"
-                 [queryParams]="{ from: 'people', sport: session.sport, city: session.city }">
-                Procurar jogadores
-              </a>
-            </div>
+            </section>
           }
 
           <div class="detail-grid">
@@ -216,7 +420,9 @@
             </div>
             <div>
               <span>{{ 'sessionDetail.creator' | t }}</span>
-              <strong>{{ session.creatorUsername || ('sessionDetail.user' | t) }}</strong>
+              @if (session.creatorUsername) {
+                <a class="session-profile-link" [routerLink]="['/menu/perfis',session.creatorUsername]">{{ session.creatorUsername }}</a>
+              } @else { <strong>{{ 'sessionDetail.user' | t }}</strong> }
             </div>
           </div>
 
@@ -297,13 +503,147 @@
             </section>
           }
 
+          @if (canRateVenuePostGame() && (venueRatingDismissed || venueRatingCollapsedByExisting)) {
+            <button type="button" class="share-session-action venue-rating-reopen-action"
+                    (click)="reopenVenueRating()">
+              {{ (myVenueScore !== null ? 'sessionDetail.venueRatingEdit'
+                                          : 'sessionDetail.venueRatingReopen') | t }}
+            </button>
+          }
+          @if (canRateVenuePostGame() && !venueRatingDismissed && !venueRatingCollapsedByExisting) {
+            <section class="overall-rating-panel venue-rating-panel" aria-labelledby="venue-rating-title">
+              <div>
+                <span class="overall-rating-kicker">{{ 'sessionDetail.overallRatingKicker' | t }}</span>
+                <h2 id="venue-rating-title">{{ 'sessionDetail.venueRatingTitle' | t }}</h2>
+                <p>{{ 'sessionDetail.venueRatingDescription' | t }}</p>
+              </div>
+              <div class="overall-rating-stars" role="group"
+                   [attr.aria-label]="'sessionDetail.venueRatingStarsLabel' | t">
+                @for (star of overallRatingStars; track star) {
+                  <button type="button" class="overall-rating-star venue-rating-star"
+                          [class.is-selected]="star <= (selectedVenueScore ?? 0)"
+                          [attr.aria-label]="'sessionDetail.overallRatingStar' | t:{ count: star }"
+                          [attr.aria-pressed]="selectedVenueScore === star"
+                          [disabled]="venueRatingLoading || venueRatingSaving || venueRatingLoadedSessionId !== session.id"
+                          (click)="selectVenueScore(star)">★</button>
+                }
+              </div>
+              @if (myVenueScore !== null) {
+                <p class="overall-rating-existing">
+                  {{ 'sessionDetail.venueRatingExisting' | t:{ count: myVenueScore } }}
+                </p>
+              }
+              @if (venueRatingLoading) {
+                <p class="overall-rating-feedback">{{ 'sessionDetail.venueRatingLoading' | t }}</p>
+              }
+              @if (venueRatingError) {
+                <p class="overall-rating-feedback overall-rating-error" role="alert">{{ venueRatingError }}</p>
+                @if (venueRatingLoadedSessionId !== session.id) {
+                  <button type="button" class="overall-rating-retry" (click)="loadMyVenueRating()"
+                          [disabled]="venueRatingLoading">{{ 'sessionDetail.retry' | t }}</button>
+                }
+              }
+              @if (venueRatingSuccess) {
+                <p class="overall-rating-feedback overall-rating-success" role="status">{{ venueRatingSuccess }}</p>
+              }
+              <div class="overall-rating-actions">
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                        [disabled]="!canSaveVenueRating()" (click)="saveVenueRating()">
+                  {{ (myVenueScore === null ? 'sessionDetail.venueRatingSave'
+                                              : 'sessionDetail.venueRatingUpdate') | t }}
+                </button>
+                <button type="button" class="overall-rating-skip"
+                        [disabled]="venueRatingSaving" (click)="dismissVenueRating()">
+                  {{ 'sessionDetail.overallRatingSkip' | t }}
+                </button>
+              </div>
+            </section>
+          }
+
+          @if (canOfferCompliments()) {
+            <section class="player-compliments-panel" aria-labelledby="player-compliments-title">
+              <div class="player-compliments-heading">
+                <div>
+                  <span class="overall-rating-kicker">{{ 'sessionDetail.overallRatingKicker' | t }}</span>
+                  <h2 id="player-compliments-title">{{ 'sessionDetail.complimentsTitle' | t }}</h2>
+                  <p>{{ 'sessionDetail.complimentsHint' | t }}</p>
+                </div>
+                <button type="button" class="jynlo-action jynlo-action--neutral compliments-toggle"
+                        [attr.aria-expanded]="complimentsOpen" (click)="toggleCompliments()">
+                  {{ (complimentsOpen ? 'sessionDetail.complimentsHide' : 'sessionDetail.complimentsOpen') | t }}
+                </button>
+              </div>
+
+              @if (complimentsOpen) {
+                @if (complimentsLoading) {
+                  <p role="status">{{ 'sessionDetail.complimentsLoading' | t }}</p>
+                }
+                @if (complimentsError) {
+                  <div class="overall-rating-feedback overall-rating-error" role="alert">
+                    {{ complimentsError }}
+                    @if (complimentsLoadedSessionId !== session.id) {
+                      <button type="button" class="overall-rating-retry" (click)="loadCompliments()"
+                              [disabled]="complimentsLoading">{{ 'sessionDetail.retry' | t }}</button>
+                    }
+                  </div>
+                }
+                @if (complimentsSuccess) {
+                  <p class="overall-rating-feedback overall-rating-success" role="status">{{ complimentsSuccess }}</p>
+                }
+                @if (!complimentsLoading && complimentsLoadedSessionId === session.id) {
+                  <div class="player-compliments-list">
+                    @for (participant of eligibleComplimentPlayers(); track participant.id) {
+                      <article class="player-compliment-row">
+                        <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ '@' + participant.username }}</a>
+                        <div class="player-compliment-actions" role="group"
+                             [attr.aria-label]="'sessionDetail.complimentsFor' | t:{ username: participant.username }">
+                          @for (kind of complimentTypes; track kind) {
+                            <button type="button" class="player-compliment-choice"
+                                    [class.is-sent]="myCompliment(participant.username)?.type === kind"
+                                    [attr.aria-pressed]="myCompliment(participant.username)?.type === kind"
+                                    [disabled]="complimentSavingUsername !== null"
+                                    (click)="giveCompliment(participant, kind)">
+                              {{ complimentLabel(kind) }}
+                            </button>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </div>
+                  @if (complimentsReceived.length > 0) {
+                    <div class="compliments-received" aria-label="{{ 'sessionDetail.complimentsReceived' | t }}">
+                      <h3>{{ 'sessionDetail.complimentsReceived' | t }}</h3>
+                      @for (compliment of complimentsReceived; track compliment.senderUsername) {
+                        <p>{{ '@' + compliment.senderUsername }} · {{ complimentLabel(compliment.type) }}</p>
+                      }
+                    </div>
+                  }
+                }
+              }
+            </section>
+          }
+
           @if (session.venue) {
             <section class="venue-detail-panel">
               <div class="venue-detail-heading">
                 <div>
                   <span class="section-kicker">{{ 'venue.kicker' | t }}</span>
-                  <h2>{{ session.venue.name }}</h2>
+                  <h2>
+                    @if (session.canSeeExactAddress && session.venue.id > 0) {
+                      <a class="session-venue-link" [routerLink]="['/menu/venues', session.venue.id]">
+                        {{ session.venue.name }}
+                      </a>
+                    } @else {
+                      {{ session.venue.name }}
+                    }
+                  </h2>
                   <p>{{ session.venue.city }}</p>
+                  @if (session.canSeeExactAddress && session.venue.id > 0) {
+                    <a class="session-venue-details-action"
+                       [routerLink]="['/menu/venues', session.venue.id]">
+                      {{ 'home.preview.viewVenue' | t }} <span aria-hidden="true">↗</span>
+                    </a>
+                  }
                 </div>
                 @if (session.venue.surfaceType) {
                   <span class="venue-surface">{{ session.venue.surfaceType }}</span>
@@ -345,7 +685,9 @@
             <div class="creator-reliability__header">
               <div>
                 <h2>{{ 'sessionDetail.creatorReliability' | t }}</h2>
-                <p>{{ session.creatorUsername || 'Utilizador' }}</p>
+                @if (session.creatorUsername) {
+                  <p><a class="session-profile-link" [routerLink]="['/menu/perfis',session.creatorUsername]">{{ session.creatorUsername }}</a></p>
+                } @else { <p>Utilizador</p> }
               </div>
               @if (reliabilityLoading) {
                 <span class="reliability-loading">{{ 'common.loading' | t }}</span>
@@ -393,9 +735,50 @@
           </section>
 
           <section class="address-panel">
-            <h2>{{ 'sessionDetail.location' | t }}</h2>
-            @if (session.canSeeExactAddress && session.address) {
-              <p>{{ session.address }}</p>
+            <div class="session-location-heading">
+              <h2>{{ 'sessionDetail.location' | t }}</h2>
+            </div>
+            @if (session.canSeeExactAddress && session.meetingPointInstructions && !meetingPointEditing) {
+              <div id="session-meeting-point" class="session-meeting-point"
+                   tabindex="-1" aria-label="{{ 'sessionDetail.meetingPointTitle' | t }}">
+                <strong>{{ 'sessionDetail.meetingPointTitle' | t }}</strong>
+                <p>{{ session.meetingPointInstructions }}</p>
+                <small>{{ 'sessionDetail.meetingPointCaveat' | t }}</small>
+              </div>
+            }
+            @if (exactGoogleMapsUrl(); as mapsUrl) {
+              <div class="session-location-detail">
+                <span class="session-location-pin" aria-hidden="true">⌖</span>
+                <div class="session-location-copy">
+                  <a class="session-location-map" [href]="mapsUrl" target="_blank" rel="noopener noreferrer"
+                     [attr.aria-label]="'sessionDetail.openMaps' | t">
+                    {{ exactLocationLabel() }} <span aria-hidden="true">↗</span>
+                  </a>
+                  <small>{{ (hasVenueMapCoordinates() ? 'sessionDetail.mapPointNotEntrance'
+                             : 'sessionDetail.openMapsHint') | t }}</small>
+                </div>
+              </div>
+              @if (hasVenueMapCoordinates()) {
+                <div class="session-route-planner" aria-label="{{ 'venue.visit.directionsTitle' | t }}">
+                  <strong>{{ 'venue.visit.directionsTitle' | t }}</strong>
+                  <div class="session-route-modes">
+                    @if (exactDirectionsUrl('driving'); as drivingUrl) {
+                      <a class="session-route-mode jynlo-action jynlo-action--neutral" [href]="drivingUrl"
+                         target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsDriving' | t }}</a>
+                    }
+                    @if (exactDirectionsUrl('walking'); as walkingUrl) {
+                      <a class="session-route-mode jynlo-action jynlo-action--neutral" [href]="walkingUrl"
+                         target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsWalking' | t }}</a>
+                    }
+                    @if (exactDirectionsUrl('transit'); as transitUrl) {
+                      <a class="session-route-mode jynlo-action jynlo-action--neutral" [href]="transitUrl"
+                         target="_blank" rel="noopener noreferrer">{{ 'venue.visit.directionsTransit' | t }}</a>
+                    }
+                  </div>
+                </div>
+              }
+            } @else if (session.canSeeExactAddress) {
+              <p>{{ 'sessionDetail.locationUnavailable' | t }}</p>
             } @else {
               <p>{{ 'sessionDetail.addressLocked' | t }}</p>
             }
@@ -407,6 +790,33 @@
 
           @if (actionError) {
             <div class="action-message error-message">{{ actionError }}</div>
+          }
+          @if (detailRefreshWarning) {
+            <div class="action-message" role="status">{{ detailRefreshWarning }}</div>
+          }
+          @if (joinStatusMessage && !joinOutcomeUnknown) {
+            <div class="action-message" role="status">{{ joinStatusMessage }}</div>
+          }
+
+          @if (registrationPending() && session.status !== 'CANCELLED' && session.status !== 'COMPLETED') {
+            <section class="participation-panel" role="status">
+              <div>
+                <h2>{{ 'sessionDetail.callupPending' | t }}</h2>
+                @if (session.registrationOpeningMode === 'MANUAL') {
+                  <p>{{ 'sessionDetail.callupAwaitOrganizer' | t }}</p>
+                } @else if (session.registrationOpensAt) {
+                  <p>{{ 'sessionDetail.callupScheduledFor' | t }}:
+                    <strong>{{ session.registrationOpensAt | date:'dd/MM/yyyy, HH:mm' }}</strong>
+                  </p>
+                }
+              </div>
+              @if (isCreator() && session.registrationOpeningMode === 'MANUAL') {
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                  (click)="openCallup()" [disabled]="actionLoading">
+                  {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.openCallup' | t) }}
+                </button>
+              }
+            </section>
           }
 
           @if (session.waitlisted) {
@@ -430,7 +840,7 @@
                 </button>
               }
             </section>
-          } @else if (session.joined && isCreator()) {
+          } @else if (isCreator()) {
             <section class="participation-panel">
               <div>
                 <h2>{{ 'sessionDetail.ownTitle' | t }}</h2>
@@ -450,19 +860,24 @@
                     <strong>{{ 'sessionDetail.teamsTitle' | t }}</strong>
                     <p>{{ 'sessionDetail.teamsText' | t }}</p>
                   </div>
-                  <button
-                    type="button"
-                    class="secondary-action jynlo-action jynlo-action--neutral"
-                    [disabled]="teamsLoading"
-                    (click)="generateTeams()">
-                    {{
-                      teamsLoading
-                        ? ('sessionDetail.generatingTeams' | t)
-                        : hasConfirmedTeams()
-                          ? ('sessionDetail.regenerateTeams' | t)
-                          : ('sessionDetail.generateTeams' | t)
-                    }}
-                  </button>
+                  <div class="team-generator-actions">
+                    <button
+                      type="button"
+                      class="secondary-action jynlo-action jynlo-action--neutral"
+                      [disabled]="teamsLoading || teamsConfirming"
+                      [attr.aria-pressed]="teamsScoreSource === 'FORM'"
+                      (click)="generateTeams('FORM')">
+                      {{ 'sessionDetail.teamsFromForm' | t }}
+                    </button>
+                    <button
+                      type="button"
+                      class="secondary-action jynlo-action jynlo-action--neutral team-generator-excel-action"
+                      [disabled]="teamsLoading || teamsConfirming"
+                      [attr.aria-pressed]="teamsScoreSource === 'EXCEL_POINTS'"
+                      (click)="generateTeams('EXCEL_POINTS')">
+                      {{ 'guestAdmin.teamsFromExcel' | t }}
+                    </button>
+                  </div>
                 </div>
 
                 @if (teamsError) {
@@ -475,8 +890,16 @@
                       <h3>{{ 'sessionDetail.teamA' | t }} <span>{{ teamSuggestion.teamAScore }}</span></h3>
                       @for (player of teamSuggestion.teamA; track player.username) {
                         <div class="team-player">
-                          <span>{{ '@' + player.username }}</span>
-                          @if (player.statsAvailable) {
+                          @if(player.guest){
+                            <span class="team-guest-label">{{ player.displayName || ('guestAdmin.guestPlayer' | t) }}</span>
+                          } @else {
+                            <a class="session-profile-link" [routerLink]="['/menu/perfis',player.username]">{{ '@' + player.username }}</a>
+                          }
+                          @if (teamsScoreSource === 'EXCEL_POINTS') {
+                            <small>{{ player.statsAvailable
+                              ? ('sessionDetail.excelPlayerPoints' | t:{ points: player.strengthScore })
+                              : ('sessionDetail.excelPlayerUnranked' | t:{ points: player.strengthScore }) }}</small>
+                          } @else if (player.statsAvailable) {
                             <small>{{ 'sessionDetail.playerStats' | t:{ games: player.games, goals: player.goals, wins: player.wins } }}</small>
                           } @else {
                             <small>{{ 'sessionDetail.noStats' | t }}</small>
@@ -489,8 +912,16 @@
                       <h3>{{ 'sessionDetail.teamB' | t }} <span>{{ teamSuggestion.teamBScore }}</span></h3>
                       @for (player of teamSuggestion.teamB; track player.username) {
                         <div class="team-player">
-                          <span>{{ '@' + player.username }}</span>
-                          @if (player.statsAvailable) {
+                          @if(player.guest){
+                            <span class="team-guest-label">{{ player.displayName || ('guestAdmin.guestPlayer' | t) }}</span>
+                          } @else {
+                            <a class="session-profile-link" [routerLink]="['/menu/perfis',player.username]">{{ '@' + player.username }}</a>
+                          }
+                          @if (teamsScoreSource === 'EXCEL_POINTS') {
+                            <small>{{ player.statsAvailable
+                              ? ('sessionDetail.excelPlayerPoints' | t:{ points: player.strengthScore })
+                              : ('sessionDetail.excelPlayerUnranked' | t:{ points: player.strengthScore }) }}</small>
+                          } @else if (player.statsAvailable) {
                             <small>{{ 'sessionDetail.playerStats' | t:{ games: player.games, goals: player.goals, wins: player.wins } }}</small>
                           } @else {
                             <small>{{ 'sessionDetail.noStats' | t }}</small>
@@ -500,8 +931,16 @@
                     </div>
                   </div>
                   <p class="team-stats-note">
-                    {{ 'sessionDetail.teamsStatsUsed' | t:{ known: teamSuggestion.playersWithStats, total: teamSuggestion.totalPlayers } }}
+                    {{ (teamsScoreSource === 'EXCEL_POINTS'
+                      ? 'sessionDetail.teamsExcelUsed'
+                      : 'sessionDetail.teamsStatsUsed') | t:{
+                        known: teamSuggestion.playersWithStats,
+                        total: teamSuggestion.totalPlayers
+                      } }}
                   </p>
+                  @if (teamsScoreSource === 'EXCEL_POINTS') {
+                    <p class="team-stats-note">{{ 'sessionDetail.teamsExcelPrivacy' | t }}</p>
+                  }
                   <button
                     type="button"
                     class="primary-action jynlo-action jynlo-action--primary"
@@ -585,6 +1024,19 @@
                 </button>
               }
             </section>
+          } @else if (joinOutcomeUnknown) {
+            <section class="participation-panel" role="status">
+              <div>
+                <h2>{{ 'sessionDetail.joinVerificationTitle' | t }}</h2>
+                <p>{{ joinStatusMessage }}</p>
+              </div>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                [disabled]="joinStatusChecking || actionLoading" (click)="verifyJoinOutcome()">
+                {{ (joinStatusChecking ? 'sessionDetail.joinVerifying' : 'sessionDetail.joinVerify') | t }}
+              </button>
+            </section>
+          } @else if (registrationPending()) {
+            <!-- The callup status panel above explains when joining will open. -->
           } @else if (!canJoinSession()) {
             <section class="participation-panel">
               <div>
@@ -634,15 +1086,12 @@
               <div class="session-participants-header">
                 <div>
                   <h2>{{ 'sessionDetail.whosGoing' | t }}</h2>
-                  <p>{{ 'sessionDetail.whosGoingText' | t:{ count: sessionParticipants.length } }}</p>
+                  <p>{{ 'sessionDetail.whosGoingText' | t:{ count: visiblePlayerCount() } }}</p>
                 </div>
-                <button
-                  type="button"
-                  class="secondary-action jynlo-action jynlo-action--neutral"
-                  [disabled]="sessionParticipantsLoading"
-                  (click)="loadSessionParticipants()">
-                  {{ sessionParticipantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
-                </button>
+                <span class="session-roster-live" role="status">
+                  <span class="session-roster-live__dot" aria-hidden="true"></span>
+                  {{ 'sessionDetail.rosterAutoUpdate' | t }}
+                </span>
               </div>
 
               @if (sessionParticipantsLoading) {
@@ -650,6 +1099,33 @@
               }
               @if (sessionParticipantsError) {
                 <div class="action-message error-message" role="alert">{{ sessionParticipantsError }}</div>
+              }
+              @if (memberConfirmedGuestsError) {
+                <div class="action-message error-message" role="alert">{{ memberConfirmedGuestsError }}</div>
+              }
+              @if (guestRosterSuccess) {
+                <p class="session-roster-feedback session-roster-feedback--success" role="status">{{ guestRosterSuccess }}</p>
+              }
+              @if (guestRosterError) {
+                <p class="session-roster-feedback session-roster-feedback--error" role="alert">{{ guestRosterError }}</p>
+              }
+              @if (participantManagementError) {
+                <p class="session-roster-feedback session-roster-feedback--error" role="alert">{{ participantManagementError }}</p>
+              }
+              @if (participantManagementSuccess) {
+                <p class="session-roster-feedback session-roster-feedback--success" role="status">{{ participantManagementSuccess }}</p>
+              }
+              @if (minimumToPlay(); as minimum) {
+                <div class="session-minimum-indicator"
+                     [class.session-minimum-indicator--ready]="visibleConfirmedForMinimum() >= minimum"
+                     role="status">
+                  <strong>{{ visibleConfirmedForMinimum() }}/{{ minimum }}</strong>
+                  <span>{{ (visibleConfirmedForMinimum() >= minimum
+                    ? 'sessionDetail.minimumReady'
+                    : 'sessionDetail.minimumMissing') | t:{
+                      count: MathMax(0, minimum - visibleConfirmedForMinimum())
+                    } }}</span>
+                </div>
               }
 
               @if (!sessionParticipantsLoading && !sessionParticipantsError) {
@@ -660,7 +1136,64 @@
                       <strong>{{ 'sessionDetail.teamA' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('A'); track participant.id) {
-                          <span>{{ '@' + participant.username }}</span>
+                          <div class="session-player-card session-player-card--member">
+                            <a class="session-player-card__profile" [routerLink]="['/menu/perfis',participant.username]">
+
+                            <span class="session-player-card__avatar" aria-hidden="true">
+                              <span>{{ rosterInitials(participant.username) }}</span>
+                              @if (rosterAvatar(participant.profilePicUrl); as photo) {
+                                <img [src]="photo" alt="" loading="lazy" (error)="rosterAvatarFailed($event)">
+                              }
+                            </span>
+                            <span class="session-player-card__name">{{ '@' + participant.username }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
+                                                      </a>
+                            @if (canCancelRegisteredPresence(participant)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (pendingRemovalId === participant.id) {
+                                  <p>{{ 'sessionDetail.cancelRegisteredConfirm' | t:{ name: participant.username } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger confirm-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="confirmRemoveParticipant(participant)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral cancel-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="cancelRemoveParticipant()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="removeLoadingId !== null"
+                                    (click)="requestRemoveParticipant(participant)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                        @for (guest of guestTeamParticipants('A'); track guest.id) {
+                          <div class="session-player-card session-player-card--guest">
+                            <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
+                            <span class="session-player-card__name">{{ guest.name }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
+                            @if (canCancelGuestPresence(guest)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (guestCancellationPendingId === guest.id) {
+                                  <p>{{ 'guestAdmin.cancelConfirm' | t:{ name: guest.name } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="confirmGuestCancellation(guest)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="dismissGuestCancellation()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="guestRequestBusyId !== null"
+                                    (click)="requestGuestCancellation(guest)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
                         }
                       </div>
                     </div>
@@ -668,7 +1201,64 @@
                       <strong>{{ 'sessionDetail.teamB' | t }}</strong>
                       <div class="session-participant-list">
                         @for (participant of teamParticipants('B'); track participant.id) {
-                          <span>{{ '@' + participant.username }}</span>
+                          <div class="session-player-card session-player-card--member">
+                            <a class="session-player-card__profile" [routerLink]="['/menu/perfis',participant.username]">
+
+                            <span class="session-player-card__avatar" aria-hidden="true">
+                              <span>{{ rosterInitials(participant.username) }}</span>
+                              @if (rosterAvatar(participant.profilePicUrl); as photo) {
+                                <img [src]="photo" alt="" loading="lazy" (error)="rosterAvatarFailed($event)">
+                              }
+                            </span>
+                            <span class="session-player-card__name">{{ '@' + participant.username }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
+                                                      </a>
+                            @if (canCancelRegisteredPresence(participant)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (pendingRemovalId === participant.id) {
+                                  <p>{{ 'sessionDetail.cancelRegisteredConfirm' | t:{ name: participant.username } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger confirm-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="confirmRemoveParticipant(participant)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral cancel-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="cancelRemoveParticipant()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="removeLoadingId !== null"
+                                    (click)="requestRemoveParticipant(participant)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                        @for (guest of guestTeamParticipants('B'); track guest.id) {
+                          <div class="session-player-card session-player-card--guest">
+                            <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
+                            <span class="session-player-card__name">{{ guest.name }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
+                            @if (canCancelGuestPresence(guest)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (guestCancellationPendingId === guest.id) {
+                                  <p>{{ 'guestAdmin.cancelConfirm' | t:{ name: guest.name } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="confirmGuestCancellation(guest)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="dismissGuestCancellation()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="guestRequestBusyId !== null"
+                                    (click)="requestGuestCancellation(guest)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
                         }
                       </div>
                     </div>
@@ -676,8 +1266,66 @@
                 } @else {
                   <div class="session-participant-list">
                     @for (participant of sessionParticipants; track participant.id) {
-                      <span>{{ '@' + participant.username }}</span>
-                    } @empty {
+                      <div class="session-player-card session-player-card--member">
+                            <a class="session-player-card__profile" [routerLink]="['/menu/perfis',participant.username]">
+
+                            <span class="session-player-card__avatar" aria-hidden="true">
+                              <span>{{ rosterInitials(participant.username) }}</span>
+                              @if (rosterAvatar(participant.profilePicUrl); as photo) {
+                                <img [src]="photo" alt="" loading="lazy" (error)="rosterAvatarFailed($event)">
+                              }
+                            </span>
+                            <span class="session-player-card__name">{{ '@' + participant.username }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.memberBadge' | t }}</span>
+                                                      </a>
+                            @if (canCancelRegisteredPresence(participant)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (pendingRemovalId === participant.id) {
+                                  <p>{{ 'sessionDetail.cancelRegisteredConfirm' | t:{ name: participant.username } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger confirm-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="confirmRemoveParticipant(participant)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral cancel-remove-action"
+                                      [disabled]="removeLoadingId !== null"
+                                      (click)="cancelRemoveParticipant()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="removeLoadingId !== null"
+                                    (click)="requestRemoveParticipant(participant)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
+                    }
+                    @for (guest of confirmedGuestParticipants(); track guest.id) {
+                      <div class="session-player-card session-player-card--guest">
+                            <span class="session-player-card__avatar" aria-hidden="true">{{ rosterInitials(guest.name) }}</span>
+                            <span class="session-player-card__name">{{ guest.name }}</span>
+                            <span class="session-player-card__badge">{{ 'guestAdmin.guestBadge' | t }}</span>
+                            @if (canCancelGuestPresence(guest)) {
+                              <div class="session-player-card__guest-actions">
+                                @if (guestCancellationPendingId === guest.id) {
+                                  <p>{{ 'guestAdmin.cancelConfirm' | t:{ name: guest.name } }}</p>
+                                  <div class="session-player-card__confirmation">
+                                    <button type="button" class="jynlo-action jynlo-action--danger"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="confirmGuestCancellation(guest)">{{ 'guestAdmin.cancelConfirmAction' | t }}</button>
+                                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                                      [disabled]="guestRequestBusyId !== null"
+                                      (click)="dismissGuestCancellation()">{{ 'common.cancel' | t }}</button>
+                                  </div>
+                                } @else {
+                                  <button type="button" class="session-player-card__cancel jynlo-action jynlo-action--neutral"
+                                    [disabled]="guestRequestBusyId !== null"
+                                    (click)="requestGuestCancellation(guest)">{{ 'guestAdmin.cancel' | t }}</button>
+                                }
+                              </div>
+                            }
+                          </div>
+                    }
+                    @if (visiblePlayerCount() === 0) {
                       <span class="session-participants-empty">{{ 'sessionDetail.noVisibleParticipants' | t }}</span>
                     }
                   </div>
@@ -765,7 +1413,7 @@
                   @for (participant of participants; track participant.id) {
                     <article class="participant-row">
                       <div class="participant-identity">
-                        <strong>{{ participant.username }}</strong>
+                        <a class="session-profile-link" [routerLink]="['/menu/perfis',participant.username]">{{ participant.username }}</a>
                         <span>{{ 'sessionDetail.joinedAt' | t:{ date: (participant.joinedAt | date:'dd/MM/yyyy HH:mm')! } }}</span>
                       </div>
 
@@ -823,9 +1471,7 @@
                         }
                       </div>
 
-                      @if (canRemoveParticipant(participant)
-                           && (participant.attendanceStatus === 'NO_SHOW'
-                               || futureExclusions[participant.id] === true)) {
+                      @if (canRemoveParticipant(participant)) {
                         <div class="future-exclusion-panel">
                           @if (futureExclusions[participant.id] === true) {
                             <span>{{ 'sessionDetail.futureExclusionActive' | t }}</span>
@@ -837,8 +1483,22 @@
                           } @else if (futureExclusions[participant.id] === false) {
                             @if (pendingFutureExclusionId === participant.id) {
                               <span>{{ 'sessionDetail.futureExclusionConfirm' | t:{ username: participant.username } }}</span>
+                              <label class="future-exclusion-reason-label"
+                                     [attr.for]="'future-exclusion-reason-' + participant.id">
+                                {{ 'sessionDetail.futureExclusionSelectReason' | t }}
+                              </label>
+                              <select class="future-exclusion-reason" [id]="'future-exclusion-reason-' + participant.id"
+                                      [value]="pendingFutureExclusionReason"
+                                      [disabled]="futureExclusionUpdatingId !== null"
+                                      (change)="chooseFutureExclusionReason(participant, $any($event.target).value)">
+                                <option value="">{{ 'sessionDetail.futureExclusionChooseReason' | t }}</option>
+                                @for (reason of availableFutureExclusionReasons(participant); track reason) {
+                                  <option [value]="reason">{{ ('sessionDetail.futureExclusionReason.' + reason) | t }}</option>
+                                }
+                              </select>
+                              <small class="future-exclusion-private-hint">{{ 'sessionDetail.futureExclusionPrivateHint' | t }}</small>
                               <button type="button" class="future-exclusion-confirm jynlo-action jynlo-action--primary"
-                                [disabled]="futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
+                                [disabled]="!pendingFutureExclusionReason || futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
                                 (click)="confirmFutureExclusion(participant)">
                                 {{ 'sessionDetail.futureExclusionYes' | t }}
                               </button>
@@ -873,101 +1533,6 @@
             }
           }
 
-          @if (canAccessChat()) {
-            <section class="chat-panel">
-              <div class="chat-header">
-                <div>
-                  <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
-                  <p>{{ 'sessionDetail.sessionChatText' | t }}</p>
-                </div>
-                <span class="sync-status">{{ (canSendChat() ? 'chat.autoRefresh' : 'sessionDetail.chatClosedShort') | t }}</span>
-              </div>
-
-              @if (chatError) {
-                <div class="chat-error">{{ chatError }}</div>
-              }
-
-              <div class="message-list">
-                @if (!chatLoading && messages.length === 0) {
-                  <div class="empty-chat">
-                    {{ (canSendChat() ? 'sessionDetail.emptyChat' : 'sessionDetail.emptyChatClosed') | t }}
-                  </div>
-                }
-
-                @for (message of messages; track message.id) {
-                  <article
-                    class="message"
-                    [class.own-message]="isOwnMessage(message)">
-                    <div class="message-meta">
-                      <strong>{{ message.senderUsername }}</strong>
-                      <span>{{ messageDate(message) }}</span>
-                    </div>
-                    <p>{{ message.body }}</p>
-                  </article>
-                }
-              </div>
-
-              @if (canSendChat()) {
-              <form class="message-composer" (ngSubmit)="sendMessage()">
-                <label>
-                  <span>{{ 'sessionDetail.newMessage' | t }}</span>
-                  <textarea
-                    name="messageBody"
-                    [(ngModel)]="messageBody"
-                    maxlength="2000"
-                    rows="3"
-                    [disabled]="messageSending"
-                    [placeholder]="'sessionDetail.groupPlaceholder' | t"
-                    (keydown.enter)="onChatEnter($event)"></textarea>
-                </label>
-
-                <div class="composer-tools">
-                  <div class="emoji-wrap">
-                    <button
-                      type="button"
-                      class="emoji-toggle"
-                      [attr.aria-expanded]="showEmojiPicker"
-                      [disabled]="messageSending"
-                      (click)="toggleEmojiPicker()">
-                      😊 {{ 'chat.emoji' | t }}
-                    </button>
-
-                    @if (showEmojiPicker) {
-                      <div class="emoji-picker">
-                        @for (emoji of emojis; track emoji) {
-                          <button type="button" class="emoji-option" (click)="addEmoji(emoji)">
-                            {{ emoji }}
-                          </button>
-                        }
-                      </div>
-                    }
-                  </div>
-
-                  <span class="character-count">{{ messageBody.length }}/2000</span>
-                </div>
-
-                <div class="composer-footer">
-                  <span>{{ 'chat.autoRefreshHint' | t }}</span>
-                  <button
-                    type="submit"
-                    class="primary-action jynlo-action jynlo-action--primary"
-                    [disabled]="messageSending || !messageBody.trim()">
-                    {{ messageSending ? ('chat.sending' | t) : ('chat.send' | t) }}
-                  </button>
-                </div>
-              </form>
-              } @else {
-                <div class="chat-read-only" role="status">
-                  {{ 'sessionDetail.chatClosedDescription' | t }}
-                </div>
-              }
-            </section>
-          } @else if (!session.waitlisted) {
-            <section class="chat-locked">
-              <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
-              <p>{{ 'sessionDetail.chatLocked' | t }}</p>
-            </section>
-          }
         </div>
       </article>
     }
