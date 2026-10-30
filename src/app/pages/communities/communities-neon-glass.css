@@ -495,3 +495,82 @@
     flex:1 1 150px;
   }
 }
+
+/* Explore and mine views: resolve title clipping and oversized vertical cards. */
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header {
+  box-sizing:border-box;
+  padding:clamp(20px,2.5vw,30px);
+  align-items:center;
+  min-height:0;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header h1 {
+  margin:0 0 10px;
+  padding:3px 0 4px;
+  font-size:clamp(1.9rem,3.2vw,2.8rem);
+  line-height:1.25;
+  overflow:visible;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header .subtitle {
+  margin:0;
+  line-height:1.6;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .communities-layout {
+  grid-template-columns:minmax(0,1fr);
+  width:100%;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .communities-layout > aside.community-list {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));
+  align-items:start;
+  align-content:start;
+  gap:16px;
+  width:100%;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > .list-heading {
+  grid-column:1/-1;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card {
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:space-between;
+  gap:14px;
+  min-width:0;
+  min-height:145px;
+  height:auto;
+  padding:17px;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card .community-card-main {
+  display:flex;
+  align-items:center;
+  gap:13px;
+  min-width:0;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card .community-avatar {
+  flex:0 0 56px;
+  width:56px;
+  height:56px;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card .community-card-copy {
+  display:grid;
+  min-width:0;
+  gap:5px;
+  overflow:visible;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card .community-card-copy strong {
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.35;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card > small {
+  display:block;
+  margin-top:auto;
+  padding-top:11px;
+  border-top:1px solid rgba(87,190,193,.18);
+  line-height:1.45;
+}
+@media(max-width:580px) {
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .communities-layout > aside.community-list {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
