@@ -1,5 +1,6 @@
 import { AfterViewChecked, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { LocalParticipant, RemoteParticipant, Track } from 'livekit-client';
 
 /** Each remote participant owns a separate audio element, preventing a third
@@ -7,7 +8,7 @@ import { LocalParticipant, RemoteParticipant, Track } from 'livekit-client';
 @Component({
   standalone: true,
   selector: 'app-call-participant-tile',
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <article class="connect-tile" [class.speaking]="participant.isSpeaking"
       [class.presenting]="isSharing" [class.with-video]="hasVideo">
@@ -20,9 +21,9 @@ import { LocalParticipant, RemoteParticipant, Track } from 'livekit-client';
       <div class="connect-person">
         <span class="connect-speaker" aria-hidden="true"></span>
         <strong>{{ label }}</strong>
-        @if (local) { <span class="connect-self">Tu</span> }
+        @if (local) { <span class="connect-self">{{ 'calls.you' | t }}</span> }
         @if (participant.isMicrophoneEnabled === false) {
-          <span class="connect-muted" aria-label="Microfone desligado">⌁</span>
+          <span class="connect-muted" [attr.aria-label]="'calls.micOff' | t">⌁</span>
         }
       </div>
     </article>
