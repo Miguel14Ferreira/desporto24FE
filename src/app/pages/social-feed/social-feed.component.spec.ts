@@ -89,6 +89,39 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component.ngOnDestroy();
   }));
 
+  it('keeps premium Feed buttons consistent without changing their real routes and actions', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const nav = root.querySelector('.feed-rail-links')!;
+    expect(nav.querySelectorAll('a').length).toBe(7);
+    expect(nav.querySelectorAll('a > svg.feed-ui-icon[aria-hidden="true"]').length).toBe(7);
+    expect(nav.querySelector('a[href="/menu/events"]')).not.toBeNull();
+
+    const primary = root.querySelector('.feed-hero-cta') as HTMLAnchorElement;
+    expect(primary.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(primary.getAttribute('href')).toBe('/menu/createEvent');
+
+    const secondary = root.querySelector('.week-hub-create') as HTMLAnchorElement;
+    expect(secondary.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    expect(secondary.getAttribute('href')).toBe('/menu/my-sessions');
+
+    const composer = root.querySelector('.composer')!;
+    const pickers = Array.from(composer.querySelectorAll<HTMLLabelElement>('.image-picker'));
+    expect(pickers.length).toBe(2);
+    expect(pickers.every(label => label.classList.contains('jynlo-premium-btn--quiet'))).toBeTrue();
+    expect(pickers.every(label => label.querySelector('input[type="file"]') !== null)).toBeTrue();
+    expect(pickers.every(label => label.querySelector('svg.feed-ui-icon') !== null)).toBeTrue();
+
+    const submit = composer.querySelector('button.jynlo-premium-btn--primary') as HTMLButtonElement;
+    expect(submit.disabled).toBeTrue();
+    expect(root.querySelector('.feed-v3-join-action[href="/menu/communities"]')).not.toBeNull();
+    expect(root.querySelectorAll('.feed-v3-side-heading > a.feed-inline-link').length).toBe(3);
+    component.ngOnDestroy();
+  }));
+
   it('keeps the feed controls real and separates the primary and weekly navigation actions', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
