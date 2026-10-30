@@ -39,6 +39,19 @@ describe('CommunityRankingTableComponent', () => {
     expect(root.querySelector('tbody input, tbody a')).toBeNull();
   });
 
+  it('keeps seven-column results scrollable without clipping player identities', () => {
+    const root = render([item]);
+    const wrap = root.querySelector<HTMLElement>('.ranking-table-wrap')!;
+    const table = wrap.querySelector<HTMLElement>('table')!;
+    expect(wrap).not.toBeNull();
+    expect(table.querySelectorAll('thead th').length).toBe(7);
+    expect(getComputedStyle(wrap).overflowX).toBe('auto');
+    expect(parseFloat(getComputedStyle(table).minWidth)).toBeGreaterThanOrEqual(600);
+    const player = table.querySelector<HTMLButtonElement>('button.ranking-player');
+    expect(player?.type).toBe('button');
+    expect(player?.textContent).toContain('Ana Silva');
+  });
+
   it('opens the linked player profile through the existing quick-view service', () => {
     const quick = TestBed.inject(ProfileQuickViewService);
     const open = spyOn(quick, 'open');

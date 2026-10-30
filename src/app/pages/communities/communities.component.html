@@ -8,19 +8,19 @@
       </div>
       <div class="row-actions">
         @if (showMineView()) {
-          <a class="secondary-action header-action button-link jynlo-action jynlo-action--neutral" routerLink="/menu/communities" [queryParams]="{ view: 'explore' }">
+          <a class="secondary-action header-action button-link jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/communities" [queryParams]="{ view: 'explore' }">
             {{ 'communities.searchTitle' | t }}
           </a>
         } @else {
           <a
-            class="secondary-action header-action button-link jynlo-action jynlo-action--neutral"
+            class="secondary-action header-action button-link jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
             routerLink="/menu/communities"
             [queryParams]="{ view: 'mine' }">
             {{ 'communities.mine' | t }}
           </a>
         }
         @if (showMineView()) {
-          <a class="primary-action header-action button-link jynlo-action jynlo-action--primary" routerLink="/menu/communities/create">
+          <a class="primary-action header-action button-link jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" routerLink="/menu/communities/create">
             {{ 'communities.create' | t }}
           </a>
         }
@@ -73,13 +73,13 @@
           <div class="row-actions full-width community-discovery-filter-actions">
             <button
               type="submit"
-              class="primary-action jynlo-action jynlo-action--primary"
+              class="primary-action jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
               [disabled]="communitySearchLoading">
               {{ (communitySearchLoading ? 'common.searching' : 'adminPlayers.search') | t }}
             </button>
             <button
               type="button"
-              class="secondary-action jynlo-action jynlo-action--neutral"
+              class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [disabled]="communitySearchLoading"
               (click)="clearCommunitySearch()">
               {{ 'events.clear' | t }}
@@ -321,7 +321,7 @@
                   <div class="row-actions">
                     <button
                       type="button"
-                      class="primary-action jynlo-action jynlo-action--primary"
+                      class="primary-action jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
                       [disabled]="membershipActionLoading || joinRequestSent || pendingJoinLookupLoading"
                       (click)="joinPresentedCommunity()">
                       @if (communityPresentation.visibility === 'PUBLIC') {
@@ -481,7 +481,7 @@
                   <h2>{{ selected.name }}</h2>
                   <p>{{ selected.description || ('communities.noDescription' | t) }}</p>
                   <div class="row-actions">
-                    <a class="jynlo-action jynlo-action--primary"
+                    <a class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
                        [routerLink]="['/menu/messages']"
                        [queryParams]="{ kind: 'community', id: selected.id }">
                       <span aria-hidden="true">💬</span> {{ 'communities.openChat' | t }}

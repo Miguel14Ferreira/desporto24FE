@@ -42,6 +42,17 @@ describe('CommunityTabsComponent', () => {
     expect(buttons[0].getAttribute('aria-current')).toBeNull();
   });
 
+  it('keeps all seven enabled tabs in a readable horizontal rail', () => {
+    const root = render({ competitions:true, archives:true, rankings:true }).nativeElement as HTMLElement;
+    const nav = root.querySelector<HTMLElement>('.community-tabs')!;
+    const buttons = Array.from(nav.querySelectorAll<HTMLButtonElement>('button'));
+    expect(buttons.length).toBe(7);
+    expect(getComputedStyle(nav).overflowX).toBe('auto');
+    expect(buttons.every(button => button.type === 'button')).toBeTrue();
+    expect(buttons.every(button => getComputedStyle(button).whiteSpace === 'nowrap')).toBeTrue();
+    expect(buttons.filter(button => button.getAttribute('aria-current') === 'true').length).toBe(1);
+  });
+
   it('emits the requested tab but never owns routing or state transitions', () => {
     const fixture = render({ competitions: true, archives: true, rankings: true });
     const handler = jasmine.createSpy('tab-request');
