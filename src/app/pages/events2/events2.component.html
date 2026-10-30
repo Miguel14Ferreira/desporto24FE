@@ -94,7 +94,13 @@
             [class.active]="creationMode === 'START'"
             [attr.aria-pressed]="creationMode === 'START'"
             [disabled]="loading" (click)="selectCreationMode('START')">
-            <span class="create-mode-option-icon" aria-hidden="true">◎</span>
+            <span class="create-mode-option-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 7v10M7 12h10"></path>
+              </svg>
+            </span>
             <strong>{{ 'createSession.modeStart' | t }}</strong>
             <small>{{ 'createSession.modeStartHelp' | t }}</small>
           </button>
@@ -102,7 +108,13 @@
             [class.active]="creationMode === 'COMPLETE'"
             [attr.aria-pressed]="creationMode === 'COMPLETE'"
             [disabled]="loading" (click)="selectCreationMode('COMPLETE')">
-            <span class="create-mode-option-icon" aria-hidden="true">♧</span>
+            <span class="create-mode-option-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor"
+                   stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+                <circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2"></circle>
+                <path d="M3.5 20v-1.5a5.5 5.5 0 0 1 11 0V20M15 14a4 4 0 0 1 5.5 4V20"></path>
+              </svg>
+            </span>
             <strong>{{ 'createSession.modeComplete' | t }}</strong>
             <small>{{ 'createSession.modeCompleteHelp' | t }}</small>
           </button>
@@ -1005,7 +1017,7 @@
           <p>{{ 'createSession.photoHint' | t }}</p>
         </div>
 
-        <label class="upload-button">
+        <label class="upload-button" [class.is-disabled]="loading">
           <input
             type="file"
             accept="image/*"

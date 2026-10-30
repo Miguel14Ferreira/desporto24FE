@@ -21,7 +21,7 @@ import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/
 @Component({
   selector: 'app-events2',
   templateUrl: './events2.component.html',
-  styleUrls: ['./events2.component.css', './events2-create-flow.css', '../../../styles/jynlo-activities-neon-glass.css'],
+  styleUrls: ['./events2.component.css', './events2-create-flow.css', '../../../styles/jynlo-activities-neon-glass.css', './events2-neon-polish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
