@@ -342,21 +342,37 @@
                           <time class="inbox-voice-clock">{{ attachmentLoading.has(message.id) ? '…' : '0:00' }}</time>
                         }
                       </div>
+                    } @else if (isInlineImage(message)) {
+                      @if (attachmentPreviews.get(message.id); as imageUrl) {
+                        <button type="button" class="inbox-inline-image-open"
+                          [attr.aria-label]="('chat.imageEnlarge' | t) + ': ' + message.attachmentName"
+                          (click)="expandInlineImage(message)">
+                          <img class="inbox-attachment-image" [src]="imageUrl" [alt]="message.attachmentName"
+                            loading="lazy">
+                        </button>
+                      } @else if (inlineImageFailures.has(message.id)) {
+                        <button type="button" class="inbox-inline-image-retry"
+                          (click)="retryInlineImage(message)">
+                          <span aria-hidden="true">🖼️</span>
+                          {{ 'chat.imageRetry' | t }}
+                        </button>
+                      } @else {
+                        <div appChatImageInView (chatImageVisible)="loadInlineImage(message)"
+                          class="inbox-inline-image-placeholder" role="status"
+                          [attr.aria-label]="'chat.imageLoading' | t">
+                          <span class="inbox-inline-image-spinner" aria-hidden="true"></span>
+                          <span>{{ 'chat.imageLoading' | t }}</span>
+                        </div>
+                      }
                     } @else {
                       <button type="button" class="inbox-attachment-button"
                         [disabled]="attachmentLoading.has(message.id)"
                         (click)="openAttachment(message)">
-                        <span aria-hidden="true">{{ message.attachmentMimeType?.startsWith('image/') ? '🖼️' : '📄' }}</span>
-                        <span>{{ message.attachmentMimeType === 'image/gif' ? ('chat.gifImage' | t)
-                          : message.attachmentName }}</span>
+                        <span aria-hidden="true">📄</span>
+                        <span>{{ message.attachmentName }}</span>
                         <small>{{ (attachmentLoading.has(message.id) ? 'chat.attachmentLoading'
-                          : attachmentPreviews.has(message.id) ? 'chat.attachmentHide'
                           : 'chat.attachmentOpen') | t }}</small>
                       </button>
-                      @if (attachmentPreviews.get(message.id); as previewUrl) {
-                        <img class="inbox-attachment-image" [src]="previewUrl" [alt]="message.attachmentName"
-                          loading="lazy">
-                      }
                     }
                   </div>
                 }
@@ -586,4 +602,14 @@
     </div>
     <p class="inbox-unread-note">{{ (serverSummariesAvailable ? 'inbox.unreadScope' : 'inbox.unreadOffline') | t }}</p>
   </div>
+  @if (expandedImageId !== null && attachmentPreviews.get(expandedImageId); as largeImageUrl) {
+    <div class="inbox-image-lightbox" role="dialog" aria-modal="true"
+      [attr.aria-label]="'chat.imageExpanded' | t"
+      (click)="closeImageViewer()">
+      <button type="button" class="inbox-image-lightbox-close"
+        [attr.aria-label]="'common.close' | t" (click)="closeImageViewer()">✕</button>
+      <img class="inbox-image-lightbox-media" [src]="largeImageUrl"
+        [alt]="'chat.imageExpanded' | t" (click)="$event.stopPropagation()">
+    </div>
+  }
 </section>

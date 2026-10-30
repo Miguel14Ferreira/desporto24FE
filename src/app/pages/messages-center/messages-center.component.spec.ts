@@ -711,6 +711,89 @@ describe('Unified Jynlo message center', () => {
     expect(component.messages.some(m => m.id === 56 && m.attachmentName === 'torneio.pdf')).toBeTrue();
   });
 
+
+  it('automatically fetches an inline image once from the selected private conversation', () => {
+    const peer=item('direct','bea'), photo={...message(peer.key,92,'bea'),
+      attachmentName:'imagem-colada.png',attachmentMimeType:'image/png'};
+    component.conversations=[peer];component.selectedKey=peer.key;
+    direct.downloadAttachment.and.returnValue(of(new Blob(['x'],{type:'image/png'})));
+    spyOn(URL,'createObjectURL').and.returnValue('blob:inline-private');
+    const revoke=spyOn(URL,'revokeObjectURL');
+    expect(component.isInlineImage(photo)).toBeTrue();
+    expect(component.isInlineImage({...photo,attachmentMimeType:'application/pdf'})).toBeFalse();
+    component.loadInlineImage(photo);
+    component.loadInlineImage(photo);
+    expect(direct.downloadAttachment).toHaveBeenCalledOnceWith('bea',92);
+    expect(component.attachmentPreviews.get(92)).toBe('blob:inline-private');
+    component.expandInlineImage(photo);
+    expect(component.expandedImageId).toBe(92);
+    component.closeImageViewer();
+    expect(component.expandedImageId).toBeNull();
+    expect(revoke).not.toHaveBeenCalled();
+    component.ngOnDestroy();
+    expect(revoke).toHaveBeenCalledWith('blob:inline-private');
+  });
+
+  it('uses existing protected community/session endpoints but never requests PDF previews', () => {
+    const community=item('community',7), session=item('session',41);
+    const photo={...message(community.key,93,'bea'),
+      attachmentName:'praia.webp',attachmentMimeType:'image/webp'};
+    component.conversations=[community,session];component.selectedKey=community.key;
+    timeline.downloadChatAttachment.and.returnValue(of(new Blob(['x'],{type:'image/webp'})));
+    spyOn(URL,'createObjectURL').and.returnValues('blob:community-photo','blob:session-photo');
+    spyOn(URL,'revokeObjectURL');
+    component.loadInlineImage(photo);
+    expect(timeline.downloadChatAttachment).toHaveBeenCalledOnceWith(7,93);
+    expect(direct.downloadAttachment).not.toHaveBeenCalled();
+    (component as any).clearAttachmentPreviews();
+    component.selectedKey=session.key;
+    const sessionPhoto={...message(session.key,94,'ana'),
+      attachmentName:'treino.jpg',attachmentMimeType:'image/jpeg'};
+    sessions.downloadAttachment.and.returnValue(of(new Blob(['x'],{type:'image/jpeg'})));
+    component.loadInlineImage(sessionPhoto);
+    expect(sessions.downloadAttachment).toHaveBeenCalledOnceWith(41,94);
+    expect(component.attachmentPreviews.get(94)).toBe('blob:session-photo');
+    component.loadInlineImage({...sessionPhoto,id:95,attachmentMimeType:'application/pdf'});
+    expect(sessions.downloadAttachment).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a failed image as a manual retry without repeatedly downloading', () => {
+    const peer=item('direct','bea'),photo={...message(peer.key,96,'ana'),
+      attachmentName:'imagem.gif',attachmentMimeType:'image/gif'};
+    component.conversations=[peer];component.selectedKey=peer.key;
+    direct.downloadAttachment.and.returnValue(throwError(()=>new Error('HTTP blocked')));
+    component.loadInlineImage(photo);
+    component.loadInlineImage(photo);
+    expect(direct.downloadAttachment).toHaveBeenCalledTimes(1);
+    expect(component.inlineImageFailures.has(96)).toBeTrue();
+    expect(component.composerError).toBe('');
+    direct.downloadAttachment.and.returnValue(of(new Blob(['x'],{type:'image/gif'})));
+    spyOn(URL,'createObjectURL').and.returnValue('blob:retry-success');
+    component.retryInlineImage(photo);
+    expect(direct.downloadAttachment).toHaveBeenCalledTimes(2);
+    expect(component.inlineImageFailures.has(96)).toBeFalse();
+    expect(component.attachmentPreviews.get(96)).toBe('blob:retry-success');
+  });
+
+  it('does not expose an inline image downloaded after the user changes account', () => {
+    let browserToken='qa-ana';
+    spyOn(localStorage,'getItem').and.callFake(key=>key==='t'?browserToken:null);
+    (component as any).receiptSessionToken=browserToken;
+    const peer=item('direct','bea'),photo={...message(peer.key,98,'bea'),
+      attachmentName:'private.png',attachmentMimeType:'image/png'};
+    component.conversations=[peer];component.selectedKey=peer.key;
+    const pending=new Subject<Blob>();
+    direct.downloadAttachment.and.returnValue(pending.asObservable());
+    const create=spyOn(URL,'createObjectURL').and.returnValue('blob:forbidden');
+    component.loadInlineImage(photo);
+    browserToken='different-account';
+    pending.next(new Blob(['x'],{type:'image/png'}));pending.complete();
+    expect(create).not.toHaveBeenCalled();
+    expect(component.attachmentPreviews.size).toBe(0);
+    component.expandInlineImage(photo);
+    expect(component.expandedImageId).toBeNull();
+  });
+
   it('downloads community media only through its authorized community endpoint', () => {
     const community = item('community', 7);
     component.conversations = [community];

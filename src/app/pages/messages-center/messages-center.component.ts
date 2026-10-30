@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, OnDestroy, OnInit, AfterViewChecked, ViewChild, ChangeDetectionStrategy, Optional } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, AfterViewChecked, ViewChild, ChangeDetectionStrategy, Optional, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
@@ -23,6 +23,7 @@ import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { chatMediaPreviewKind } from '../../shared/chat-media-preview';
 import { readPastedChatImage } from '../../shared/chat-clipboard-image';
+import { ChatImageInViewDirective } from '../../shared/chat-image-in-view.directive';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { DirectChatMessage } from '../model/direct-chat';
 import { SessionMessage } from '../model/session-message';
@@ -48,7 +49,7 @@ const VOICE_NOTE_AUDIO_BITRATE = 48_000;
 @Component({
   selector: 'app-messages-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent, InboxConversationListComponent, InboxEmojiGifPickerComponent, InboxShareMenuComponent, InboxSharePickerComponent, InboxHistorySearchComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent, InboxConversationListComponent, InboxEmojiGifPickerComponent, InboxShareMenuComponent, InboxSharePickerComponent, InboxHistorySearchComponent, ChatImageInViewDirective],
   templateUrl: './messages-center.component.html',
   styleUrls: ['./messages-center.component.css', './messages-center-premium.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -187,6 +188,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private voiceGeneration = 0;
   readonly attachmentPreviews = new Map<number, string>();
   readonly attachmentLoading = new Set<number>();
+  readonly inlineImageFailures = new Set<number>();
+  expandedImageId: number | null = null;
   // Only transient playback state is retained. URLs remain private and are
   // revoked whenever the chat, account or active session changes.
   readonly voicePlaying = new Set<number>();
@@ -1665,6 +1668,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     for (const url of this.attachmentPreviews.values()) URL.revokeObjectURL(url);
     this.attachmentPreviews.clear();
     this.attachmentLoading.clear();
+    this.inlineImageFailures.clear();
+    this.expandedImageId = null;
   }
 
   private releaseVoicePlayer(id: number): void {
@@ -1797,7 +1802,38 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && (!this.isVoiceNote(message) || body !== message.attachmentName));
   }
 
-  openAttachment(message: InboxMessage): void {
+  isInlineImage(message: InboxMessage): boolean {
+    return !!message.attachmentName && message.id > 0
+      && ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        .includes((message.attachmentMimeType || '').toLowerCase());
+  }
+
+  loadInlineImage(message: InboxMessage): void {
+    if (!this.isInlineImage(message) || this.inlineImageFailures.has(message.id)
+        || this.attachmentLoading.has(message.id) || this.attachmentPreviews.has(message.id)) return;
+    this.openAttachment(message, true);
+  }
+
+  retryInlineImage(message: InboxMessage): void {
+    if (!this.isInlineImage(message)) return;
+    this.inlineImageFailures.delete(message.id);
+    this.loadInlineImage(message);
+  }
+
+  expandInlineImage(message: InboxMessage): void {
+    if (this.isInlineImage(message) && this.selectedKey === message.key
+        && this.isAttachmentIdentityCurrent() && this.isSelectedSessionOpen()
+        && this.attachmentPreviews.has(message.id)) {
+      this.expandedImageId = message.id;
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  closeImageViewer(): void {
+    this.expandedImageId = null;
+  }
+
+  openAttachment(message: InboxMessage, inline = false): void {
     const conversation = this.selected;
     if (!conversation || message.key !== conversation.key
         || !this.isAttachmentIdentityCurrent() || !this.isSelectedSessionOpen()
@@ -1805,9 +1841,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         || this.attachmentLoading.has(message.id)) return;
     const existing = this.attachmentPreviews.get(message.id);
     if (existing) {
+      if (inline) return; // viewport never hides a loaded image
       this.releaseVoicePlayer(message.id);
       URL.revokeObjectURL(existing);
       this.attachmentPreviews.delete(message.id);
+      if (this.expandedImageId === message.id) this.expandedImageId = null;
       return;
     }
     const viewVersion = this.attachmentViewVersion;
@@ -1829,6 +1867,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           const url = URL.createObjectURL(blob);
           if (message.attachmentMimeType?.startsWith('image/')
               || message.attachmentMimeType?.startsWith('audio/')) {
+            this.inlineImageFailures.delete(message.id);
             this.attachmentPreviews.set(message.id, url);
           } else {
             const anchor = document.createElement('a');
@@ -1842,8 +1881,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         error: () => {
           this.voiceAutoplayRequested.delete(message.id);
           if (viewVersion === this.attachmentViewVersion && this.selectedKey === conversation.key
-              && this.isAttachmentIdentityCurrent())
-            this.composerError = t('chat.attachmentDownloadFailed');
+              && this.isAttachmentIdentityCurrent()) {
+            if (inline) this.inlineImageFailures.add(message.id);
+            else this.composerError = t('chat.attachmentDownloadFailed');
+          }
         }
       });
   }
