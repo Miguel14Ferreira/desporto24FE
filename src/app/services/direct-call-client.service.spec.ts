@@ -33,6 +33,10 @@ describe('Direct calls gated by authenticated realtime and backend availability'
   });
 
   afterEach(() => {
+    // Group membership refresh is best-effort and may be started by a
+    // mocked peer connection in older unit tests. Finish those scoped GETs.
+    http.match(req => /\/api\/calls\/direct\/[^/]+\/members$/.test(req.url))
+      .forEach(req => req.flush({participants:[],pending:[]}));
     calls.ngOnDestroy();
     http.verify();
   });
@@ -541,6 +545,68 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability'))
       .flush({enabled:false,status:'providerUnavailable'});
     expect(calls.availabilityStatus$.value).toBe('providerUnavailable');
+  });
+
+
+  it('only sends invited members to the scoped authenticated endpoint in an active room', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room={remoteParticipants:new Map(),localParticipant:{},disconnect:jasmine.createSpy('disconnect')};
+    calls.room=room as any;
+    calls.state$.next({id:'call-123',peer:'bea',media:'voice',phase:'active',
+      micEnabled:true,cameraEnabled:false});
+    const sending=calls.inviteMember('carlos');
+    const request=http.expectOne(r=>r.url.endsWith('/api/calls/direct/call-123/invite/carlos'));
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({});
+    request.flush(null);
+    await sending;
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/call-123/members'))
+      .flush({participants:[{username:'ana',identity:'jynlo-user-12'},
+        {username:'bea',identity:'jynlo-user-13'}],pending:['carlos']});
+    expect(calls.members$.value.pending).toEqual(['carlos']);
+    expect(calls.invitationError$.value).toBeNull();
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/call-123/end')).flush(null);
+  });
+
+  it('does not invite from a pending call or leak a stale membership response across logout', async () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const invalid=await calls.inviteMember('carlos');
+    expect(invalid).toBeFalse();
+    http.expectNone(r=>r.url.includes('/invite/'));
+    calls.room={remoteParticipants:new Map(),disconnect:()=>{}} as any;
+    calls.state$.next({id:'privacy-call',peer:'bea',media:'video',phase:'active',
+      micEnabled:true,cameraEnabled:false});
+    calls.refreshMembers();
+    const pending=http.expectOne(r=>r.url.endsWith('/api/calls/direct/privacy-call/members'));
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/privacy-call/end')).flush(null);
+    pending.flush({participants:[{username:'ana',identity:'jynlo-user-12'}],pending:[]});
+    expect(calls.members$.value.participants).toEqual([]);
+  });
+
+  it('reacts to authenticated group changes without ending the remaining callers', () => {
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    calls.room={remoteParticipants:new Map(),disconnect:()=>{}} as any;
+    calls.state$.next({id:'call-123',peer:'bea',media:'voice',phase:'active',
+      micEnabled:true,cameraEnabled:false});
+    const expiry=new Date(Date.now()+50000).toISOString();
+    events.next({callId:'call-123',caller:'ana',peer:'bea',actor:'carlos',media:'voice',
+      status:'MEMBERS_CHANGED',expiresAt:expiry});
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/call-123/members'))
+      .flush({participants:[{username:'ana',identity:'jynlo-user-12'},
+        {username:'bea',identity:'jynlo-user-13'},
+        {username:'carlos',identity:'jynlo-user-14'}],pending:[]});
+    expect(calls.members$.value.participants).toHaveSize(3);
+    events.next({callId:'call-123',caller:'ana',peer:'carlos',actor:'carlos',media:'voice',
+      status:'LEFT',expiresAt:expiry});
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/call-123/members'))
+      .flush({participants:[{username:'ana',identity:'jynlo-user-12'},
+        {username:'bea',identity:'jynlo-user-13'}],pending:[]});
+    expect(calls.state$.value?.phase).toBe('active');
+    expect(calls.members$.value.participants).toHaveSize(2);
+    calls.end();
+    http.expectOne(r=>r.url.endsWith('/api/calls/direct/call-123/end')).flush(null);
   });
 
   it('handles a backend call conflict with an actionable error instead of showing a phantom call', async () => {

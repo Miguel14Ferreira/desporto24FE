@@ -1,8 +1,11 @@
-import { AfterViewChecked, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Track } from 'livekit-client';
+import { LocalParticipant, RemoteParticipant, Track } from 'livekit-client';
+import { FormsModule } from '@angular/forms';
+import { CallParticipantTileComponent } from './call-participant-tile.component';
 import { combineLatest, map, Observable, Subscription, timer } from 'rxjs';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { appTranslate } from '../i18n/i18n.service';
 import { DirectCallClientService } from '../services/direct-call-client.service';
 
 /**
@@ -12,7 +15,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
 @Component({
   selector: 'app-direct-call-overlay',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, CallParticipantTileComponent],
   template: `
     @if (calls.state$ | async; as call) {
       @if (call.phase === 'incoming') {
@@ -56,13 +59,39 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
             </div>
           </div>
         </section>
+      } @else if (minimized && call.phase !== 'error') {
+        <div class="connect-mini" role="group" [attr.aria-label]="'calls.title' | t">
+          <!-- Remote sound stays attached even while the full call view is minimized. -->
+          <div class="connect-mini-audio" aria-hidden="true">
+            @for (person of participants; track person.identity) {
+              @if (person !== calls.room?.localParticipant) {
+                <app-call-participant-tile [participant]="person" [label]="participantLabel(person)"
+                  [volume]="volumeFor(person.identity)"/>
+              }
+            }
+          </div>
+          <div class="connect-mini-name"><span class="call-incoming-pulse"></span>
+            <strong>{{ call.peer }}</strong>
+            <small>{{ (call.startedAt ? 'calls.connected' : 'calls.ringing') | t }}</small>
+          </div>
+          <button type="button" (click)="minimized=false">{{ 'calls.expand' | t }}</button>
+          <button type="button" class="connect-mini-hangup" (click)="calls.end()"
+            [attr.aria-label]="'calls.hangUp' | t">✕</button>
+        </div>
       } @else {
       <section class="call-backdrop" role="dialog" aria-modal="true"
-          [attr.aria-label]="'calls.title' | t" (keydown.escape)="dismiss()">
+          [attr.aria-label]="'calls.title' | t" (keydown.escape)="minimize()">
         <div class="call-panel" tabindex="-1">
           <header class="call-topline">
-            <strong class="call-brand">Jynlo <span class="call-brand-dot">●</span></strong>
-            <span class="call-kind">{{ (call.media === 'video' ? 'calls.video' : 'calls.voice') | t }}</span>
+            <strong class="call-brand">Jynlo <span class="call-brand-dot">●</span>
+              <span class="connect-brand-label">Connect</span></strong>
+            <div class="connect-head-actions">
+              <span class="call-kind">{{ (videoActive ? 'calls.video' : 'calls.voice') | t }}</span>
+              @if (call.phase !== 'error') {
+                <button type="button" class="connect-minimize" (click)="minimize()"
+                  [attr.aria-label]="'calls.minimize' | t">−</button>
+              }
+            </div>
           </header>
           <div class="call-info">
             <div class="call-avatar" aria-hidden="true">{{ call.peer.slice(0,1).toUpperCase() }}</div>
@@ -78,43 +107,38 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
           </div>
           @if (call.phase !== 'error') {
             <div class="call-metrics">
-              <span class="call-metric" aria-label="Duração">
-                <span aria-hidden="true">◷</span> {{ (elapsed$ | async) || '00:00' }}
-              </span>
-              <span class="call-metric call-quality" [class.is-poor]="(calls.connectionQuality$ | async) === 'poor' || (calls.connectionQuality$ | async) === 'lost'">
-                <span aria-hidden="true">▰</span>
-                {{ (qualityKey(calls.connectionQuality$ | async) | t) }}
-              </span>
-              <span class="call-metric">{{ 'calls.participants' | t }}: {{ participantCount }}</span>
-            </div>
-          }
-          @if (call.media === 'video' && call.phase !== 'error') {
-            <div class="call-videos" [class.call-videos--swapped]="viewsSwapped">
-              <button type="button" class="call-swap" (click)="viewsSwapped=!viewsSwapped"
-                [disabled]="!remoteHasVideo || !call.cameraEnabled">⇄ {{ 'calls.swapView' | t }}</button>
-              <video #remoteVideo autoplay playsinline [attr.aria-label]="'calls.remoteVideo' | t"></video>
-              @if (!remoteHasVideo) {
-                <div class="call-remote-placeholder">
-                  <span class="call-avatar call-avatar-remote" aria-hidden="true">{{ call.peer.slice(0,1).toUpperCase() }}</span>
-                  <p>{{ 'calls.waitingForVideo' | t }}</p>
-                </div>
+              @if (call.startedAt) {
+                <span class="call-metric"><span aria-hidden="true">◷</span> {{ elapsed$ | async }}</span>
               }
-              @if (call.cameraEnabled) {
-                <video #localVideo autoplay playsinline muted [attr.aria-label]="'calls.localVideo' | t"></video>
-              } @else {
-                <div class="call-local-off">
-                  <span aria-hidden="true">◉</span>
-                  <small>{{ 'calls.cameraIsOff' | t }}</small>
-                </div>
+              @if (call.phase === 'active') {
+                <span class="call-metric call-quality" [class.is-poor]="(calls.connectionQuality$ | async) === 'poor' || (calls.connectionQuality$ | async) === 'lost'">
+                  <span aria-hidden="true">▰</span>
+                  {{ (qualityKey(calls.connectionQuality$ | async) | t) }}
+                </span>
+                <span class="call-metric">{{ 'calls.participants' | t }}: {{ participantCount }}</span>
               }
             </div>
-          } @else if (call.phase !== 'error') {
-            <div class="call-voice-surface" [class.is-active]="call.phase === 'active'">
-              <span class="call-avatar call-avatar-large" aria-hidden="true">{{ call.peer.slice(0,1).toUpperCase() }}</span>
-              <p>{{ 'calls.voiceConnected' | t }}</p>
-            </div>
           }
-          @if (call.phase !== 'error') { <audio #remoteAudio autoplay></audio> }
+          @if (call.phase !== 'error') {
+            @if (call.phase === 'dialing' || (call.phase === 'connecting' && !call.startedAt)) {
+              <div class="connect-waiting">
+                <div class="connect-wait-avatar" aria-hidden="true">{{ call.peer.slice(0,1).toUpperCase() }}</div>
+                <h3>{{ call.peer }}</h3>
+                <p>{{ 'calls.waitingForAnswer' | t }}</p>
+                <div class="connect-wait-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+              </div>
+            } @else {
+              <div class="connect-participants" [class.connect-participants--video]="videoActive"
+                [class.connect-participants--presenting]="hasPresentation">
+                @for (person of participants; track person.identity) {
+                  <app-call-participant-tile [participant]="person"
+                    [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant"
+                    [volume]="volumeFor(person.identity)">
+                  </app-call-participant-tile>
+                }
+              </div>
+            }
+          }
           <div class="call-feedback" aria-live="polite">
             @if (call.error) {
               <p class="call-error" role="alert">{{ call.error | t }}</p>
@@ -148,14 +172,12 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                   <span aria-hidden="true">{{ call.micEnabled ? '🎙' : '⊘' }}</span>
                   {{ (call.micEnabled ? 'calls.mute' : 'calls.unmute') | t }}
                 </button>
-                @if (call.media === 'video') {
-                  <button type="button" [disabled]="calls.busyMedia$ | async"
+                <button type="button" [disabled]="calls.busyMedia$ | async"
                     (click)="calls.setCamera(!call.cameraEnabled)"
                     [attr.aria-pressed]="!call.cameraEnabled" [class.call-off]="!call.cameraEnabled">
                     <span aria-hidden="true">▣</span>
                     {{ (call.cameraEnabled ? 'calls.cameraOff' : 'calls.cameraOn') | t }}
                   </button>
-                }
                 @if (calls.canShareScreen) {
                   <button type="button" [disabled]="calls.busyMedia$ | async"
                     (click)="calls.setScreenShare(!calls.screenShareEnabled$.value)"
@@ -169,8 +191,14 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                     {{ 'calls.sound' | t }}
                   </button>
                 }
+                @if (call.phase === 'active') {
+                  <button type="button" class="connect-invite-button" [attr.aria-expanded]="inviteOpen"
+                    (click)="inviteOpen=!inviteOpen;settingsOpen=false">
+                    <span aria-hidden="true">＋</span> {{ 'calls.inviteMembers' | t }}
+                  </button>
+                }
                 <button type="button" class="call-settings-button"
-                  [attr.aria-expanded]="settingsOpen" (click)="toggleSettings()">
+                  [attr.aria-expanded]="settingsOpen" (click)="toggleSettings();inviteOpen=false">
                   <span aria-hidden="true">⚙</span> {{ 'calls.settings' | t }}
                 </button>
                 <button type="button" class="call-decline" (click)="calls.end()">
@@ -178,6 +206,46 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                 </button>
               }
             </div>
+            @if (inviteOpen && call.phase === 'active') {
+              <section class="connect-invite-panel" [attr.aria-label]="'calls.inviteMembers' | t">
+                <h3>{{ 'calls.inviteMembers' | t }}</h3>
+                <p>{{ 'calls.inviteHelp' | t }}</p>
+                <form class="connect-invite-form" (ngSubmit)="inviteMember()">
+                  <label for="connect-invite-name">{{ 'calls.username' | t }}</label>
+                  <input id="connect-invite-name" type="text" autocomplete="off"
+                    name="inviteUsername" [ngModel]="inviteUsername" (ngModelChange)="inviteUsername=$event"
+                    maxlength="128" [disabled]="(calls.invitationBusy$ | async) ?? false"
+                    [placeholder]="'calls.username' | t">
+                  <button type="submit" [disabled]="(calls.invitationBusy$ | async) ?? false">
+                    {{ 'calls.sendInvite' | t }}
+                  </button>
+                </form>
+                @if (calls.invitationError$ | async; as inviteError) {
+                  <p class="connect-invite-error" role="alert">{{ inviteError | t }}</p>
+                }
+                @if (calls.members$ | async; as members) {
+                  <div class="connect-member-list">
+                    <strong>{{ 'calls.participants' | t }} ({{ members.participants.length }})</strong>
+                    @for (person of members.participants; track person.identity) {
+                      <label class="connect-member-item">
+                        <span>● {{ person.username }}</span>
+                        @if (person.identity !== calls.room?.localParticipant?.identity) {
+                          <span class="connect-volume-label">{{ 'calls.volume' | t }} {{ volumeFor(person.identity) * 100 | number:'1.0-0' }}%</span>
+                          <input type="range" min="0" max="100" step="5"
+                            [ngModel]="volumeFor(person.identity) * 100"
+                            (ngModelChange)="setVolume(person.identity,$event)"
+                            [ngModelOptions]="{standalone:true}"
+                            [attr.aria-label]="('calls.volume' | t) + ' ' + person.username">
+                        }
+                      </label>
+                    }
+                    @for (pending of members.pending; track pending) {
+                      <span class="connect-member-pending">◷ {{ pending }} · {{ 'calls.invitePending' | t }}</span>
+                    }
+                  </div>
+                }
+              </section>
+            }
             @if (settingsOpen && call.phase !== 'error') {
               <div class="call-device-panel" role="group" [attr.aria-label]="'calls.settings' | t">
                 <div class="call-settings-head">
@@ -187,7 +255,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                   </button>
                 </div>
                 @if (calls.devices$ | async; as devices) {
-                  @if (call.media === 'video') {
+                  @if (true) {
                     <label for="call-camera">{{ 'calls.cameraDevice' | t }}</label>
                     <select id="call-camera" [disabled]="calls.busyMedia$ | async"
                       (change)="selectDevice('videoinput', $event)">
@@ -454,7 +522,48 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
       width:min(100%,650px);box-sizing:border-box;z-index:10;max-height:48dvh;
       overflow-y:auto;box-shadow:0 16px 45px #0008}
     .call-buttons button{min-width:76px}
-    .call-refresh{display:none}
+.call-refresh{display:none}
+    .connect-brand-label{color:#b3dcd7;font-weight:500;margin-left:7px}
+    .connect-head-actions{display:flex;align-items:center;gap:12px}
+    .connect-minimize{display:grid;place-items:center;width:34px;height:30px;border:1px solid #568d91;
+      background:#173a48;border-radius:9px;color:#dbfff4;font:inherit;font-size:1.2rem;cursor:pointer}
+    .connect-waiting{flex:1;min-height:145px;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:13px;padding:20px;background:radial-gradient(circle at 50% 50%,#194950,#0c2634 70%);border-radius:17px}
+    .connect-wait-avatar{width:108px;height:108px;display:grid;place-items:center;border-radius:50%;background:#286d69;
+      border:3px solid #4ee7bb;box-shadow:0 0 0 13px #49e7bd18;font-size:2.8rem;font-weight:850}
+    .connect-waiting h3,.connect-waiting p{margin:0}.connect-waiting p{color:#a6d2d5;font-size:.82rem}
+    .connect-wait-bars{display:flex;align-items:center;gap:5px;height:25px}
+    .connect-wait-bars i{width:4px;height:9px;border-radius:9px;background:#56f2c5;animation:connect-wave 1s ease-in-out infinite alternate}
+    .connect-wait-bars i:nth-child(2),.connect-wait-bars i:nth-child(4){animation-delay:.22s}.connect-wait-bars i:nth-child(3){animation-delay:.44s}
+    @keyframes connect-wave{to{height:24px}}
+    .connect-participants{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+      grid-auto-rows:minmax(150px,1fr);gap:12px;overflow:auto;padding:4px}
+    .connect-participants:has(app-call-participant-tile:only-child){grid-template-columns:1fr}
+    .connect-participants--presenting app-call-participant-tile:has(.presenting){grid-column:1/-1;min-height:55%}
+    .connect-invite-panel{position:absolute;right:0;bottom:calc(100% + 8px);z-index:15;width:min(450px,100%);box-sizing:border-box;
+      max-height:55dvh;overflow:auto;padding:17px;background:#0c2a39;border:1px solid #508d8a;border-radius:16px;box-shadow:0 14px 40px #0008}
+    .connect-invite-panel h3{margin:0 0 7px;font-size:1rem}.connect-invite-panel p{font-size:.79rem;color:#bbd8d6;line-height:1.5}
+    .connect-invite-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+    .connect-invite-form label{grid-column:1/-1;font-size:.76rem}.connect-invite-form input{min-width:0;width:100%;box-sizing:border-box;
+      border:1px solid #54958f;background:#0d2631;color:#effffb;border-radius:10px;padding:11px;font:inherit}
+    .connect-invite-form button{padding:10px 16px;border-radius:10px;background:#43e6bd;color:#062f36;border:0;font-weight:850;cursor:pointer}
+    .connect-invite-form button:disabled{opacity:.6}.connect-invite-error{color:#ffd0cd!important}
+    .connect-member-list{display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid #416a70;margin-top:14px;padding-top:12px}
+    .connect-member-list strong{width:100%;font-size:.78rem}
+    .connect-member-item,.connect-member-pending{padding:6px 10px;border-radius:99px;border:1px solid #397f77;color:#b4ffe8;font-size:.74rem}
+    .connect-member-pending{border-color:#827757;color:#f5ddb0}
+    .connect-member-item{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+    .connect-member-item input{width:118px;accent-color:#45dfb9}
+    .connect-volume-label{font-size:.67rem;color:#a9d5d5}
+    .connect-mini{position:fixed;bottom:max(20px,env(safe-area-inset-bottom));right:20px;z-index:6000;
+      display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #48bfa8;border-radius:16px;
+      background:#0b303e;color:#ebfff8;box-shadow:0 12px 48px #0008}
+    .connect-mini-name{display:grid;grid-template-columns:8px 1fr;column-gap:10px;font-size:.78rem}
+    .connect-mini-name strong,.connect-mini-name small{grid-column:2}.connect-mini-name span{grid-row:1/3;align-self:center}
+    .connect-mini-name small{color:#a9d1d5}.connect-mini button{padding:9px;border-radius:9px;border:1px solid #468e89;
+      color:white;background:#155551;cursor:pointer;font:inherit;font-size:.76rem}
+    .connect-mini .connect-mini-hangup{background:#903e50;border-color:#b85d6a}
+    .connect-mini-audio{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
     @media(max-width:600px){
       .call-backdrop{padding:6px}
       .call-panel{max-height:calc(100dvh - 12px);padding:12px;border-radius:15px}
@@ -475,16 +584,52 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     }
   `]
 })
-export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
-  @ViewChild('remoteVideo') private remoteVideo?: ElementRef<HTMLVideoElement>;
-  @ViewChild('localVideo') private localVideo?: ElementRef<HTMLVideoElement>;
-  @ViewChild('remoteAudio') private remoteAudio?: ElementRef<HTMLAudioElement>;
-  private lastRemoteVideo: Track | null = null;
-  private lastLocalVideo: Track | null = null;
-  private lastRemoteAudio: Track | null = null;
+export class DirectCallOverlayComponent implements OnDestroy {
   private readonly mediaSubscription: Subscription;
-  settingsOpen=false;
-  viewsSwapped=false;
+  settingsOpen = false;
+  inviteOpen = false;
+  inviteUsername = '';
+  minimized = false;
+  private volumes: Record<string,number> = {};
+
+  volumeFor(identity: string): number { return this.volumes[identity] ?? 1; }
+  setVolume(identity: string, percent: number | string): void {
+    const value=Number(percent);
+    if (Number.isFinite(value)) this.volumes[identity]=Math.max(0,Math.min(1,value/100));
+  }
+
+  get participants(): (LocalParticipant | RemoteParticipant)[] {
+    const room = this.calls.room;
+    return room ? [room.localParticipant, ...room.remoteParticipants.values()] : [];
+  }
+
+  get videoActive(): boolean {
+    return this.participants.some(p=>[...p.videoTrackPublications.values()]
+      .some(pub=>!!pub.track && !pub.isMuted));
+  }
+  get hasPresentation(): boolean {
+    return this.participants.some(p=>[...p.videoTrackPublications.values()]
+      .some(pub=>pub.source===Track.Source.ScreenShare && !!pub.track && !pub.isMuted));
+  }
+  participantLabel(person: LocalParticipant | RemoteParticipant): string {
+    if (person===this.calls.room?.localParticipant) return appTranslate('calls.you');
+    const found=this.calls.members$.value.participants
+      .find(member=>member.identity===person.identity);
+    return found?.username || this.calls.state$.value?.peer || 'Participante';
+  }
+
+  minimize(): void {
+    if (this.calls.state$.value?.phase !== 'error') {
+      this.minimized=true;
+      this.settingsOpen=false;
+      this.inviteOpen=false;
+    }
+  }
+
+  async inviteMember(): Promise<void> {
+    const target=this.inviteUsername.trim();
+    if (await this.calls.inviteMember(target)) this.inviteUsername='';
+  }
   get speakerSelectionSupported(): boolean {
     return typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
   }
@@ -520,14 +665,15 @@ export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
       : [Math.floor(seconds/60),seconds%60].map(x=>String(x).padStart(2,'0')).join(':');
   }));
 
-    this.mediaSubscription = calls.mediaChanged$.subscribe(() => {
-      this.lastRemoteVideo = null;
-      this.lastLocalVideo = null;
-      this.lastRemoteAudio = null;
+    this.mediaSubscription = calls.state$.subscribe(call=>{
+      if (!call) {
+        this.settingsOpen=false;
+        this.inviteOpen=false;
+        this.minimized=false;
+        this.inviteUsername='';
+        this.volumes={};
+      }
     });
-    this.mediaSubscription.add(calls.state$.subscribe(call=>{
-      if (!call) { this.settingsOpen=false; this.viewsSwapped=false; }
-    }));
   }
 
   toggleSettings(forceOpen=false): void {
@@ -545,35 +691,6 @@ export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
     if (call?.phase==='incoming') this.calls.decline();
     else if (call?.phase==='error') this.calls.closeError();
     else if (call) this.calls.end();
-  }
-
-  ngAfterViewChecked(): void {
-    const room=this.calls.room;
-    if (!room) return;
-    const localVideo=this.localVideo?.nativeElement;
-    if (localVideo) {
-      for (const publication of room.localParticipant.videoTrackPublications.values()) {
-        const track=publication.track;
-        if (track && track.kind===Track.Kind.Video && this.lastLocalVideo!==track) {
-          track.attach(localVideo);
-          this.lastLocalVideo=track;
-        }
-      }
-    }
-    for (const participant of room.remoteParticipants.values()) {
-      for (const publication of participant.trackPublications.values()) {
-        const track=publication.track;
-        if (!track) continue;
-        if (track.kind===Track.Kind.Video && this.remoteVideo && this.lastRemoteVideo!==track) {
-          track.attach(this.remoteVideo.nativeElement);
-          this.lastRemoteVideo=track;
-        }
-        if (track.kind===Track.Kind.Audio && this.remoteAudio && this.lastRemoteAudio!==track) {
-          track.attach(this.remoteAudio.nativeElement);
-          this.lastRemoteAudio=track;
-        }
-      }
-    }
   }
 
   ngOnDestroy(): void {

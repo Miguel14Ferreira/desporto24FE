@@ -33,6 +33,10 @@ describe('Global incoming call popup', () => {
       ringtoneBlocked$: ringtoneBlocked,
       busyMedia$: new BehaviorSubject(false),
       screenShareEnabled$: new BehaviorSubject(false),
+      members$: new BehaviorSubject({participants:[],pending:[]}),
+      invitationBusy$: new BehaviorSubject(false),
+      invitationError$: new BehaviorSubject(null),
+      inviteMember: jasmine.createSpy('inviteMember').and.returnValue(Promise.resolve(true)),
       canShareScreen: false,
       room: null,
       accept: jasmine.createSpy('accept'),
@@ -92,6 +96,62 @@ describe('Global incoming call popup', () => {
     expect(dialog.textContent).toContain('beatriz');
   });
 
+
+  it('shows a clean connecting state without premature clock or connection quality', () => {
+    state.next({...invitation('voice'), phase:'dialing'});
+    fixture.detectChanges();
+    const body = fixture.nativeElement as HTMLElement;
+    expect(body.querySelector('.connect-waiting')).toBeTruthy();
+    expect(body.querySelector('.call-metric')).toBeNull();
+    expect(body.textContent).toContain('À espera de resposta');
+    expect(body.querySelector('.call-brand')?.textContent).toContain('Connect');
+  });
+
+  it('supports minimized mode without terminating the live call', () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    const minimize=fixture.nativeElement.querySelector('.connect-minimize') as HTMLButtonElement;
+    expect(minimize).toBeTruthy();
+    minimize.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.call-backdrop')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.connect-mini')).toBeTruthy();
+    expect(calls.end).not.toHaveBeenCalled();
+    (fixture.nativeElement.querySelector('.connect-mini button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.call-backdrop')).toBeTruthy();
+    state.next(null);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.connect-mini')).toBeNull();
+  });
+
+  it('invites a username only through the authenticated calling service', async () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.connect-invite-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const input=fixture.nativeElement.querySelector('#connect-invite-name') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    input.value='carlos';
+    fixture.componentInstance.inviteUsername = 'carlos';
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.connect-invite-form button') as HTMLButtonElement).click();
+    // The call clock intentionally runs continuously, so whenStable() never
+    // resolves. Flush only the invitation's own microtask.
+    await Promise.resolve();
+    fixture.detectChanges();
+    expect(calls.inviteMember).toHaveBeenCalledOnceWith('carlos');
+    expect(fixture.componentInstance.inviteUsername).toBe('');
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
+  it('exposes a camera toggle even if the call began as voice only', () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    const controls = fixture.nativeElement.querySelectorAll('.call-buttons button') as NodeListOf<HTMLButtonElement>;
+    expect(Array.from(controls).some(button=>button.textContent?.includes('Ativar câmara'))).toBeTrue();
+    expect(Array.from(controls).some(button=>button.textContent?.includes('Convidar pessoas'))).toBeTrue();
+  });
   it('rejects a call without showing the full screen or navigating', () => {
     state.next(invitation());
     calls.decline.and.callFake(() => state.next(null));
