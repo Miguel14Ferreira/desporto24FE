@@ -151,3 +151,51 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .story-overlay .story-confirm-danger { border: 1px solid #ea5264; background: #cd3349; color: white; }
 .story-overlay .story-confirm-danger:hover:not(:disabled) { background: #e34459; }
 .story-overlay .story-confirm-actions button:disabled { opacity: .55; cursor: wait; }
+
+
+/* Neon Glass feed story rail. Keep the immersive player/reply controls untouched. */
+.stories-panel {
+  border-color:rgba(60,210,203,.26);
+  background:
+    radial-gradient(ellipse 380px 160px at 93% 0%,rgba(35,221,201,.11),transparent 90%),
+    linear-gradient(135deg,rgba(12,45,59,.96),rgba(8,31,47,.95));
+  box-shadow:0 12px 32px rgba(1,13,24,.17),inset 0 1px 0 rgba(220,255,253,.04);
+}
+.stories-eyebrow { color:#4df3dc; }
+.stories-heading h2 {color:#f4fffd;letter-spacing:-.025em;}
+.stories-heading p,.stories-empty {color:#b9d8df;}
+.story-rail {gap:.7rem;scrollbar-color:rgba(42,210,205,.4) transparent;}
+.story-ring {
+  border:2px solid transparent;
+  background:
+    linear-gradient(#092b39,#092b39) padding-box,
+    linear-gradient(135deg,#79ffeb,#18d4ca 56%,#31879a) border-box;
+  box-shadow:0 0 0 2px rgba(18,223,196,.055);
+}
+.story-bubble:hover .story-ring,
+.story-bubble:focus-visible .story-ring {
+  box-shadow:0 0 17px rgba(23,230,203,.19);
+}
+.story-placeholder {background:linear-gradient(140deg,#1e707a,#10384a);color:#e8fffb;}
+.story-bubble small {color:#a3c9cf;}
+.story-bubble:focus-visible,.story-add-action:focus-visible {outline-color:#8fffe6;}
+.story-header-actions .story-add-action {
+  min-height:44px;
+  border-radius:12px;
+  --jynlo-action-bg:#25ead2;
+  --jynlo-action-border:#25ead2;
+  --jynlo-action-text:#042b34;
+  --jynlo-action-hover:#7cffdf;
+}
+.story-header-actions .story-retry {
+  min-height:44px;border-color:rgba(84,183,197,.33);
+  color:#d3eeed;background:rgba(19,73,85,.18);
+}
+@media (max-width:620px){
+  .stories-panel {padding:1rem;}
+  .story-header-actions {width:100%;justify-content:flex-start;}
+  .story-header-actions .story-add-action {flex:1 1 auto;justify-content:center;}
+}
+@media (prefers-reduced-motion:reduce){
+  .story-bubble .story-ring {transition:none;}
+}

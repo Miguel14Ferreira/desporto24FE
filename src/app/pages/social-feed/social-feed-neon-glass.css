@@ -1,0 +1,207 @@
+/*
+ * Jynlo Neon Glass / Feed v2.
+ * Layer after the existing Concept One styles. Visual only: posting, media,
+ * stories, comments, permissions and real week data keep their handlers.
+ */
+:host { --feed-neon:#23e6d1; --feed-neon-soft:#a1ffe7; --feed-line:rgba(53,210,204,.24); }
+:host .feed-page.jynlo-feed-premium {
+  background:
+    radial-gradient(ellipse 760px 470px at 89% 4%,rgba(4,154,163,.19),transparent 75%),
+    radial-gradient(ellipse 590px 460px at 1% 33%,rgba(7,113,151,.10),transparent 78%),
+    linear-gradient(154deg,#041321 0%,#072434 49%,#051724 100%);
+  color:#f2fffd;
+}
+:host .jynlo-feed-premium .feed-shell { width:min(1280px,100%); }
+:host .jynlo-feed-premium .jynlo-feed-hero {
+  position:relative;
+  align-items:center;
+  padding:clamp(1rem,2.4vw,1.75rem);
+  margin-bottom:1rem;
+  border:1px solid rgba(44,206,205,.22);
+  border-radius:22px;
+  background:linear-gradient(116deg,rgba(17,68,78,.53),rgba(5,29,45,.86) 64%,rgba(8,55,70,.47));
+  box-shadow:0 15px 45px rgba(0,12,23,.16),inset 0 1px 0 rgba(182,255,246,.04);
+  overflow:hidden;
+}
+:host .jynlo-feed-premium .jynlo-feed-hero::before {
+  content:"";
+  position:absolute;inset:0 0 auto;
+  height:2px;
+  background:linear-gradient(90deg,transparent 2%,rgba(36,235,211,.83) 30%,rgba(72,215,231,.34) 67%,transparent);
+  pointer-events:none;
+}
+:host .jynlo-feed-premium .jynlo-feed-hero h1 {
+  color:#f4fffd; font-size:clamp(2.15rem,4.4vw,3.65rem);
+  letter-spacing:-.055em; line-height:1.05;
+}
+:host .jynlo-feed-premium .jynlo-feed-hero .subtitle {
+  max-width:53ch; color:#bad9e0; line-height:1.55;
+}
+:host .jynlo-feed-premium .feed-hero-cta {
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 auto;min-height:46px;padding:.7rem 1.15rem;
+  border:1px solid #39ebd2;border-radius:999px;
+  background:linear-gradient(120deg,#2cf1d2,#20dcca);
+  color:#052f34;font-weight:850;text-decoration:none;white-space:nowrap;
+  box-shadow:0 5px 23px rgba(20,234,203,.17);
+}
+:host .jynlo-feed-premium .feed-hero-cta:hover {
+  color:#042c32;background:#81ffde;box-shadow:0 7px 28px rgba(20,234,203,.26);
+}
+:host .jynlo-feed-premium .feed-hero-cta:focus-visible {
+  outline:3px solid #b2ffed;outline-offset:3px;
+}
+/* Glass surfaces, with the brightest glow reserved for interactive states. */
+:host .jynlo-feed-premium :is(.week-hub,.composer,.feed-card,.state-card,.feed-discovery-card,.week-hub-card) {
+  border:1px solid var(--feed-line);
+  border-radius:19px;
+  background:linear-gradient(145deg,rgba(11,43,57,.94),rgba(8,30,46,.96));
+  box-shadow:0 15px 38px rgba(0,12,23,.16),inset 0 1px 0 rgba(205,255,250,.035);
+}
+:host .jynlo-feed-premium .week-hub {
+  padding:clamp(1rem,2.15vw,1.6rem);
+  margin-bottom:1.05rem;
+  background:
+    radial-gradient(ellipse 480px 260px at 96% 0%,rgba(39,228,201,.13),transparent 85%),
+    linear-gradient(145deg,rgba(9,49,59,.96),rgba(7,31,45,.96));
+}
+:host .jynlo-feed-premium .week-hub-heading { align-items:center; }
+:host .jynlo-feed-premium .week-hub-heading h2 {
+  font-size:clamp(1.35rem,2.4vw,1.75rem);
+  color:#f5fffd;
+}
+:host .jynlo-feed-premium .week-hub-heading p:not(.week-hub-eyebrow) {
+  color:#b9d8dc;
+}
+:host .jynlo-feed-premium .week-hub-eyebrow {
+  color:#41efd7;
+}
+:host .jynlo-feed-premium .week-hub-card {
+  min-height:0;
+  padding:1rem;
+  border-color:rgba(76,194,194,.22);
+  background:linear-gradient(145deg,rgba(12,56,67,.79),rgba(8,32,46,.83));
+  box-shadow:none;
+}
+:host .jynlo-feed-premium .week-card-heading > span {
+  color:#71f3df;background:rgba(36,226,203,.13);
+  border:1px solid rgba(54,230,206,.16);
+}
+:host .jynlo-feed-premium .week-item {padding:.65rem 0;}
+:host .jynlo-feed-premium .week-item strong {color:#f0fffc;}
+:host .jynlo-feed-premium .week-item small:not(.week-waitlist),
+:host .jynlo-feed-premium .week-card-link {color:#79f4dc;}
+:host .jynlo-feed-premium .week-hub-create {
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;padding:.65rem .95rem;
+  text-align:center;
+}
+/* Publishing feels like a lightweight social action, not a large form. */
+:host .jynlo-feed-premium .composer {
+  gap:.85rem;padding:clamp(1rem,2vw,1.4rem);
+}
+:host .jynlo-feed-premium .composer-heading > strong {
+  color:#f4fffc;font-size:1.04rem;letter-spacing:-.01em;
+}
+:host .jynlo-feed-premium .composer textarea {
+  width:100%;min-height:92px;
+  border:1px solid rgba(65,187,193,.36);
+  border-radius:13px;
+  background:rgba(3,24,37,.78);
+  color:#f4fffc;
+  padding:.9rem 1rem;
+  box-sizing:border-box;
+}
+:host .jynlo-feed-premium .composer textarea:focus {
+  border-color:#40ead2;box-shadow:0 0 0 3px rgba(33,226,204,.10);
+}
+:host .jynlo-feed-premium .composer textarea::placeholder {color:#9bb9c4;}
+:host .jynlo-feed-premium .composer-actions {
+  display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;
+  gap:.65rem;
+}
+:host .jynlo-feed-premium .composer-actions .image-picker {
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;padding:.55rem .9rem;border-radius:12px;
+  border:1px solid rgba(70,193,199,.3);
+  background:rgba(23,79,89,.20);
+  color:#cbe9e9;
+}
+:host .jynlo-feed-premium .composer-actions .image-picker:hover {
+  border-color:rgba(46,232,213,.58);background:rgba(34,136,139,.19);
+}
+:host .jynlo-feed-premium .composer-actions > button.jynlo-action--primary,
+:host .jynlo-feed-premium .feed-hero-cta {
+  --jynlo-action-bg:#25e8d1;--jynlo-action-border:#25e8d1;--jynlo-action-text:#032d33;
+}
+:host .jynlo-feed-premium .composer-actions > button.jynlo-action--primary {
+  min-height:44px;padding-inline:1.25rem;
+  border-radius:12px;
+  background:linear-gradient(120deg,#25ead2,#24d6c8);
+  border:1px solid #29e9d2;
+  color:#033238;
+  font-weight:850;
+}
+/* Real posts stay the focus, with subtle separation and crisp media. */
+:host .jynlo-feed-premium .feed-layout {
+  grid-template-columns:minmax(0,1fr) minmax(260px,295px);
+  gap:1.1rem;
+}
+:host .jynlo-feed-premium .feed-list {gap:1rem;}
+:host .jynlo-feed-premium .feed-card {
+  padding:clamp(1rem,2vw,1.35rem);
+  background:linear-gradient(150deg,rgba(13,46,60,.97),rgba(8,30,46,.97));
+}
+:host .jynlo-feed-premium .feed-card:hover {
+  border-color:rgba(54,232,206,.36);
+}
+:host .jynlo-feed-premium .feed-author-link .author-copy strong {color:#effffc;}
+:host .jynlo-feed-premium .feed-author-link:hover .author-copy strong {color:#65f4dd;}
+:host .jynlo-feed-premium .avatar,
+:host .jynlo-feed-premium .feed-suggested-avatar {
+  border:1px solid rgba(67,234,209,.33);
+  background:linear-gradient(130deg,#1b6b72,#0c4658);
+}
+:host .jynlo-feed-premium :is(.post-image,.post-video) {
+  border:1px solid rgba(92,187,196,.2);
+  border-radius:14px;
+}
+:host .jynlo-feed-premium .feed-sidebar {gap:1rem;}
+:host .jynlo-feed-premium .feed-discovery-card {padding:1.05rem;}
+:host .jynlo-feed-premium .feed-suggested-person:hover,
+:host .jynlo-feed-premium .feed-suggested-session:hover {
+  border-color:rgba(38,233,206,.53);background:rgba(24,92,98,.31);
+}
+:host .jynlo-feed-premium .feed-suggested-person-details {min-width:0;}
+:host .jynlo-feed-premium .feed-suggested-person-details :is(strong,small) {
+  overflow-wrap:anywhere;
+}
+:host .jynlo-feed-premium .feed-empty-actions {display:flex;flex-wrap:wrap;gap:.6rem;}
+:host .jynlo-feed-premium :is(a,button,input,textarea):focus-visible {
+  outline:2px solid #8effe1;outline-offset:3px;
+}
+@media (max-width:960px) {
+  :host .jynlo-feed-premium .feed-shell {width:min(800px,100%);}
+  :host .jynlo-feed-premium .feed-layout {grid-template-columns:minmax(0,1fr);}
+}
+@media (max-width:620px) {
+  :host .jynlo-feed-premium .jynlo-feed-hero {
+    display:flex;flex-direction:column;align-items:stretch;gap:1rem;padding:1rem;
+  }
+  :host .jynlo-feed-premium .feed-hero-cta {width:100%;box-sizing:border-box;}
+  :host .jynlo-feed-premium .week-hub-heading {align-items:stretch;}
+  :host .jynlo-feed-premium .week-hub-create {width:100%;}
+  :host .jynlo-feed-premium .week-hub-grid {grid-template-columns:minmax(0,1fr);}
+  :host .jynlo-feed-premium .composer-actions {
+    justify-content:flex-start;gap:.5rem;
+  }
+  :host .jynlo-feed-premium .composer-actions .image-picker {
+    flex:1 1 auto;padding:.55rem;
+  }
+  :host .jynlo-feed-premium .composer-actions > button.jynlo-action--primary {
+    flex:1 1 100%;width:100%;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  :host .jynlo-feed-premium :is(.feed-card,.feed-suggested-person) {transition:none;}
+}

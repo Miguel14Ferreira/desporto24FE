@@ -5,7 +5,9 @@
         <h1>{{ 'feed.title' | t }}</h1>
         <p class="subtitle">{{ 'feed.subtitle' | t }}</p>
       </div>
-
+      <a class="feed-hero-cta" routerLink="/menu/createEvent">
+        <span aria-hidden="true">+</span> {{ 'week.create' | t }}
+      </a>
     </header>
 
     <app-social-stories></app-social-stories>
@@ -17,8 +19,8 @@
           <h2>{{ 'week.title' | t }}</h2>
           <p>{{ 'week.subtitle' | t }}</p>
         </div>
-        <a class="jynlo-action jynlo-action--accent week-hub-create"
-           routerLink="/menu/createEvent">{{ 'week.create' | t }} <span aria-hidden="true">↗</span></a>
+        <a class="jynlo-action jynlo-action--neutral week-hub-create"
+           routerLink="/menu/my-sessions">{{ 'week.allMyGames' | t }} <span aria-hidden="true">↗</span></a>
       </div>
       <div class="week-hub-grid">
         <article class="week-hub-card" aria-label="Os teus próximos jogos">

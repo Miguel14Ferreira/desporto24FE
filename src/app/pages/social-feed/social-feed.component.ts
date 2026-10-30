@@ -19,7 +19,7 @@ import { CommunityProfile } from '../model/community-profile';
 @Component({
   selector: 'app-social-feed',
   templateUrl: './social-feed.component.html',
-  styleUrls: ['./social-feed.component.css', './social-feed-concept-one-refresh.css'],
+  styleUrls: ['./social-feed.component.css', './social-feed-concept-one-refresh.css', './social-feed-neon-glass.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
