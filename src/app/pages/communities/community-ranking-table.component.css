@@ -170,3 +170,24 @@
   :host .ranking-table {min-width:600px;}
   :host .ranking-table :is(th,td) {padding:9px 7px;}
 }
+
+
+/* Long translated labels and player names must never overlap statistics. */
+:host { min-width:0;max-width:100%; }
+:host .ranking-table-wrap { width:100%; -webkit-overflow-scrolling:touch; }
+:host .ranking-table { table-layout:auto; }
+:host .ranking-table th:nth-child(2),
+:host .ranking-table td:nth-child(2) { min-width:190px; max-width:320px; }
+:host .ranking-table td:nth-child(2) { white-space:normal; }
+:host .ranking-table .ranking-player--interactive {
+  width:100%; margin:0; box-sizing:border-box;
+}
+:host .ranking-table .ranking-player__identity { flex:1 1 auto; }
+:host .ranking-table .ranking-player__identity :is(strong,span) {
+  display:block; max-width:100%; overflow-wrap:anywhere; word-break:normal;
+}
+:host .ranking-table th { overflow-wrap:normal; }
+@media(max-width:720px) {
+  :host .ranking-table th:nth-child(2),
+  :host .ranking-table td:nth-child(2) { min-width:180px; max-width:245px; }
+}
