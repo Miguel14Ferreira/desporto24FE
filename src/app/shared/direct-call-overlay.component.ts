@@ -1,4 +1,7 @@
 import { Component, OnDestroy } from '@angular/core';
+import { CommunityService } from '../services/community.service';
+import { FriendSummary } from '../pages/model/friend-summary';
+import { timeout } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { LocalParticipant, RemoteParticipant, Track } from 'livekit-client';
 import { FormsModule } from '@angular/forms';
@@ -193,7 +196,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                 }
                 @if (call.phase === 'active') {
                   <button type="button" class="connect-invite-button" [attr.aria-expanded]="inviteOpen"
-                    (click)="inviteOpen=!inviteOpen;settingsOpen=false">
+                    (click)="toggleInvites()">
                     <span aria-hidden="true">＋</span> {{ 'calls.inviteMembers' | t }}
                   </button>
                 }
@@ -210,6 +213,22 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               <section class="connect-invite-panel" [attr.aria-label]="'calls.inviteMembers' | t">
                 <h3>{{ 'calls.inviteMembers' | t }}</h3>
                 <p>{{ 'calls.inviteHelp' | t }}</p>
+                @if (contactsLoading) { <p role="status">A carregar contactos…</p> }
+                @if (contactsError) { <p role="alert">Não foi possível carregar os contactos. Podes usar o nome de utilizador.</p> }
+                @if (matchingContacts.length) {
+                  <div class="connect-contact-results">
+                    @for (contact of matchingContacts; track contact.username) {
+                      <button type="button" class="connect-contact-option"
+                        [disabled]="(calls.invitationBusy$ | async) ?? false"
+                        (click)="inviteContact(contact.username)">
+                        <span class="connect-contact-avatar">{{ contact.username.slice(0,1).toUpperCase() }}</span>
+                        <span class="connect-contact-names"><strong>{{ contact.nickname || contact.fullName || contact.username }}</strong>
+                        <small>&#64;{{ contact.username }}</small></span>
+                        <span aria-hidden="true">＋</span>
+                      </button>
+                    }
+                  </div>
+                }
                 <form class="connect-invite-form" (ngSubmit)="inviteMember()">
                   <label for="connect-invite-name">{{ 'calls.username' | t }}</label>
                   <input id="connect-invite-name" type="text" autocomplete="off"
@@ -429,7 +448,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     }
     .call-backdrop{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;
       padding:clamp(8px,2vh,24px);background:rgba(0,13,23,.9);backdrop-filter:blur(8px);}
-    .call-panel{box-sizing:border-box;width:min(100%,900px);max-height:calc(100dvh - 20px);
+    .call-panel{box-sizing:border-box;width:min(100%,1180px);max-height:calc(100dvh - 20px);
       display:flex;flex-direction:column;min-height:0;padding:clamp(12px,2vw,22px);
       color:#ecfcf9;background:linear-gradient(144deg,#0b2332,#133e49);
       border:1px solid rgba(104,201,198,.43);border-radius:22px;
@@ -543,6 +562,14 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .connect-invite-panel{position:absolute;right:0;bottom:calc(100% + 8px);z-index:15;width:min(450px,100%);box-sizing:border-box;
       max-height:55dvh;overflow:auto;padding:17px;background:#0c2a39;border:1px solid #508d8a;border-radius:16px;box-shadow:0 14px 40px #0008}
     .connect-invite-panel h3{margin:0 0 7px;font-size:1rem}.connect-invite-panel p{font-size:.79rem;color:#bbd8d6;line-height:1.5}
+    .connect-contact-results{display:grid;gap:6px;max-height:210px;overflow-y:auto;margin:10px 0}
+    .connect-contact-option{display:flex;align-items:center;gap:10px;width:100%;min-width:0;padding:9px;border-radius:11px;background:#123b46;border:1px solid #36796f;color:#e6fff8;text-align:left;cursor:pointer}
+    .connect-contact-option:hover{background:#1b5656;border-color:#54daba}
+    .connect-contact-option:disabled{opacity:.5}
+    .connect-contact-avatar{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:#286b68;font-weight:800}
+    .connect-contact-names{display:grid;min-width:0;flex:1}
+    .connect-contact-names strong,.connect-contact-names small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .connect-contact-names small{color:#a5d7cf}
     .connect-invite-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
     .connect-invite-form label{grid-column:1/-1;font-size:.76rem}.connect-invite-form input{min-width:0;width:100%;box-sizing:border-box;
       border:1px solid #54958f;background:#0d2631;color:#effffb;border-radius:10px;padding:11px;font:inherit}
@@ -589,6 +616,10 @@ export class DirectCallOverlayComponent implements OnDestroy {
   settingsOpen = false;
   inviteOpen = false;
   inviteUsername = '';
+  contacts: FriendSummary[] = [];
+  contactsLoading = false;
+  contactsError = false;
+  private contactsRequested = false;
   minimized = false;
   private volumes: Record<string,number> = {};
 
@@ -615,7 +646,7 @@ export class DirectCallOverlayComponent implements OnDestroy {
     if (person===this.calls.room?.localParticipant) return appTranslate('calls.you');
     const found=this.calls.members$.value.participants
       .find(member=>member.identity===person.identity);
-    return found?.username || this.calls.state$.value?.peer || 'Participante';
+    return found?.username || 'Participante';
   }
 
   minimize(): void {
@@ -624,6 +655,42 @@ export class DirectCallOverlayComponent implements OnDestroy {
       this.settingsOpen=false;
       this.inviteOpen=false;
     }
+  }
+
+  get matchingContacts(): FriendSummary[] {
+    if (!this.inviteOpen) return [];
+    const query = this.inviteUsername.trim().toLowerCase();
+    const membership = this.calls.members$.value;
+    const excluded = new Set([...membership.participants.map(p => p.username),
+      ...membership.pending, this.calls.state$.value?.peer || ''].map(p => p.toLowerCase()));
+    return this.contacts.filter(c => !c.chatBlocked && !excluded.has(c.username.toLowerCase())
+      && (!query || [c.username, c.nickname || '', c.fullName || '']
+        .some(name => name.toLowerCase().includes(query)))).slice(0,8);
+  }
+
+  toggleInvites(): void {
+    this.inviteOpen = !this.inviteOpen;
+    this.settingsOpen = false;
+    if (!this.inviteOpen || this.contactsRequested) return;
+    this.contactsRequested = true;
+    this.contactsLoading = true;
+    this.contactsError = false;
+    this.community.friends().pipe(timeout(10000)).subscribe({
+      next: contacts => {
+        this.contacts = Array.isArray(contacts) ? contacts : [];
+        this.contactsLoading = false;
+      },
+      error: () => {
+        this.contactsLoading = false;
+        this.contactsError = true;
+        this.contactsRequested = false;
+      }
+    });
+  }
+
+  async inviteContact(username: string): Promise<void> {
+    this.inviteUsername = username;
+    await this.inviteMember();
   }
 
   async inviteMember(): Promise<void> {
@@ -656,7 +723,7 @@ export class DirectCallOverlayComponent implements OnDestroy {
     }
   }
 
-  constructor(public readonly calls: DirectCallClientService) {
+  constructor(public readonly calls: DirectCallClientService, private readonly community: CommunityService) {
     this.elapsed$ = combineLatest([this.calls.state$,timer(0,1000)]).pipe(map(([call]) => {
     if (!call?.startedAt) return '00:00';
     const seconds=Math.max(0,Math.floor((Date.now()-call.startedAt)/1000));
@@ -671,6 +738,8 @@ export class DirectCallOverlayComponent implements OnDestroy {
         this.inviteOpen=false;
         this.minimized=false;
         this.inviteUsername='';
+        this.contacts=[];
+        this.contactsRequested=false;
         this.volumes={};
       }
     });
