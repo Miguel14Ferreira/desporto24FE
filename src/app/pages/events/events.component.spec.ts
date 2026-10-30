@@ -31,6 +31,21 @@ describe('EventsComponent', () => {
   });
 
 
+  it('keeps action semantics and search bindings while adopting Neon Glass controls', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const header = root.querySelector('.sessions-page .page-header')!;
+    expect(header.querySelector('a[href="/menu/createEvent"]')?.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(header.querySelector('a[href="/menu/my-sessions"]')?.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    const form = root.querySelector('.jynlo-session-filters') as HTMLFormElement;
+    expect(form.querySelector('input[name="sport"]')).not.toBeNull();
+    expect(form.querySelector('input[name="city"]')).not.toBeNull();
+    expect(form.querySelector('select[name="sort"]')).not.toBeNull();
+    expect(form.querySelector('button[type="submit"]')?.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(form.querySelector('.advanced-toggle')?.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    expect(form.querySelectorAll('.quick-chip').length).toBe(5);
+    expect(root.querySelectorAll('.nearby-panel .jynlo-premium-btn').length).toBeGreaterThan(0);
+  });
+
   it('exposes the premium filter groups and working quick action buttons', () => {
     const page = fixture.nativeElement as HTMLElement;
     const form = page.querySelector('.jynlo-session-filters') as HTMLFormElement;

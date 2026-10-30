@@ -7,8 +7,8 @@
       </div>
 
       <div class="header-actions">
-        <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/menu/createEvent">{{ 'mySessions.create' | t }}</a>
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
+        <a class="primary-action jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" routerLink="/menu/createEvent">{{ 'mySessions.create' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
       </div>
     </header>
 
@@ -36,9 +36,9 @@
               <option [ngValue]="100">100 km</option>
             </select>
           </label>
-          <button type="button" class="ghost-button jynlo-action jynlo-action--neutral" (click)="disableNearby()">{{ 'events.disable' | t }}</button>
+          <button type="button" class="ghost-button jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" (click)="disableNearby()">{{ 'events.disable' | t }}</button>
         } @else {
-          <button class="jynlo-action jynlo-action--neutral" type="button" [disabled]="locating" (click)="useCurrentLocation()">
+          <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" type="button" [disabled]="locating" (click)="useCurrentLocation()">
             {{ locating ? ('events.locating' | t) : ('events.useLocation' | t) }}
           </button>
         }
@@ -177,12 +177,12 @@
       }
 
       <div class="filters-toolbar">
-      <button type="button" class="advanced-toggle" (click)="toggleAdvancedFilters()">
+      <button type="button" class="advanced-toggle jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small" (click)="toggleAdvancedFilters()">
         {{ showAdvancedFilters ? ('events.lessFilters' | t) : ('events.moreFilters' | t) }}
       </button>
       <div class="filter-actions">
-        <button class="jynlo-action jynlo-action--primary" type="submit">{{ 'common.search' | t }}</button>
-        <button type="button" class="ghost-button jynlo-action jynlo-action--neutral" (click)="clearFilters()">{{ 'events.clear' | t }}</button>
+        <button class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" type="submit">{{ 'common.search' | t }}</button>
+        <button type="button" class="ghost-button jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" (click)="clearFilters()">{{ 'events.clear' | t }}</button>
       </div>
       </div>
     </form>
@@ -194,7 +194,7 @@
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="loadSessions()">{{ 'common.retry' | t }}</button>
+        <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" type="button" (click)="loadSessions()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -209,19 +209,19 @@
           }
         </p>
         <div class="session-empty-actions">
-          <a class="jynlo-action jynlo-action--primary session-empty-create"
+          <a class="jynlo-action jynlo-action--primary session-empty-create jynlo-premium-btn jynlo-premium-btn--primary"
             routerLink="/menu/createEvent"
             [queryParams]="{ sport: sport.trim() || null, city: city.trim() || null }">
             {{ 'mySessions.create' | t }}
           </a>
           @if (nearbyActive && radiusKm < 100) {
-            <button type="button" class="jynlo-action jynlo-action--neutral"
+            <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               (click)="increaseRadius()">{{ 'events.increaseRadius' | t }}</button>
           } @else {
-            <button type="button" class="jynlo-action jynlo-action--neutral session-empty-clear"
+            <button type="button" class="jynlo-action jynlo-action--neutral session-empty-clear jynlo-premium-btn jynlo-premium-btn--quiet"
               (click)="clearFilters()">{{ 'events.clear' | t }}</button>
           }
-          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/venues">{{ 'events.exploreVenues' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/venues">{{ 'events.exploreVenues' | t }}</a>
         </div>
       </div>
     }
@@ -272,7 +272,7 @@
             </div>
 
             <a
-              class="session-action jynlo-action jynlo-action--neutral"
+              class="session-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [class.session-action--join]="canJoin(session) || canJoinWaitlist(session)"
               [routerLink]="['/menu/events', session.id]"
                 [queryParams]="canJoin(session) || canJoinWaitlist(session) ? { join: 1 } : null">

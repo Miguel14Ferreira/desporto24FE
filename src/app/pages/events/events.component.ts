@@ -10,7 +10,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 @Component({
   selector: 'app-events',
   templateUrl: './events.component.html',
-  styleUrls: ['./events.component.css'],
+  styleUrls: ['./events.component.css', '../../../styles/jynlo-activities-neon-glass.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })

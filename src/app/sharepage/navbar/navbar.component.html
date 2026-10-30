@@ -7,12 +7,9 @@
 
     <div class="site-nav__links">
       @if (authenticated) {
-        <a class="feed-v3-top-search" routerLink="/menu/discover">
-          <span aria-hidden="true">⌕</span> {{ 'feed.v3.searchShortcut' | t }}
-        </a>
         <a class="desktop-primary-link" routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
         <a routerLink="/menu/discover" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
-        <a class="mobile-only-link" routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
+        <a class="nav-activities-link" routerLink="/menu/events" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
         <a class="nav-communities-link" routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
         <a class="mobile-only-link" routerLink="/menu/messages" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
         <a class="desktop-primary-link nav-create-action jynlo-action jynlo-action--accent" routerLink="/menu/createEvent" routerLinkActive="active-link">{{ 'feed.createSession' | t }}</a>
@@ -56,7 +53,7 @@
             </div>
             <div class="account-menu__divider" aria-hidden="true"></div>
             <a class="mobile-only-link" routerLink="/menu/feed" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.feed' | t }}</a>
-            <a class="desktop-primary-link" routerLink="/menu/my-sessions" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.activities' | t }}</a>
+            <a class="desktop-primary-link" routerLink="/menu/my-sessions" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'mySessions.title' | t }}</a>
             <a class="desktop-primary-link" routerLink="/menu/messages" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.messages' | t }}</a>
             <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.account.viewProfile' | t }}</a>
             @if (admin) {

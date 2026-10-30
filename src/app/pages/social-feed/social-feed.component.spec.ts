@@ -69,20 +69,17 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component.ngOnDestroy();
   }));
 
-  it('renders the full three-column dashboard with real sidebar routes and connected data', fakeAsync(() => {
+  it('keeps the Feed in two content columns without duplicate site navigation', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     const shell = root.querySelector('.feed-v3-shell')!;
-    expect(shell.querySelector('.feed-left-rail')).not.toBeNull();
+    expect(shell.querySelector('.feed-left-rail')).toBeNull();
+    expect(shell.querySelector('.feed-rail-links')).toBeNull();
     expect(shell.querySelector('.feed-main .feed-v3-welcome h1')?.textContent).toContain(t('feed.v3.welcome'));
-    expect(shell.querySelector('.feed-left-rail a[href="/menu/venues"]')).not.toBeNull();
-    expect(shell.querySelector('.feed-left-rail a[href="/menu/messages"]')).not.toBeNull();
-    expect(shell.querySelector('.feed-left-rail a[href="/menu/createEvent"]')).not.toBeNull();
     expect(shell.querySelector('.feed-main .week-hub-grid')).not.toBeNull();
     expect(shell.querySelector('.feed-main .composer textarea')).not.toBeNull();
-    expect(shell.querySelector('.feed-main .feed-empty-state')).not.toBeNull();
     expect(shell.querySelector('.feed-sidebar .feed-v3-community-panel')).not.toBeNull();
     expect(shell.querySelector('.feed-sidebar .feed-v3-join-card a[href="/menu/communities"]')).not.toBeNull();
     expect(shell.querySelectorAll('.feed-discovery-card').length).toBe(3);
@@ -95,10 +92,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
-    const nav = root.querySelector('.feed-rail-links')!;
-    expect(nav.querySelectorAll('a').length).toBe(7);
-    expect(nav.querySelectorAll('a > svg.feed-ui-icon[aria-hidden="true"]').length).toBe(7);
-    expect(nav.querySelector('a[href="/menu/events"]')).not.toBeNull();
+    expect(root.querySelector('.feed-rail-links')).toBeNull();
+    expect(root.querySelectorAll('.composer-actions .jynlo-premium-btn').length).toBe(3);
 
     const primary = root.querySelector('.feed-hero-cta') as HTMLAnchorElement;
     expect(primary.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
