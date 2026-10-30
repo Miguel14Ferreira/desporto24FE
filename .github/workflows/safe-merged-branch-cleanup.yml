@@ -11,7 +11,7 @@ on:
         type: boolean
         default: true
 permissions:
-  contents: write
+  contents: read
   pull-requests: read
 jobs:
   cleanup:
@@ -21,6 +21,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Test branch cleanup safety
+        run: python3 -m unittest discover -s scripts -p 'test_safe_merged_branch_cleanup.py'
       - name: Classify and clean safe branches
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
