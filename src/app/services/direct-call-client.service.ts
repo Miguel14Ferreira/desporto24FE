@@ -295,7 +295,7 @@ export class DirectCallClientService implements OnDestroy {
     const call = this.state$.value;
     const recipient = username.trim();
     if (!call || call.phase !== 'active' || !this.room || this.invitationBusy$.value
-        || !/^[\\p{L}\\p{N}_.-]{2,128}$/u.test(recipient)) {
+        || !/^[\p{L}\p{N}_.-]{2,128}$/u.test(recipient)) {
       this.invitationError$.next('calls.inviteInvalid');
       return false;
     }
