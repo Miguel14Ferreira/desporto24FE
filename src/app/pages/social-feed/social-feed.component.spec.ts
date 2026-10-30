@@ -82,7 +82,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(shell.querySelector('.feed-left-rail a[href="/menu/createEvent"]')).not.toBeNull();
     expect(shell.querySelector('.feed-main .week-hub-grid')).not.toBeNull();
     expect(shell.querySelector('.feed-main .composer textarea')).not.toBeNull();
-    expect(shell.querySelector('.feed-main .feed-list')).not.toBeNull();
+    expect(shell.querySelector('.feed-main .feed-empty-state')).not.toBeNull();
     expect(shell.querySelector('.feed-sidebar .feed-v3-community-panel')).not.toBeNull();
     expect(shell.querySelector('.feed-sidebar .feed-v3-join-card a[href="/menu/communities"]')).not.toBeNull();
     expect(shell.querySelectorAll('.feed-discovery-card').length).toBe(3);
