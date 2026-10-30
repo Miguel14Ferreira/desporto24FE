@@ -7,9 +7,6 @@
 
     <div class="site-nav__links">
       @if (authenticated) {
-        <a class="feed-v3-top-search" routerLink="/menu/discover">
-          <span aria-hidden="true">⌕</span> {{ 'feed.v3.searchShortcut' | t }}
-        </a>
         <a class="desktop-primary-link" routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
         <a routerLink="/menu/discover" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
         <a class="mobile-only-link" routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
