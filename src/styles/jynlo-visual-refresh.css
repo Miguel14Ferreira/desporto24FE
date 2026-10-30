@@ -98,3 +98,45 @@ body .jynlo-c1 :is(.state-card,.empty-card) :is(.session-empty-actions,.empty-ac
     transition: none;
   }
 }
+
+/* The same monogram appears beside existing branded page eyebrows. */
+body .jynlo-c1 :is(.page-header,.discover-header,.create-header,.dashboard-header) > div > .eyebrow,
+body .register-page .page-header .eyebrow,
+body .login-page .login-copy > .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding-left: 31px;
+  background: url('/assets/jynlo-mark.svg') left center / 24px 24px no-repeat;
+}
+body .jynlo-home-premium .brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding-left: 49px;
+  background: url('/assets/jynlo-mark.svg') left center / 40px 40px no-repeat;
+}
+body .jynlo-c1 :is(.session-row,.session-card,.preview-item,.community-card,.venue-card) {
+  border-color: var(--jynlo-premium-outline);
+  border-radius: 1rem;
+}
+body .jynlo-c1 :is(.session-row,.session-card,.preview-item,.community-card,.venue-card):hover {
+  border-color: rgba(37, 228, 201, .43);
+}
+body .jynlo-c1 :is(.state-card,.empty-card) h2 {
+  color: #f4fffc;
+  letter-spacing: -.025em;
+}
+body .jynlo-c1 :is(.state-card,.empty-card) p {
+  color: var(--jynlo-premium-muted);
+}
+body .jynlo-c1 :is(.header-actions,.row-actions) > a,
+body .jynlo-c1 :is(.header-actions,.row-actions) > button {
+  box-sizing: border-box;
+}
+@media (max-width: 480px) {
+  body .jynlo-c1 :is(.header-actions,.row-actions) { width: 100%; }
+  body .jynlo-c1 :is(.header-actions,.row-actions) > .jynlo-action {
+    flex: 1 1 auto;
+  }
+}
