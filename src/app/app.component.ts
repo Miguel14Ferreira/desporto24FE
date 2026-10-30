@@ -1,5 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, Injector, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, NavigationError, Router } from '@angular/router';
+import { filter, Subscription, take } from 'rxjs';
 
 import { AuthenticationService } from './services/authethication.service';
 import type { NativeSelectEnhancementService } from './shared/jynlo-select/native-select-enhancement.service';
@@ -7,6 +8,7 @@ import { PilotAnalyticsService } from './services/pilot-analytics.service';
 import { OnlinePresenceService } from './services/online-presence.service';
 import { appTranslate as t } from './i18n/i18n.service';
 import { registrationSessionReturnUrl, registrationCommunityReturnUrl, takeRegistrationDestination } from './shared/registration-return-url';
+import { dismissStartupSplash } from './shared/startup-splash';
 
 @Component({
     selector: 'app-root',
@@ -20,6 +22,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private callOverlayOutlet?: ViewContainerRef;
   private disposed=false;
   private nativeSelectEnhancement?: NativeSelectEnhancementService;
+  private splashNavigationSubscription?: Subscription;
+  private splashSafetyTimeout?: number;
   title = 'desporto24';
 
   constructor(
@@ -31,6 +35,20 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // The static startup screen is visible even before the Angular bundle loads.
+    // Keep it until first route resolution + two browser paint frames; never
+    // replay it during ordinary SPA navigation.
+    if (document.getElementById('jynlo-startup-splash')) {
+      this.splashNavigationSubscription = this.router.events.pipe(
+        filter(event => event instanceof NavigationEnd || event instanceof NavigationError),
+        take(1)
+      ).subscribe(() => {
+        window.requestAnimationFrame(() =>
+          window.requestAnimationFrame(() => this.finishStartupSplash()));
+      });
+      // Protect against an indefinitely hanging initial route or guard.
+      this.splashSafetyTimeout = window.setTimeout(() => this.finishStartupSplash(), 12000);
+    }
     const params = new URLSearchParams(window.location.search);
     this.pilotAnalyticsService.recordFirstAccess(params.get('cohort'));
     this.onlinePresence.start();
@@ -89,8 +107,21 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.disposed=true;
+    this.splashNavigationSubscription?.unsubscribe();
+    if (this.splashSafetyTimeout !== undefined) {
+      window.clearTimeout(this.splashSafetyTimeout);
+    }
     this.onlinePresence.stop();
     this.nativeSelectEnhancement?.stop();
+  }
+
+  private finishStartupSplash(): void {
+    if (this.disposed) return;
+    if (this.splashSafetyTimeout !== undefined) {
+      window.clearTimeout(this.splashSafetyTimeout);
+      this.splashSafetyTimeout = undefined;
+    }
+    dismissStartupSplash();
   }
 
   private navigateToLoginAfterConfirmation(params: URLSearchParams): void {
