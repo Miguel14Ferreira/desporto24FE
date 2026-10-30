@@ -333,6 +333,8 @@ describe('NavbarComponent', () => {
     )).map(anchor => anchor.getAttribute('href'));
     expect(primaryLinks).toEqual(['/menu/feed', '/menu/createEvent']);
     expect(nav.querySelector('a[href="/menu/discover"]')).toBeTruthy();
+    expect(nav.querySelector(':scope > a.nav-activities-link[href="/menu/events"]')).toBeTruthy();
+    expect(nav.querySelector('.feed-v3-top-search')).toBeNull();
     expect(nav.querySelector(':scope > a.nav-communities-link[href="/menu/communities"]')).toBeTruthy();
     expect(nav.querySelector('a[href="/menu/notifications"]')).toBeTruthy();
 
