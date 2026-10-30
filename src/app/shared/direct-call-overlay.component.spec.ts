@@ -133,8 +133,11 @@ describe('Global incoming call popup', () => {
     (fixture.nativeElement.querySelector('.connect-invite-button') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.connect-contact-option')?.textContent).toContain('Carlos');
-    fixture.componentInstance.inviteUsername='nobody';
+    const search = fixture.nativeElement.querySelector('#connect-invite-name') as HTMLInputElement;
+    search.value = 'nobody';
+    search.dispatchEvent(new Event('input', {bubbles:true}));
     fixture.detectChanges();
+    expect(fixture.componentInstance.matchingContacts).toEqual([]);
     expect(fixture.nativeElement.querySelector('.connect-contact-option')).toBeNull();
   });
 
