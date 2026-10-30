@@ -92,3 +92,26 @@
 @media(prefers-reduced-motion:reduce) {
   :host .community-tabs {scroll-behavior:auto;}
 }
+
+/* Responsive tab rail: every item keeps its own space and the active tab stays readable. */
+:host { min-width:0; max-width:100%; }
+:host .community-tabs {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x proximity;
+}
+:host .community-tabs > button {
+  position:relative;
+  scroll-snap-align:start;
+  min-width:max-content;
+  max-width:none;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:normal;
+}
+@media(max-width:420px) {
+  :host .community-tabs { gap:4px; padding:5px; }
+  :host .community-tabs > button { min-height:44px; padding:9px 12px; }
+}
