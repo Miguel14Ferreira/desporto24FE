@@ -22,7 +22,7 @@ export interface DirectCallEvent {
   caller: string;
   peer: string;
   media: 'voice' | 'video';
-  status: 'RINGING' | 'ACTIVE' | 'DECLINED' | 'ENDED';
+  status: 'RINGING' | 'ACTIVE' | 'DECLINED' | 'ENDED' | 'MEMBERS_CHANGED' | 'LEFT';
   actor: string;
   expiresAt: string;
 }
@@ -230,7 +230,7 @@ export class DirectChatRealtimeService {
           if (typeof call.callId === 'string'
               && typeof call.caller === 'string' && typeof call.peer === 'string'
               && ['voice', 'video'].includes(call.media)
-              && ['RINGING', 'ACTIVE', 'DECLINED', 'ENDED'].includes(call.status)) {
+              && ['RINGING', 'ACTIVE', 'DECLINED', 'ENDED', 'MEMBERS_CHANGED', 'LEFT'].includes(call.status)) {
             this.callSubject.next(call);
           }
           return;
