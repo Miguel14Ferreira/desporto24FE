@@ -183,8 +183,9 @@ describe('SocialFeedComponent discovery sidebar', () => {
     const root = fixture.nativeElement as HTMLElement;
     const hub = root.querySelector<HTMLElement>('.week-hub');
     expect(hub).not.toBeNull();
-    expect((root.querySelector('.feed-layout')!.compareDocumentPosition(hub!)) & Node.DOCUMENT_POSITION_PRECEDING)
-      .toBeTruthy();
+    expect(root.querySelector('.feed-main')?.contains(hub)).toBeTrue();
+    expect(root.querySelector('.feed-layout')?.contains(hub)).toBeTrue();
+    expect(root.querySelector('.feed-main')?.querySelector('.composer')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/4"]')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/5"]')).not.toBeNull();
     const openGame = hub?.querySelector<HTMLAnchorElement>('a[href^="/menu/events/6?"]');
