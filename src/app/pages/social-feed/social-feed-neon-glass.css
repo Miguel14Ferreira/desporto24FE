@@ -68,11 +68,12 @@
   min-height:174px;overflow:hidden;margin:0;padding:clamp(18px,3vw,28px);
   border:1px solid var(--v3-edge);border-radius:19px;
   background:
-    linear-gradient(94deg,#021625 15%,#043046dc 63%,#05354480),
-    radial-gradient(ellipse at 90% 35%,#0fb3c14d,transparent 60%);
+    linear-gradient(90deg,#021625 5%,#05283bea 48%,#05354460 88%),
+    url('/assets/jynlo-feed-hero-sport.webp') right center / auto 100% no-repeat,
+    radial-gradient(ellipse at 90% 35%,#0fb3c14d,transparent 60%),#031725;
 }
 :host .feed-v3-shell .feed-v3-welcome::after {
-  content:"";position:absolute;right:-5%;top:-24%;height:160%;width:48%;z-index:-1;opacity:.5;
+  content:"";position:absolute;right:-5%;top:-24%;height:160%;width:48%;z-index:-1;opacity:.18;
   background:repeating-linear-gradient(0deg,transparent 0 31px,#20d8ca2c 32px 33px),
     repeating-linear-gradient(90deg,transparent 0 48px,#20d8ca22 49px 50px);
   transform:perspective(300px) rotateY(-25deg) rotateX(20deg) rotate(-8deg);
