@@ -224,6 +224,9 @@
 :host .create-page.jynlo-games .photo-section .upload-button:hover {
   background:rgba(24,103,105,.35);border-color:#52e6d1;
 }
+:host .create-page.jynlo-games .photo-section .upload-button.is-disabled {
+  opacity:.55;cursor:not-allowed;pointer-events:none;
+}
 :host .create-page.jynlo-games .photo-section .upload-button:focus-within {
   outline:3px solid #9cfde7;outline-offset:3px;
 }
