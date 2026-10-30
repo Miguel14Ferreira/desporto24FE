@@ -243,3 +243,113 @@
 @media (prefers-reduced-motion:reduce) {
   :host .sessions-page.jynlo-games .session-row {transform:none;transition:none;}
 }
+
+
+/* Activities refinement — coherent navigation-free workspace, no duplicate rail.
+   Visual controls retain their Angular bindings and original semantics. */
+:host .sessions-page.jynlo-games .sessions-shell { width:min(1160px,100%); }
+:host .sessions-page.jynlo-games .page-header {
+  gap:18px;align-items:center;flex-wrap:wrap;
+}
+:host .sessions-page.jynlo-games .page-header > div:first-child {
+  flex:1 1 300px;min-width:0;
+}
+:host .sessions-page.jynlo-games .header-actions {
+  flex:0 1 auto;align-items:center;
+}
+:host .sessions-page.jynlo-games .nearby-panel {
+  min-height:110px;box-sizing:border-box;padding:18px 20px;
+}
+:host .sessions-page.jynlo-games .nearby-panel > div:first-child {
+  flex:1 1 280px;min-width:0;
+}
+:host .sessions-page.jynlo-games .filters {
+  gap:15px;box-sizing:border-box;
+}
+:host .sessions-page.jynlo-games .filters-intro {
+  display:flex;align-items:center;gap:12px;
+}
+:host .sessions-page.jynlo-games .filters-intro > div {min-width:0;}
+:host .sessions-page.jynlo-games .filters-primary > label {
+  display:flex;flex-direction:column;align-items:stretch;
+  justify-content:flex-start;gap:7px;
+}
+:host .sessions-page.jynlo-games .filters-primary > label > span {
+  min-height:20px;display:flex;align-items:center;
+}
+:host .sessions-page.jynlo-games .filters-primary :is(input,select) {
+  min-height:48px;max-width:100%;
+}
+:host .sessions-page.jynlo-games .filters-quick {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;gap:12px;
+}
+:host .sessions-page.jynlo-games .filters-quick__chips,
+:host .sessions-page.jynlo-games .filters-quick__checks {
+  min-width:0;gap:8px;
+}
+:host .sessions-page.jynlo-games .filters-quick__checks .check-filter {
+  display:inline-flex;align-items:center;gap:7px;
+}
+:host .sessions-page.jynlo-games .filters .quick-chip {
+  min-height:40px;padding:8px 12px;
+  white-space:normal;line-height:1.25;
+}
+:host .sessions-page.jynlo-games .filters .quick-chip:focus-visible {
+  outline:2px solid #9efce5;outline-offset:2px;
+}
+:host .sessions-page.jynlo-games .filters-toolbar {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+}
+:host .sessions-page.jynlo-games .filters-toolbar .filter-actions {
+  margin:0;gap:8px;
+}
+:host .sessions-page.jynlo-games .filters-toolbar .jynlo-premium-btn {
+  min-height:44px!important;
+}
+:host .sessions-page.jynlo-games .session-row {
+  box-sizing:border-box;min-width:0;
+}
+:host .sessions-page.jynlo-games .session-row .session-action {
+  min-height:44px!important;
+}
+:host .sessions-page.jynlo-games .session-fact > span {
+  line-height:1.35;overflow-wrap:anywhere;
+}
+:host .sessions-page.jynlo-games .session-empty-actions {
+  align-items:stretch;
+}
+:host .sessions-page.jynlo-games .session-empty-actions > * {
+  min-height:44px!important;
+}
+@media(max-width:920px) {
+  :host .sessions-page.jynlo-games .filters-quick {
+    grid-template-columns:minmax(0,1fr);
+  }
+  :host .sessions-page.jynlo-games .filters-quick__checks {
+    justify-content:flex-start;
+  }
+}
+@media(max-width:640px) {
+  :host .sessions-page.jynlo-games .nearby-panel {padding:15px;gap:13px;}
+  :host .sessions-page.jynlo-games .filters-toolbar {
+    grid-template-columns:minmax(0,1fr);
+  }
+  :host .sessions-page.jynlo-games .filters-toolbar > .advanced-toggle {
+    width:100%;
+  }
+  :host .sessions-page.jynlo-games .filters-toolbar .filter-actions {
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;
+  }
+  :host .sessions-page.jynlo-games .page-header .header-actions {
+    width:100%;justify-content:stretch;
+  }
+  :host .sessions-page.jynlo-games .page-header .header-actions > a {
+    flex:1 1 130px;
+  }
+}
+@media(max-width:380px) {
+  :host .sessions-page.jynlo-games .filters-toolbar .filter-actions {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
