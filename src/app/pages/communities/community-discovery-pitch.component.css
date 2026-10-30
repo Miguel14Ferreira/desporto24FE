@@ -71,3 +71,12 @@
   .community-pitch-benefit { padding: .8rem; min-height: 0; }
   .community-pitch-actions .jynlo-action { flex: 1 1 100%; }
 }
+
+/* Keep heading and cards fully contained when fonts scale. */
+.community-pitch {box-sizing:border-box;max-width:100%;}
+.community-pitch h2 {margin:0;line-height:1.19;padding-block:3px;overflow:visible;}
+.community-pitch-benefits {min-width:0;}
+.community-pitch-benefit {box-sizing:border-box;min-width:0;overflow-wrap:anywhere;}
+@media(max-width:560px) {
+  .community-pitch-benefits {grid-template-columns:minmax(0,1fr);}
+}
