@@ -83,6 +83,17 @@ describe('Events2Component', () => {
   });
 
 
+  it('keeps the complete Create Session form operational with consistent actions', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const form = root.querySelector('form.create-card') as HTMLFormElement;
+    expect(form).not.toBeNull();
+    expect(root.querySelectorAll('.page-header .jynlo-premium-btn--quiet').length).toBe(2);
+    expect(form.querySelectorAll('button.create-mode-option').length).toBe(2);
+    expect(form.querySelector('button[type="submit"]')?.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(form.querySelectorAll('.form-actions .jynlo-premium-btn').length).toBeGreaterThanOrEqual(2);
+    expect(form.querySelectorAll('app-jynlo-select').length).toBeGreaterThan(0);
+  });
+
   it('shows saved presets only after saving, with a separate save action beside Create session', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.create-preset-panel')).toBeNull();
