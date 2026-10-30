@@ -158,3 +158,35 @@
 @media(prefers-reduced-motion:reduce){
   :host .feed-v3-shell .feed-post-reaction {transition:none;}
 }
+
+
+/* Navigation decision: one persistent app header, no feed-only sidebar.
+   Preserve the two content columns and give posts back the lost width. */
+:host .feed-page .feed-shell.feed-v3-shell {
+  display:block;
+  width:min(1230px,100%);
+  max-width:1230px;
+  margin-inline:auto;
+}
+:host .feed-page .feed-v3-shell .feed-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(250px,310px);
+  align-items:start;
+  gap:clamp(12px,1.65vw,22px);
+}
+:host .feed-page .feed-v3-shell .feed-main {min-width:0;}
+:host .feed-page .feed-v3-shell .feed-left-rail {display:none;}
+:host .feed-page .feed-v3-shell .feed-sidebar {top:80px;}
+/* Desktop's Create action is already in the shared navbar; never repeat it. */
+@media (min-width:901px) {
+  :host .feed-page .feed-v3-shell .feed-v3-welcome > .feed-hero-cta {display:none!important;}
+}
+@media (max-width:990px) {
+  :host .feed-page .feed-shell.feed-v3-shell {max-width:940px;}
+}
+@media (max-width:760px) {
+  :host .feed-page .feed-v3-shell .feed-layout {
+    grid-template-columns:minmax(0,1fr);
+  }
+  :host .feed-page .feed-v3-shell .feed-sidebar {position:static;}
+}
