@@ -559,16 +559,45 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     }
   `]
 })
-export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
-  @ViewChild('remoteVideo') private remoteVideo?: ElementRef<HTMLVideoElement>;
-  @ViewChild('localVideo') private localVideo?: ElementRef<HTMLVideoElement>;
-  @ViewChild('remoteAudio') private remoteAudio?: ElementRef<HTMLAudioElement>;
-  private lastRemoteVideo: Track | null = null;
-  private lastLocalVideo: Track | null = null;
-  private lastRemoteAudio: Track | null = null;
+export class DirectCallOverlayComponent implements OnDestroy {
   private readonly mediaSubscription: Subscription;
-  settingsOpen=false;
-  viewsSwapped=false;
+  settingsOpen = false;
+  inviteOpen = false;
+  inviteUsername = '';
+  minimized = false;
+
+  get participants(): (LocalParticipant | RemoteParticipant)[] {
+    const room = this.calls.room;
+    return room ? [room.localParticipant, ...room.remoteParticipants.values()] : [];
+  }
+
+  get videoActive(): boolean {
+    return this.participants.some(p=>[...p.videoTrackPublications.values()]
+      .some(pub=>!!pub.track && !pub.isMuted));
+  }
+  get hasPresentation(): boolean {
+    return this.participants.some(p=>[...p.videoTrackPublications.values()]
+      .some(pub=>pub.source===Track.Source.ScreenShare && !!pub.track && !pub.isMuted));
+  }
+  participantLabel(person: LocalParticipant | RemoteParticipant): string {
+    if (person===this.calls.room?.localParticipant) return 'Tu';
+    const found=this.calls.members$.value.participants
+      .find(member=>member.identity===person.identity);
+    return found?.username || this.calls.state$.value?.peer || 'Participante';
+  }
+
+  minimize(): void {
+    if (this.calls.state$.value?.phase !== 'error') {
+      this.minimized=true;
+      this.settingsOpen=false;
+      this.inviteOpen=false;
+    }
+  }
+
+  async inviteMember(): Promise<void> {
+    const target=this.inviteUsername.trim();
+    if (await this.calls.inviteMember(target)) this.inviteUsername='';
+  }
   get speakerSelectionSupported(): boolean {
     return typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
   }
@@ -604,14 +633,14 @@ export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
       : [Math.floor(seconds/60),seconds%60].map(x=>String(x).padStart(2,'0')).join(':');
   }));
 
-    this.mediaSubscription = calls.mediaChanged$.subscribe(() => {
-      this.lastRemoteVideo = null;
-      this.lastLocalVideo = null;
-      this.lastRemoteAudio = null;
+    this.mediaSubscription = calls.state$.subscribe(call=>{
+      if (!call) {
+        this.settingsOpen=false;
+        this.inviteOpen=false;
+        this.minimized=false;
+        this.inviteUsername='';
+      }
     });
-    this.mediaSubscription.add(calls.state$.subscribe(call=>{
-      if (!call) { this.settingsOpen=false; this.viewsSwapped=false; }
-    }));
   }
 
   toggleSettings(forceOpen=false): void {
@@ -629,35 +658,6 @@ export class DirectCallOverlayComponent implements AfterViewChecked, OnDestroy {
     if (call?.phase==='incoming') this.calls.decline();
     else if (call?.phase==='error') this.calls.closeError();
     else if (call) this.calls.end();
-  }
-
-  ngAfterViewChecked(): void {
-    const room=this.calls.room;
-    if (!room) return;
-    const localVideo=this.localVideo?.nativeElement;
-    if (localVideo) {
-      for (const publication of room.localParticipant.videoTrackPublications.values()) {
-        const track=publication.track;
-        if (track && track.kind===Track.Kind.Video && this.lastLocalVideo!==track) {
-          track.attach(localVideo);
-          this.lastLocalVideo=track;
-        }
-      }
-    }
-    for (const participant of room.remoteParticipants.values()) {
-      for (const publication of participant.trackPublications.values()) {
-        const track=publication.track;
-        if (!track) continue;
-        if (track.kind===Track.Kind.Video && this.remoteVideo && this.lastRemoteVideo!==track) {
-          track.attach(this.remoteVideo.nativeElement);
-          this.lastRemoteVideo=track;
-        }
-        if (track.kind===Track.Kind.Audio && this.remoteAudio && this.lastRemoteAudio!==track) {
-          track.attach(this.remoteAudio.nativeElement);
-          this.lastRemoteAudio=track;
-        }
-      }
-    }
   }
 
   ngOnDestroy(): void {
