@@ -373,3 +373,68 @@
     transition:none;
   }
 }
+
+/* Detail polish: keep member actions, tabs and admin controls legible at all widths. */
+:host .communities-page.jynlo-community-main-premium.community-detail-page {
+  --community-control-focus:#9cffe3;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page .detail-header > * {
+  min-width:0;
+  max-width:100%;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page .detail-header .row-actions,
+:host .communities-page.jynlo-community-main-premium.community-detail-page .section-heading .row-actions,
+:host .communities-page.jynlo-community-main-premium.community-detail-page .community-session-policy-actions {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page :is(
+  .detail-header,.section-heading,.community-session-policy-actions,.member-row
+) :is(button,a) {
+  box-sizing:border-box;
+  min-height:42px;
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.35;
+  text-align:center;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page :is(
+  .community-tab-panel,.members-block,.management-block,.season-dashboard,
+  .community-session-entry,.community-session-policy
+) {
+  min-width:0;
+  max-width:100%;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page :is(
+  input:not([type="checkbox"]):not([type="radio"]),select,textarea
+) {
+  max-width:100%;
+  box-sizing:border-box;
+}
+:host .communities-page.jynlo-community-main-premium.community-detail-page :is(
+  input:not([type="checkbox"]):not([type="radio"]),select,textarea
+):focus-visible {
+  outline:2px solid var(--community-control-focus);
+  outline-offset:2px;
+}
+@media(max-width:620px) {
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .detail-header .row-actions,
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .community-session-policy-actions {
+    width:100%;
+    align-items:stretch;
+  }
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .detail-header .row-actions > :is(button,a),
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .community-session-policy-actions > button {
+    flex:1 1 160px;
+  }
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .member-row {
+    align-items:stretch;
+  }
+  :host .communities-page.jynlo-community-main-premium.community-detail-page .member-row .row-actions {
+    width:100%;
+  }
+}
