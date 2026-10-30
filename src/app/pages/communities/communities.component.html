@@ -474,18 +474,37 @@
                         ? ('communities.private' | t)
                         : ('communities.public' | t) }}
                     </span>
+                    <span class="role-badge">
+                      {{ selected.myRole === 'OWNER'
+                        ? ('communities.role.owner' | t)
+                        : (selected.myRole === 'ADMIN'
+                          ? ('communities.role.admin' | t)
+                          : ('communities.role.member' | t)) }}
+                    </span>
                     @if (competition?.settings?.rankingsEnabled) {
                       <span class="competition-badge">{{ 'communities.competitionOn' | t }}</span>
                     }
                   </div>
                   <h2>{{ selected.name }}</h2>
                   <p>{{ selected.description || ('communities.noDescription' | t) }}</p>
-                  <div class="row-actions">
+                  <div class="community-hero-meta">
+                    <span>{{ selected.memberCount === 1
+                      ? ('communities.memberOne' | t:{ count: selected.memberCount })
+                      : ('communities.memberMany' | t:{ count: selected.memberCount }) }}</span>
+                    @if (hasCompetitions(selected)) {
+                      <span>{{ 'communities.features.competitionsTab' | t }}</span>
+                    }
+                  </div>
+                  <div class="row-actions community-hero-actions">
                     <a class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
                        [routerLink]="['/menu/messages']"
                        [queryParams]="{ kind: 'community', id: selected.id }">
                       <span aria-hidden="true">💬</span> {{ 'communities.openChat' | t }}
                     </a>
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      (click)="setTab('members')">{{ 'communities.tab.members' | t }}</button>
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      (click)="setTab('sessions')">{{ 'communities.tab.sessions' | t }}</button>
                   </div>
                 </div>
               </div>
