@@ -25,7 +25,10 @@
       place-items: center;
       min-height: 100vh;
       min-height: 100dvh;
-      background: #07111f;
+      background:
+        radial-gradient(ellipse 26rem 24rem at 50% 49%, rgba(0, 185, 174, .20), transparent 76%),
+        radial-gradient(ellipse 55rem 45rem at 50% 58%, rgba(4, 79, 94, .20), transparent 80%),
+        linear-gradient(155deg, #001422, #052234 55%, #041321);
       opacity: 1;
       visibility: visible;
       transition: opacity 240ms ease, visibility 240ms ease;
@@ -40,20 +43,21 @@
     #jynlo-startup-splash .jynlo-startup-brand {
       display: grid;
       justify-items: center;
-      gap: 18px;
+      gap: 21px;
       transform: translateY(-2%);
     }
     #jynlo-startup-splash .jynlo-startup-mark {
       display: block;
-      width: 80px;
-      height: 80px;
-      filter: drop-shadow(0 0 28px rgba(39, 226, 201, .2));
+      width: clamp(116px, 30vw, 170px);
+      height: auto;
+      aspect-ratio: 1;
+      filter: drop-shadow(0 0 28px rgba(15, 222, 201, .28));
     }
     #jynlo-startup-splash .jynlo-startup-wordmark {
       color: #f4fffd;
-      font: 800 14px/1.2 system-ui, sans-serif;
-      letter-spacing: .38em;
-      text-indent: .38em;
+      font: 750 16px/1.2 system-ui, sans-serif;
+      letter-spacing: .48em;
+      text-indent: .48em;
     }
     @keyframes jynlo-startup-failsafe {
       to { opacity: 0; visibility: hidden; pointer-events: none; }
