@@ -1013,7 +1013,10 @@ describe('Unified Jynlo message center', () => {
     expect(revoked).toHaveBeenCalledWith('blob:one');
     expect(component.selectedAttachment).toBeNull();
     component.attachmentReady=true;component.composerAllowed=true;
+    component.previewLoading=false;component.previewError=false;
+    component.composerAccessLoading=false;
     component.onComposerPaste(clip(new File(['x'],'two.png',{type:'image/png'})));
+    expect(component.selectedAttachmentPreviewUrl).toBe('blob:two');
     component.ngOnDestroy();
     expect(revoked).toHaveBeenCalledWith('blob:two');
   });
