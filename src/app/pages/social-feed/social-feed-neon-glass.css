@@ -190,7 +190,12 @@
    button padding to every nested community link, causing cramped/overlapping
    rows at the right-column widths seen in production. */
 :host .feed-page .feed-v3-shell,
-:host .feed-page .feed-v3-shell * { min-width:0; }
+:host .feed-page .feed-v3-shell .feed-layout,
+:host .feed-page .feed-v3-shell .feed-main,
+:host .feed-page .feed-v3-shell .feed-sidebar,
+:host .feed-page .feed-v3-shell .feed-discovery-card {
+  min-width:0;
+}
 :host .feed-page .feed-v3-shell .feed-sidebar,
 :host .feed-page .feed-v3-shell .feed-discovery-card,
 :host .feed-page .feed-v3-shell .feed-v3-community-panel {
@@ -356,6 +361,12 @@
 @media(max-width:990px) {
   :host .feed-page .feed-v3-shell .feed-left-rail {display:none;}
   :host .feed-page .feed-v3-shell .feed-sidebar {position:static;}
+}
+/* Global navigation uses two fixed rows on phones and compact tablets. */
+@media(max-width:900px) {
+  :host .feed-page.jynlo-feed-premium {
+    padding-top:calc(8.5rem + env(safe-area-inset-top));
+  }
 }
 @media(max-width:760px) {
   :host .feed-page .feed-v3-shell .feed-sidebar {grid-template-columns:repeat(2,minmax(0,1fr));}
