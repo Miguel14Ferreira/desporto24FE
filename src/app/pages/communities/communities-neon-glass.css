@@ -796,3 +796,158 @@
   :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card {transition:none;}
   :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card:hover {transform:none;}
 }
+
+
+/* Community directory v3: inputs and action buttons share one baseline. */
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) 124px 90px;
+  align-items:end;
+  gap:12px;
+  width:100%;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters > label {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+  margin:0;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters > label > input {
+  box-sizing:border-box;
+  width:100%;
+  height:48px;
+  min-height:48px;
+  margin:0;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters > .community-discovery-filter-actions {
+  display:contents;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters > .community-discovery-filter-actions > button {
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  align-self:end;
+  width:100%;
+  height:48px;
+  min-height:48px;
+  margin:0;
+  padding:0 12px;
+  white-space:normal;
+  line-height:1.25;
+}
+/* Directory: content-first identity and compact cards, without artificial empty heights. */
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr));
+  align-items:stretch;
+  gap:14px;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid > button.community-card {
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:space-between;
+  height:auto;
+  min-height:188px;
+  gap:16px;
+  padding:17px;
+  border-radius:17px;
+  text-align:left;
+  background:linear-gradient(145deg,rgba(12,51,65,.98),rgba(8,34,48,.98));
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid > button.community-card .community-card-main {
+  display:flex;
+  flex-direction:row;
+  align-items:flex-start;
+  gap:14px;
+  min-width:0;
+  width:100%;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid .community-discovery-cover {
+  width:70px;
+  height:70px;
+  flex:0 0 70px;
+  border-radius:14px;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid .community-card-copy {
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:8px;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid .community-card-copy strong {
+  font-size:1.05rem;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid .community-discovery-description {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  overflow:hidden;
+  max-width:100%;
+  line-height:1.5;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid .community-discovery-card-footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  width:100%;
+  margin-top:auto;
+  padding-top:12px;
+  border-top:1px solid rgba(91,190,187,.18);
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .communities-layout > aside.community-list {
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+  gap:14px;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card {
+  min-height:118px;
+  padding:16px;
+  gap:12px;
+  border-radius:16px;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list:not(.community-discovery-grid) > button.community-card .community-avatar {
+  width:62px;
+  height:62px;
+  flex-basis:62px;
+}
+:host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list:not(.community-discovery-grid) > button.community-card > small {
+  padding-top:9px;
+}
+@media(max-width:1000px) {
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters > .community-discovery-filter-actions {
+    display:flex;
+    grid-column:1/-1;
+    justify-content:flex-end;
+    gap:10px;
+    min-width:0;
+  }
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters > .community-discovery-filter-actions > button {
+    width:auto;
+    min-width:110px;
+  }
+}
+@media(max-width:560px) {
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters {
+    grid-template-columns:minmax(0,1fr);
+  }
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters > .community-discovery-filter-actions {
+    grid-column:1;
+    justify-content:stretch;
+  }
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters > .community-discovery-filter-actions > button {
+    flex:1 1 0;
+    min-width:0;
+  }
+}
