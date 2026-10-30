@@ -54,8 +54,8 @@ describe('EventsComponent', () => {
   it('applies real search date boundaries and toggles quick dates off', () => {
     component.applyQuickDate('today');
     expect(component.quickDate).toBe('today');
-    expect(component.fromDateTime).toMatch(/^\\d{4}-\\d\\d-\\d\\dT00:00$/);
-    expect(component.toDateTime).toMatch(/^\\d{4}-\\d\\d-\\d\\dT23:59$/);
+    expect(component.fromDateTime).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T00:00$/);
+    expect(component.toDateTime).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T23:59$/);
     expect(sessionService.discover.calls.mostRecent().args[0].from).toBeTruthy();
     expect(sessionService.discover.calls.mostRecent().args[0].to).toBeTruthy();
     component.applyQuickDate('today');
