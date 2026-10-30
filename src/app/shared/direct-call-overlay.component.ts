@@ -214,9 +214,9 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                   <label for="connect-invite-name">{{ 'calls.username' | t }}</label>
                   <input id="connect-invite-name" type="text" autocomplete="off"
                     name="inviteUsername" [ngModel]="inviteUsername" (ngModelChange)="inviteUsername=$event"
-                    maxlength="128" [disabled]="calls.invitationBusy$ | async"
+                    maxlength="128" [disabled]="(calls.invitationBusy$ | async) ?? false"
                     [placeholder]="'calls.username' | t">
-                  <button type="submit" [disabled]="calls.invitationBusy$ | async">
+                  <button type="submit" [disabled]="(calls.invitationBusy$ | async) ?? false">
                     {{ 'calls.sendInvite' | t }}
                   </button>
                 </form>
