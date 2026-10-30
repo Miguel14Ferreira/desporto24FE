@@ -153,6 +153,48 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(root.querySelector('.week-hub-create')?.getAttribute('href')).toBe('/menu/my-sessions');
   }));
 
+  it('keeps narrow community suggestions separated, accessible and within their panel', fakeAsync(() => {
+    const community = (id: number, name: string) => ({
+      id, name, description: null, sport: 'Futebol', sports: ['Futebol'],
+      photoUrl: null, visibility: 'PRIVATE' as const, rankingsEnabled: false,
+      ownerUsername: 'ana', myRole: 'MEMBER' as const, memberCount: id,
+      createdAt: '2026-10-01T09:00:00Z', members: []
+    });
+    groups.mine.and.returnValue(of([
+      community(2, 'reis da cerveja'), community(3, 'Colégio Pio'),
+      community(4, 'Uma comunidade com um nome muito longo para um cartão lateral')
+    ]));
+
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    const panel = (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLElement>('.feed-v3-community-panel')!;
+    const list = panel.querySelector<HTMLElement>('.feed-v3-communities')!;
+    const links = Array.from(panel.querySelectorAll<HTMLAnchorElement>('.feed-v3-community-row'));
+    expect(links.length).toBe(3);
+    expect(getComputedStyle(list).display).toBe('grid');
+    expect(parseFloat(getComputedStyle(list).rowGap)).toBeGreaterThanOrEqual(8);
+    expect(panel.querySelectorAll('.feed-v3-side-heading a').length).toBe(1);
+    expect(panel.querySelectorAll('.feed-v3-side-button').length).toBe(0);
+    links.forEach((link, index) => {
+      expect(link.getAttribute('href')).toBe('/menu/communities/' + (index + 2));
+      expect(link.getAttribute('title')).toBeTruthy();
+      expect(link.getAttribute('aria-label')).toBe(link.getAttribute('title'));
+      expect(getComputedStyle(link).boxSizing).toBe('border-box');
+      expect(getComputedStyle(link).display).toBe('grid');
+      expect(getComputedStyle(link.querySelector('strong')!).textOverflow).toBe('ellipsis');
+    });
+    const positions = links.map(link => link.getBoundingClientRect());
+    if (positions.every(position => position.height > 0)) {
+      for (let index = 1; index < positions.length; index++) {
+        expect(positions[index].top).toBeGreaterThanOrEqual(positions[index - 1].bottom + 7);
+      }
+    }
+    component.ngOnDestroy();
+  }));
+
   it('shows my sports week before the feed using real session and community links', fakeAsync(() => {
     const at = Date.now() + 86_400_000;
     const upcoming = (id: number, other: Partial<SessionSummary> = {}): SessionSummary => ({
