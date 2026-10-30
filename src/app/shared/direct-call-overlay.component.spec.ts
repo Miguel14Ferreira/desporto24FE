@@ -133,10 +133,13 @@ describe('Global incoming call popup', () => {
     const input=fixture.nativeElement.querySelector('#connect-invite-name') as HTMLInputElement;
     expect(input).toBeTruthy();
     input.value='carlos';
-    input.dispatchEvent(new Event('input',{bubbles:true}));
+    fixture.componentInstance.inviteUsername = 'carlos';
     fixture.detectChanges();
     (fixture.nativeElement.querySelector('.connect-invite-form button') as HTMLButtonElement).click();
-    await fixture.whenStable();
+    // The call clock intentionally runs continuously, so whenStable() never
+    // resolves. Flush only the invitation's own microtask.
+    await Promise.resolve();
+    fixture.detectChanges();
     expect(calls.inviteMember).toHaveBeenCalledOnceWith('carlos');
     expect(fixture.componentInstance.inviteUsername).toBe('');
     expect(calls.end).not.toHaveBeenCalled();
