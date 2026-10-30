@@ -7,8 +7,8 @@
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
       </div>
     </header>
 
@@ -24,7 +24,7 @@
           <small>{{ 'createSession.communityAudienceHint' | t }}</small>
         </div>
         <a
-          class="secondary-action jynlo-action jynlo-action--neutral"
+          class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
           [routerLink]="['/menu/communities', communityId]">
           {{ 'createSession.backCommunity' | t }}
         </a>
@@ -64,16 +64,16 @@
           </div>
           @if (selectedPresetId !== null) {
             <div class="create-preset-actions">
-              <button type="button" class="jynlo-action jynlo-action--neutral"
+              <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                       [disabled]="loading || presetSaving || presetDeleting"
                       (click)="savePreset(true)">{{ 'createSession.presets.update' | t }}</button>
-              <button type="button" class="jynlo-action jynlo-action--neutral"
+              <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                       [disabled]="loading || presetSaving || presetDeleting"
                       (click)="deletePreset()">{{ (presetConfirmDelete
                         ? 'createSession.presets.confirmDelete'
                         : 'createSession.presets.delete') | t }}</button>
               @if (presetConfirmDelete) {
-                <button type="button" class="jynlo-action jynlo-action--neutral"
+                <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                         (click)="presetConfirmDelete = false">{{ 'common.cancel' | t }}</button>
               }
             </div>
@@ -453,7 +453,7 @@
           @if (locationMethod === 'venue') {
             <button
               type="button"
-              class="secondary-action jynlo-action jynlo-action--neutral"
+              class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [disabled]="loading || venueSaving"
               (click)="toggleVenueCreator()">
               {{ showVenueCreator ? ('common.cancel' | t) : ('venue.saveNew' | t) }}
@@ -509,7 +509,7 @@
         </label>
 
         @if (venuesHasMore && sportSelected && venueDistrict) {
-          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
             [disabled]="venuesLoading || loading" (click)="loadMoreVenues()">
             {{ 'venue.showMore' | t }}
           </button>
@@ -520,7 +520,7 @@
             <span>{{ 'venue.loadError' | t }}</span>
             <button
               type="button"
-              class="secondary-action jynlo-action jynlo-action--neutral"
+              class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [disabled]="venuesLoading || loading"
               (click)="loadVenues()">
               {{ 'common.retry' | t }}
@@ -536,7 +536,7 @@
             </div>
             <button
               type="button"
-              class="secondary-action jynlo-action jynlo-action--neutral"
+              class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
               [disabled]="loading"
               (click)="useMapLinkVenue()">
               {{ 'venue.mapLink.use' | t }}
@@ -567,7 +567,7 @@
             <div class="header-actions">
               <button
                 type="button"
-                class="secondary-action jynlo-action jynlo-action--neutral"
+                class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                 [disabled]="venueMapLinkLoading || !venueMapLink.trim() || locating"
                 (click)="resolveVenueMapLink()">
                 {{ venueMapLinkLoading ? ('venue.mapLink.resolving' | t) : ('venue.mapLink.resolve' | t) }}
@@ -576,7 +576,7 @@
               @if (venueMapCandidateResolvedUrl) {
                 <button
                   type="button"
-                  class="secondary-action jynlo-action jynlo-action--neutral"
+                  class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                   (click)="clearVenueMapLinkCandidate()">
                   {{ 'common.remove' | t }}
                 </button>
@@ -591,13 +591,13 @@
               <div class="header-actions">
                 <button
                   type="button"
-                  class="secondary-action jynlo-action jynlo-action--neutral gps-location-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral gps-location-action jynlo-premium-btn jynlo-premium-btn--quiet"
                   [disabled]="loading || locating || venueMapLinkLoading"
                   (click)="captureCurrentLocation()">
                   {{ locating ? ('events.locating' | t) : ('createSession.useLocation' | t) }}
                 </button>
                 @if (locationSource === 'gps') {
-                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                           [disabled]="loading || locating" (click)="clearLocation()">
                     {{ 'createSession.removeLocation' | t }}
                   </button>
@@ -706,7 +706,7 @@
                   referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
                 <a
-                  class="secondary-action jynlo-action jynlo-action--neutral"
+                  class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                   style="display:inline-flex;margin-top:.75rem;"
                   [href]="'https://www.google.com/maps/search/?api=1&query='
                     + venue.latitude + ',' + venue.longitude"
@@ -885,7 +885,7 @@
 
             <button
               type="button"
-              class="primary-action jynlo-action jynlo-action--primary"
+              class="primary-action jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
               [disabled]="venueSaving"
               (click)="saveVenue()">
               {{ venueSaving ? ('venue.submission.sending' | t) : ('venue.submission.send' | t) }}
@@ -1019,7 +1019,7 @@
             <img [src]="photoPreview" [alt]="'createSession.photoAlt' | t">
             <div>
               <strong>{{ photo?.name }}</strong>
-              <button class="jynlo-action jynlo-action--neutral" type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
+              <button class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
             </div>
           </div>
         }
@@ -1040,23 +1040,23 @@
                    [disabled]="loading || presetSaving || presetDeleting">
           </label>
           <div class="create-preset-actions">
-            <button type="button" class="jynlo-action jynlo-action--primary"
+            <button type="button" class="jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary"
                     [disabled]="loading || presetSaving || presetsLoading"
                     (click)="savePreset()">{{ (presetSaving
                       ? 'createSession.presets.saving'
                       : 'createSession.presets.confirmSave') | t }}</button>
-            <button type="button" class="jynlo-action jynlo-action--neutral"
+            <button type="button" class="jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                     [disabled]="presetSaving" (click)="closePresetEditor()">{{ 'common.cancel' | t }}</button>
           </div>
         </section>
       }
       @if (presetError) { <p class="create-preset-error" role="alert">{{ presetError }}</p> }
       <div class="form-actions">
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
-        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+        <a class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-premium-btn jynlo-premium-btn--quiet"
                 [attr.aria-expanded]="presetEditorOpen" [disabled]="loading || presetSaving || presetDeleting"
                 (click)="togglePresetEditor()">{{ 'createSession.presets.saveConfiguration' | t }}</button>
-        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || venueSaving || venueMapLinkLoading || gpsAddressLoading || communityCreationBlocked">
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary jynlo-premium-btn jynlo-premium-btn--primary" [disabled]="loading || venueSaving || venueMapLinkLoading || gpsAddressLoading || communityCreationBlocked">
           {{ loading ? ('createSession.creating' | t) : ('mySessions.create' | t) }}
         </button>
       </div>
