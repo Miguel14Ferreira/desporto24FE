@@ -44,7 +44,7 @@ describe('EventsComponent', () => {
     fixture.detectChanges();
     expect(component.sport).toBe('Padel');
     expect(padel.getAttribute('aria-pressed')).toBe('true');
-    expect(sessionService.discover.calls.mostRecent().args[0].sport).toBe('Padel');
+    expect(sessionService.discover.calls.mostRecent().args[0]?.sport).toBe('Padel');
     padel.click();
     fixture.detectChanges();
     expect(component.sport).toBe('');
@@ -56,8 +56,8 @@ describe('EventsComponent', () => {
     expect(component.quickDate).toBe('today');
     expect(component.fromDateTime).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T00:00$/);
     expect(component.toDateTime).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T23:59$/);
-    expect(sessionService.discover.calls.mostRecent().args[0].from).toBeTruthy();
-    expect(sessionService.discover.calls.mostRecent().args[0].to).toBeTruthy();
+    expect(sessionService.discover.calls.mostRecent().args[0]?.from).toBeTruthy();
+    expect(sessionService.discover.calls.mostRecent().args[0]?.to).toBeTruthy();
     component.applyQuickDate('today');
     expect(component.quickDate).toBe('');
     expect(component.fromDateTime).toBe('');
@@ -80,7 +80,7 @@ describe('EventsComponent', () => {
     component.radiusKm = 25;
     component.increaseRadius();
     expect(component.radiusKm).toBe(50);
-    expect(sessionService.discover.calls.mostRecent().args[0].radiusKm).toBe(50);
+    expect(sessionService.discover.calls.mostRecent().args[0]?.radiusKm).toBe(50);
     component.radiusKm = 100;
     const atMaximum = sessionService.discover.calls.count();
     component.increaseRadius();
