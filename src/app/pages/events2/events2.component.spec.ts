@@ -83,6 +83,25 @@ describe('Events2Component', () => {
   });
 
 
+  it('keeps responsive Neon Glass groups wired to real fields and actions', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const form = root.querySelector('form.create-card') as HTMLFormElement;
+    expect(form.querySelectorAll('button.create-mode-option[aria-pressed]').length).toBe(2);
+    expect(form.querySelectorAll('.create-mode-option-icon svg').length).toBe(2);
+    expect(form.querySelector('.form-grid input[name="gameDate"]')).not.toBeNull();
+    expect(form.querySelector('.form-grid input[name="maxParticipants"]')).not.toBeNull();
+    expect(form.querySelector('app-jynlo-select[name="sport"]')).not.toBeNull();
+    const upload = form.querySelector('.photo-section .upload-button') as HTMLLabelElement;
+    expect(upload.querySelector('input[type="file"]')).not.toBeNull();
+    const submit = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(submit).not.toBeNull();
+    expect(submit.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    component.loading = true;
+    fixture.detectChanges();
+    expect(upload.classList.contains('is-disabled')).toBeTrue();
+    expect(upload.querySelector('input')!.disabled).toBeTrue();
+  });
+
   it('keeps the complete Create Session form operational with consistent actions', () => {
     const root = fixture.nativeElement as HTMLElement;
     const form = root.querySelector('form.create-card') as HTMLFormElement;
