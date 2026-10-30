@@ -3,8 +3,8 @@
  * An opt-in visual layer. Angular form state, geo, price, sorting, validation,
  * community permissions and click handlers remain authoritative.
  */
-body .sessions-page.jynlo-games,
-body .create-page.jynlo-games {
+:host .sessions-page.jynlo-games,
+:host .create-page.jynlo-games {
   --activity-line:rgba(37,206,207,.25);
   --activity-strong:rgba(37,224,208,.51);
   --activity-panel:#092837;
@@ -14,72 +14,72 @@ body .create-page.jynlo-games {
     linear-gradient(145deg,#041321 3%,#062435 61%,#041725 100%);
   color:#f2fffb;
 }
-body .sessions-page.jynlo-games .sessions-shell {
+:host .sessions-page.jynlo-games .sessions-shell {
   max-width:1220px;
 }
-body .create-page.jynlo-games .create-shell {
+:host .create-page.jynlo-games .create-shell {
   max-width:1080px;
 }
-body .jynlo-games:is(.sessions-page,.create-page) .page-header {
+:host .jynlo-games:is(.sessions-page,.create-page) .page-header {
   display:flex;align-items:center;justify-content:space-between;
   min-width:0;gap:clamp(12px,2vw,25px);
   padding:clamp(12px,2vw,24px) 0;
   margin-bottom:clamp(12px,2vw,20px);
 }
-body .jynlo-games:is(.sessions-page,.create-page) .page-header h1 {
+:host .jynlo-games:is(.sessions-page,.create-page) .page-header h1 {
   font-size:clamp(2.05rem,3.3vw,3.1rem);
   line-height:1.12;
   letter-spacing:-.047em;
   color:#f4fffd;
 }
-body .jynlo-games:is(.sessions-page,.create-page) .page-header .subtitle {
+:host .jynlo-games:is(.sessions-page,.create-page) .page-header .subtitle {
   max-width:60ch;color:#bddbe1;font-size:.94rem;line-height:1.55;
 }
-body .jynlo-games:is(.sessions-page,.create-page) .header-actions {
+:host .jynlo-games:is(.sessions-page,.create-page) .header-actions {
   display:flex;align-items:center;justify-content:flex-end;
   flex-wrap:wrap;gap:10px;min-width:0;
 }
-body .jynlo-games:is(.sessions-page,.create-page) :is(.header-actions,.filter-actions,.form-actions) > .jynlo-premium-btn {
+:host .jynlo-games:is(.sessions-page,.create-page) :is(.header-actions,.filter-actions,.form-actions) > .jynlo-premium-btn {
   flex:0 1 auto;
   min-height:44px!important;
   white-space:normal;
 }
-body .sessions-page.jynlo-games :is(.nearby-panel,.filters,.state-card),
-body .create-page.jynlo-games :is(.create-card,.community-context,.create-mode-panel,.create-preset-panel,.create-share-panel,.venue-create-card) {
+:host .sessions-page.jynlo-games :is(.nearby-panel,.filters,.state-card),
+:host .create-page.jynlo-games :is(.create-card,.community-context,.create-mode-panel,.create-preset-panel,.create-share-panel,.venue-create-card) {
   border-color:var(--activity-line);
   background:linear-gradient(145deg,rgba(11,46,62,.96),rgba(6,29,46,.97));
   box-shadow:0 15px 36px rgba(0,12,25,.13);
   border-radius:18px;
 }
-body .sessions-page.jynlo-games .nearby-panel {
+:host .sessions-page.jynlo-games .nearby-panel {
   display:flex;align-items:center;justify-content:space-between;gap:16px;
   background:
     radial-gradient(ellipse at 91% 8%,rgba(25,225,205,.15),transparent 75%),
     linear-gradient(115deg,rgba(14,55,69,.96),rgba(8,38,58,.96));
 }
-body .sessions-page.jynlo-games .nearby-panel strong {color:#eafffa;}
-body .sessions-page.jynlo-games .nearby-panel p {color:#bfdae2;}
-body .sessions-page.jynlo-games .nearby-actions {
+:host .sessions-page.jynlo-games .nearby-panel strong {color:#eafffa;}
+:host .sessions-page.jynlo-games .nearby-panel p {color:#bfdae2;}
+:host .sessions-page.jynlo-games .nearby-actions {
   display:flex;align-items:end;justify-content:flex-end;flex-wrap:wrap;gap:10px;
 }
-body .sessions-page.jynlo-games .nearby-actions > label {min-width:0;}
-body .sessions-page.jynlo-games .nearby-actions > .jynlo-premium-btn {min-height:44px!important;}
-body .sessions-page.jynlo-games .filters {
+:host .sessions-page.jynlo-games .nearby-actions > label {min-width:0;}
+:host .sessions-page.jynlo-games .nearby-actions > .jynlo-premium-btn {min-height:44px!important;}
+:host .sessions-page.jynlo-games .filters {
   display:grid;grid-template-columns:minmax(0,1fr);
   align-items:stretch;gap:16px;
   padding:clamp(14px,2vw,22px);
 }
-body .sessions-page.jynlo-games .filters-intro__icon {
+:host .sessions-page.jynlo-games .filters-intro__icon {
   border-radius:12px;color:#75f8df;
   border:1px solid rgba(43,230,204,.33);
   background:rgba(22,187,181,.11);
 }
-body .sessions-page.jynlo-games .filters-primary {
+:host .sessions-page.jynlo-games .filters-primary {
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
 }
-body .sessions-page.jynlo-games .filters-primary > label {min-width:0;}
-body .sessions-page.jynlo-games .filters-primary :is(input,select),
-body .sessions-page.jynlo-games .advanced-filters :is(input,select) {
+:host .sessions-page.jynlo-games .filters-primary > label {min-width:0;}
+:host .sessions-page.jynlo-games .filters-primary :is(input,select),
+:host .sessions-page.jynlo-games .advanced-filters :is(input,select) {
   width:100%;min-width:0;max-width:100%;min-height:46px;
   box-sizing:border-box;
   border-color:rgba(24,191,183,.50);
@@ -87,19 +87,19 @@ body .sessions-page.jynlo-games .advanced-filters :is(input,select) {
   color:#f4fffb;
   background-color:rgba(5,47,54,.82);
 }
-body .sessions-page.jynlo-games .filters-primary :is(input,select):focus-visible,
-body .sessions-page.jynlo-games .advanced-filters :is(input,select):focus-visible {
+:host .sessions-page.jynlo-games .filters-primary :is(input,select):focus-visible,
+:host .sessions-page.jynlo-games .advanced-filters :is(input,select):focus-visible {
   outline:2px solid #a4ffeb;outline-offset:2px;
 }
-body .sessions-page.jynlo-games .filters-quick {
+:host .sessions-page.jynlo-games .filters-quick {
   display:flex;align-items:center;justify-content:space-between;
   gap:12px;flex-wrap:wrap;min-width:0;
 }
-body .sessions-page.jynlo-games .filters-quick__chips {
+:host .sessions-page.jynlo-games .filters-quick__chips {
   display:flex;align-items:center;gap:7px;flex-wrap:wrap;
   min-width:0;
 }
-body .sessions-page.jynlo-games .filters .quick-chip {
+:host .sessions-page.jynlo-games .filters .quick-chip {
   min-height:36px;box-sizing:border-box;
   padding:6px 12px;border-radius:10px;
   border:1px solid rgba(91,185,195,.29);
@@ -107,28 +107,28 @@ body .sessions-page.jynlo-games .filters .quick-chip {
   background:rgba(12,62,76,.49);
   font-size:.78rem;
 }
-body .sessions-page.jynlo-games .filters .quick-chip:is(.is-active,[aria-pressed="true"]) {
+:host .sessions-page.jynlo-games .filters .quick-chip:is(.is-active,[aria-pressed="true"]) {
   color:#012d33;background:#2be7cb;border-color:#2be7cb;
 }
-body .sessions-page.jynlo-games .filters .quick-chip:hover {
+:host .sessions-page.jynlo-games .filters .quick-chip:hover {
   border-color:#50e5d1;
 }
-body .sessions-page.jynlo-games .filters-quick__checks {
+:host .sessions-page.jynlo-games .filters-quick__checks {
   display:flex;align-items:center;gap:12px;flex-wrap:wrap;
 }
-body .sessions-page.jynlo-games .filters-toolbar {
+:host .sessions-page.jynlo-games .filters-toolbar {
   display:flex;align-items:center;justify-content:space-between;
   gap:12px;flex-wrap:wrap;padding-top:13px;
   border-top:1px solid rgba(88,180,188,.19);
 }
-body .sessions-page.jynlo-games .filters-toolbar .filter-actions {
+:host .sessions-page.jynlo-games .filters-toolbar .filter-actions {
   display:flex;align-items:center;justify-content:flex-end;gap:9px;
 }
-body .sessions-page.jynlo-games .filters-toolbar .filter-actions > .jynlo-premium-btn {
+:host .sessions-page.jynlo-games .filters-toolbar .filter-actions > .jynlo-premium-btn {
   min-width:100px;
 }
-body .sessions-page.jynlo-games .session-list {gap:12px;}
-body .sessions-page.jynlo-games .session-row {
+:host .sessions-page.jynlo-games .session-list {gap:12px;}
+:host .sessions-page.jynlo-games .session-row {
   gap:clamp(9px,1vw,15px);
   min-width:0;padding:clamp(13px,1.5vw,18px);
   background:linear-gradient(135deg,#0b3443,#092838);
@@ -136,110 +136,110 @@ body .sessions-page.jynlo-games .session-row {
   border-radius:16px;
   box-shadow:0 10px 26px rgba(0,10,22,.15);
 }
-body .sessions-page.jynlo-games .session-row:hover {
+:host .sessions-page.jynlo-games .session-row:hover {
   border-color:var(--activity-strong);
 }
-body .sessions-page.jynlo-games .session-row :is(.session-fact,.session-identity,.session-state) {
+:host .sessions-page.jynlo-games .session-row :is(.session-fact,.session-identity,.session-state) {
   min-width:0;
 }
-body .sessions-page.jynlo-games .session-identity strong {
+:host .sessions-page.jynlo-games .session-identity strong {
   color:#f6fffc;
 }
-body .sessions-page.jynlo-games .session-fact strong {
+:host .sessions-page.jynlo-games .session-fact strong {
   white-space:normal;overflow-wrap:anywhere;line-height:1.3;
 }
-body .sessions-page.jynlo-games .session-action.jynlo-premium-btn {
+:host .sessions-page.jynlo-games .session-action.jynlo-premium-btn {
   width:auto;min-width:112px;max-width:100%;
   text-align:center;
 }
-body .sessions-page.jynlo-games .session-action--join.jynlo-premium-btn {
+:host .sessions-page.jynlo-games .session-action--join.jynlo-premium-btn {
   --jynlo-btn-bg:#2ce9cd;
   --jynlo-btn-border:#2ce9cd;
   --jynlo-btn-hover:#79fbe0;
   --jynlo-btn-fg:#03343a;
   font-weight:820!important;
 }
-body .sessions-page.jynlo-games .session-empty-actions {
+:host .sessions-page.jynlo-games .session-empty-actions {
   display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;
 }
-body .sessions-page.jynlo-games .session-empty-actions .jynlo-premium-btn {
+:host .sessions-page.jynlo-games .session-empty-actions .jynlo-premium-btn {
   flex:1 1 160px;
 }
-body .create-page.jynlo-games .create-card {
+:host .create-page.jynlo-games .create-card {
   padding:clamp(14px,2vw,24px);
 }
-body .create-page.jynlo-games :is(.create-preset-panel,.create-mode-panel,.create-share-panel,.venue-create-card) {
+:host .create-page.jynlo-games :is(.create-preset-panel,.create-mode-panel,.create-share-panel,.venue-create-card) {
   border-radius:15px;
 }
-body .create-page.jynlo-games .create-mode-option {
+:host .create-page.jynlo-games .create-mode-option {
   min-height:104px;box-sizing:border-box;
   border:1px solid rgba(74,186,197,.34);
   background:linear-gradient(120deg,rgba(15,58,70,.80),rgba(9,40,56,.87));
   color:#e7fffb;border-radius:14px;
 }
-body .create-page.jynlo-games .create-mode-option:is(.active,[aria-pressed="true"]) {
+:host .create-page.jynlo-games .create-mode-option:is(.active,[aria-pressed="true"]) {
   background:linear-gradient(125deg,rgba(15,105,104,.49),rgba(10,65,79,.8));
   border-color:#35e6d0;
   box-shadow:inset 0 0 0 1px rgba(53,226,205,.24);
 }
-body .create-page.jynlo-games .create-mode-option:hover:not(:disabled) {
+:host .create-page.jynlo-games .create-mode-option:hover:not(:disabled) {
   border-color:#5cf2da;
 }
-body .create-page.jynlo-games :is(.create-preset-actions,.form-actions,.header-actions) {
+:host .create-page.jynlo-games :is(.create-preset-actions,.form-actions,.header-actions) {
   gap:10px;
 }
-body .create-page.jynlo-games :is(.form-actions,.create-preset-actions) > .jynlo-premium-btn {
+:host .create-page.jynlo-games :is(.form-actions,.create-preset-actions) > .jynlo-premium-btn {
   min-height:44px!important;
   white-space:normal;
 }
-body .create-page.jynlo-games .form-actions > .jynlo-premium-btn--primary {
+:host .create-page.jynlo-games .form-actions > .jynlo-premium-btn--primary {
   min-width:160px;
 }
-body .jynlo-games:is(.sessions-page,.create-page) :is(a,button,input,textarea,select):focus-visible {
+:host .jynlo-games:is(.sessions-page,.create-page) :is(a,button,input,textarea,select):focus-visible {
   outline:2px solid #a0ffe7;outline-offset:3px;
 }
 @media (max-width:900px) {
-  body .jynlo-games:is(.sessions-page,.create-page) {
+  :host .jynlo-games:is(.sessions-page,.create-page) {
     padding-top:calc(8.6rem + env(safe-area-inset-top));
   }
-  body .jynlo-games:is(.sessions-page,.create-page) .page-header {
+  :host .jynlo-games:is(.sessions-page,.create-page) .page-header {
     align-items:flex-start;flex-wrap:wrap;
   }
-  body .sessions-page.jynlo-games .filters-primary {
+  :host .sessions-page.jynlo-games .filters-primary {
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
-  body .sessions-page.jynlo-games .filters-primary > label:last-child {
+  :host .sessions-page.jynlo-games .filters-primary > label:last-child {
     grid-column:1/-1;
   }
 }
 @media (max-width:640px) {
-  body .jynlo-games:is(.sessions-page,.create-page) {
+  :host .jynlo-games:is(.sessions-page,.create-page) {
     padding-inline:12px;
   }
-  body .sessions-page.jynlo-games .filters-primary {
+  :host .sessions-page.jynlo-games .filters-primary {
     grid-template-columns:minmax(0,1fr);
   }
-  body .sessions-page.jynlo-games .filters-primary > label:last-child {
+  :host .sessions-page.jynlo-games .filters-primary > label:last-child {
     grid-column:auto;
   }
-  body .sessions-page.jynlo-games .nearby-panel {
+  :host .sessions-page.jynlo-games .nearby-panel {
     flex-wrap:wrap;
   }
-  body .sessions-page.jynlo-games :is(.filters-toolbar .filter-actions,.header-actions),
-  body .create-page.jynlo-games .header-actions {
+  :host .sessions-page.jynlo-games :is(.filters-toolbar .filter-actions,.header-actions),
+  :host .create-page.jynlo-games .header-actions {
     width:100%;
   }
-  body .sessions-page.jynlo-games :is(.filters-toolbar .filter-actions,.header-actions) > .jynlo-premium-btn,
-  body .create-page.jynlo-games .header-actions > .jynlo-premium-btn {
+  :host .sessions-page.jynlo-games :is(.filters-toolbar .filter-actions,.header-actions) > .jynlo-premium-btn,
+  :host .create-page.jynlo-games .header-actions > .jynlo-premium-btn {
     flex:1 1 135px;
   }
-  body .sessions-page.jynlo-games .session-action.jynlo-premium-btn {
+  :host .sessions-page.jynlo-games .session-action.jynlo-premium-btn {
     width:100%;
   }
-  body .create-page.jynlo-games .form-actions > .jynlo-premium-btn {
+  :host .create-page.jynlo-games .form-actions > .jynlo-premium-btn {
     flex:1 1 100%;
   }
 }
 @media (prefers-reduced-motion:reduce) {
-  body .sessions-page.jynlo-games .session-row {transform:none;transition:none;}
+  :host .sessions-page.jynlo-games .session-row {transform:none;transition:none;}
 }
