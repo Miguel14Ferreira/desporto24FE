@@ -14,6 +14,8 @@ describe('Community value proposition copy', () => {
     'communities.pitchGamesText',
     'communities.pitchSeasonsTitle',
     'communities.pitchSeasonsText',
+    'communities.pitchTournamentsTitle',
+    'communities.pitchTournamentsText',
     'communities.pitchRankingsTitle',
     'communities.pitchRankingsText',
     'communities.pitchGroupTitle',
@@ -37,15 +39,13 @@ describe('Community value proposition copy', () => {
     });
   }
 
-  it('does not advertise standalone tournaments as a completed feature', () => {
+  it('highlights tournaments in both languages while keeping invitation guidance', () => {
     for (const language of ['pt', 'en']) {
       localStorage.setItem('d24-language', language);
-      const heading = t('communities.pitchSeasonsTitle').toLowerCase();
       const lead = t('communities.pitchLead').toLowerCase();
-      expect(heading).not.toContain('torneios');
-      expect(heading).not.toContain('tournaments');
-      expect(lead).not.toContain('torneios');
-      expect(lead).not.toContain('tournaments');
+      const title = t('communities.pitchTournamentsTitle').toLowerCase();
+      expect(lead).toContain(language === 'pt' ? 'torneios' : 'tournaments');
+      expect(title).toContain(language === 'pt' ? 'torneios' : 'tournaments');
       expect(t('communityInviteStep.tournamentNotice')).not.toBe('communityInviteStep.tournamentNotice');
     }
   });
