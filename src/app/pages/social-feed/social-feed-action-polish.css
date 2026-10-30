@@ -1,0 +1,160 @@
+/* Feed button polish — opt-in action geometry, consistent icons and clear hierarchy.
+   Keep all routes, event handlers, ARIA states and story overlay controls intact. */
+:host .feed-v3-shell .feed-ui-icon {
+  width:18px;height:18px;flex:0 0 18px;
+  stroke:currentColor;stroke-width:1.8;
+  fill:none;vertical-align:middle;
+}
+:host .feed-v3-shell .feed-rail-links a {
+  gap:11px;line-height:1.4;
+  border-radius:12px;
+}
+:host .feed-v3-shell .feed-rail-links a .feed-ui-icon {
+  width:20px;height:20px;flex-basis:20px;color:#91cbd5;
+}
+:host .feed-v3-shell .feed-rail-links a:is(:hover,.is-active) .feed-ui-icon {
+  color:#39f1d8;
+}
+:host .feed-v3-shell .feed-rail-create.jynlo-premium-btn {
+  width:100%;
+  white-space:normal;
+  box-shadow:0 7px 24px rgba(19,219,194,.17);
+}
+:host .feed-v3-shell .feed-v3-welcome .feed-hero-cta.jynlo-premium-btn {
+  flex:0 1 auto;min-height:44px;align-self:flex-end;
+  white-space:normal;line-height:1.4;
+}
+:host .feed-v3-shell .week-hub-heading .week-hub-create.jynlo-premium-btn {
+  flex:0 1 auto;white-space:normal;
+}
+:host .feed-v3-shell .week-share-action.jynlo-premium-btn {
+  align-self:flex-start;max-width:100%;white-space:normal;
+}
+:host .feed-v3-shell .feed-empty-actions {
+  display:flex;flex-wrap:wrap;align-items:center;gap:9px;
+}
+:host .feed-v3-shell .feed-empty-actions > .jynlo-premium-btn {
+  flex:1 1 145px;
+}
+:host .feed-v3-shell .composer-actions {
+  display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;
+  gap:9px;
+}
+:host .feed-v3-shell .composer-actions > .image-picker.jynlo-premium-btn {
+  flex:0 1 auto;min-height:44px;
+  padding-inline:13px !important;
+  white-space:normal;
+  cursor:pointer;
+}
+:host .feed-v3-shell .composer-actions > button.jynlo-premium-btn--primary {
+  flex:0 1 auto;
+  margin-left:auto;
+  min-width:112px;
+}
+:host .feed-v3-shell .composer-image-preview .remove-image.jynlo-premium-btn {
+  position:relative;max-width:100%;
+}
+:host .feed-v3-shell .postgame-prompts,
+:host .feed-v3-shell .postgame-session-card {
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+}
+:host .feed-v3-shell .postgame-prompt.jynlo-premium-btn,
+:host .feed-v3-shell .postgame-detach.jynlo-premium-btn {
+  flex:0 1 auto;white-space:normal;
+}
+:host .feed-v3-shell .feed-v3-post-heading > a.feed-inline-link,
+:host .feed-v3-shell .feed-discovery-card .feed-v3-side-heading > a.feed-inline-link {
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  min-height:32px;
+  padding:4px 2px !important;
+  border:0 !important;
+  border-radius:4px !important;
+  background:transparent !important;
+  color:#61e9d5 !important;
+  font-size:.76rem;font-weight:790;
+  line-height:1.3;white-space:nowrap;text-decoration:none;
+}
+:host .feed-v3-shell .feed-v3-post-heading > a.feed-inline-link:hover,
+:host .feed-v3-shell .feed-discovery-card .feed-v3-side-heading > a.feed-inline-link:hover {
+  color:#abffe9 !important;text-decoration:underline;
+}
+:host .feed-v3-shell .post-actions {
+  display:flex;align-items:center;flex-wrap:wrap;
+  gap:7px;
+  padding-top:12px;margin-top:12px;
+  border-top:1px solid rgba(98,187,194,.16);
+}
+:host .feed-v3-shell .post-actions > button.feed-post-reaction {
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-width:66px;min-height:36px;
+  padding:7px 11px;
+  box-sizing:border-box;
+  border:1px solid rgba(77,168,188,.26);
+  border-radius:10px;
+  background:rgba(15,62,75,.30);
+  color:#b9d9e2;
+  font-size:.83rem;font-weight:730;
+}
+:host .feed-v3-shell .post-actions > button.feed-post-reaction:is(:hover,.active,[aria-expanded="true"]) {
+  border-color:rgba(43,230,203,.60);
+  background:rgba(33,129,133,.23);
+  color:#6ff2dd;
+}
+:host .feed-v3-shell .post-actions > button.feed-post-reaction.active .feed-ui-icon {
+  fill:rgba(44,229,204,.30);stroke:#58f0d8;
+}
+:host .feed-v3-shell .post-actions > button.feed-post-reaction:disabled {
+  opacity:.48;cursor:wait;
+}
+:host .feed-v3-shell .post-actions > .share-session.jynlo-premium-btn {
+  min-height:36px !important;white-space:normal;
+}
+:host .feed-v3-shell .post-actions > .feed-report-action.jynlo-premium-btn {
+  margin-left:auto;color:#adc7ce !important;
+}
+:host .feed-v3-shell .comments-panel .delete-comment.jynlo-premium-btn {
+  align-self:flex-start;white-space:normal;
+  min-height:36px !important;
+  max-width:100%;
+}
+:host .feed-v3-shell .comment-composer > button.jynlo-premium-btn {
+  min-height:44px !important;white-space:normal;
+}
+:host .feed-v3-shell .manual-share-controls > button.jynlo-premium-btn {
+  flex:0 1 auto;white-space:normal;
+}
+:host .feed-v3-shell .feed-sidebar-link.jynlo-premium-btn {
+  width:100%;min-height:42px !important;
+  white-space:normal;
+}
+:host .feed-v3-shell .feed-v3-join-card > a.feed-v3-join-action.jynlo-premium-btn {
+  display:inline-flex!important;
+  align-items:center;justify-content:center;
+  min-height:44px !important;
+  width:100%;max-width:100%;
+  box-sizing:border-box;
+  padding:10px 12px !important;
+  text-align:center;line-height:1.35;
+}
+:host .feed-v3-shell .post-actions > :is(button,a):focus-visible {
+  outline:3px solid #a0ffe9;outline-offset:3px;
+}
+@media (max-width:660px) {
+  :host .feed-v3-shell .composer-actions > .image-picker.jynlo-premium-btn {
+    flex:1 1 calc(50% - 5px);
+  }
+  :host .feed-v3-shell .composer-actions > button.jynlo-premium-btn--primary {
+    flex:1 1 100%;width:100%;margin-left:0;
+  }
+  :host .feed-v3-shell .post-actions > .feed-report-action.jynlo-premium-btn {
+    margin-left:0;
+  }
+}
+@media (max-width:400px) {
+  :host .feed-v3-shell .composer-actions > .image-picker.jynlo-premium-btn {
+    flex:1 1 100%;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  :host .feed-v3-shell .feed-post-reaction {transition:none;}
+}

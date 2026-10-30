@@ -57,6 +57,23 @@ describe('SocialStoriesComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.story-bubble').length).toBe(1);
   }));
 
+  it('uses the shared premium hierarchy for Story creation and media controls', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    const root = fixture.nativeElement as HTMLElement;
+    const create = root.querySelector('.story-add-action') as HTMLButtonElement;
+    const retry = root.querySelector('.story-retry') as HTMLButtonElement;
+    expect(create.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(retry.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+
+    create.click();
+    fixture.detectChanges();
+    const file = root.querySelector('.story-file') as HTMLLabelElement;
+    expect(file.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    expect(file.querySelector('input[type="file"]')).not.toBeNull();
+    expect(root.querySelector('.story-primary.jynlo-premium-btn--primary')).not.toBeNull();
+  }));
+
   it('hides the audience selector when personal profile is the only publication target', fakeAsync(() => {
     communities.mine.and.returnValue(of([
       { id: 4, name: 'Comunidade privada', visibility: 'PRIVATE', myRole: 'OWNER' },
