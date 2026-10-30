@@ -54,6 +54,8 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   @Input({required:true}) participant!: LocalParticipant | RemoteParticipant;
   @Input() label = '';
   @Input() local = false;
+  /** Independently adjustable playback volume for every remote microphone. */
+  @Input() volume = 1;
   @ViewChild('video') private videoElement?: ElementRef<HTMLVideoElement>;
   @ViewChild('audio') private audioElement?: ElementRef<HTMLAudioElement>;
   private lastVideo: {attach(e: HTMLMediaElement): void; detach(e: HTMLMediaElement): void} | null = null;
@@ -79,6 +81,7 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
       nextVideo?.attach(video);
     }
     const audio=this.audioElement?.nativeElement;
+    if (audio) audio.volume=Math.max(0,Math.min(1,this.volume));
     const nextAudio=this.local ? null :
       ([...this.participant.audioTrackPublications.values()]
         .find(p=>!!p.track && !p.isMuted)?.track || null);
