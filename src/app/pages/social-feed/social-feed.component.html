@@ -1,9 +1,29 @@
 <section class="feed-page jynlo-c1 jynlo-social jynlo-entry-premium jynlo-feed-premium">
-  <div class="feed-shell">
-    <header class="page-header jynlo-feed-hero">
+  <div class="feed-shell feed-v3-shell">
+    <aside class="feed-left-rail" [attr.aria-label]="'feed.v3.navigation' | t">
+      <a routerLink="/menu/feed" class="feed-rail-brand" aria-label="Jynlo">
+        <img src="/assets/jynlo-icon-approved.webp" alt="" width="58" height="58">
+        <span>JYNLO</span>
+      </a>
+      <nav class="feed-rail-links" [attr.aria-label]="'feed.v3.navigation' | t">
+        <a routerLink="/menu/feed" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact:true}"><span aria-hidden="true">⌂</span>{{ 'nav.feed' | t }}</a>
+        <a routerLink="/menu/events" routerLinkActive="is-active"><span aria-hidden="true">▦</span>{{ 'nav.activities' | t }}</a>
+        <a routerLink="/menu/venues" routerLinkActive="is-active"><span aria-hidden="true">⌖</span>{{ 'nav.venues' | t }}</a>
+        <a routerLink="/menu/communities" routerLinkActive="is-active"><span aria-hidden="true">◎</span>{{ 'nav.communities' | t }}</a>
+        <a routerLink="/menu/messages" routerLinkActive="is-active"><span aria-hidden="true">▤</span>{{ 'nav.messages' | t }}</a>
+        <a routerLink="/menu/discover" routerLinkActive="is-active"><span aria-hidden="true">◇</span>{{ 'nav.discover' | t }}</a>
+        <a routerLink="/menu/dadosPerfil" routerLinkActive="is-active"><span aria-hidden="true">○</span>{{ 'nav.profile' | t }}</a>
+      </nav>
+      <a class="feed-rail-create" routerLink="/menu/createEvent"><span aria-hidden="true">＋</span>{{ 'feed.createSession' | t }}</a>
+      <div class="feed-rail-art" aria-hidden="true"></div>
+    </aside>
+    <div class="feed-layout jynlo-premium-feed-grid">
+      <div class="feed-main">
+    <header class="page-header jynlo-feed-hero feed-v3-welcome">
       <div>
-        <h1>{{ 'feed.title' | t }}</h1>
-        <p class="subtitle">{{ 'feed.subtitle' | t }}</p>
+        <span class="feed-v3-greeting">{{ 'feed.v3.greeting' | t }} {{ currentUsername || ('nav.account.profile' | t) }} 👋</span>
+        <h1>{{ 'feed.v3.welcome' | t }}</h1>
+        <p class="subtitle">{{ 'feed.v3.tagline' | t }}</p>
       </div>
       <a class="feed-hero-cta" routerLink="/menu/createEvent">
         <span aria-hidden="true">+</span> {{ 'week.create' | t }}
@@ -102,8 +122,6 @@
       </div>
     </section>
 
-    <div class="feed-layout jynlo-premium-feed-grid">
-      <div class="feed-main">
     @if (!loading && !errorMessage && items.length === 0) {
       <div class="state-card feed-empty-state">
         <h2>{{ 'feed.emptyTitle' | t }}</h2>
@@ -210,6 +228,7 @@
       <div class="feedback error-feedback">{{ actionError }}</div>
     }
 
+    <div class="feed-v3-post-heading"><h2>{{ 'feed.v3.latest' | t }}</h2><a routerLink="/menu/discover">{{ 'nav.discover' | t }} <span aria-hidden="true">↗</span></a></div>
     @if (loading) {
       <div class="state-card">{{ 'feed.loading' | t }}</div>
     }
@@ -509,7 +528,10 @@
 
       <aside class="feed-sidebar" [attr.aria-label]="'discover.title' | t">
         <section class="state-card feed-discovery-card">
-          <h2>{{ (suggestedSessions.length > 0 ? 'feed.suggestedSessionsTitle' : 'menu.findSessions') | t }}</h2>
+          <div class="feed-v3-side-heading">
+            <h2>{{ (suggestedSessions.length > 0 ? 'feed.suggestedSessionsTitle' : 'menu.findSessions') | t }}</h2>
+            <a routerLink="/menu/events">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+          </div>
           @if (suggestedSessions.length > 0) {
             <div class="feed-suggested-sessions">
               @for (session of suggestedSessions; track session.id) {
@@ -530,7 +552,10 @@
         </section>
 
         <section class="state-card feed-discovery-card">
-          <h2>{{ 'discover.who.title' | t }}</h2>
+          <div class="feed-v3-side-heading">
+            <h2>{{ 'discover.who.title' | t }}</h2>
+            <a routerLink="/menu/perfis">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+          </div>
           @if (suggestedPeople.length > 0) {
             <div class="feed-suggested-people">
               @for (profile of suggestedPeople; track profile.username) {
@@ -559,6 +584,32 @@
           <a class="jynlo-action jynlo-action--neutral feed-sidebar-link" routerLink="/menu/perfis">
             {{ 'feed.findPeople' | t }} →
           </a>
+        </section>
+        <section class="state-card feed-discovery-card feed-v3-community-panel">
+          <div class="feed-v3-side-heading">
+            <h2>{{ 'feed.v3.communities' | t }}</h2>
+            <a routerLink="/menu/communities">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+          </div>
+          @if (myWeekCommunities.length > 0) {
+            <div class="feed-v3-communities">
+              @for (community of myWeekCommunities; track community.id) {
+                <a [routerLink]="['/menu/communities', community.id]" class="feed-v3-community-row">
+                  <span class="feed-v3-community-avatar" aria-hidden="true">{{ community.name.charAt(0).toUpperCase() }}</span>
+                  <span><strong>{{ community.name }}</strong><small>{{ community.memberCount }} {{ 'week.members' | t }}</small></span>
+                  <span class="feed-v3-community-chevron" aria-hidden="true">↗</span>
+                </a>
+              }
+            </div>
+          } @else {
+            <p class="feed-v3-side-empty">{{ 'week.noCommunities' | t }}</p>
+          }
+          <a class="feed-sidebar-link feed-v3-side-button" routerLink="/menu/communities">{{ 'week.exploreCommunities' | t }}</a>
+        </section>
+        <section class="feed-v3-join-card">
+          <img src="/assets/jynlo-icon-approved.webp" width="65" height="65" alt="" loading="lazy">
+          <h2>{{ 'feed.v3.joinTitle' | t }}</h2>
+          <p>{{ 'feed.v3.joinHint' | t }}</p>
+          <a routerLink="/menu/communities">{{ 'feed.v3.exploreCommunities' | t }}</a>
         </section>
       </aside>
     </div>

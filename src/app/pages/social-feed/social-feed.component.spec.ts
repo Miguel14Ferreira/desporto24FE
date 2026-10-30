@@ -69,6 +69,26 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component.ngOnDestroy();
   }));
 
+  it('renders the full three-column dashboard with real sidebar routes and connected data', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const shell = root.querySelector('.feed-v3-shell')!;
+    expect(shell.querySelector('.feed-left-rail')).not.toBeNull();
+    expect(shell.querySelector('.feed-main .feed-v3-welcome h1')?.textContent).toContain(t('feed.v3.welcome'));
+    expect(shell.querySelector('.feed-left-rail a[href="/menu/venues"]')).not.toBeNull();
+    expect(shell.querySelector('.feed-left-rail a[href="/menu/messages"]')).not.toBeNull();
+    expect(shell.querySelector('.feed-left-rail a[href="/menu/createEvent"]')).not.toBeNull();
+    expect(shell.querySelector('.feed-main .week-hub-grid')).not.toBeNull();
+    expect(shell.querySelector('.feed-main .composer textarea')).not.toBeNull();
+    expect(shell.querySelector('.feed-main .feed-empty-state')).not.toBeNull();
+    expect(shell.querySelector('.feed-sidebar .feed-v3-community-panel')).not.toBeNull();
+    expect(shell.querySelector('.feed-sidebar .feed-v3-join-card a[href="/menu/communities"]')).not.toBeNull();
+    expect(shell.querySelectorAll('.feed-discovery-card').length).toBe(3);
+    component.ngOnDestroy();
+  }));
+
   it('keeps the feed controls real and separates the primary and weekly navigation actions', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
@@ -163,8 +183,9 @@ describe('SocialFeedComponent discovery sidebar', () => {
     const root = fixture.nativeElement as HTMLElement;
     const hub = root.querySelector<HTMLElement>('.week-hub');
     expect(hub).not.toBeNull();
-    expect((root.querySelector('.feed-layout')!.compareDocumentPosition(hub!)) & Node.DOCUMENT_POSITION_PRECEDING)
-      .toBeTruthy();
+    expect(root.querySelector('.feed-main')?.contains(hub)).toBeTrue();
+    expect(root.querySelector('.feed-layout')?.contains(hub)).toBeTrue();
+    expect(root.querySelector('.feed-main')?.querySelector('.composer')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/4"]')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/5"]')).not.toBeNull();
     const openGame = hub?.querySelector<HTMLAnchorElement>('a[href^="/menu/events/6?"]');

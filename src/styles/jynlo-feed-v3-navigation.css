@@ -1,0 +1,58 @@
+/* Dashboard top-bar treatment, opt-in only while the Feed v3 route is mounted.
+   The regular navbar remains unchanged on every other page and on mobile. */
+.site-nav__links .feed-v3-top-search {display:none;}
+@media (min-width:991px) {
+  body:has(.feed-v3-shell) .site-nav {
+    border-color:rgba(24,215,211,.20);
+    background:#031725eE;
+    backdrop-filter:blur(16px);
+  }
+  body:has(.feed-v3-shell) .site-nav__shell {
+    width:min(1580px,calc(100% - 2rem));
+    max-width:none;
+    padding-left:clamp(165px,15vw,214px);
+    box-sizing:border-box;
+  }
+  body:has(.feed-v3-shell) .site-nav__shell > .brand {
+    visibility:hidden;
+    pointer-events:none;
+    width:0;
+    overflow:hidden;
+  }
+  body:has(.feed-v3-shell) .site-nav__links {
+    width:100%;
+    gap:12px;
+    justify-content:flex-end;
+  }
+  body:has(.feed-v3-shell) .site-nav__links > a:not(.notification-link):not(.feed-v3-top-search) {
+    display:none;
+  }
+  body:has(.feed-v3-shell) .site-nav__links > .feed-v3-top-search {
+    display:flex;
+    align-items:center;
+    min-width:0;
+    width:min(490px,40vw);
+    min-height:41px;
+    margin-right:auto;
+    padding:.55rem .85rem;
+    color:#9bbac5;
+    font-size:.82rem;
+    font-weight:530;
+    background:#062b3b;
+    border:1px solid rgba(24,198,205,.27);
+    border-radius:14px;
+    text-overflow:ellipsis;
+    overflow:hidden;
+    white-space:nowrap;
+  }
+  body:has(.feed-v3-shell) .site-nav__links > .feed-v3-top-search span {
+    color:#7ae9df;font-size:1.4rem;line-height:1;margin-right:9px;
+  }
+  body:has(.feed-v3-shell) .site-nav__links > .feed-v3-top-search:hover {
+    color:#effffd;border-color:rgba(44,239,216,.6);background:#074255;
+  }
+  body:has(.feed-v3-shell) .site-nav__links > .notification-link {
+    border:1px solid rgba(30,181,193,.22);
+    border-radius:12px;
+  }
+}
