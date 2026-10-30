@@ -25,7 +25,18 @@ ALLOWLIST = [
     "feat/notification-unread-browser-tab-title-20261028",
     "feat/participant-chips-guest-roster-20261028",
     "feat/per-conversation-mute-controls-20261028",
-    "feat/premium-global-selects-profile-20261028"
+    "feat/premium-global-selects-profile-20261028",
+    "feat/session-meeting-point-edit-ui-20261028",
+    "feat/session-meeting-point-notification-ui-20261028",
+    "feat/session-minimum-and-organizer-roster-20261029",
+    "feat/session-private-meeting-point-ui-20261028",
+    "feat/session-roster-avatar-premium-20261028",
+    "feat/session-roster-cancel-autosync-20261028",
+    "feat/session-venue-details-and-calendar-gps-20261028",
+    "feat/signed-invite-confirmed-players-20261028",
+    "feat/unified-session-create-communities-20261027",
+    "feat/venue-directions-safe-modes-20261028",
+    "feat/venue-sports-badges-premium-20261028",
 ]
 PROTECTED = {"develop", "master", "main", "preview/render-fullstack", "feature/desporto24-preview-deploy"}
 
