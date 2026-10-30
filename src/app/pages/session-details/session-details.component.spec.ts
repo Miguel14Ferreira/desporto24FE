@@ -299,6 +299,19 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.join).not.toHaveBeenCalled();
   });
 
+  it('preserves the detail card, summary facts and action toolbar under the Neon layout', () => {
+    const page = fixture.nativeElement as HTMLElement;
+    const shell = page.querySelector('.jynlo-session-detail-premium');
+    expect(shell).not.toBeNull();
+    expect(shell!.querySelector('.detail-card .detail-content')).not.toBeNull();
+    expect(shell!.querySelector('.detail-card .title-row h1')?.textContent).toContain('Lisboa');
+    const summary = shell!.querySelector('.detail-card .detail-grid')!;
+    expect(summary).not.toBeNull();
+    expect(summary.children.length).toBeGreaterThanOrEqual(4);
+    expect(shell!.querySelector('.session-top-actions')).not.toBeNull();
+    expect(shell!.querySelector('a.back-link[href="/menu/events"]')).not.toBeNull();
+  });
+
   it('keeps session detail navigation and participation information inside the Premium shell', () => {
     const shell: HTMLElement = fixture.nativeElement.querySelector('.detail-page');
     expect(shell.classList.contains('jynlo-session-detail-premium')).toBeTrue();
