@@ -1,0 +1,39 @@
+name: One-shot verified merged FE cleanup 2026-10-30
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/one-shot-verified-cleanup-20261030.yml'
+permissions:
+  contents: write
+  pull-requests: read
+concurrency:
+  group: manual-exact-merged-branch-cleanup
+  cancel-in-progress: false
+jobs:
+  verified-cleanup:
+    if: github.repository == 'Miguel14Ferreira/desporto24FE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          persist-credentials: false
+      - name: Validate fail-closed cleanup script and tests
+        run: |
+          python3 -m py_compile scripts/delete_exact_merged_branches.py scripts/test_delete_exact_merged_branches.py
+          python3 -m unittest discover -s scripts -p 'test_delete_exact_merged_branches.py' -v
+      - name: Preflight all allowlisted branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIRM_DELETE: DRY_RUN
+        run: |
+          python3 scripts/delete_exact_merged_branches.py | tee /tmp/cleanup-preflight.log
+          test "$(grep -c '^DRY_RUN ' /tmp/cleanup-preflight.log)" -eq 32
+          ! grep -E '^(MISSING|DELETE_REJECTED) ' /tmp/cleanup-preflight.log
+      - name: Archive and delete the 32 exact merged refs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIRM_DELETE: DELETE_EXACT_ALLOWLIST
+        run: python3 scripts/delete_exact_merged_branches.py
