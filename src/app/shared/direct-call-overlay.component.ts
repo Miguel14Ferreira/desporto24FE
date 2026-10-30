@@ -60,6 +60,14 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
         </section>
       } @else if (minimized && call.phase !== 'error') {
         <div class="connect-mini" role="group" [attr.aria-label]="'calls.title' | t">
+          <!-- Remote sound stays attached even while the full call view is minimized. -->
+          <div class="connect-mini-audio" aria-hidden="true">
+            @for (person of participants; track person.identity) {
+              @if (person !== calls.room?.localParticipant) {
+                <app-call-participant-tile [participant]="person" [label]="participantLabel(person)"/>
+              }
+            }
+          </div>
           <div class="connect-mini-name"><span class="call-incoming-pulse"></span>
             <strong>{{ call.peer }}</strong>
             <small>{{ (call.startedAt ? 'calls.connected' : 'calls.ringing') | t }}</small>
@@ -539,6 +547,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .connect-mini-name small{color:#a9d1d5}.connect-mini button{padding:9px;border-radius:9px;border:1px solid #468e89;
       color:white;background:#155551;cursor:pointer;font:inherit;font-size:.76rem}
     .connect-mini .connect-mini-hangup{background:#903e50;border-color:#b85d6a}
+    .connect-mini-audio{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
     @media(max-width:600px){
       .call-backdrop{padding:6px}
       .call-panel{max-height:calc(100dvh - 12px);padding:12px;border-radius:15px}
