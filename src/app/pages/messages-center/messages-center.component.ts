@@ -22,6 +22,7 @@ import { ProfileQuickViewService } from '../../services/profile-quick-view.servi
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { chatMediaPreviewKind } from '../../shared/chat-media-preview';
+import { readPastedChatImage } from '../../shared/chat-clipboard-image';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { DirectChatMessage } from '../model/direct-chat';
 import { SessionMessage } from '../model/session-message';
@@ -112,7 +113,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearAttachmentRetry();
     ++this.attachmentViewVersion;
     this.attachmentReady = false;
-    this.selectedAttachment = null;
+    this.setSelectedAttachment(null);
     this.selectedGif = null;
     this.selectedShare = null;
     this.closeSharePicker();
@@ -153,6 +154,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return this.attachmentReady && this.isAttachmentIdentityCurrent() && this.isSelectedSessionOpen();
   }
   selectedAttachment: File | null = null;
+  selectedAttachmentPreviewUrl: string | null = null;
   // GIPHY media is NOT copied to R2: only validated CDN URLs travel as chat text.
   selectedGif: GifChoice | null = null;
   selectedShare: ShareChoice | null = null;
@@ -478,6 +480,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.cancelVoiceRecording();
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
+    this.setSelectedAttachment(null);
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
   }
 
@@ -772,7 +775,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.cancelVoiceRecording();
     this.clearAttachmentRetry();
     ++this.attachmentViewVersion; // Reject any authenticated Blob still in flight.
-    this.selectedAttachment = null;
+    this.setSelectedAttachment(null);
     this.selectedGif = null;
     this.selectedShare = null;
     this.closeSharePicker();
@@ -817,7 +820,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.closeEmojiPicker();
     this.closeSharePicker();
     this.closeAttachmentMenu();
-    this.selectedAttachment = null;
+    this.setSelectedAttachment(null);
     this.selectedGif = null;
     this.selectedShare = null;
     this.clearAttachmentRetry();
@@ -1438,12 +1441,34 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       });
   }
 
-  onAttachmentPicked(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    input.value = '';
-    if (!file || !this.attachmentControlsReady
-        || !this.canEditDraft()) return;
+  /**
+   * Only a real copied image is intercepted; ordinary text and links retain
+   * their browser paste behaviour. No message is sent until Send is pressed.
+   */
+  onComposerPaste(event: ClipboardEvent): void {
+    const file = readPastedChatImage(event.clipboardData);
+    if (!file) return;
+    event.preventDefault();
+    if (!this.attachmentControlsReady || !this.canEditDraft()) {
+      this.composerError = t('chat.pasteUnavailable');
+      return;
+    }
+    this.stageAttachment(file);
+  }
+
+  private setSelectedAttachment(file: File | null): void {
+    if (this.selectedAttachmentPreviewUrl) {
+      URL.revokeObjectURL(this.selectedAttachmentPreviewUrl);
+      this.selectedAttachmentPreviewUrl = null;
+    }
+    this.selectedAttachment = file;
+    if (file?.type.startsWith('image/')) {
+      try { this.selectedAttachmentPreviewUrl = URL.createObjectURL(file); }
+      catch { /* The filename remains available when previews are unsupported. */ }
+    }
+  }
+
+  private stageAttachment(file: File): void {
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif',
       'application/pdf'].includes(file.type);
     if (!allowed || file.size === 0 || file.size > 5 * 1024 * 1024) {
@@ -1451,7 +1476,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     this.clearVoicePreview();
-    this.selectedAttachment = file;
+    this.setSelectedAttachment(file);
     this.selectedGif = null;
     this.selectedShare = null;
     this.closeAttachmentMenu();
@@ -1459,9 +1484,17 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.closeEmojiPicker();
   }
 
+  onAttachmentPicked(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file || !this.attachmentControlsReady || !this.canEditDraft()) return;
+    this.stageAttachment(file);
+  }
+
   removeAttachment(): void {
     if (this.sending || this.deliveryUncertain) return;
-    this.selectedAttachment = null;
+    this.setSelectedAttachment(null);
     this.clearVoicePreview();
   }
 
@@ -1563,8 +1596,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           return;
         }
         this.clearVoicePreview();
-        this.selectedAttachment = new File([recorded],
-          'voz-' + Date.now() + '.' + format.extension, { type });
+        this.setSelectedAttachment(new File([recorded],
+          'voz-' + Date.now() + '.' + format.extension, { type }));
         this.voicePreviewUrl = URL.createObjectURL(recorded);
         this.composerError = '';
       };
@@ -1888,7 +1921,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         || !this.shareChoices.some(item => item.kind === choice.kind && item.id === choice.id)
         || !encodeShareMessage(choice,this.draft.trim())) return;
     this.selectedShare = choice;
-    this.selectedAttachment = null;
+    this.setSelectedAttachment(null);
     this.selectedGif = null;
     this.clearVoicePreview();
     this.composerError = '';
@@ -2065,7 +2098,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.selectedGif = choice;
     this.selectedShare = null;
-    this.selectedAttachment = null;
+    this.setSelectedAttachment(null);
     this.clearVoicePreview();
     this.composerError = '';
     this.closeEmojiPicker();
@@ -2188,7 +2221,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.sendErrorsByConversation.delete(key);
         if (key !== this.selectedKey) return;
         if (this.historicalPreview) this.returnToRecent();
-        this.selectedAttachment = null;
+        this.setSelectedAttachment(null);
         this.selectedGif = null;
         this.selectedShare = null;
         this.clearVoicePreview();
@@ -2275,7 +2308,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
-        this.selectedAttachment = null;
+        this.setSelectedAttachment(null);
         this.selectedGif = null;
         this.clearVoicePreview();
         this.draft = '';

@@ -462,8 +462,12 @@
               </div>
             }
             @if (selectedAttachment; as file) {
-              <div class="inbox-attachment-draft">
-                <span aria-hidden="true">{{ file.type.startsWith('audio/') ? '🎤' : '📎' }}</span>
+              <div class="inbox-attachment-draft" [class.inbox-pasted-image-draft]="!!selectedAttachmentPreviewUrl">
+                @if (selectedAttachmentPreviewUrl; as imagePreview) {
+                  <img class="inbox-pasted-image-preview" [src]="imagePreview" [alt]="'chat.pastedImage' | t">
+                } @else {
+                  <span aria-hidden="true">{{ file.type.startsWith('audio/') ? '🎤' : '📎' }}</span>
+                }
                 <span>{{ file.type.startsWith('audio/') ? ('chat.voicePreview' | t) : file.name }}</span>
                 <button type="button" [disabled]="sending || deliveryUncertain"
                   (click)="removeAttachment()">{{ 'chat.attachmentRemove' | t }}</button>
@@ -480,7 +484,7 @@
               [readOnly]="sending"
               [disabled]="composerAccessLoading || !composerAllowed || !isSelectedSessionOpen() || previewLoading || previewError || deliveryUncertain || deliveryChecking"
               (ngModelChange)="onTypingInput()" (blur)="typing.stop()"
-              (keydown.enter)="onComposerEnter($event)"></textarea>
+              (keydown.enter)="onComposerEnter($event)" (paste)="onComposerPaste($event)"></textarea>
               <div class="inbox-composer-actions">
                 @if (attachmentControlsReady && voiceSupported) {
                   <button type="button" class="inbox-voice-trigger"
