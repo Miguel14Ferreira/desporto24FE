@@ -69,6 +69,23 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component.ngOnDestroy();
   }));
 
+  it('keeps the feed controls real and separates the primary and weekly navigation actions', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    const root = fixture.nativeElement as HTMLElement;
+    const header = root.querySelector('.jynlo-feed-hero') as HTMLElement;
+    expect(header).not.toBeNull();
+    expect(header.querySelector('h1')).not.toBeNull();
+    expect(header.querySelector('.feed-hero-cta')?.getAttribute('href')).toBe('/menu/createEvent');
+    expect(root.querySelector('.week-hub-heading .week-hub-create')?.getAttribute('href')).toBe('/menu/my-sessions');
+    expect(root.querySelector('.composer textarea')).not.toBeNull();
+    expect(root.querySelectorAll('.composer-actions .image-picker').length).toBe(2);
+    expect(root.querySelector('.composer-actions button.jynlo-action--primary')).not.toBeNull();
+    expect(root.querySelector('.feed-layout .feed-main')).not.toBeNull();
+    expect(root.querySelector('.feed-layout .feed-sidebar')).not.toBeNull();
+    component.ngOnDestroy();
+  }));
+
   it('allows video selection, limits its size and keeps photo/video mutually exclusive', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
