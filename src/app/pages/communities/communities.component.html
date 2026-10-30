@@ -508,14 +508,6 @@
                   </div>
                 </div>
               </div>
-
-              <span class="role-badge">
-                {{ selected.myRole === 'OWNER'
-                  ? ('communities.role.owner' | t)
-                  : (selected.myRole === 'ADMIN'
-                    ? ('communities.role.admin' | t)
-                    : ('communities.role.member' | t)) }}
-              </span>
             </div>
 
             <app-community-tabs
