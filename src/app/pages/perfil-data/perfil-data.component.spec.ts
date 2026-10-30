@@ -75,9 +75,10 @@ describe('PerfilDataComponent', () => {
     fixture.detectChanges();
   });
 
-  it('uses the current Jynlo brand without changing the profile actions', () => {
+  it('preserves profile actions while the brand stays only in the navbar', () => {
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelector('.page-header .eyebrow')?.textContent?.trim()).toBe('Jynlo');
+    expect(root.querySelector('.page-header .eyebrow')).toBeNull();
+    expect(root.querySelector('.page-header h1')).not.toBeNull();
     expect(root.querySelector('.profile-card .identity')).not.toBeNull();
     expect(root.querySelector('a[href="/menu/alterardados"]')).not.toBeNull();
   });
