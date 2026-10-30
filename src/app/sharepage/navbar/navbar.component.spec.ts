@@ -94,6 +94,14 @@ describe('NavbarComponent', () => {
   afterEach(() => {
     document.title = originalTabTitle;
   });
+  
+  it('uses the approved Jynlo artwork in the navbar, not the old SVG reconstruction', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const logo = root.querySelector('.brand__mark') as HTMLImageElement;
+    expect(logo).not.toBeNull();
+    expect(logo.getAttribute('src')).toBe('/assets/jynlo-icon-approved.webp');
+    expect(root.querySelector('.brand__wordmark')?.textContent?.trim()).toBe('JYNLO');
+  });
 
 
 

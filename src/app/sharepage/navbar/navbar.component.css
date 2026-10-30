@@ -35,6 +35,8 @@
   height: 36px;
   flex: none;
   filter: drop-shadow(0 0 12px rgba(39, 226, 201, .15));
+  border-radius: .6rem;
+  object-fit: contain;
 }
 .brand__wordmark {
   color: #f3fffc;
