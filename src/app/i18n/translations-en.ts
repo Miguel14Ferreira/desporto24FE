@@ -322,6 +322,7 @@ export const EN: Record<string, string> = {
   'nav.register': 'Create account',
   'nav.feed': 'Feed',
   'nav.discover': 'Explore',
+  'nav.venues': 'Venues',
   'nav.activities': 'Activities',
   'nav.communities': 'Communities',
   'nav.messages': 'Messages',
