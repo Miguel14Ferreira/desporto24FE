@@ -1,0 +1,30 @@
+name: Safe cleanup of merged old branches
+on:
+  push:
+    branches:
+      - chore/safe-merged-branch-cleanup-20261030
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Only list deletable branches
+        required: true
+        type: boolean
+        default: true
+permissions:
+  contents: write
+  pull-requests: read
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Classify and clean safe branches
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRODUCTION_BRANCH: preview/render-fullstack
+          MIN_AGE_DAYS: '3'
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        run: python3 scripts/safe_merged_branch_cleanup.py
