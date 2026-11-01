@@ -326,11 +326,88 @@ def audit_qa_equivalence(token):
               "OTHER_CHANGED_FILES", json.dumps(mismatches), "NO_DELETION")
     print("QA_EQUIVALENCE_TOTAL", len(QA_EQUIVALENCE_CANDIDATES), "DELETE", False)
 
+
+QA_ARCHIVE_PINS = {
+    "qa/direct-read-receipts-live-20261023": "fe98071aae67883cb72859c39a14f289a52af5b3",
+    "qa/karting-auth-coverage-pages-20261024": "f577b31dcda0367e37dfca2925c906f0cc9cf145",
+    "qa/live-auth-session-readonly-20261026": "afa4be90360b022d1575bca7fcc2c0469d4c5a11",
+    "qa/live-guest-browser-20261020": "33bdca0359c989d0f5ef799992a4dfe8ab3a1cf4"
+}
+QA_PRESERVED_FILES = {
+    "qa/direct-read-receipts-live-20261023": ["scripts/qa/README-inbox-live-browser.md", "scripts/qa/jynlo-read-receipts-live-browser.cjs", "scripts/qa/jynlo-read-receipts-live-browser.test.cjs"],
+    "qa/karting-auth-coverage-pages-20261024": ["scripts/qa/jynlo-karting-live-readonly.cjs", "scripts/qa/jynlo-karting-live-readonly.test.cjs"],
+    "qa/live-auth-session-readonly-20261026": ["scripts/qa/jynlo-sessions-live-readonly.cjs", "scripts/qa/jynlo-sessions-live-readonly.test.cjs"],
+    "qa/live-guest-browser-20261020": ["scripts/ci-browser/live_guest_readonly.cjs"],
+}
+QA_REVIEWED_WORKFLOWS = {
+    "qa/direct-read-receipts-live-20261023": [".github/workflows/qa-inbox-contract.yml"],
+    "qa/karting-auth-coverage-pages-20261024": [".github/workflows/pr-validation.yml"],
+    "qa/live-auth-session-readonly-20261026": [".github/workflows/notification-live-readonly.yml", ".github/workflows/pr-validation.yml"],
+    "qa/live-guest-browser-20261020": [".github/workflows/live-guest-readonly.yml"],
+}
+
+def archive_reviewed_qa(token, delete=False):
+    for name, sha in QA_ARCHIVE_PINS.items():
+        branch_ref = "git/ref/heads/" + urllib.parse.quote(name, safe="/")
+        status, current = api("GET", branch_ref, token)
+        if status == 404:
+            print("QA_ALREADY_MISSING", name)
+            continue
+        if status != 200 or current["object"]["sha"] != sha:
+            raise RuntimeError("QA branch changed: " + name)
+        status, prs = api("GET", "pulls?state=open&head=" + urllib.parse.quote(OWNER + ":" + name, safe="") + "&per_page=100", token)
+        if status != 200 or not isinstance(prs, list) or prs:
+            raise RuntimeError("Open PR or QA PR check failed: " + name)
+        status, comparison = api("GET", "compare/develop..." + sha, token)
+        if status != 200 or not isinstance(comparison.get("files"), list):
+            raise RuntimeError("QA comparison failed: " + name)
+        changed = {item["filename"] for item in comparison["files"]}
+        expected = set(QA_PRESERVED_FILES[name] + QA_REVIEWED_WORKFLOWS[name])
+        if changed != expected:
+            raise RuntimeError("QA changed file inventory differs: " + name + " " + str(changed ^ expected))
+        for filename in QA_PRESERVED_FILES[name]:
+            encoded = urllib.parse.quote(filename, safe="/")
+            status, original = api("GET", "contents/" + encoded + "?ref=" + urllib.parse.quote(sha, safe=""), token)
+            if status != 200 or not original.get("sha"):
+                raise RuntimeError("Cannot read QA original file: " + filename)
+            status, integrated = api("GET", "contents/" + encoded + "?ref=develop", token)
+            if status != 200 or integrated.get("sha") != original["sha"]:
+                raise RuntimeError("QA test file not identical on develop: " + filename)
+        if not delete:
+            print("QA_ARCHIVE_DRY_RUN", name, sha, "PRESERVED_FILES", len(QA_PRESERVED_FILES[name]))
+            continue
+        tag = "archive/reviewed-qa-20261101/" + name
+        tag_ref = "git/ref/tags/" + urllib.parse.quote(tag, safe="/")
+        status, existing = api("GET", tag_ref, token)
+        if status == 404:
+            status, _ = api("POST", "git/refs", token, {"ref": "refs/tags/" + tag, "sha": sha})
+            if status != 201:
+                raise RuntimeError("QA recovery tag creation failed: " + name)
+        elif status != 200 or existing["object"]["sha"] != sha:
+            raise RuntimeError("QA recovery tag collision: " + name)
+        status, verified = api("GET", tag_ref, token)
+        if status != 200 or verified["object"]["sha"] != sha:
+            raise RuntimeError("QA recovery tag verification failed: " + name)
+        status, current = api("GET", branch_ref, token)
+        if status != 200 or current["object"]["sha"] != sha:
+            raise RuntimeError("QA branch changed after archival: " + name)
+        status, prs = api("GET", "pulls?state=open&head=" + urllib.parse.quote(OWNER + ":" + name, safe="") + "&per_page=100", token)
+        if status != 200 or not isinstance(prs, list) or prs:
+            raise RuntimeError("QA open PR after archival: " + name)
+        status, _ = api("DELETE", "git/refs/heads/" + urllib.parse.quote(name, safe="/"), token)
+        if status != 204:
+            raise RuntimeError("QA deletion failed: " + name)
+        print("QA_ARCHIVE_DELETED", name, sha, "RECOVERY_TAG", tag)
+    print("QA_ARCHIVE_TOTAL", len(QA_ARCHIVE_PINS), "DELETE", delete)
+
 def main():
     token = os.environ.get("GH_TOKEN")
     if not token:
         raise RuntimeError("GH_TOKEN required")
     batch_mode = os.environ.get("BATCH_MERGED_MODE", "")
+    if batch_mode in ("QA_ARCHIVE_DRY_RUN", "QA_ARCHIVE_AND_DELETE"):
+        archive_reviewed_qa(token, delete=batch_mode == "QA_ARCHIVE_AND_DELETE")
+        return
     if batch_mode == "QA_EQUIVALENCE_AUDIT":
         audit_qa_equivalence(token)
         return
