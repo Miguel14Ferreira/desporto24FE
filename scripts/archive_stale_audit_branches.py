@@ -107,11 +107,11 @@ def api(method, path, token, body=None):
         raise
 
 def ensure_branch_safe(name, sha, token):
-    if not name.startswith(("audit/", "analysis/", "chore/", "design/", "feat/")):
+    if not name.startswith(("audit/", "analysis/", "chore/", "design/", "feat/", "fix/", "release/")):
         raise RuntimeError("Not an approved obsolete-audit namespace: " + name)
     if name.startswith("chore/") and name not in EXPECTED:
         raise RuntimeError("Unpinned chore branch: " + name)
-    if name.startswith(("design/", "feat/")) and name not in EXPECTED:
+    if name.startswith(("design/", "feat/", "fix/", "release/")) and name not in EXPECTED:
         raise RuntimeError("Unpinned merged feature branch: " + name)
     if len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
         raise RuntimeError("Invalid pinned SHA: " + name)
@@ -132,10 +132,10 @@ def ensure_branch_safe(name, sha, token):
     if status != 200:
         raise RuntimeError("Cannot verify commit date: " + name)
     stamp = datetime.datetime.fromisoformat(commit["commit"]["committer"]["date"].replace("Z", "+00:00"))
-    if datetime.datetime.now(datetime.timezone.utc) - stamp < datetime.timedelta(days=0 if name.startswith(("chore/", "design/", "feat/")) else MIN_AGE_DAYS):
+    if datetime.datetime.now(datetime.timezone.utc) - stamp < datetime.timedelta(days=0 if name.startswith(("chore/", "design/", "feat/", "fix/", "release/")) else MIN_AGE_DAYS):
         print("SKIP_RECENT", name)
         return None
-    if name.startswith(("design/", "feat/")):
+    if name.startswith(("chore/", "design/", "feat/", "fix/", "release/")):
         closed_status, closed_prs = api("GET", "pulls?state=closed&head=" + urllib.parse.quote(OWNER + ":" + name, safe="") + "&per_page=100", token)
         if closed_status != 200 or not isinstance(closed_prs, list):
             raise RuntimeError("Cannot verify merged feature PR: " + name)
@@ -175,7 +175,7 @@ def archive_and_delete(name, sha, token):
 
 
 # Read-only discovery. Never add candidates to the deletion allowlist automatically.
-def discover_merged_candidates(token):
+def discover_merged_candidates(token, return_candidates=False):
     protected = {"develop", "master", "preview/render-fullstack"}
     page = 1
     found = []
@@ -206,11 +206,41 @@ def discover_merged_candidates(token):
     for name, sha, number in sorted(found):
         print("AUDIT_CANDIDATE", name, sha, "MERGED_PR", number)
     print("AUDIT_CANDIDATES_TOTAL", len(found))
+    if return_candidates:
+        return sorted(found)
+
+
+def batch_verified_merged(token, delete=False):
+    candidates = discover_merged_candidates(token, return_candidates=True)
+    if len(candidates) > 250:
+        raise RuntimeError("Unexpectedly large batch; refuse")
+    for name, sha, pr_number in candidates:
+        # Re-check the exact SHA, open PRs and merged history immediately before mutation.
+        status, current = api("GET", "git/ref/heads/" + urllib.parse.quote(name, safe="/"), token)
+        if status != 200 or current["object"]["sha"] != sha:
+            raise RuntimeError("Candidate branch changed: " + name)
+        status, open_prs = api("GET", "pulls?state=open&head=" + urllib.parse.quote(OWNER + ":" + name, safe="") + "&per_page=100", token)
+        if status != 200 or open_prs:
+            raise RuntimeError("Open PR or failed verification: " + name)
+        if not delete:
+            print("BATCH_DRY_RUN", name, sha, "MERGED_PR", pr_number)
+            continue
+        # Allow the existing archival routine to verify again using an exact, ephemeral SHA pin.
+        EXPECTED[name] = sha
+        try:
+            archive_and_delete(name, sha, token)
+        finally:
+            del EXPECTED[name]
+    print("BATCH_TOTAL", len(candidates), "DELETE", delete)
 
 def main():
     token = os.environ.get("GH_TOKEN")
     if not token:
         raise RuntimeError("GH_TOKEN required")
+    batch_mode = os.environ.get("BATCH_MERGED_MODE", "")
+    if batch_mode in ("BATCH_DRY_RUN", "BATCH_ARCHIVE_AND_DELETE"):
+        batch_verified_merged(token, delete=batch_mode == "BATCH_ARCHIVE_AND_DELETE")
+        return
     if os.environ.get("DISCOVER_MERGED_CANDIDATES") == "1":
         discover_merged_candidates(token)
         return
