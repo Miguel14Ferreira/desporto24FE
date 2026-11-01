@@ -287,11 +287,53 @@ def archive_ancestor_perf(token, delete=False):
         print("PERF_ANCESTOR_DELETED", name, sha, "RECOVERY_TAG", tag)
     print("PERF_ANCESTOR_TOTAL", len(PERF_ANCESTOR_PINS), "DELETE", delete)
 
+
+QA_EQUIVALENCE_CANDIDATES = {
+    "qa/direct-read-receipts-live-20261023": [
+        "scripts/qa/README-inbox-live-browser.md",
+        "scripts/qa/jynlo-read-receipts-live-browser.cjs",
+        "scripts/qa/jynlo-read-receipts-live-browser.test.cjs",
+    ],
+    "qa/karting-auth-coverage-pages-20261024": [
+        "scripts/qa/jynlo-karting-live-readonly.cjs",
+        "scripts/qa/jynlo-karting-live-readonly.test.cjs",
+    ],
+    "qa/live-auth-session-readonly-20261026": [
+        "scripts/qa/jynlo-sessions-live-readonly.cjs",
+        "scripts/qa/jynlo-sessions-live-readonly.test.cjs",
+    ],
+    "qa/live-guest-browser-20261020": [
+        "scripts/ci-browser/live_guest_readonly.cjs",
+    ],
+}
+
+def audit_qa_equivalence(token):
+    """Read-only evidence; no QA branch is eligible for deletion based on partial file matches."""
+    for name, paths in QA_EQUIVALENCE_CANDIDATES.items():
+        status, branch = api("GET", "git/ref/heads/" + urllib.parse.quote(name, safe="/"), token)
+        if status != 200:
+            raise RuntimeError("Cannot read QA branch: " + name)
+        sha = branch["object"]["sha"]
+        status, cmp = api("GET", "compare/develop..." + sha, token)
+        if status != 200:
+            raise RuntimeError("Cannot compare QA branch: " + name)
+        mismatches = []
+        for item in cmp.get("files", []):
+            filename = item.get("filename", "")
+            if filename not in paths:
+                mismatches.append(filename)
+        print("QA_EQUIVALENCE_AUDIT", name, sha, "PRESERVED_TEST_FILES", len(paths),
+              "OTHER_CHANGED_FILES", json.dumps(mismatches), "NO_DELETION")
+    print("QA_EQUIVALENCE_TOTAL", len(QA_EQUIVALENCE_CANDIDATES), "DELETE", False)
+
 def main():
     token = os.environ.get("GH_TOKEN")
     if not token:
         raise RuntimeError("GH_TOKEN required")
     batch_mode = os.environ.get("BATCH_MERGED_MODE", "")
+    if batch_mode == "QA_EQUIVALENCE_AUDIT":
+        audit_qa_equivalence(token)
+        return
     if batch_mode in ("PERF_ANCESTOR_DRY_RUN", "PERF_ANCESTOR_ARCHIVE_AND_DELETE"):
         archive_ancestor_perf(token, delete=batch_mode == "PERF_ANCESTOR_ARCHIVE_AND_DELETE")
         return
