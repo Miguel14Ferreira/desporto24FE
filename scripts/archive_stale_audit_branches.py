@@ -351,15 +351,20 @@ QA_REVIEWED_WORKFLOWS = {
 def archive_reviewed_qa(token, delete=False):
     for name in QA_ARCHIVE_BRANCHES:
         sha = os.environ.get("QA_EXPECTED_SHA_" + str(QA_ARCHIVE_BRANCHES.index(name) + 1), "").strip()
-        if len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
-            raise RuntimeError("Missing or invalid expected QA branch SHA: " + name)
+        if sha and (len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha)):
+            raise RuntimeError("Invalid expected QA branch SHA: " + name)
+        if delete and not sha:
+            raise RuntimeError("Deletion requires explicit expected QA branch SHA: " + name)
         branch_ref = "git/ref/heads/" + urllib.parse.quote(name, safe="/")
         status, current = api("GET", branch_ref, token)
         if status == 404:
             print("QA_ALREADY_MISSING", name)
             continue
-        if status != 200 or current["object"]["sha"] != sha:
+        if status != 200 or (sha and current["object"]["sha"] != sha):
             raise RuntimeError("QA branch changed: " + name)
+        if not sha:
+            sha = current["object"]["sha"]
+            print("QA_DRY_RUN_AUTO_PIN", name, sha)
         status, prs = api("GET", "pulls?state=open&head=" + urllib.parse.quote(OWNER + ":" + name, safe="") + "&per_page=100", token)
         if status != 200 or not isinstance(prs, list) or prs:
             raise RuntimeError("Open PR or QA PR check failed: " + name)
