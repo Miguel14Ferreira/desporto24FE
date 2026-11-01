@@ -28,6 +28,14 @@ EXPECTED = {
     "audit/mobile-navbar-ux-20261018": "b1b40e911de43d09db1f8c86646e6fc58f7c8464",
     "audit/venue-autocomplete-legacy-fallback-20261018": "ee64bc5f070dc2e082bcb093bf7e609809d40ec7",
 }
+EXPECTED.update({
+    "chore/archive-stale-audits-fe-20261101": "62e340a1e9a6e6720393082c1c17b33362c2f9f1",
+    "chore/cleanup-fe-verified-batch-20261030": "2e08aee2a41305b30d25b01cfb7fcdeb5d00cf3a",
+    "chore/expand-fe-exact-cleanup-20261030": "58a7c218a7f49e78bbc796bc696772e339d0f99a",
+    "chore/extend-fe-merged-list-20261030": "e4e626761af0248afd3a3c313ee1e08ff22aa4cf",
+    "chore/next-verified-cleanup-fe-20261030": "b5a3128e22e9bb8fc61920b7b3815b87d42b9fbe",
+})
+CHORE_ARCHIVE_PREFIX = "archive/cleanup-scaffolding-20261101/"
 ARCHIVE_PREFIX = "archive/stale-audit-20261101/"
 MIN_AGE_DAYS = 7
 
@@ -48,8 +56,10 @@ def api(method, path, token, body=None):
         raise
 
 def ensure_branch_safe(name, sha, token):
-    if not name.startswith(("audit/", "analysis/")):
+    if not name.startswith(("audit/", "analysis/", "chore/")):
         raise RuntimeError("Not an approved obsolete-audit namespace: " + name)
+    if name.startswith("chore/") and name not in EXPECTED:
+        raise RuntimeError("Unpinned chore branch: " + name)
     if len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
         raise RuntimeError("Invalid pinned SHA: " + name)
     ref = "git/ref/heads/" + urllib.parse.quote(name, safe="/")
@@ -69,13 +79,13 @@ def ensure_branch_safe(name, sha, token):
     if status != 200:
         raise RuntimeError("Cannot verify commit date: " + name)
     stamp = datetime.datetime.fromisoformat(commit["commit"]["committer"]["date"].replace("Z", "+00:00"))
-    if datetime.datetime.now(datetime.timezone.utc) - stamp < datetime.timedelta(days=MIN_AGE_DAYS):
+    if datetime.datetime.now(datetime.timezone.utc) - stamp < datetime.timedelta(days=0 if name.startswith("chore/") else MIN_AGE_DAYS):
         print("SKIP_RECENT", name)
         return None
     return ref
 
 def archive_and_delete(name, sha, token):
-    tag_path = ARCHIVE_PREFIX + name
+    tag_path = (CHORE_ARCHIVE_PREFIX if name.startswith("chore/") else ARCHIVE_PREFIX) + name
     tag_ref = "git/ref/tags/" + urllib.parse.quote(tag_path, safe="/")
     status, existing = api("GET", tag_ref, token)
     if status == 404:
