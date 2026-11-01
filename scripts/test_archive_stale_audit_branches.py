@@ -74,5 +74,27 @@ class SafetyTests(unittest.TestCase):
         with patch.object(archive, 'api', side_effect=replies):
             self.assertEqual(archive.ensure_branch_safe(name, sha, 'token'), 'git/ref/heads/' + name)
 
+
+    def test_new_feature_batch_rejects_mismatched_merged_head(self):
+        name = 'feat/global-floating-incoming-call-popup-20261029'
+        sha = archive.EXPECTED[name]
+        commit = {'commit': {'committer': {'date': '2026-10-29T00:00:00Z'}}}
+        merged_pr = {'merged_at': '2026-10-29T12:00:00Z', 'head': {'sha': 'c'*40}, 'merge_commit_sha': 'b'*40}
+        replies = [(200, {'object': {'sha': sha}}), (200, []), (200, commit), (200, [merged_pr])]
+        with patch.object(archive, 'api', side_effect=replies):
+            with self.assertRaisesRegex(RuntimeError, 'No merged PR with exact feature head SHA'):
+                archive.ensure_branch_safe(name, sha, 'token')
+
+    def test_new_feature_batch_rejects_merge_outside_develop(self):
+        name = 'feat/communities-neon-glass-layout-20261030'
+        sha = archive.EXPECTED[name]
+        commit = {'commit': {'committer': {'date': '2026-10-30T00:00:00Z'}}}
+        merged_pr = {'merged_at': '2026-10-30T12:00:00Z', 'head': {'sha': sha}, 'merge_commit_sha': 'b'*40}
+        replies = [(200, {'object': {'sha': sha}}), (200, []), (200, commit),
+                   (200, [merged_pr]), (200, {'ahead_by': 1, 'status': 'diverged'})]
+        with patch.object(archive, 'api', side_effect=replies):
+            with self.assertRaisesRegex(RuntimeError, 'not an ancestor'):
+                archive.ensure_branch_safe(name, sha, 'token')
+
 if __name__ == '__main__':
     unittest.main()
