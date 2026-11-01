@@ -233,11 +233,72 @@ def batch_verified_merged(token, delete=False):
             del EXPECTED[name]
     print("BATCH_TOTAL", len(candidates), "DELETE", delete)
 
+
+PERF_ANCESTOR_PINS = {
+    "perf/community-competition-switches-scoped-20261026": "ed7f2ba8c4ebd1208a9e8a9cc63c4f65a2b2d9ba",
+    "perf/community-management-panels-scoped-20261026": "dfc62e08b21740c832b80dd568c5e736d162e11a",
+    "perf/community-overview-leader-scoped-20261026": "6009973638c687da80a3214907849afac1ac3a1f",
+    "perf/community-pending-invites-scoped-20261026": "6faa0ecbf82db9e80bafaac0c0b46ac33998e7b3",
+    "perf/community-photo-cover-scoped-20261026": "2027b1a14fd9b6ec6e167badd27fd76d6e840d9d",
+    "perf/community-rankings-table-scoped-20261026": "32733b9735a62bda70665ff31963a721a6873d11",
+    "perf/community-season-controls-scoped-20261026": "ab4c44c001913fdfcf287e7d13393c9cfc4446ca",
+    "perf/community-seasons-summary-scoped-20261026": "4cc60806bff645a2d77a223e62070487c295b683",
+    "perf/community-session-card-scoped-20261026": "588064591986eea42e439d7ea788c9a9e2277c02",
+    "perf/community-sports-editor-scoped-20261026": "e9a30f3dbc724442ee3b0cf6c3fcb771181de14a",
+}
+
+def archive_ancestor_perf(token, delete=False):
+    for name, sha in PERF_ANCESTOR_PINS.items():
+        status, ref = api("GET", "git/ref/heads/" + urllib.parse.quote(name, safe="/"), token)
+        if status == 404:
+            print("ALREADY_MISSING", name)
+            continue
+        if status != 200 or ref["object"]["sha"] != sha:
+            raise RuntimeError("Perf branch SHA changed: " + name)
+        status, cmp = api("GET", "compare/develop..." + sha, token)
+        if status != 200 or cmp.get("ahead_by") != 0 or cmp.get("status") not in ("behind", "identical"):
+            raise RuntimeError("Perf branch is not an ancestor of develop: " + name)
+        status, prs = api("GET", "pulls?state=open&head=" + urllib.parse.quote(OWNER + ":" + name, safe="") + "&per_page=100", token)
+        if status != 200 or not isinstance(prs, list) or prs:
+            raise RuntimeError("Open PR or cannot verify: " + name)
+        if not delete:
+            print("PERF_ANCESTOR_DRY_RUN", name, sha)
+            continue
+        tag = "archive/verified-perf-ancestor-20261101/" + name
+        tag_ref = "git/ref/tags/" + urllib.parse.quote(tag, safe="/")
+        status, existing = api("GET", tag_ref, token)
+        if status == 404:
+            status, _ = api("POST", "git/refs", token, {"ref": "refs/tags/" + tag, "sha": sha})
+            if status != 201:
+                raise RuntimeError("Recovery tag creation failed: " + name)
+        elif status != 200 or existing["object"]["sha"] != sha:
+            raise RuntimeError("Recovery tag collision: " + name)
+        status, verified = api("GET", tag_ref, token)
+        if status != 200 or verified["object"]["sha"] != sha:
+            raise RuntimeError("Recovery tag verification failed: " + name)
+        status, current = api("GET", "git/ref/heads/" + urllib.parse.quote(name, safe="/"), token)
+        if status != 200 or current["object"]["sha"] != sha:
+            raise RuntimeError("Branch changed after archive: " + name)
+        status, cmp = api("GET", "compare/develop..." + sha, token)
+        if status != 200 or cmp.get("ahead_by") != 0:
+            raise RuntimeError("Ancestor recheck failed: " + name)
+        status, prs = api("GET", "pulls?state=open&head=" + urllib.parse.quote(OWNER + ":" + name, safe="") + "&per_page=100", token)
+        if status != 200 or not isinstance(prs, list) or prs:
+            raise RuntimeError("Open PR recheck failed: " + name)
+        status, _ = api("DELETE", "git/refs/heads/" + urllib.parse.quote(name, safe="/"), token)
+        if status != 204:
+            raise RuntimeError("Deletion failed: " + name)
+        print("PERF_ANCESTOR_DELETED", name, sha, "RECOVERY_TAG", tag)
+    print("PERF_ANCESTOR_TOTAL", len(PERF_ANCESTOR_PINS), "DELETE", delete)
+
 def main():
     token = os.environ.get("GH_TOKEN")
     if not token:
         raise RuntimeError("GH_TOKEN required")
     batch_mode = os.environ.get("BATCH_MERGED_MODE", "")
+    if batch_mode in ("PERF_ANCESTOR_DRY_RUN", "PERF_ANCESTOR_ARCHIVE_AND_DELETE"):
+        archive_ancestor_perf(token, delete=batch_mode == "PERF_ANCESTOR_ARCHIVE_AND_DELETE")
+        return
     if batch_mode in ("BATCH_DRY_RUN", "BATCH_ARCHIVE_AND_DELETE"):
         batch_verified_merged(token, delete=batch_mode == "BATCH_ARCHIVE_AND_DELETE")
         return
