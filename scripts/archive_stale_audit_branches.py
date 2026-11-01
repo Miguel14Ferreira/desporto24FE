@@ -57,6 +57,23 @@ EXPECTED.update({
     "feat/admin-gps-rodovia-tree-coordinate-ui-20261027": "bc22f493ddf48546ef8df1c79a6c4cec541137fb",
     "feat/chat-inline-private-images-20261030": "366e322f669527f971c306f6daab81a4fa377e3e",
 })
+EXPECTED.update({
+    "feat/communities-neon-glass-layout-20261030": "392a4460e3b5a21b8af3497389145e268a3301ba",
+    "feat/community-default-venue-autofill-20261028": "6834e0949cbf16c0e75ba3547d8570107d3470f3",
+    "feat/community-session-quick-results-rebased-20261027": "2a6ac8e83cd5357b812b353ba4fa8ddc82c2d3fe",
+    "feat/community-venue-picker-onboarding-20261028": "4ab9c0ce8c032568eb1a76dab92fd83e27d3f2b1",
+    "feat/create-session-neon-refinement-20261030": "4845b14244a62d695bea70051801f4be45af7d4c",
+    "feat/create-session-premium-selects-20261029": "1784f8d19782c18646caa1ceb9b043632b5fce7c",
+    "feat/create-session-sport-venue-premium-20261029": "38b98e9d3d893ad1907fb2f4726d955cb081f716",
+    "feat/explore-unified-premium-20261029": "b3b9f4694a82a3e35c615a6a21a81455c7f0c0b2",
+    "feat/feed-full-20261030": "a0cc3d881f06dc1ec64bf1b2916f02d64f4e3ac7",
+    "feat/global-floating-incoming-call-popup-20261029": "54d3781c6aa53266b85379345f43e1fcc91702cb",
+    "feat/global-native-select-green-premium-20261029": "70137aafae4041533aa2c75e7aa9b0fa8dcc3523",
+    "feat/global-premium-green-form-controls-20261029": "789e341470ce1672760217a05fc373fe6ae69ad8",
+    "feat/global-profile-quickview-20261027": "cdb9b003cf91055af4f1d4e0b9c8a1a03ca1c93e",
+    "feat/global-topnav-activities-neon-glass-20261030": "85abc398c365af50189e52a652855936e13bb07c",
+    "feat/guest-session-invites-20261027": "7731f3571a1757688056e9023a7d175b3b3b17f1",
+})
 MERGED_ARCHIVE_PREFIX = "archive/verified-merged-20261101/"
 CHORE_ARCHIVE_PREFIX = "archive/cleanup-scaffolding-20261101/"
 ARCHIVE_PREFIX = "archive/stale-audit-20261101/"
