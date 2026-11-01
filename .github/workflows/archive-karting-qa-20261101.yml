@@ -1,0 +1,80 @@
+name: Archive reviewed Karting QA branches
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/archive-karting-qa-20261101.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: read
+concurrency:
+  group: archive-karting-qa-20261101
+  cancel-in-progress: false
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Pin and verify both branches, create recovery tags, then delete obsolete refs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: python
+        run: |
+          import json, os, urllib.request, urllib.error
+          repo = os.environ["GH_REPO"]
+          token = os.environ["GH_TOKEN"]
+          pairs = [
+              ("qa/live-karting-workflow-pin-20261024", "8f0472da93fffaf4670510f54742318fc1d4a5d9"),
+              ("qa/manual-live-karting-workflow-master-20261024", "cb2f457fab2ccb30a3019f3fea2bf0dafdd013c1"),
+          ]
+          def api(method, path, body=None, missing=False):
+              url = "https://api.github.com/repos/" + repo + "/" + path
+              data = json.dumps(body).encode() if body is not None else None
+              req = urllib.request.Request(url, data=data, method=method, headers={
+                  "Authorization": "Bearer " + token,
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+              })
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      raw = response.read()
+                      return json.loads(raw) if raw else None
+              except urllib.error.HTTPError as exc:
+                  if missing and exc.code == 404:
+                      return None
+                  raise
+          def ref(kind, name):
+              return api("GET", "git/ref/" + kind + "/" + name, missing=True)
+          # Preflight all branches before writing anything.
+          for name, sha in pairs:
+              current = ref("heads", name)
+              assert current and current["object"]["sha"] == sha, "Branch changed: " + name
+              prs = api("GET", "pulls?state=open&head=" + repo.split("/")[0] + ":" + name)
+              assert not prs, "Open PR for " + name
+              backup = ref("heads", "archive/karting-qa-20261101/" + name)
+              assert backup and backup["object"]["sha"] == sha, "Missing backup: " + name
+              existing = ref("tags", "archive/karting-qa-20261101/" + name)
+              assert not existing or existing["object"]["sha"] == sha, "Tag conflict: " + name
+          # Create all permanent lightweight tags and verify before deleting.
+          for name, sha in pairs:
+              tag = "archive/karting-qa-20261101/" + name
+              if not ref("tags", tag):
+                  api("POST", "git/refs", {"ref": "refs/tags/" + tag, "sha": sha})
+              assert ref("tags", tag)["object"]["sha"] == sha, "Tag verification failed"
+              print("RECOVERY_TAG_OK", tag, sha)
+          for name, sha in pairs:
+              assert ref("heads", name)["object"]["sha"] == sha, "Branch moved before deletion"
+              api("DELETE", "git/refs/heads/" + name)
+              assert ref("heads", name) is None, "Branch deletion unverified"
+              print("DELETED", name)
+          # Remove temporary backup branches only after verified tags exist.
+          for name, sha in pairs:
+              backup = "archive/karting-qa-20261101/" + name
+              tag = backup
+              assert ref("tags", tag)["object"]["sha"] == sha
+              assert ref("heads", backup)["object"]["sha"] == sha
+              api("DELETE", "git/refs/heads/" + backup)
+              assert ref("heads", backup) is None
+              print("REMOVED_TEMP_BACKUP", backup)
