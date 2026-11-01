@@ -235,16 +235,12 @@ def batch_verified_merged(token, delete=False):
 
 
 PERF_ANCESTOR_PINS = {
-    "perf/community-competition-switches-scoped-20261026": "ed7f2ba8c4ebd1208a9e8a9cc63c4f65a2b2d9ba",
-    "perf/community-management-panels-scoped-20261026": "dfc62e08b21740c832b80dd568c5e736d162e11a",
-    "perf/community-overview-leader-scoped-20261026": "6009973638c687da80a3214907849afac1ac3a1f",
-    "perf/community-pending-invites-scoped-20261026": "6faa0ecbf82db9e80bafaac0c0b46ac33998e7b3",
-    "perf/community-photo-cover-scoped-20261026": "2027b1a14fd9b6ec6e167badd27fd76d6e840d9d",
-    "perf/community-rankings-table-scoped-20261026": "32733b9735a62bda70665ff31963a721a6873d11",
-    "perf/community-season-controls-scoped-20261026": "ab4c44c001913fdfcf287e7d13393c9cfc4446ca",
-    "perf/community-seasons-summary-scoped-20261026": "4cc60806bff645a2d77a223e62070487c295b683",
-    "perf/community-session-card-scoped-20261026": "588064591986eea42e439d7ea788c9a9e2277c02",
-    "perf/community-sports-editor-scoped-20261026": "e9a30f3dbc724442ee3b0cf6c3fcb771181de14a",
+    "perf/community-stats-readonly-scoped-20261026": "d8670d98da9b3ea286d414523d114f32cf9b2827",
+    "perf/community-tabs-scoped-css-20261025": "8df49619ba3a4021b9c1e19b3dbf9209ed49ff8c",
+    "perf/inbox-conversation-list-scoped-20261026": "3f952d4267dbe1753d82c7fbffc9b5c80ffda220",
+    "perf/inbox-emoji-gif-picker-scoped-20261026": "c20fd51068a511eb4a6b9950d5d09fe7c14ffed3",
+    "perf/inbox-history-search-scoped-20261026": "f3c8d1ee6910ead9f3cbcce482ae4da0a05ab91c",
+    "perf/inbox-share-pickers-scoped-20261026": "582ba5b6be69e7266f49db18c9a61a2a0186ea3a",
 }
 
 def archive_ancestor_perf(token, delete=False):
