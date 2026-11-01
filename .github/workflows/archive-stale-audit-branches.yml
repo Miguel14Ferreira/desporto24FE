@@ -10,6 +10,8 @@ on:
         options:
           - DRY_RUN
           - AUDIT_MERGED_CANDIDATES
+          - QA_ARCHIVE_DRY_RUN
+          - QA_ARCHIVE_AND_DELETE
           - QA_EQUIVALENCE_AUDIT
           - PERF_ANCESTOR_DRY_RUN
           - PERF_ANCESTOR_ARCHIVE_AND_DELETE
