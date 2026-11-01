@@ -1,0 +1,61 @@
+name: Reusable verified branch archive
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to archive (never develop, master or LIVE)
+        required: true
+        type: string
+      expected_sha:
+        description: Exact SHA previously reviewed
+        required: true
+        type: string
+  push:
+    branches: [develop]
+    paths: [.github/workflows/reusable-verified-branch-archive.yml]
+permissions:
+  contents: write
+  pull-requests: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify and archive branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+          INPUT_SHA: ${{ inputs.expected_sha }}
+        run: |
+          python3 - <<'PY'
+          import os,json,re,urllib.request,urllib.error
+          repo=os.environ['REPO']
+          if os.environ['EVENT']=='push':
+              name='chore/archive-last-merged-chore-20261101'; sha='52939d11fbde5d1a5315764956159867cf578b9e'
+          else:
+              name=os.environ['INPUT_BRANCH']; sha=os.environ['INPUT_SHA']
+          assert re.fullmatch(r'[0-9a-f]{40}',sha), 'invalid SHA'
+          assert re.fullmatch(r'[A-Za-z0-9._/-]+',name) and '..' not in name and not name.startswith('/'), 'invalid branch'
+          forbidden={'develop','master','main','preview/render-fullstack','feature/desporto24-preview-deploy'}
+          assert name not in forbidden and not name.startswith(('archive/','release/')), 'protected branch'
+          def api(method,path,data=None):
+              req=urllib.request.Request('https://api.github.com/repos/'+repo+path,method=method,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},data=None if data is None else json.dumps(data).encode())
+              with urllib.request.urlopen(req,timeout=30) as r: return json.loads(r.read() or b'{}')
+          assert api('GET','/git/ref/heads/'+name)['object']['sha']==sha, 'SHA mismatch'
+          c=api('GET','/compare/'+sha+'...develop')
+          assert c['behind_by']==0 and c['status'] in ('ahead','identical'), 'not fully merged'
+          def no_open_pr():
+              return not api('GET','/pulls?state=open&head='+repo.split('/')[0]+':'+name+'&per_page=100')
+          assert no_open_pr(), 'open PR'
+          tag='archive/verified-20261101/'+name
+          try:
+              assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha
+          except urllib.error.HTTPError as e:
+              if e.code!=404: raise
+              api('POST','/git/refs',{'ref':'refs/tags/'+tag,'sha':sha})
+          assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha
+          assert api('GET','/git/ref/heads/'+name)['object']['sha']==sha and no_open_pr()
+          api('DELETE','/git/refs/heads/'+name)
+          print('ARCHIVED_AND_DELETED',name,sha)
+          PY
