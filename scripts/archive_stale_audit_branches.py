@@ -327,12 +327,14 @@ def audit_qa_equivalence(token):
     print("QA_EQUIVALENCE_TOTAL", len(QA_EQUIVALENCE_CANDIDATES), "DELETE", False)
 
 
-QA_ARCHIVE_PINS = {
-    "qa/direct-read-receipts-live-20261023": "fe98071aae67883cb72859c39a14f289a52af5b3",
-    "qa/karting-auth-coverage-pages-20261024": "f577b31dcda0367e37dfca2925c906f0cc9cf145",
-    "qa/live-auth-session-readonly-20261026": "afa4be90360b022d1575bca7fcc2c0469d4c5a11",
-    "qa/live-guest-browser-20261020": "33bdca0359c989d0f5ef799992a4dfe8ab3a1cf4"
-}
+QA_ARCHIVE_BRANCHES = (
+    "qa/direct-read-receipts-live-20261023",
+    "qa/karting-auth-coverage-pages-20261024",
+    "qa/live-auth-session-readonly-20261026",
+    "qa/live-guest-browser-20261020",
+)
+# The workflow input pins each branch's current full commit SHA at dispatch time.
+# No commit IDs or credential-like constants are embedded in this source.
 QA_PRESERVED_FILES = {
     "qa/direct-read-receipts-live-20261023": ["scripts/qa/README-inbox-live-browser.md", "scripts/qa/jynlo-read-receipts-live-browser.cjs", "scripts/qa/jynlo-read-receipts-live-browser.test.cjs"],
     "qa/karting-auth-coverage-pages-20261024": ["scripts/qa/jynlo-karting-live-readonly.cjs", "scripts/qa/jynlo-karting-live-readonly.test.cjs"],
@@ -347,7 +349,10 @@ QA_REVIEWED_WORKFLOWS = {
 }
 
 def archive_reviewed_qa(token, delete=False):
-    for name, sha in QA_ARCHIVE_PINS.items():
+    for name in QA_ARCHIVE_BRANCHES:
+        sha = os.environ.get("QA_EXPECTED_SHA_" + str(QA_ARCHIVE_BRANCHES.index(name) + 1), "").strip()
+        if len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
+            raise RuntimeError("Missing or invalid expected QA branch SHA: " + name)
         branch_ref = "git/ref/heads/" + urllib.parse.quote(name, safe="/")
         status, current = api("GET", branch_ref, token)
         if status == 404:
@@ -398,7 +403,7 @@ def archive_reviewed_qa(token, delete=False):
         if status != 204:
             raise RuntimeError("QA deletion failed: " + name)
         print("QA_ARCHIVE_DELETED", name, sha, "RECOVERY_TAG", tag)
-    print("QA_ARCHIVE_TOTAL", len(QA_ARCHIVE_PINS), "DELETE", delete)
+    print("QA_ARCHIVE_TOTAL", len(QA_ARCHIVE_BRANCHES), "DELETE", delete)
 
 def main():
     token = os.environ.get("GH_TOKEN")
