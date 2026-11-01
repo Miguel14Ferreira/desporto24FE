@@ -1,0 +1,32 @@
+name: Archive four reviewed QA branches
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/archive-reviewed-qa-batch-20261101.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: read
+concurrency:
+  group: archive-reviewed-qa-batch-20261101
+  cancel-in-progress: false
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify and archive pinned QA branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          BATCH_MERGED_MODE: QA_ARCHIVE_AND_DELETE
+          QA_EXPECTED_SHA_1: fe98071aae67883cb72859c39a14f289a52af5b3
+          QA_EXPECTED_SHA_2: f577b31dcda0367e37dfca2925c906f0cc9cf145
+          QA_EXPECTED_SHA_3: afa4be90360b022d1575bca7fcc2c0469d4c5a11
+          QA_EXPECTED_SHA_4: 33bdca0359c989d0f5ef799992a4dfe8ab3a1cf4
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_archive_stale_audit_branches.py' -v
+          python3 scripts/archive_stale_audit_branches.py
