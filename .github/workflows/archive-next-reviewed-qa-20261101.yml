@@ -1,0 +1,54 @@
+name: Archive next two reviewed QA branches
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/archive-next-reviewed-qa-20261101.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: read
+concurrency:
+  group: archive-next-reviewed-qa-20261101
+  cancel-in-progress: false
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run isolated archive safety tests
+        run: python3 -m unittest discover -s scripts -p 'test_archive_stale_audit_branches.py' -v
+      - name: Verify, tag and remove two reviewed QA branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          QA_EXPECTED_SHA_1: 6794b3fdf8d3c0b0d3cac2244dc674893c774875
+          QA_EXPECTED_SHA_2: c9c0f0fdc1a3585d7ab01cad6c312458470a7f8a
+        run: |
+          python3 - <<'PY'
+          import os
+          import sys
+          sys.path.insert(0, 'scripts')
+          import archive_stale_audit_branches as archive
+          archive.QA_ARCHIVE_BRANCHES = (
+              'qa/community-roles-live-fallback-20261026',
+              'qa/live-public-browser-readonly-20261024',
+          )
+          archive.QA_PRESERVED_FILES = {
+              'qa/community-roles-live-fallback-20261026': [
+                  'scripts/qa/README-community-roles-live-readonly.md',
+                  'scripts/qa/jynlo-community-roles-live-readonly.cjs',
+                  'scripts/qa/jynlo-community-roles-live-readonly.test.cjs',
+              ],
+              'qa/live-public-browser-readonly-20261024': [
+                  'scripts/ci-browser/public_api_contract_READONLY.cjs',
+              ],
+          }
+          archive.QA_REVIEWED_WORKFLOWS = {
+              'qa/community-roles-live-fallback-20261026': ['.github/workflows/pr-validation.yml'],
+              'qa/live-public-browser-readonly-20261024': ['.github/workflows/pr-validation.yml'],
+          }
+          archive.archive_reviewed_qa(os.environ['GH_TOKEN'], delete=True)
+          PY
