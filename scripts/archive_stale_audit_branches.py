@@ -75,6 +75,14 @@ EXPECTED.update({
     "feat/guest-session-invites-20261027": "7731f3571a1757688056e9023a7d175b3b3b17f1",
 })
 MERGED_ARCHIVE_PREFIX = "archive/verified-merged-20261101/"
+
+EXPECTED.update({
+    "chore/archive-13-merged-design-features-fe-20261101": "0f698c3ba781f6e146dcd70d33cce3777f8abe91",
+    "chore/archive-15-verified-merged-features-fe-20261101": "2aece93c8952b0675d91ecd37b04e9e52c4fc61c",
+    "chore/archive-cleanup-scaffolding-fe-20261101": "d641185887c53e9b6612bf41dd65bcadc2ff0432",
+    "chore/archive-workflow-confirmation-choice-fe-20261101": "602324b89d8842baa3fd498fe46a336ec5c35864",
+    "chore/pin-archive-workflow-sha-fe-20261101": "155e940fff37e510f5858462dd9930060d7ba97e",
+})
 CHORE_ARCHIVE_PREFIX = "archive/cleanup-scaffolding-20261101/"
 ARCHIVE_PREFIX = "archive/stale-audit-20261101/"
 MIN_AGE_DAYS = 7
