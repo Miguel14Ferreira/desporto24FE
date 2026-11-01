@@ -1908,10 +1908,11 @@ describe('Unified Jynlo message center', () => {
   it('shows friends, membership communities and confirmed sessions without N+1 histories', () => {
     friends.friends.and.returnValue(of([{ username: 'Bea', nickname: 'Bia', fullName: null, profilePicUrl: null, chatBlocked: false, blockedByMe: false }]));
     communities.mine.and.returnValue(of([{ id: 7, name: 'CNG', sport: 'Futsal' }] as any));
+    const futureGameDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     sessions.mine.and.returnValue(of({
-      created: [{ id: 41, sport: 'Ténis', city: 'Cacém', gameDate: '2026-11-01T10:00:00Z' }],
-      joined: [{ id: 41, sport: 'Ténis', city: 'Cacém', gameDate: '2026-11-01T10:00:00Z' }],
-      waitlisted: [{ id: 99, sport: 'Futebol', city: 'Lisboa', gameDate: '2026-11-01T10:00:00Z' }]
+      created: [{ id: 41, sport: 'Ténis', city: 'Cacém', gameDate: futureGameDate }],
+      joined: [{ id: 41, sport: 'Ténis', city: 'Cacém', gameDate: futureGameDate }],
+      waitlisted: [{ id: 99, sport: 'Futebol', city: 'Lisboa', gameDate: futureGameDate }]
     } as any));
     component.loadInbox();
     expect(component.conversations.map(x => x.key).sort()).toEqual([
