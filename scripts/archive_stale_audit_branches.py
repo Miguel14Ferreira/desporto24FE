@@ -42,6 +42,22 @@ EXPECTED.update({
     "chore/rebase-content-equivalence-audit-20261030": "621991125b326222e40f0214f9ba65cb709cf46d",
     "chore/recoverable-manual-branch-cleanup-20261030": "f979787ffe5ce653b805ec1880c2c9dcb06e8044",
 })
+EXPECTED.update({
+    "design/community-detail-polish-20261030": "1ee1c59d2a0010597d423dbc8c635d9ab04104ca",
+    "design/community-directory-aligned-search-v3-20261030": "69457f80b792c1e5a3566733e89acb962885be04",
+    "design/community-detail-hero-refresh-20261030": "230e8062f69169114448816b9e73f4cf453509e1",
+    "design/community-ranking-invites-responsive-20261030": "4416a468838be0229c6ba07710bbbc9eebd293f7",
+    "feat/account-identity-navbar-20261029": "7b7e124ea36621b692d16b9f9ae578c84aa1f006",
+    "feat/admin-gps-evora-official-map-link-ui-20261027": "53a875226bf2ad881e5eb5c0c75dab7bacc7535e",
+    "feat/admin-gps-braga-rodovia-context-ui-20261027": "61015bd28f0e22c549b0d40eb0d2efca806e8582",
+    "feat/admin-gps-facility-context-ui-20261027": "d779d6e03512951dc5798e6d597dc6d11493922f",
+    "feat/admin-gps-rodovia-290-294-ui-20261027": "d24571dd5215d6fdb27b512365bd07b2d8f976c1",
+    "feat/admin-gps-rodovia-map-crosscheck-ui-20261027": "4a20e873c41e6474d811ff6c5897e140f921ba01",
+    "feat/admin-gps-rodovia-numbered-sign-ui-20261027": "0e682fcf35ec82575e0a0ab764276535e97d6c94",
+    "feat/admin-gps-rodovia-tree-coordinate-ui-20261027": "bc22f493ddf48546ef8df1c79a6c4cec541137fb",
+    "feat/chat-inline-private-images-20261030": "366e322f669527f971c306f6daab81a4fa377e3e",
+})
+MERGED_ARCHIVE_PREFIX = "archive/verified-merged-20261101/"
 CHORE_ARCHIVE_PREFIX = "archive/cleanup-scaffolding-20261101/"
 ARCHIVE_PREFIX = "archive/stale-audit-20261101/"
 MIN_AGE_DAYS = 7
@@ -63,10 +79,12 @@ def api(method, path, token, body=None):
         raise
 
 def ensure_branch_safe(name, sha, token):
-    if not name.startswith(("audit/", "analysis/", "chore/")):
+    if not name.startswith(("audit/", "analysis/", "chore/", "design/", "feat/")):
         raise RuntimeError("Not an approved obsolete-audit namespace: " + name)
     if name.startswith("chore/") and name not in EXPECTED:
         raise RuntimeError("Unpinned chore branch: " + name)
+    if name.startswith(("design/", "feat/")) and name not in EXPECTED:
+        raise RuntimeError("Unpinned merged feature branch: " + name)
     if len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
         raise RuntimeError("Invalid pinned SHA: " + name)
     ref = "git/ref/heads/" + urllib.parse.quote(name, safe="/")
@@ -86,13 +104,28 @@ def ensure_branch_safe(name, sha, token):
     if status != 200:
         raise RuntimeError("Cannot verify commit date: " + name)
     stamp = datetime.datetime.fromisoformat(commit["commit"]["committer"]["date"].replace("Z", "+00:00"))
-    if datetime.datetime.now(datetime.timezone.utc) - stamp < datetime.timedelta(days=0 if name.startswith("chore/") else MIN_AGE_DAYS):
+    if datetime.datetime.now(datetime.timezone.utc) - stamp < datetime.timedelta(days=0 if name.startswith(("chore/", "design/", "feat/")) else MIN_AGE_DAYS):
         print("SKIP_RECENT", name)
         return None
+    if name.startswith(("design/", "feat/")):
+        closed_status, closed_prs = api("GET", "pulls?state=closed&head=" + urllib.parse.quote(OWNER + ":" + name, safe="") + "&per_page=100", token)
+        if closed_status != 200 or not isinstance(closed_prs, list):
+            raise RuntimeError("Cannot verify merged feature PR: " + name)
+        matching = [p for p in closed_prs if p.get("merged_at") and p.get("head", {}).get("sha") == sha and p.get("merge_commit_sha")]
+        if not matching:
+            raise RuntimeError("No merged PR with exact feature head SHA: " + name)
+        merged_into_develop = False
+        for pr in matching:
+            cmp_status, cmp = api("GET", "compare/develop..." + pr["merge_commit_sha"], token)
+            if cmp_status == 200 and cmp.get("ahead_by") == 0 and cmp.get("status") in ("behind", "identical"):
+                merged_into_develop = True
+                break
+        if not merged_into_develop:
+            raise RuntimeError("Feature PR merge commit is not an ancestor of develop: " + name)
     return ref
 
 def archive_and_delete(name, sha, token):
-    tag_path = (CHORE_ARCHIVE_PREFIX if name.startswith("chore/") else ARCHIVE_PREFIX) + name
+    tag_path = (MERGED_ARCHIVE_PREFIX if name.startswith(("design/", "feat/")) else CHORE_ARCHIVE_PREFIX if name.startswith("chore/") else ARCHIVE_PREFIX) + name
     tag_ref = "git/ref/tags/" + urllib.parse.quote(tag_path, safe="/")
     status, existing = api("GET", tag_ref, token)
     if status == 404:

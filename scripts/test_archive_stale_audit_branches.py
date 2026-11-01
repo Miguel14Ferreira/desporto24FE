@@ -51,5 +51,28 @@ class SafetyTests(unittest.TestCase):
             archive.main()
             delete.assert_not_called()
 
+    def test_rejects_unpinned_feature_branch(self):
+        with self.assertRaisesRegex(RuntimeError, 'Unpinned merged feature branch'):
+            archive.ensure_branch_safe('feat/unlisted', SHA, 'token')
+
+    def test_rejects_feature_without_exact_merged_pr(self):
+        name = 'feat/account-identity-navbar-20261029'
+        sha = archive.EXPECTED[name]
+        old_commit = {'commit': {'committer': {'date': '2026-10-29T00:00:00Z'}}}
+        replies = [(200, {'object': {'sha': sha}}), (200, []), (200, old_commit), (200, [])]
+        with patch.object(archive, 'api', side_effect=replies):
+            with self.assertRaisesRegex(RuntimeError, 'No merged PR with exact feature head SHA'):
+                archive.ensure_branch_safe(name, sha, 'token')
+
+    def test_accepts_merged_feature_ancestor(self):
+        name = 'feat/account-identity-navbar-20261029'
+        sha = archive.EXPECTED[name]
+        old_commit = {'commit': {'committer': {'date': '2026-10-29T00:00:00Z'}}}
+        merged_pr = {'merged_at': '2026-10-29T12:00:00Z', 'head': {'sha': sha}, 'merge_commit_sha': 'b'*40}
+        replies = [(200, {'object': {'sha': sha}}), (200, []), (200, old_commit),
+                   (200, [merged_pr]), (200, {'ahead_by': 0, 'status': 'behind'})]
+        with patch.object(archive, 'api', side_effect=replies):
+            self.assertEqual(archive.ensure_branch_safe(name, sha, 'token'), 'git/ref/heads/' + name)
+
 if __name__ == '__main__':
     unittest.main()
