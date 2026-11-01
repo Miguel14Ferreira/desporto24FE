@@ -18,6 +18,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Run isolated archive safety tests
+        run: python3 -m unittest discover -s scripts -p 'test_archive_stale_audit_branches.py' -v
       - name: Verify and archive pinned QA branches
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -27,6 +29,4 @@ jobs:
           QA_EXPECTED_SHA_2: f577b31dcda0367e37dfca2925c906f0cc9cf145
           QA_EXPECTED_SHA_3: afa4be90360b022d1575bca7fcc2c0469d4c5a11
           QA_EXPECTED_SHA_4: 33bdca0359c989d0f5ef799992a4dfe8ab3a1cf4
-        run: |
-          python3 -m unittest discover -s scripts -p 'test_archive_stale_audit_branches.py' -v
-          python3 scripts/archive_stale_audit_branches.py
+        run: python3 scripts/archive_stale_audit_branches.py
