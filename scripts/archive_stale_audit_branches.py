@@ -83,6 +83,9 @@ EXPECTED.update({
     "chore/archive-workflow-confirmation-choice-fe-20261101": "602324b89d8842baa3fd498fe46a336ec5c35864",
     "chore/pin-archive-workflow-sha-fe-20261101": "155e940fff37e510f5858462dd9930060d7ba97e",
 })
+EXPECTED.update({
+    "chore/next-safe-cleanup-fe-20261101": "281b09bd15218f9e7b91d4215d431e925cf70974",
+})
 CHORE_ARCHIVE_PREFIX = "archive/cleanup-scaffolding-20261101/"
 ARCHIVE_PREFIX = "archive/stale-audit-20261101/"
 MIN_AGE_DAYS = 7
