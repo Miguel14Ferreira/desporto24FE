@@ -35,6 +35,13 @@ EXPECTED.update({
     "chore/extend-fe-merged-list-20261030": "e4e626761af0248afd3a3c313ee1e08ff22aa4cf",
     "chore/next-verified-cleanup-fe-20261030": "b5a3128e22e9bb8fc61920b7b3815b87d42b9fbe",
 })
+EXPECTED.update({
+    "chore/allowlisted-branch-removal-20261030": "de742e7e9dfb135514a595d36e33f7049321bf99",
+    "chore/consolidated-cleanup-audit-20261030": "a216dd088586c257c73f0db5e9236bcd1b6160da",
+    "chore/content-equivalence-audit-20261030": "8a0b6b8c830dc4a75ea5d88101ac08b3fe882606",
+    "chore/rebase-content-equivalence-audit-20261030": "621991125b326222e40f0214f9ba65cb709cf46d",
+    "chore/recoverable-manual-branch-cleanup-20261030": "f979787ffe5ce653b805ec1880c2c9dcb06e8044",
+})
 CHORE_ARCHIVE_PREFIX = "archive/cleanup-scaffolding-20261101/"
 ARCHIVE_PREFIX = "archive/stale-audit-20261101/"
 MIN_AGE_DAYS = 7
