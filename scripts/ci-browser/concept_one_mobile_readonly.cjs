@@ -228,10 +228,51 @@ async function main() {
           // Angular and mobile viewport metadata can settle after the route host.
           // Wait for the viewport to match the device width before testing overflow.
           // A genuinely broken mobile viewport still fails rather than being ignored.
-          await page.waitForFunction(
-            expected => Math.abs(window.innerWidth - expected) <= 3,
-            width, { timeout: 8000 }
-          );
+          try {
+            await page.waitForFunction(
+              expected => Math.abs(window.innerWidth - expected) <= 3,
+              width, { timeout: 4500 }
+            );
+          } catch (error) {
+            // Make persistent mobile viewport failures actionable instead of
+            // reporting only a timeout. No user data, no network writes.
+            const diagnostic = await page.evaluate(() => {
+              const meta = document.querySelector('meta[name="viewport"]');
+              const selectors = ['html','body','.site-nav','.site-nav__shell',
+                '.create-page','.create-shell','.page-header','.header-actions',
+                '.create-card','.form-actions','.form-actions button',
+                'app-jynlo-select'];
+              const box = name => {
+                const el = document.querySelector(name);
+                if (!el) return null;
+                const r = el.getBoundingClientRect();
+                const c = getComputedStyle(el);
+                return { name, left:Math.round(r.left), right:Math.round(r.right),
+                  width:Math.round(r.width), scrollWidth:el.scrollWidth,
+                  minWidth:c.minWidth, maxWidth:c.maxWidth,
+                  flex:c.flexDirection, flexWrap:c.flexWrap,
+                  display:c.display, overflowX:c.overflowX };
+              };
+              const offenders = [...document.body.querySelectorAll('*')].map(el => {
+                const r = el.getBoundingClientRect();
+                const c = getComputedStyle(el);
+                return { node:el.tagName.toLowerCase(),
+                  cls:String(el.className || '').slice(0,75),
+                  parent:String(el.parentElement?.className || '').slice(0,50),
+                  left:Math.round(r.left),right:Math.round(r.right),
+                  width:Math.round(r.width),minWidth:c.minWidth,
+                  display:c.display,position:c.position };
+              }).filter(x => x.right > window.visualViewport.width + 4
+                && x.position !== 'fixed' && x.display !== 'none')
+                .sort((a,b) => b.right - a.right).slice(0,35);
+              return { meta:meta?.content, device:window.visualViewport.width,
+                layout:window.innerWidth, media760:matchMedia('(max-width:760px)').matches,
+                media900:matchMedia('(max-width:900px)').matches,
+                elements:selectors.map(box).filter(Boolean), offenders };
+            });
+            console.error('AUTH_MOBILE_VIEWPORT_DIAGNOSTIC', route, JSON.stringify(diagnostic));
+            throw error;
+          }
           await page.waitForTimeout(250);
           const name = route.replace(/\W+/g, '-').replace(/^-/, '');
           await page.screenshot({
