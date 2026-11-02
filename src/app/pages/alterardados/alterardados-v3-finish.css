@@ -1,0 +1,124 @@
+/* Jynlo v3 · Account and profile settings, scoped to edit view. */
+:host .edit-page.jynlo-secondary{
+  --v3-edit-line:rgba(43,207,202,.29);
+  min-height:100dvh;
+  padding:clamp(90px,7.3vw,108px) clamp(14px,2.1vw,28px) 75px;
+  color:#effffc;
+  background:radial-gradient(ellipse 47% 460px at 95% 3%,rgba(10,159,161,.19),transparent 78%),
+    linear-gradient(145deg,#03121f,#052333 62%,#031522);
+}
+:host .edit-page.jynlo-secondary .edit-shell{width:min(1120px,100%);max-width:1120px;min-width:0;}
+:host .edit-page.jynlo-secondary .page-header{
+  box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+  gap:16px 23px;flex-wrap:wrap;padding:clamp(19px,2.8vw,30px);
+  margin-bottom:20px;border:1px solid var(--v3-edit-line);border-radius:20px;
+  background:linear-gradient(99deg,rgba(3,23,38,.97),rgba(5,45,59,.94) 64%,rgba(6,61,71,.62)),
+    url('/assets/jynlo-feed-hero-sport.webp') right center/auto 100% no-repeat,#052535;
+}
+:host .edit-page.jynlo-secondary .page-header>div:first-child{flex:1 1 320px;min-width:0;}
+:host .edit-page.jynlo-secondary .page-header h1{
+  margin:0;color:#f2fffc;font-size:clamp(2rem,3.35vw,3.13rem);
+  line-height:1.1;letter-spacing:-.044em;text-wrap:balance;
+}
+:host .edit-page.jynlo-secondary .page-header .subtitle{
+  color:#c0dbe2;line-height:1.56;margin-top:9px;max-width:60ch;
+}
+:host .edit-page.jynlo-secondary .header-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:9px;}
+:host .edit-page.jynlo-secondary .header-actions>a{
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;min-height:44px;padding:9px 14px;
+  white-space:normal;line-height:1.35;text-align:center;border-radius:11px;
+}
+:host .edit-page.jynlo-secondary .edit-card{
+  box-sizing:border-box;min-width:0;
+  border:1px solid var(--v3-edit-line);border-radius:21px;
+  padding:clamp(17px,2.5vw,28px);
+  background:linear-gradient(146deg,rgba(10,47,62,.98),rgba(5,30,47,.98));
+  box-shadow:0 18px 41px rgba(0,12,27,.16);
+}
+:host .edit-page.jynlo-secondary .photo-panel{
+  min-width:0;flex-wrap:wrap;gap:17px;
+  padding-bottom:20px;border-bottom:1px solid rgba(42,194,195,.24);
+}
+:host .edit-page.jynlo-secondary .photo-panel>div:not(.photo-preview){min-width:0;}
+:host .edit-page.jynlo-secondary .photo-preview{
+  width:95px;height:95px;flex:0 0 95px;
+  border:2px solid rgba(53,229,212,.52);
+  background:linear-gradient(130deg,#105966,#083849);color:#d4fff3;
+  box-shadow:0 9px 28px rgba(13,149,142,.11);
+}
+:host .edit-page.jynlo-secondary .photo-panel p{color:#b5d4da;line-height:1.5;}
+:host .edit-page.jynlo-secondary :is(.profile-completion-card,.mfa-setting,.mfa-setup-card,
+  .device-sessions,.danger-zone){
+  box-sizing:border-box;min-width:0;
+  border:1px solid var(--v3-edit-line);
+  border-radius:16px;background:rgba(7,39,55,.83);
+}
+:host .edit-page.jynlo-secondary .profile-completion-card__heading h2{color:#f2fffb;line-height:1.3;}
+:host .edit-page.jynlo-secondary .profile-completion-track{background:#123d4d;}
+:host .edit-page.jynlo-secondary .profile-completion-track span{
+  background:linear-gradient(95deg,#16d6cc,#60f5cc);
+}
+:host .edit-page.jynlo-secondary .form-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:15px;margin-top:22px;
+}
+:host .edit-page.jynlo-secondary .form-grid>label{min-width:0;gap:8px;}
+:host .edit-page.jynlo-secondary .form-grid>label>span{
+  color:#c8e2e6;line-height:1.4;
+}
+:host .edit-page.jynlo-secondary .edit-card :is(
+  input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea
+){
+  box-sizing:border-box;min-width:0;max-width:100%;width:100%;
+  min-height:47px;border:1px solid rgba(43,195,202,.4);
+  border-radius:11px;background:#082b3d;color:#f0fffc;
+}
+:host .edit-page.jynlo-secondary .edit-card :is(
+  input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea
+):focus-visible{
+  outline:2px solid #97ffe6;outline-offset:2px;border-color:#52f0d9;
+}
+:host .edit-page.jynlo-secondary .edit-card input[aria-invalid=true]{
+  border-color:#f5a1a1;
+}
+:host .edit-page.jynlo-secondary .mfa-setting{
+  gap:14px;flex-wrap:wrap;align-items:center;
+}
+:host .edit-page.jynlo-secondary .mfa-copy{min-width:0;flex:1 1 220px;}
+:host .edit-page.jynlo-secondary .switch-track{border-color:rgba(48,190,200,.47);background:#103d4a;}
+:host .edit-page.jynlo-secondary .switch input:checked+.switch-track{
+  border-color:#47e6cc;background:rgba(28,216,191,.32);
+}
+:host .edit-page.jynlo-secondary .form-actions{
+  display:flex;justify-content:flex-end;align-items:center;
+  flex-wrap:wrap;gap:10px;margin-top:22px;
+  padding-top:18px;border-top:1px solid rgba(47,186,194,.22);
+}
+:host .edit-page.jynlo-secondary .form-actions>:is(a,button){
+  min-height:45px;max-width:100%;
+  padding:10px 15px;line-height:1.35;border-radius:11px;
+  white-space:normal;text-align:center;
+}
+:host .edit-page.jynlo-secondary .photo-edit-actions{gap:9px;flex-wrap:wrap;}
+:host .edit-page.jynlo-secondary .photo-edit-actions>:is(label,button){
+  max-width:100%;min-height:41px;line-height:1.35;white-space:normal;
+}
+:host .edit-page.jynlo-secondary :is(a,button,input,select,textarea):focus-visible{
+  outline:2px solid #9bffeb;outline-offset:3px;
+}
+@media(max-width:760px){
+  :host .edit-page.jynlo-secondary .page-header{align-items:stretch;flex-direction:column;}
+  :host .edit-page.jynlo-secondary .header-actions{justify-content:flex-start;}
+  :host .edit-page.jynlo-secondary .form-grid{grid-template-columns:minmax(0,1fr);}
+  :host .edit-page.jynlo-secondary .full-width{grid-column:auto;}
+}
+@media(max-width:560px){
+  :host .edit-page.jynlo-secondary{padding:calc(90px + env(safe-area-inset-top)) 13px 53px;}
+  :host .edit-page.jynlo-secondary .page-header{padding:18px;}
+  :host .edit-page.jynlo-secondary .photo-panel{align-items:flex-start;}
+  :host .edit-page.jynlo-secondary .form-actions>:is(a,button){flex:1 1 100%;}
+}
+@media(prefers-reduced-motion:reduce){
+  :host .edit-page.jynlo-secondary .photo-preview{transition:none;}
+}

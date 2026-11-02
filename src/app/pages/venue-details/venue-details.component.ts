@@ -14,7 +14,7 @@ import { venueOfficialContactPage, venueOfficialContactPageNeedsIdentityCheck } 
 @Component({
   selector: 'app-venue-details',
   templateUrl: './venue-details.component.html',
-  styleUrls: ['./venue-details.component.css'],
+  styleUrls: ['./venue-details.component.css', './venue-details-v3-finish.css'],
   standalone: false
 })
 export class VenueDetailsComponent implements OnInit, OnDestroy {

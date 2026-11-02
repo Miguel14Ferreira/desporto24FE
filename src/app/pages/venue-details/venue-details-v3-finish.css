@@ -1,0 +1,104 @@
+/* Jynlo v3 · Venue detail: map and verified GPS links are untouched. */
+:host .venue-detail-page{
+  --v3-venue-line:rgba(42,207,205,.3);
+  min-height:100dvh;
+  padding:clamp(90px,7.3vw,106px) clamp(14px,2.1vw,28px) 72px;
+  background:radial-gradient(ellipse 46% 470px at 97% 2%,rgba(12,159,164,.18),transparent 77%),
+    linear-gradient(145deg,#03121f,#052333 65%,#031421);
+  color:#f1fffc;
+}
+:host .venue-detail-page .venue-detail-shell{width:min(1250px,100%);max-width:1250px;min-width:0;}
+:host .venue-detail-page .venue-header {
+  box-sizing:border-box;min-width:0;
+  border:1px solid var(--v3-venue-line);border-radius:22px;
+  padding:clamp(22px,3.3vw,39px);
+  background:linear-gradient(100deg,rgba(3,22,36,.97),rgba(5,43,58,.93) 62%,rgba(5,63,74,.64)),
+    url('/assets/jynlo-feed-hero-sport.webp') right center/auto 100% no-repeat,#062b3b;
+  box-shadow:0 17px 37px rgba(0,12,26,.16);
+}
+:host .venue-detail-page .venue-header h1{
+  max-width:23ch;font-size:clamp(2.05rem,3.6vw,3.3rem);
+  line-height:1.12;letter-spacing:-.044em;color:#f2fffc;
+  overflow-wrap:anywhere;text-wrap:balance;
+}
+:host .venue-detail-page .venue-kicker{color:#5ef1d6;letter-spacing:.13em;}
+:host .venue-detail-page .venue-hero-location{color:#c2dce4;overflow-wrap:anywhere;}
+:host .venue-detail-page .venue-header :is(.venue-hero-back,.venue-edit-link){
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;max-width:100%;
+  min-height:43px;padding:9px 13px;
+  border-radius:11px;border:1px solid rgba(43,207,207,.43);
+  background:rgba(6,59,72,.81);color:#cbfcf2;
+  line-height:1.4;text-decoration:none;white-space:normal;text-align:center;
+}
+:host .venue-detail-page .venue-source-badge{
+  border:1px solid rgba(48,225,211,.32);
+  border-radius:9px;background:rgba(25,176,173,.14);color:#c8f9ec;
+}
+:host .venue-detail-page :is(.venue-basic-info,.venue-information-grid){
+  gap:14px;min-width:0;
+}
+:host .venue-detail-page :is(.venue-basic-info>div,.venue-information-grid>div,
+  .venue-rating-summary,.venue-visit-card,.venue-public-more,
+  .venue-sport-condition-card,.venue-photos-state,.venue-state){
+  min-width:0;box-sizing:border-box;
+  border:1px solid var(--v3-venue-line);border-radius:17px;
+  background:linear-gradient(145deg,rgba(10,51,66,.97),rgba(5,30,46,.98));
+  box-shadow:0 13px 31px rgba(0,12,25,.12);
+}
+:host .venue-detail-page :is(.venue-basic-info,.venue-information-grid) strong{
+  color:#f1fffc;line-height:1.45;overflow-wrap:anywhere;
+}
+:host .venue-detail-page :is(.venue-basic-info,.venue-information-grid) span{color:#b5d7df;}
+:host .venue-detail-page :is(.venue-information-section,.venue-amenities-section,
+  .venue-photos-section,.venue-visit-section,.venue-sport-conditions-section) h2{
+  color:#f2fffc;letter-spacing:-.024em;text-wrap:balance;
+}
+:host .venue-detail-page .venue-visit-grid{
+  grid-template-columns:minmax(0,1.3fr) minmax(0,.85fr);gap:14px;
+}
+:host .venue-detail-page .venue-visit-card{padding:clamp(17px,2vw,24px);}
+:host .venue-detail-page .venue-map-iframe{
+  display:block;width:100%;height:clamp(255px,30vw,365px);
+  border-radius:13px;border:1px solid rgba(47,199,202,.3);
+  background:#082536;
+}
+:host .venue-detail-page .venue-map-unavailable{
+  border:1px dashed rgba(57,185,198,.35);background:rgba(5,33,49,.7);
+  border-radius:13px;color:#bbd9e0;
+}
+:host .venue-detail-page :is(.venue-visit-action,.venue-route-mode,
+  .venue-public-more-link,.venue-address-map-link){
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;max-width:100%;min-height:43px;
+  border-radius:11px;white-space:normal;overflow-wrap:anywhere;
+  text-align:center;line-height:1.35;
+}
+:host .venue-detail-page .venue-route-planner{
+  border:1px solid rgba(44,190,199,.27);border-radius:13px;
+  background:rgba(6,37,53,.79);
+}
+:host .venue-detail-page .venue-route-modes{gap:8px;}
+:host .venue-detail-page .venue-contact-number{color:#e9fffa;overflow-wrap:anywhere;}
+:host .venue-detail-page .venue-photo-grid{gap:13px;}
+:host .venue-detail-page .venue-photo-grid img{
+  width:100%;max-width:100%;border:1px solid rgba(53,198,201,.31);
+  border-radius:13px;
+}
+:host .venue-detail-page .venue-amenities-list span{
+  border-color:rgba(43,197,194,.33);
+  background:rgba(21,129,130,.16);color:#bdffed;
+}
+:host .venue-detail-page :is(a,button,input,textarea):focus-visible{
+  outline:2px solid #9cffe9;outline-offset:3px;
+}
+@media(max-width:900px){
+  :host .venue-detail-page .venue-visit-grid{grid-template-columns:minmax(0,1fr);}
+}
+@media(max-width:640px){
+  :host .venue-detail-page{padding:calc(90px + env(safe-area-inset-top)) 14px 50px;}
+  :host .venue-detail-page .venue-header{padding:21px;}
+  :host .venue-detail-page .venue-basic-info,
+  :host .venue-detail-page .venue-information-grid{grid-template-columns:minmax(0,1fr);}
+  :host .venue-detail-page .venue-map-iframe{height:260px;}
+}

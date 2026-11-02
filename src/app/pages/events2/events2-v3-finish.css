@@ -1,0 +1,108 @@
+/* Jynlo v3 · Create Session. Presentation only; keep existing bindings and flow. */
+:host .create-page.jynlo-games {
+  --v3-create-line:rgba(41,209,205,.31);
+  min-height:100dvh;
+  background:
+    radial-gradient(ellipse 48% 420px at 96% 2%,rgba(12,146,159,.19),transparent 78%),
+    linear-gradient(145deg,#03111f,#052434 63%,#031521);
+  padding:clamp(90px,7.4vw,108px) clamp(14px,2vw,27px) 72px;
+  color:#f0fffc;
+}
+:host .create-page.jynlo-games .create-shell{width:min(1160px,100%);max-width:1160px;min-width:0;}
+:host .create-page.jynlo-games .page-header{
+  box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px 26px;padding:clamp(20px,2.7vw,30px);
+  margin:0 0 19px;border:1px solid var(--v3-create-line);
+  border-radius:21px;
+  background:linear-gradient(97deg,rgba(3,22,36,.97),rgba(5,43,56,.92) 64%,rgba(7,62,69,.6)),
+    url('/assets/jynlo-feed-hero-sport.webp') right center/auto 100% no-repeat,#052b3b;
+}
+:host .create-page.jynlo-games .page-header>div:first-child{flex:1 1 360px;min-width:0;}
+:host .create-page.jynlo-games .page-header h1{
+  margin:0;color:#f3fffc;font-size:clamp(2rem,3.3vw,3.13rem);
+  line-height:1.1;letter-spacing:-.046em;text-wrap:balance;
+}
+:host .create-page.jynlo-games .page-header .subtitle{
+  color:#c2dce2;line-height:1.56;max-width:63ch;margin-top:9px;
+}
+:host .create-page.jynlo-games .header-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:9px;}
+:host .create-page.jynlo-games .header-actions>a{
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;min-height:44px!important;
+  padding:9px 13px;border-radius:12px;white-space:normal;
+  line-height:1.35;text-align:center;
+}
+:host .create-page.jynlo-games .create-card{
+  min-width:0;border:1px solid var(--v3-create-line);
+  border-radius:20px;
+  background:linear-gradient(145deg,rgba(9,45,62,.98),rgba(5,29,45,.98));
+}
+:host .create-page.jynlo-games :is(.community-context,.create-mode-panel,.create-share-panel,
+  .create-preset-panel,.venue-section,.create-meeting-point-panel,.photo-section){
+  border-color:rgba(40,197,202,.33);border-radius:16px;
+}
+:host .create-page.jynlo-games .create-mode-option,
+:host .create-page.jynlo-games .create-share-community,
+:host .create-page.jynlo-games .option-card {
+  min-width:0;
+  border-color:rgba(50,182,193,.36);
+  border-radius:13px;background:rgba(5,35,50,.76);
+}
+:host .create-page.jynlo-games :is(.create-mode-option,.create-share-community,.option-card):hover{
+  border-color:rgba(56,236,214,.62);
+}
+:host .create-page.jynlo-games .create-mode-option:is(.active,[aria-pressed="true"]),
+:host .create-page.jynlo-games .create-share-community.selected {
+  border-color:#45f0d1;background:rgba(23,149,146,.21);
+}
+:host .create-page.jynlo-games .create-card :is(.form-grid,.create-preset-fields,.venue-create-grid)>label{
+  min-width:0;gap:7px;
+}
+:host .create-page.jynlo-games .create-card label>span{
+  line-height:1.4;overflow-wrap:anywhere;
+}
+:host .create-page.jynlo-games .create-card :is(
+  .form-grid,.create-preset-fields,.venue-create-grid,.nested-field
+) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){
+  box-sizing:border-box;min-height:48px;min-width:0;max-width:100%;
+  border-radius:12px;border:1px solid rgba(50,195,201,.41);
+  background:#082b3d;color:#f0fffc;
+}
+:host .create-page.jynlo-games .create-card :is(
+  input:not([type=checkbox]):not([type=radio]),select,textarea
+):focus-visible{
+  outline:2px solid #a0ffeb;outline-offset:2px;border-color:#4cf2d7;
+}
+:host .create-page.jynlo-games .create-card :is(.venue-result-option,.venue-result-option button){
+  max-width:100%;overflow-wrap:anywhere;
+}
+:host .create-page.jynlo-games .create-card>.form-actions{
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:10px;flex-wrap:wrap;
+  margin-top:19px;padding-top:19px;border-top:1px solid rgba(43,187,192,.22);
+}
+:host .create-page.jynlo-games .create-card>.form-actions>*{
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;min-height:46px;line-height:1.35;
+  padding:10px 17px;border-radius:12px;
+  white-space:normal;max-width:100%;text-align:center;
+}
+:host .create-page.jynlo-games .create-card>.form-actions>button[type=submit]{
+  border:1px solid #43f1d1;background:linear-gradient(110deg,#20e5d0,#43f5c9);color:#04343a;
+}
+:host .create-page.jynlo-games :is(a,button,select):focus-visible{
+  outline:2px solid #9dffeb;outline-offset:3px;
+}
+@media(max-width:760px){
+  :host .create-page.jynlo-games .page-header{flex-direction:column;align-items:stretch;}
+  :host .create-page.jynlo-games .header-actions{justify-content:flex-start;}
+}
+@media(max-width:560px){
+  :host .create-page.jynlo-games{padding:calc(88px + env(safe-area-inset-top)) 13px 52px;}
+  :host .create-page.jynlo-games .page-header{padding:19px;}
+  :host .create-page.jynlo-games .header-actions>a{flex:1 1 135px;}
+  :host .create-page.jynlo-games .create-card>.form-actions>*{flex:1 1 100%;}
+}
+@media(prefers-reduced-motion:reduce){
+  :host .create-page.jynlo-games :is(.create-mode-option,.option-card){transition:none;}
+}

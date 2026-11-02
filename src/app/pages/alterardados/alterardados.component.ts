@@ -14,7 +14,7 @@ import { calculateProfileCompletion } from '../../shared/profile-completion';
 @Component({
   selector: 'app-alterardados',
   templateUrl: './alterardados.component.html',
-  styleUrls: ['./alterardados.component.css'],
+  styleUrls: ['./alterardados.component.css', './alterardados-v3-finish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
