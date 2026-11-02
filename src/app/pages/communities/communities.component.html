@@ -318,6 +318,25 @@
                       <span class="sport-blank">{{ 'communities.noSportsSelected' | t }}</span>
                     }
                   </div>
+                  @if (hasTeamInvitationDeepLink) {
+                    <section class="community-team-onboarding" [attr.aria-label]="'communities.teamInviteOnboarding.region' | t">
+                      <span class="community-team-onboarding-kicker">
+                        <span aria-hidden="true">🏆</span> {{ 'communities.teamInviteOnboarding.eyebrow' | t }}
+                      </span>
+                      <strong>{{ 'communities.teamInviteOnboarding.title' | t }}</strong>
+                      @if (communityPresentation.visibility === 'PUBLIC') {
+                        <p>{{ 'communities.teamInviteOnboarding.publicHint' | t }}</p>
+                      } @else if (joinRequestSent) {
+                        <p role="status">{{ 'communities.teamInviteOnboarding.pendingHint' | t }}</p>
+                      } @else {
+                        <p>{{ 'communities.teamInviteOnboarding.privateHint' | t }}</p>
+                      }
+                      <div class="community-team-onboarding-steps" [attr.aria-label]="'communities.teamInviteOnboarding.stepsLabel' | t">
+                        <span><b>1</b> {{ 'communities.teamInviteOnboarding.stepCommunity' | t }}</span>
+                        <span><b>2</b> {{ 'communities.teamInviteOnboarding.stepTeam' | t }}</span>
+                      </div>
+                    </section>
+                  }
                   <div class="row-actions">
                     <button
                       type="button"
@@ -325,17 +344,19 @@
                       [disabled]="membershipActionLoading || joinRequestSent || pendingJoinLookupLoading"
                       (click)="joinPresentedCommunity()">
                       @if (communityPresentation.visibility === 'PUBLIC') {
-                        {{ (membershipActionLoading ? 'communities.joining' : 'communities.joinPublic') | t }}
+                        {{ (membershipActionLoading ? 'communities.joining'
+                            : (hasTeamInvitationDeepLink ? 'communities.teamInviteOnboarding.joinPublic' : 'communities.joinPublic')) | t }}
                       } @else {
                         {{ (pendingJoinLookupLoading
                           ? 'communities.checkingJoinRequest'
                           : (membershipActionLoading
                             ? 'communities.requestingJoin'
-                            : (joinRequestSent ? 'communities.joinRequestPending' : 'communities.requestJoin'))) | t }}
+                            : (joinRequestSent ? 'communities.joinRequestPending'
+                              : (hasTeamInvitationDeepLink ? 'communities.teamInviteOnboarding.requestJoin' : 'communities.requestJoin')))) | t }}
                       }
                     </button>
                   </div>
-                  @if (membershipActionMessage) {
+                  @if (membershipActionMessage && !(hasTeamInvitationDeepLink && joinRequestSent)) {
                     <div class="feedback">{{ membershipActionMessage }}</div>
                   }
                 </div>

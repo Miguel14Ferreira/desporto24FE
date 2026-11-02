@@ -1632,3 +1632,58 @@ input,textarea,select {
   .community-session-policy-choice-grid { grid-template-columns: minmax(0, 1fr); }
   .community-session-policy-heading > button { width: 100%; }
 }
+
+
+/* Invite onboarding on the community presentation screen. No roster data for visitors. */
+.community-team-onboarding {
+  display: grid;
+  gap: .65rem;
+  padding: clamp(1rem, 2vw, 1.35rem);
+  margin: 1rem 0;
+  border: 1px solid rgba(70, 194, 152, .35);
+  border-radius: 1rem;
+  background: linear-gradient(128deg, rgba(31, 83, 78, .24), rgba(14, 27, 45, .48));
+}
+.community-team-onboarding-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  color: #8cf0c8;
+  font-size: .75rem;
+  font-weight: 750;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.community-team-onboarding > strong {
+  color: #f3fafc;
+  font-size: 1.06rem;
+  line-height: 1.4;
+}
+.community-team-onboarding > p {
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.55;
+}
+.community-team-onboarding-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.1rem;
+  margin-top: .25rem;
+}
+.community-team-onboarding-steps > span {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  color: #cbd5e1;
+  font-size: .84rem;
+}
+.community-team-onboarding-steps b {
+  display: inline-grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  border: 1px solid rgba(140, 240, 200, .45);
+  color: #8cf0c8;
+  font-size: .75rem;
+}

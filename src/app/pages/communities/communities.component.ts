@@ -1648,6 +1648,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.invitedTournamentId ? this.positiveQueryId('team') : null;
   }
 
+  // A deep link is only an invitation, not permission to see private rosters.
+  // The full team is loaded only after the community membership check.
+  get hasTeamInvitationDeepLink(): boolean {
+    return this.invitedTournamentId !== null && this.invitedTeamId !== null;
+  }
+
   // Dedicated team profile is separate from the legacy invitation deep link.
   get tournamentTeamPageId(): number | null {
     return this.invitedTournamentId ? this.positiveQueryId('teamPage') : null;
