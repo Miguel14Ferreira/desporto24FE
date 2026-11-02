@@ -5,6 +5,7 @@ on:
     branches: [develop]
     paths:
       - '.github/workflows/jynlo-authenticated-visual-audit.yml'
+      - 'angular.json'
       - 'scripts/ci-browser/concept_one_mobile_readonly.cjs'
       - 'src/app/app.component.*'
       - 'src/app/app-routing.module.ts'
