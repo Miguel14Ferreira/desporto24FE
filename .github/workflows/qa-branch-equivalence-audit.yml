@@ -1,0 +1,25 @@
+name: QA branch equivalence audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - .github/workflows/qa-branch-equivalence-audit.yml
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit QA branches without modifying refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/qa/audit_branch_equivalence_20261101.py
+      - name: Upload audit JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-branch-equivalence-audit
+          path: artifacts/qa-equivalence-audit.json
+          if-no-files-found: warn
