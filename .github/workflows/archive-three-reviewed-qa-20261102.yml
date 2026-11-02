@@ -1,0 +1,54 @@
+name: Archive three reviewed inbox and session QA branches
+on:
+  push:
+    branches: [develop]
+    paths: [.github/workflows/archive-three-reviewed-qa-20261102.yml]
+permissions:
+  contents: write
+  pull-requests: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify retained QA tests
+        run: |
+          node --check scripts/qa/jynlo-inbox-live-browser.cjs
+          node --test scripts/qa/jynlo-inbox-live-browser.test.cjs
+          node --check scripts/qa/jynlo-session-live-browser.cjs
+          node --test scripts/qa/jynlo-session-live-browser.test.cjs
+      - name: Archive pinned historical heads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request,urllib.error,urllib.parse
+          repo=os.environ['REPO']
+          items=[
+            ('qa/live-inbox-dual-account-20261023','351a319693eea16a153269310113629ffb12595b'),
+            ('qa/live-private-session-lifecycle-20261023','4336576236206f16dd361ca9f7b860ca89a44c84'),
+            ('qa/read-only-community-session-access-20261023','0116ae431920f6a9be644a28fe4e1e35617d6eaf')
+          ]
+          def api(method,path,data=None):
+              req=urllib.request.Request('https://api.github.com/repos/'+repo+path,method=method,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},data=None if data is None else json.dumps(data).encode())
+              with urllib.request.urlopen(req,timeout=30) as r:return json.loads(r.read() or b'{}')
+          owner=repo.split('/')[0]
+          for name,sha in items:
+              encoded=urllib.parse.quote(name,safe='/')
+              assert api('GET','/git/ref/heads/'+encoded)['object']['sha']==sha,'branch moved'
+              assert not api('GET','/pulls?state=open&head='+owner+':'+urllib.parse.quote(name,safe='')+'&per_page=100'),'open PR'
+              tag='archive/reviewed-qa-20261102/'+name
+              try:
+                  assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha,'tag mismatch'
+              except urllib.error.HTTPError as e:
+                  if e.code!=404:raise
+                  api('POST','/git/refs',{'ref':'refs/tags/'+tag,'sha':sha})
+              assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha
+              assert api('GET','/git/ref/heads/'+encoded)['object']['sha']==sha
+              api('DELETE','/git/refs/heads/'+encoded)
+              print('QA_ARCHIVED',name,sha)
+          PY
