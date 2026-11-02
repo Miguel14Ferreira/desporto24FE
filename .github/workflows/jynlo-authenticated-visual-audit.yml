@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   authenticated-layout:
-    name: Audit signed-in layouts at 390px and 1366px in PT and EN
+    name: Audit signed-in layouts at 390px, 768px and 1366px in PT and EN
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

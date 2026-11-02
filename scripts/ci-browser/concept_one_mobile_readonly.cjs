@@ -113,10 +113,10 @@ async function main() {
     ...(process.env.JYNLO_USE_SYSTEM_CHROME === '1' ? { channel: 'chrome' } : {})
   });
   try {
-    for (const width of [390, 1366]) {
+    for (const width of [390, 768, 1366]) {
       for (const language of ['pt', 'en']) {
         const context = await browser.newContext({
-          viewport: { width, height: width === 390 ? 844 : 900 },
+          viewport: { width, height: width === 390 ? 844 : width === 768 ? 1024 : 900 },
           locale: language === 'en' ? 'en-GB' : 'pt-PT',
           isMobile: width === 390,
           hasTouch: width === 390
@@ -367,7 +367,7 @@ async function main() {
     }
     assert.deepEqual(unexpectedWrites, [], 'Visual audit may not trigger business mutations');
     assert.deepEqual(browserErrors, [], 'Angular must not throw while rendering audited routes');
-    console.log('PASS: 390px/1366px PT/EN including four synthetic authenticated session states');
+    console.log('PASS: 390px/768px/1366px PT/EN including four synthetic authenticated session states');
   } finally {
     await browser.close();
   }
