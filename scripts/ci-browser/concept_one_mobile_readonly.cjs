@@ -367,7 +367,8 @@ async function main() {
             if (!action) return respond(route, 200,
               tournamentId === 9020 ? fictionalTeams.slice(0,3)
                 : tournamentId === 9023
-                ? [...fictionalTeams.slice(0,2), {...fictionalTeams[2],players:[]}]
+                ? [{...fictionalTeams[0],players:fictionalTeams[0].players.slice(0,1)},
+                   fictionalTeams[1], {...fictionalTeams[2],players:[]}]
                 : fictionalTeams);
             if (action === 'matches') return respond(route, 200, {
               matches:fictionalTeamMatches[tournamentId],page:0,hasMore:false
@@ -611,10 +612,10 @@ async function main() {
                   assert.equal(await page.locator('.team-roster-card').count(),3,
                     'Draft shows both occupied squads and the deletable empty squad');
                   const occupied = page.locator('.team-roster-card').first();
-                  assert.equal(await page.locator('.team-roster-readiness.is-ready').count(),2,
-                    'Two synthetic complete teams must be visibly ready');
-                  assert.equal(await page.locator('.team-roster-readiness:not(.is-ready)').count(),1,
-                    'The empty team must visibly need more players');
+                  assert.equal(await page.locator('.team-roster-readiness.is-ready').count(),1,
+                    'Only the complete synthetic team must be ready');
+                  assert.equal(await page.locator('.team-roster-readiness:not(.is-ready)').count(),2,
+                    'Incomplete and empty squads must be marked as needing players');
                   const rawLink = occupied.locator('.team-link-field');
                   assert.equal(await rawLink.isVisible(),false,
                     'Full invitation URL must stay collapsed by default');
