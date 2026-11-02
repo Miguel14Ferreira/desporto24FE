@@ -412,7 +412,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       || this.selectedSportCreationModel === 'TRACK_BEST_TIME';
   }
   timedUiKey(key:string):string {
-    const common=['rounds','linked','unlink','link','empty','place','bestTime','attempts','unlinked'];
+    const common=['rounds','linked','unlink','link','empty','place','bestTime','attempts','unlinked','loading','loadError','available','noAvailable','resultsTitle','noResults','provisional'];
     return 'communities.'+(this.selected?.scoringMode==='TRACK_BEST_TIME'
       && !common.includes(key) ? 'trackTournament':'swimTournament')+'.'+key;
   }
