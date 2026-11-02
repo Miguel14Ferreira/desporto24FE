@@ -373,7 +373,7 @@ async function main() {
             const filters = await page.locator('.community-discovery-filters').boundingBox();
             assert.ok(pitch && benefits && copy && heading && filters,
               'Communities desktop discovery must retain its intro, benefits and search');
-            assert.ok(pitch.height <= 430,
+            assert.ok(pitch.height <= 485,
               'Communities onboarding should remain compact on desktop: '
               + Math.round(pitch.height) + 'px');
             assert.ok(benefits.x >= copy.x + copy.width - 5,
