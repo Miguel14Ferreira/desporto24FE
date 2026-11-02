@@ -69,3 +69,84 @@
 
 }
 
+
+/* Community session cards reuse the premium session identity / metadata rhythm.
+   Keep the entire card as the original single navigation link. */
+.community-session-card {
+  min-width:0;
+  border-color:rgba(40,203,204,.28);
+  background:
+    radial-gradient(ellipse at 100% 0%,rgba(30,214,202,.085),transparent 75%),
+    linear-gradient(145deg,rgba(9,51,67,.96),rgba(5,33,49,.98));
+  border-radius:15px;
+  transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.community-session-card:hover {
+  transform:translateY(-2px);
+  border-color:rgba(62,237,213,.65);
+  background:linear-gradient(145deg,rgba(12,72,79,.97),rgba(7,46,61,.98));
+}
+.community-session-card:focus-visible {
+  outline:2px solid #a1ffe9;
+  outline-offset:3px;
+}
+.community-session-main strong {
+  font-size:1.04rem;
+  line-height:1.35;
+  color:#f2fffc;
+  overflow-wrap:anywhere;
+}
+.community-session-main > span {
+  color:#b8d5df;
+  overflow-wrap:anywhere;
+}
+.community-session-meta {
+  color:#c0e0e4;
+  column-gap:7px;
+  row-gap:7px;
+  line-height:1.35;
+}
+.community-session-meta > span {
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:5px 9px;
+  border:1px solid rgba(55,169,185,.21);
+  border-radius:9px;
+  color:#cbe6e7;
+  background:rgba(16,79,90,.24);
+  font-size:.75rem;
+  overflow-wrap:anywhere;
+}
+.community-session-meta > .competition-badge {
+  color:#a2fbe4;
+  background:rgba(31,205,185,.13);
+  border-color:rgba(39,225,204,.3);
+  font-weight:800;
+}
+.community-session-meta > .session-open-spots {
+  color:#a4ffdf;
+  border-color:rgba(47,216,172,.36);
+  background:rgba(20,160,125,.14);
+  font-weight:800;
+}
+.community-session-meta > .session-full {
+  color:#ffdbac;
+  border-color:rgba(239,175,98,.35);
+  background:rgba(143,88,33,.15);
+  font-weight:800;
+}
+@media (min-width: 1050px) {
+  .community-session-card {
+    grid-template-columns:minmax(0,.84fr) minmax(0,1.6fr);
+    gap:18px;
+    padding:16px 18px;
+  }
+  .community-session-meta {justify-content:flex-end;}
+}
+@media (prefers-reduced-motion:reduce) {
+  .community-session-card {transition:none;}
+  .community-session-card:hover {transform:none;}
+}
