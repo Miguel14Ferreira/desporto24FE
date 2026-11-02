@@ -191,3 +191,21 @@
   :host .ranking-table th:nth-child(2),
   :host .ranking-table td:nth-child(2) { min-width:180px; max-width:245px; }
 }
+
+/* Community rankings: clearer top-three hierarchy; the actual ordering is
+   supplied by the standings API and never recomputed by CSS. */
+:host .ranking-table tbody tr.podium td:first-child strong{
+  display:inline-grid;place-items:center;min-width:30px;min-height:30px;
+  border:1px solid rgba(55,217,198,.35);border-radius:9px;
+  color:#baffea;background:rgba(31,154,143,.18);font-variant-numeric:tabular-nums;
+}
+:host .ranking-table tbody tr.podium:first-child td:first-child strong{
+  color:#ffe6a2;border-color:rgba(246,199,94,.52);background:rgba(173,123,35,.17);
+}
+:host .ranking-table tbody tr.podium:nth-child(2) td:first-child strong{
+  color:#e8f5f6;border-color:rgba(182,218,222,.42);background:rgba(125,161,174,.16);
+}
+:host .ranking-table tbody tr.podium:nth-child(3) td:first-child strong{
+  color:#f7caac;border-color:rgba(211,151,101,.42);background:rgba(155,104,64,.18);
+}
+:host .ranking-table tbody tr.podium .points-cell{font-weight:950;}
