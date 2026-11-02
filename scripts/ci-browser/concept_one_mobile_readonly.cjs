@@ -254,6 +254,12 @@ async function main() {
           if (endpoint === '/api/communities/invites/me') return respond(route, 200, []);
           if (endpoint === '/api/communities/77') return respond(route, 200, fictionalCommunity);
           if (endpoint === '/api/communities/77/competition') return respond(route, 200, fictionalCompetition);
+          // Empty historical collections are valid and must not be confused with
+          // unavailable data when reviewing the populated current standings.
+          if (endpoint === '/api/communities/77/competition/standings-archives'
+              || endpoint === '/api/communities/77/competition/match-archives') {
+            return respond(route, 200, []);
+          }
           if (endpoint === '/api/communities/77/sessions') return respond(route, 200, [fictionalCommunitySession]);
           if (endpoint === '/api/communities/77/sessions/competition-results') return respond(route, 200, []);
           if (endpoint === '/api/communities/77/tournaments') {
@@ -461,6 +467,11 @@ async function main() {
                 'Three supplied rankings should form the podium');
               assert.ok((await table.locator('tbody').innerText()).includes('Jogador Histórico'),
                 'Historical participants remain visible in the community ranking');
+              await table.scrollIntoViewIfNeeded();
+              await page.screenshot({
+                path: path.join(OUT, width + '-' + language + '-community-ranking-results.png'),
+                fullPage: false
+              });
             }
             if (selected === 'tournaments') {
               const options = page.locator('.tournament-option');
@@ -473,6 +484,11 @@ async function main() {
                 'Completed tournament keeps all three scored competitors');
               assert.ok((await page.locator('.tournament-detail .champion').innerText()).includes('Jogadora Fictícia'),
                 'Completed tournament shows the recorded champion');
+              await standings.scrollIntoViewIfNeeded();
+              await page.screenshot({
+                path: path.join(OUT, width + '-' + language + '-community-tournament-results.png'),
+                fullPage: false
+              });
             }
             if (selected === 'sessions') {
               assert.equal(await page.locator('a.community-session-card[href="/menu/events/901"]').count(), 1,
