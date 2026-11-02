@@ -126,6 +126,33 @@
         }
             </div>
           </div>
+          @if (sportDraft && sportEventChoices.length) {
+            <div class="tournament-event-choices" role="group"
+              [attr.aria-label]="'communities.tournaments.events.region' | t">
+              <div class="tournament-event-choices-intro">
+                <strong>{{ 'communities.tournaments.events.title' | t }}</strong>
+                <p>{{ 'communities.tournaments.events.help' | t }}</p>
+              </div>
+              <div class="tournament-event-options">
+                @for (event of sportEventChoices; track event.code) {
+                  <button type="button" class="tournament-event-option"
+                    [disabled]="busy || !event.supported"
+                    [attr.aria-pressed]="eventTypeDraft === event.code"
+                    [class.is-selected]="eventTypeDraft === event.code"
+                    [class.is-unavailable]="!event.supported"
+                    (click)="chooseTournamentEventType(event.code)">
+                    <span>{{ ('communities.tournaments.events.type.' + event.code) | t }}</span>
+                    <small>{{ (event.supported
+                      ? 'communities.tournaments.events.compatible'
+                      : 'communities.tournaments.events.unavailable') | t }}</small>
+                  </button>
+                }
+              </div>
+              @if (!savedSportEventType && isSportFormatSupported) {
+                <p class="tournament-event-legacy-note">{{ 'communities.tournaments.events.optional' | t }}</p>
+              }
+            </div>
+          }
           @if (sportDraft) {
             <div class="tournament-sport-capability" role="group"
               [attr.aria-label]="'communities.tournaments.capabilities.region' | t">

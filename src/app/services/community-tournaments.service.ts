@@ -51,18 +51,20 @@ export class CommunityTournamentsService {
 
   create(communityId: number, name: string, sport: string,
          rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 },
-         scoringMode?: 'CHESS_HALF_POINTS'): Observable<CommunityTournament> {
-    const body = scoringMode ? { name, sport, ...rules, scoringMode } : { name, sport, ...rules };
+         scoringMode?: 'CHESS_HALF_POINTS', eventType?: string | null): Observable<CommunityTournament> {
+    const event = eventType ? { eventType } : {};
+    const body = scoringMode ? { name, sport, ...rules, scoringMode, ...event } : { name, sport, ...rules, ...event };
     return this.http.post<CommunityTournament>(this.url(communityId), body);
   }
 
 
   /** Uses the generic rounds-based classification; not federation rulebooks. */
   createRaceChampionship(communityId: number, name: string,
-                         sport: RaceChampionshipSport): Observable<CommunityTournament> {
+                         sport: RaceChampionshipSport, eventType?: string | null): Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId), {
       name, sport, entryType: 'INDIVIDUAL', format: 'LEAGUE',
-      scoringMode: 'RACE_POINTS'
+      scoringMode: 'RACE_POINTS',
+      ...(eventType ? { eventType } : {})
     });
   }
 

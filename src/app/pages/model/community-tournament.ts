@@ -16,6 +16,8 @@ export interface CommunityTournament {
   name: string;
   // Optional for cached responses from old API versions; new API always supplies it.
   sport?: string | null;
+  // Nullable sport-specific event metadata; historical competitions remain null.
+  eventType?: string | null;
   // Older individual competitions may omit these fields in cached responses.
   entryType?: 'INDIVIDUAL' | 'TEAM';
   scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | null;

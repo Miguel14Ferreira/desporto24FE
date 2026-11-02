@@ -17,6 +17,7 @@ import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipS
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
+import { tournamentEventChoices, validatedTournamentEventType } from './community-tournament-event-types';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -181,6 +182,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   confirmingEmptyTeamId: number | null = null;
   nameDraft = '';
   sportDraft = '';
+  eventTypeDraft: string | null = null;
   sportSearch = '';
   editingSport = false;
   get communitySportOptions(): string[] {
@@ -207,6 +209,20 @@ export class CommunityTournamentsComponent implements OnChanges {
   get selectedSportCreationModel() {
     const capability = this.selectedSportCapabilities;
     return this.showTeamCreate ? capability.team : capability.individual;
+  }
+
+  get sportEventChoices() {
+    return tournamentEventChoices(this.sportDraft, this.selectedSportCreationModel);
+  }
+
+  get savedSportEventType(): string | null {
+    return validatedTournamentEventType(this.sportDraft, this.selectedSportCreationModel, this.eventTypeDraft);
+  }
+
+  chooseTournamentEventType(code: string): void {
+    if (this.busy || !validatedTournamentEventType(this.sportDraft, this.selectedSportCreationModel, code)) return;
+    this.eventTypeDraft = code;
+    this.changeDetector.markForCheck();
   }
 
   get creationSportNoticeKey(): string | null {
@@ -244,6 +260,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (this.busy || !(SPORTS_CATALOG.includes(sport) || this.communitySportOptions.includes(sport))) return;
     if (this.sportDraft !== sport) {
       this.sportDraft = sport;
+      this.eventTypeDraft = null;
       this.resetPointRules();
     }
     this.sportSearch = '';
@@ -942,6 +959,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       const sports = this.community.sports;
       this.sportDraft = sports?.length === 1
         ? sports[0] : (!sports?.length ? this.community.sport || '' : '');
+      this.eventTypeDraft = null;
       this.sportSearch = '';
       this.editingSport = false;
       this.resetPointRules();
@@ -1612,6 +1630,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.showGuide = false;
     this.showTeamCreate = false;
     this.showIndividualCreate = true;
+    this.eventTypeDraft = null;
     this.editingSport = false;
     this.sportSearch = '';
     this.error = '';
@@ -1622,6 +1641,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.showGuide = false;
     this.showIndividualCreate = false;
     this.showTeamCreate = true;
+    this.eventTypeDraft = null;
     this.editingSport = false;
     this.sportSearch = '';
     this.error = '';
@@ -1994,13 +2014,16 @@ export class CommunityTournamentsComponent implements OnChanges {
       ? this.api.create(this.community.id, name, this.sportDraft,
           { winPoints: 0, drawPoints: 0, lossPoints: 0 })
       : this.isRaceChampionshipDraft
-      ? this.api.createRaceChampionship(this.community.id, name, this.sportDraft as RaceChampionshipSport)
+      ? this.api.createRaceChampionship(this.community.id, name, this.sportDraft as RaceChampionshipSport,
+          this.savedSportEventType)
       : scoringMode
-      ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode)
+      ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode,
+          this.savedSportEventType)
       : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft);
     await this.mutate(createRequest,
       t('communities.tournaments.organizerUi.competitionCreated'), result => {
       this.nameDraft = '';
+      this.eventTypeDraft = null;
       this.resetPointRules();
       this.showIndividualCreate = false;
       this.selected = undefined;

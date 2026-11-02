@@ -97,6 +97,25 @@ describe('Community tournaments management', () => {
     expect(api.createTeamTournament).not.toHaveBeenCalled();
   });
 
+  it('selects only eligible tournament event types and clears them on sport changes',()=>{
+    component.sportDraft='BMX';
+    component.showTeamCreate=false;
+    expect(component.sportEventChoices.map(x=>[x.code,x.supported])).toEqual([
+      ['RACE',true],['FREESTYLE',false]
+    ]);
+    component.chooseTournamentEventType('FREESTYLE');
+    expect(component.savedSportEventType).toBeNull();
+    component.chooseTournamentEventType('RACE');
+    expect(component.savedSportEventType).toBe('RACE');
+    component.chooseSport('Xadrez');
+    expect(component.eventTypeDraft).toBeNull();
+    component.chooseTournamentEventType('CHESS_GAME');
+    expect(component.savedSportEventType).toBe('CHESS_GAME');
+    component.startTeamCreation();
+    expect(component.savedSportEventType).toBeNull();
+    expect(component.sportEventChoices[0].supported).toBeFalse();
+  });
+
   it('keeps tournament and fixtures semantics unchanged by the layout update', () => {
     expect(component.community.id).toBe(7);
     expect(component.tournaments.length).toBeGreaterThan(0);
