@@ -1011,20 +1011,52 @@
                     }
                   </p>
                 }
+                @if (teamMatches.length) {
+                  <div class="team-fixtures-toolbar">
+                    <div class="team-fixtures-filters" role="group"
+                      [attr.aria-label]="'communities.tournaments.fixturesUi.filterLabel' | t">
+                      <button type="button" [class.is-active]="teamMatchFilter === 'ALL'"
+                        [attr.aria-pressed]="teamMatchFilter === 'ALL'"
+                        (click)="setTeamMatchFilter('ALL')">{{ 'communities.tournaments.fixturesUi.filterAll' | t }}</button>
+                      <button type="button" [class.is-active]="teamMatchFilter === 'PENDING'"
+                        [attr.aria-pressed]="teamMatchFilter === 'PENDING'"
+                        (click)="setTeamMatchFilter('PENDING')">{{ 'communities.tournaments.fixturesUi.filterPending' | t }}</button>
+                      <button type="button" [class.is-active]="teamMatchFilter === 'COMPLETED'"
+                        [attr.aria-pressed]="teamMatchFilter === 'COMPLETED'"
+                        (click)="setTeamMatchFilter('COMPLETED')">{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</button>
+                    </div>
+                    <p role="status">{{ 'communities.tournaments.fixturesUi.loadedSummary' | t:{shown:visibleTeamMatches.length,loaded:teamMatches.length} }}</p>
+                  </div>
+                }
+                @let shownTeamMatches = visibleTeamMatches;
+                @if (teamMatches.length && !shownTeamMatches.length) {
+                  <p class="team-fixtures-empty" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
+                }
                 <div class="team-fixtures-list">
-                  @for (game of teamMatches; track game.id; let index = $index) {
-                    @if (index === 0 || teamMatches[index - 1].roundNumber !== game.roundNumber
-                          || teamMatches[index - 1].groupNumber !== game.groupNumber) {
+                  @for (game of shownTeamMatches; track game.id; let index = $index) {
+                    @if (index === 0 || shownTeamMatches[index - 1].roundNumber !== game.roundNumber
+                          || shownTeamMatches[index - 1].groupNumber !== game.groupNumber) {
                       <h6>{{ teamMatchStageLabel(game) }}</h6>
                     }
-                    <div class="team-fixture">
-                       <strong>{{ game.homeTeamName }}</strong>
-                       <span class="team-versus">vs</span>
-                       <strong>{{ game.awayTeamName }}</strong>
-                       <span class="tournament-state">
-                         {{ game.status === 'COMPLETED'
-                           ? game.homeScore + ' : ' + game.awayScore : ('communities.tournaments.fixturesUi.pending' | t) }}
-                       </span>
+                    <div class="team-fixture" [class.is-completed]="game.status === 'COMPLETED'">
+                       <div class="team-fixture-matchup">
+                         <strong class="team-fixture-home">{{ game.homeTeamName }}</strong>
+                         <div class="team-fixture-score" [class.is-pending]="game.status !== 'COMPLETED'"
+                           [attr.aria-label]="(game.status === 'COMPLETED'
+                             ? 'communities.tournaments.fixturesUi.scoreAria'
+                             : 'communities.tournaments.fixturesUi.pendingAria') | t:{
+                               home:game.homeTeamName,away:game.awayTeamName,
+                               homeScore:game.homeScore,awayScore:game.awayScore}">
+                           @if (game.status === 'COMPLETED') {
+                             <span class="team-fixture-numbers"><b>{{ game.homeScore }}</b><i>:</i><b>{{ game.awayScore }}</b></span>
+                             <small>{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</small>
+                           } @else {
+                             <span class="team-fixture-versus">VS</span>
+                             <small>{{ 'communities.tournaments.fixturesUi.pending' | t }}</small>
+                           }
+                         </div>
+                         <strong class="team-fixture-away">{{ game.awayTeamName }}</strong>
+                       </div>
                        @if (canManage && selected.status === 'IN_PROGRESS'
                            && game.status === 'COMPLETED' && !isPastKnockoutRound(game)) {
                          <button type="button" class="t-btn t-btn-secondary t-btn-small team-result-toggle"
@@ -1099,7 +1131,10 @@
                       <p class="t-muted">{{ 'communities.tournaments.finalUi.groupsComplete' | t }}</p>
                     }
                     @for (group of groups.groups; track group.groupNumber) {
-                      <h6>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group: groupLabel(group.groupNumber)} }}</h6>
+                      <div class="team-group-heading">
+                        <h6>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group: groupLabel(group.groupNumber)} }}</h6>
+                        <span>{{ group.standings.length }} {{ 'communities.tournaments.teamUi.teamsShort' | t }}</span>
+                      </div>
                       <div class="standings-scroll">
                         <table class="standings-table team-standings-table"
                           [attr.aria-label]="'communities.tournaments.finalUi.groupTableLabel' | t:{group: groupLabel(group.groupNumber)}">
@@ -1113,7 +1148,7 @@
                           </thead>
                           <tbody>
                             @for (row of group.standings; track row.teamId) {
-                              <tr>
+                              <tr [class.is-qualified]="groups.knockoutStarted && row.position <= 2">
                                 <td>{{ row.position }}</td>
                                 <th scope="row">{{ row.teamName }}
                                   @if (groups.knockoutStarted && row.position <= 2) {
@@ -1154,7 +1189,11 @@
                   <p class="field-validation" role="alert">{{ 'communities.tournaments.finalUi.teamError' | t }}</p>
                 }
                 @if (teamStandings; as table) {
-                  <p class="t-muted">{{ 'communities.tournaments.finalUi.completedMatches' | t:{completed: table.completedMatches, total: table.totalMatches} }}</p>
+                  <div class="team-standings-progress">
+                    <p>{{ 'communities.tournaments.finalUi.completedMatches' | t:{completed: table.completedMatches, total: table.totalMatches} }}</p>
+                    <progress [value]="table.completedMatches" [max]="table.totalMatches || 1"
+                      [attr.aria-label]="'communities.tournaments.finalUi.completedMatches' | t:{completed: table.completedMatches, total: table.totalMatches}"></progress>
+                  </div>
                   <div class="standings-scroll">
                     <table class="standings-table team-standings-table" [attr.aria-label]="'communities.tournaments.finalUi.teamStandings' | t">
                       <thead>
@@ -1165,7 +1204,7 @@
                       </thead>
                       <tbody>
                         @for (row of table.standings; track row.teamId) {
-                          <tr>
+                          <tr [class.is-leader]="row.position === 1 && row.played > 0">
                             <td>{{ row.position }}</td><th scope="row">{{ row.teamName }}</th>
                             <td>{{ row.played }}</td><td>{{ row.won }}</td>
                             <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>

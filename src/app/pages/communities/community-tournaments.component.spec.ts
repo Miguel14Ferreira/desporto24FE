@@ -625,6 +625,63 @@ describe('Community tournaments management', () => {
       expect(component.isGroupKnockout).toBeTrue();
     });
 
+
+    it('filters only fetched matches without touching paging or results', () => {
+      const pending = { id: 71, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
+        awayTeamId: 41, awayTeamName: 'Azuis', status: 'SCHEDULED' as const };
+      const done = { ...pending, id: 72, roundNumber: 2,
+        status: 'COMPLETED' as const, homeScore: 2, awayScore: 1 };
+      api.teams.and.returnValue(of([team]));
+      api.teamMatches.and.returnValue(of({ matches: [pending, done], page: 0, hasMore: true }));
+      component.selectTournament({ ...teamDraft, status: 'IN_PROGRESS' });
+      const initialCalls = api.teamMatches.calls.count();
+      expect(component.visibleTeamMatches.map(item => item.id)).toEqual([71, 72]);
+      component.setTeamMatchFilter('PENDING');
+      expect(component.visibleTeamMatches.map(item => item.id)).toEqual([71]);
+      component.editingTeamResultId = 72;
+      component.setTeamMatchFilter('COMPLETED');
+      expect(component.editingTeamResultId).toBeNull();
+      expect(component.visibleTeamMatches.map(item => item.id)).toEqual([72]);
+      expect(component.teamMatches.map(item => item.id)).toEqual([71, 72]);
+      expect(component.teamMatchesHasMore).toBeTrue();
+      expect(api.teamMatches.calls.count()).toBe(initialCalls);
+      component.setTeamMatchFilter('ALL');
+      expect(component.visibleTeamMatches.length).toBe(2);
+      component.setTeamMatchFilter('PENDING');
+      component.selectTournament(draft);
+      expect(component.teamMatchFilter).toBe('ALL');
+      expect(component.visibleTeamMatches).toEqual([]);
+    });
+
+    it('recomputes pending and completed cards after backend result updates', () => {
+      const game = { id: 71, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
+        awayTeamId: 41, awayTeamName: 'Azuis', status: 'SCHEDULED' as const };
+      component.teamMatches = [game];
+      component.setTeamMatchFilter('PENDING');
+      expect(component.visibleTeamMatches.length).toBe(1);
+      component.teamMatches = [{ ...game, status: 'COMPLETED', homeScore: 2, awayScore: 1 }];
+      expect(component.visibleTeamMatches.length).toBe(0);
+      component.setTeamMatchFilter('COMPLETED');
+      expect(component.visibleTeamMatches.length).toBe(1);
+    });
+
+    it('localizes fixture filters and screen-reader score summaries', () => {
+      const previous = localStorage.getItem('d24-language');
+      try {
+        localStorage.setItem('d24-language', 'pt');
+        expect(t('communities.tournaments.fixturesUi.filterPending')).toBe('Por jogar');
+        expect(t('communities.tournaments.fixturesUi.loadedSummary', { shown: 3, loaded: 5 })).toContain('3 de 5');
+        localStorage.setItem('d24-language', 'en');
+        expect(t('communities.tournaments.fixturesUi.filterCompleted')).toBe('Completed');
+        expect(t('communities.tournaments.fixturesUi.scoreAria', {
+          home: 'A', homeScore: 2, awayScore: 1, away: 'B'
+        })).toContain('A 2 — 1 B');
+      } finally {
+        if (previous === null) localStorage.removeItem('d24-language');
+        else localStorage.setItem('d24-language', previous);
+      }
+    });
+
     it('labels group fixtures, quarterfinals, semifinals and final without changing league labels', () => {
       component.selected = { ...teamDraft, status: 'IN_PROGRESS',
         format: 'GROUP_KNOCKOUT', groupCount: 4 };

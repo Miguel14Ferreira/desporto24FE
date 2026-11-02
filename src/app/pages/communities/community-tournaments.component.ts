@@ -160,6 +160,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamDirectoryQuery = '';
   teamsLoadError = false;
   teamMatches: TournamentTeamMatch[] = [];
+  teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamMatchesPage = 0;
   teamMatchesHasMore = false;
   teamMatchesLoading = false;
@@ -914,6 +915,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamDirectoryQuery = '';
       this.teamsLoadError = false;
       this.teamMatches = [];
+      this.teamMatchFilter = 'ALL';
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
@@ -1091,6 +1093,20 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get isCupFormat(): boolean {
     return this.isKnockout || this.isGroupKnockout;
+  }
+
+  /** Filters the fetched matches only; fixture pagination and scores are unchanged. */
+  get visibleTeamMatches(): TournamentTeamMatch[] {
+    return this.teamMatches.filter(game => this.teamMatchFilter === 'ALL'
+      || (this.teamMatchFilter === 'COMPLETED'
+        ? game.status === 'COMPLETED' : game.status !== 'COMPLETED'));
+  }
+
+  setTeamMatchFilter(filter: 'ALL' | 'PENDING' | 'COMPLETED'): void {
+    if (this.teamMatchFilter === filter) return;
+    this.teamMatchFilter = filter;
+    this.editingTeamResultId = null;
+    this.changeDetector.markForCheck();
   }
 
   isEliminationMatch(game: TournamentTeamMatch): boolean {
@@ -1306,6 +1322,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMemberSearch = {};
     this.teamsLoadError = false;
     this.teamMatches = [];
+    this.teamMatchFilter = 'ALL';
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
