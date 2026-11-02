@@ -886,6 +886,60 @@ describe('Community tournaments management', () => {
       expect(api.addTeamPlayer).toHaveBeenCalledTimes(1);
     });
 
+    it('finds available members by accent-insensitive name and username per team', () => {
+      const largeMembers = [...members,
+        { profileId: 4, username: 'joao-silva', fullName: 'João Silva',
+          profilePicUrl: null, role: 'MEMBER' as const },
+        { profileId: 5, username: 'rute-padel', fullName: 'Rute Dias',
+          profilePicUrl: null, role: 'MEMBER' as const }
+      ];
+      component.community = { ...community, members: largeMembers, memberCount: 5 };
+      api.teams.and.returnValue(of([{ ...team, players: [
+        { profileId: 2, username: 'ana', displayName: 'Ana' }
+      ] }]));
+      component.selectTournament(teamDraft);
+      expect(component.availableTeamMembers.map(x => x.profileId)).toEqual([1,3,4,5]);
+      component.setTeamMemberSearch(40, 'JOAO');
+      expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([4]);
+      component.setTeamMemberSearch(40, 'rute-PAD');
+      expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([5]);
+      component.setTeamMemberSearch(40, 'ANA');
+      expect(component.filteredTeamMembers(40)).toEqual([]);
+      component.setTeamMemberSearch(40, '');
+      expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([1,3,4,5]);
+    });
+
+    it('clears hidden member selections and search when the competition changes', async () => {
+      component.community = { ...community, members, memberCount: 3 };
+      component.selectTournament(teamDraft);
+      component.teamPlayerDraft[40] = 2;
+      component.setTeamMemberSearch(40, 'bruno');
+      expect(component.teamPlayerDraft[40]).toBeNull();
+      component.teamPlayerDraft[40] = 2; // Hidden by the active search.
+      await component.assignTeamPlayer(team);
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+      component.teamPlayerDraft[40] = 3;
+      expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([3]);
+      component.selectTournament(draft);
+      expect(component.teamMemberSearch).toEqual({});
+      expect(component.teamPlayerDraft).toEqual({});
+    });
+
+    it('localizes roster readiness and invitation helper labels in PT and EN', () => {
+      const previous = localStorage.getItem('d24-language');
+      try {
+        localStorage.setItem('d24-language', 'pt');
+        expect(t('communities.tournaments.teamUi.rosterReady')).toBe('Pronta para competir');
+        expect(t('communities.tournaments.teamUi.showInviteLink')).toBe('Ver link do convite');
+        localStorage.setItem('d24-language', 'en');
+        expect(t('communities.tournaments.teamUi.rosterIncomplete')).toBe('Needs players');
+        expect(t('communities.tournaments.teamUi.searchMember')).toBe('Search community members');
+      } finally {
+        if (previous === null) localStorage.removeItem('d24-language');
+        else localStorage.setItem('d24-language', previous);
+      }
+    });
+
     it('can remove players, then delete only an empty team', async () => {
       const occupied = { ...team, players: [{ profileId: 2, username: 'ana', displayName: 'Ana' }] };
       component.community = { ...community, members, memberCount: 3 };
