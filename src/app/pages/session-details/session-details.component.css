@@ -1750,12 +1750,8 @@ h1 {
 
 /* Desktop session hero follows the Feed visual language. */
 @media(min-width:1100px){
-:host .jynlo-session-detail-premium{background:linear-gradient(145deg,#03111f,#052231 60%,#031521)}
-:host .jynlo-session-detail-premium .detail-shell{width:min(1100px,100%)}
-:host .jynlo-session-detail-premium .detail-card{border-color:#24cfc945;background:linear-gradient(148deg,#082d3d,#051d2d)}
 :host .jynlo-session-detail-premium .detail-content>.title-row{align-items:center;flex-wrap:wrap;gap:16px 25px;min-height:146px;padding:22px 25px;margin-bottom:20px;border:1px solid #2acfca45;border-radius:18px;background:linear-gradient(95deg,#031d2cf8,#052f3be8 64%,#064d4c7a),url('/assets/jynlo-feed-hero-sport.webp') right center/auto 100% no-repeat,#063140}
 :host .jynlo-session-detail-premium .title-row>div:first-child{flex:1 1 290px;min-width:0}
 :host .jynlo-session-detail-premium .title-row h1{font-size:clamp(2rem,3vw,2.9rem);line-height:1.12;letter-spacing:-.04em;overflow-wrap:anywhere}
-:host .jynlo-session-detail-premium .title-row .eyebrow{color:#62f3d9}
 :host .jynlo-session-detail-premium .title-row .badges>span{border:1px solid #33d6c34d;background:#16767c3d;color:#b3ffeb;border-radius:10px}
 }
