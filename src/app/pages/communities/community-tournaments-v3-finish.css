@@ -110,3 +110,41 @@
 @media(prefers-reduced-motion:reduce){
   :host .tournaments .t-btn{transition:none;}
 }
+
+
+/* Desktop competition hero: one clear primary action, quieter guide and
+   selected-format metadata. Tournament forms and score entry are unchanged. */
+@media (min-width: 1100px) {
+  :host .tournaments .tournament-hero {
+    min-height:164px;
+    padding:24px 28px;
+    column-gap:28px;
+    background:
+      linear-gradient(95deg,rgba(4,27,41,.97),rgba(6,49,61,.93) 60%,rgba(5,65,71,.60)),
+      url('/assets/jynlo-feed-hero-sport.webp') right center / auto 100% no-repeat,
+      #062e3c;
+  }
+  :host .tournaments .tournament-hero > div:first-child {
+    flex:1 1 370px;
+    max-width:760px;
+  }
+  :host .tournaments .tournament-hero h3 {
+    font-size:clamp(1.65rem,2.25vw,2.15rem);
+    max-width:26ch;
+  }
+  :host .tournaments .competition-hero-actions {
+    flex:0 1 340px;
+    justify-content:flex-end;
+    align-self:center;
+  }
+  :host .tournaments .competition-hero-actions > button {
+    min-height:44px;
+    padding:10px 16px;
+  }
+  :host .tournaments .tournament-type {
+    flex:0 1 auto;
+    margin:0;
+    padding:7px 11px;
+    text-align:center;
+  }
+}
