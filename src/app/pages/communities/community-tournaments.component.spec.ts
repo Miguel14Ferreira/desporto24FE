@@ -116,6 +116,34 @@ describe('Community tournaments management', () => {
     expect(component.sportEventChoices[0].supported).toBeFalse();
   });
 
+  it('sends the selected compatible race or chess event type to the API', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'BMX corrida';
+    component.chooseSport('BMX');
+    component.chooseTournamentEventType('RACE');
+    api.createRaceChampionship.and.returnValue(of({
+      ...draft, id: 55, name: 'BMX corrida', sport: 'BMX',
+      scoringMode: 'RACE_POINTS', eventType: 'RACE'
+    }));
+    await component.create();
+    expect(api.createRaceChampionship).toHaveBeenCalledWith(7, 'BMX corrida', 'BMX', 'RACE');
+
+    component.startIndividualCreation();
+    component.nameDraft = 'Torneio de Xadrez';
+    component.chooseSport('Xadrez');
+    component.chooseTournamentEventType('CHESS_GAME');
+    api.create.and.returnValue(of({
+      ...draft, id: 56, name: 'Torneio de Xadrez', sport: 'Xadrez',
+      scoringMode: 'CHESS_HALF_POINTS', eventType: 'CHESS_GAME'
+    }));
+    await component.create();
+    expect(api.create).toHaveBeenCalledWith(
+      7, 'Torneio de Xadrez', 'Xadrez',
+      { winPoints: 2, drawPoints: 1, lossPoints: 0 },
+      'CHESS_HALF_POINTS', 'CHESS_GAME'
+    );
+  });
+
   it('keeps tournament and fixtures semantics unchanged by the layout update', () => {
     expect(component.community.id).toBe(7);
     expect(component.tournaments.length).toBeGreaterThan(0);
