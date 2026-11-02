@@ -313,6 +313,26 @@ async function main() {
           assert.ok(overflow <= 2,
             route + ' (' + width + 'px ' + language + ') horizontal overflow: '
             + JSON.stringify(measure));
+          // A desktop flex-basis on the text column becomes a tall empty
+          // box when its parent switches to a column on tablet/mobile.
+          if (width <= 768 && (route === '/menu/events' || route === '/menu/communities')) {
+            const panels = route === '/menu/events'
+              ? ['.jynlo-activities-v3 .page-header',
+                ...(width <= 390 ? ['.jynlo-activities-v3 .nearby-panel'] : [])]
+              : ['.jynlo-community-main-premium:not(.community-detail-page) .page-header'];
+            for (const selector of panels) {
+              const trailingSpace = await page.locator(selector).evaluate(panel => {
+                const copy = panel.querySelector(':scope > div:first-child');
+                const lastChild = copy?.lastElementChild;
+                if (!copy || !lastChild) return null;
+                return Math.round(copy.getBoundingClientRect().bottom
+                  - lastChild.getBoundingClientRect().bottom);
+              });
+              assert.ok(trailingSpace !== null && trailingSpace <= 42,
+                route + ' (' + width + 'px ' + language + ') ' + selector
+                + ' has excessive blank space after heading copy: ' + trailingSpace + 'px');
+            }
+          }
           if (route === '/menu/venues') {
             const shell = page.locator('.venue-directory-page');
             assert.equal(await shell.locator('.venue-directory-card').count(), 3,
