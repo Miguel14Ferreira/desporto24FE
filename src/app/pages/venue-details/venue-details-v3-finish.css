@@ -93,10 +93,11 @@
   outline:2px solid #9cffe9;outline-offset:3px;
 }
 @media(max-width:900px){
+  :host .venue-detail-page{padding-top:calc(8.5rem + env(safe-area-inset-top));}
   :host .venue-detail-page .venue-visit-grid{grid-template-columns:minmax(0,1fr);}
 }
 @media(max-width:640px){
-  :host .venue-detail-page{padding:calc(90px + env(safe-area-inset-top)) 14px 50px;}
+  :host .venue-detail-page{padding:calc(8.5rem + env(safe-area-inset-top)) 14px 50px;}
   :host .venue-detail-page .venue-header{padding:21px;}
   :host .venue-detail-page .venue-basic-info,
   :host .venue-detail-page .venue-information-grid{grid-template-columns:minmax(0,1fr);}

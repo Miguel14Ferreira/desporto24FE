@@ -346,8 +346,12 @@
   :host .jynlo-activities-v3 .session-list {grid-template-columns:minmax(0,1fr);}
   :host .jynlo-activities-v3 .session-row {gap:12px;}
 }
+/* Keep the activity title below the two-row shared navigation. */
+@media(max-width:900px) {
+  :host .sessions-page.jynlo-activities-v3 {padding-top:calc(8.5rem + env(safe-area-inset-top));}
+}
 @media(max-width:760px) {
-  :host .sessions-page.jynlo-activities-v3 {padding:83px 14px 50px;}
+  :host .sessions-page.jynlo-activities-v3 {padding:calc(8.5rem + env(safe-area-inset-top)) 14px 50px;}
   :host .jynlo-activities-v3 .page-header {flex-direction:column;align-items:stretch;}
   :host .jynlo-activities-v3 .header-actions {width:100%;justify-content:flex-start;}
   :host .jynlo-activities-v3 .filters-primary {grid-template-columns:repeat(2,minmax(0,1fr));}

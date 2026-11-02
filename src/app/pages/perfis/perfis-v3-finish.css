@@ -188,3 +188,10 @@
   :host .community-page.jynlo-social .profile-grid .profile-card{transition:none;}
   :host .community-page.jynlo-social .profile-grid .profile-card:hover{transform:none;}
 }
+
+/* Do not let the two-line navbar cover the people search or profile heading. */
+@media(max-width:900px){
+  :host .community-page.jynlo-social{
+    padding-top:calc(8.5rem + env(safe-area-inset-top));
+  }
+}

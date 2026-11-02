@@ -107,6 +107,9 @@
 :host .edit-page.jynlo-secondary :is(a,button,input,select,textarea):focus-visible{
   outline:2px solid #9bffeb;outline-offset:3px;
 }
+@media(max-width:900px){
+  :host .edit-page.jynlo-secondary{padding-top:calc(8.5rem + env(safe-area-inset-top));}
+}
 @media(max-width:760px){
   :host .edit-page.jynlo-secondary .page-header{align-items:stretch;flex-direction:column;}
   :host .edit-page.jynlo-secondary .header-actions{justify-content:flex-start;}
@@ -114,7 +117,7 @@
   :host .edit-page.jynlo-secondary .full-width{grid-column:auto;}
 }
 @media(max-width:560px){
-  :host .edit-page.jynlo-secondary{padding:calc(90px + env(safe-area-inset-top)) 13px 53px;}
+  :host .edit-page.jynlo-secondary{padding:calc(8.5rem + env(safe-area-inset-top)) 13px 53px;}
   :host .edit-page.jynlo-secondary .page-header{padding:18px;}
   :host .edit-page.jynlo-secondary .photo-panel{align-items:flex-start;}
   :host .edit-page.jynlo-secondary .form-actions>:is(a,button){flex:1 1 100%;}

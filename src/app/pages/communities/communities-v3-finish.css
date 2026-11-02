@@ -130,3 +130,10 @@
   :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-card{transition:none;}
   :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-card:hover{transform:none;}
 }
+
+/* Two-line fixed navbar clearance on tablet and mobile. */
+@media(max-width:900px){
+  :host .communities-page.jynlo-community-main-premium{
+    padding-top:calc(8.5rem + env(safe-area-inset-top));
+  }
+}

@@ -435,8 +435,12 @@
   :host .jynlo-explore-v3 .explore-spotlight {grid-template-columns:minmax(0,1fr) minmax(145px,.44fr);}
   :host .jynlo-explore-v3 .result-list {grid-template-columns:repeat(2,minmax(0,1fr));}
 }
+/* The shared fixed navigation occupies two rows below 900px. */
+@media(max-width:900px) {
+  :host .discover-page.jynlo-explore-v3 {padding-top:calc(8.5rem + env(safe-area-inset-top));}
+}
 @media(max-width:760px) {
-  :host .discover-page.jynlo-explore-v3 {padding:83px 14px 50px;}
+  :host .discover-page.jynlo-explore-v3 {padding:calc(8.5rem + env(safe-area-inset-top)) 14px 50px;}
   :host .jynlo-explore-v3 .discover-header {flex-direction:column;align-items:stretch;}
   :host .jynlo-explore-v3 .explore-header-actions {align-self:flex-start;}
   :host .jynlo-explore-v3 .search-fields {grid-template-columns:repeat(2,minmax(0,1fr));}
