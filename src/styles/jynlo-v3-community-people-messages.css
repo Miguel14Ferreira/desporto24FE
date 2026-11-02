@@ -1,0 +1,468 @@
+/*
+ * Jynlo Neon Glass v3 — communities, people, and messages continuation.
+ * Route-specific presentation only. Does not affect event binding, permissions,
+ * media playback, conversation logic, modals, drag/drop, or data fetching.
+ */
+body .communities-page.jynlo-community-main-premium,
+body .community-page.jynlo-social,
+body .inbox-page.jynlo-secondary {
+  --jynlo-v3-edge: rgba(35, 210, 204, .28);
+  --jynlo-v3-strong: rgba(43, 235, 209, .65);
+  --jynlo-v3-soft: #b8d7dd;
+  --jynlo-v3-mint: #2cebd0;
+}
+
+/* COMMUNITY DIRECTORY: coherent outer canvas, clear search action alignment,
+ * improved discovery cards. The tournament and detail panels keep their layouts. */
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) {
+  background:
+    radial-gradient(ellipse 52% 470px at 97% 0%,rgba(9,157,163,.2),transparent 76%),
+    linear-gradient(145deg,#03111f 1%,#052332 59%,#031521 100%);
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .communities-shell {
+  width:min(1300px,100%);
+  max-width:1300px;
+  min-width:0;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header {
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px 26px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+  padding:clamp(19px,2.8vw,30px);
+  border:1px solid var(--jynlo-v3-edge);
+  border-radius:20px;
+  background:
+    linear-gradient(96deg,rgba(2,22,36,.96),rgba(5,42,55,.93) 65%,rgba(5,61,70,.6)),
+    url('/assets/jynlo-feed-hero-sport.webp') right center / auto 100% no-repeat,
+    #052637;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header > div:first-child {
+  flex:1 1 290px;
+  min-width:0;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header h1 {
+  margin:0;
+  max-width:22ch;
+  color:#f4fffc;
+  font-size:clamp(2rem,3.2vw,3.1rem);
+  line-height:1.1;
+  letter-spacing:-.045em;
+  text-wrap:balance;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header .subtitle {
+  max-width:61ch;
+  margin-top:9px;
+  color:#c0dce2;
+  line-height:1.55;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header > .row-actions {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  flex:0 1 auto;
+  min-width:0;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header .header-action {
+  box-sizing:border-box;
+  min-height:44px;
+  max-width:100%;
+  border-radius:12px;
+  white-space:normal;
+  line-height:1.35;
+  text-align:center;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery {
+  border-color:var(--jynlo-v3-edge);
+  background:linear-gradient(140deg,rgba(10,49,64,.98),rgba(5,29,45,.98));
+  box-shadow:0 18px 42px rgba(0,13,26,.17);
+  border-radius:20px;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-heading h2 {
+  color:#f3fffc;
+  letter-spacing:-.03em;
+  text-wrap:balance;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters :is(input[type=search],button) {
+  min-height:46px;
+  border-radius:12px;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-filters input[type=search] {
+  background:#062a3a;
+  border:1px solid rgba(40,203,203,.39);
+  color:#f0fffa;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid > button.community-card,
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card {
+  min-width:0;
+  border:1px solid rgba(37,193,202,.32);
+  background:linear-gradient(145deg,rgba(11,54,69,.95),rgba(5,34,50,.98));
+  border-radius:17px;
+  transition:border-color .18s,background .18s,transform .18s;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-grid > button.community-card:hover,
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-list > button.community-card:hover {
+  border-color:var(--jynlo-v3-strong);
+  background:linear-gradient(145deg,rgba(11,75,84,.96),rgba(8,45,60,.98));
+  transform:translateY(-2px);
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-card-copy strong {
+  color:#f4fffc;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery-description {
+  color:var(--jynlo-v3-soft);
+  line-height:1.5;
+}
+body .communities-page.jynlo-community-main-premium :is(a,button,input,select):focus-visible {
+  outline:2px solid #95ffe5;
+  outline-offset:3px;
+}
+
+/* PEOPLE: use the Feed/Explore visual language without replacing profile
+ * identity, relationship states, follow status, or invitation controls. */
+body .community-page.jynlo-social {
+  background:
+    radial-gradient(ellipse 46% 480px at 96% 1%,rgba(11,159,164,.19),transparent 77%),
+    radial-gradient(ellipse 36% 450px at 0% 82%,rgba(7,103,142,.11),transparent 76%),
+    linear-gradient(145deg,#03121f,#062434 64%,#031622);
+}
+body .community-page.jynlo-social .community-shell {
+  width:min(1290px,100%);
+  max-width:1290px;
+  min-width:0;
+}
+body .community-page.jynlo-social:not(.profile-page-open) .page-header {
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px 24px;
+  flex-wrap:wrap;
+  padding:clamp(20px,2.6vw,30px);
+  margin-bottom:20px;
+  border:1px solid var(--jynlo-v3-edge);
+  border-radius:20px;
+  background:linear-gradient(105deg,rgba(4,27,43,.98),rgba(9,57,67,.87));
+}
+body .community-page.jynlo-social:not(.profile-page-open) .page-header > div:first-child {
+  flex:1 1 280px;
+  min-width:0;
+}
+body .community-page.jynlo-social:not(.profile-page-open) .page-header h1 {
+  margin:0;
+  max-width:22ch;
+  font-size:clamp(2rem,3.2vw,3.05rem);
+  letter-spacing:-.045em;
+  line-height:1.1;
+  color:#f3fffc;
+  text-wrap:balance;
+}
+body .community-page.jynlo-social:not(.profile-page-open) .page-header .subtitle {
+  max-width:63ch;
+  margin-top:9px;
+  color:#c1dce3;
+  line-height:1.55;
+}
+body .community-page.jynlo-social .header-actions {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-end;
+  gap:9px;
+  min-width:0;
+}
+body .community-page.jynlo-social .header-actions > :is(a,button),
+body .community-page.jynlo-social a.back-to-search {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  padding:9px 13px;
+  border-radius:12px;
+  box-sizing:border-box;
+  white-space:normal;
+  text-align:center;
+  overflow-wrap:anywhere;
+}
+body .community-page.jynlo-social .search-bar.partner-search {
+  box-sizing:border-box;
+  min-width:0;
+  border:1px solid var(--jynlo-v3-edge);
+  border-radius:20px;
+  background:linear-gradient(142deg,rgba(10,47,62,.97),rgba(5,29,45,.99));
+  box-shadow:0 18px 38px rgba(0,12,25,.15);
+}
+body .community-page.jynlo-social .search-intro h2,
+body .community-page.jynlo-social .discovery-heading h2 {
+  color:#f2fffc;
+  letter-spacing:-.025em;
+  line-height:1.25;
+  text-wrap:balance;
+}
+body .community-page.jynlo-social .partner-filter-grid {min-width:0;}
+body .community-page.jynlo-social .partner-filter-grid > label {min-width:0;}
+body .community-page.jynlo-social .partner-filter-grid :is(input,select) {
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  min-height:46px;
+  border-radius:11px;
+  border:1px solid rgba(43,197,202,.35);
+  background:#072b3b;
+  color:#f2fffc;
+}
+body .community-page.jynlo-social .partner-search-actions {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+}
+body .community-page.jynlo-social .partner-search-actions > button {
+  min-height:44px;
+  border-radius:11px;
+  white-space:normal;
+}
+body .community-page.jynlo-social .profile-grid {gap:14px;min-width:0;}
+body .community-page.jynlo-social .profile-grid .profile-card {
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  border:1px solid rgba(41,194,199,.3);
+  border-radius:17px;
+  background:linear-gradient(145deg,rgba(11,57,70,.93),rgba(5,35,51,.97));
+  padding:clamp(15px,1.5vw,20px);
+  transition:border-color .18s,background .18s,transform .18s;
+}
+body .community-page.jynlo-social .profile-grid .profile-card:hover {
+  border-color:rgba(55,236,209,.7);
+  background:#0b4652;
+  transform:translateY(-2px);
+}
+body .community-page.jynlo-social .profile-card .profile-copy {
+  min-width:0;
+}
+body .community-page.jynlo-social .profile-card .profile-copy :is(strong,span,small) {
+  max-width:100%;
+  overflow-wrap:anywhere;
+  line-height:1.45;
+}
+body .community-page.jynlo-social.profile-page-open .profile-detail {
+  min-width:0;
+  border:1px solid var(--jynlo-v3-edge);
+  border-radius:21px;
+  background:
+    radial-gradient(ellipse at 90% 0%,rgba(26,219,203,.10),transparent 65%),
+    linear-gradient(143deg,rgba(9,45,61,.98),rgba(5,27,43,.98));
+  box-shadow:0 23px 54px rgba(0,10,26,.17);
+}
+body .community-page.jynlo-social.profile-page-open .profile-hero {min-width:0;}
+body .community-page.jynlo-social.profile-page-open .profile-identity {
+  min-width:0;
+}
+body .community-page.jynlo-social.profile-page-open .profile-identity h1 {
+  color:#f1fffd;
+  overflow-wrap:anywhere;
+  line-height:1.12;
+  letter-spacing:-.04em;
+  text-wrap:balance;
+}
+body .community-page.jynlo-social.profile-page-open .social-summary > div {
+  border-color:rgba(48,199,199,.29);
+  background:rgba(9,68,76,.46);
+}
+body .community-page.jynlo-social.profile-page-open .profile-primary-actions > :is(a,button) {
+  min-height:46px;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  white-space:normal;
+  border-radius:12px;
+}
+body .community-page.jynlo-social.profile-page-open .profile-invite-panel {
+  border-color:rgba(53,208,201,.33);
+  background:linear-gradient(145deg,#103b47,#082b3a);
+}
+body .community-page.jynlo-social :is(a,button,input,select):focus-visible {
+  outline:2px solid #99ffe7;
+  outline-offset:3px;
+}
+
+/* MESSAGE CENTER: preserve fixed-height scroll containers, own bubbles,
+ * recording UI and overlays. Harmonise list and composer geometry. */
+body .inbox-page.jynlo-secondary {
+  background:
+    radial-gradient(ellipse 45% 420px at 100% 0%,rgba(9,154,164,.17),transparent 76%),
+    linear-gradient(145deg,#03111e,#052232 63%,#031521);
+}
+body .inbox-page.jynlo-secondary .inbox-shell {
+  max-width:1480px;
+  min-width:0;
+}
+body .inbox-page.jynlo-secondary .inbox-layout {
+  grid-template-columns:minmax(310px,390px) minmax(0,1fr);
+  gap:13px;
+  min-width:0;
+}
+body .inbox-page.jynlo-secondary :is(.inbox-sidebar,.inbox-detail) {
+  min-width:0;
+  border:1px solid var(--jynlo-v3-edge);
+  border-radius:19px;
+  box-shadow:0 16px 38px rgba(0,12,26,.16);
+}
+body .inbox-page.jynlo-secondary .inbox-sidebar {
+  background:linear-gradient(160deg,#0b3141,#082536 64%,#061d2d);
+}
+body .inbox-page.jynlo-secondary .inbox-side-top {
+  background:linear-gradient(125deg,rgba(11,54,68,.83),rgba(6,35,51,.83));
+  border-bottom:1px solid rgba(42,192,199,.2);
+}
+body .inbox-page.jynlo-secondary .inbox-side-heading h1 {
+  color:#f3fffc;
+  letter-spacing:-.035em;
+}
+body .inbox-page.jynlo-secondary .inbox-heading-mark {
+  border-color:rgba(35,226,208,.43);
+  color:#7ffbe4;
+  background:rgba(27,185,182,.15);
+}
+body .inbox-page.jynlo-secondary .inbox-search input {
+  min-width:0;
+  min-height:46px;
+  border-radius:12px;
+  border-color:rgba(39,193,204,.37);
+  background:#072a3b;
+}
+body .inbox-page.jynlo-secondary .inbox-filters button {
+  min-height:35px;
+  border:1px solid rgba(36,185,194,.38);
+  background:rgba(11,58,74,.88);
+  color:#c4e6e8;
+}
+body .inbox-page.jynlo-secondary .inbox-filters button:is(.active,:hover) {
+  background:rgba(36,220,199,.22);
+  color:#dcfff4;
+  border-color:rgba(60,237,211,.79);
+}
+body .inbox-page.jynlo-secondary .inbox-detail {
+  background:
+    radial-gradient(ellipse at 95% 8%,rgba(19,131,133,.14),transparent 54%),
+    linear-gradient(155deg,#061d2d,#072736 80%,#052132);
+}
+body .inbox-page.jynlo-secondary .inbox-detail-heading {
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  padding:clamp(13px,1.65vw,21px);
+  background:linear-gradient(120deg,rgba(11,49,64,.98),rgba(8,37,53,.96));
+  border-bottom:1px solid rgba(44,192,198,.23);
+}
+body .inbox-page.jynlo-secondary .inbox-chat-identity,
+body .inbox-page.jynlo-secondary .inbox-detail-info {min-width:0;}
+body .inbox-page.jynlo-secondary .inbox-detail-heading :is(h2,.inbox-contact-name) {
+  color:#f0fffc;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+}
+body .inbox-page.jynlo-secondary .inbox-heading-actions {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+}
+body .inbox-page.jynlo-secondary .inbox-call-trigger,
+body .inbox-page.jynlo-secondary .inbox-search-toggle {
+  flex:0 0 40px;
+  width:40px;
+  height:40px;
+  border-radius:11px;
+  border-color:rgba(50,180,191,.39);
+}
+body .inbox-page.jynlo-secondary .inbox-composer {
+  border-top:1px solid rgba(42,195,198,.24);
+  background:linear-gradient(120deg,#0b3140,#082639);
+}
+body .inbox-page.jynlo-secondary .inbox-compose-toolbar {
+  max-width:100%;
+  min-width:0;
+}
+body .inbox-page.jynlo-secondary .inbox-composer textarea {
+  min-width:0;
+  max-width:100%;
+  background:#092c3d;
+  border:1px solid rgba(48,184,196,.36);
+  color:#f1fffc;
+}
+body .inbox-page.jynlo-secondary .inbox-side-footer a {
+  border-color:rgba(50,183,191,.36);
+  background:#103b4a;
+  color:#8ffbe4;
+}
+body .inbox-page.jynlo-secondary .inbox-side-footer a:hover {
+  background:#165b62;
+  border-color:rgba(68,237,211,.65);
+}
+body .inbox-page.jynlo-secondary :is(a,button,input,textarea):focus-visible {
+  outline:2px solid #a0ffe9;
+  outline-offset:3px;
+}
+@media(max-width:980px) {
+  body .inbox-page.jynlo-secondary .inbox-layout {
+    grid-template-columns:minmax(280px,340px) minmax(0,1fr);
+  }
+}
+@media(max-width:800px) {
+  body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header,
+  body .community-page.jynlo-social:not(.profile-page-open) .page-header {
+    align-items:stretch;
+    flex-direction:column;
+  }
+  body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header > .row-actions,
+  body .community-page.jynlo-social .header-actions {justify-content:flex-start;}
+  body .inbox-page.jynlo-secondary .inbox-layout {
+    grid-template-columns:minmax(0,1fr);
+    gap:0;
+  }
+  body .inbox-page.jynlo-secondary :is(.inbox-sidebar,.inbox-detail) {
+    border-radius:14px;
+  }
+}
+@media(max-width:560px) {
+  body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header,
+  body .community-page.jynlo-social:not(.profile-page-open) .page-header {
+    padding:18px;
+  }
+  body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header .header-action,
+  body .community-page.jynlo-social .header-actions > :is(a,button) {
+    flex:1 1 130px;
+  }
+  body .community-page.jynlo-social .partner-search-actions > button {
+    flex:1 1 0;
+  }
+  body .community-page.jynlo-social .profile-grid {grid-template-columns:minmax(0,1fr);}
+  body .inbox-page.jynlo-secondary .inbox-detail-heading {
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  body .inbox-page.jynlo-secondary .inbox-heading-actions {
+    max-width:100%;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-card,
+  body .community-page.jynlo-social .profile-grid .profile-card {
+    transition:none;
+  }
+  body .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-card:hover,
+  body .community-page.jynlo-social .profile-grid .profile-card:hover {
+    transform:none;
+  }
+}
