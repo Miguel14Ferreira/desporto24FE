@@ -347,7 +347,7 @@
                       <div>
                         <h6>{{ team.name }}</h6>
                         <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
-                        @if (selected.status === 'DRAFT') {
+                        @if (selected?.status === 'DRAFT') {
                           <span class="team-roster-readiness" [class.is-ready]="isTeamRosterReady(team)">
                             {{ (isTeamRosterReady(team) ? 'communities.tournaments.teamUi.rosterReady'
                               : 'communities.tournaments.teamUi.rosterIncomplete') | t }}
