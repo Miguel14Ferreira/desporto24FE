@@ -2,7 +2,7 @@
 
 .register-page {
   min-height: 100vh;
-  padding: 6.5rem 1.25rem 4rem;
+  padding: 8rem 1.25rem 4rem;
   background:
     radial-gradient(circle at top right, rgba(0,230,118,.16), transparent 32rem),
     linear-gradient(145deg, #07111f, #12334a);
@@ -248,8 +248,7 @@ textarea {
 
 @media (max-width: 700px) {
   .page-header,
-  .photo-section,
-  .form-actions {
+  .photo-section {
     align-items: flex-start;
     flex-direction: column;
   }

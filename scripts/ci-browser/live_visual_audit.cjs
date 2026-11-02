@@ -48,16 +48,17 @@ async function main() {
             const bodyText = body.innerText.trim();
             const width = html.clientWidth;
             const excess = Math.max(0,html.scrollWidth - width,body.scrollWidth - width);
+            const titleClearance = navRect && titleRect ? Math.round(titleRect.top - navRect.bottom) : null;
             const titleOverlap = !!(navRect && titleRect
               && titleRect.top < navRect.bottom - 3
               && titleRect.bottom > navRect.top + 3);
-            const fields = [...document.querySelectorAll('input:not([type=hidden]),select,textarea')];
+            const fields = [...document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea')];
             const clippedFields = fields.filter(el => {
               const r = el.getBoundingClientRect();
               return r.width > 0 && (r.width < 130 || r.right > width + 3 || r.left < -3);
             }).length;
             return {
-              width, scrollWidth:html.scrollWidth, excess, titleOverlap,
+              width, scrollWidth:html.scrollWidth, excess, titleOverlap, titleClearance,
               titleTop:titleRect ? Math.round(titleRect.top):null,
               navbarBottom:navRect ? Math.round(navRect.bottom):null,
               title:title?.innerText?.trim().slice(0,90) || '',
@@ -74,6 +75,7 @@ async function main() {
           if (!row.title)fail.push('h1 missing');
           if (row.excess>4)fail.push('horizontal overflow '+row.excess+'px');
           if (row.titleOverlap)fail.push('heading overlaps fixed navigation');
+          if (row.titleClearance !== null && row.titleClearance < 12)fail.push('heading has under 12px navbar clearance');
           if (row.clippedFields>0)fail.push(row.clippedFields+' clipped form fields');
           if (fail.length)failures.push({case:name,findings:fail});
           await page.screenshot({path:path.join(OUT,name+'.png'),fullPage:true,animations:'disabled',timeout:15000});
