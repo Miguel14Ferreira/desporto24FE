@@ -111,10 +111,44 @@ const fictionalCommunity = {
       profilePicUrl: null, role: 'MEMBER' }
   ]
 };
+const fictionalRankingRows = [
+  { position: 1, profileId: 1, username: 'mobile-fixture', fullName: 'Jogadora Fictícia',
+    profilePicUrl: null, games: 4, wins: 3, draws: 1, losses: 0, points: 10,
+    goals: 12, assists: 5, mvps: 2, cleanSheets: 1, winRate: 75,
+    currentStreak: '3W', bestWinStreak: 3 },
+  { position: 2, profileId: 2, username: 'qa-teammate', fullName: 'Colega Fictício',
+    profilePicUrl: null, games: 4, wins: 2, draws: 1, losses: 1, points: 7,
+    goals: 9, assists: 3, mvps: 1, cleanSheets: 0, winRate: 50,
+    currentStreak: '1W', bestWinStreak: 2 },
+  { position: 3, profileId: null, username: null, fullName: 'Jogador Histórico',
+    profilePicUrl: null, games: 4, wins: 1, draws: 0, losses: 3, points: 3,
+    goals: 5, assists: 1, mvps: 0, cleanSheets: 0, winRate: 25,
+    currentStreak: '2L', bestWinStreak: 1 }
+];
 const fictionalCompetition = {
   settings: { rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 },
-  seasons: [], selectedSeasonId: null, activeSeasonId: null, rounds: [], standings: []
+  seasons: [], selectedSeasonId: null, activeSeasonId: null, rounds: [],
+  standings: fictionalRankingRows
 };
+const fictionalTournament = {
+  id: 9010, name: 'Liga QA de Padel', sport: 'Padel', entryType: 'INDIVIDUAL',
+  format: 'LEAGUE', status: 'COMPLETED', winPoints: 3, drawPoints: 1,
+  lossPoints: 0, createdAt: '2026-09-01T10:00:00Z',
+  startedAt: '2026-09-03T10:00:00Z', completedAt: '2026-10-20T20:00:00Z',
+  championProfileId: 1, championUsername: 'mobile-fixture',
+  championDisplayName: 'Jogadora Fictícia', championPoints: 7, championTied: false
+};
+const fictionalTournamentRows = [
+  { position: 1, profileId: 1, username: 'mobile-fixture', displayName: 'Jogadora Fictícia',
+    played: 3, won: 2, drawn: 1, lost: 0, goalsFor: 12, goalsAgainst: 4,
+    goalDifference: 8, points: 7 },
+  { position: 2, profileId: 2, username: 'qa-teammate', displayName: 'Colega Fictício',
+    played: 3, won: 1, drawn: 1, lost: 1, goalsFor: 8, goalsAgainst: 7,
+    goalDifference: 1, points: 4 },
+  { position: 3, profileId: 3, username: 'qa-historic', displayName: 'Jogador Histórico',
+    played: 3, won: 0, drawn: 0, lost: 3, goalsFor: 2, goalsAgainst: 11,
+    goalDifference: -9, points: 0 }
+];
 const fictionalCommunitySession = {
   id: 901, sport: 'Padel', city: 'Lisboa', gameDate: futureGameDate,
   participantCount: 2, maxParticipants: 4, priceAmount: 0,
@@ -223,7 +257,30 @@ async function main() {
           if (endpoint === '/api/communities/77/sessions') return respond(route, 200, [fictionalCommunitySession]);
           if (endpoint === '/api/communities/77/sessions/competition-results') return respond(route, 200, []);
           if (endpoint === '/api/communities/77/tournaments') {
-            return respond(route, 200, { tournaments: [], page: 0, hasMore: false });
+            return respond(route, 200, { tournaments: [fictionalTournament], page: 0, hasMore: false });
+          }
+          if (endpoint === '/api/communities/77/tournaments/9010/participants') {
+            return respond(route, 200, { participants: [
+              { profileId: 1, username: 'mobile-fixture', displayName: 'Jogadora Fictícia',
+                joinedAt: '2026-09-01T12:00:00Z', status: 'CONFIRMED' },
+              { profileId: 2, username: 'qa-teammate', displayName: 'Colega Fictício',
+                joinedAt: '2026-09-01T12:00:00Z', status: 'CONFIRMED' }
+            ], page: 0, hasMore: false });
+          }
+          if (endpoint === '/api/communities/77/tournaments/9010/matches') {
+            return respond(route, 200, { matches: [
+              { id: 9011, roundNumber: 1, homeProfileId: 1,
+                homeUsername: 'mobile-fixture', awayProfileId: 2,
+                awayUsername: 'qa-teammate', status: 'COMPLETED',
+                homeScore: 3, awayScore: 1 }
+            ], page: 0, hasMore: false });
+          }
+          if (endpoint === '/api/communities/77/tournaments/9010/standings') {
+            return respond(route, 200, {
+              tournamentId: 9010, status: 'COMPLETED', totalMatches: 3,
+              completedMatches: 3, winPoints: 3, drawPoints: 1, lossPoints: 0,
+              standings: fictionalTournamentRows
+            });
           }
           if (endpoint === '/api/venues/suggest') {
             return respond(route, 200, { venues: fictionalVenues, page: 0, hasMore: false });
@@ -256,6 +313,8 @@ async function main() {
           ['/menu/communities/77?tab=home', '.community-tabs'],
           ['/menu/communities/77?tab=sessions', '.community-session-card'],
           ['/menu/communities/77?tab=stats', '.stats-table-wrap'],
+          ['/menu/communities/77?tab=ranking', '.ranking-table-wrap'],
+          ['/menu/communities/77?tab=tournaments', '.tournament-browser'],
           ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/903', '.jynlo-session-detail-premium .detail-card'],
@@ -393,6 +452,28 @@ async function main() {
             assert.equal(layout, 'grid',
               'Desktop community sections must share the available width');
             const selected = new URL('http://localhost' + route).searchParams.get('tab');
+            if (selected === 'ranking') {
+              const table = page.locator('.ranking-table');
+              await table.locator('tbody tr').first().waitFor({state:'visible'});
+              assert.equal(await table.locator('thead th').count(), 7,
+                'Community ranking must keep all seven actual columns');
+              assert.equal(await table.locator('tbody tr.podium').count(), 3,
+                'Three supplied rankings should form the podium');
+              assert.ok((await table.locator('tbody').innerText()).includes('Jogador Histórico'),
+                'Historical participants remain visible in the community ranking');
+            }
+            if (selected === 'tournaments') {
+              const options = page.locator('.tournament-option');
+              await options.first().waitFor({state:'visible'});
+              assert.equal(await options.count(), 1,
+                'Synthetic tournament browser must show the supplied competition');
+              await page.locator('.tournament-detail .champion').waitFor({state:'visible'});
+              const standings = page.locator('.tournament-detail .standings-table');
+              assert.equal(await standings.locator('tbody tr').count(), 3,
+                'Completed tournament keeps all three scored competitors');
+              assert.ok((await page.locator('.tournament-detail .champion').innerText()).includes('Jogadora Fictícia'),
+                'Completed tournament shows the recorded champion');
+            }
             if (selected === 'sessions') {
               assert.equal(await page.locator('a.community-session-card[href="/menu/events/901"]').count(), 1,
                 'Community session must retain its real details link');
