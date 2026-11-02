@@ -394,3 +394,68 @@
   :host .jynlo-activities-v3 .session-row {transition:none;}
   :host .jynlo-activities-v3 .session-row:hover {transform:none;}
 }
+
+
+/* Desktop-first activities workspace. The nearby finder shares a row with
+ * search filters rather than pushing results an entire card lower.
+ * No movement of controls into other forms, no change to API/geolocation. */
+@media (min-width: 1160px) {
+  :host .sessions-page.jynlo-activities-v3 .sessions-shell {
+    grid-template-columns: minmax(0,1fr) minmax(260px,300px);
+    align-items: start;
+    column-gap: 18px;
+    row-gap: 18px;
+  }
+  :host .jynlo-activities-v3 .sessions-shell > .page-header {
+    grid-column: 1 / -1;
+  }
+  :host .jynlo-activities-v3 .sessions-shell > .filters {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  :host .sessions-page.jynlo-games.jynlo-activities-v3 .sessions-shell > .nearby-panel {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 100%;
+    gap: 15px;
+    padding: 21px;
+    background:
+      radial-gradient(ellipse at 100% 0%,rgba(39,217,199,.14),transparent 66%),
+      linear-gradient(143deg,rgba(10,53,68,.98),rgba(4,30,46,.99));
+  }
+  :host .sessions-page.jynlo-games.jynlo-activities-v3 .nearby-panel > div:first-child {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  :host .jynlo-activities-v3 .nearby-panel strong {
+    display: block;
+    line-height: 1.4;
+  }
+  :host .jynlo-activities-v3 .nearby-panel p {
+    font-size: .87rem;
+    line-height: 1.5;
+  }
+  :host .sessions-page.jynlo-games.jynlo-activities-v3 .nearby-actions {
+    width: 100%;
+    margin-top: auto;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+  :host .sessions-page.jynlo-games.jynlo-activities-v3 .nearby-actions > :is(label,button) {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  :host .sessions-page.jynlo-games.jynlo-activities-v3 .nearby-actions label > select {
+    width: 100%;
+  }
+  :host .jynlo-activities-v3 .sessions-shell > :is(.location-error,.state-card,.session-results-bar,.session-list) {
+    grid-column: 1 / -1;
+  }
+}
