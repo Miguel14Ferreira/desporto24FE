@@ -353,13 +353,13 @@
 /* When the responsive header stacks, its desktop flex-basis must not
  * become a 370px-tall empty area above the actions. */
 @media(max-width:900px) {
-  :host .jynlo-activities-v3 .page-header > div:first-child {
+  :host .sessions-page.jynlo-games.jynlo-activities-v3 .page-header > div:first-child {
     flex:0 1 auto;
   }
 }
 @media(max-width:760px) {
   /* The location copy also switches to a column on narrow screens. */
-  :host .jynlo-activities-v3 .nearby-panel > div:first-child {
+  :host .sessions-page.jynlo-games.jynlo-activities-v3 .nearby-panel > div:first-child {
     flex:0 1 auto;
   }
 }
