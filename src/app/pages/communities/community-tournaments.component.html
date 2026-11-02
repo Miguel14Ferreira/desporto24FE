@@ -12,7 +12,7 @@
       @if (canManage && !showGuide && !showIndividualCreate && !showTeamCreate) {
         <button type="button" class="t-btn t-btn-primary" (click)="showGuide = true">{{ 'communities.tournaments.overview.create' | t }}</button>
       }
-      @if (!showGuide) {
+      @if (!showGuide && (!canManage || showIndividualCreate || showTeamCreate)) {
         <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = true">{{ 'communities.tournaments.overview.how' | t }}</button>
       }
       @if (selected) {
