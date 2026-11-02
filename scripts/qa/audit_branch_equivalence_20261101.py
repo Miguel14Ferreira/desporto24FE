@@ -33,10 +33,14 @@ def main():
             try: current=blob(path,"develop")
             except Exception: current=""
             old_tests=tests(old) if path.endswith(".spec.ts") else []
+            original_lines=[line.strip() for line in old.splitlines() if len(line.strip())>35 and not line.strip().startswith("//")]
+            unmatched_lines=sorted(set(line for line in original_lines if line not in current))
             new_tests=tests(current) if path.endswith(".spec.ts") else []
             old_runs=[s.strip() for s in old.splitlines() if "run: npx playwright test " in s]
             changes.append({"path":path,"exact_content_match":old==current,
                 "missing_test_titles":sorted(set(old_tests)-set(new_tests)),
+                "unmatched_substantive_lines":unmatched_lines,
+                "unmatched_substantive_line_count":len(unmatched_lines),
                 "missing_playwright_commands":sorted(set(old_runs)-set(s.strip() for s in current.splitlines())),
                 "requires_manual_review":old!=current})
         results.append({"branch":name,"sha":branch,"ahead_by":comparison["ahead_by"],
