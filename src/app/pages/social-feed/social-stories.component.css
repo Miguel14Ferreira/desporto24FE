@@ -199,3 +199,33 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion:reduce){
   .story-bubble .story-ring {transition:none;}
 }
+
+/* A Feed error or an empty Stories feed must not reserve the space of a
+   populated carousel. The story viewer and composer retain their layouts. */
+.story-rail.story-rail--empty {
+  min-height: 0;
+  padding: .7rem 0 .15rem;
+  align-items: center;
+}
+.stories-panel .stories-status {
+  margin: .75rem 0 0;
+  padding: .7rem .9rem;
+  border: 1px solid rgba(248, 113, 113, .23);
+  border-radius: 12px;
+  background: rgba(248, 113, 113, .065);
+  color: #ffd1d1;
+  font-size: .85rem;
+  line-height: 1.45;
+}
+@media (min-width: 901px) {
+  .stories-panel {
+    padding: 16px 19px;
+    margin-bottom: 17px;
+  }
+  .stories-heading {
+    gap: 18px;
+  }
+  .stories-heading > div:first-child {
+    min-width: 0;
+  }
+}
