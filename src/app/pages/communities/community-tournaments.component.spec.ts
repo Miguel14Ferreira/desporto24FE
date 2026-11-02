@@ -199,6 +199,32 @@ describe('Community tournaments management', () => {
     expect(api.generateSchedule).not.toHaveBeenCalled();
   });
 
+  it('keeps 100 m hurdles separate from flat sprints and relay formats', async () => {
+    component.startIndividualCreation();
+    component.nameDraft='100 m barreiras';
+    component.chooseSport('Atletismo');
+    component.chooseTournamentEventType('TRACK');
+    expect(component.trackFlatOptions).toContain('TRACK_100');
+    expect(component.trackFlatOptions).toContain('TRACK_10000');
+    expect(component.trackObstacleOptions).toEqual([
+      'TRACK_HURDLES_100','TRACK_HURDLES_110','TRACK_HURDLES_400','TRACK_STEEPLE_3000'
+    ]);
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseTrackDiscipline('TRACK_RELAY_4X100');
+    expect(component.eventDisciplineDraft).toBeNull();
+    component.chooseTrackDiscipline('TRACK_HURDLES_100');
+    expect(component.isSportFormatSupported).toBeTrue();
+    api.createTrackChampionship.and.returnValue(of({
+      ...draft,id:103,name:'100 m barreiras',sport:'Atletismo',
+      eventType:'TRACK',eventDiscipline:'TRACK_HURDLES_100',scoringMode:'TRACK_BEST_TIME'
+    }));
+    await component.create();
+    expect(api.createTrackChampionship).toHaveBeenCalledOnceWith(
+      7,'100 m barreiras','TRACK_HURDLES_100');
+    expect(api.timedOverview).toHaveBeenCalledOnceWith(7,103);
+    expect(api.generateSchedule).not.toHaveBeenCalled();
+  });
+
   it('creates athletics championships only after selecting a compatible discipline', async () => {
     component.startIndividualCreation();
     component.nameDraft='Salto em comprimento';
