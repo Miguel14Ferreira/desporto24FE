@@ -3,7 +3,7 @@ import { buildTournamentTeamInviteUrl, teamInvitationWhatsAppUrl } from './commu
 describe('Tournament team WhatsApp and link invites', () => {
   it('targets the exact community, tournament and team on the current domain', () => {
     const url = buildTournamentTeamInviteUrl('https://d24sports.com', 7, 19, 40);
-    expect(url).toBe('https://d24sports.com/menu/communities/7?tab=tournaments&tournament=19&team=40');
+    expect(url).toBe('https://d24sports.com/menu/communities/7?tab=tournaments&tournament=19&team=40&teamPage=40');
     expect(buildTournamentTeamInviteUrl('https://preview.example:4200', 7, 19, 40))
       .toContain('https://preview.example:4200/menu/communities/7?');
   });
@@ -12,6 +12,7 @@ describe('Tournament team WhatsApp and link invites', () => {
     const url = buildTournamentTeamInviteUrl('https://d24sports.com', 7, 19, 40);
     const parsed = new URL(url);
     expect(parsed.searchParams.get('team')).toBe('40');
+    expect(parsed.searchParams.get('teamPage')).toBe('40');
     expect(parsed.searchParams.has('username')).toBeFalse();
     expect(parsed.searchParams.has('token')).toBeFalse();
   });

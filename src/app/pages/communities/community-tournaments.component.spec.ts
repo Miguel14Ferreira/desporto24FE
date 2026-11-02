@@ -864,7 +864,7 @@ describe('Community tournaments management', () => {
       component.invitedTeamId = 40;
       expect(component.invitedTeam?.id).toBe(40);
       expect(component.teamInviteUrl(team)).toContain('team=40');
-      expect(component.teamInviteUrl(team)).not.toContain('teamPage');
+      expect(component.teamInviteUrl(team)).toContain('teamPage=40');
     });
 
     it('switches between focused teams without sending changes to the backend', () => {

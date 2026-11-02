@@ -16,6 +16,8 @@ export function buildTournamentTeamInviteUrl(
   url.searchParams.set('tab', 'tournaments');
   url.searchParams.set('tournament', String(tournamentId));
   url.searchParams.set('team', String(teamId));
+  // New invites open the dedicated team profile. Keep `team` for older deep links.
+  url.searchParams.set('teamPage', String(teamId));
   return url.toString();
 }
 

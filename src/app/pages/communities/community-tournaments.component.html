@@ -328,7 +328,7 @@
                 : 'communities.tournaments.teamPage.rosterLocked') | t }}
             </span>
           </div>
-          @if (selected?.status === 'DRAFT' && !myTeam && !isTeamRosterFull(team)) {
+          @if (selected?.status === 'DRAFT' && !myTeam && !isTeamRosterFull(team) && invitedTeam?.id !== team.id) {
             <a class="t-btn t-btn-secondary"
               [routerLink]="['/menu/communities', community.id]"
               [queryParams]="{tab:'tournaments',tournament:selected?.id,team:team.id}">
@@ -336,6 +336,29 @@
             </a>
           }
         </header>
+        @if (invitedTeam?.id === team.id && selected?.id === invitedTournamentId) {
+          <section class="team-invite-accept" [attr.aria-label]="'communities.tournaments.teamUi.inviteRegion' | t">
+            <div>
+              <strong>🏆 {{ 'communities.tournaments.teamUi.invited' | t:{team:team.name} }}</strong>
+              <p>{{ selected?.name }} · {{ community.name }}</p>
+              @if (myTeam?.id === team.id) {
+                <p class="team-invite-confirmed" role="status">{{ 'communities.tournaments.teamUi.alreadyMember' | t }}</p>
+              } @else if (myTeam) {
+                <p role="status">{{ 'communities.tournaments.teamUi.otherTeam' | t:{team:myTeam.name} }}</p>
+              } @else if (selected?.status !== 'DRAFT') {
+                <p role="status">{{ 'communities.tournaments.teamUi.rosterClosed' | t }}</p>
+              } @else if (isTeamRosterFull(team)) {
+                <p role="status">{{ 'communities.tournaments.teamUi.teamFull' | t }}</p>
+              } @else {
+                <p>{{ 'communities.tournaments.teamUi.confirmInviteHint' | t }}</p>
+                <button type="button" class="t-btn t-btn-primary"
+                  [disabled]="busy || detailsLoading" (click)="acceptInvitedTeam()">
+                  {{ (busy ? 'communities.tournaments.teamUi.accepting' : 'communities.tournaments.teamUi.acceptInvite') | t }}
+                </button>
+              }
+            </div>
+          </section>
+        }
         <div class="team-page-content">
           <div class="team-page-section-label">
             <h3>{{ 'communities.tournaments.teamPage.rosterTitle' | t }}</h3>
