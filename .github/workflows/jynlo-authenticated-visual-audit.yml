@@ -6,7 +6,14 @@ on:
     paths:
       - '.github/workflows/jynlo-authenticated-visual-audit.yml'
       - 'scripts/ci-browser/concept_one_mobile_readonly.cjs'
-      - 'src/app/pages/events2/events2-v3-finish.css'
+      - 'src/app/app.component.*'
+      - 'src/app/app-routing.module.ts'
+      - 'src/app/pages/**'
+      - 'src/app/shared/**'
+      - 'src/app/i18n/**'
+      - 'src/styles.css'
+      - 'src/styles/**'
+      - 'src/index.html'
   workflow_dispatch:
 
 permissions:
