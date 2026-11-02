@@ -127,6 +127,13 @@ describe('MenuComponent', () => {
     }
   });
 
+  it('keeps account logout in the shared navbar, not duplicated in the dashboard', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.dashboard-header .profile-link[href="/menu/dadosPerfil"]')).not.toBeNull();
+    expect(root.querySelector('.dashboard-header .logout-action')).toBeNull();
+    expect(root.querySelectorAll('a.hero-action').length).toBe(2);
+  });
+
   it('should create and load dashboard data', () => {
     expect(component).toBeTruthy();
     expect(profileService.get).toHaveBeenCalled();
