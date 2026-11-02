@@ -120,6 +120,8 @@
 
 @media(max-width:800px){
   :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header{align-items:stretch;flex-direction:column;}
+  /* The desktop 290px flex basis must not become vertical empty space. */
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header > div:first-child{flex:0 1 auto;}
   :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .page-header > .row-actions{justify-content:flex-start;}
 }
 @media(max-width:560px){
