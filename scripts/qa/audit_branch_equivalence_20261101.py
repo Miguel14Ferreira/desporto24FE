@@ -20,7 +20,7 @@ def blob(path,ref):
     import base64
     return base64.b64decode(data["content"]).decode("utf-8")
 def tests(text):
-    return sorted(set(re.findall(r"""test(?:\\.skip|\\.only)?\\s*\\(\\s*['\"]([^'\"]+)""",text)))
+    return sorted(set(re.findall(r"""test(?:\.skip|\.only)?\s*\(\s*['\"]([^'\"]+)""",text)))
 def main():
     results=[]
     for name in CANDIDATES:
