@@ -1,0 +1,57 @@
+name: Jynlo archive merged v3 design branches
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/archive-merged-design-v3-20261102.yml']
+permissions:
+  contents: write
+  pull-requests: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Preserve merged design heads as tags and prune temporary branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request,urllib.error,urllib.parse
+          repo=os.environ['REPO']
+          assert repo=='Miguel14Ferreira/desporto24FE'
+          items=[
+            ('design/explore-neon-glass-continuation-20261102','32f5aa92ded9530b63c58cdf3603f22fb9ec1187',801,'archive/design-v3-20261102/explore-neon-glass'),
+            ('design/activities-neon-glass-cards-20261102','1ec2298401e95496b1bb006b119c366adc6e5232',802,'archive/design-v3-20261102/activities-neon-glass')
+          ]
+          def api(method,path,body=None):
+              url='https://api.github.com/repos/'+repo+path
+              req=urllib.request.Request(url,method=method,
+                  data=None if body is None else json.dumps(body).encode(),
+                  headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+                           'Accept':'application/vnd.github+json',
+                           'X-GitHub-Api-Version':'2022-11-28',
+                           'Content-Type':'application/json'})
+              with urllib.request.urlopen(req,timeout=35) as r:
+                  data=r.read()
+                  return json.loads(data) if data else {}
+          for branch,sha,pr_id,tag in items:
+              pr=api('GET','/pulls/'+str(pr_id))
+              assert pr['merged_at'] is not None and pr['state']=='closed',branch+' PR not merged'
+              assert pr['head']['sha']==sha,'PR HEAD changed '+branch
+              assert api('GET','/git/ref/heads/'+urllib.parse.quote(branch,safe='/'))['object']['sha']==sha
+              opens=api('GET','/pulls?state=open&head='+urllib.parse.quote(repo.split('/')[0]+':'+branch,safe='')+'&per_page=100')
+              assert not opens,branch+' has open PR'
+              try:
+                  assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha
+              except urllib.error.HTTPError as e:
+                  if e.code!=404:raise
+                  api('POST','/git/refs',{'ref':'refs/tags/'+tag,'sha':sha})
+              assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha
+              assert api('GET','/git/ref/heads/'+urllib.parse.quote(branch,safe='/'))['object']['sha']==sha
+              api('DELETE','/git/refs/heads/'+urllib.parse.quote(branch,safe='/'))
+              print('ARCHIVED_AND_REMOVED',branch,sha,tag,flush=True)
+          refs=[b['name'] for b in api('GET','/branches?per_page=100&page=1')]
+          assert sorted(refs)==['develop','master'],refs
+          print('DESIGN_CLEANUP_DONE',','.join(refs),flush=True)
+          PY
