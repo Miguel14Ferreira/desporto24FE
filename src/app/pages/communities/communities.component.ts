@@ -831,6 +831,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   fieldDisciplineLabel(code: string): string {
+    // Reuse the championship labels for typed athletics distances so the
+    // round editor and result tags show "100 m", not an internal code.
+    if (['TRACK_100','TRACK_200','TRACK_400',
+         'TRACK_800','TRACK_1500','TRACK_5000'].includes(code)) {
+      return t('communities.trackTournament.discipline.' + code);
+    }
     return t('communities.discipline.' + code.toLowerCase());
   }
   performanceKind = performanceKind;
