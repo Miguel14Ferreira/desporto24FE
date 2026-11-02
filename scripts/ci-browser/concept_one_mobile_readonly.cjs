@@ -653,10 +653,10 @@ async function main() {
                   await page.locator('.team-profile-page').waitFor({state:'visible'});
                   const occupied = page.locator('.team-page-roster');
 
-                  assert.equal(await page.locator('.team-roster-card').count(),3,
-                    'Draft shows both occupied squads and the deletable empty squad');
-                  assert.equal(await page.locator('.team-roster-readiness.is-ready').count(),1,
-                    'Only the complete synthetic team must be ready');
+                  assert.equal(await page.locator('.team-roster-card').count(),1,
+                    'Dedicated team page shows only its own roster');
+                  assert.equal(await page.locator('.team-roster-readiness.is-ready').count(),0,
+                    'The incomplete synthetic squad is not labelled ready');
                   assert.equal(await page.locator('.team-summary-state').count(),0,
                     'The individual team page must not show the whole directory');
                   const rawLink = occupied.locator('.team-link-field');
