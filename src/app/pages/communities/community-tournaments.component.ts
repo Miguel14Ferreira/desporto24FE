@@ -33,6 +33,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   @Input({ required: true }) community!: CommunityGroup;
   @Input() invitedTournamentId: number | null = null;
   @Input() invitedTeamId: number | null = null;
+  @Input() teamPageId: number | null = null;
 
   tournaments: CommunityTournament[] = [];
   selected?: CommunityTournament;
@@ -1018,6 +1019,11 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMemberSearch[teamId] = value;
     // Never submit a selection hidden by the updated search.
     this.teamPlayerDraft[teamId] = null;
+  }
+
+  get focusedTeam(): TournamentTeam | undefined {
+    return this.isTeamCompetition && this.teamPageId !== null
+      ? this.teams.find(team => team.id === this.teamPageId) : undefined;
   }
 
   get invitedTeam(): TournamentTeam | undefined {
