@@ -1046,7 +1046,7 @@
                              ? 'communities.tournaments.fixturesUi.scoreAria'
                              : 'communities.tournaments.fixturesUi.pendingAria') | t:{
                                home:game.homeTeamName,away:game.awayTeamName,
-                               homeScore:game.homeScore,awayScore:game.awayScore}">
+                               homeScore:game.homeScore ?? '—',awayScore:game.awayScore ?? '—'}">
                            @if (game.status === 'COMPLETED') {
                              <span class="team-fixture-numbers"><b>{{ game.homeScore }}</b><i>:</i><b>{{ game.awayScore }}</b></span>
                              <small>{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</small>
