@@ -266,9 +266,9 @@ async function main() {
               el => getComputedStyle(el).gap);
             const margin = await shell.locator('.venue-directory-result-heading').evaluate(
               el => getComputedStyle(el).marginTop);
-            assert.equal(gap, width === 390 ? '14px' : '16px',
+            assert.equal(gap, '16px',
               'Catalogue filters retain readable responsive spacing');
-            assert.equal(margin, width === 390 ? '20px' : '24px',
+            assert.equal(margin, '24px',
               'Catalogue results are separated from filter form');
           }
           if (route === '/menu/venues/201') {
