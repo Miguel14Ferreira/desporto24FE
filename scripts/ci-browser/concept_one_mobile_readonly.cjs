@@ -98,6 +98,30 @@ const fictionalParticipants = [
     joinedAt: futureGameDate, teamCode: null }
 ];
 
+// All internal community screenshots use synthetic, read-only records.
+const fictionalCommunity = {
+  id: 77, name: 'Clube QA Padel', description: 'Comunidade fictícia para validar os separadores.',
+  sport: 'Padel', sports: ['Padel'], photoUrl: null, visibility: 'PUBLIC',
+  rankingsEnabled: true, individualTournamentsEnabled: true, teamTournamentsEnabled: true,
+  membersCanCreateSessions: true, ownerUsername: 'mobile-fixture', myRole: 'OWNER',
+  memberCount: 2, createdAt: '2026-10-20T12:00:00Z', members: [
+    { profileId: 1, username: 'mobile-fixture', fullName: 'Jogadora Fictícia',
+      profilePicUrl: null, role: 'OWNER' },
+    { profileId: 2, username: 'qa-teammate', fullName: 'Colega Fictício',
+      profilePicUrl: null, role: 'MEMBER' }
+  ]
+};
+const fictionalCompetition = {
+  settings: { rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 },
+  seasons: [], selectedSeasonId: null, activeSeasonId: null, rounds: [], standings: []
+};
+const fictionalCommunitySession = {
+  id: 901, sport: 'Padel', city: 'Lisboa', gameDate: futureGameDate,
+  participantCount: 2, maxParticipants: 4, priceAmount: 0,
+  status: 'OPEN', privateGame: true, audience: 'COMMUNITY_ONLY',
+  distanceKm: null, recurrenceSeriesId: null, seasonCommunityId: null
+};
+
 const unexpectedWrites = [];
 const browserErrors = [];
 
@@ -186,7 +210,15 @@ async function main() {
           if (endpoint === '/api/sessions/mine') {
             return respond(route, 200, { created: [], joined: [], waitlisted: [] });
           }
-          if (endpoint === '/api/communities/mine') return respond(route, 200, []);
+          if (endpoint === '/api/communities/mine') return respond(route, 200, [fictionalCommunity]);
+          if (endpoint === '/api/communities/invites/me') return respond(route, 200, []);
+          if (endpoint === '/api/communities/77') return respond(route, 200, fictionalCommunity);
+          if (endpoint === '/api/communities/77/competition') return respond(route, 200, fictionalCompetition);
+          if (endpoint === '/api/communities/77/sessions') return respond(route, 200, [fictionalCommunitySession]);
+          if (endpoint === '/api/communities/77/sessions/competition-results') return respond(route, 200, []);
+          if (endpoint === '/api/communities/77/tournaments') {
+            return respond(route, 200, { tournaments: [], page: 0, hasMore: false });
+          }
           if (endpoint === '/api/venues/suggest') {
             return respond(route, 200, { venues: fictionalVenues, page: 0, hasMore: false });
           }
@@ -215,6 +247,9 @@ async function main() {
           ['/menu/venues/201', '.venue-detail-page .venue-header'],
           ['/menu/venues/new', '.venue-create-form'],
           ['/menu/communities?view=explore', '.community-pitch'],
+          ['/menu/communities/77?tab=home', '.community-tabs'],
+          ['/menu/communities/77?tab=sessions', '.community-session-card'],
+          ['/menu/communities/77?tab=stats', '.stats-table-wrap'],
           ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/903', '.jynlo-session-detail-premium .detail-card'],
@@ -336,6 +371,30 @@ async function main() {
           }
           // Desktop-first content hierarchy: search and nearby actions remain
           // real controls, but should no longer delay the first results row.
+          if (width === 1366 && route.startsWith('/menu/communities/77?')) {
+            const tabs = page.locator('nav.community-tabs > button');
+            assert.equal(await tabs.count(), 7,
+              'Synthetic community must expose all seven authorized sections');
+            const current = await tabs.evaluateAll(items =>
+              items.filter(el => el.getAttribute('aria-current') === 'true'));
+            assert.equal(current.length, 1,
+              'Exactly one community section must be selected');
+            const tabBox = await page.locator('nav.community-tabs').boundingBox();
+            assert.ok(tabBox && tabBox.height < 120,
+              'Desktop community navigation should remain compact');
+            const layout = await page.locator('nav.community-tabs').evaluate(
+              el => getComputedStyle(el).display);
+            assert.equal(layout, 'grid',
+              'Desktop community sections must share the available width');
+            const selected = new URL('http://localhost' + route).searchParams.get('tab');
+            if (selected === 'sessions') {
+              assert.equal(await page.locator('a.community-session-card[href="/menu/events/901"]').count(), 1,
+                'Community session must retain its real details link');
+            } else if (selected === 'stats') {
+              assert.equal(await page.locator('.stats-table th').count(), 9,
+                'Statistics must keep their nine original columns');
+            }
+          }
           if (width === 1366 && route === '/menu/discover') {
             const searchBox = await page.locator('.jynlo-explore-v3 .discover-search').boundingBox();
             const copyBox = await page.locator('.jynlo-explore-v3 .search-copy').boundingBox();
