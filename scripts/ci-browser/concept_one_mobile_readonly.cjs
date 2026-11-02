@@ -234,19 +234,24 @@ async function main() {
               documentWidth: doc.scrollWidth,
               bodyWidth: document.body.scrollWidth,
               offenders: [...document.body.querySelectorAll('*')]
-                .filter(el => {
+                .map(el => {
                   const r = el.getBoundingClientRect();
                   const css = getComputedStyle(el);
-                  return r.width > 0 && r.height > 0
-                    && css.visibility !== 'hidden' && css.display !== 'none'
-                    && r.right > width + 3 && r.left < width
-                    && css.position !== 'fixed';
+                  return {
+                    element: el.tagName.toLowerCase(),
+                    className: String(el.className || '').slice(0, 70),
+                    parent: String(el.parentElement?.className || '').slice(0, 50),
+                    left: Math.round(r.left), right: Math.round(r.right),
+                    width: Math.round(r.width), scrollWidth: el.scrollWidth,
+                    minWidth: css.minWidth, position: css.position,
+                    visible: r.width > 0 && r.height > 0
+                      && css.visibility !== 'hidden' && css.display !== 'none'
+                  };
                 })
-                .slice(0, 7).map(el => ({
-                  element: el.tagName.toLowerCase(),
-                  className: String(el.className || '').slice(0, 75),
-                  right: Math.round(el.getBoundingClientRect().right)
-                }))
+                .filter(item => item.visible && item.right > width + 3
+                  && item.left < width && item.position !== 'fixed')
+                .sort((a, b) => b.right - a.right)
+                .slice(0, 22)
             };
           }, width);
           const name = route.replace(/\W+/g, '-').replace(/^-/, '');
