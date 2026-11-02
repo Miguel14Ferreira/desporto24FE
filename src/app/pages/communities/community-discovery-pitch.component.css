@@ -127,3 +127,18 @@
   border-color:rgba(59,196,201,.4);
   background:rgba(14,77,86,.34);
 }
+
+
+/* Keep the full value proposition, but avoid a second onboarding paragraph
+   beneath the already explicit create/explore actions on wide screens. */
+@media(min-width:1100px){
+  .community-pitch{padding:21px 25px;gap:20px}
+  .community-pitch h2{font-size:clamp(1.85rem,2.1vw,2.2rem);max-width:25ch;line-height:1.12}
+  .community-pitch-eyebrow{margin-bottom:6px}
+  .community-pitch-lead{margin:9px 0 8px;font-size:.92rem;line-height:1.45}
+  .community-pitch-promise{font-size:.89rem;line-height:1.4}
+  .community-pitch-actions{margin-top:13px}
+  .community-pitch-onboarding{display:none}
+  .community-pitch-benefits{gap:8px}
+  .community-pitch-benefit{min-height:104px;padding:11px}
+}
