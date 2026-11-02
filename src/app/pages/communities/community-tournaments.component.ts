@@ -232,6 +232,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.selectedSportCreationModel==='TRACK_BEST_TIME'
       && this.savedSportEventType==='TRACK' ? TRACK_TOURNAMENT_DISTANCES : [];
   }
+  get trackFlatOptions():readonly string[] {
+    return this.trackDisciplineOptions.filter(code=>!code.includes('HURDLES') && !code.includes('STEEPLE'));
+  }
+  get trackObstacleOptions():readonly string[] {
+    return this.trackDisciplineOptions.filter(code=>code.includes('HURDLES') || code.includes('STEEPLE'));
+  }
   chooseTrackDiscipline(code:string):void {
     if (this.busy || !this.trackDisciplineOptions.includes(code)) return;
     this.eventDisciplineDraft=code;

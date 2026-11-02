@@ -180,8 +180,25 @@
                 <strong>{{ 'communities.trackTournament.disciplineTitle' | t }}</strong>
                 <p>{{ 'communities.trackTournament.disciplineHelp' | t }}</p>
               </div>
+              <div class="tournament-event-choices-intro">
+                <strong>{{ 'communities.trackTournament.flatGroup' | t }}</strong>
+              </div>
               <div class="tournament-event-options">
-                @for (discipline of trackDisciplineOptions; track discipline) {
+                @for (discipline of trackFlatOptions; track discipline) {
+                  <button type="button" class="tournament-event-option"
+                    [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
+                    [class.is-selected]="eventDisciplineDraft === discipline"
+                    (click)="chooseTrackDiscipline(discipline)">
+                    <span>{{ ('communities.trackTournament.discipline.' + discipline) | t }}</span>
+                    <small>{{ 'communities.swimTournament.secondsUnit' | t }}</small>
+                  </button>
+                }
+              </div>
+              <div class="tournament-event-choices-intro">
+                <strong>{{ 'communities.trackTournament.obstacleGroup' | t }}</strong>
+              </div>
+              <div class="tournament-event-options">
+                @for (discipline of trackObstacleOptions; track discipline) {
                   <button type="button" class="tournament-event-option"
                     [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
                     [class.is-selected]="eventDisciplineDraft === discipline"

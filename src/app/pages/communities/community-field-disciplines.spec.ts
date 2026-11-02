@@ -9,7 +9,9 @@ describe('Athletics field disciplines', () => {
       'SHOT_PUT', 'DISCUS', 'JAVELIN', 'HAMMER'
     ]);
     expect(athleticsDisciplineOptions('Atletismo', 'TRACK'))
-      .toEqual(['TRACK_100','TRACK_200','TRACK_400','TRACK_800','TRACK_1500','TRACK_5000']);
+      .toEqual(['TRACK_100','TRACK_200','TRACK_400','TRACK_800','TRACK_1500','TRACK_5000',
+        'TRACK_10000','TRACK_HURDLES_100','TRACK_HURDLES_110',
+        'TRACK_HURDLES_400','TRACK_STEEPLE_3000']);
     expect(athleticsDisciplineOptions('Ciclismo de Pista', 'TRACK_SPRINT_HEAT')).toEqual([
       'SPRINT_THIRTY_SECOND_FINAL', 'SPRINT_SIXTEENTH_FINAL', 'SPRINT_EIGHTH_FINAL', 'SPRINT_QUARTER_FINAL', 'SPRINT_SEMI_FINAL',
       'SPRINT_BRONZE_FINAL', 'SPRINT_GOLD_FINAL'
@@ -31,6 +33,12 @@ describe('Athletics field disciplines', () => {
     expect(athleticsDisciplineValid('Atletismo', 'THROW', 'JAVELIN')).toBeTrue();
     expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'TRACK_100')).toBeTrue();
     expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'TRACK_400')).toBeTrue();
+    expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'TRACK_10000')).toBeTrue();
+    expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'TRACK_HURDLES_100')).toBeTrue();
+    expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'TRACK_HURDLES_110')).toBeTrue();
+    expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'TRACK_HURDLES_400')).toBeTrue();
+    expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'TRACK_STEEPLE_3000')).toBeTrue();
+    expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'TRACK_RELAY_4X100')).toBeFalse();
     expect(athleticsDisciplineValid('Atletismo', 'TRACK', null)).toBeFalse();
     expect(athleticsDisciplineValid('Atletismo', 'TRACK', 'LONG_JUMP')).toBeFalse();
     expect(athleticsDisciplineValid('Snowboard', 'FREESTYLE', null)).toBeTrue();

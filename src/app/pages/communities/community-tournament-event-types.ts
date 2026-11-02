@@ -56,7 +56,9 @@ export function validFieldTournamentDiscipline(eventType:string|null,discipline:
 }
 
 export const TRACK_TOURNAMENT_DISTANCES = [
-  'TRACK_100','TRACK_200','TRACK_400','TRACK_800','TRACK_1500','TRACK_5000'
+  'TRACK_100','TRACK_200','TRACK_400','TRACK_800','TRACK_1500','TRACK_5000',
+  'TRACK_10000','TRACK_HURDLES_100','TRACK_HURDLES_110',
+  'TRACK_HURDLES_400','TRACK_STEEPLE_3000'
 ] as const;
 export function validTrackTournamentDistance(eventType:string|null,discipline:string|null):boolean {
   return eventType==='TRACK' && TRACK_TOURNAMENT_DISTANCES.some(code=>code===discipline);
