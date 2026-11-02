@@ -515,7 +515,9 @@
         <section class="state-card feed-discovery-card">
           <div class="feed-v3-side-heading">
             <h2>{{ (suggestedSessions.length > 0 ? 'feed.suggestedSessionsTitle' : 'menu.findSessions') | t }}</h2>
-            <a class="feed-inline-link" routerLink="/menu/events">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+            @if (suggestedSessions.length > 0) {
+              <a class="feed-inline-link" routerLink="/menu/events">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+            }
           </div>
           @if (suggestedSessions.length > 0) {
             <div class="feed-suggested-sessions">
@@ -539,7 +541,9 @@
         <section class="state-card feed-discovery-card">
           <div class="feed-v3-side-heading">
             <h2>{{ 'discover.who.title' | t }}</h2>
-            <a class="feed-inline-link" routerLink="/menu/perfis">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+            @if (suggestedPeople.length > 0) {
+              <a class="feed-inline-link" routerLink="/menu/perfis">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+            }
           </div>
           @if (suggestedPeople.length > 0) {
             <div class="feed-suggested-people">
@@ -570,12 +574,12 @@
             {{ 'feed.findPeople' | t }} →
           </a>
         </section>
-        <section class="state-card feed-discovery-card feed-v3-community-panel">
-          <div class="feed-v3-side-heading">
-            <h2>{{ 'feed.v3.communities' | t }}</h2>
-            <a class="feed-inline-link" routerLink="/menu/communities">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
-          </div>
-          @if (myWeekCommunities.length > 0) {
+        @if (myWeekCommunities.length > 0) {
+          <section class="state-card feed-discovery-card feed-v3-community-panel">
+            <div class="feed-v3-side-heading">
+              <h2>{{ 'feed.v3.communities' | t }}</h2>
+              <a class="feed-inline-link" routerLink="/menu/communities">{{ 'feed.v3.viewAll' | t }} <span aria-hidden="true">↗</span></a>
+            </div>
             <div class="feed-v3-communities">
               @for (community of myWeekCommunities; track community.id) {
                 <a [routerLink]="['/menu/communities', community.id]" class="feed-v3-community-row"
@@ -586,16 +590,15 @@
                 </a>
               }
             </div>
-          } @else {
-            <p class="feed-v3-side-empty">{{ 'week.noCommunities' | t }}</p>
-          }
-        </section>
-        <section class="feed-v3-join-card">
-          <img src="/assets/jynlo-icon-approved.webp" width="65" height="65" alt="" loading="lazy">
-          <h2>{{ 'feed.v3.joinTitle' | t }}</h2>
-          <p>{{ 'feed.v3.joinHint' | t }}</p>
-          <a class="jynlo-premium-btn jynlo-premium-btn--primary feed-v3-join-action" routerLink="/menu/communities">{{ 'feed.v3.exploreCommunities' | t }}</a>
-        </section>
+          </section>
+        } @else {
+          <section class="feed-v3-join-card">
+            <img src="/assets/jynlo-icon-approved.webp" width="65" height="65" alt="" loading="lazy">
+            <h2>{{ 'feed.v3.joinTitle' | t }}</h2>
+            <p>{{ 'feed.v3.joinHint' | t }}</p>
+            <a class="jynlo-premium-btn jynlo-premium-btn--primary feed-v3-join-action" routerLink="/menu/communities">{{ 'feed.v3.exploreCommunities' | t }}</a>
+          </section>
+        }
       </aside>
     </div>
   </div>
