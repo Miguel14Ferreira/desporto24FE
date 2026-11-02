@@ -80,9 +80,9 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(shell.querySelector('.feed-main .feed-v3-welcome h1')?.textContent).toContain(t('feed.v3.welcome'));
     expect(shell.querySelector('.feed-main .week-hub-grid')).not.toBeNull();
     expect(shell.querySelector('.feed-main .composer textarea')).not.toBeNull();
-    expect(shell.querySelector('.feed-sidebar .feed-v3-community-panel')).not.toBeNull();
+    expect(shell.querySelector('.feed-sidebar .feed-v3-community-panel')).toBeNull();
     expect(shell.querySelector('.feed-sidebar .feed-v3-join-card a[href="/menu/communities"]')).not.toBeNull();
-    expect(shell.querySelectorAll('.feed-discovery-card').length).toBe(3);
+    expect(shell.querySelectorAll('.feed-discovery-card').length).toBe(2);
     component.ngOnDestroy();
   }));
 
@@ -113,7 +113,23 @@ describe('SocialFeedComponent discovery sidebar', () => {
     const submit = composer.querySelector('button.jynlo-premium-btn--primary') as HTMLButtonElement;
     expect(submit.disabled).toBeTrue();
     expect(root.querySelector('.feed-v3-join-action[href="/menu/communities"]')).not.toBeNull();
-    expect(root.querySelectorAll('.feed-v3-side-heading > a.feed-inline-link').length).toBe(3);
+    expect(root.querySelectorAll('.feed-v3-side-heading > a.feed-inline-link').length).toBe(0);
+    expect(root.querySelectorAll('.feed-sidebar-link[href="/menu/events"]').length).toBe(1);
+    expect(root.querySelectorAll('.feed-sidebar-link[href="/menu/perfis"]').length).toBe(1);
+    component.ngOnDestroy();
+  }));
+
+  it('shows member communities instead of the discovery promotion when one exists', fakeAsync(() => {
+    groups.mine.and.returnValue(of([
+      { id: 11, name: 'Clube de Padel', visibility: 'PUBLIC', myRole: 'MEMBER', memberCount: 4, sport: 'Padel' }
+    ] as any));
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+    const sidebar = (fixture.nativeElement as HTMLElement).querySelector('.feed-sidebar')!;
+    expect(sidebar.querySelector('.feed-v3-community-panel')).not.toBeNull();
+    expect(sidebar.querySelector('.feed-v3-community-row[href="/menu/communities/11"]')).not.toBeNull();
+    expect(sidebar.querySelector('.feed-v3-join-card')).toBeNull();
     component.ngOnDestroy();
   }));
 
