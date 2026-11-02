@@ -4,7 +4,7 @@ import { CommunitiesComponent } from './communities.component';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 describe('Team invitation community onboarding', () => {
-  function freshComponent(params: Record<string, string>): CommunitiesComponent {
+  function freshComponent(params: Record<string, string | undefined>): CommunitiesComponent {
     const component = Object.create(CommunitiesComponent.prototype) as CommunitiesComponent;
     (component as any).route = {
       snapshot: { queryParamMap: convertToParamMap(params) }
