@@ -406,8 +406,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       || this.selectedSportCreationModel === 'TRACK_BEST_TIME';
   }
   timedUiKey(key:string):string {
+    const common=['rounds','linked','unlink','link','empty','place','bestTime','attempts','unlinked'];
     return 'communities.'+(this.selected?.scoringMode==='TRACK_BEST_TIME'
-      ? 'trackTournament':'swimTournament')+'.'+key;
+      && !common.includes(key) ? 'trackTournament':'swimTournament')+'.'+key;
   }
 
   /** A speed-skating bracket uses timed heats, never generic league points. */
