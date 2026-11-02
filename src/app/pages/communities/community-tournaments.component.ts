@@ -172,6 +172,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   private teamStandingsRevision = 0;
   teamScoreDrafts: Record<number, { home: number | null; away: number | null }> = {};
   teamScoreTouched = new Set<number>();
+  editingTeamResultId: number | null = null;
+  confirmingTeamPlayerRemoval: { teamId: number; profileId: number } | null = null;
+  confirmingEmptyTeamId: number | null = null;
   nameDraft = '';
   sportDraft = '';
   sportSearch = '';
@@ -917,6 +920,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamStandingsError = false;
       this.teamScoreDrafts = {};
       this.teamScoreTouched.clear();
+      this.editingTeamResultId = null;
+      this.confirmingTeamPlayerRemoval = null;
+      this.confirmingEmptyTeamId = null;
       // A sole community sport is convenient; multi-sport requires an explicit choice.
       const sports = this.community.sports;
       this.sportDraft = sports?.length === 1
@@ -1273,6 +1279,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamStandingsError = false;
     this.teamScoreDrafts = {};
     this.teamScoreTouched.clear();
+    this.editingTeamResultId = null;
+    this.confirmingTeamPlayerRemoval = null;
+    this.confirmingEmptyTeamId = null;
     this.scoreDrafts = {};
     this.scoreTouched.clear();
     this.focusPlayersAfterReload = false;
@@ -1577,6 +1586,8 @@ export class CommunityTournamentsComponent implements OnChanges {
             || this.selected?.id !== tournament.id) return;
         this.teams = teams;
         this.teamPlayerDraft = {};
+        this.confirmingTeamPlayerRemoval = null;
+        this.confirmingEmptyTeamId = null;
         if (tournament.status !== 'DRAFT') {
           this.loadTeamMatches(true);
           if (tournament.format === 'LEAGUE') this.loadTeamStandings();
@@ -1694,6 +1705,25 @@ export class CommunityTournamentsComponent implements OnChanges {
     });
   }
 
+  // Completed scores remain compact until an organizer requests a correction.
+  toggleTeamResultCorrection(match: TournamentTeamMatch): void {
+    if (!this.selected || !this.canManage || this.busy
+        || this.selected.entryType !== 'TEAM' || this.selected.status !== 'IN_PROGRESS'
+        || match.status !== 'COMPLETED' || this.isPastKnockoutRound(match)) return;
+    this.editingTeamResultId = this.editingTeamResultId === match.id ? null : match.id;
+    this.teamScoreDrafts[match.id] = {
+      home: match.homeScore ?? null, away: match.awayScore ?? null
+    };
+    this.teamScoreTouched.delete(match.id);
+    this.changeDetector.markForCheck();
+  }
+
+  teamScoreUnchanged(match: TournamentTeamMatch): boolean {
+    const draft = this.teamScoreDraft(match);
+    return match.status === 'COMPLETED'
+      && draft.home === match.homeScore && draft.away === match.awayScore;
+  }
+
   teamScoreDraft(match: TournamentTeamMatch): { home: number | null; away: number | null } {
     return this.teamScoreDrafts[match.id]
       || { home: match.homeScore ?? null, away: match.awayScore ?? null };
@@ -1718,6 +1748,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.selected || !this.canManage || this.selected.entryType !== 'TEAM'
         || this.selected.status !== 'IN_PROGRESS' || this.isPastKnockoutRound(match)) return;
     const score = this.teamScoreDraft(match);
+    if (this.teamScoreUnchanged(match)) return;
     if (!this.validScore(score.home) || !this.validScore(score.away)) {
       this.showError(t('communities.tournaments.organizerUi.invalidScores'));
       return;
@@ -1731,6 +1762,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatches = this.teamMatches.map(game => game.id === saved.id ? saved : game);
       this.teamScoreDrafts[saved.id] = { home: saved.homeScore ?? null, away: saved.awayScore ?? null };
       this.teamScoreTouched.delete(saved.id);
+      this.editingTeamResultId = null;
       if (this.isEliminationMatch(saved)) {
         if (saved.roundNumber === this.knockoutTotalRounds && saved.homeScore !== saved.awayScore) {
           const homeWins = saved.homeScore! > saved.awayScore!;
@@ -1839,15 +1871,36 @@ export class CommunityTournamentsComponent implements OnChanges {
       t('communities.tournaments.organizerUi.teamPlayerAdded'), () => this.loadTeams());
   }
 
+  requestTeamPlayerRemoval(team: TournamentTeam, profileId: number): void {
+    if (!this.canManageTeamRoster || !this.selected
+        || !team.players.some(player => player.profileId === profileId)) return;
+    this.confirmingTeamPlayerRemoval = { teamId: team.id, profileId };
+    this.confirmingEmptyTeamId = null;
+  }
+
+  requestEmptyTeamDeletion(team: TournamentTeam): void {
+    if (!this.canManageTeamRoster || !this.selected || team.players.length > 0) return;
+    this.confirmingEmptyTeamId = team.id;
+    this.confirmingTeamPlayerRemoval = null;
+  }
+
+  cancelTeamRosterConfirmation(): void {
+    this.confirmingTeamPlayerRemoval = null;
+    this.confirmingEmptyTeamId = null;
+  }
+
   async removeTeamPlayer(team: TournamentTeam, profileId: number): Promise<void> {
     if (!this.canManageTeamRoster || !this.selected
+        || this.confirmingTeamPlayerRemoval?.teamId !== team.id
+        || this.confirmingTeamPlayerRemoval.profileId !== profileId
         || !team.players.some(p => p.profileId === profileId)) return;
     await this.mutate(this.api.removeTeamPlayer(this.community.id, this.selected.id, team.id, profileId),
       t('communities.tournaments.organizerUi.teamPlayerRemoved'), () => this.loadTeams());
   }
 
   async deleteTournamentTeam(team: TournamentTeam): Promise<void> {
-    if (!this.canManageTeamRoster || !this.selected || team.players.length > 0) return;
+    if (!this.canManageTeamRoster || !this.selected || team.players.length > 0
+        || this.confirmingEmptyTeamId !== team.id) return;
     await this.mutate(this.api.deleteTeam(this.community.id, this.selected.id, team.id),
       t('communities.tournaments.organizerUi.teamDeleted'), () => this.loadTeams());
   }
