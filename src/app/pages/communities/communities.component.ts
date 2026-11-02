@@ -1648,6 +1648,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.invitedTournamentId ? this.positiveQueryId('team') : null;
   }
 
+  // Dedicated team profile is separate from the legacy invitation deep link.
+  get tournamentTeamPageId(): number | null {
+    return this.invitedTournamentId ? this.positiveQueryId('teamPage') : null;
+  }
+
   ngOnInit(): void {
     this.isDetailMode = Boolean(this.route.snapshot.paramMap.get('id'));
     this.reload();
