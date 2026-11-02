@@ -1,0 +1,99 @@
+/* Jynlo Neon Glass v3 — session detail finishing pass, presentation only. */
+:host .detail-page.jynlo-session-detail-premium {
+  --sd-v3-line:rgba(42,207,207,.31);
+  min-height:100dvh;
+  padding:clamp(90px,7.3vw,108px) clamp(13px,2.1vw,28px) 70px;
+  background:
+    radial-gradient(ellipse 47% 470px at 97% 3%,rgba(12,156,159,.19),transparent 78%),
+    linear-gradient(145deg,#03111f,#052434 63%,#031522);
+}
+:host .detail-page.jynlo-session-detail-premium .detail-shell {
+  width:min(1240px,100%);max-width:1240px;min-width:0;
+}
+:host .detail-page.jynlo-session-detail-premium .back-link {
+  display:inline-flex;align-items:center;box-sizing:border-box;
+  min-height:44px;padding:7px 13px;margin-bottom:15px;
+  border-radius:11px;border:1px solid rgba(46,194,198,.31);
+  background:rgba(8,50,64,.72);color:#b8fbea;
+  white-space:normal;line-height:1.4;
+}
+:host .detail-page.jynlo-session-detail-premium .detail-card {
+  border:1px solid var(--sd-v3-line);border-radius:21px;
+  background:linear-gradient(144deg,#0b3244,#061e30);
+  box-shadow:0 20px 46px rgba(0,10,27,.17);
+}
+:host .detail-page.jynlo-session-detail-premium .detail-content {
+  padding:clamp(17px,2.6vw,31px);
+}
+:host .detail-page.jynlo-session-detail-premium .title-row h1{
+  font-size:clamp(2rem,3.4vw,3.14rem);
+  letter-spacing:-.047em;line-height:1.1;
+  color:#f4fffc;text-wrap:balance;overflow-wrap:anywhere;
+}
+:host .detail-page.jynlo-session-detail-premium .badges>span{
+  border-color:rgba(48,224,209,.43);
+  background:rgba(27,200,187,.17);color:#b5ffed;
+  line-height:1.35;
+}
+:host .detail-page.jynlo-session-detail-premium .session-top-actions{
+  gap:9px;flex-wrap:wrap;
+  padding:17px 0;margin-bottom:17px;
+  border-color:rgba(44,200,197,.25);
+}
+:host .detail-page.jynlo-session-detail-premium .session-top-actions>:is(a,button){
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;max-width:100%;padding:10px 13px;
+  border-radius:11px;line-height:1.35;white-space:normal;text-align:center;
+}
+:host .detail-page.jynlo-session-detail-premium .detail-grid>div{
+  border:1px solid rgba(44,205,204,.29);
+  background:#082f41;border-radius:13px;
+  padding:clamp(12px,1.35vw,16px);
+}
+:host .detail-page.jynlo-session-detail-premium .detail-grid>div strong{
+  color:#f2fffc;overflow-wrap:anywhere;
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  .session-created-share,.organizer-preparation,.session-community-context,
+  .session-post-game-community,.venue-detail-panel,.address-panel,
+  .participation-panel,.attendance-panel,.session-participants-panel,
+  .calendar-panel,.overall-rating-panel,.player-compliments-panel
+){
+  border:1px solid var(--sd-v3-line);
+  border-radius:16px;
+  background:linear-gradient(145deg,rgba(10,51,66,.88),rgba(5,34,49,.91));
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  .session-created-actions,.organizer-preparation-actions,.join-controls,
+  .attendance-actions,.session-friend-invite-actions,.calendar-actions
+)>:is(button,a){
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;min-height:43px;max-width:100%;
+  border-radius:11px;line-height:1.35;
+  white-space:normal;text-align:center;overflow-wrap:anywhere;
+}
+:host .detail-page.jynlo-session-detail-premium .session-player-card{
+  min-width:0;border-color:rgba(47,201,200,.31);
+  background:linear-gradient(135deg,#0c3949,#082a3d);
+}
+:host .detail-page.jynlo-session-detail-premium .session-player-card__name {
+  color:#f0fffb;overflow-wrap:anywhere;
+}
+:host .detail-page.jynlo-session-detail-premium :is(
+  input:not([type=checkbox]):not([type=radio]),select,textarea
+):focus-visible{
+  outline:2px solid #9bffe8;outline-offset:2px;
+}
+@media(max-width:900px){
+  :host .detail-page.jynlo-session-detail-premium{
+    padding-top:calc(8.5rem + env(safe-area-inset-top));
+  }
+}
+@media(max-width:580px){
+  :host .detail-page.jynlo-session-detail-premium{padding-inline:12px;}
+  :host .detail-page.jynlo-session-detail-premium .detail-content{padding:15px;}
+  :host .detail-page.jynlo-session-detail-premium .session-top-actions>:is(a,button){flex:1 1 140px;}
+}
+@media(prefers-reduced-motion:reduce){
+  :host .detail-page.jynlo-session-detail-premium .session-player-card{transition:none;}
+}

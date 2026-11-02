@@ -1,0 +1,119 @@
+/* Jynlo Neon Glass v3 — personal profile view. Read-only account facts unchanged. */
+:host .profile-page.jynlo-social{
+  --profile-v3-line:rgba(42,205,203,.3);
+  padding:clamp(90px,7.3vw,108px) clamp(14px,2.1vw,28px) 74px;
+  min-height:100dvh;
+  background:
+    radial-gradient(ellipse 49% 470px at 97% 0%,rgba(10,158,168,.2),transparent 78%),
+    linear-gradient(145deg,#03111f,#052333 62%,#031521);
+}
+:host .profile-page.jynlo-social .profile-shell{
+  width:min(1160px,100%);max-width:1160px;min-width:0;
+}
+:host .profile-page.jynlo-social .page-header{
+  box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px 25px;margin-bottom:20px;
+  padding:clamp(20px,2.8vw,31px);
+  border:1px solid var(--profile-v3-line);border-radius:20px;
+  background:
+    linear-gradient(100deg,rgba(3,23,38,.97),rgba(5,44,58,.94) 64%,rgba(6,63,72,.6)),
+    url('/assets/jynlo-feed-hero-sport.webp') right center/auto 100% no-repeat,#052638;
+}
+:host .profile-page.jynlo-social .page-header>div:first-child{
+  min-width:0;flex:1 1 320px;
+}
+:host .profile-page.jynlo-social .page-header h1{
+  color:#f2fffc;font-size:clamp(2rem,3.4vw,3.14rem);
+  line-height:1.12;letter-spacing:-.045em;text-wrap:balance;
+}
+:host .profile-page.jynlo-social .page-header .subtitle{
+  max-width:62ch;margin-top:9px;color:#bedae2;line-height:1.55;
+}
+:host .profile-page.jynlo-social .header-actions{
+  display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:9px;
+}
+:host .profile-page.jynlo-social .header-actions>a{
+  box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;padding:10px 15px;border-radius:11px;
+  line-height:1.35;max-width:100%;text-align:center;white-space:normal;
+}
+:host .profile-page.jynlo-social :is(.profile-card,.state-card){
+  box-sizing:border-box;max-width:100%;min-width:0;
+  border:1px solid var(--profile-v3-line);border-radius:20px;
+  background:linear-gradient(143deg,#0b3345,#062536);
+  box-shadow:0 18px 39px rgba(0,11,26,.16);
+}
+:host .profile-page.jynlo-social .profile-card{padding:clamp(17px,2.4vw,29px);}
+:host .profile-page.jynlo-social .identity{
+  align-items:center;gap:17px;min-width:0;
+  padding-bottom:20px;border-bottom:1px solid rgba(43,197,198,.23);
+}
+:host .profile-page.jynlo-social .identity-copy{min-width:0;}
+:host .profile-page.jynlo-social .identity-copy h2{
+  color:#f2fffc;line-height:1.2;letter-spacing:-.025em;
+  overflow-wrap:anywhere;text-wrap:balance;
+}
+:host .profile-page.jynlo-social .avatar{
+  width:94px;height:94px;flex:0 0 94px;
+  border:2px solid rgba(53,238,209,.46);
+  background:linear-gradient(130deg,#155465,#08364a);
+  color:#d1fff1;
+}
+:host .profile-page.jynlo-social .sports-identity-line span,
+:host .profile-page.jynlo-social .favorite-sport-chip{
+  border:1px solid rgba(52,202,197,.29);
+  background:rgba(27,168,164,.16);color:#c1fdec;
+  overflow-wrap:anywhere;
+}
+:host .profile-page.jynlo-social :is(
+  .profile-completion-card,.bio-card,.activity-section,.reliability-card,.account-section
+){
+  box-sizing:border-box;min-width:0;max-width:100%;
+  border:1px solid var(--profile-v3-line);border-radius:16px;
+  background:linear-gradient(145deg,rgba(11,52,66,.87),rgba(6,33,49,.91));
+  padding:clamp(16px,2vw,23px);margin-top:16px;
+}
+:host .profile-page.jynlo-social .section-kicker{color:#6ff5dc;}
+:host .profile-page.jynlo-social .section-heading h3,
+:host .profile-page.jynlo-social .profile-completion-card h3{
+  color:#f1fffb;line-height:1.3;
+}
+:host .profile-page.jynlo-social :is(
+  .details-grid,.reliability-grid,.activity-grid
+){min-width:0;gap:11px;}
+:host .profile-page.jynlo-social :is(
+  .details-grid,.reliability-grid,.activity-grid
+)>div{
+  min-width:0;box-sizing:border-box;
+  border:1px solid rgba(45,182,196,.28);border-radius:12px;
+  background:rgba(7,44,59,.87);padding:13px;
+}
+:host .profile-page.jynlo-social :is(
+  .details-grid,.reliability-grid,.activity-grid
+)>div strong{
+  color:#f3fffb;overflow-wrap:anywhere;
+}
+:host .profile-page.jynlo-social :is(
+  .details-grid,.reliability-grid,.activity-grid
+)>div span{color:#b2d4dc;}
+:host .profile-page.jynlo-social .profile-completion-track{background:#103d4d;}
+:host .profile-page.jynlo-social .profile-completion-track span{
+  background:linear-gradient(110deg,#18dad0,#58f5c7);
+}
+:host .profile-page.jynlo-social :is(a,button):focus-visible{
+  outline:2px solid #9cffe8;outline-offset:3px;
+}
+@media(max-width:760px){
+  :host .profile-page.jynlo-social .page-header{flex-direction:column;align-items:stretch;}
+  :host .profile-page.jynlo-social .header-actions{justify-content:flex-start;}
+  :host .profile-page.jynlo-social :is(.details-grid,.reliability-grid){
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+@media(max-width:520px){
+  :host .profile-page.jynlo-social{padding:calc(89px + env(safe-area-inset-top)) 13px 52px;}
+  :host .profile-page.jynlo-social .page-header{padding:19px;}
+  :host .profile-page.jynlo-social .header-actions>a{flex:1 1 100%;}
+  :host .profile-page.jynlo-social .identity{align-items:flex-start;flex-wrap:wrap;}
+  :host .profile-page.jynlo-social .activity-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}

@@ -13,7 +13,7 @@ import { calculateProfileCompletion, ProfileCompletion, ProfileCompletionItem } 
 @Component({
   selector: 'app-perfil-data',
   templateUrl: './perfil-data.component.html',
-  styleUrls: ['./perfil-data.component.css'],
+  styleUrls: ['./perfil-data.component.css', './perfil-data-v3-finish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })

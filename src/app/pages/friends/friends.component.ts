@@ -10,7 +10,7 @@ import { CommunityService } from '../../services/community.service';
 @Component({
   selector: 'app-friends',
   templateUrl: './friends.component.html',
-  styleUrls: ['./friends.component.css'],
+  styleUrls: ['./friends.component.css', './friends-v3-finish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
