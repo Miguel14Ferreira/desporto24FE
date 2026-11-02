@@ -1746,3 +1746,71 @@ h1 {
 }
 .session-player-card__avatar {flex-shrink:0;}
 .session-player-card__name {overflow-wrap:anywhere;line-height:1.4;}
+
+
+/* Session detail desktop entry — align its first impression with the Feed,
+   without moving sharing, attendance, payment or organizer controls. */
+@media (min-width: 1100px) {
+  :host .detail-page.jynlo-session-detail-premium {
+    background:
+      radial-gradient(ellipse 47% 470px at 98% 0%,rgba(9,153,159,.17),transparent 75%),
+      linear-gradient(145deg,#03111f 4%,#052231 60%,#031521);
+  }
+  :host .detail-page.jynlo-session-detail-premium .detail-shell {
+    width:min(1100px,100%);
+  }
+  :host .detail-page.jynlo-session-detail-premium .detail-card {
+    border:1px solid rgba(36,207,201,.27);
+    border-radius:20px;
+    background:linear-gradient(148deg,rgba(8,45,61,.99),rgba(5,29,45,.99));
+    box-shadow:0 18px 44px rgba(0,11,25,.20);
+  }
+  :host .detail-page.jynlo-session-detail-premium .detail-content {
+    padding:clamp(25px,2.6vw,34px);
+  }
+  :host .detail-page.jynlo-session-detail-premium .detail-content > .title-row {
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px 25px;
+    min-height:146px;
+    padding:22px 25px;
+    margin-bottom:20px;
+    box-sizing:border-box;
+    border:1px solid rgba(42,207,202,.27);
+    border-radius:18px;
+    background:
+      linear-gradient(95deg,rgba(3,29,44,.97),rgba(5,47,59,.90) 64%,rgba(6,77,76,.48)),
+      url('/assets/jynlo-feed-hero-sport.webp') right center / auto 100% no-repeat,
+      #063140;
+  }
+  :host .detail-page.jynlo-session-detail-premium .title-row > div:first-child {
+    flex:1 1 290px;
+    min-width:0;
+  }
+  :host .detail-page.jynlo-session-detail-premium .title-row h1 {
+    font-size:clamp(2rem,3vw,2.9rem);
+    line-height:1.12;
+    letter-spacing:-.04em;
+    overflow-wrap:anywhere;
+  }
+  :host .detail-page.jynlo-session-detail-premium .title-row .eyebrow {
+    color:#62f3d9;
+    letter-spacing:.075em;
+  }
+  :host .detail-page.jynlo-session-detail-premium .title-row .badges {
+    flex:0 1 auto;
+    justify-content:flex-end;
+    gap:8px;
+    min-width:0;
+  }
+  :host .detail-page.jynlo-session-detail-premium .title-row .badges > span {
+    border:1px solid rgba(51,214,195,.30);
+    background:rgba(22,118,124,.24);
+    color:#b3ffeb;
+    border-radius:10px;
+    padding:8px 12px;
+    font-size:.8rem;
+    overflow-wrap:anywhere;
+  }
+}
