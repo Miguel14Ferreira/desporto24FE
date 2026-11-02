@@ -1,4 +1,4 @@
-<section class="tournaments" [attr.aria-label]="'communities.tournaments.overview.sectionLabel' | t">
+<section class="tournaments" [class.team-profile-mode]="isTeamCompetition && teamPageId !== null" [attr.aria-label]="'communities.tournaments.overview.sectionLabel' | t">
   <div class="tournament-hero">
     <div>
       <p class="tournament-eyebrow">{{ 'communities.tournaments.overview.eyebrow' | t }}</p>
