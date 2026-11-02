@@ -444,6 +444,7 @@ async function main() {
           ['/menu/communities/77?tab=tournaments&tournament=9022', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9023', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9023&teamPage=701', '.team-profile-page'],
+          ['/menu/communities/77?tab=tournaments&tournament=9023&teamPage=999', '.team-profile-page'],
           ['/menu/communities/77?tab=tournaments&tournament=9023&team=701', '.team-invite-accept'],
           ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
@@ -603,6 +604,13 @@ async function main() {
               const teamId = query.get('tournament');
               if (teamPage) {
                 const detail = page.locator('.team-profile-page');
+                if (teamPage === '999') {
+                  await detail.locator('.notice-info').waitFor({state:'visible'});
+                  assert.equal(await detail.locator('.team-page-roster').count(),0,
+                    'Unknown team must not leak another team roster');
+                  await detail.locator('.team-page-back').click();
+                  await page.locator('.team-summary-card').first().waitFor({state:'visible'});
+                } else {
                 await detail.locator('.team-page-hero h2').waitFor({state:'visible'});
                 assert.equal((await detail.locator('.team-page-hero h2').innerText()).trim(),
                   'Raquetes Verdes', 'Deep link opens the exact team');
@@ -622,6 +630,7 @@ async function main() {
                 await page.locator('.team-summary-card').first().waitFor({state:'visible'});
                 assert.equal(await page.locator('.team-summary-card').count(),3,
                   'Back returns to the same tournament team directory');
+                }
               } else {
               const options = page.locator('.tournament-option');
               await options.first().waitFor({state:'visible'});
