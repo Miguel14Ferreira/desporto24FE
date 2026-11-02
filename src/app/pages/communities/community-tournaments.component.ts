@@ -16,7 +16,7 @@ import {
 import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
-import { formatForSport } from './community-round-sport';
+import { tournamentSportCapabilities } from './community-tournament-capabilities';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -199,11 +199,21 @@ export class CommunityTournamentsComponent implements OnChanges {
    * Clearly distinguish that contract from the sport-specific formats
    * available when recording community rounds. Presentation only.
    */
+  /** One result-contract decision for all 121 catalog sports and both creation flows. */
+  get selectedSportCapabilities() {
+    return tournamentSportCapabilities(this.sportDraft);
+  }
+
+  get selectedSportCreationModel() {
+    const capability = this.selectedSportCapabilities;
+    return this.showTeamCreate ? capability.team : capability.individual;
+  }
+
   get creationSportNoticeKey(): string | null {
     if (!this.sportDraft.trim()) return null;
     if (this.sportDraft === 'Patinagem de Velocidade' && !this.showTeamCreate)
       return null;
-    switch (formatForSport(this.sportDraft)) {
+    switch (this.selectedSportCapabilities.family) {
       case 'race':
         return 'communities.tournaments.creationRaceNotice';
       case 'measured':
@@ -762,9 +772,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get isSportFormatSupported(): boolean {
-    return (!this.showTeamCreate && this.sportDraft === 'Patinagem de Velocidade')
-      || this.isRaceChampionshipDraft || this.classificationProfile.isRoundRobinSupported
-      && !(this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS');
+    return this.selectedSportCreationModel !== 'UNAVAILABLE';
   }
 
   get sportFormatWarning(): string {

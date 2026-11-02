@@ -126,8 +126,25 @@
         }
             </div>
           </div>
-          @if (creationSportNoticeKey; as noticeKey) {
-            <p class="create-sport-notice" role="note">{{ noticeKey | t }}</p>
+          @if (sportDraft) {
+            <div class="tournament-sport-capability" role="group"
+              [attr.aria-label]="'communities.tournaments.capabilities.region' | t">
+              <div class="tournament-sport-capability-header">
+                <span class="tournament-sport-capability-label">{{ 'communities.tournaments.capabilities.sportModel' | t }}</span>
+                <strong>{{ ('communities.tournaments.capabilities.family.' + selectedSportCapabilities.family) | t }}</strong>
+                <span class="tournament-sport-capability-status"
+                  [class.is-available]="isSportFormatSupported">
+                  {{ (isSportFormatSupported
+                    ? 'communities.tournaments.capabilities.partialAvailable'
+                    : 'communities.tournaments.capabilities.pending') | t }}
+                </span>
+              </div>
+              <p>{{ ('communities.tournaments.capabilities.model.' + selectedSportCreationModel) | t }}</p>
+              <p class="tournament-sport-capability-note">{{ 'communities.tournaments.capabilities.noOfficialRules' | t }}</p>
+              @if (creationSportNoticeKey; as noticeKey) {
+                <p class="create-sport-notice" role="note">{{ noticeKey | t }}</p>
+              }
+            </div>
           }
         </section>
 

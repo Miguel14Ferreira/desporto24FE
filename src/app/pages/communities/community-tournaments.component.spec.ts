@@ -71,6 +71,32 @@ describe('Community tournaments management', () => {
   });
 
 
+  it('uses the shared 121-sport contract for creation instead of a football fallback', () => {
+    component.sportDraft = 'Karting';
+    component.showTeamCreate = false;
+    expect(component.selectedSportCreationModel).toBe('RACE_POINTS');
+    expect(component.isSportFormatSupported).toBeTrue();
+    component.showTeamCreate = true;
+    expect(component.selectedSportCreationModel).toBe('UNAVAILABLE');
+    expect(component.isSportFormatSupported).toBeFalse();
+
+    component.sportDraft = 'Xadrez';
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.showTeamCreate = false;
+    expect(component.selectedSportCreationModel).toBe('NUMERIC_INDIVIDUAL');
+
+    component.sportDraft = 'Natação';
+    expect(component.selectedSportCapabilities.family).toBe('race');
+    expect(component.selectedSportCreationModel).toBe('UNAVAILABLE');
+    expect(component.isSportFormatSupported).toBeFalse();
+
+    component.sportDraft = 'Futebol';
+    component.showTeamCreate = true;
+    expect(component.selectedSportCreationModel).toBe('NUMERIC_TEAM');
+    expect(component.isSportFormatSupported).toBeTrue();
+    expect(api.createTeamTournament).not.toHaveBeenCalled();
+  });
+
   it('keeps tournament and fixtures semantics unchanged by the layout update', () => {
     expect(component.community.id).toBe(7);
     expect(component.tournaments.length).toBeGreaterThan(0);
