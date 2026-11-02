@@ -396,6 +396,9 @@
 }
 
 
+/* The location visualization is decorative and appears only in desktop layout. */
+:host .jynlo-activities-v3 .nearby-radar { display:none; }
+
 /* Desktop-first activities workspace. The nearby finder shares a row with
  * search filters rather than pushing results an entire card lower.
  * No movement of controls into other forms, no change to API/geolocation. */
@@ -439,6 +442,42 @@
   :host .jynlo-activities-v3 .nearby-panel p {
     font-size: .87rem;
     line-height: 1.5;
+  }
+  :host .jynlo-activities-v3 .nearby-radar {
+    display: grid;
+    position: relative;
+    flex: 1 1 auto;
+    place-items: center;
+    min-height: 145px;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  :host .jynlo-activities-v3 .nearby-radar::before {
+    content: '';
+    position: absolute;
+    width: 205px;
+    height: 205px;
+    border-radius: 50%;
+    background:
+      repeating-radial-gradient(circle,transparent 0 26px,
+        rgba(46,222,207,.24) 27px 28px,transparent 29px 46px),
+      radial-gradient(circle,rgba(26,224,207,.14),transparent 60%);
+    opacity: .72;
+    pointer-events: none;
+  }
+  :host .jynlo-activities-v3 .nearby-radar__target {
+    display: grid;
+    place-items: center;
+    width: 61px;
+    height: 61px;
+    border-radius: 50%;
+    border: 1px solid rgba(77,246,222,.68);
+    background: linear-gradient(150deg,rgba(22,132,136,.65),rgba(6,56,75,.92));
+    box-shadow: 0 0 46px rgba(18,237,212,.16);
+    color: #9cffee;
+    font-size: 2.2rem;
+    line-height: 1;
+    z-index: 1;
   }
   :host .sessions-page.jynlo-games.jynlo-activities-v3 .nearby-actions {
     width: 100%;
