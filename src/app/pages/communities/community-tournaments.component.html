@@ -316,7 +316,7 @@
         <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.loading' | t }}</p>
       } @else if (focusedTeam; as team) {
         <header class="team-page-hero">
-          <div class="team-page-crest" aria-hidden="true">♜</div>
+          <div class="team-page-crest" aria-hidden="true">✦</div>
           <div class="team-page-intro">
             <span class="team-page-eyebrow">{{ selected?.name }} · {{ 'communities.tournaments.teamPage.eyebrow' | t }}</span>
             <h2>{{ team.name }}</h2>
@@ -364,18 +364,13 @@
             <h3>{{ 'communities.tournaments.teamPage.rosterTitle' | t }}</h3>
             <span>{{ team.players.length }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
           </div>
+          <div class="team-page-layout">
           <article class="team-roster-card team-page-roster">
 
                     <div class="team-roster-heading">
                       <div>
-                        <h6>{{ team.name }}</h6>
-                        <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
-                        @if (selected?.status === 'DRAFT') {
-                          <span class="team-roster-readiness" [class.is-ready]="isTeamRosterReady(team)">
-                            {{ (isTeamRosterReady(team) ? 'communities.tournaments.teamUi.rosterReady'
-                              : 'communities.tournaments.teamUi.rosterIncomplete') | t }}
-                          </span>
-                        }
+                        <h6>{{ 'communities.tournaments.teamPage.playersTitle' | t }}</h6>
+                        <span class="team-roster-count">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
                       </div>
                       @if (canManageTeamRoster && team.players.length === 0) {
                         @if (confirmingEmptyTeamId === team.id) {
@@ -403,8 +398,11 @@
                     <div class="players-list">
                       @for (player of team.players; track player.profileId) {
                         <div class="player-item">
-                          <div><strong>{{ player.displayName || player.username }}</strong>
-                            <small>&#64;{{ player.username }}</small></div>
+                          <div class="team-player-summary">
+                            <span class="team-player-avatar" aria-hidden="true">{{ (player.displayName || player.username).charAt(0).toUpperCase() }}</span>
+                            <span class="team-player-identity"><strong>{{ player.displayName || player.username }}</strong>
+                              <small>&#64;{{ player.username }}</small></span>
+                          </div>
                           @if (canManageTeamRoster) {
                             @if (confirmingTeamPlayerRemoval?.teamId === team.id
                                 && confirmingTeamPlayerRemoval?.profileId === player.profileId) {
@@ -428,8 +426,11 @@
                         </div>
                       }
                     </div>
+          </article>
                     @if (canManageTeamRoster && !isTeamRosterFull(team)) {
-                      <div class="team-share-invite">
+                      <aside class="team-page-management" [attr.aria-label]="'communities.tournaments.teamPage.manageTitle' | t">
+                        <h3>{{ 'communities.tournaments.teamPage.manageTitle' | t }}</h3>
+                        <div class="team-share-invite">
                         <strong>{{ 'communities.tournaments.teamUi.invitePlayers' | t }}</strong>
                         <p>{{ 'communities.tournaments.teamUi.inviteHint' | t }}</p>
                         <div class="team-share-actions">
@@ -488,9 +489,9 @@
                           }
                         </div>
                       </details>
+                      </aside>
                     }
-
-          </article>
+          </div>
         </div>
       } @else if (teamsLoadError) {
         <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.loadError' | t }}</p>
@@ -907,13 +908,31 @@
               } @else if (invitedTeamId && selected.id === invitedTournamentId && !teamsLoadError && !detailsLoading) {
                 <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.invalidInvite' | t }}</p>
               }
+              @if (teams.length > 6) {
+                <div class="team-directory-toolbar">
+                  <label for="tournament-team-search">{{ 'communities.tournaments.teamPage.searchLabel' | t }}</label>
+                  <div class="team-directory-search">
+                    <input id="tournament-team-search" type="search" maxlength="100" autocomplete="off"
+                      [ngModel]="teamDirectoryQuery" (ngModelChange)="teamDirectoryQuery = $event"
+                      [placeholder]="'communities.tournaments.teamPage.searchPlaceholder' | t">
+                    @if (teamDirectoryQuery) {
+                      <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                        (click)="teamDirectoryQuery = ''">{{ 'communities.tournaments.teamPage.clearSearch' | t }}</button>
+                    }
+                  </div>
+                  <p role="status">{{ 'communities.tournaments.teamPage.searchCount' | t:{shown:visibleTournamentTeams.length,total:teams.length} }}</p>
+                </div>
+              }
+              @if (teams.length && !visibleTournamentTeams.length) {
+                <p class="t-muted" role="status">{{ 'communities.tournaments.teamPage.noSearchResults' | t }}</p>
+              }
               <div class="team-overview-grid" [attr.aria-label]="'communities.tournaments.teamPage.gridLabel' | t">
-                @for (team of teams; track team.id) {
+                @for (team of visibleTournamentTeams; track team.id) {
                   <a class="team-summary-card"
                     [routerLink]="['/menu/communities', community.id]"
                     [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:team.id}"
                     [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:team.name}">
-                    <span class="team-summary-crest" aria-hidden="true">♜</span>
+                    <span class="team-summary-crest" aria-hidden="true">✦</span>
                     <span class="team-summary-body">
                       <strong>{{ team.name }}</strong>
                       <small>{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }}

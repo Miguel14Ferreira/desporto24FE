@@ -849,6 +849,48 @@ describe('Community tournaments management', () => {
       expect(component.canPublishTeamSchedule).toBeFalse();
     });
 
+
+    it('searches the team directory without changing saved teams or fixtures', () => {
+      const blue = { ...team, id: 41, name: 'São Azul' };
+      const green = { ...team, id: 42, name: 'Verdes' };
+      api.teams.and.returnValue(of([team, blue, green]));
+      component.selectTournament(teamDraft);
+      expect(component.visibleTournamentTeams.length).toBe(3);
+      const calls = api.teams.calls.count();
+      component.teamDirectoryQuery = '  SAO az  ';
+      expect(component.visibleTournamentTeams.map(entry => entry.id)).toEqual([41]);
+      expect(component.teams.length).toBe(3);
+      expect(api.teams.calls.count()).toBe(calls);
+      component.teamDirectoryQuery = 'inexistente';
+      expect(component.visibleTournamentTeams).toEqual([]);
+      component.teamDirectoryQuery = '';
+      expect(component.visibleTournamentTeams.length).toBe(3);
+    });
+
+    it('clears a team-directory search when switching tournaments', () => {
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      component.teamDirectoryQuery = 'Verdes';
+      component.selectTournament(draft);
+      expect(component.teamDirectoryQuery).toBe('');
+      expect(component.visibleTournamentTeams).toEqual([]);
+    });
+
+    it('localizes directory and team-management headings in PT and EN', () => {
+      const previous = localStorage.getItem('d24-language');
+      try {
+        localStorage.setItem('d24-language', 'pt');
+        expect(t('communities.tournaments.teamPage.manageTitle')).toBe('Gerir a equipa');
+        expect(t('communities.tournaments.teamPage.searchCount', { shown: 2, total: 12 })).toContain('2 de 12');
+        localStorage.setItem('d24-language', 'en');
+        expect(t('communities.tournaments.teamPage.playersTitle')).toBe('Players');
+        expect(t('communities.tournaments.teamPage.searchCount', { shown: 2, total: 12 })).toContain('2 of 12');
+      } finally {
+        if (previous === null) localStorage.removeItem('d24-language');
+        else localStorage.setItem('d24-language', previous);
+      }
+    });
+
     it('opens one dedicated team without changing tournament permissions or invitation IDs', () => {
       api.teams.and.returnValue(of([team, { ...team, id: 41, name: 'Azuis' }]));
       component.teamPageId = 41;

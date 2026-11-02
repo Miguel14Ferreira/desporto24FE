@@ -157,6 +157,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamMemberSearch: Record<number, string> = {};
   inviteCopyFeedback: Record<number, string> = {};
   teams: TournamentTeam[] = [];
+  teamDirectoryQuery = '';
   teamsLoadError = false;
   teamMatches: TournamentTeamMatch[] = [];
   teamMatchesPage = 0;
@@ -910,6 +911,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMemberSearch = {};
       this.inviteCopyFeedback = {};
       this.teams = [];
+      this.teamDirectoryQuery = '';
       this.teamsLoadError = false;
       this.teamMatches = [];
       this.teamMatchesHasMore = false;
@@ -1019,6 +1021,14 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMemberSearch[teamId] = value;
     // Never submit a selection hidden by the updated search.
     this.teamPlayerDraft[teamId] = null;
+  }
+
+  /** Search affects only the directory, never saved rosters, fixtures or scores. */
+  get visibleTournamentTeams(): TournamentTeam[] {
+    const normalize = (value: string) => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
+    const query = normalize(this.teamDirectoryQuery);
+    return query ? this.teams.filter(team => normalize(team.name).includes(query)) : this.teams;
   }
 
   get focusedTeam(): TournamentTeam | undefined {
@@ -1291,6 +1301,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.matches = [];
     this.standings = undefined;
     this.teams = [];
+    this.teamDirectoryQuery = '';
     this.teamPlayerDraft = {};
     this.teamMemberSearch = {};
     this.teamsLoadError = false;
