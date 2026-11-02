@@ -225,9 +225,13 @@ async function main() {
           await page.goto(SITE + route, { waitUntil: 'domcontentloaded', timeout: 20_000 });
           await page.locator(selector).first().waitFor({ state: 'visible', timeout: 15_000 });
           await page.evaluate(() => document.fonts && document.fonts.ready);
-          // Angular mounts async content after the route host becomes visible.
-          // A screenshot forces a paint; measure the settled responsive layout,
-          // not a transient mobile layout viewport while components initialize.
+          // Angular and mobile viewport metadata can settle after the route host.
+          // Wait for the viewport to match the device width before testing overflow.
+          // A genuinely broken mobile viewport still fails rather than being ignored.
+          await page.waitForFunction(
+            expected => Math.abs(window.innerWidth - expected) <= 3,
+            width, { timeout: 8000 }
+          );
           await page.waitForTimeout(250);
           const name = route.replace(/\W+/g, '-').replace(/^-/, '');
           await page.screenshot({
