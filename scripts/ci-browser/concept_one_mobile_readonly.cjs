@@ -149,6 +149,80 @@ const fictionalTournamentRows = [
     played: 3, won: 0, drawn: 0, lost: 3, goalsFor: 2, goalsAgainst: 11,
     goalDifference: -9, points: 0 }
 ];
+// Three distinct team formats, including their real API response shapes.
+const fictionalTeamTournaments = [
+  { id:9020, name:'Liga de Equipas QA', sport:'Padel', entryType:'TEAM',
+    format:'LEAGUE', status:'COMPLETED', playersPerTeam:2, roundRobinLegs:1,
+    winPoints:3, drawPoints:1, lossPoints:0,
+    createdAt:'2026-09-01T10:00:00Z', startedAt:'2026-09-02T10:00:00Z',
+    completedAt:'2026-10-22T20:00:00Z',
+    championTied:false, championTeamId:701, championTeamName:'Raquetes Verdes',
+    championPoints:6, championProfileId:null, championUsername:null,
+    championDisplayName:null },
+  { id:9021, name:'Grupos e Eliminatórias QA', sport:'Padel', entryType:'TEAM',
+    format:'GROUP_KNOCKOUT', status:'IN_PROGRESS', playersPerTeam:2,
+    groupCount:2, winPoints:3, drawPoints:1, lossPoints:0,
+    createdAt:'2026-09-05T10:00:00Z', startedAt:'2026-09-12T10:00:00Z',
+    completedAt:null, championTied:false, championTeamId:null,
+    championTeamName:null, championPoints:null, championProfileId:null,
+    championUsername:null, championDisplayName:null },
+  { id:9022, name:'Taça de Eliminatórias QA', sport:'Padel', entryType:'TEAM',
+    format:'KNOCKOUT', status:'IN_PROGRESS', playersPerTeam:2,
+    winPoints:3, drawPoints:1, lossPoints:0,
+    createdAt:'2026-09-06T10:00:00Z', startedAt:'2026-09-15T10:00:00Z',
+    completedAt:null, championTied:false, championTeamId:null,
+    championTeamName:null, championPoints:null, championProfileId:null,
+    championUsername:null, championDisplayName:null }
+];
+const fictionalTeamNames = ['Raquetes Verdes','Rede Azul','Smash Atlântico','Equipa Aurora'];
+const fictionalTeams = fictionalTeamNames.map((name,i)=>({
+  id:701+i, name, playersPerTeam:2, createdAt:'2026-09-01T10:00:00Z',
+  players:[{profileId:100+i*2,username:'qa-team-'+i+'-a',
+    displayName:'Jogador QA '+(i*2+1)},
+    {profileId:101+i*2,username:'qa-team-'+i+'-b',
+    displayName:'Jogador QA '+(i*2+2)}]
+}));
+const fictionalTeamStandings = fictionalTeamNames.slice(0,3).map((name,i)=>({
+  position:i+1,teamId:701+i,teamName:name,played:2,
+  won:2-i,drawn:0,lost:i,goalsFor:9-i*2,goalsAgainst:2+i*2,
+  goalDifference:7-i*4,points:6-i*3
+}));
+const fictionalGroupStanding = {
+  tournamentId:9021,knockoutStarted:true,groups:[
+    {groupNumber:1,standings:[
+      {...fictionalTeamStandings[0],played:1,won:1,lost:0,points:3},
+      {...fictionalTeamStandings[1],played:1,won:0,lost:1,points:0}]},
+    {groupNumber:2,standings:[
+      {...fictionalTeamStandings[2],position:1,played:1,won:1,lost:0,points:3},
+      {position:2,teamId:704,teamName:'Equipa Aurora',played:1,
+        won:0,drawn:0,lost:1,goalsFor:1,goalsAgainst:3,
+        goalDifference:-2,points:0}]}
+  ]
+};
+const fictionalTeamMatches = {
+  9020:[{id:9211,roundNumber:1,homeTeamId:701,homeTeamName:'Raquetes Verdes',
+    awayTeamId:702,awayTeamName:'Rede Azul',status:'COMPLETED',
+    homeScore:3,awayScore:1}],
+  9021:[
+    {id:9221,roundNumber:1,groupNumber:1,homeTeamId:701,
+      homeTeamName:'Raquetes Verdes',awayTeamId:702,awayTeamName:'Rede Azul',
+      status:'COMPLETED',homeScore:3,awayScore:1},
+    {id:9222,roundNumber:1,groupNumber:2,homeTeamId:703,
+      homeTeamName:'Smash Atlântico',awayTeamId:704,awayTeamName:'Equipa Aurora',
+      status:'COMPLETED',homeScore:3,awayScore:1},
+    {id:9223,roundNumber:2,groupNumber:null,homeTeamId:701,
+      homeTeamName:'Raquetes Verdes',awayTeamId:703,awayTeamName:'Smash Atlântico',
+      status:'SCHEDULED',homeScore:null,awayScore:null}
+  ],
+  9022:[
+    {id:9231,roundNumber:1,homeTeamId:701,homeTeamName:'Raquetes Verdes',
+      awayTeamId:704,awayTeamName:'Equipa Aurora',status:'COMPLETED',
+      homeScore:3,awayScore:1},
+    {id:9232,roundNumber:1,homeTeamId:702,homeTeamName:'Rede Azul',
+      awayTeamId:703,awayTeamName:'Smash Atlântico',status:'SCHEDULED',
+      homeScore:null,awayScore:null}
+  ]
+};
 const fictionalCommunitySession = {
   id: 901, sport: 'Padel', city: 'Lisboa', gameDate: futureGameDate,
   participantCount: 2, maxParticipants: 4, priceAmount: 0,
@@ -263,7 +337,28 @@ async function main() {
           if (endpoint === '/api/communities/77/sessions') return respond(route, 200, [fictionalCommunitySession]);
           if (endpoint === '/api/communities/77/sessions/competition-results') return respond(route, 200, []);
           if (endpoint === '/api/communities/77/tournaments') {
-            return respond(route, 200, { tournaments: [fictionalTournament], page: 0, hasMore: false });
+            return respond(route, 200, {
+              tournaments: [fictionalTournament, ...fictionalTeamTournaments],
+              page: 0, hasMore: false
+            });
+          }
+          const teamApi = /^\\/api\\/communities\\/77\\/tournaments\\/(9020|9021|9022)\\/teams(?:\\/(matches|standings|groups))?$/.exec(endpoint);
+          if (teamApi) {
+            const tournamentId = Number(teamApi[1]), action = teamApi[2];
+            if (!action) return respond(route, 200,
+              tournamentId === 9020 ? fictionalTeams.slice(0,3) : fictionalTeams);
+            if (action === 'matches') return respond(route, 200, {
+              matches:fictionalTeamMatches[tournamentId],page:0,hasMore:false
+            });
+            if (action === 'standings' && tournamentId === 9020) {
+              return respond(route, 200, {
+                tournamentId,status:'COMPLETED',totalMatches:3,completedMatches:3,
+                winPoints:3,drawPoints:1,lossPoints:0,standings:fictionalTeamStandings
+              });
+            }
+            if (action === 'groups' && tournamentId === 9021) {
+              return respond(route, 200, fictionalGroupStanding);
+            }
           }
           if (endpoint === '/api/communities/77/tournaments/9010/participants') {
             return respond(route, 200, { participants: [
@@ -321,6 +416,9 @@ async function main() {
           ['/menu/communities/77?tab=stats', '.stats-table-wrap'],
           ['/menu/communities/77?tab=ranking', '.ranking-table-wrap'],
           ['/menu/communities/77?tab=tournaments', '.tournament-browser'],
+          ['/menu/communities/77?tab=tournaments&tournament=9020', '.tournament-browser'],
+          ['/menu/communities/77?tab=tournaments&tournament=9021', '.tournament-browser'],
+          ['/menu/communities/77?tab=tournaments&tournament=9022', '.tournament-browser'],
           ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/903', '.jynlo-session-detail-premium .detail-card'],
@@ -476,8 +574,43 @@ async function main() {
             if (selected === 'tournaments') {
               const options = page.locator('.tournament-option');
               await options.first().waitFor({state:'visible'});
-              assert.equal(await options.count(), 1,
-                'Synthetic tournament browser must show the supplied competition');
+              assert.equal(await options.count(), 4,
+                'Browser must show individual and all three team formats');
+              const teamId = new URL('http://localhost' + route).searchParams.get('tournament');
+              if (teamId) {
+                const heading = page.locator('.tournament-detail .tournament-heading h4');
+                const expected = fictionalTeamTournaments.find(t => t.id === Number(teamId));
+                await heading.getByText(expected.name).waitFor({state:'visible'});
+                await page.locator('.team-roster-card').first().waitFor({state:'visible'});
+                await page.locator('.team-fixture').first().waitFor({state:'visible'});
+                assert.equal(await page.locator('.team-fixture').count(),
+                  fictionalTeamMatches[Number(teamId)].length,
+                  'Each team format keeps its own scheduled and completed fixtures');
+                assert.equal(await page.locator('.team-roster-card').count(),
+                  Number(teamId) === 9020 ? 3 : 4,
+                  'Teams must not be mixed with individual player standings');
+                if (Number(teamId) === 9020) {
+                  await page.locator('.team-standings-table tbody tr').first()
+                    .waitFor({state:'visible'});
+                  assert.equal(await page.locator('.team-standings-table tbody tr').count(),3);
+                  assert.ok((await page.locator('.champion').innerText()).includes('Raquetes Verdes'));
+                  await page.locator('.team-standings-table').scrollIntoViewIfNeeded();
+                } else if (Number(teamId) === 9021) {
+                  await page.locator('.team-standings-table').first().waitFor({state:'visible'});
+                  assert.equal(await page.locator('.team-standings-table').count(),2,
+                    'Group stage must display two independent classifications');
+                  assert.equal(await page.locator('.team-standings-table tbody tr').count(),4);
+                  await page.locator('.team-standings-table').last().scrollIntoViewIfNeeded();
+                } else {
+                  assert.equal(await page.locator('.team-standings-table').count(),0,
+                    'Knockout-only tournaments must not invent a league table');
+                  await page.locator('.team-fixture').last().scrollIntoViewIfNeeded();
+                }
+                const record = 'team-' + teamId + '-results.png';
+                await page.screenshot({
+                  path:path.join(OUT,width+'-'+language+'-'+record),fullPage:false
+                });
+              } else {
               await page.locator('.tournament-detail .champion').waitFor({state:'visible'});
               const standings = page.locator('.tournament-detail .standings-table');
               assert.equal(await standings.locator('tbody tr').count(), 3,
@@ -489,6 +622,7 @@ async function main() {
                 path: path.join(OUT, width + '-' + language + '-community-tournament-results.png'),
                 fullPage: false
               });
+              }
             }
             if (selected === 'sessions') {
               assert.equal(await page.locator('a.community-session-card[href="/menu/events/901"]').count(), 1,
