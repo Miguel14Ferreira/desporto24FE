@@ -896,11 +896,76 @@ describe('Community tournaments management', () => {
       api.removeTeamPlayer.and.returnValue(of(void 0));
       api.teams.and.returnValue(of([team]));
       await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+      component.requestTeamPlayerRemoval(occupied, 2);
+      await component.removeTeamPlayer(occupied, 2);
       expect(api.removeTeamPlayer).toHaveBeenCalledWith(7, 19, 40, 2);
+      expect(component.confirmingTeamPlayerRemoval).toBeNull();
       api.deleteTeam.and.returnValue(of(void 0));
       api.teams.and.returnValue(of([]));
       await component.deleteTournamentTeam(team);
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+      component.requestEmptyTeamDeletion(team);
+      await component.deleteTournamentTeam(team);
       expect(api.deleteTeam).toHaveBeenCalledWith(7, 19, 40);
+      expect(component.confirmingEmptyTeamId).toBeNull();
+    });
+
+    it('cancels an unconfirmed squad removal without any write', async () => {
+      const occupied = { ...team, players: [
+        { profileId: 2, username: 'ana', displayName: 'Ana' }
+      ] };
+      component.selectTournament(teamDraft);
+      component.requestTeamPlayerRemoval(occupied, 2);
+      expect(component.confirmingTeamPlayerRemoval).toEqual({ teamId: 40, profileId: 2 });
+      component.cancelTeamRosterConfirmation();
+      expect(component.confirmingTeamPlayerRemoval).toBeNull();
+      await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+
+      component.requestEmptyTeamDeletion(team);
+      expect(component.confirmingEmptyTeamId).toBe(40);
+      component.cancelTeamRosterConfirmation();
+      await component.deleteTournamentTeam(team);
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+    });
+
+    it('drops pending roster confirmations after switching to another competition', async () => {
+      const occupied = { ...team, players: [
+        { profileId: 2, username: 'ana', displayName: 'Ana' }
+      ] };
+      component.selectTournament(teamDraft);
+      component.requestTeamPlayerRemoval(occupied, 2);
+      component.selectTournament(draft);
+      expect(component.confirmingTeamPlayerRemoval).toBeNull();
+      expect(component.confirmingEmptyTeamId).toBeNull();
+      await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
+    it('keeps completed team fixtures collapsed until a permitted correction is requested', async () => {
+      const match = {
+        id: 412, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
+        awayTeamId: 41, awayTeamName: 'Azuis', status: 'COMPLETED' as const,
+        homeScore: 3, awayScore: 1
+      };
+      component.selectTournament({ ...teamDraft, status: 'IN_PROGRESS' });
+      expect(component.editingTeamResultId).toBeNull();
+      expect(component.teamScoreUnchanged(match)).toBeTrue();
+      await component.saveTeamScore(match);
+      expect(api.recordTeamResult).not.toHaveBeenCalled();
+      component.toggleTeamResultCorrection(match);
+      expect(component.editingTeamResultId).toBe(412);
+      component.setTeamScore(match, 'home', 4);
+      expect(component.teamScoreUnchanged(match)).toBeFalse();
+      component.toggleTeamResultCorrection(match);
+      expect(component.editingTeamResultId).toBeNull();
+      expect(component.teamScoreDraft(match)).toEqual({ home: 3, away: 1 });
+      expect(component.teamScoreUnchanged(match)).toBeTrue();
+
+      component.toggleTeamResultCorrection(match);
+      component.selectTournament(draft);
+      expect(component.editingTeamResultId).toBeNull();
     });
 
     it('prevents members from editing any squad', async () => {
