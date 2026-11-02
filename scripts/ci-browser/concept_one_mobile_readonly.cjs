@@ -204,13 +204,12 @@ async function main() {
         ));
 
         // Scope to READ-ONLY navigation. Never click submit, send, delete, save.
-        const scenarios = language === 'pt'
-          ? [...publicPages, ...authenticatedPages]
-          : [['/home', '.home-page'], ['/menu/notifications', '.notifications-page']];
+        // Cover every public and authenticated layout in both languages.
+        // English can have longer labels than Portuguese and must pass the
+        // same horizontal-overflow checks at each tested viewport.
+        const scenarios = [...publicPages, ...authenticatedPages];
 
-        // High-value authenticated detail states omitted from previous 390px QA.
-        // English also gets the session detail smoke even though its general
-        // route sweep is deliberately kept small to reduce CI costs.
+        // High-value authenticated detail states in four synthetic states.
         scenarios.push(
           ['/menu/venues', '.venue-directory-grid .venue-directory-card'],
           ['/menu/venues/201', '.venue-detail-page .venue-header'],
