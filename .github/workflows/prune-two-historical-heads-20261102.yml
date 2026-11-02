@@ -1,0 +1,45 @@
+name: Jynlo finalize two preserved legacy branch deletions
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/prune-two-historical-heads-20261102.yml']
+permissions:
+  contents: write
+  pull-requests: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify recovery tags and remove the two pinned old refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request,urllib.error,urllib.parse,time
+          assert os.environ['REPO']=='Miguel14Ferreira/desporto24FE'
+          repo=os.environ['REPO']
+          items=[
+            ('fix/venue-create-similar-check-20261019','c59d59d05ba133a74e291648d33bd3832bd9911d'),
+            ('revert/jynlo-mobile-changes-514-518-20261026','8e30a0eb10811dc416f19e222ec9966635c3ef71')
+          ]
+          def api(method,path):
+              req=urllib.request.Request('https://api.github.com/repos/'+repo+path,method=method,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'})
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  raw=r.read();return json.loads(raw) if raw else {}
+          for name,sha in items:
+              branch=urllib.parse.quote(name,safe='/')
+              tag='archive/jynlo-legacy-preserved-20261102/'+name
+              assert api('GET','/git/ref/tags/'+urllib.parse.quote(tag,safe='/'))['object']['sha']==sha
+              assert api('GET','/git/ref/heads/'+branch)['object']['sha']==sha
+              assert not api('GET','/pulls?state=open&head='+urllib.parse.quote(repo.split('/')[0]+':'+name,safe='')+'&per_page=100')
+              for attempt in range(3):
+                  try:
+                      api('DELETE','/git/refs/heads/'+branch)
+                      print('ARCHIVED_AND_DELETED',name,sha,flush=True)
+                      break
+                  except urllib.error.HTTPError as e:
+                      if e.code not in (404,409,422) or attempt==2:raise
+                      time.sleep(2+attempt*3)
+          PY
