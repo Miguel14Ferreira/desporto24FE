@@ -720,9 +720,23 @@
                         <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
                       </div>
                       @if (canManageTeamRoster && team.players.length === 0) {
-                        <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
-                          [disabled]="detailsLoading" [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}"
-                          (click)="deleteTournamentTeam(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
+                        @if (confirmingEmptyTeamId === team.id) {
+                          <div class="team-roster-confirm" role="group"
+                            [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}">
+                            <p>{{ 'communities.tournaments.teamUi.confirmDeleteEmpty' | t:{team:team.name} }}</p>
+                            <div class="team-roster-confirm-actions">
+                              <button type="button" class="t-btn t-btn-danger t-btn-small" [disabled]="busy || detailsLoading"
+                                (click)="deleteTournamentTeam(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
+                              <button type="button" class="t-btn t-btn-secondary t-btn-small" [disabled]="busy"
+                                (click)="cancelTeamRosterConfirmation()">{{ 'common.cancel' | t }}</button>
+                            </div>
+                          </div>
+                        } @else {
+                          <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
+                            [disabled]="busy || detailsLoading"
+                            [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}"
+                            (click)="requestEmptyTeamDeletion(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
+                        }
                       }
                     </div>
                     @if (!team.players.length) {
@@ -734,9 +748,24 @@
                           <div><strong>{{ player.displayName || player.username }}</strong>
                             <small>&#64;{{ player.username }}</small></div>
                           @if (canManageTeamRoster) {
-                            <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                              [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}"
-                              (click)="removeTeamPlayer(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
+                            @if (confirmingTeamPlayerRemoval?.teamId === team.id
+                                && confirmingTeamPlayerRemoval?.profileId === player.profileId) {
+                              <div class="team-roster-confirm" role="group"
+                                [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}">
+                                <p>{{ 'communities.tournaments.teamUi.confirmRemovePlayer' | t:{player:player.displayName || player.username,team:team.name} }}</p>
+                                <div class="team-roster-confirm-actions">
+                                  <button type="button" class="t-btn t-btn-danger t-btn-small" [disabled]="busy"
+                                    (click)="removeTeamPlayer(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
+                                  <button type="button" class="t-btn t-btn-secondary t-btn-small" [disabled]="busy"
+                                    (click)="cancelTeamRosterConfirmation()">{{ 'common.cancel' | t }}</button>
+                                </div>
+                              </div>
+                            } @else {
+                              <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                                [disabled]="busy"
+                                [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}"
+                                (click)="requestTeamPlayerRemoval(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
+                            }
                           }
                         </div>
                       }
@@ -861,7 +890,18 @@
                          {{ game.status === 'COMPLETED'
                            ? game.homeScore + ' : ' + game.awayScore : ('communities.tournaments.fixturesUi.pending' | t) }}
                        </span>
-                       @if (canManage && selected.status === 'IN_PROGRESS' && !isPastKnockoutRound(game)) {
+                       @if (canManage && selected.status === 'IN_PROGRESS'
+                           && game.status === 'COMPLETED' && !isPastKnockoutRound(game)) {
+                         <button type="button" class="t-btn t-btn-secondary t-btn-small team-result-toggle"
+                           [disabled]="busy"
+                           [attr.aria-expanded]="editingTeamResultId === game.id"
+                           (click)="toggleTeamResultCorrection(game)">
+                           {{ (editingTeamResultId === game.id ? 'common.cancel'
+                             : 'communities.tournaments.fixturesUi.correct') | t }}
+                         </button>
+                       }
+                       @if (canManage && selected.status === 'IN_PROGRESS' && !isPastKnockoutRound(game)
+                           && (game.status !== 'COMPLETED' || editingTeamResultId === game.id)) {
                          <div class="team-score-edit">
                            <label>
                              <span>{{ game.homeTeamName }}</span>
@@ -884,7 +924,8 @@
                            </label>
                            <button type="button" class="t-btn t-btn-primary t-btn-small"
                              [disabled]="busy || !validScore(teamScoreDraft(game).home) || !validScore(teamScoreDraft(game).away)
-                                || (isEliminationMatch(game) && teamScoreDraft(game).home === teamScoreDraft(game).away)"
+                                || (isEliminationMatch(game) && teamScoreDraft(game).home === teamScoreDraft(game).away)
+                                || teamScoreUnchanged(game)"
                              [attr.aria-label]="(game.status === 'COMPLETED' ? 'communities.tournaments.fixturesUi.correctAria' : 'communities.tournaments.fixturesUi.saveAria') | t:{home:game.homeTeamName,away:game.awayTeamName}"
                              (click)="saveTeamScore(game)">
                              {{ (game.status === 'COMPLETED' ? 'communities.tournaments.fixturesUi.correct' : 'communities.tournaments.fixturesUi.save') | t }}
