@@ -130,15 +130,9 @@
 
   .site-nav__links {
     width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
     overflow-x: auto;
-    overflow-y: hidden;
     overscroll-behavior-x: contain;
-    scroll-padding-inline: .35rem;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(71, 224, 203, .55) transparent;
-    padding-bottom: .3rem;
+    padding-bottom: .15rem;
   }
 
   .site-nav__links a {
@@ -492,25 +486,5 @@
     position: fixed;
     top: 3.65rem;
     right: max(1rem, env(safe-area-inset-right));
-  }
-}
-
-/* Keep navigation keyboard-operable when links scroll on smaller screens.
-   Do not change Angular routes, notification badges, or account menu state. */
-.site-nav__links > a:focus-visible,
-.site-nav__links .language-switch button:focus-visible {
-  outline: 2px solid #9cffe9;
-  outline-offset: 2px;
-  position: relative;
-  z-index: 1;
-}
-@media (max-width: 900px) {
-  .site-nav__links > a {
-    white-space: nowrap;
-    scroll-margin-inline: .35rem;
-  }
-  .site-nav__links > .account-menu {
-    /* The dropdown stays pinned in the brand row, not in scrolling links. */
-    top: max(.62rem, env(safe-area-inset-top));
   }
 }
