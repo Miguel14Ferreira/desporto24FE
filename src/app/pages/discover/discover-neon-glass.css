@@ -354,8 +354,6 @@
 :host .jynlo-explore-v3 .result-list {gap:12px;}
 :host .jynlo-explore-v3 .result-card {
   min-width:0;
-  display:flex;
-  flex-direction:column;
   gap:12px;
   border:1px solid rgba(33,187,194,.25);
   border-radius:14px;
