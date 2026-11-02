@@ -153,6 +153,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   lossPointsDraft = 0;
   teamNameDraft = '';
   teamPlayerDraft: Record<number, number | null> = {};
+  teamMemberSearch: Record<number, string> = {};
   inviteCopyFeedback: Record<number, string> = {};
   teams: TournamentTeam[] = [];
   teamsLoadError = false;
@@ -905,6 +906,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.resetPointRules();
       this.teamNameDraft = '';
       this.teamPlayerDraft = {};
+      this.teamMemberSearch = {};
       this.inviteCopyFeedback = {};
       this.teams = [];
       this.teamsLoadError = false;
@@ -998,6 +1000,24 @@ export class CommunityTournamentsComponent implements OnChanges {
   get availableTeamMembers() {
     const assigned = new Set(this.teams.flatMap(team => team.players.map(player => player.profileId)));
     return (this.community.members || []).filter(member => !assigned.has(member.profileId));
+  }
+
+  // Search stays scoped to one team and excludes already assigned profiles.
+  // Accent-insensitive matching works for Portuguese names and usernames.
+  filteredTeamMembers(teamId: number) {
+    const normalize = (value: string) => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
+    const query = normalize(this.teamMemberSearch[teamId] || '');
+    const eligible = this.availableTeamMembers;
+    return query ? eligible.filter(member =>
+      normalize(member.fullName || '').includes(query)
+      || normalize(member.username).includes(query)) : eligible;
+  }
+
+  setTeamMemberSearch(teamId: number, value: string): void {
+    this.teamMemberSearch[teamId] = value;
+    // Never submit a selection hidden by the updated search.
+    this.teamPlayerDraft[teamId] = null;
   }
 
   get invitedTeam(): TournamentTeam | undefined {
@@ -1266,6 +1286,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.standings = undefined;
     this.teams = [];
     this.teamPlayerDraft = {};
+    this.teamMemberSearch = {};
     this.teamsLoadError = false;
     this.teamMatches = [];
     this.teamMatchesHasMore = false;
@@ -1586,6 +1607,7 @@ export class CommunityTournamentsComponent implements OnChanges {
             || this.selected?.id !== tournament.id) return;
         this.teams = teams;
         this.teamPlayerDraft = {};
+        this.teamMemberSearch = {};
         this.confirmingTeamPlayerRemoval = null;
         this.confirmingEmptyTeamId = null;
         if (tournament.status !== 'DRAFT') {
@@ -1866,7 +1888,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const id = this.teamPlayerDraft[team.id];
     if (!this.canManageTeamRoster || !this.selected || id == null || !Number.isInteger(id)
         || this.isTeamRosterFull(team)
-        || !this.availableTeamMembers.some(member => member.profileId === id)) return;
+        || !this.filteredTeamMembers(team.id).some(member => member.profileId === id)) return;
     await this.mutate(this.api.addTeamPlayer(this.community.id, this.selected.id, team.id, id),
       t('communities.tournaments.organizerUi.teamPlayerAdded'), () => this.loadTeams());
   }
