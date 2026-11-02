@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { CommunityOverviewStatsComponent } from './community-overview-stats.component';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 describe('CommunityOverviewStatsComponent', () => {
   beforeEach(async () => {
@@ -26,11 +27,11 @@ describe('CommunityOverviewStatsComponent', () => {
     expect(render().querySelector('button, input, a')).toBeNull();
   });
 
-  it('preserves the original no-sport fallback and public/no-rankings view', () => {
+  it('localizes the no-sport fallback and preserves public/no-rankings view', () => {
     const cards = render({count: 0, sports: [], visibility: 'PUBLIC', rankings: false})
       .querySelectorAll<HTMLElement>('.overview-card');
     expect(cards[0].querySelector('strong')?.textContent?.trim()).toBe('0');
-    expect(cards[1].querySelector('strong')?.textContent).toContain('Sem modalidade definida');
+    expect(cards[1].querySelector('strong')?.textContent?.trim()).toBe(t('communities.noSportsSelected'));
     expect(cards[2].textContent?.trim()).toBeTruthy();
     expect(cards[3].textContent?.trim()).toBeTruthy();
   });
