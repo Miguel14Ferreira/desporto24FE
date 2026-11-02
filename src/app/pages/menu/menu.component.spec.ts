@@ -103,6 +103,8 @@ describe('MenuComponent', () => {
       expect(root.querySelector('a[href="' + route + '"]')).withContext(route).not.toBeNull();
     }
     expect(root.querySelectorAll('a.hero-action').length).toBe(2);
+    expect(Array.from(root.querySelectorAll('a.hero-action')).every(el =>
+      !el.classList.contains('jynlo-action'))).toBeTrue();
   });
 
   it('translates community and admin cards into English without changing their routes', async () => {
