@@ -24,3 +24,27 @@
 @media (max-width:800px) {
   .overview-grid {grid-template-columns:1fr;}
 }
+
+
+/* Summary metrics share the same desktop Neon Glass hierarchy as sessions. */
+.overview-card {
+  min-width:0;
+  border-color:rgba(46,203,201,.3);
+  background:linear-gradient(145deg,rgba(10,59,73,.88),rgba(6,35,51,.96));
+  box-shadow:0 10px 22px rgba(0,13,25,.10);
+}
+.overview-card span {
+  color:#b1d5dc;
+  line-height:1.4;
+  font-weight:700;
+}
+.overview-card strong {
+  color:#edfffa;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+}
+@media(min-width:1060px) {
+  .overview-grid{gap:13px}
+  .overview-card{min-height:108px;padding:17px 18px;align-content:space-between}
+  .overview-card strong{font-size:clamp(1.06rem,1.35vw,1.3rem)}
+}
