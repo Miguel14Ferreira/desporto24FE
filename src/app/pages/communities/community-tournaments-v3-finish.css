@@ -345,3 +345,66 @@
   :host .tournaments .team-roster-confirm-actions>.t-btn{flex:1 1 auto;}
   :host .tournaments .team-fixture>.team-result-toggle{justify-self:stretch;}
 }
+
+/* Organiser flow: invite first, advanced URL only on request. */
+:host .tournaments .team-roster-heading>div{display:grid;justify-items:start;gap:5px;}
+:host .tournaments .team-roster-readiness{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 8px;border-radius:8px;
+  border:1px solid rgba(245,185,112,.35);
+  background:rgba(116,76,31,.16);color:#ffd9aa;
+  font-size:.72rem;font-weight:800;
+}
+:host .tournaments .team-roster-readiness.is-ready{
+  border-color:rgba(91,224,183,.4);background:rgba(24,132,111,.18);
+  color:#aaffde;
+}
+:host .tournaments .team-share-invite{
+  min-width:0;display:grid;gap:8px;margin-top:2px;padding:13px;
+  border:1px solid rgba(66,192,191,.25);
+  border-radius:12px;background:rgba(8,46,60,.62);
+}
+:host .tournaments .team-share-invite>strong{
+  color:#eafff9;font-size:.89rem;
+}
+:host .tournaments .team-share-invite>p{
+  margin:0;line-height:1.45;color:#afcdd2;font-size:.8rem;
+}
+:host .tournaments .team-share-actions{display:flex;flex-wrap:wrap;gap:8px;margin:3px 0 0;}
+:host .tournaments .team-share-actions>.t-btn{
+  min-height:40px;flex:1 1 120px;text-align:center;justify-content:center;
+}
+:host .tournaments .team-link-details{min-width:0;margin-top:3px;}
+:host .tournaments .team-link-details>summary,
+:host .tournaments .team-manual-assign>summary{
+  cursor:pointer;min-height:35px;display:flex;align-items:center;
+  color:#b5eee5;font-size:.8rem;font-weight:750;
+}
+:host .tournaments .team-link-details>summary::before,
+:host .tournaments .team-manual-assign>summary::before{
+  content:'›';display:inline-block;margin-right:7px;font-size:1.05rem;
+  transition:transform .15s;
+}
+:host .tournaments .team-link-details[open]>summary::before,
+:host .tournaments .team-manual-assign[open]>summary::before{transform:rotate(90deg);}
+:host .tournaments .team-link-field{display:grid;gap:5px;padding-top:7px;min-width:0;}
+:host .tournaments .team-link-field>label{font-size:.78rem;color:#aac8cf;}
+:host .tournaments .team-link-field>input{
+  width:100%;min-width:0;border-radius:9px;background:#082d3b;
+  border:1px solid rgba(66,192,191,.38);color:#d8fffb;
+  padding:10px;font-size:.78rem;
+}
+:host .tournaments .team-player-assign{min-width:0;gap:8px;margin-top:9px;}
+:host .tournaments .team-player-assign>input[type="search"]{
+  width:100%;min-width:0;min-height:42px;box-sizing:border-box;
+  padding:9px 11px;border:1px solid rgba(62,198,191,.45);
+  border-radius:10px;background:#0a3343;color:#edfffa;
+}
+:host .tournaments .team-player-assign>input[type="search"]:focus-visible{
+  outline:2px solid #9bffea;outline-offset:2px;
+}
+:host .tournaments .team-player-assign>.t-muted{margin:3px 0;line-height:1.4;}
+@media(prefers-reduced-motion:reduce){
+  :host .tournaments .team-link-details>summary::before,
+  :host .tournaments .team-manual-assign>summary::before{transition:none;}
+}
