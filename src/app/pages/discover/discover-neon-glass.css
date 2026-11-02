@@ -462,3 +462,48 @@
   :host .jynlo-explore-v3 .result-card {transition:none;}
   :host .jynlo-explore-v3 .result-card:hover {transform:none;}
 }
+
+
+/* Desktop-first workspace: keep the search call-to-action visible while making
+ * results reachable without scrolling through three tall stacked panels.
+ * The search, category selection and map keep their existing Angular bindings. */
+@media (min-width: 1160px) {
+  :host .jynlo-explore-v3 .discover-header {
+    min-height: 174px;
+    padding: 21px 28px;
+    border: 1px solid rgba(35,208,207,.32);
+    border-radius: 21px;
+    background:
+      linear-gradient(95deg,rgba(2,22,37,.97),rgba(5,39,55,.91) 62%,rgba(5,64,73,.5)),
+      url('/assets/jynlo-feed-hero-sport.webp') right center / auto 100% no-repeat,
+      #042536;
+    box-sizing: border-box;
+  }
+  :host .jynlo-explore-v3 .discover-intro {
+    flex: 1 1 auto;
+    max-width: 780px;
+  }
+  :host .jynlo-explore-v3 .discover-header h1 {
+    font-size: clamp(2.15rem,3vw,3rem);
+  }
+  :host .jynlo-explore-v3 .discover-search {
+    grid-template-columns: minmax(195px,.66fr) minmax(0,2.34fr);
+    align-items: center;
+    column-gap: 22px;
+    row-gap: 14px;
+    padding: 19px 22px;
+  }
+  :host .jynlo-explore-v3 .search-copy {
+    align-self: center;
+  }
+  :host .jynlo-explore-v3 .explore-search-footer {
+    grid-column: 1 / -1;
+  }
+  :host .jynlo-explore-v3 .explore-spotlight {
+    min-height: 216px;
+    padding: 24px 30px;
+  }
+  :host .jynlo-explore-v3 .explore-spotlight-actions {
+    margin-top: 15px;
+  }
+}
