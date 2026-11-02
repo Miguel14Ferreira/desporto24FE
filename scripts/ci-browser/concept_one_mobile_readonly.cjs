@@ -225,6 +225,15 @@ async function main() {
           await page.goto(SITE + route, { waitUntil: 'domcontentloaded', timeout: 20_000 });
           await page.locator(selector).first().waitFor({ state: 'visible', timeout: 15_000 });
           await page.evaluate(() => document.fonts && document.fonts.ready);
+          // Angular mounts async content after the route host becomes visible.
+          // A screenshot forces a paint; measure the settled responsive layout,
+          // not a transient mobile layout viewport while components initialize.
+          await page.waitForTimeout(250);
+          const name = route.replace(/\W+/g, '-').replace(/^-/, '');
+          await page.screenshot({
+            path: path.join(OUT, width + '-' + language + '-' + name + '.png'),
+            fullPage: false
+          });
           const measure = await page.evaluate(expectedWidth => {
             const doc = document.documentElement;
             const width = expectedWidth;
@@ -254,11 +263,6 @@ async function main() {
                 .slice(0, 22)
             };
           }, width);
-          const name = route.replace(/\W+/g, '-').replace(/^-/, '');
-          await page.screenshot({
-            path: path.join(OUT, width + '-' + language + '-' + name + '.png'),
-            fullPage: false
-          });
           const overflow = Math.max(measure.documentWidth, measure.bodyWidth, measure.viewport) - width;
           console.log('[responsive]', width, language, route,
             'documentWidth=' + measure.documentWidth, 'overflow=' + overflow);
