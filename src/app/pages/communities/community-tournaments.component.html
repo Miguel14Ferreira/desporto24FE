@@ -173,6 +173,26 @@
               </div>
             </div>
           }
+          @if (trackDisciplineOptions.length) {
+            <div class="tournament-event-choices" role="group"
+              [attr.aria-label]="'communities.trackTournament.disciplineTitle' | t">
+              <div class="tournament-event-choices-intro">
+                <strong>{{ 'communities.trackTournament.disciplineTitle' | t }}</strong>
+                <p>{{ 'communities.trackTournament.disciplineHelp' | t }}</p>
+              </div>
+              <div class="tournament-event-options">
+                @for (discipline of trackDisciplineOptions; track discipline) {
+                  <button type="button" class="tournament-event-option"
+                    [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
+                    [class.is-selected]="eventDisciplineDraft === discipline"
+                    (click)="chooseTrackDiscipline(discipline)">
+                    <span>{{ ('communities.trackTournament.discipline.' + discipline) | t }}</span>
+                    <small>{{ 'communities.trackTournament.secondsUnit' | t }}</small>
+                  </button>
+                }
+              </div>
+            </div>
+          }
           @if (fieldDisciplineOptions.length) {
             <div class="tournament-event-choices" role="group"
               [attr.aria-label]="'communities.fieldTournament.disciplineTitle' | t">
@@ -660,7 +680,7 @@
               } @else if (isMeasuredCompetition) {
                 <p>{{ 'communities.fieldTournament.title' | t }}</p>
               } @else if (isTimedCompetition) {
-                <p>{{ 'communities.swimTournament.title' | t }}</p>
+                <p>{{ timedUiKey('title') | t }}</p>
               } @else if (isRaceCompetition) {
                 <p>{{ raceSportLabel(selected.sport) }} · {{ 'communities.karting.title' | t }}</p>
               } @else if (isChessTournament) {
@@ -1831,83 +1851,83 @@
           @if (!isMember) {
             <div class="notice notice-info">{{ 'communities.karting.joinToView' | t }}</div>
           } @else if (detailsLoading) {
-            <p class="t-muted" role="status">{{ 'communities.swimTournament.loading' | t }}</p>
+            <p class="t-muted" role="status">{{ timedUiKey('loading') | t }}</p>
           } @else if (timedError || !timedOverview) {
             <div class="notice notice-info" role="status">
-              {{ 'communities.swimTournament.loadError' | t }}
+              {{ timedUiKey('loadError') | t }}
               <button type="button" class="t-btn t-btn-secondary"
                 (click)="loadTimedOverview()">{{ 'common.retry' | t }}</button>
             </div>
           } @else {
             <section class="t-section timed-championship"
-              [attr.aria-label]="'communities.swimTournament.title' | t">
+              [attr.aria-label]="timedUiKey('title') | t">
               <div class="t-section-heading">
                 <div>
-                  <h5>{{ 'communities.swimTournament.title' | t }} ·
-                    {{ ('communities.swimTournament.discipline.' + timedOverview.eventDiscipline) | t }}</h5>
-                  <p>{{ 'communities.swimTournament.description' | t }}</p>
+                  <h5>{{ timedUiKey('title') | t }} ·
+                    {{ (timedUiKey('discipline.') + timedOverview.eventDiscipline) | t }}</h5>
+                  <p>{{ timedUiKey('description') | t }}</p>
                 </div>
               </div>
               <div class="swim-championship-summary">
-                <div><strong>{{ timedOverview.linkedRounds.length }}</strong><span>{{ 'communities.swimTournament.rounds' | t }}</span></div>
-                <div><strong>{{ timedOverview.standings.length }}</strong><span>{{ 'communities.swimTournament.athletes' | t }}</span></div>
+                <div><strong>{{ timedOverview.linkedRounds.length }}</strong><span>{{ timedUiKey('rounds') | t }}</span></div>
+                <div><strong>{{ timedOverview.standings.length }}</strong><span>{{ timedUiKey('athletes') | t }}</span></div>
               </div>
               @if (timedOverview.linkedRounds.length) {
                 <div class="swim-linked-rounds">
-                  <h6>{{ 'communities.swimTournament.linked' | t }}</h6>
+                  <h6>{{ timedUiKey('linked') | t }}</h6>
                   @for (round of timedOverview.linkedRounds; track round.id) {
                     <div class="race-available-row">
                       <span><strong>{{ round.name }}</strong>
                         <small>{{ round.playedAt | date:'dd/MM/yyyy' }} ·
-                          {{ round.entries.length }} {{ 'communities.swimTournament.athletes' | t }}</small>
+                          {{ round.entries.length }} {{ timedUiKey('athletes') | t }}</small>
                       </span>
                       @if (canManage && selected.status !== 'COMPLETED') {
                         <button type="button" class="t-btn t-btn-secondary t-btn-small" [disabled]="busy"
-                          (click)="unlinkTimedRound(round.id)">{{ 'communities.swimTournament.unlink' | t }}</button>
+                          (click)="unlinkTimedRound(round.id)">{{ timedUiKey('unlink') | t }}</button>
                       }
                     </div>
                   }
                 </div>
               } @else {
-                <p class="t-muted">{{ 'communities.swimTournament.empty' | t }}</p>
+                <p class="t-muted">{{ timedUiKey('empty') | t }}</p>
               }
               @if (canManage && selected.status !== 'COMPLETED') {
                 <div class="race-available">
-                  <h6>{{ 'communities.swimTournament.available' | t }}</h6>
+                  <h6>{{ timedUiKey('available') | t }}</h6>
                   @if (!timedOverview.availableRounds.length) {
-                    <p class="t-muted">{{ 'communities.swimTournament.noAvailable' | t }}</p>
+                    <p class="t-muted">{{ timedUiKey('noAvailable') | t }}</p>
                   }
                   @for (round of timedOverview.availableRounds; track round.id) {
                     <div class="race-available-row">
                       <span><strong>{{ round.name }}</strong>
                         <small>{{ round.playedAt | date:'dd/MM/yyyy' }} ·
-                          {{ round.entries.length }} {{ 'communities.swimTournament.athletes' | t }}</small>
+                          {{ round.entries.length }} {{ timedUiKey('athletes') | t }}</small>
                       </span>
                       <button type="button" class="t-btn t-btn-primary t-btn-small" [disabled]="busy"
-                        (click)="linkTimedRound(round.id)">{{ 'communities.swimTournament.link' | t }}</button>
+                        (click)="linkTimedRound(round.id)">{{ timedUiKey('link') | t }}</button>
                     </div>
                   }
                 </div>
               }
               <div class="swim-standings">
-                <h6>{{ 'communities.swimTournament.resultsTitle' | t }}</h6>
+                <h6>{{ timedUiKey('resultsTitle') | t }}</h6>
                 @if (!timedOverview.standings.length) {
-                  <p class="t-muted">{{ 'communities.swimTournament.noResults' | t }}</p>
+                  <p class="t-muted">{{ timedUiKey('noResults') | t }}</p>
                 } @else {
                   <div class="standings-scroll">
                     <table class="team-standings-table">
                       <thead><tr>
-                        <th scope="col">{{ 'communities.swimTournament.place' | t }}</th>
-                        <th scope="col">{{ 'communities.swimTournament.athlete' | t }}</th>
-                        <th scope="col">{{ 'communities.swimTournament.bestTime' | t }}</th>
-                        <th scope="col">{{ 'communities.swimTournament.attempts' | t }}</th>
+                        <th scope="col">{{ timedUiKey('place') | t }}</th>
+                        <th scope="col">{{ timedUiKey('athlete') | t }}</th>
+                        <th scope="col">{{ timedUiKey('bestTime') | t }}</th>
+                        <th scope="col">{{ timedUiKey('attempts') | t }}</th>
                       </tr></thead>
                       <tbody>
                         @for (entry of timedOverview.standings; track entry.communityPlayerId) {
                           <tr [class.is-leader]="entry.position === 1">
                             <td>{{ entry.position }}</td>
                             <th scope="row">{{ entry.fullName || entry.username }}</th>
-                            <td class="swim-time-value">{{ entry.bestSeconds | number:'1.2-2' }} s</td>
+                            <td class="swim-time-value">{{ entry.bestSeconds | number:(isTrackCompetition ? '1.2-3' : '1.2-2') }} s</td>
                             <td>{{ entry.validAttempts }}</td>
                           </tr>
                         }
@@ -1915,7 +1935,7 @@
                     </table>
                   </div>
                 }
-                <p class="t-muted">{{ 'communities.swimTournament.provisional' | t }}</p>
+                <p class="t-muted">{{ timedUiKey('provisional') | t }}</p>
               </div>
             </section>
           }

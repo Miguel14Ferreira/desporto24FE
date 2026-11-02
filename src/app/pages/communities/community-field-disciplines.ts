@@ -1,6 +1,9 @@
 /** Event discipline is descriptive; no automatic federation scoring or season points. */
-export type AthleticsDiscipline = 'LONG_JUMP' | 'TRIPLE_JUMP' | 'HIGH_JUMP' | 'POLE_VAULT'
+export type AthleticsDiscipline = TrackDistance | 'LONG_JUMP' | 'TRIPLE_JUMP' | 'HIGH_JUMP' | 'POLE_VAULT'
   | 'SHOT_PUT' | 'DISCUS' | 'JAVELIN' | 'HAMMER';
+
+export type TrackDistance = 'TRACK_100' | 'TRACK_200' | 'TRACK_400'
+  | 'TRACK_800' | 'TRACK_1500' | 'TRACK_5000';
 
 export type GymApparatus = 'FLOOR' | 'VAULT' | 'POMMEL_HORSE' | 'RINGS'
   | 'PARALLEL_BARS' | 'HORIZONTAL_BAR' | 'UNEVEN_BARS' | 'BALANCE_BEAM';
@@ -36,6 +39,7 @@ const GYM_APPARATUS: readonly GymApparatus[] = [
   'PARALLEL_BARS', 'HORIZONTAL_BAR', 'UNEVEN_BARS', 'BALANCE_BEAM'
 ];
 const OPTIONS: Record<string, readonly AthleticsDiscipline[]> = {
+  TRACK: ['TRACK_100','TRACK_200','TRACK_400','TRACK_800','TRACK_1500','TRACK_5000'],
   JUMP: ['LONG_JUMP', 'TRIPLE_JUMP', 'HIGH_JUMP', 'POLE_VAULT'],
   THROW: ['SHOT_PUT', 'DISCUS', 'JAVELIN', 'HAMMER']
 };

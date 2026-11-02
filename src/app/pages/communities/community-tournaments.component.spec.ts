@@ -32,7 +32,7 @@ describe('Community tournaments management', () => {
       'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
-      'createTimedChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
+      'createTimedChampionship', 'createTrackChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
       'createMeasuredChampionship', 'measuredOverview', 'linkMeasuredRound', 'unlinkMeasuredRound',
       'completeRaceChampionship', 'inlineSpeedOverview', 'resolveInlineSpeedTieBreak', 'recordInlineSpeedTrial'
     ]);
@@ -178,6 +178,27 @@ describe('Community tournaments management', () => {
     expect(api.generateSchedule).not.toHaveBeenCalled();
   });
 
+  it('creates a 100 m track best-time championship without mixing swim or field results', async () => {
+    component.startIndividualCreation();
+    component.nameDraft='Campeonato 100 m';
+    component.chooseSport('Atletismo');
+    component.chooseTournamentEventType('TRACK');
+    expect(component.selectedSportCreationModel).toBe('TRACK_BEST_TIME');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseTrackDiscipline('TRACK_100');
+    expect(component.isSportFormatSupported).toBeTrue();
+    api.createTrackChampionship.and.returnValue(of({
+      ...draft,id:102,name:'Campeonato 100 m',sport:'Atletismo',
+      eventType:'TRACK',eventDiscipline:'TRACK_100',scoringMode:'TRACK_BEST_TIME'
+    }));
+    await component.create();
+    expect(api.createTrackChampionship).toHaveBeenCalledOnceWith(7,'Campeonato 100 m','TRACK_100');
+    expect(component.isTimedCompetition).toBeTrue();
+    expect(api.timedOverview).toHaveBeenCalledOnceWith(7,102);
+    expect(api.createTimedChampionship).not.toHaveBeenCalled();
+    expect(api.generateSchedule).not.toHaveBeenCalled();
+  });
+
   it('creates athletics championships only after selecting a compatible discipline', async () => {
     component.startIndividualCreation();
     component.nameDraft='Salto em comprimento';
@@ -185,7 +206,7 @@ describe('Community tournaments management', () => {
     expect(component.selectedSportCreationModel).toBe('FIELD_BEST_MARK');
     expect(component.isSportFormatSupported).toBeFalse();
     component.chooseTournamentEventType('TRACK');
-    expect(component.savedSportEventType).toBeNull();
+    expect(component.savedSportEventType).toBe('TRACK');
     component.chooseTournamentEventType('JUMP');
     expect(component.isSportFormatSupported).toBeFalse();
     component.chooseFieldDiscipline('LONG_JUMP');

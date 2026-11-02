@@ -76,6 +76,14 @@ export class CommunityTournamentsService {
     });
   }
 
+  /** Per-distance athletics, sharing only the time API (not swimming distances). */
+  createTrackChampionship(communityId:number,name:string,eventDiscipline:string):Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId),{
+      name,sport:'Atletismo',entryType:'INDIVIDUAL',format:'LEAGUE',
+      eventType:'TRACK',eventDiscipline,scoringMode:'TRACK_BEST_TIME'
+    });
+  }
+
   timedOverview(communityId:number,tournamentId:number):Observable<TournamentTimedOverview> {
     return this.http.get<TournamentTimedOverview>(this.url(communityId,tournamentId)+'/times');
   }

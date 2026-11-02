@@ -27,8 +27,8 @@ const COMPATIBLE: Record<string,{code:string; model:TournamentCreationModel}> = 
 };
 export function tournamentEventChoices(sport: string, model: TournamentCreationModel): TournamentEventChoice[] {
   return (CHOICES[sport]??[]).map(code=>({
-    code, supported:(sport==='Atletismo' && model==='FIELD_BEST_MARK'
-      && (code==='JUMP' || code==='THROW'))
+    code, supported:(sport==='Atletismo' && (model==='FIELD_BEST_MARK' || model==='TRACK_BEST_TIME')
+      && (code==='TRACK' || code==='JUMP' || code==='THROW'))
       || (COMPATIBLE[sport]?.code===code && COMPATIBLE[sport]?.model===model)
   }));
 }
@@ -53,4 +53,11 @@ export const FIELD_TOURNAMENT_DISCIPLINES: Readonly<Record<string, readonly stri
 };
 export function validFieldTournamentDiscipline(eventType:string|null,discipline:string|null):boolean {
   return !!discipline && (FIELD_TOURNAMENT_DISCIPLINES[eventType ?? ''] ?? []).includes(discipline);
+}
+
+export const TRACK_TOURNAMENT_DISTANCES = [
+  'TRACK_100','TRACK_200','TRACK_400','TRACK_800','TRACK_1500','TRACK_5000'
+] as const;
+export function validTrackTournamentDistance(eventType:string|null,discipline:string|null):boolean {
+  return eventType==='TRACK' && TRACK_TOURNAMENT_DISTANCES.some(code=>code===discipline);
 }

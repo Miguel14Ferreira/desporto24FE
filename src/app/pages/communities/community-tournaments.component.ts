@@ -386,6 +386,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   get isTimedCompetition(): boolean {
     return this.selected?.scoringMode === 'SWIM_BEST_TIME';
   }
+  get isTrackCompetition():boolean {
+    return this.selected?.scoringMode==='TRACK_BEST_TIME';
+  }
   get isTimedDraft(): boolean {
     return this.selectedSportCreationModel === 'SWIM_BEST_TIME';
   }
@@ -1553,7 +1556,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if(!this.selected || !this.isTimedCompetition || !this.canManage
         || this.selected.status==='COMPLETED')return;
     await this.mutate(this.api.linkTimedRound(this.community.id,this.selected.id,roundId),
-      t('communities.swimTournament.linked'),result=>{
+      t(this.timedUiKey('linkedSuccess')),result=>{
         this.timedOverview=result;
         this.updateSelected({...this.selected!,status:'IN_PROGRESS'});
       });
@@ -1562,7 +1565,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if(!this.selected || !this.isTimedCompetition || !this.canManage
         || this.selected.status==='COMPLETED')return;
     await this.mutate(this.api.unlinkTimedRound(this.community.id,this.selected.id,roundId),
-      t('communities.swimTournament.unlinked'),result=>{
+      t(this.timedUiKey('unlinked')),result=>{
         this.timedOverview=result;
         if(!result.linkedRounds.length)
           this.updateSelected({...this.selected!,status:'DRAFT',startedAt:null});

@@ -8,7 +8,7 @@ import { isRaceChampionshipSport } from '../../services/community-tournaments.se
  */
 export type TournamentCreationModel =
   | 'NUMERIC_INDIVIDUAL' | 'NUMERIC_TEAM'
-  | 'RACE_POINTS' | 'INLINE_SPEED' | 'SWIM_BEST_TIME' | 'FIELD_BEST_MARK' | 'UNAVAILABLE';
+  | 'RACE_POINTS' | 'INLINE_SPEED' | 'SWIM_BEST_TIME' | 'FIELD_BEST_MARK' | 'TRACK_BEST_TIME' | 'UNAVAILABLE';
 
 export interface TournamentSportCapabilities {
   family: CommunitySportFormat | 'unknown';
