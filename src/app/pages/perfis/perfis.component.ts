@@ -21,7 +21,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 @Component({
   selector: 'app-perfis',
   templateUrl: './perfis.component.html',
-  styleUrls: ['./perfis.component.css'],
+  styleUrls: ['./perfis.component.css', './perfis-v3-finish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
