@@ -214,6 +214,7 @@ async function main() {
           ['/menu/venues', '.venue-directory-grid .venue-directory-card'],
           ['/menu/venues/201', '.venue-detail-page .venue-header'],
           ['/menu/venues/new', '.venue-create-form'],
+          ['/menu/communities?view=explore', '.community-pitch'],
           ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/903', '.jynlo-session-detail-premium .detail-card'],
@@ -363,6 +364,34 @@ async function main() {
               'Desktop Activities nearby finder must not overlap filters');
             assert.ok(nearby.width >= 240,
               'Desktop nearby finder must remain large enough for its button');
+          }
+          if (width === 1366 && route === '/menu/communities?view=explore') {
+            const pitch = await page.locator('.community-pitch').boundingBox();
+            const benefits = await page.locator('.community-pitch-benefits').boundingBox();
+            const copy = await page.locator('.community-pitch-copy').boundingBox();
+            const heading = await page.locator('.community-discovery-heading').boundingBox();
+            const filters = await page.locator('.community-discovery-filters').boundingBox();
+            assert.ok(pitch && benefits && copy && heading && filters,
+              'Communities desktop discovery must retain its intro, benefits and search');
+            assert.ok(pitch.height <= 430,
+              'Communities onboarding should remain compact on desktop: '
+              + Math.round(pitch.height) + 'px');
+            assert.ok(benefits.x >= copy.x + copy.width - 5,
+              'Communities benefits should form a right-hand desktop column');
+            assert.ok(filters.x >= heading.x + heading.width - 5,
+              'Communities search fields should align to the right of the heading');
+            assert.ok(Math.abs(filters.y - heading.y) <= 90,
+              'Communities search and heading should share one desktop row');
+            assert.equal(await page.locator('.community-discovery-filters button[type="submit"]').count(), 1,
+              'Communities search retains one working submit control');
+          }
+          if (width === 1366 && route.startsWith('/menu/events/')) {
+            const hero = await page.locator('.jynlo-session-detail-premium .detail-content > .title-row').boundingBox();
+            assert.ok(hero && hero.height >= 140,
+              'Session detail should present a readable, distinct desktop hero');
+            assert.ok(hero.height <= 250,
+              'Session detail desktop hero should remain compact: '
+              + JSON.stringify(hero));
           }
           if (route === '/menu/feed' && width === 1366) {
             const stories = page.locator('.stories-panel');
