@@ -429,7 +429,7 @@ body .inbox-page.jynlo-secondary :is(a,button,input,textarea):focus-visible {
   body .community-page.jynlo-social .header-actions {justify-content:flex-start;}
   body .inbox-page.jynlo-secondary .inbox-layout {
     grid-template-columns:minmax(0,1fr);
-    gap:0;
+    gap:10px;
   }
   body .inbox-page.jynlo-secondary :is(.inbox-sidebar,.inbox-detail) {
     border-radius:14px;
