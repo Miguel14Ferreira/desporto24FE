@@ -139,3 +139,28 @@
     padding-top:calc(8.5rem + env(safe-area-inset-top));
   }
 }
+
+
+/* Desktop directory: put the discovery prompt next to the working filters.
+   All result, error and pagination sections continue beneath both columns. */
+@media (min-width: 1180px) {
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery {
+    display:grid;
+    grid-template-columns:minmax(220px,.56fr) minmax(0,1.44fr);
+    align-items:center;
+    column-gap:26px;
+    row-gap:16px;
+    padding:23px 26px;
+  }
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery > .community-discovery-heading {
+    min-width:0;
+    align-self:center;
+  }
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery > .community-discovery-filters {
+    min-width:0;
+    margin:0;
+  }
+  :host .communities-page.jynlo-community-main-premium:not(.community-detail-page) .community-discovery > :not(.community-discovery-heading):not(.community-discovery-filters) {
+    grid-column:1 / -1;
+  }
+}
