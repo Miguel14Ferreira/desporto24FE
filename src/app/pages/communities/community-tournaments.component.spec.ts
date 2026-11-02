@@ -849,6 +849,38 @@ describe('Community tournaments management', () => {
       expect(component.canPublishTeamSchedule).toBeFalse();
     });
 
+    it('opens one dedicated team without changing tournament permissions or invitation IDs', () => {
+      api.teams.and.returnValue(of([team, { ...team, id: 41, name: 'Azuis' }]));
+      component.teamPageId = 41;
+      component.selectTournament(teamDraft);
+      expect(component.focusedTeam?.name).toBe('Azuis');
+      expect(component.selected?.id).toBe(19);
+      expect(component.invitedTeam).toBeUndefined();
+      component.teamPageId = 999;
+      expect(component.focusedTeam).toBeUndefined();
+      component.teamPageId = null;
+      expect(component.focusedTeam).toBeUndefined();
+      component.invitedTournamentId = 19;
+      component.invitedTeamId = 40;
+      expect(component.invitedTeam?.id).toBe(40);
+      expect(component.teamInviteUrl(team)).toContain('team=40');
+      expect(component.teamInviteUrl(team)).not.toContain('teamPage');
+    });
+
+    it('switches between focused teams without sending changes to the backend', () => {
+      const blue = { ...team, id: 41, name: 'Azuis' };
+      api.teams.and.returnValue(of([team, blue]));
+      component.selectTournament(teamDraft);
+      component.teamPageId = 40;
+      expect(component.focusedTeam?.name).toBe('Verdes');
+      component.teamPageId = 41;
+      expect(component.focusedTeam?.name).toBe('Azuis');
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+      component.selectTournament(draft);
+      expect(component.focusedTeam).toBeUndefined();
+    });
+
     it('loads only teams for team tournaments, without individual standings or fixtures', () => {
       const oldParticipantCalls = api.participants.calls.count();
       const oldMatchCalls = api.matches.calls.count();
