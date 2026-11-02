@@ -652,6 +652,9 @@ async function main() {
                   await page.locator('.team-summary-card').first().click();
                   await page.locator('.team-profile-page').waitFor({state:'visible'});
                   const occupied = page.locator('.team-page-roster');
+                  const management = page.locator('.team-page-management');
+                  assert.equal(await management.count(),1,
+                    'Organiser actions live in a separate team management panel');
 
                   assert.equal(await page.locator('.team-roster-card').count(),1,
                     'Dedicated team page shows only its own roster');
@@ -659,14 +662,14 @@ async function main() {
                     'The incomplete synthetic squad is not labelled ready');
                   assert.equal(await page.locator('.team-summary-state').count(),0,
                     'The individual team page must not show the whole directory');
-                  const rawLink = occupied.locator('.team-link-field');
+                  const rawLink = management.locator('.team-link-field');
                   assert.equal(await rawLink.isVisible(),false,
                     'Full invitation URL must stay collapsed by default');
-                  await occupied.locator('.team-link-details summary').click();
+                  await management.locator('.team-link-details summary').click();
                   assert.equal(await rawLink.isVisible(),true,
                     'Organisers can reveal the original invitation URL');
-                  await occupied.locator('.team-link-details summary').click();
-                  const manual = occupied.locator('.team-manual-assign');
+                  await management.locator('.team-link-details summary').click();
+                  const manual = management.locator('.team-manual-assign');
                   await manual.locator('summary').click();
                   const search = manual.locator('input[type="search"]');
                   await search.waitFor({state:'visible'});
