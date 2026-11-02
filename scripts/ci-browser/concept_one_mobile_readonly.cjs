@@ -333,6 +333,37 @@ async function main() {
                 + ' has excessive blank space after heading copy: ' + trailingSpace + 'px');
             }
           }
+          // Desktop-first content hierarchy: search and nearby actions remain
+          // real controls, but should no longer delay the first results row.
+          if (width === 1366 && route === '/menu/discover') {
+            const searchBox = await page.locator('.jynlo-explore-v3 .discover-search').boundingBox();
+            const copyBox = await page.locator('.jynlo-explore-v3 .search-copy').boundingBox();
+            const fieldBox = await page.locator('.jynlo-explore-v3 .search-fields').boundingBox();
+            const heroBox = await page.locator('.jynlo-explore-v3 .discover-header').boundingBox();
+            assert.ok(searchBox && copyBox && fieldBox && heroBox,
+              'Explore desktop needs visible search fields, introduction and hero');
+            assert.ok(searchBox.height < 215,
+              'Explore desktop search should not occupy an entire tall viewport row: '
+              + Math.round(searchBox.height) + 'px');
+            assert.ok(fieldBox.x > copyBox.x + copyBox.width - 5,
+              'Explore search controls should sit beside the intro on desktop');
+            assert.ok(Math.abs(fieldBox.y - copyBox.y) < 70,
+              'Explore search introduction and controls must share a row');
+            assert.ok(heroBox.height >= 140 && heroBox.height < 220,
+              'Explore desktop hero should be compact but legible');
+          }
+          if (width === 1366 && route === '/menu/events') {
+            const filters = await page.locator('.jynlo-activities-v3 .filters').boundingBox();
+            const nearby = await page.locator('.jynlo-activities-v3 .nearby-panel').boundingBox();
+            assert.ok(filters && nearby,
+              'Activities needs both filters and the nearby finder');
+            assert.ok(Math.abs(filters.y - nearby.y) <= 8,
+              'Desktop Activities nearby finder and filters must share one row');
+            assert.ok(filters.x + filters.width <= nearby.x + 6,
+              'Desktop Activities nearby finder must not overlap filters');
+            assert.ok(nearby.width >= 240,
+              'Desktop nearby finder must remain large enough for its button');
+          }
           if (route === '/menu/feed' && width === 1366) {
             const stories = page.locator('.stories-panel');
             await stories.waitFor({ state: 'visible' });
