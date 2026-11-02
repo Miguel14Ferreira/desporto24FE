@@ -2014,11 +2014,15 @@ export class CommunityTournamentsComponent implements OnChanges {
       ? this.api.create(this.community.id, name, this.sportDraft,
           { winPoints: 0, drawPoints: 0, lossPoints: 0 })
       : this.isRaceChampionshipDraft
-      ? this.api.createRaceChampionship(this.community.id, name, this.sportDraft as RaceChampionshipSport,
-          this.savedSportEventType)
+      ? (this.savedSportEventType
+          ? this.api.createRaceChampionship(this.community.id, name, this.sportDraft as RaceChampionshipSport,
+              this.savedSportEventType)
+          : this.api.createRaceChampionship(this.community.id, name, this.sportDraft as RaceChampionshipSport))
       : scoringMode
-      ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode,
-          this.savedSportEventType)
+      ? (this.savedSportEventType
+          ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode,
+              this.savedSportEventType)
+          : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode))
       : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft);
     await this.mutate(createRequest,
       t('communities.tournaments.organizerUi.competitionCreated'), result => {
