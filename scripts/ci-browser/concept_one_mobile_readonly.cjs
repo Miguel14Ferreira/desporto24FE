@@ -443,6 +443,8 @@ async function main() {
           ['/menu/communities/77?tab=tournaments&tournament=9021', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9022', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9023', '.tournament-browser'],
+          ['/menu/communities/77?tab=tournaments&tournament=9023&teamPage=701', '.team-profile-page'],
+          ['/menu/communities/77?tab=tournaments&tournament=9023&team=701', '.team-invite-accept'],
           ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/903', '.jynlo-session-detail-premium .detail-card'],
@@ -596,26 +598,58 @@ async function main() {
               });
             }
             if (selected === 'tournaments') {
+              const query = new URL('http://localhost' + route).searchParams;
+              const teamPage = query.get('teamPage');
+              const teamId = query.get('tournament');
+              if (teamPage) {
+                const detail = page.locator('.team-profile-page');
+                await detail.locator('.team-page-hero h2').waitFor({state:'visible'});
+                assert.equal((await detail.locator('.team-page-hero h2').innerText()).trim(),
+                  'Raquetes Verdes', 'Deep link opens the exact team');
+                assert.equal(await detail.locator('.team-page-roster').count(),1,
+                  'Team has one dedicated management card');
+                assert.equal(await page.locator('.team-summary-card').count(),0,
+                  'Dedicated page does not repeat the entire tournament directory');
+                assert.equal(await page.locator('.team-fixture').count(),0,
+                  'The team page must not duplicate tournament fixtures');
+                const join = detail.locator('.team-page-hero a').last();
+                assert.ok((await join.getAttribute('href')).includes('team=701'),
+                  'Team page offers the existing invitation flow without changing old links');
+                await page.screenshot({
+                  path:path.join(OUT,width+'-'+language+'-team-profile-701.png'),fullPage:false
+                });
+                await detail.locator('.team-page-back').click();
+                await page.locator('.team-summary-card').first().waitFor({state:'visible'});
+                assert.equal(await page.locator('.team-summary-card').count(),3,
+                  'Back returns to the same tournament team directory');
+              } else {
               const options = page.locator('.tournament-option');
               await options.first().waitFor({state:'visible'});
               assert.equal(await options.count(), 5,
                 'Browser must show the individual, team formats and an editable draft');
-              const teamId = new URL('http://localhost' + route).searchParams.get('tournament');
               if (teamId) {
                 const heading = page.locator('.tournament-detail .tournament-heading h4');
                 const expected = fictionalTeamTournaments.find(t => t.id === Number(teamId));
                 await heading.waitFor({state:'visible'});
                 assert.equal((await heading.innerText()).trim(),expected.name,
                   'Deep-linked team tournament must remain selected');
-                await page.locator('.team-roster-card').first().waitFor({state:'visible'});
+                await page.locator('.team-summary-card').first().waitFor({state:'visible'});
+                assert.equal(await page.locator('.team-roster-card').count(),0,
+                  'Main tournament index must not render full team rosters');
+                assert.equal(await page.locator('.team-summary-card').count(),
+                  Number(teamId) === 9020 || Number(teamId) === 9023 ? 3 : 4,
+                  'All teams remain reachable as compact cards');
                 if (Number(teamId) === 9023) {
+                  await page.locator('.team-summary-card').first().click();
+                  await page.locator('.team-profile-page').waitFor({state:'visible'});
+                  const occupied = page.locator('.team-page-roster');
+
                   assert.equal(await page.locator('.team-roster-card').count(),3,
                     'Draft shows both occupied squads and the deletable empty squad');
-                  const occupied = page.locator('.team-roster-card').first();
                   assert.equal(await page.locator('.team-roster-readiness.is-ready').count(),1,
                     'Only the complete synthetic team must be ready');
-                  assert.equal(await page.locator('.team-roster-readiness:not(.is-ready)').count(),2,
-                    'Incomplete and empty squads must be marked as needing players');
+                  assert.equal(await page.locator('.team-summary-state').count(),0,
+                    'The individual team page must not show the whole directory');
                   const rawLink = occupied.locator('.team-link-field');
                   assert.equal(await rawLink.isVisible(),false,
                     'Full invitation URL must stay collapsed by default');
@@ -641,7 +675,9 @@ async function main() {
                     'Player removal requires confirmation and allows cancellation');
                   await occupied.locator('.team-roster-confirm button').last().click();
                   assert.equal(await occupied.locator('.team-roster-confirm').count(),0);
-                  const emptyTeam = page.locator('.team-roster-card').last();
+                  await page.locator('.team-page-back').click();
+                  await page.locator('.team-summary-card').last().click();
+                  const emptyTeam = page.locator('.team-page-roster');
                   await emptyTeam.locator('button.t-btn-danger-outline').click();
                   await emptyTeam.locator('.team-roster-confirm').waitFor({state:'visible'});
                   assert.equal(await emptyTeam.locator('.team-roster-confirm button').count(),2,
@@ -658,9 +694,9 @@ async function main() {
                 assert.equal(await page.locator('.team-fixture').count(),
                   fictionalTeamMatches[Number(teamId)].length,
                   'Each team format keeps its own scheduled and completed fixtures');
-                assert.equal(await page.locator('.team-roster-card').count(),
+                assert.equal(await page.locator('.team-summary-card').count(),
                   Number(teamId) === 9020 ? 3 : 4,
-                  'Teams must not be mixed with individual player standings');
+                  'Team directory retains every real team without full inline rosters');
                 if (Number(teamId) === 9020) {
                   await page.locator('.team-standings-table tbody tr').first()
                     .waitFor({state:'visible'});
@@ -708,6 +744,7 @@ async function main() {
                 path: path.join(OUT, width + '-' + language + '-community-tournament-results.png'),
                 fullPage: false
               });
+              }
               }
             }
             if (selected === 'sessions') {
