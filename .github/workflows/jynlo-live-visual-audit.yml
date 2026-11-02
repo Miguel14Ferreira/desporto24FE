@@ -1,0 +1,34 @@
+name: Jynlo LIVE responsive visual audit (read-only)
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'scripts/ci-browser/live_visual_audit.cjs'
+      - '.github/workflows/jynlo-live-visual-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-visual-audit:
+    name: Chromium desktop/tablet/mobile public layout audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated Playwright Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/jynlo-browser-qa" --no-fund --no-audit --no-save playwright@1.56.1
+          "$RUNNER_TEMP/jynlo-browser-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Audit deployed Jynlo public pages without login or writes
+        run: NODE_PATH="$RUNNER_TEMP/jynlo-browser-qa/node_modules" node scripts/ci-browser/live_visual_audit.cjs
+      - name: Preserve screenshots for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-live-responsive-audit
+          path: artifacts/visual-audit/*.png
+          if-no-files-found: warn
+          retention-days: 3
