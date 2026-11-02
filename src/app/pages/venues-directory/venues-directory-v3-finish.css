@@ -43,7 +43,7 @@
 :host .venue-directory-page.jynlo-social .venue-directory-filters{
   display:grid;
   grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,.9fr));
-  gap:13px;
+  gap:16px;
   align-items:end;
   margin:0;
   padding:clamp(18px,2.3vw,25px);
@@ -83,7 +83,7 @@
 }
 :host .venue-directory-page.jynlo-social .venue-directory-result-heading{
   display:flex;align-items:center;justify-content:space-between;
-  gap:10px 18px;flex-wrap:wrap;margin:25px 2px 15px;min-width:0;
+  gap:10px 18px;flex-wrap:wrap;margin:24px 2px 15px;min-width:0;
 }
 :host .venue-directory-page.jynlo-social .venue-directory-result-heading h2{
   margin:0 0 5px;color:#f0fffc;font-size:clamp(1.18rem,1.8vw,1.45rem);
