@@ -62,9 +62,14 @@ describe('SocialStoriesComponent', () => {
     tick();
     const root = fixture.nativeElement as HTMLElement;
     const create = root.querySelector('.story-add-action') as HTMLButtonElement;
-    const retry = root.querySelector('.story-retry') as HTMLButtonElement;
     expect(create.classList.contains('jynlo-premium-btn--primary')).toBeTrue();
+    expect(root.querySelector('.story-retry')).toBeNull();
+    component.error = 'Falha simulada';
+    fixture.detectChanges();
+    const retry = root.querySelector('.story-retry') as HTMLButtonElement;
     expect(retry.classList.contains('jynlo-premium-btn--quiet')).toBeTrue();
+    component.error = '';
+    fixture.detectChanges();
 
     create.click();
     fixture.detectChanges();
@@ -327,7 +332,7 @@ describe('SocialStoriesComponent', () => {
 
       const panel: HTMLElement = fixture.nativeElement.querySelector('.stories-panel');
       expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Momentos desportivos');
-      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Tentar novamente');
+      expect(panel.querySelector('.story-retry')).toBeNull();
       expect(panel.querySelector('.stories-empty')?.textContent).toContain('Ainda não há Stories');
 
       i18n.setLanguage('en');
@@ -336,7 +341,7 @@ describe('SocialStoriesComponent', () => {
       expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Sporting moments');
       expect(panel.querySelector('.stories-heading p')?.textContent?.trim())
         .toBe('Your friends’ and communities’ best moments, for 24 hours.');
-      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.story-retry')).toBeNull();
       expect(panel.querySelector('.story-add-action')?.textContent?.trim()).toContain('Create Story');
       expect(panel.querySelector('.stories-empty')?.textContent?.trim())
         .toBe('No Stories yet. Share the first moment!');
@@ -345,6 +350,10 @@ describe('SocialStoriesComponent', () => {
       expect(panel.querySelector('.story-file')?.textContent).toContain('Choose photo or video');
       expect(panel.querySelector('label[for="storyCaption"]')?.textContent?.trim()).toBe('Caption (optional)');
 
+      component.error = 'Unavailable';
+      fixture.detectChanges();
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.stories-empty')).toBeNull();
       i18n.setLanguage('pt');
       fixture.detectChanges();
       expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Momentos desportivos');
@@ -367,10 +376,14 @@ describe('SocialStoriesComponent', () => {
 
       const panel: HTMLElement = fixture.nativeElement.querySelector('.stories-panel');
       expect(panel.querySelector('.stories-eyebrow')?.textContent?.trim()).toBe('Sporting moments');
-      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.story-retry')).toBeNull();
       expect(panel.querySelector('.story-add-action')?.textContent).toContain('Create Story');
       expect(panel.querySelector('.stories-empty')?.textContent?.trim())
         .toBe('No Stories yet. Share the first moment!');
+      component.error = 'Unavailable';
+      fixture.detectChanges();
+      expect(panel.querySelector('.story-retry')?.textContent?.trim()).toBe('Try again');
+      expect(panel.querySelector('.stories-empty')).toBeNull();
     } finally {
       i18n.setLanguage(initial === 'en' ? 'en' : 'pt');
       if (initial === null) localStorage.removeItem('d24-language');
