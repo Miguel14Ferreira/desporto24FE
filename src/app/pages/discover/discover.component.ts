@@ -20,7 +20,7 @@ type ExploreCategory = 'all' | 'venues' | 'sessions' | 'people' | 'communities';
 @Component({
   selector: 'app-discover',
   templateUrl: './discover.component.html',
-  styleUrls: ['./discover.component.css'],
+  styleUrls: ['./discover.component.css', './discover-neon-glass.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
