@@ -333,6 +333,25 @@ async function main() {
                 + ' has excessive blank space after heading copy: ' + trailingSpace + 'px');
             }
           }
+          if (route === '/menu/feed' && width === 1366) {
+            const stories = page.locator('.stories-panel');
+            await stories.waitFor({ state: 'visible' });
+            const errors = await stories.locator('.stories-status').count();
+            assert.ok(errors <= 1,
+              'Feed Stories must never show duplicate failure messages');
+            if (errors > 0 && await stories.locator('.story-bubble').count() === 0) {
+              assert.equal(await stories.locator('.stories-empty').count(), 0,
+                'Unavailable Stories must not also claim there are no Stories');
+              const box = await stories.boundingBox();
+              assert.ok(box && box.height <= 210,
+                'Unavailable desktop Stories should not monopolize the feed: '
+                  + JSON.stringify(box));
+            }
+            const communityPanels = await page.locator('.feed-v3-community-panel').count();
+            const communityPromotion = await page.locator('.feed-v3-join-card').count();
+            assert.equal(communityPanels + communityPromotion, 1,
+              'Community sidebar shows either membership or discovery, never both');
+          }
           if (route === '/menu/venues') {
             const shell = page.locator('.venue-directory-page');
             assert.equal(await shell.locator('.venue-directory-card').count(), 3,
