@@ -1,4 +1,4 @@
-<section class="sessions-page jynlo-c1 jynlo-games">
+<section class="sessions-page jynlo-c1 jynlo-games jynlo-activities-v3">
   <div class="sessions-shell">
     <header class="page-header">
       <div>
@@ -227,6 +227,10 @@
     }
 
     @if (!loading && !errorMessage && sessions.length > 0) {
+      <div class="session-results-bar" aria-live="polite">
+        <strong>{{ 'discover.explore.sessions' | t }}</strong>
+        <span>{{ sessions.length }}</span>
+      </div>
       <div class="session-list">
         @for (session of sessions; track session.id) {
           <article class="session-row" [class.session-row--full]="vacancies(session) === 0">
@@ -238,7 +242,7 @@
               }
             </div>
 
-            <div class="session-fact">
+            <div class="session-fact session-fact--date">
               <span>📅 {{ 'events.date' | t }}</span>
               <strong>{{ session.gameDate | date:'dd/MM · HH:mm' }}</strong>
             </div>
@@ -252,7 +256,7 @@
               }
             </div>
 
-            <div class="session-fact">
+            <div class="session-fact session-fact--price">
               <span>💶 {{ 'events.price' | t }}</span>
               <strong>
                 @if (session.priceAmount > 0) {
