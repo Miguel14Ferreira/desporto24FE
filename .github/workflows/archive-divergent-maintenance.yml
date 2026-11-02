@@ -1,16 +1,20 @@
-name: Archive reviewed divergent maintenance branches
+name: Archive reviewed superseded design branches
 on:
   push:
     branches: [develop]
-    paths: [.github/workflows/archive-divergent-maintenance.yml]
+    paths: ['.github/workflows/archive-divergent-maintenance.yml']
 permissions:
   contents: write
   pull-requests: read
+concurrency:
+  group: archive-reviewed-superseded-design
+  cancel-in-progress: false
 jobs:
   archive:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Preserve exact SHA before deleting branch
+      - name: Preserve exact original commits, then remove obsolete heads
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -19,24 +23,30 @@ jobs:
           import json,os,urllib.request,urllib.error,urllib.parse
           repo=os.environ['REPO']
           items=[
-            ('chore/archive-four-reviewed-qa-20261101','d2cb77ee8dd7dfdb734870ec566f6814fa5be3bb'),
-            ('chore/safe-merged-branch-cleanup-20261030','6ba0a8b62debad8adc4c8b6b453629b4ecefefb1')
+            ('style/feed-hero-container-safe-20261102','1b44f774701f6790379dc63db1ce71af448815d1'),
+            ('design/communities-cards-discovery-refresh-20261030','25d0e03023d67beb746b03c86a9660f54a48c0d0')
           ]
           def api(method,path,data=None):
-              req=urllib.request.Request('https://api.github.com/repos/'+repo+path,method=method,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},data=None if data is None else json.dumps(data).encode())
-              with urllib.request.urlopen(req,timeout=30) as r:return json.loads(r.read() or b'{}')
+              request=urllib.request.Request('https://api.github.com/repos/'+repo+path,method=method,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},data=None if data is None else json.dumps(data).encode())
+              with urllib.request.urlopen(request,timeout=30) as r:
+                  body=r.read()
+                  return json.loads(body) if body else {}
+          assert api('GET','/pulls/800')['merged'], 'Feed design PR not merged'
+          assert api('GET','/pulls/744')['state']=='closed', 'Original community PR still open'
+          assert api('GET','/pulls/746')['merged'], 'Replacement community design not merged'
           for name,sha in items:
-              path=urllib.parse.quote(name,safe='/')
-              assert api('GET','/git/ref/heads/'+path)['object']['sha']==sha,'branch moved'
-              assert not api('GET','/pulls?state=open&head='+repo.split('/')[0]+':'+urllib.parse.quote(name,safe='')+'&per_page=100'),'open PR'
-              tag='archive/divergent-preserved-20261102/'+name
+              encoded=urllib.parse.quote(name,safe='/')
+              assert api('GET','/git/ref/heads/'+encoded)['object']['sha']==sha,'Branch moved: '+name
+              prs=api('GET','/pulls?state=open&head='+urllib.parse.quote(repo.split('/')[0]+':'+name,safe='')+'&per_page=100')
+              assert not prs,'Open PR for: '+name
+              tag='archive/superseded-design-20261102/'+name
               try:
-                  assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha,'tag mismatch'
+                  assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha
               except urllib.error.HTTPError as e:
                   if e.code!=404:raise
                   api('POST','/git/refs',{'ref':'refs/tags/'+tag,'sha':sha})
-              assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha,'tag missing'
-              assert api('GET','/git/ref/heads/'+path)['object']['sha']==sha,'branch changed'
-              api('DELETE','/git/refs/heads/'+path)
-              print('DIVERGENT_BRANCH_ARCHIVED',name,sha)
+              assert api('GET','/git/ref/tags/'+tag)['object']['sha']==sha
+              assert api('GET','/git/ref/heads/'+encoded)['object']['sha']==sha
+              api('DELETE','/git/refs/heads/'+encoded)
+              print('DESIGN_ARCHIVED_AND_DELETED',name,sha)
           PY
