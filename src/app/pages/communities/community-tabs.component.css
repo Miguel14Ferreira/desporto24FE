@@ -115,3 +115,34 @@
   :host .community-tabs { gap:4px; padding:5px; }
   :host .community-tabs > button { min-height:44px; padding:9px 12px; }
 }
+
+
+/* Desktop community workspace: show every enabled section on one evenly
+   spaced navigation row. Narrow screens keep the accessible scroll rail. */
+@media (min-width:1120px) {
+  :host .community-tabs {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(116px,1fr));
+    align-items:stretch;
+    gap:7px;
+    overflow-x:auto;
+    padding:9px;
+    scroll-snap-type:none;
+  }
+  :host .community-tabs > button {
+    min-width:0;
+    max-width:100%;
+    width:100%;
+    min-height:47px;
+    padding:10px 9px;
+    white-space:normal;
+    overflow-wrap:break-word;
+    text-align:center;
+    scroll-snap-align:none;
+  }
+  :host .community-tabs > button:is(.active,[aria-current="true"]) {
+    color:#f1fffa;
+    background:linear-gradient(112deg,rgba(24,163,150,.38),rgba(9,92,103,.54));
+    box-shadow:inset 0 -3px 0 rgba(80,248,218,.9);
+  }
+}
