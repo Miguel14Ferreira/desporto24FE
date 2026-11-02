@@ -14,7 +14,7 @@ import {
   TournamentParticipantPage,
   TournamentScheduleSummary,
   TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
-  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, InlineSpeedOverview, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
+  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, TournamentTimedOverview, InlineSpeedOverview, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../pages/model/community-tournament';
 
 /** Community result-by-position formats verified end to end. */
@@ -66,6 +66,26 @@ export class CommunityTournamentsService {
       scoringMode: 'RACE_POINTS',
       ...(eventType ? { eventType } : {})
     });
+  }
+
+  /** Best measured seconds in exactly one swimming pool discipline. */
+  createTimedChampionship(communityId:number,name:string,eventDiscipline:string):Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId),{
+      name,sport:'Natação',entryType:'INDIVIDUAL',format:'LEAGUE',
+      eventType:'SWIM_LCM',eventDiscipline,scoringMode:'SWIM_BEST_TIME'
+    });
+  }
+
+  timedOverview(communityId:number,tournamentId:number):Observable<TournamentTimedOverview> {
+    return this.http.get<TournamentTimedOverview>(this.url(communityId,tournamentId)+'/times');
+  }
+
+  linkTimedRound(communityId:number,tournamentId:number,roundId:number):Observable<TournamentTimedOverview> {
+    return this.http.put<TournamentTimedOverview>(this.url(communityId,tournamentId)+'/times/'+roundId,{});
+  }
+
+  unlinkTimedRound(communityId:number,tournamentId:number,roundId:number):Observable<TournamentTimedOverview> {
+    return this.http.delete<TournamentTimedOverview>(this.url(communityId,tournamentId)+'/times/'+roundId);
   }
 
   raceOverview(communityId: number, tournamentId: number): Observable<TournamentRaceOverview> {

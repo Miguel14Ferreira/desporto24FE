@@ -10,14 +10,14 @@ import { historicalMatchReviewFlags } from './community-historical-match-review'
 import {
   CommunityTournament, TournamentStatus, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
-  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry,
+  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry, TournamentTimedOverview,
   InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../model/community-tournament';
 import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
-import { tournamentEventChoices, validatedTournamentEventType } from './community-tournament-event-types';
+import { tournamentEventChoices, validatedTournamentEventType, SWIM_TOURNAMENT_DISCIPLINES, validSwimTournamentDiscipline } from './community-tournament-event-types';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -122,6 +122,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   matchesHasMore = false;
   standings?: TournamentStandings;
   raceOverview?: TournamentRaceOverview;
+  timedOverview?: TournamentTimedOverview;
+  timedError = false;
+  private timedRevision = 0;
   speedOverview?: InlineSpeedOverview;
   speedError = false;
   speedHeats: Record<number, number> = {};
@@ -183,6 +186,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   nameDraft = '';
   sportDraft = '';
   eventTypeDraft: string | null = null;
+  eventDisciplineDraft: string | null = null;
   sportSearch = '';
   editingSport = false;
   get communitySportOptions(): string[] {
@@ -219,8 +223,18 @@ export class CommunityTournamentsComponent implements OnChanges {
     return validatedTournamentEventType(this.sportDraft, this.selectedSportCreationModel, this.eventTypeDraft);
   }
 
+  get swimDisciplineOptions(): readonly string[] {
+    return this.savedSportEventType === 'SWIM_LCM' && this.selectedSportCreationModel === 'SWIM_BEST_TIME'
+      ? SWIM_TOURNAMENT_DISCIPLINES : [];
+  }
+  chooseSwimDiscipline(code: string): void {
+    if (this.busy || !this.swimDisciplineOptions.includes(code)) return;
+    this.eventDisciplineDraft = code;
+    this.changeDetector.markForCheck();
+  }
   chooseTournamentEventType(code: string): void {
     if (this.busy || !validatedTournamentEventType(this.sportDraft, this.selectedSportCreationModel, code)) return;
+    if (this.eventTypeDraft !== code) this.eventDisciplineDraft = null;
     this.eventTypeDraft = code;
     this.changeDetector.markForCheck();
   }
@@ -261,6 +275,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (this.sportDraft !== sport) {
       this.sportDraft = sport;
       this.eventTypeDraft = null;
+      this.eventDisciplineDraft = null;
       this.resetPointRules();
     }
     this.sportSearch = '';
@@ -349,6 +364,12 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get isRaceCompetition(): boolean {
     return this.selected?.scoringMode === 'RACE_POINTS';
+  }
+  get isTimedCompetition(): boolean {
+    return this.selected?.scoringMode === 'SWIM_BEST_TIME';
+  }
+  get isTimedDraft(): boolean {
+    return this.selectedSportCreationModel === 'SWIM_BEST_TIME';
   }
 
   /** A speed-skating bracket uses timed heats, never generic league points. */
@@ -789,7 +810,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get isSportFormatSupported(): boolean {
-    return this.selectedSportCreationModel !== 'UNAVAILABLE';
+    return this.selectedSportCreationModel !== 'UNAVAILABLE'
+      && (this.selectedSportCreationModel !== 'SWIM_BEST_TIME'
+        || validSwimTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft));
   }
 
   get sportFormatWarning(): string {
@@ -920,6 +943,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.raceRevision;
       this.raceOverview = undefined;
       this.raceError = false;
+      ++this.timedRevision;
+      this.timedOverview = undefined;
+      this.timedError = false;
       ++this.teamMatchesRevision;
       ++this.teamStandingsRevision;
       ++this.teamGroupsRevision;
@@ -960,6 +986,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.sportDraft = sports?.length === 1
         ? sports[0] : (!sports?.length ? this.community.sport || '' : '');
       this.eventTypeDraft = null;
+      this.eventDisciplineDraft = null;
       this.sportSearch = '';
       this.editingSport = false;
       this.resetPointRules();
@@ -1308,6 +1335,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     ++this.raceRevision;
     this.raceOverview = undefined;
     this.raceError = false;
+    ++this.timedRevision;
+    this.timedOverview = undefined;
+    this.timedError = false;
     ++this.teamMatchesRevision;
     ++this.teamStandingsRevision;
     ++this.teamGroupsRevision;
@@ -1390,6 +1420,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.loadRaceOverview();
       return;
     }
+    if (tournament.scoringMode === 'SWIM_BEST_TIME') {
+      this.loadTimedOverview();
+      return;
+    }
     const communityId = this.community.id;
     const revision = ++this.detailRevision;
     ++this.standingsRevision;
@@ -1459,6 +1493,53 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
       }
     });
+  }
+
+
+  /** Provisional swimming standings use source seconds and one exact discipline. */
+  loadTimedOverview(): void {
+    const tournament=this.selected;
+    if (!tournament || tournament.scoringMode!=='SWIM_BEST_TIME'
+        || !this.isMember || this.detailsLoading) return;
+    const communityId=this.community.id, revision=++this.timedRevision;
+    this.detailsLoading=true;this.timedError=false;
+    this.api.timedOverview(communityId,tournament.id).pipe(
+      timeout(12000),
+      finalize(()=>{
+        if(revision===this.timedRevision){
+          this.detailsLoading=false;this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next:result=>{
+        if(revision!==this.timedRevision || this.community.id!==communityId
+            || this.selected?.id!==tournament.id)return;
+        this.timedOverview=result;
+      },
+      error:()=>{
+        if(revision===this.timedRevision && this.selected?.id===tournament.id)
+          this.timedError=true;
+      }
+    });
+  }
+  async linkTimedRound(roundId:number):Promise<void>{
+    if(!this.selected || !this.isTimedCompetition || !this.canManage
+        || this.selected.status==='COMPLETED')return;
+    await this.mutate(this.api.linkTimedRound(this.community.id,this.selected.id,roundId),
+      t('communities.swimTournament.linked'),result=>{
+        this.timedOverview=result;
+        this.updateSelected({...this.selected!,status:'IN_PROGRESS'});
+      });
+  }
+  async unlinkTimedRound(roundId:number):Promise<void>{
+    if(!this.selected || !this.isTimedCompetition || !this.canManage
+        || this.selected.status==='COMPLETED')return;
+    await this.mutate(this.api.unlinkTimedRound(this.community.id,this.selected.id,roundId),
+      t('communities.swimTournament.unlinked'),result=>{
+        this.timedOverview=result;
+        if(!result.linkedRounds.length)
+          this.updateSelected({...this.selected!,status:'DRAFT',startedAt:null});
+      });
   }
 
   /** Race championships read real rounds, not fake 1-vs-1 fixtures. */
@@ -1631,6 +1712,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.showTeamCreate = false;
     this.showIndividualCreate = true;
     this.eventTypeDraft = null;
+    this.eventDisciplineDraft = null;
     this.editingSport = false;
     this.sportSearch = '';
     this.error = '';
@@ -1642,6 +1724,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.showIndividualCreate = false;
     this.showTeamCreate = true;
     this.eventTypeDraft = null;
+    this.eventDisciplineDraft = null;
     this.editingSport = false;
     this.sportSearch = '';
     this.error = '';
@@ -2005,12 +2088,14 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError(t('communities.tournaments.organizerUi.individualUnsupported'));
       return;
     }
-    if (!this.isRaceChampionshipDraft && !this.isInlineSpeedDraft && !this.validPointRules) {
+    if (!this.isRaceChampionshipDraft && !this.isInlineSpeedDraft && !this.isTimedDraft && !this.validPointRules) {
       this.showError(t('communities.tournaments.organizerUi.invalidPoints'));
       return;
     }
     const scoringMode = this.classificationProfile.scoringMode;
-    const createRequest = this.isInlineSpeedDraft
+    const createRequest = this.isTimedDraft
+      ? this.api.createTimedChampionship(this.community.id,name,this.eventDisciplineDraft!)
+      : this.isInlineSpeedDraft
       ? this.api.create(this.community.id, name, this.sportDraft,
           { winPoints: 0, drawPoints: 0, lossPoints: 0 })
       : this.isRaceChampionshipDraft
@@ -2028,6 +2113,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       t('communities.tournaments.organizerUi.competitionCreated'), result => {
       this.nameDraft = '';
       this.eventTypeDraft = null;
+      this.eventDisciplineDraft = null;
       this.resetPointRules();
       this.showIndividualCreate = false;
       this.selected = undefined;

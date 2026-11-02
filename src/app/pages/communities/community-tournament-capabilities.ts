@@ -8,7 +8,7 @@ import { isRaceChampionshipSport } from '../../services/community-tournaments.se
  */
 export type TournamentCreationModel =
   | 'NUMERIC_INDIVIDUAL' | 'NUMERIC_TEAM'
-  | 'RACE_POINTS' | 'INLINE_SPEED' | 'UNAVAILABLE';
+  | 'RACE_POINTS' | 'INLINE_SPEED' | 'SWIM_BEST_TIME' | 'UNAVAILABLE';
 
 export interface TournamentSportCapabilities {
   family: CommunitySportFormat | 'unknown';
@@ -24,7 +24,9 @@ export function tournamentSportCapabilities(sport: string | null | undefined): T
   let individual: TournamentCreationModel = 'UNAVAILABLE';
   let team: TournamentCreationModel = 'UNAVAILABLE';
 
-  if (sport === 'Patinagem de Velocidade') {
+  if (sport === 'Natação') {
+    individual = 'SWIM_BEST_TIME';
+  } else if (sport === 'Patinagem de Velocidade') {
     individual = 'INLINE_SPEED';
   } else if (sport && isRaceChampionshipSport(sport)) {
     // Only the seven verified race-championship sports use this API.

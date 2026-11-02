@@ -709,3 +709,36 @@
 }
 :host .tournaments .tournament-event-option.is-unavailable small{color:#e7c49a;}
 :host .tournaments .tournament-event-option:focus-visible{outline:2px solid #acfde5;outline-offset:3px;}
+
+/* First genuine timed championship: no generic goals or positional points. */
+:host .tournaments .timed-championship{display:grid;gap:18px;min-width:0;}
+:host .tournaments .swim-championship-summary{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+:host .tournaments .swim-championship-summary>div{
+  display:grid;gap:3px;padding:14px 16px;
+  border:1px solid rgba(83,192,170,.32);border-radius:13px;
+  background:rgba(8,53,63,.66);
+}
+:host .tournaments .swim-championship-summary strong{
+  color:#eefff8;font-size:1.35rem;font-variant-numeric:tabular-nums;
+}
+:host .tournaments .swim-championship-summary span{
+  color:#adcfce;font-size:.77rem;
+}
+:host .tournaments .swim-linked-rounds,
+:host .tournaments .swim-standings{
+  display:grid;gap:12px;min-width:0;
+}
+:host .tournaments .swim-linked-rounds h6,
+:host .tournaments .swim-standings h6{
+  margin:0;color:#e5fff4;font-size:.95rem;
+}
+:host .tournaments .swim-standings table{width:100%;}
+:host .tournaments .swim-time-value{
+  font-variant-numeric:tabular-nums;font-size:.96rem;
+  font-weight:850;color:#9df3d5;white-space:nowrap;
+}
+:host .tournaments .swim-standings tr.is-leader{
+  background:rgba(38,142,118,.19);
+}

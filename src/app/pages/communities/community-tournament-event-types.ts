@@ -22,7 +22,8 @@ const COMPATIBLE: Record<string,{code:string; model:TournamentCreationModel}> = 
   BMX: {code:'RACE',model:'RACE_POINTS'},
   'Ciclismo de Estrada': {code:'ROAD_RACE',model:'RACE_POINTS'},
   'Ciclismo de Pista': {code:'TRACK_SCRATCH',model:'RACE_POINTS'},
-  Xadrez: {code:'CHESS_GAME',model:'NUMERIC_INDIVIDUAL'}
+  Xadrez: {code:'CHESS_GAME',model:'NUMERIC_INDIVIDUAL'},
+  'Natação': {code:'SWIM_LCM',model:'SWIM_BEST_TIME'}
 };
 export function tournamentEventChoices(sport: string, model: TournamentCreationModel): TournamentEventChoice[] {
   return (CHOICES[sport]??[]).map(code=>({
@@ -32,4 +33,13 @@ export function tournamentEventChoices(sport: string, model: TournamentCreationM
 export function validatedTournamentEventType(sport:string,model:TournamentCreationModel,code:string|null|undefined):string|null{
   if(!code)return null;
   return tournamentEventChoices(sport,model).find(x=>x.code===code && x.supported)?.code ?? null;
+}
+
+/** Exact, independently comparable 50m pool events validated by the backend. */
+export const SWIM_TOURNAMENT_DISCIPLINES = [
+  'FREE_50','FREE_100','FREE_200','BACK_100','BREAST_100','FLY_100','IM_200'
+] as const;
+export function validSwimTournamentDiscipline(eventType:string|null,discipline:string|null):boolean {
+  return eventType==='SWIM_LCM'
+    && SWIM_TOURNAMENT_DISCIPLINES.some(code=>code===discipline);
 }

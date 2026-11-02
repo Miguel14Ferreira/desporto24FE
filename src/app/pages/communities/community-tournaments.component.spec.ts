@@ -32,6 +32,7 @@ describe('Community tournaments management', () => {
       'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
+      'createTimedChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
       'completeRaceChampionship', 'inlineSpeedOverview', 'resolveInlineSpeedTieBreak', 'recordInlineSpeedTrial'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
@@ -41,6 +42,10 @@ describe('Community tournaments management', () => {
     api.raceOverview.and.returnValue(of({
       tournamentId: 19, pointsByPlace: [25, 18, 15], linkedRaces: [], availableRaces: [],
       standings: []
+    }));
+    api.timedOverview.and.returnValue(of({
+      tournamentId: 19, eventType: 'SWIM_LCM', eventDiscipline: 'FREE_50',
+      linkedRounds: [], availableRounds: [], standings: []
     }));
     api.inlineSpeedOverview.and.returnValue(of({
       tournamentId: 19, discipline: null, linkedHeats: [], availableHeats: [],
@@ -87,7 +92,7 @@ describe('Community tournaments management', () => {
 
     component.sportDraft = 'Natação';
     expect(component.selectedSportCapabilities.family).toBe('race');
-    expect(component.selectedSportCreationModel).toBe('UNAVAILABLE');
+    expect(component.selectedSportCreationModel).toBe('SWIM_BEST_TIME');
     expect(component.isSportFormatSupported).toBeFalse();
 
     component.sportDraft = 'Futebol';
@@ -142,6 +147,47 @@ describe('Community tournaments management', () => {
       { winPoints: 2, drawPoints: 1, lossPoints: 0 },
       'CHESS_HALF_POINTS', 'CHESS_GAME'
     );
+  });
+
+  it('creates a real swimming best-time championship only after selecting the event and exact discipline', async () => {
+    component.startIndividualCreation();
+    component.nameDraft='50 m livres';
+    component.chooseSport('Natação');
+    expect(component.selectedSportCreationModel).toBe('SWIM_BEST_TIME');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseTournamentEventType('SWIM_LCM');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseSwimDiscipline('FREE_100');
+    expect(component.isSportFormatSupported).toBeTrue();
+    component.chooseSwimDiscipline('FREE_50');
+    api.createTimedChampionship.and.returnValue(of({
+      ...draft,id:100,name:'50 m livres',sport:'Natação',eventType:'SWIM_LCM',
+      eventDiscipline:'FREE_50',scoringMode:'SWIM_BEST_TIME'
+    }));
+    await component.create();
+    expect(api.createTimedChampionship).toHaveBeenCalledOnceWith(7,'50 m livres','FREE_50');
+    expect(component.selected?.eventDiscipline).toBe('FREE_50');
+    expect(component.isTimedCompetition).toBeTrue();
+    expect(api.timedOverview).toHaveBeenCalledWith(7,100);
+    expect(api.create).not.toHaveBeenCalled();
+    expect(api.generateSchedule).not.toHaveBeenCalled();
+  });
+
+  it('uses swimming round results without exposing race-position points', async () => {
+    component.selected={...draft,id:100,sport:'Natação',eventType:'SWIM_LCM',
+      eventDiscipline:'FREE_50',scoringMode:'SWIM_BEST_TIME'};
+    const data={
+      tournamentId:100,eventType:'SWIM_LCM',eventDiscipline:'FREE_50',
+      linkedRounds:[],availableRounds:[],
+      standings:[{position:1,communityPlayerId:10,profileId:null,username:'ana',
+        fullName:'Ana',bestSeconds:28.47,validAttempts:2}]
+    };
+    api.linkTimedRound.and.returnValue(of(data));
+    await component.linkTimedRound(31);
+    expect(api.linkTimedRound).toHaveBeenCalledOnceWith(7,100,31);
+    expect(component.timedOverview?.standings[0].bestSeconds).toBe(28.47);
+    expect(api.linkRace).not.toHaveBeenCalled();
+    expect(api.recordResult).not.toHaveBeenCalled();
   });
 
   it('keeps tournament and fixtures semantics unchanged by the layout update', () => {

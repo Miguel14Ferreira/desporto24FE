@@ -18,9 +18,10 @@ export interface CommunityTournament {
   sport?: string | null;
   // Nullable sport-specific event metadata; historical competitions remain null.
   eventType?: string | null;
+  eventDiscipline?: string | null;
   // Older individual competitions may omit these fields in cached responses.
   entryType?: 'INDIVIDUAL' | 'TEAM';
-  scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | null;
+  scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | 'SWIM_BEST_TIME' | null;
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: TeamTieBreakPriority;
@@ -332,4 +333,21 @@ export interface InlineSpeedOverview {
   decisions: InlineSpeedDecision[];
   tieBreaks?: InlineSpeedTieBreak[];
   trials?: InlineSpeedTrial[];
+}
+
+/** Measured times, not football scores or ordinal race points. */
+export interface TournamentTimedRound {
+  id:number; name:string; sport:string|null; playedAt:string;
+  eventType:string|null; eventDiscipline:string|null;
+  entries:{communityPlayerId:number|null;fullName:string|null;
+    elapsedSeconds:number|null;raceDisqualified:boolean}[];
+}
+export interface TournamentTimedStanding {
+  position:number;communityPlayerId:number;profileId:number|null;
+  username:string;fullName:string;bestSeconds:number;validAttempts:number;
+}
+export interface TournamentTimedOverview {
+  tournamentId:number;eventType:string;eventDiscipline:string;
+  linkedRounds:TournamentTimedRound[];availableRounds:TournamentTimedRound[];
+  standings:TournamentTimedStanding[];
 }

@@ -27,7 +27,9 @@ describe('Tournament capabilities for all 121 modalities', () => {
         fullSportRulesImplemented: false
       });
     }
-    for (const sport of ['Natação', 'Triatlo', 'Corrida', 'Remo', 'Vela']) {
+    expect(tournamentSportCapabilities('Natação').individual).toBe('SWIM_BEST_TIME');
+    expect(tournamentSportCapabilities('Natação').team).toBe('UNAVAILABLE');
+    for (const sport of ['Triatlo', 'Corrida', 'Remo', 'Vela']) {
       expect(tournamentSportCapabilities(sport).individual).withContext(sport).toBe('UNAVAILABLE');
     }
   });
@@ -41,7 +43,7 @@ describe('Tournament capabilities for all 121 modalities', () => {
 
   it('retains existing numeric team and individual tournament creation paths', () => {
     const models: readonly TournamentCreationModel[] = [
-      'NUMERIC_INDIVIDUAL', 'NUMERIC_TEAM', 'RACE_POINTS', 'INLINE_SPEED', 'UNAVAILABLE'
+      'NUMERIC_INDIVIDUAL', 'NUMERIC_TEAM', 'RACE_POINTS', 'INLINE_SPEED', 'SWIM_BEST_TIME', 'UNAVAILABLE'
     ];
     for (const sport of SPORTS_CATALOG) {
       const cap = tournamentSportCapabilities(sport);
