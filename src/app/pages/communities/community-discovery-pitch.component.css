@@ -80,3 +80,50 @@
 @media(max-width:560px) {
   .community-pitch-benefits {grid-template-columns:minmax(0,1fr);}
 }
+
+
+/* Desktop-first discovery: a focused introduction and four scannable benefits
+   using the same mint/teal glass vocabulary as Feed and Explore. */
+@media (min-width: 1100px) {
+  .community-pitch {
+    grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr);
+    gap: clamp(18px,2.5vw,34px);
+    padding: clamp(20px,2.3vw,29px);
+  }
+  .community-pitch h2 {
+    max-width: 21ch;
+    font-size: clamp(1.9rem,2.55vw,2.6rem);
+    line-height: 1.13;
+  }
+  .community-pitch-eyebrow {margin-bottom:8px;}
+  .community-pitch-lead {margin:12px 0 8px;line-height:1.5;}
+  .community-pitch-actions {margin-top:15px;}
+  .community-pitch-onboarding {margin-top:9px;}
+  .community-pitch-benefits {gap:9px;}
+  .community-pitch-benefit {
+    min-height:108px;
+    padding:12px;
+    gap:7px;
+    border-color:rgba(43,206,205,.25);
+    background:linear-gradient(155deg,rgba(10,66,75,.35),rgba(6,31,48,.48));
+  }
+  .community-pitch-benefit p {font-size:.78rem;line-height:1.43;}
+  .community-pitch-benefit-icon {font-size:1.23rem;}
+}
+.community-pitch {
+  border-color:rgba(40,209,205,.3);
+  background:
+    radial-gradient(ellipse at 94% 0%,rgba(27,212,194,.14),transparent 64%),
+    linear-gradient(120deg,rgba(5,34,50,.97),rgba(4,43,54,.95));
+}
+.community-pitch-eyebrow,.community-pitch-promise {color:#69f3dc;}
+.community-pitch-actions .jynlo-action--primary {
+  background:linear-gradient(112deg,#1ce4ce,#4af0c5);
+  border-color:#34e8cc;
+  color:#04333b;
+}
+.community-pitch-actions .jynlo-action--neutral {
+  color:#d2f9f2;
+  border-color:rgba(59,196,201,.4);
+  background:rgba(14,77,86,.34);
+}
