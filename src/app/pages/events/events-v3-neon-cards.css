@@ -350,6 +350,19 @@
 @media(max-width:900px) {
   :host .sessions-page.jynlo-activities-v3 {padding-top:calc(8.5rem + env(safe-area-inset-top));}
 }
+/* When the responsive header stacks, its desktop flex-basis must not
+ * become a 370px-tall empty area above the actions. */
+@media(max-width:900px) {
+  :host .jynlo-activities-v3 .page-header > div:first-child {
+    flex:0 1 auto;
+  }
+}
+@media(max-width:760px) {
+  /* The location copy also switches to a column on narrow screens. */
+  :host .jynlo-activities-v3 .nearby-panel > div:first-child {
+    flex:0 1 auto;
+  }
+}
 @media(max-width:760px) {
   :host .sessions-page.jynlo-activities-v3 {padding:calc(8.5rem + env(safe-area-inset-top)) 14px 50px;}
   :host .jynlo-activities-v3 .page-header {flex-direction:column;align-items:stretch;}
