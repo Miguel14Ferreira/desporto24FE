@@ -303,6 +303,179 @@
     </section>
   }
 
+  @if (isTeamCompetition && teamPageId !== null) {
+    <main class="team-profile-page" [attr.aria-label]="'communities.tournaments.teamPage.region' | t">
+      <a class="team-page-back t-btn t-btn-secondary"
+        [routerLink]="['/menu/communities', community.id]"
+        [queryParams]="{tab:'tournaments',tournament:selected?.id}">
+        <span aria-hidden="true">←</span> {{ 'communities.tournaments.teamPage.back' | t }}
+      </a>
+      @if (!isMember) {
+        <p class="notice notice-info" role="status">{{ 'communities.tournaments.teamUi.memberOnly' | t }}</p>
+      } @else if (detailsLoading) {
+        <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.loading' | t }}</p>
+      } @else if (focusedTeam; as team) {
+        <header class="team-page-hero">
+          <div class="team-page-crest" aria-hidden="true">♜</div>
+          <div class="team-page-intro">
+            <span class="team-page-eyebrow">{{ selected?.name }} · {{ 'communities.tournaments.teamPage.eyebrow' | t }}</span>
+            <h2>{{ team.name }}</h2>
+            <p>{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }}
+              {{ 'communities.tournaments.teamUi.players' | t }}</p>
+            <span class="team-roster-readiness" [class.is-ready]="isTeamRosterReady(team)">
+              {{ (selected?.status === 'DRAFT'
+                ? (isTeamRosterReady(team) ? 'communities.tournaments.teamUi.rosterReady' : 'communities.tournaments.teamUi.rosterIncomplete')
+                : 'communities.tournaments.teamPage.rosterLocked') | t }}
+            </span>
+          </div>
+          @if (selected?.status === 'DRAFT' && !myTeam && !isTeamRosterFull(team)) {
+            <a class="t-btn t-btn-secondary"
+              [routerLink]="['/menu/communities', community.id]"
+              [queryParams]="{tab:'tournaments',tournament:selected?.id,team:team.id}">
+              {{ 'communities.tournaments.teamPage.joinTeam' | t }}
+            </a>
+          }
+        </header>
+        <div class="team-page-content">
+          <div class="team-page-section-label">
+            <h3>{{ 'communities.tournaments.teamPage.rosterTitle' | t }}</h3>
+            <span>{{ team.players.length }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
+          </div>
+          <article class="team-roster-card team-page-roster">
+
+                    <div class="team-roster-heading">
+                      <div>
+                        <h6>{{ team.name }}</h6>
+                        <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
+                        @if (selected.status === 'DRAFT') {
+                          <span class="team-roster-readiness" [class.is-ready]="isTeamRosterReady(team)">
+                            {{ (isTeamRosterReady(team) ? 'communities.tournaments.teamUi.rosterReady'
+                              : 'communities.tournaments.teamUi.rosterIncomplete') | t }}
+                          </span>
+                        }
+                      </div>
+                      @if (canManageTeamRoster && team.players.length === 0) {
+                        @if (confirmingEmptyTeamId === team.id) {
+                          <div class="team-roster-confirm" role="group"
+                            [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}">
+                            <p>{{ 'communities.tournaments.teamUi.confirmDeleteEmpty' | t:{team:team.name} }}</p>
+                            <div class="team-roster-confirm-actions">
+                              <button type="button" class="t-btn t-btn-danger t-btn-small" [disabled]="busy || detailsLoading"
+                                (click)="deleteTournamentTeam(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
+                              <button type="button" class="t-btn t-btn-secondary t-btn-small" [disabled]="busy"
+                                (click)="cancelTeamRosterConfirmation()">{{ 'common.cancel' | t }}</button>
+                            </div>
+                          </div>
+                        } @else {
+                          <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
+                            [disabled]="busy || detailsLoading"
+                            [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}"
+                            (click)="requestEmptyTeamDeletion(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
+                        }
+                      }
+                    </div>
+                    @if (!team.players.length) {
+                      <p class="t-muted">{{ 'communities.tournaments.teamUi.noPlayers' | t }}</p>
+                    }
+                    <div class="players-list">
+                      @for (player of team.players; track player.profileId) {
+                        <div class="player-item">
+                          <div><strong>{{ player.displayName || player.username }}</strong>
+                            <small>&#64;{{ player.username }}</small></div>
+                          @if (canManageTeamRoster) {
+                            @if (confirmingTeamPlayerRemoval?.teamId === team.id
+                                && confirmingTeamPlayerRemoval?.profileId === player.profileId) {
+                              <div class="team-roster-confirm" role="group"
+                                [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}">
+                                <p>{{ 'communities.tournaments.teamUi.confirmRemovePlayer' | t:{player:player.displayName || player.username,team:team.name} }}</p>
+                                <div class="team-roster-confirm-actions">
+                                  <button type="button" class="t-btn t-btn-danger t-btn-small" [disabled]="busy"
+                                    (click)="removeTeamPlayer(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
+                                  <button type="button" class="t-btn t-btn-secondary t-btn-small" [disabled]="busy"
+                                    (click)="cancelTeamRosterConfirmation()">{{ 'common.cancel' | t }}</button>
+                                </div>
+                              </div>
+                            } @else {
+                              <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                                [disabled]="busy"
+                                [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}"
+                                (click)="requestTeamPlayerRemoval(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
+                            }
+                          }
+                        </div>
+                      }
+                    </div>
+                    @if (canManageTeamRoster && !isTeamRosterFull(team)) {
+                      <div class="team-share-invite">
+                        <strong>{{ 'communities.tournaments.teamUi.invitePlayers' | t }}</strong>
+                        <p>{{ 'communities.tournaments.teamUi.inviteHint' | t }}</p>
+                        <div class="team-share-actions">
+                          <a class="t-btn t-btn-primary" [href]="teamWhatsAppUrl(team)"
+                            target="_blank" rel="noopener noreferrer"
+                            [attr.aria-label]="'communities.tournaments.teamUi.whatsappAria' | t:{team:team.name}">
+                            WhatsApp
+                          </a>
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy || detailsLoading" (click)="copyTeamInvite(team)">
+                            {{ 'communities.tournaments.teamUi.copy' | t }}
+                          </button>
+                        </div>
+                        <details class="team-link-details">
+                          <summary>{{ 'communities.tournaments.teamUi.showInviteLink' | t }}</summary>
+                          <div class="team-link-field">
+                            <label [for]="'team-invite-link-' + team.id">{{ 'communities.tournaments.teamUi.teamLink' | t }}</label>
+                            <input [id]="'team-invite-link-' + team.id" type="text" readonly
+                              [value]="teamInviteUrl(team)" (click)="$any($event.target).select()">
+                          </div>
+                        </details>
+                        @if (inviteCopyFeedback[team.id]) {
+                          <p role="status">{{ inviteCopyFeedback[team.id] }}</p>
+                        }
+                        <p class="t-muted">{{ 'communities.tournaments.teamUi.joinCommunity' | t }}</p>
+                      </div>
+                      <details class="team-manual-assign">
+                        <summary>{{ 'communities.tournaments.teamUi.manualAssign' | t }}</summary>
+                        <div class="team-player-assign">
+                          @if (availableTeamMembers.length === 0) {
+                            <p class="t-muted">{{ 'communities.tournaments.teamUi.noEligibleMembers' | t }}</p>
+                          } @else {
+                            @if (availableTeamMembers.length > 6) {
+                              <label [for]="'team-member-search-' + team.id">{{ 'communities.tournaments.teamUi.searchMember' | t }}</label>
+                              <input [id]="'team-member-search-' + team.id" type="search"
+                                [ngModel]="teamMemberSearch[team.id] || ''"
+                                (ngModelChange)="setTeamMemberSearch(team.id, $event)"
+                                [disabled]="busy || detailsLoading" maxlength="80"
+                                autocomplete="off"
+                                [placeholder]="'communities.tournaments.teamUi.searchPlaceholder' | t">
+                            }
+                            <label [for]="'team-player-' + team.id">{{ 'communities.tournaments.teamUi.communityMember' | t }}</label>
+                            <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]"
+                              [disabled]="busy || detailsLoading || filteredTeamMembers(team.id).length === 0">
+                              <option [ngValue]="null">{{ 'communities.tournaments.teamUi.selectMember' | t }}</option>
+                              @for (member of filteredTeamMembers(team.id); track member.profileId) {
+                                <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
+                              }
+                            </select>
+                            @if (filteredTeamMembers(team.id).length === 0) {
+                              <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.noSearchMatches' | t }}</p>
+                            }
+                            <button type="button" class="t-btn t-btn-secondary"
+                              [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
+                              (click)="assignTeamPlayer(team)">{{ 'communities.tournaments.teamUi.addPlayer' | t }}</button>
+                          }
+                        </div>
+                      </details>
+                    }
+
+          </article>
+        </div>
+      } @else if (teamsLoadError) {
+        <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.loadError' | t }}</p>
+      } @else {
+        <p class="notice notice-info" role="status">{{ 'communities.tournaments.teamPage.notFound' | t }}</p>
+      }
+    </main>
+  } @else {
   <div class="tournament-browser">
     <aside class="tournament-sidebar" [attr.aria-label]="'communities.tournaments.detailUi.listLabel' | t">
       <div class="sidebar-title">
@@ -711,133 +884,25 @@
               } @else if (invitedTeamId && selected.id === invitedTournamentId && !teamsLoadError && !detailsLoading) {
                 <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.invalidInvite' | t }}</p>
               }
-              <div class="team-roster-grid">
+              <div class="team-overview-grid" [attr.aria-label]="'communities.tournaments.teamPage.gridLabel' | t">
                 @for (team of teams; track team.id) {
-                  <article class="team-roster-card">
-                    <div class="team-roster-heading">
-                      <div>
-                        <h6>{{ team.name }}</h6>
-                        <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
-                        @if (selected.status === 'DRAFT') {
-                          <span class="team-roster-readiness" [class.is-ready]="isTeamRosterReady(team)">
-                            {{ (isTeamRosterReady(team) ? 'communities.tournaments.teamUi.rosterReady'
-                              : 'communities.tournaments.teamUi.rosterIncomplete') | t }}
-                          </span>
-                        }
-                      </div>
-                      @if (canManageTeamRoster && team.players.length === 0) {
-                        @if (confirmingEmptyTeamId === team.id) {
-                          <div class="team-roster-confirm" role="group"
-                            [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}">
-                            <p>{{ 'communities.tournaments.teamUi.confirmDeleteEmpty' | t:{team:team.name} }}</p>
-                            <div class="team-roster-confirm-actions">
-                              <button type="button" class="t-btn t-btn-danger t-btn-small" [disabled]="busy || detailsLoading"
-                                (click)="deleteTournamentTeam(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
-                              <button type="button" class="t-btn t-btn-secondary t-btn-small" [disabled]="busy"
-                                (click)="cancelTeamRosterConfirmation()">{{ 'common.cancel' | t }}</button>
-                            </div>
-                          </div>
-                        } @else {
-                          <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
-                            [disabled]="busy || detailsLoading"
-                            [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}"
-                            (click)="requestEmptyTeamDeletion(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
-                        }
-                      }
-                    </div>
-                    @if (!team.players.length) {
-                      <p class="t-muted">{{ 'communities.tournaments.teamUi.noPlayers' | t }}</p>
-                    }
-                    <div class="players-list">
-                      @for (player of team.players; track player.profileId) {
-                        <div class="player-item">
-                          <div><strong>{{ player.displayName || player.username }}</strong>
-                            <small>&#64;{{ player.username }}</small></div>
-                          @if (canManageTeamRoster) {
-                            @if (confirmingTeamPlayerRemoval?.teamId === team.id
-                                && confirmingTeamPlayerRemoval?.profileId === player.profileId) {
-                              <div class="team-roster-confirm" role="group"
-                                [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}">
-                                <p>{{ 'communities.tournaments.teamUi.confirmRemovePlayer' | t:{player:player.displayName || player.username,team:team.name} }}</p>
-                                <div class="team-roster-confirm-actions">
-                                  <button type="button" class="t-btn t-btn-danger t-btn-small" [disabled]="busy"
-                                    (click)="removeTeamPlayer(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
-                                  <button type="button" class="t-btn t-btn-secondary t-btn-small" [disabled]="busy"
-                                    (click)="cancelTeamRosterConfirmation()">{{ 'common.cancel' | t }}</button>
-                                </div>
-                              </div>
-                            } @else {
-                              <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                                [disabled]="busy"
-                                [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}"
-                                (click)="requestTeamPlayerRemoval(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
-                            }
-                          }
-                        </div>
-                      }
-                    </div>
-                    @if (canManageTeamRoster && !isTeamRosterFull(team)) {
-                      <div class="team-share-invite">
-                        <strong>{{ 'communities.tournaments.teamUi.invitePlayers' | t }}</strong>
-                        <p>{{ 'communities.tournaments.teamUi.inviteHint' | t }}</p>
-                        <div class="team-share-actions">
-                          <a class="t-btn t-btn-primary" [href]="teamWhatsAppUrl(team)"
-                            target="_blank" rel="noopener noreferrer"
-                            [attr.aria-label]="'communities.tournaments.teamUi.whatsappAria' | t:{team:team.name}">
-                            WhatsApp
-                          </a>
-                          <button type="button" class="t-btn t-btn-secondary"
-                            [disabled]="busy || detailsLoading" (click)="copyTeamInvite(team)">
-                            {{ 'communities.tournaments.teamUi.copy' | t }}
-                          </button>
-                        </div>
-                        <details class="team-link-details">
-                          <summary>{{ 'communities.tournaments.teamUi.showInviteLink' | t }}</summary>
-                          <div class="team-link-field">
-                            <label [for]="'team-invite-link-' + team.id">{{ 'communities.tournaments.teamUi.teamLink' | t }}</label>
-                            <input [id]="'team-invite-link-' + team.id" type="text" readonly
-                              [value]="teamInviteUrl(team)" (click)="$any($event.target).select()">
-                          </div>
-                        </details>
-                        @if (inviteCopyFeedback[team.id]) {
-                          <p role="status">{{ inviteCopyFeedback[team.id] }}</p>
-                        }
-                        <p class="t-muted">{{ 'communities.tournaments.teamUi.joinCommunity' | t }}</p>
-                      </div>
-                      <details class="team-manual-assign">
-                        <summary>{{ 'communities.tournaments.teamUi.manualAssign' | t }}</summary>
-                        <div class="team-player-assign">
-                          @if (availableTeamMembers.length === 0) {
-                            <p class="t-muted">{{ 'communities.tournaments.teamUi.noEligibleMembers' | t }}</p>
-                          } @else {
-                            @if (availableTeamMembers.length > 6) {
-                              <label [for]="'team-member-search-' + team.id">{{ 'communities.tournaments.teamUi.searchMember' | t }}</label>
-                              <input [id]="'team-member-search-' + team.id" type="search"
-                                [ngModel]="teamMemberSearch[team.id] || ''"
-                                (ngModelChange)="setTeamMemberSearch(team.id, $event)"
-                                [disabled]="busy || detailsLoading" maxlength="80"
-                                autocomplete="off"
-                                [placeholder]="'communities.tournaments.teamUi.searchPlaceholder' | t">
-                            }
-                            <label [for]="'team-player-' + team.id">{{ 'communities.tournaments.teamUi.communityMember' | t }}</label>
-                            <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]"
-                              [disabled]="busy || detailsLoading || filteredTeamMembers(team.id).length === 0">
-                              <option [ngValue]="null">{{ 'communities.tournaments.teamUi.selectMember' | t }}</option>
-                              @for (member of filteredTeamMembers(team.id); track member.profileId) {
-                                <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
-                              }
-                            </select>
-                            @if (filteredTeamMembers(team.id).length === 0) {
-                              <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.noSearchMatches' | t }}</p>
-                            }
-                            <button type="button" class="t-btn t-btn-secondary"
-                              [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
-                              (click)="assignTeamPlayer(team)">{{ 'communities.tournaments.teamUi.addPlayer' | t }}</button>
-                          }
-                        </div>
-                      </details>
-                    }
-                  </article>
+                  <a class="team-summary-card"
+                    [routerLink]="['/menu/communities', community.id]"
+                    [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:team.id}"
+                    [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:team.name}">
+                    <span class="team-summary-crest" aria-hidden="true">♜</span>
+                    <span class="team-summary-body">
+                      <strong>{{ team.name }}</strong>
+                      <small>{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }}
+                        {{ 'communities.tournaments.teamUi.players' | t }}</small>
+                      <span class="team-summary-state" [class.is-ready]="isTeamRosterReady(team)">
+                        {{ (selected.status === 'DRAFT'
+                          ? (isTeamRosterReady(team) ? 'communities.tournaments.teamUi.rosterReady' : 'communities.tournaments.teamUi.rosterIncomplete')
+                          : 'communities.tournaments.teamPage.rosterLocked') | t }}
+                      </span>
+                    </span>
+                    <span class="team-summary-open" aria-hidden="true">↗</span>
+                  </a>
                 }
               </div>
               @if (canManage && selected.status === 'DRAFT') {
@@ -1855,4 +1920,5 @@
       }
     </div>
   </div>
+  }
 </section>
