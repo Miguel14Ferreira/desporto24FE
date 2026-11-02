@@ -21,7 +21,7 @@ export interface CommunityTournament {
   eventDiscipline?: string | null;
   // Older individual competitions may omit these fields in cached responses.
   entryType?: 'INDIVIDUAL' | 'TEAM';
-  scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | 'SWIM_BEST_TIME' | null;
+  scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | 'SWIM_BEST_TIME' | 'FIELD_BEST_MARK' | null;
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: TeamTieBreakPriority;
@@ -350,4 +350,21 @@ export interface TournamentTimedOverview {
   tournamentId:number;eventType:string;eventDiscipline:string;
   linkedRounds:TournamentTimedRound[];availableRounds:TournamentTimedRound[];
   standings:TournamentTimedStanding[];
+}
+
+/** Source-recorded metre marks, never head-to-head scores or race points. */
+export interface TournamentMeasuredRound {
+  id:number; name:string; sport:string|null; playedAt:string;
+  eventType:string|null; eventDiscipline:string|null;
+  entries:{communityPlayerId:number|null;fullName:string|null;
+    performanceValue:number|null;raceDisqualified:boolean}[];
+}
+export interface TournamentMeasuredStanding {
+  position:number;communityPlayerId:number;profileId:number|null;
+  username:string;fullName:string;bestMetres:number;validMarks:number;
+}
+export interface TournamentMeasuredOverview {
+  tournamentId:number;eventType:string;eventDiscipline:string;
+  linkedRounds:TournamentMeasuredRound[];availableRounds:TournamentMeasuredRound[];
+  standings:TournamentMeasuredStanding[];
 }

@@ -173,6 +173,26 @@
               </div>
             </div>
           }
+          @if (fieldDisciplineOptions.length) {
+            <div class="tournament-event-choices" role="group"
+              [attr.aria-label]="'communities.fieldTournament.disciplineTitle' | t">
+              <div class="tournament-event-choices-intro">
+                <strong>{{ 'communities.fieldTournament.disciplineTitle' | t }}</strong>
+                <p>{{ 'communities.fieldTournament.disciplineHelp' | t }}</p>
+              </div>
+              <div class="tournament-event-options">
+                @for (discipline of fieldDisciplineOptions; track discipline) {
+                  <button type="button" class="tournament-event-option"
+                    [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
+                    [class.is-selected]="eventDisciplineDraft === discipline"
+                    (click)="chooseFieldDiscipline(discipline)">
+                    <span>{{ ('communities.fieldTournament.discipline.' + discipline) | t }}</span>
+                    <small>{{ 'communities.fieldTournament.metresUnit' | t }}</small>
+                  </button>
+                }
+              </div>
+            </div>
+          }
           @if (sportDraft) {
             <div class="tournament-sport-capability" role="group"
               [attr.aria-label]="'communities.tournaments.capabilities.region' | t">
@@ -261,7 +281,7 @@
               <app-tournament-classification-note kind="inline"></app-tournament-classification-note>
             } @else if (isRaceChampionshipDraft) {
               <app-tournament-classification-note kind="race" [raceSport]="raceSportLabel(sportDraft)"></app-tournament-classification-note>
-            } @else {
+            } @else if (!isTimedDraft && !isMeasuredDraft) {
             <details class="create-advanced-rules">
               <summary>
                 <span>
@@ -637,6 +657,8 @@
             } @else {
               @if (isInlineSpeedCompetition) {
                 <p>{{ 'communities.inlineSpeed.detailSummary' | t }}</p>
+              } @else if (isMeasuredCompetition) {
+                <p>{{ 'communities.fieldTournament.title' | t }}</p>
               } @else if (isTimedCompetition) {
                 <p>{{ 'communities.swimTournament.title' | t }}</p>
               } @else if (isRaceCompetition) {
@@ -1711,6 +1733,98 @@
                   }
                 </section>
               }
+            </section>
+          }
+        } @else if (isMeasuredCompetition) {
+          @if (!isMember) {
+            <div class="notice notice-info">{{ 'communities.karting.joinToView' | t }}</div>
+          } @else if (detailsLoading) {
+            <p class="t-muted" role="status">{{ 'communities.fieldTournament.loading' | t }}</p>
+          } @else if (measuredError || !measuredOverview) {
+            <div class="notice notice-info" role="status">
+              {{ 'communities.fieldTournament.loadError' | t }}
+              <button type="button" class="t-btn t-btn-secondary"
+                (click)="loadMeasuredOverview()">{{ 'common.retry' | t }}</button>
+            </div>
+          } @else {
+            <section class="t-section timed-championship"
+              [attr.aria-label]="'communities.fieldTournament.title' | t">
+              <div class="t-section-heading">
+                <div>
+                  <h5>{{ 'communities.fieldTournament.title' | t }} ·
+                    {{ ('communities.fieldTournament.discipline.' + measuredOverview.eventDiscipline) | t }}</h5>
+                  <p>{{ 'communities.fieldTournament.description' | t }}</p>
+                </div>
+              </div>
+              <div class="swim-championship-summary">
+                <div><strong>{{ measuredOverview.linkedRounds.length }}</strong><span>{{ 'communities.fieldTournament.rounds' | t }}</span></div>
+                <div><strong>{{ measuredOverview.standings.length }}</strong><span>{{ 'communities.fieldTournament.athletes' | t }}</span></div>
+              </div>
+              @if (measuredOverview.linkedRounds.length) {
+                <div class="swim-linked-rounds">
+                  <h6>{{ 'communities.fieldTournament.linked' | t }}</h6>
+                  @for (round of measuredOverview.linkedRounds; track round.id) {
+                    <div class="race-available-row">
+                      <span><strong>{{ round.name }}</strong>
+                        <small>{{ round.playedAt | date:'dd/MM/yyyy' }} ·
+                          {{ round.entries.length }} {{ 'communities.fieldTournament.athletes' | t }}</small>
+                      </span>
+                      @if (canManage && selected.status !== 'COMPLETED') {
+                        <button type="button" class="t-btn t-btn-secondary t-btn-small" [disabled]="busy"
+                          (click)="unlinkMeasuredRound(round.id)">{{ 'communities.fieldTournament.unlink' | t }}</button>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="t-muted">{{ 'communities.fieldTournament.empty' | t }}</p>
+              }
+              @if (canManage && selected.status !== 'COMPLETED') {
+                <div class="race-available">
+                  <h6>{{ 'communities.fieldTournament.available' | t }}</h6>
+                  @if (!measuredOverview.availableRounds.length) {
+                    <p class="t-muted">{{ 'communities.fieldTournament.noAvailable' | t }}</p>
+                  }
+                  @for (round of measuredOverview.availableRounds; track round.id) {
+                    <div class="race-available-row">
+                      <span><strong>{{ round.name }}</strong>
+                        <small>{{ round.playedAt | date:'dd/MM/yyyy' }} ·
+                          {{ round.entries.length }} {{ 'communities.fieldTournament.athletes' | t }}</small>
+                      </span>
+                      <button type="button" class="t-btn t-btn-primary t-btn-small" [disabled]="busy"
+                        (click)="linkMeasuredRound(round.id)">{{ 'communities.fieldTournament.link' | t }}</button>
+                    </div>
+                  }
+                </div>
+              }
+              <div class="swim-standings">
+                <h6>{{ 'communities.fieldTournament.resultsTitle' | t }}</h6>
+                @if (!measuredOverview.standings.length) {
+                  <p class="t-muted">{{ 'communities.fieldTournament.noResults' | t }}</p>
+                } @else {
+                  <div class="standings-scroll">
+                    <table class="team-standings-table">
+                      <thead><tr>
+                        <th scope="col">{{ 'communities.fieldTournament.place' | t }}</th>
+                        <th scope="col">{{ 'communities.fieldTournament.athlete' | t }}</th>
+                        <th scope="col">{{ 'communities.fieldTournament.bestTime' | t }}</th>
+                        <th scope="col">{{ 'communities.fieldTournament.attempts' | t }}</th>
+                      </tr></thead>
+                      <tbody>
+                        @for (entry of measuredOverview.standings; track entry.communityPlayerId) {
+                          <tr [class.is-leader]="entry.position === 1">
+                            <td>{{ entry.position }}</td>
+                            <th scope="row">{{ entry.fullName || entry.username }}</th>
+                            <td class="swim-time-value">{{ entry.bestMetres | number:'1.2-3' }} m</td>
+                            <td>{{ entry.validMarks }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+                <p class="t-muted">{{ 'communities.fieldTournament.provisional' | t }}</p>
+              </div>
             </section>
           }
         } @else if (isTimedCompetition) {

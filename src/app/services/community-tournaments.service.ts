@@ -14,7 +14,7 @@ import {
   TournamentParticipantPage,
   TournamentScheduleSummary,
   TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
-  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, TournamentTimedOverview, InlineSpeedOverview, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
+  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, TournamentTimedOverview, TournamentMeasuredOverview, InlineSpeedOverview, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../pages/model/community-tournament';
 
 /** Community result-by-position formats verified end to end. */
@@ -86,6 +86,23 @@ export class CommunityTournamentsService {
 
   unlinkTimedRound(communityId:number,tournamentId:number,roundId:number):Observable<TournamentTimedOverview> {
     return this.http.delete<TournamentTimedOverview>(this.url(communityId,tournamentId)+'/times/'+roundId);
+  }
+
+  /** Provisional athletics field-event championships. */
+  createMeasuredChampionship(communityId:number,name:string,eventType:'JUMP'|'THROW',eventDiscipline:string):Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId), {
+      name,sport:'Atletismo',entryType:'INDIVIDUAL',format:'LEAGUE',
+      eventType,eventDiscipline,scoringMode:'FIELD_BEST_MARK'
+    });
+  }
+  measuredOverview(communityId:number,tournamentId:number):Observable<TournamentMeasuredOverview> {
+    return this.http.get<TournamentMeasuredOverview>(this.url(communityId,tournamentId)+'/marks');
+  }
+  linkMeasuredRound(communityId:number,tournamentId:number,roundId:number):Observable<TournamentMeasuredOverview> {
+    return this.http.put<TournamentMeasuredOverview>(this.url(communityId,tournamentId)+'/marks/'+roundId,{});
+  }
+  unlinkMeasuredRound(communityId:number,tournamentId:number,roundId:number):Observable<TournamentMeasuredOverview> {
+    return this.http.delete<TournamentMeasuredOverview>(this.url(communityId,tournamentId)+'/marks/'+roundId);
   }
 
   raceOverview(communityId: number, tournamentId: number): Observable<TournamentRaceOverview> {

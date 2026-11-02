@@ -23,6 +23,9 @@ describe('Sport-specific tournament event types',()=>{
     }
     expect(validatedTournamentEventType('Xadrez','NUMERIC_INDIVIDUAL','CHESS_GAME')).toBe('CHESS_GAME');
     expect(validatedTournamentEventType('Natação','SWIM_BEST_TIME','SWIM_LCM')).toBe('SWIM_LCM');
+    expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','JUMP')).toBe('JUMP');
+    expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','THROW')).toBe('THROW');
+    expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','TRACK')).toBeNull();
   });
   it('does not turn freestyle, swimming, athletics or golf into generic race standings',()=>{
     for(const [sport,code] of [['BMX','FREESTYLE'],['Atletismo','TRACK'],['Natação','SWIM_LCM'],['Golfe','GOLF_STROKE_18'],['Snowboard','RACE']])

@@ -27,7 +27,9 @@ const COMPATIBLE: Record<string,{code:string; model:TournamentCreationModel}> = 
 };
 export function tournamentEventChoices(sport: string, model: TournamentCreationModel): TournamentEventChoice[] {
   return (CHOICES[sport]??[]).map(code=>({
-    code, supported:COMPATIBLE[sport]?.code===code && COMPATIBLE[sport]?.model===model
+    code, supported:(sport==='Atletismo' && model==='FIELD_BEST_MARK'
+      && (code==='JUMP' || code==='THROW'))
+      || (COMPATIBLE[sport]?.code===code && COMPATIBLE[sport]?.model===model)
   }));
 }
 export function validatedTournamentEventType(sport:string,model:TournamentCreationModel,code:string|null|undefined):string|null{
@@ -42,4 +44,13 @@ export const SWIM_TOURNAMENT_DISCIPLINES = [
 export function validSwimTournamentDiscipline(eventType:string|null,discipline:string|null):boolean {
   return eventType==='SWIM_LCM'
     && SWIM_TOURNAMENT_DISCIPLINES.some(code=>code===discipline);
+}
+
+/** Exact and independently comparable field disciplines. */
+export const FIELD_TOURNAMENT_DISCIPLINES: Readonly<Record<string, readonly string[]>> = {
+  JUMP: ['LONG_JUMP','TRIPLE_JUMP','HIGH_JUMP','POLE_VAULT'],
+  THROW: ['SHOT_PUT','DISCUS','JAVELIN','HAMMER']
+};
+export function validFieldTournamentDiscipline(eventType:string|null,discipline:string|null):boolean {
+  return !!discipline && (FIELD_TOURNAMENT_DISCIPLINES[eventType ?? ''] ?? []).includes(discipline);
 }

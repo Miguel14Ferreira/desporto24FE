@@ -33,6 +33,7 @@ describe('Community tournaments management', () => {
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
       'createTimedChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
+      'createMeasuredChampionship', 'measuredOverview', 'linkMeasuredRound', 'unlinkMeasuredRound',
       'completeRaceChampionship', 'inlineSpeedOverview', 'resolveInlineSpeedTieBreak', 'recordInlineSpeedTrial'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
@@ -45,6 +46,10 @@ describe('Community tournaments management', () => {
     }));
     api.timedOverview.and.returnValue(of({
       tournamentId: 19, eventType: 'SWIM_LCM', eventDiscipline: 'FREE_50',
+      linkedRounds: [], availableRounds: [], standings: []
+    }));
+    api.measuredOverview.and.returnValue(of({
+      tournamentId: 101, eventType: 'JUMP', eventDiscipline: 'LONG_JUMP',
       linkedRounds: [], availableRounds: [], standings: []
     }));
     api.inlineSpeedOverview.and.returnValue(of({
@@ -171,6 +176,47 @@ describe('Community tournaments management', () => {
     expect(api.timedOverview).toHaveBeenCalledWith(7,100);
     expect(api.create).not.toHaveBeenCalled();
     expect(api.generateSchedule).not.toHaveBeenCalled();
+  });
+
+  it('creates athletics championships only after selecting a compatible discipline', async () => {
+    component.startIndividualCreation();
+    component.nameDraft='Salto em comprimento';
+    component.chooseSport('Atletismo');
+    expect(component.selectedSportCreationModel).toBe('FIELD_BEST_MARK');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseTournamentEventType('TRACK');
+    expect(component.savedSportEventType).toBeNull();
+    component.chooseTournamentEventType('JUMP');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseFieldDiscipline('LONG_JUMP');
+    expect(component.isSportFormatSupported).toBeTrue();
+    api.createMeasuredChampionship.and.returnValue(of({
+      ...draft,id:101,name:'Salto em comprimento',sport:'Atletismo',
+      eventType:'JUMP',eventDiscipline:'LONG_JUMP',scoringMode:'FIELD_BEST_MARK'
+    }));
+    await component.create();
+    expect(api.createMeasuredChampionship).toHaveBeenCalledOnceWith(
+      7,'Salto em comprimento','JUMP','LONG_JUMP');
+    expect(component.isMeasuredCompetition).toBeTrue();
+    expect(api.measuredOverview).toHaveBeenCalledOnceWith(7,101);
+    expect(api.generateSchedule).not.toHaveBeenCalled();
+  });
+
+  it('never submits athletics metre marks through race or 1-vs-1 endpoints', async () => {
+    component.selected={...draft,id:101,sport:'Atletismo',eventType:'JUMP',
+      eventDiscipline:'LONG_JUMP',scoringMode:'FIELD_BEST_MARK'};
+    const data={
+      tournamentId:101,eventType:'JUMP',eventDiscipline:'LONG_JUMP',
+      linkedRounds:[],availableRounds:[],
+      standings:[{position:1,communityPlayerId:10,profileId:null,username:'ana',
+        fullName:'Ana',bestMetres:7.25,validMarks:2}]
+    };
+    api.linkMeasuredRound.and.returnValue(of(data));
+    await component.linkMeasuredRound(31);
+    expect(api.linkMeasuredRound).toHaveBeenCalledOnceWith(7,101,31);
+    expect(component.measuredOverview?.standings[0].bestMetres).toBe(7.25);
+    expect(api.linkRace).not.toHaveBeenCalled();
+    expect(api.recordResult).not.toHaveBeenCalled();
   });
 
   it('uses swimming round results without exposing race-position points', async () => {
