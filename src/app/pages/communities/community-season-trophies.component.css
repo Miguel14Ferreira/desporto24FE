@@ -46,3 +46,22 @@
   font-size: .77rem;
 }
 @media(max-width:900px){.trophies-grid{grid-template-columns:1fr;}}
+
+/* Champions and season titles must remain readable, not clipped by ellipsis. */
+.trophy-card{
+  min-width:0;align-items:flex-start;gap:13px;
+  border-color:rgba(230,191,94,.34);border-radius:15px;
+  background:linear-gradient(130deg,rgba(99,78,27,.16),rgba(8,49,62,.55));
+}
+.trophy-card > div{min-width:0;flex:1;}
+.trophy-card strong,.trophy-card span{
+  display:block;white-space:normal;overflow:visible;text-overflow:clip;
+  overflow-wrap:anywhere;line-height:1.42;
+}
+.trophy-card strong{color:#ffeaba;font-size:.94rem;}
+.trophy-card span{color:#cde6e4;font-size:.79rem;}
+.trophy-icon{flex:0 0 auto;line-height:1.15;}
+@media(min-width:1080px){
+  .trophies-grid{gap:12px;}
+  .trophy-card{padding:16px;}
+}
