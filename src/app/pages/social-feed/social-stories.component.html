@@ -6,37 +6,46 @@
       <p>{{ 'stories.subtitle' | t }}</p>
     </div>
     <div class="story-header-actions">
-      <button type="button" class="story-retry jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small" (click)="retry()" [disabled]="loading || mineLoading">
-        {{ 'stories.retry' | t }}
-      </button>
+      @if (mineError || error) {
+        <button type="button" class="story-retry jynlo-premium-btn jynlo-premium-btn--quiet jynlo-premium-btn--small" (click)="retry()" [disabled]="loading || mineLoading">
+          {{ 'stories.retry' | t }}
+        </button>
+      }
     <button type="button" class="story-add-action jynlo-action jynlo-action--accent jynlo-premium-btn jynlo-premium-btn--primary" (click)="composerOpen = !composerOpen">
       <span aria-hidden="true">+</span> {{ 'stories.create' | t }}
     </button>
     </div>
   </div>
 
-  @if (mineError) { <p class="story-error" role="alert">{{ mineError }}</p> }
+  @if (mineError || error) {
+    <p class="story-error stories-status" role="alert">{{ error || mineError }}</p>
+  }
 
-  <div class="story-rail">
-    @for (group of storyGroups; track group.key) {
-      <button type="button" class="story-bubble" (click)="openGroup(group)"
-          [attr.aria-label]="('stories.view' | t) + ' ' + group.name">
-        <span class="story-ring">
-          @if (group.avatar) {
-            <img [src]="group.avatar" [alt]="''" loading="lazy">
-          } @else {
-            <span class="story-placeholder">{{ group.name.charAt(0).toUpperCase() }}</span>
-          }
-        </span>
-        <span class="story-name">{{ group.name }}</span>
-        @if (group.stories.length > 1) { <small>{{ group.stories.length }} {{ 'stories.items' | t }}</small> }
-      </button>
-    }
-    @if (!loading && storyGroups.length === 0) {
-      <p class="stories-empty">{{ 'stories.empty' | t }}</p>
-    }
-    @if (loading) { <p class="stories-empty">{{ 'stories.loading' | t }}</p> }
-  </div>
+  @if (storyGroups.length > 0 || loading || mineLoading || (!mineError && !error)) {
+    <div class="story-rail" [class.story-rail--empty]="storyGroups.length === 0"
+         [attr.aria-busy]="loading || mineLoading">
+      @for (group of storyGroups; track group.key) {
+        <button type="button" class="story-bubble" (click)="openGroup(group)"
+            [attr.aria-label]="('stories.view' | t) + ' ' + group.name">
+          <span class="story-ring">
+            @if (group.avatar) {
+              <img [src]="group.avatar" [alt]="''" loading="lazy">
+            } @else {
+              <span class="story-placeholder">{{ group.name.charAt(0).toUpperCase() }}</span>
+            }
+          </span>
+          <span class="story-name">{{ group.name }}</span>
+          @if (group.stories.length > 1) { <small>{{ group.stories.length }} {{ 'stories.items' | t }}</small> }
+        </button>
+      }
+      @if (!loading && !mineLoading && storyGroups.length === 0) {
+        <p class="stories-empty">{{ 'stories.empty' | t }}</p>
+      }
+      @if ((loading || mineLoading) && storyGroups.length === 0) {
+        <p class="stories-empty" role="status">{{ 'stories.loading' | t }}</p>
+      }
+    </div>
+  }
 
   @if (composerOpen) {
     <div class="story-composer">
@@ -83,7 +92,6 @@
     </div>
   }
 
-  @if (error) { <p class="story-error" role="alert">{{ error }}</p> }
   @if (feedback && !activeStory) { <p class="story-success" role="status">{{ feedback }}</p> }
 
 
