@@ -3,7 +3,7 @@
     <p class="eyebrow">{{ 'mfa.eyebrow' | t }}</p>
     <h1>{{ 'mfa.title' | t }}</h1>
     <p class="subtitle">
-      Abre a tua aplicação Authenticator e introduz o código atual de 6 dígitos.
+      {{ 'mfa.sent' | t }}
     </p>
 
     @if (countdownLabel() && !isChallengeExpired()) {
