@@ -1,72 +1,62 @@
 :host { display: block; }
-
 .reset-page {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 1.25rem;
+  padding: calc(6rem + env(safe-area-inset-top)) 1.25rem 2rem;
   background:
-    radial-gradient(circle at top right, rgba(14,165,233,.16), transparent 30rem),
-    linear-gradient(145deg, #07111f, #12334a);
-  color: #f8fafc;
+    radial-gradient(circle at 94% 5%,rgba(25,207,186,.17),transparent 30rem),
+    linear-gradient(145deg,#03111f,#052b3a);
+  color: #effffc;
 }
-
 .reset-card {
   width: min(520px, 100%);
   box-sizing: border-box;
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid rgba(45,208,203,.29);
   border-radius: 1.2rem;
   padding: 1.5rem;
-  background: rgba(15,23,42,.84);
+  background: linear-gradient(145deg,#0b3445,#062536);
   box-shadow: 0 24px 60px rgba(0,0,0,.24);
 }
-
 .eyebrow {
   margin: 0 0 .45rem;
-  color: #7dd3fc;
+  color: #62f1d7;
   font-size: .78rem;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: .12em;
 }
-
 h1 { margin: 0; font-size: 2rem; }
-
 .subtitle {
   margin: .7rem 0 1.2rem;
-  color: #cbd5e1;
+  color: #bedce3;
   line-height: 1.55;
 }
-
 form {
   display: grid;
   gap: 1rem;
 }
-
 label { display: grid; gap: .4rem; }
-label > span { color: #cbd5e1; font-size: .8rem; font-weight: 800; }
-
+label > span { color: #bedce3; font-size: .8rem; font-weight: 800; }
 input {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid rgba(255,255,255,.16);
+  border: 1px solid rgba(51,192,200,.34);
   border-radius: .75rem;
   padding: .85rem .9rem;
-  background: rgba(255,255,255,.07);
+  background: #082b3d;
   color: #fff;
   font: inherit;
   outline: none;
 }
-
 .password-field {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: .5rem;
 }
-
 .password-field button,
 .back-action {
-  border: 1px solid rgba(255,255,255,.16);
+  border: 1px solid rgba(51,192,200,.34);
   border-radius: .75rem;
   padding: .75rem .85rem;
   background: rgba(255,255,255,.06);
@@ -74,47 +64,46 @@ input {
   font-weight: 800;
   cursor: pointer;
 }
-
 .primary-action {
   border: 0;
   border-radius: .8rem;
   padding: .9rem 1rem;
-  background: #f8fafc;
-  color: #0f172a;
+  background: #30ebcb;
+  color: #05343c;
   font-weight: 900;
   cursor: pointer;
 }
-
 button:disabled { opacity: .6; cursor: wait; }
-
 .feedback {
   margin-bottom: 1rem;
   border-radius: .8rem;
   padding: .8rem .9rem;
 }
-
 .error-feedback {
   border: 1px solid rgba(248,113,113,.38);
   background: rgba(248,113,113,.08);
   color: #fecaca;
 }
-
 .success-feedback {
   border: 1px solid rgba(74,222,128,.3);
   background: rgba(74,222,128,.08);
   color: #bbf7d0;
 }
-
 .back-link {
   display: inline-block;
   margin-top: 1rem;
-  color: #bae6fd;
+  color: #b7ffed;
   font-weight: 800;
   text-decoration: none;
 }
-
 .back-action { margin-top: 1rem; width: 100%; }
-
 @media (max-width: 520px) {
   .password-field { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .reset-page { padding-top: calc(8.5rem + env(safe-area-inset-top)); }
+}
+:host :is(input,select,textarea,button,a):focus-visible {
+  outline: 2px solid #9effe8;
+  outline-offset: 2px;
 }
