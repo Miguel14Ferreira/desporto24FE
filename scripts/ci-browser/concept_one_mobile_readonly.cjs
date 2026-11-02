@@ -176,6 +176,12 @@ async function main() {
               'access-control-allow-methods': 'GET, OPTIONS',
               'access-control-allow-headers': '*' }
           });
+          // Inbox summaries is a read-only batched lookup implemented as POST.
+          // Supply an empty synthetic result, never forwarding it to production.
+          if (request.method() === 'POST'
+              && url.pathname === '/api/messages/inbox/summaries') {
+            return respond(route, 200, []);
+          }
           if (request.method() !== 'GET') {
             // The UI can attempt background telemetry/token refresh. Do not send it.
             if (url.pathname !== '/api/presence/heartbeat'
