@@ -1,0 +1,138 @@
+/* Inbox Neon Glass v3: preserve message scroll, calls and media overlays. */
+:host {
+  --jynlo-v3-edge:rgba(35,210,204,.28);
+  --jynlo-v3-strong:rgba(43,235,209,.65);
+  --jynlo-v3-soft:#b8d7dd;
+  --jynlo-v3-mint:#2cebd0;
+}
+/* MESSAGE CENTER: preserve fixed-height scroll containers, own bubbles,
+ * recording UI and overlays. Harmonise list and composer geometry. */
+:host .inbox-page.jynlo-secondary {
+  background:
+    radial-gradient(ellipse 45% 420px at 100% 0%,rgba(9,154,164,.17),transparent 76%),
+    linear-gradient(145deg,#03111e,#052232 63%,#031521);
+}
+:host .inbox-page.jynlo-secondary .inbox-shell {
+  max-width:1480px;
+  min-width:0;
+}
+:host .inbox-page.jynlo-secondary .inbox-layout {
+  grid-template-columns:minmax(310px,390px) minmax(0,1fr);
+  gap:13px;
+  min-width:0;
+}
+:host .inbox-page.jynlo-secondary :is(.inbox-sidebar,.inbox-detail) {
+  min-width:0;
+  border:1px solid var(--jynlo-v3-edge);
+  border-radius:19px;
+  box-shadow:0 16px 38px rgba(0,12,26,.16);
+}
+:host .inbox-page.jynlo-secondary .inbox-sidebar {
+  background:linear-gradient(160deg,#0b3141,#082536 64%,#061d2d);
+}
+:host .inbox-page.jynlo-secondary .inbox-side-top {
+  background:linear-gradient(125deg,rgba(11,54,68,.83),rgba(6,35,51,.83));
+  border-bottom:1px solid rgba(42,192,199,.2);
+}
+:host .inbox-page.jynlo-secondary .inbox-side-heading h1 {
+  color:#f3fffc;
+  letter-spacing:-.035em;
+}
+:host .inbox-page.jynlo-secondary .inbox-heading-mark {
+  border-color:rgba(35,226,208,.43);
+  color:#7ffbe4;
+  background:rgba(27,185,182,.15);
+}
+:host .inbox-page.jynlo-secondary .inbox-search input {
+  min-width:0;
+  min-height:46px;
+  border-radius:12px;
+  border-color:rgba(39,193,204,.37);
+  background:#072a3b;
+}
+:host .inbox-page.jynlo-secondary .inbox-filters button {
+  min-height:35px;
+  border:1px solid rgba(36,185,194,.38);
+  background:rgba(11,58,74,.88);
+  color:#c4e6e8;
+}
+:host .inbox-page.jynlo-secondary .inbox-filters button:is(.active,:hover) {
+  background:rgba(36,220,199,.22);
+  color:#dcfff4;
+  border-color:rgba(60,237,211,.79);
+}
+:host .inbox-page.jynlo-secondary .inbox-detail {
+  background:
+    radial-gradient(ellipse at 95% 8%,rgba(19,131,133,.14),transparent 54%),
+    linear-gradient(155deg,#061d2d,#072736 80%,#052132);
+}
+:host .inbox-page.jynlo-secondary .inbox-detail-heading {
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  padding:clamp(13px,1.65vw,21px);
+  background:linear-gradient(120deg,rgba(11,49,64,.98),rgba(8,37,53,.96));
+  border-bottom:1px solid rgba(44,192,198,.23);
+}
+:host .inbox-page.jynlo-secondary .inbox-chat-identity,
+:host .inbox-page.jynlo-secondary .inbox-detail-info {min-width:0;}
+:host .inbox-page.jynlo-secondary .inbox-detail-heading :is(h2,.inbox-contact-name) {
+  color:#f0fffc;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+}
+:host .inbox-page.jynlo-secondary .inbox-heading-actions {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+}
+:host .inbox-page.jynlo-secondary .inbox-call-trigger,
+:host .inbox-page.jynlo-secondary .inbox-search-toggle {
+  flex:0 0 40px;
+  width:40px;
+  height:40px;
+  border-radius:11px;
+  border-color:rgba(50,180,191,.39);
+}
+:host .inbox-page.jynlo-secondary .inbox-composer {
+  border-top:1px solid rgba(42,195,198,.24);
+  background:linear-gradient(120deg,#0b3140,#082639);
+}
+:host .inbox-page.jynlo-secondary .inbox-compose-toolbar {
+  max-width:100%;
+  min-width:0;
+}
+:host .inbox-page.jynlo-secondary .inbox-composer textarea {
+  min-width:0;
+  max-width:100%;
+  background:#092c3d;
+  border:1px solid rgba(48,184,196,.36);
+  color:#f1fffc;
+}
+:host .inbox-page.jynlo-secondary .inbox-side-footer a {
+  border-color:rgba(50,183,191,.36);
+  background:#103b4a;
+  color:#8ffbe4;
+}
+:host .inbox-page.jynlo-secondary .inbox-side-footer a:hover {
+  background:#165b62;
+  border-color:rgba(68,237,211,.65);
+}
+:host .inbox-page.jynlo-secondary :is(a,button,input,textarea):focus-visible {
+  outline:2px solid #a0ffe9;
+  outline-offset:3px;
+}
+@media(max-width:980px){
+  :host .inbox-page.jynlo-secondary .inbox-layout{grid-template-columns:minmax(280px,340px) minmax(0,1fr);}
+}
+@media(max-width:800px){
+  :host .inbox-page.jynlo-secondary .inbox-layout{grid-template-columns:minmax(0,1fr);gap:10px;}
+  :host .inbox-page.jynlo-secondary :is(.inbox-sidebar,.inbox-detail){border-radius:14px;}
+}
+@media(max-width:560px){
+  :host .inbox-page.jynlo-secondary .inbox-detail-heading{align-items:flex-start;flex-wrap:wrap;}
+  :host .inbox-page.jynlo-secondary .inbox-heading-actions{max-width:100%;}
+}
