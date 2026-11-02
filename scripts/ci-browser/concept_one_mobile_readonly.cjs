@@ -172,6 +172,13 @@ const fictionalTeamTournaments = [
     createdAt:'2026-09-06T10:00:00Z', startedAt:'2026-09-15T10:00:00Z',
     completedAt:null, championTied:false, championTeamId:null,
     championTeamName:null, championPoints:null, championProfileId:null,
+    championUsername:null, championDisplayName:null },
+  { id:9023, name:'Preparação das Equipas QA', sport:'Padel', entryType:'TEAM',
+    format:'LEAGUE', status:'DRAFT', playersPerTeam:2, roundRobinLegs:1,
+    winPoints:3, drawPoints:1, lossPoints:0,
+    createdAt:'2026-10-29T10:00:00Z', startedAt:null,
+    completedAt:null, championTied:false, championTeamId:null,
+    championTeamName:null, championPoints:null, championProfileId:null,
     championUsername:null, championDisplayName:null }
 ];
 const fictionalTeamNames = ['Raquetes Verdes','Rede Azul','Smash Atlântico','Equipa Aurora'];
@@ -346,7 +353,7 @@ async function main() {
           const teamApi = teamParts.length >= 7
             && teamParts[1] === 'api' && teamParts[2] === 'communities'
             && teamParts[3] === '77' && teamParts[4] === 'tournaments'
-            && ['9020','9021','9022'].includes(teamParts[5])
+            && ['9020','9021','9022','9023'].includes(teamParts[5])
             && teamParts[6] === 'teams'
             && (teamParts.length === 7 || (teamParts.length === 8
               && ['matches','standings','groups'].includes(teamParts[7])))
@@ -354,7 +361,10 @@ async function main() {
           if (teamApi) {
             const tournamentId = Number(teamApi[1]), action = teamApi[2];
             if (!action) return respond(route, 200,
-              tournamentId === 9020 ? fictionalTeams.slice(0,3) : fictionalTeams);
+              tournamentId === 9020 ? fictionalTeams.slice(0,3)
+                : tournamentId === 9023
+                ? [...fictionalTeams.slice(0,2), {...fictionalTeams[2],players:[]}]
+                : fictionalTeams);
             if (action === 'matches') return respond(route, 200, {
               matches:fictionalTeamMatches[tournamentId],page:0,hasMore:false
             });
@@ -427,6 +437,7 @@ async function main() {
           ['/menu/communities/77?tab=tournaments&tournament=9020', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9021', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9022', '.tournament-browser'],
+          ['/menu/communities/77?tab=tournaments&tournament=9023', '.tournament-browser'],
           ['/menu/events/901', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/902', '.jynlo-session-detail-premium .detail-card'],
           ['/menu/events/903', '.jynlo-session-detail-premium .detail-card'],
@@ -582,8 +593,8 @@ async function main() {
             if (selected === 'tournaments') {
               const options = page.locator('.tournament-option');
               await options.first().waitFor({state:'visible'});
-              assert.equal(await options.count(), 4,
-                'Browser must show individual and all three team formats');
+              assert.equal(await options.count(), 5,
+                'Browser must show the individual, team formats and an editable draft');
               const teamId = new URL('http://localhost' + route).searchParams.get('tournament');
               if (teamId) {
                 const heading = page.locator('.tournament-detail .tournament-heading h4');
@@ -592,6 +603,29 @@ async function main() {
                 assert.equal((await heading.innerText()).trim(),expected.name,
                   'Deep-linked team tournament must remain selected');
                 await page.locator('.team-roster-card').first().waitFor({state:'visible'});
+                if (Number(teamId) === 9023) {
+                  assert.equal(await page.locator('.team-roster-card').count(),3,
+                    'Draft shows both occupied squads and the deletable empty squad');
+                  const occupied = page.locator('.team-roster-card').first();
+                  await occupied.locator('.player-item button').first().click();
+                  await occupied.locator('.team-roster-confirm').first().waitFor({state:'visible'});
+                  assert.equal(await occupied.locator('.team-roster-confirm button').count(),2,
+                    'Player removal requires confirmation and allows cancellation');
+                  await occupied.locator('.team-roster-confirm button').last().click();
+                  assert.equal(await occupied.locator('.team-roster-confirm').count(),0);
+                  const emptyTeam = page.locator('.team-roster-card').last();
+                  await emptyTeam.locator('button.t-btn-danger-outline').click();
+                  await emptyTeam.locator('.team-roster-confirm').waitFor({state:'visible'});
+                  assert.equal(await emptyTeam.locator('.team-roster-confirm button').count(),2,
+                    'Deleting empty teams requires a separate confirmation');
+                  await emptyTeam.locator('.team-roster-confirm').scrollIntoViewIfNeeded();
+                  await page.screenshot({
+                    path:path.join(OUT,width+'-'+language+'-team-9023-roster-confirm.png'),
+                    fullPage:false
+                  });
+                  await emptyTeam.locator('.team-roster-confirm button').last().click();
+                  assert.equal(await page.locator('.team-roster-confirm').count(),0);
+                } else {
                 await page.locator('.team-fixture').first().waitFor({state:'visible'});
                 assert.equal(await page.locator('.team-fixture').count(),
                   fictionalTeamMatches[Number(teamId)].length,
@@ -616,10 +650,24 @@ async function main() {
                     'Knockout-only tournaments must not invent a league table');
                   await page.locator('.team-fixture').last().scrollIntoViewIfNeeded();
                 }
+                if (Number(teamId) === 9021) {
+                  const played = page.locator('.team-fixture').first();
+                  assert.equal(await played.locator('.team-score-edit').count(),0,
+                    'Completed fixtures keep their editor collapsed');
+                  const pending = page.locator('.team-fixture').last();
+                  assert.equal(await pending.locator('.team-score-edit').count(),1,
+                    'Scheduled fixtures keep their normal score entry');
+                  await played.locator('.team-result-toggle').click();
+                  await played.locator('.team-score-edit').waitFor({state:'visible'});
+                  assert.equal(await played.locator('.team-result-toggle').getAttribute('aria-expanded'),'true');
+                  await played.locator('.team-result-toggle').click();
+                  assert.equal(await played.locator('.team-score-edit').count(),0);
+                }
                 const record = 'team-' + teamId + '-results.png';
                 await page.screenshot({
                   path:path.join(OUT,width+'-'+language+'-'+record),fullPage:false
                 });
+                }
               } else {
               await page.locator('.tournament-detail .champion').waitFor({state:'visible'});
               const standings = page.locator('.tournament-detail .standings-table');
