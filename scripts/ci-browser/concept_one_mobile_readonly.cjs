@@ -342,7 +342,15 @@ async function main() {
               page: 0, hasMore: false
             });
           }
-          const teamApi = new RegExp('^/api/communities/77/tournaments/(9020|9021|9022)/teams(?:/(matches|standings|groups))?
+          const teamParts = endpoint.split('/');
+          const teamApi = teamParts.length >= 7
+            && teamParts[1] === 'api' && teamParts[2] === 'communities'
+            && teamParts[3] === '77' && teamParts[4] === 'tournaments'
+            && ['9020','9021','9022'].includes(teamParts[5])
+            && teamParts[6] === 'teams'
+            && (teamParts.length === 7 || (teamParts.length === 8
+              && ['matches','standings','groups'].includes(teamParts[7])))
+            ? [endpoint, teamParts[5], teamParts[7] || undefined] : null;
           if (teamApi) {
             const tournamentId = Number(teamApi[1]), action = teamApi[2];
             if (!action) return respond(route, 200,
@@ -580,7 +588,9 @@ async function main() {
               if (teamId) {
                 const heading = page.locator('.tournament-detail .tournament-heading h4');
                 const expected = fictionalTeamTournaments.find(t => t.id === Number(teamId));
-                await heading.getByText(expected.name).waitFor({state:'visible'});
+                await heading.waitFor({state:'visible'});
+                assert.equal((await heading.innerText()).trim(),expected.name,
+                  'Deep-linked team tournament must remain selected');
                 await page.locator('.team-roster-card').first().waitFor({state:'visible'});
                 await page.locator('.team-fixture').first().waitFor({state:'visible'});
                 assert.equal(await page.locator('.team-fixture').count(),
