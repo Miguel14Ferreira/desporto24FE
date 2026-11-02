@@ -718,6 +718,12 @@
                       <div>
                         <h6>{{ team.name }}</h6>
                         <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
+                        @if (selected.status === 'DRAFT') {
+                          <span class="team-roster-readiness" [class.is-ready]="isTeamRosterReady(team)">
+                            {{ (isTeamRosterReady(team) ? 'communities.tournaments.teamUi.rosterReady'
+                              : 'communities.tournaments.teamUi.rosterIncomplete') | t }}
+                          </span>
+                        }
                       </div>
                       @if (canManageTeamRoster && team.players.length === 0) {
                         @if (confirmingEmptyTeamId === team.id) {
@@ -785,9 +791,14 @@
                             {{ 'communities.tournaments.teamUi.copy' | t }}
                           </button>
                         </div>
-                        <label [for]="'team-invite-link-' + team.id">{{ 'communities.tournaments.teamUi.teamLink' | t }}</label>
-                        <input [id]="'team-invite-link-' + team.id" type="text" readonly
-                          [value]="teamInviteUrl(team)" (click)="$any($event.target).select()">
+                        <details class="team-link-details">
+                          <summary>{{ 'communities.tournaments.teamUi.showInviteLink' | t }}</summary>
+                          <div class="team-link-field">
+                            <label [for]="'team-invite-link-' + team.id">{{ 'communities.tournaments.teamUi.teamLink' | t }}</label>
+                            <input [id]="'team-invite-link-' + team.id" type="text" readonly
+                              [value]="teamInviteUrl(team)" (click)="$any($event.target).select()">
+                          </div>
+                        </details>
                         @if (inviteCopyFeedback[team.id]) {
                           <p role="status">{{ inviteCopyFeedback[team.id] }}</p>
                         }
@@ -796,16 +807,33 @@
                       <details class="team-manual-assign">
                         <summary>{{ 'communities.tournaments.teamUi.manualAssign' | t }}</summary>
                         <div class="team-player-assign">
-                          <label [for]="'team-player-' + team.id">{{ 'communities.tournaments.teamUi.communityMember' | t }}</label>
-                          <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]" [disabled]="busy || detailsLoading">
-                            <option [ngValue]="null">{{ 'communities.tournaments.teamUi.selectMember' | t }}</option>
-                            @for (member of availableTeamMembers; track member.profileId) {
-                              <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
+                          @if (availableTeamMembers.length === 0) {
+                            <p class="t-muted">{{ 'communities.tournaments.teamUi.noEligibleMembers' | t }}</p>
+                          } @else {
+                            @if (availableTeamMembers.length > 6) {
+                              <label [for]="'team-member-search-' + team.id">{{ 'communities.tournaments.teamUi.searchMember' | t }}</label>
+                              <input [id]="'team-member-search-' + team.id" type="search"
+                                [ngModel]="teamMemberSearch[team.id] || ''"
+                                (ngModelChange)="setTeamMemberSearch(team.id, $event)"
+                                [disabled]="busy || detailsLoading" maxlength="80"
+                                autocomplete="off"
+                                [placeholder]="'communities.tournaments.teamUi.searchPlaceholder' | t">
                             }
-                          </select>
-                          <button type="button" class="t-btn t-btn-secondary"
-                            [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
-                            (click)="assignTeamPlayer(team)">{{ 'communities.tournaments.teamUi.addPlayer' | t }}</button>
+                            <label [for]="'team-player-' + team.id">{{ 'communities.tournaments.teamUi.communityMember' | t }}</label>
+                            <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]"
+                              [disabled]="busy || detailsLoading || filteredTeamMembers(team.id).length === 0">
+                              <option [ngValue]="null">{{ 'communities.tournaments.teamUi.selectMember' | t }}</option>
+                              @for (member of filteredTeamMembers(team.id); track member.profileId) {
+                                <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
+                              }
+                            </select>
+                            @if (filteredTeamMembers(team.id).length === 0) {
+                              <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.noSearchMatches' | t }}</p>
+                            }
+                            <button type="button" class="t-btn t-btn-secondary"
+                              [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
+                              (click)="assignTeamPlayer(team)">{{ 'communities.tournaments.teamUi.addPlayer' | t }}</button>
+                          }
                         </div>
                       </details>
                     }
