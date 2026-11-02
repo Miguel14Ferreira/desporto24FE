@@ -13,7 +13,7 @@ import { AuthenticationService } from '../../services/authethication.service';
 @Component({
   selector: 'app-notifications',
   templateUrl: './notifications.component.html',
-  styleUrls: ['./notifications.component.css'],
+  styleUrls: ['./notifications.component.css', './notifications-v3-finish.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })

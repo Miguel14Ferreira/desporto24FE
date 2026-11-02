@@ -17,7 +17,7 @@ import { VenueSportsBadgesComponent } from '../../shared/venue-sports-badges/ven
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, VenueSportsBadgesComponent],
   templateUrl: './venues-directory.component.html',
-  styleUrls: ['./venues-directory.component.css']
+  styleUrls: ['./venues-directory.component.css', './venues-directory-v3-finish.css']
 })
 export class VenuesDirectoryComponent implements OnInit, OnDestroy {
   readonly sportsCatalog = SPORTS_CATALOG;

@@ -1,0 +1,116 @@
+/* Jynlo Neon Glass v3 — My Sessions: presentation only. */
+:host .my-sessions-page.jynlo-sessions-premium {
+  --sessions-v3-mint:#2cebd0;
+  --sessions-v3-line:rgba(35,210,204,.28);
+  background:radial-gradient(ellipse 45% 440px at 97% 2%,rgba(8,153,163,.19),transparent 78%),
+    linear-gradient(145deg,#03111f,#052333 63%,#031421);
+  padding:clamp(90px,7.3vw,108px) clamp(14px,2.1vw,28px) 76px;
+  min-width:0;
+}
+:host .jynlo-sessions-premium .page-shell{max-width:1300px;width:min(1300px,100%);min-width:0;}
+:host .jynlo-sessions-premium .page-header {
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:17px 24px;box-sizing:border-box;min-width:0;
+  margin-bottom:18px;padding:clamp(19px,2.8vw,31px);
+  border:1px solid var(--sessions-v3-line);border-radius:21px;
+  background:linear-gradient(96deg,rgba(2,22,36,.97),rgba(5,43,56,.94) 64%,rgba(5,63,71,.61)),
+    url('/assets/jynlo-feed-hero-sport.webp') right center/auto 100% no-repeat,#052535;
+  overflow:hidden;
+}
+:host .jynlo-sessions-premium .page-header::before{display:none;}
+:host .jynlo-sessions-premium .page-header>div:first-child{flex:1 1 340px;min-width:0;}
+:host .jynlo-sessions-premium .page-header h1{
+  color:#f4fffc;font-size:clamp(2rem,3.3vw,3.15rem);
+  line-height:1.11;letter-spacing:-.045em;max-width:22ch;text-wrap:balance;
+}
+:host .jynlo-sessions-premium .page-header .subtitle{color:#c0dce3;max-width:62ch;line-height:1.58;}
+:host .jynlo-sessions-premium .header-actions{
+  display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:9px;min-width:0;
+}
+:host .jynlo-sessions-premium .header-actions>a {
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;max-width:100%;min-height:44px;
+  padding:10px 15px;border-radius:12px;white-space:normal;
+  text-align:center;line-height:1.35;
+}
+:host .jynlo-sessions-premium .session-view-tabs{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  margin:5px 0 0;padding:7px;min-width:0;
+  border:1px solid var(--sessions-v3-line);border-radius:16px;
+  background:rgba(4,28,43,.88);
+}
+:host .jynlo-sessions-premium .session-view-tabs button{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-width:0;min-height:48px;padding:10px 12px;border:1px solid transparent;
+  border-radius:11px;color:#bedbe1;line-height:1.35;
+  font-weight:760;white-space:normal;text-align:center;
+}
+:host .jynlo-sessions-premium .session-view-tabs button.is-active{
+  background:linear-gradient(105deg,rgba(24,185,187,.22),rgba(10,86,99,.65));
+  border-color:rgba(49,230,209,.62);color:#effffc;
+}
+:host .jynlo-sessions-premium .session-view-tabs button small{
+  display:inline-flex;align-items:center;justify-content:center;min-width:25px;
+  min-height:25px;padding:2px 7px;color:#b8fbe9;
+  background:rgba(28,224,198,.14);font-variant-numeric:tabular-nums;
+}
+:host .jynlo-sessions-premium .session-section{min-width:0;margin-top:25px;}
+:host .jynlo-sessions-premium .section-heading{
+  gap:11px;flex-wrap:wrap;align-items:center;min-width:0;
+}
+:host .jynlo-sessions-premium .section-heading>div:first-child{min-width:0;}
+:host .jynlo-sessions-premium .section-heading h2{line-height:1.25;text-wrap:balance;}
+:host .jynlo-sessions-premium :is(.upcoming-card,.attendance-card,.empty-card,.state-card,.history-row){
+  border-color:var(--sessions-v3-line);
+  background:linear-gradient(143deg,rgba(10,49,65,.98),rgba(5,31,47,.98));
+  box-shadow:0 13px 32px rgba(0,11,25,.15);
+}
+:host .jynlo-sessions-premium .upcoming-card {min-width:0;border-top-color:#2fe7d0;gap:15px;}
+:host .jynlo-sessions-premium .upcoming-card .card-top{
+  align-items:flex-start;flex-wrap:wrap;gap:9px;
+}
+:host .jynlo-sessions-premium .upcoming-card .card-top>div:first-child{min-width:0;flex:1 1 190px;}
+:host .jynlo-sessions-premium .upcoming-card h3{overflow-wrap:anywhere;}
+:host .jynlo-sessions-premium .upcoming-meta>div{
+  border-color:rgba(37,190,198,.26);background:#082c3d;
+}
+:host .jynlo-sessions-premium .upcoming-meta :is(span,strong){overflow-wrap:anywhere;}
+:host .jynlo-sessions-premium .card-actions{display:flex;flex-wrap:wrap;gap:9px;}
+:host .jynlo-sessions-premium .card-actions>:is(button,a){
+  display:inline-flex;align-items:center;justify-content:center;min-height:44px;
+  border-radius:11px;line-height:1.35;text-align:center;white-space:normal;
+}
+:host .jynlo-sessions-premium .history-filters{
+  gap:10px;padding:16px;border:1px solid var(--sessions-v3-line);
+  border-radius:16px;background:rgba(7,40,56,.81);
+}
+:host .jynlo-sessions-premium .history-filter :is(input,select){
+  box-sizing:border-box;min-width:0;max-width:100%;min-height:46px;
+  background:#062a3b;border-color:rgba(43,197,204,.4);border-radius:11px;
+}
+:host .jynlo-sessions-premium .history-row{gap:10px 16px;}
+:host .jynlo-sessions-premium .history-actions>:is(button,a){
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:42px;border-radius:10px;line-height:1.35;text-align:center;white-space:normal;
+}
+:host .jynlo-sessions-premium :is(a,button,input,select):focus-visible{
+  outline:2px solid #95ffe5;outline-offset:3px;
+}
+@media(max-width:900px){
+  :host .my-sessions-page.jynlo-sessions-premium{padding-top:calc(8.5rem + env(safe-area-inset-top));}
+}
+@media(max-width:720px){
+  :host .jynlo-sessions-premium .page-header{align-items:stretch;flex-direction:column;}
+  :host .jynlo-sessions-premium .header-actions{width:100%;justify-content:flex-start;}
+  :host .jynlo-sessions-premium .header-actions>a{flex:1 1 145px;}
+  :host .jynlo-sessions-premium .upcoming-meta{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media(max-width:520px){
+  :host .jynlo-sessions-premium .session-view-tabs{gap:4px;padding:5px;}
+  :host .jynlo-sessions-premium .session-view-tabs button{flex-direction:column;gap:5px;padding:8px 3px;font-size:.76rem;}
+  :host .jynlo-sessions-premium .upcoming-meta{grid-template-columns:minmax(0,1fr);}
+  :host .jynlo-sessions-premium .card-actions>:is(a,button){flex:1 1 130px;}
+}
+@media(prefers-reduced-motion:reduce){
+  :host .jynlo-sessions-premium .history-row{transition:none;}
+}

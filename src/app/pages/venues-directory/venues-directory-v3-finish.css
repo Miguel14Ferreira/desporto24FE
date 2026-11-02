@@ -1,0 +1,175 @@
+/* Jynlo Neon Glass v3 — venues discovery. Only layout and presentation. */
+:host .venue-directory-page.jynlo-social{
+  --venue-v3-line:rgba(34,207,205,.3);
+  --venue-v3-accent:#2eeccf;
+  min-height:100dvh;
+  padding:clamp(90px,7.3vw,108px) clamp(14px,2.1vw,28px) 70px;
+  background:radial-gradient(ellipse 46% 480px at 98% 1%,rgba(9,167,168,.2),transparent 77%),
+    radial-gradient(ellipse 38% 430px at 0% 83%,rgba(10,101,136,.12),transparent 80%),
+    linear-gradient(145deg,#03111f,#052333 61%,#031522);
+  color:#f2fffc;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-shell{
+  width:min(1300px,100%);max-width:1300px;min-width:0;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-hero{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px 24px;flex-wrap:wrap;min-width:0;
+  margin-bottom:18px;padding:clamp(20px,2.8vw,31px);
+  border:1px solid var(--venue-v3-line);border-radius:21px;
+  background:linear-gradient(95deg,rgba(2,21,35,.97),rgba(5,43,57,.94) 62%,rgba(5,63,73,.57)),
+    url('/assets/jynlo-feed-hero-sport.webp') right center/auto 100% no-repeat,#052436;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-hero>div:first-child{
+  min-width:0;flex:1 1 350px;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-eyebrow{color:#60f3d9;letter-spacing:.13em;}
+:host .venue-directory-page.jynlo-social .venue-directory-hero h1{
+  margin:7px 0 9px;max-width:22ch;
+  font-size:clamp(2rem,3.4vw,3.2rem);line-height:1.1;
+  letter-spacing:-.046em;color:#f3fffc;text-wrap:balance;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-hero p{max-width:66ch;color:#c0dce3;line-height:1.55;}
+:host .venue-directory-page.jynlo-social .venue-directory-add {
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;flex:0 1 auto;min-height:45px;
+  max-width:100%;padding:10px 17px;
+  border:1px solid #3aefd3;border-radius:12px;
+  background:linear-gradient(110deg,#1ee8d3,#48f4c8);
+  color:#033238;text-decoration:none;
+  white-space:normal;text-align:center;line-height:1.35;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-add:hover{background:#97ffe6;color:#033238;}
+:host .venue-directory-page.jynlo-social .venue-directory-filters{
+  display:grid;
+  grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,.9fr));
+  gap:13px;
+  align-items:end;
+  margin:0;
+  padding:clamp(18px,2.3vw,25px);
+  border:1px solid var(--venue-v3-line);border-radius:20px;
+  background:linear-gradient(145deg,rgba(9,47,63,.98),rgba(5,29,46,.98));
+  box-shadow:0 18px 40px rgba(0,10,26,.13);
+}
+:host .venue-directory-page.jynlo-social .venue-directory-filters>label{
+  display:flex;flex-direction:column;align-items:stretch;
+  min-width:0;gap:8px;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-filters label>span{
+  color:#bfdde2;font-size:.79rem;line-height:1.3;font-weight:750;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-filters :is(input,select){
+  box-sizing:border-box;min-width:0;max-width:100%;min-height:49px;
+  padding-inline:13px;background:#06293a;color:#f1fffc;
+  border:1px solid rgba(44,202,205,.39);border-radius:12px;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-filters input::placeholder{color:#9bb9c4;opacity:1;}
+:host .venue-directory-page.jynlo-social .venue-directory-actions{
+  display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;
+  grid-column:1/-1;
+  padding-top:14px;border-top:1px solid rgba(45,190,193,.18);
+}
+:host .venue-directory-page.jynlo-social .venue-directory-actions>button {
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:120px;min-height:44px;padding:9px 15px;
+  border-radius:11px;white-space:normal;line-height:1.3;text-align:center;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-search{
+  background:#30eed1;color:#03333a;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-clear,
+:host .venue-directory-page.jynlo-social .venue-directory-pagination button{
+  border:1px solid rgba(46,192,201,.4);background:#0b3648;color:#c9f8ef;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-result-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px 18px;flex-wrap:wrap;margin:25px 2px 15px;min-width:0;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-result-heading h2{
+  margin:0 0 5px;color:#f0fffc;font-size:clamp(1.18rem,1.8vw,1.45rem);
+  letter-spacing:-.02em;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-result-heading>span{
+  border:1px solid rgba(43,197,198,.25);
+  background:rgba(28,212,201,.13);color:#bcfaec;
+  border-radius:10px;padding:7px 10px;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-card{
+  display:flex;flex-direction:column;gap:11px;
+  min-width:0;border:1px solid rgba(40,199,202,.29);
+  border-radius:17px;padding:clamp(17px,1.8vw,23px);
+  background:linear-gradient(142deg,rgba(9,51,66,.98),rgba(5,32,48,.98));
+  box-shadow:0 13px 31px rgba(0,10,25,.16);
+  transition:border-color .18s ease,background .18s ease,transform .18s ease;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-card:hover{
+  border-color:rgba(61,238,215,.7);background:#0b4050;transform:translateY(-2px);
+}
+:host .venue-directory-page.jynlo-social .venue-directory-card h3{
+  color:#effffb;font-size:1.09rem;line-height:1.35;overflow-wrap:anywhere;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-icon{
+  background:rgba(20,196,191,.16);border:1px solid rgba(48,232,215,.34);color:#72f7de;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-card :is(p,span){
+  overflow-wrap:anywhere;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-location{color:#a8e7db;}
+:host .venue-directory-page.jynlo-social .venue-directory-card-link{
+  color:#6af1d7;font-weight:810;margin-top:auto;
+  padding-top:11px;border-top:1px solid rgba(37,186,189,.18);
+}
+:host .venue-directory-page.jynlo-social :is(.venue-directory-nearby,.venue-directory-state){
+  border:1px solid var(--venue-v3-line);
+  background:linear-gradient(145deg,#0b3345,#062536);
+  border-radius:16px;color:#d9f2f0;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-pagination{
+  flex-wrap:wrap;gap:10px;margin:24px 0;
+}
+:host .venue-directory-page.jynlo-social .venue-directory-pagination button{
+  min-height:43px;max-width:100%;white-space:normal;border-radius:11px;
+}
+:host .venue-directory-page.jynlo-social :is(a,button,input,select):focus-visible{
+  outline:2px solid #9affed;outline-offset:3px;
+}
+@media(max-width:1100px){
+  :host .venue-directory-page.jynlo-social .venue-directory-filters{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  :host .venue-directory-page.jynlo-social .venue-directory-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:900px){
+  :host .venue-directory-page.jynlo-social{
+    padding-top:calc(8.5rem + env(safe-area-inset-top));
+  }
+}
+@media(max-width:640px){
+  :host .venue-directory-page.jynlo-social .venue-directory-hero{
+    flex-direction:column;align-items:stretch;
+  }
+  :host .venue-directory-page.jynlo-social .venue-directory-add{
+    align-self:stretch;
+  }
+  :host .venue-directory-page.jynlo-social .venue-directory-filters{
+    grid-template-columns:minmax(0,1fr);
+  }
+  :host .venue-directory-page.jynlo-social .venue-directory-actions{
+    justify-content:stretch;
+  }
+  :host .venue-directory-page.jynlo-social .venue-directory-actions>button{
+    flex:1 1 130px;
+  }
+  :host .venue-directory-page.jynlo-social .venue-directory-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  :host .venue-directory-page.jynlo-social .venue-directory-card{transition:none;}
+  :host .venue-directory-page.jynlo-social .venue-directory-card:hover{transform:none;}
+}

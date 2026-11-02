@@ -1,0 +1,161 @@
+/* Jynlo Neon Glass v3 — Notifications. No state or permission changes. */
+:host .notifications-page.jynlo-secondary{
+  --notice-v3-line:rgba(38,201,201,.29);
+  --notice-v3-mint:#2eedce;
+  padding:clamp(90px,7.3vw,109px) clamp(14px,2.1vw,28px) 74px;
+  background:radial-gradient(ellipse 45% 460px at 96% 0%,rgba(10,151,165,.2),transparent 77%),
+    linear-gradient(145deg,#03111e,#052335 61%,#031421);
+}
+:host .notifications-page.jynlo-secondary .notifications-shell{
+  width:min(1260px,100%);max-width:1260px;min-width:0;
+}
+:host .notifications-page.jynlo-secondary .page-header{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:15px 24px;
+  min-width:0;margin-bottom:21px;
+  padding:clamp(19px,2.7vw,29px);
+  border:1px solid var(--notice-v3-line);border-radius:20px;
+  background:linear-gradient(98deg,rgba(3,23,38,.96),rgba(7,44,58,.92) 65%,rgba(6,63,69,.57)),
+    url('/assets/jynlo-feed-hero-sport.webp') right center/auto 100% no-repeat,#052738;
+}
+:host .notifications-page.jynlo-secondary .page-header>div:first-child{
+  flex:1 1 290px;min-width:0;
+}
+:host .notifications-page.jynlo-secondary .page-header h1{
+  margin:0;max-width:22ch;color:#f4fffc;
+  font-size:clamp(2rem,3.3vw,3.1rem);letter-spacing:-.046em;
+  line-height:1.1;text-wrap:balance;
+}
+:host .notifications-page.jynlo-secondary .page-header .subtitle{
+  color:#c1dbe2;line-height:1.55;max-width:61ch;
+}
+:host .notifications-page.jynlo-secondary .header-actions{
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:8px;flex-wrap:wrap;min-width:0;
+}
+:host .notifications-page.jynlo-secondary .header-actions>:is(a,button){
+  display:inline-flex;align-items:center;justify-content:center;
+  max-width:100%;min-height:44px;box-sizing:border-box;
+  padding:10px 13px;border-radius:11px;white-space:normal;
+  line-height:1.35;text-align:center;
+}
+:host .notifications-page.jynlo-secondary .clear-all-confirmation{
+  min-width:0;max-width:100%;
+  padding:8px;border:1px solid rgba(245,148,148,.26);
+  border-radius:12px;background:rgba(90,43,47,.18);
+}
+:host .notifications-page.jynlo-secondary .clear-all-confirmation>span{
+  flex:1 1 160px;line-height:1.4;
+}
+:host .notifications-page.jynlo-secondary .clear-all-confirmation>button{
+  min-height:40px;white-space:normal;
+}
+:host .notifications-page.jynlo-secondary .notifications-grid{
+  display:grid;grid-template-columns:minmax(280px,.88fr) minmax(0,1.12fr);
+  align-items:start;gap:15px;min-width:0;
+}
+:host .notifications-page.jynlo-secondary .notification-list{
+  display:grid;align-content:start;gap:10px;min-width:0;
+}
+:host .notifications-page.jynlo-secondary .notification-card{
+  box-sizing:border-box;min-width:0;padding:15px 17px;
+  border:1px solid rgba(40,193,200,.31);
+  border-radius:15px;
+  background:linear-gradient(142deg,rgba(10,50,65,.96),rgba(6,32,49,.97));
+  transition:border-color .18s,background .18s,transform .18s;
+}
+:host .notifications-page.jynlo-secondary .notification-card:hover,
+:host .notifications-page.jynlo-secondary .notification-card.active{
+  border-color:rgba(65,239,214,.66);background:#0c4453;
+}
+:host .notifications-page.jynlo-secondary .notification-card.unread{
+  box-shadow:inset 3px 0 0 #35efd1;
+}
+:host .notifications-page.jynlo-secondary .notification-card strong{
+  margin-top:11px;line-height:1.4;color:#f0fffc;overflow-wrap:anywhere;
+}
+:host .notifications-page.jynlo-secondary .notification-card p{
+  color:#bed9df;line-height:1.55;overflow-wrap:anywhere;
+}
+:host .notifications-page.jynlo-secondary .type-badge{
+  background:rgba(33,208,199,.14);border:1px solid rgba(40,206,200,.29);
+  border-radius:9px;padding:5px 9px;color:#9cfce7;
+  font-weight:780;line-height:1.35;
+}
+:host .notifications-page.jynlo-secondary .unread-dot{
+  background:#34efce;box-shadow:0 0 0 4px rgba(37,224,197,.12);
+}
+:host .notifications-page.jynlo-secondary .created-at{color:#a9c7d0;}
+:host .notifications-page.jynlo-secondary .notification-detail{
+  min-width:0;min-height:370px;padding:clamp(17px,2.3vw,26px);
+  border:1px solid var(--notice-v3-line);
+  border-radius:18px;
+  background:linear-gradient(150deg,#0b3545,#062537);
+  box-shadow:0 16px 39px rgba(0,10,27,.16);
+}
+:host .notifications-page.jynlo-secondary .detail-header{
+  align-items:flex-start;gap:13px;min-width:0;
+}
+:host .notifications-page.jynlo-secondary .detail-header>div:first-child{min-width:0;}
+:host .notifications-page.jynlo-secondary .detail-header h2{
+  color:#f2fffc;line-height:1.27;overflow-wrap:anywhere;text-wrap:balance;
+}
+:host .notifications-page.jynlo-secondary .detail-message{
+  color:#d5e9ec;line-height:1.65;overflow-wrap:anywhere;
+}
+:host .notifications-page.jynlo-secondary .close-detail{
+  display:inline-grid;place-items:center;min-width:40px;height:40px;
+  border:1px solid rgba(53,179,193,.3);border-radius:11px;
+  background:#0d4050;color:#d9f5f0;
+}
+:host .notifications-page.jynlo-secondary :is(.notification-preferences,.session-invites-inbox,.state-card){
+  border:1px solid var(--notice-v3-line);border-radius:18px;
+  background:linear-gradient(144deg,rgba(10,49,64,.96),rgba(5,30,46,.98));
+}
+:host .notifications-page.jynlo-secondary .notification-preferences__row{
+  border-top-color:rgba(45,182,189,.19);
+}
+:host .notifications-page.jynlo-secondary .notification-preferences__labels{color:#badfe1;}
+:host .notifications-page.jynlo-secondary .session-invite-card{
+  border-color:rgba(39,198,200,.31);background:#092d3e;border-radius:15px;
+}
+:host .notifications-page.jynlo-secondary .session-invite-actions{
+  align-items:stretch;flex-wrap:wrap;gap:9px;
+}
+:host .notifications-page.jynlo-secondary .session-invite-actions>:is(button,a){
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;line-height:1.35;text-align:center;
+  max-width:100%;white-space:normal;border-radius:11px;
+}
+:host .notifications-page.jynlo-secondary :is(a,button,input):focus-visible{
+  outline:2px solid #9bffe7;outline-offset:3px;
+}
+@media(max-width:900px){
+  :host .notifications-page.jynlo-secondary{
+    padding-top:calc(8.5rem + env(safe-area-inset-top));
+  }
+}
+@media(max-width:800px){
+  :host .notifications-page.jynlo-secondary .notifications-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+  :host .notifications-page.jynlo-secondary .page-header{
+    flex-direction:column;align-items:stretch;
+  }
+  :host .notifications-page.jynlo-secondary .header-actions{
+    width:100%;justify-content:flex-start;
+  }
+}
+@media(max-width:560px){
+  :host .notifications-page.jynlo-secondary .page-header{padding:18px;}
+  :host .notifications-page.jynlo-secondary .header-actions>:is(a,button){
+    flex:1 1 130px;
+  }
+  :host .notifications-page.jynlo-secondary .session-invite-actions>:is(button,a){
+    flex:1 1 130px;
+  }
+  :host .notifications-page.jynlo-secondary .notification-detail{min-height:0;}
+}
+@media(prefers-reduced-motion:reduce){
+  :host .notifications-page.jynlo-secondary .notification-card{transition:none;}
+}
