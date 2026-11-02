@@ -104,11 +104,15 @@ const fictionalCommunity = {
   sport: 'Padel', sports: ['Padel'], photoUrl: null, visibility: 'PUBLIC',
   rankingsEnabled: true, individualTournamentsEnabled: true, teamTournamentsEnabled: true,
   membersCanCreateSessions: true, ownerUsername: 'mobile-fixture', myRole: 'OWNER',
-  memberCount: 2, createdAt: '2026-10-20T12:00:00Z', members: [
+  memberCount: 10, createdAt: '2026-10-20T12:00:00Z', members: [
     { profileId: 1, username: 'mobile-fixture', fullName: 'Jogadora Fictícia',
       profilePicUrl: null, role: 'OWNER' },
     { profileId: 2, username: 'qa-teammate', fullName: 'Colega Fictício',
-      profilePicUrl: null, role: 'MEMBER' }
+      profilePicUrl: null, role: 'MEMBER' },
+    ...Array.from({length:8},(_,i)=>({
+      profileId:10+i,username:'community-member-'+(i+1),
+      fullName:'Membro de Teste '+(i+1),profilePicUrl:null,role:'MEMBER'
+    }))
   ]
 };
 const fictionalRankingRows = [
@@ -607,6 +611,29 @@ async function main() {
                   assert.equal(await page.locator('.team-roster-card').count(),3,
                     'Draft shows both occupied squads and the deletable empty squad');
                   const occupied = page.locator('.team-roster-card').first();
+                  assert.equal(await page.locator('.team-roster-readiness.is-ready').count(),2,
+                    'Two synthetic complete teams must be visibly ready');
+                  assert.equal(await page.locator('.team-roster-readiness:not(.is-ready)').count(),1,
+                    'The empty team must visibly need more players');
+                  const rawLink = occupied.locator('.team-link-field');
+                  assert.equal(await rawLink.isVisible(),false,
+                    'Full invitation URL must stay collapsed by default');
+                  await occupied.locator('.team-link-details summary').click();
+                  assert.equal(await rawLink.isVisible(),true,
+                    'Organisers can reveal the original invitation URL');
+                  await occupied.locator('.team-link-details summary').click();
+                  const manual = occupied.locator('.team-manual-assign');
+                  await manual.locator('summary').click();
+                  const search = manual.locator('input[type="search"]');
+                  await search.waitFor({state:'visible'});
+                  await search.fill('community-member-4');
+                  assert.equal(await manual.locator('select option').count(),2,
+                    'Community member search limits the options to a matching profile');
+                  await search.fill('not-a-real-person');
+                  assert.equal(await manual.locator('select option').count(),1,
+                    'No-match search must not allow a stale member choice');
+                  await search.fill('');
+                  await manual.locator('summary').click();
                   await occupied.locator('.player-item button').first().click();
                   await occupied.locator('.team-roster-confirm').first().waitFor({state:'visible'});
                   assert.equal(await occupied.locator('.team-roster-confirm button').count(),2,
