@@ -2,6 +2,9 @@
 :host .create-page.jynlo-games {
   --v3-create-line:rgba(41,209,205,.31);
   min-height:100dvh;
+  box-sizing:border-box;
+  width:100%;max-width:100%;
+  overflow-x:clip;
   background:
     radial-gradient(ellipse 48% 420px at 96% 2%,rgba(12,146,159,.19),transparent 78%),
     linear-gradient(145deg,#03111f,#052434 63%,#031521);
