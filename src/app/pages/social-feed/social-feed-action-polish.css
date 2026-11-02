@@ -190,3 +190,66 @@
   }
   :host .feed-page .feed-v3-shell .feed-sidebar {position:static;}
 }
+
+
+/* Responsive feed hierarchy: the central dashboard column can be narrow even
+   on desktop because the left rail and suggestions panel also occupy space.
+   Let the actual content width determine wrapping, not the viewport width. */
+:host .feed-v3-shell .feed-v3-welcome {
+  flex-wrap: wrap;
+  gap: 14px;
+  align-content: center;
+}
+:host .feed-v3-shell .feed-v3-welcome > div:first-child {
+  flex: 1 1 275px;
+  min-width: 0;
+}
+:host .feed-v3-shell .feed-v3-welcome :is(h1, .subtitle, .feed-v3-greeting) {
+  overflow-wrap: anywhere;
+}
+:host .feed-v3-shell .feed-v3-welcome .feed-hero-cta.jynlo-premium-btn {
+  flex: 0 1 auto;
+  max-width: 100%;
+  margin-left: auto;
+  box-sizing: border-box;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+:host .feed-v3-shell .week-hub-heading > div:first-child {
+  flex: 1 1 210px;
+  min-width: 0;
+}
+:host .feed-v3-shell .week-hub-heading .week-hub-create.jynlo-premium-btn {
+  max-width: 100%;
+  line-height: 1.35;
+  text-align: center;
+}
+/* Container queries avoid the 990px viewport gap where a narrow center column
+   previously forced the greeting and primary action into each other. */
+@container (max-width: 540px) {
+  :host .feed-v3-shell .feed-v3-welcome {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 13px;
+  }
+  :host .feed-v3-shell .feed-v3-welcome > div:first-child {
+    flex: 0 1 auto;
+    width: 100%;
+  }
+  :host .feed-v3-shell .feed-v3-welcome h1 {
+    max-width: 100%;
+    font-size: clamp(1.55rem, 5cqi, 2.15rem);
+    line-height: 1.15;
+  }
+  :host .feed-v3-shell .feed-v3-welcome .feed-hero-cta.jynlo-premium-btn {
+    align-self: stretch;
+    width: 100%;
+    margin-left: 0;
+    min-height: 44px;
+  }
+  :host .feed-v3-shell .week-hub-heading {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}
