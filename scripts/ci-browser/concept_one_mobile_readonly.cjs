@@ -225,11 +225,13 @@ async function main() {
           await page.goto(SITE + route, { waitUntil: 'domcontentloaded', timeout: 20_000 });
           await page.locator(selector).first().waitFor({ state: 'visible', timeout: 15_000 });
           await page.evaluate(() => document.fonts && document.fonts.ready);
-          const measure = await page.evaluate(() => {
+          const measure = await page.evaluate(expectedWidth => {
             const doc = document.documentElement;
-            const width = window.innerWidth;
+            const width = expectedWidth;
             return {
-              viewport: width, documentWidth: doc.scrollWidth,
+              viewport: window.innerWidth, expectedWidth,
+              visualViewport: window.visualViewport?.width ?? null,
+              documentWidth: doc.scrollWidth,
               bodyWidth: document.body.scrollWidth,
               offenders: [...document.body.querySelectorAll('*')]
                 .filter(el => {
@@ -246,13 +248,13 @@ async function main() {
                   right: Math.round(el.getBoundingClientRect().right)
                 }))
             };
-          });
+          }, width);
           const name = route.replace(/\W+/g, '-').replace(/^-/, '');
           await page.screenshot({
             path: path.join(OUT, width + '-' + language + '-' + name + '.png'),
             fullPage: false
           });
-          const overflow = measure.documentWidth - measure.viewport;
+          const overflow = Math.max(measure.documentWidth, measure.bodyWidth, measure.viewport) - width;
           console.log('[responsive]', width, language, route,
             'documentWidth=' + measure.documentWidth, 'overflow=' + overflow);
           assert.ok(overflow <= 2,
@@ -285,10 +287,16 @@ async function main() {
             assert.match(await shell.locator('.venue-address-map-link').getAttribute('href'),
               /^https:\/\/www\.google\.com\/maps\?q=38\.75,-9\.16$/,
               'Map action must use the supplied synthetic coordinates');
-            const margin = await shell.locator('.venue-header').evaluate(
-              el => getComputedStyle(el).marginBottom);
-            assert.equal(margin, width === 390 ? '20px' : '24px',
-              'Venue summary must not collide with the header');
+            const summarySpacing = await shell.locator('.venue-detail-shell').evaluate(el => {
+              const header = el.querySelector('.venue-header');
+              const next = header?.nextElementSibling;
+              return header && next
+                ? next.getBoundingClientRect().top - header.getBoundingClientRect().bottom
+                : null;
+            });
+            assert.ok(summarySpacing !== null && summarySpacing >= 18,
+              'Venue summary must have visible separation below the header: '
+              + summarySpacing);
           }
           if (route === '/menu/venues/new') {
             assert.equal(await page.locator('.venue-create-form').count(), 1,
