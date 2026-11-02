@@ -315,3 +315,33 @@
   :host .tournaments .team-score-edit label{flex:1 1 110px;}
   :host .tournaments .team-score-edit>.t-btn{flex:1 1 100%;}
 }
+
+/* Compact correction workflow and explicit confirmation before roster removals. */
+:host .tournaments .team-fixture>.team-result-toggle{
+  grid-column:1/-1;justify-self:end;min-height:37px;
+  border-color:rgba(63,194,193,.43);color:#c5fff2;
+}
+:host .tournaments .team-fixture>.team-result-toggle[aria-expanded="true"]{
+  border-color:rgba(255,206,120,.52);background:rgba(114,82,34,.24);
+  color:#ffe5b0;
+}
+:host .tournaments .team-roster-card .player-item{flex-wrap:wrap;}
+:host .tournaments .team-roster-confirm{
+  flex:1 1 100%;min-width:0;display:grid;gap:9px;
+  border:1px solid rgba(239,149,111,.38);
+  border-radius:11px;background:rgba(88,44,38,.20);
+  padding:11px 12px;
+}
+:host .tournaments .team-roster-confirm p{
+  color:#ffe2d0;line-height:1.45;font-size:.83rem;
+  margin:0;overflow-wrap:anywhere;
+}
+:host .tournaments .team-roster-confirm-actions{
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+}
+:host .tournaments .team-roster-confirm-actions .t-btn{min-height:35px;}
+:host .tournaments .team-roster-heading>.team-roster-confirm{flex-basis:100%;}
+@media(max-width:580px){
+  :host .tournaments .team-roster-confirm-actions>.t-btn{flex:1 1 auto;}
+  :host .tournaments .team-fixture>.team-result-toggle{justify-self:stretch;}
+}
