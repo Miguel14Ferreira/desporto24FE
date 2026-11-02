@@ -1,0 +1,57 @@
+name: Jynlo authenticated responsive browser audit (synthetic, read-only)
+# Built candidate only: fictitious JWT and intercepted HTTP/WS; never connect to LIVE APIs.
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/jynlo-authenticated-visual-audit.yml'
+      - 'scripts/ci-browser/concept_one_mobile_readonly.cjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-auth-visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  authenticated-layout:
+    name: Audit signed-in layouts at 390px and 1366px in PT and EN
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.3'
+          cache: npm
+      - name: Install application dependencies
+        run: npm ci
+      - name: Build isolated candidate
+        run: npm run build
+      - name: Install isolated Playwright Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/jynlo-browser-qa" --no-fund --no-audit --no-save playwright@1.56.1
+          "$RUNNER_TEMP/jynlo-browser-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Start candidate-only SPA server
+        run: |
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > "$RUNNER_TEMP/jynlo-spa-server.log" 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/jynlo-spa-server.log"
+          exit 1
+      - name: Run synthetic authenticated read-only responsive audit
+        env:
+          NODE_PATH: ${{ runner.temp }}/jynlo-browser-qa/node_modules
+        run: node scripts/ci-browser/concept_one_mobile_readonly.cjs
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-authenticated-layout-screenshots
+          path: artifacts/concept-one-mobile/*.png
+          if-no-files-found: warn
+          retention-days: 3
