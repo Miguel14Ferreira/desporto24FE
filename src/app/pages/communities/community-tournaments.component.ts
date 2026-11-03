@@ -174,6 +174,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   inviteCopyFeedback: Record<number, string> = {};
   teams: TournamentTeam[] = [];
   teamDirectoryQuery = '';
+  readonly teamDirectoryPageSize = 12;
+  teamDirectoryLimit = 12;
   teamsLoadError = false;
   teamMatches: TournamentTeamMatch[] = [];
   /** Independent, server-scoped fixture pagination for the selected team page. */
@@ -182,6 +184,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamProfileMatchesHasMore = false;
   teamProfileMatchesLoading = false;
   teamProfileMatchesError = false;
+  teamProfileMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   private teamProfileMatchesRevision = 0;
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamMatchesPage = 0;
@@ -1131,6 +1134,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.inviteCopyFeedback = {};
       this.teams = [];
       this.teamDirectoryQuery = '';
+      this.teamDirectoryLimit = this.teamDirectoryPageSize;
       this.teamsLoadError = false;
       this.teamMatches = [];
       this.resetTeamProfileMatches();
@@ -1251,12 +1255,36 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamPlayerDraft[teamId] = null;
   }
 
-  /** Search affects only the directory, never saved rosters, fixtures or scores. */
-  get visibleTournamentTeams(): TournamentTeam[] {
+  /** Search and pagination are display-only; never hide or mutate stored teams. */
+  get filteredTournamentTeams(): TournamentTeam[] {
     const normalize = (value: string) => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
     const query = normalize(this.teamDirectoryQuery);
     return query ? this.teams.filter(team => normalize(team.name).includes(query)) : this.teams;
+  }
+
+  get visibleTournamentTeams(): TournamentTeam[] {
+    return this.filteredTournamentTeams.slice(0, this.teamDirectoryLimit);
+  }
+
+  get hasMoreTournamentTeams(): boolean {
+    return this.filteredTournamentTeams.length > this.teamDirectoryLimit;
+  }
+
+  setTeamDirectoryQuery(query: string): void {
+    this.teamDirectoryQuery = query;
+    this.teamDirectoryLimit = this.teamDirectoryPageSize;
+  }
+
+  expandTeamDirectory(): void {
+    this.teamDirectoryLimit += this.teamDirectoryPageSize;
+  }
+
+  get teamProfileNavigation(): {index:number; total:number; previous?:TournamentTeam; next?:TournamentTeam} {
+    const index = this.teams.findIndex(team => team.id === this.teamPageId);
+    return index < 0 ? {index:0,total:this.teams.length}
+      : {index:index + 1,total:this.teams.length,
+          previous:this.teams[index - 1],next:this.teams[index + 1]};
   }
 
   get focusedTeam(): TournamentTeam | undefined {
@@ -1582,6 +1610,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.relayDecisionReasons={};
     ++this.relayRevision;
     this.teamDirectoryQuery = '';
+    this.teamDirectoryLimit = this.teamDirectoryPageSize;
     this.teamPlayerDraft = {};
     this.teamMemberSearch = {};
     this.teamsLoadError = false;
@@ -2150,6 +2179,17 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamProfileMatchesHasMore = false;
     this.teamProfileMatchesLoading = false;
     this.teamProfileMatchesError = false;
+    this.teamProfileMatchFilter = 'ALL';
+  }
+
+  get visibleTeamProfileMatches(): TournamentTeamMatch[] {
+    return this.teamProfileMatches.filter(game => this.teamProfileMatchFilter === 'ALL'
+      || (this.teamProfileMatchFilter === 'COMPLETED'
+        ? game.status === 'COMPLETED' : game.status !== 'COMPLETED'));
+  }
+
+  setTeamProfileMatchFilter(filter: 'ALL' | 'PENDING' | 'COMPLETED'): void {
+    this.teamProfileMatchFilter = filter;
   }
 
   loadTeamProfileMatches(): void {

@@ -803,3 +803,26 @@
 }
 :host .tournaments .team-page-more{justify-self:start;}
 :host .tournaments .team-page-fixtures-feedback{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+
+/* Navigate between dedicated team pages without reopening the tournament directory. */
+:host .tournaments .team-page-switcher{
+  display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;gap:10px;
+}
+:host .tournaments .team-page-switcher a{
+  display:flex;gap:7px;align-items:center;min-width:0;padding:10px 12px;
+  color:#afffe7;background:rgba(8,58,65,.62);text-decoration:none;
+  border:1px solid rgba(66,187,173,.36);border-radius:10px;
+}
+:host .tournaments .team-page-switcher a:last-child{justify-self:end;}
+:host .tournaments .team-page-switcher a:hover,
+:host .tournaments .team-name-link:hover{color:#e8fff9;text-decoration:underline;}
+:host .tournaments .team-page-switcher a:focus-visible,
+:host .tournaments .team-name-link:focus-visible{outline:2px solid #8cf5d8;outline-offset:3px;}
+:host .tournaments .team-page-count{font-variant-numeric:tabular-nums;color:#aad3cd;}
+:host .tournaments .team-name-link,
+:host .tournaments .team-page-fixture-participants a{color:inherit;text-decoration:none;}
+:host .tournaments .team-page-fixture-participants a{overflow-wrap:anywhere;font-weight:650;}
+:host .tournaments .team-page-fixture-participants a:first-child{text-align:right;}
+:host .tournaments .team-page-fixture-participants a.is-own-team{color:#abffe4;font-weight:850;}
+:host .tournaments .team-directory-more{margin-top:12px;}

@@ -3076,6 +3076,8 @@ export const EN: Record<string, string> = {
   'communities.tournaments.teamPage.champion': 'Champion',
   'communities.tournaments.teamPage.noResults': 'No results recorded yet.',
   'communities.tournaments.teamPage.moreMatches': 'Load more matches',
+  'communities.tournaments.teamPage.moreTeams': 'Show more teams',
+  'communities.tournaments.teamPage.lessTeams': 'Show fewer teams',
   'communities.tournaments.teamPage.notFound': "This team is not part of this tournament or has been deleted.",
   'communities.tournaments.teamUi.title': "Teams and rosters",
   'communities.tournaments.teamUi.loadError': "Could not load rosters. Use Refresh to try again.",

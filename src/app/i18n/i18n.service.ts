@@ -3082,6 +3082,8 @@ const PT: Dictionary = {
   'communities.tournaments.teamPage.champion': 'Campeã',
   'communities.tournaments.teamPage.noResults': 'Ainda não existem resultados.',
   'communities.tournaments.teamPage.moreMatches': 'Carregar mais jogos',
+  'communities.tournaments.teamPage.moreTeams': 'Mostrar mais equipas',
+  'communities.tournaments.teamPage.lessTeams': 'Mostrar menos equipas',
   'communities.tournaments.teamPage.notFound': "Esta equipa não existe neste torneio ou foi eliminada.",
   'communities.tournaments.teamUi.title': "Equipas e plantéis",
   'communities.tournaments.teamUi.loadError': "Não foi possível carregar os plantéis. Usa Atualizar para tentar novamente.",

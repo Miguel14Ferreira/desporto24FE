@@ -482,6 +482,26 @@
       } @else if (detailsLoading) {
         <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.loading' | t }}</p>
       } @else if (focusedTeam; as team) {
+        @let teamNav = teamProfileNavigation;
+        @if (teamNav.total > 1) {
+          <nav class="team-page-switcher" [attr.aria-label]="'communities.tournaments.teamPage.gridLabel' | t">
+            @if (teamNav.previous; as previous) {
+              <a [routerLink]="['/menu/communities', community.id]"
+                [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:previous.id}"
+                [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:previous.name}">
+                <span aria-hidden="true">←</span> {{ previous.name }}
+              </a>
+            } @else { <span></span> }
+            <span class="team-page-count">{{ teamNav.index }} / {{ teamNav.total }}</span>
+            @if (teamNav.next; as next) {
+              <a [routerLink]="['/menu/communities', community.id]"
+                [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:next.id}"
+                [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:next.name}">
+                {{ next.name }} <span aria-hidden="true">→</span>
+              </a>
+            } @else { <span></span> }
+          </nav>
+        }
         <header class="team-page-hero">
           <div class="team-page-crest" aria-hidden="true">✦</div>
           <div class="team-page-intro">
@@ -579,17 +599,40 @@
                     (click)="retryTeamProfileMatches()">{{ 'communities.tournaments.fixturesUi.retry' | t }}</button>
                 </div>
               }
-              @for (game of teamProfileMatches; track game.id) {
+              @if (teamProfileMatches.length) {
+                <div class="team-fixtures-toolbar">
+                  <div class="team-fixtures-filters" role="group" [attr.aria-label]="'communities.tournaments.fixturesUi.filterLabel' | t">
+                    <button type="button" [class.is-active]="teamProfileMatchFilter === 'ALL'"
+                      [attr.aria-pressed]="teamProfileMatchFilter === 'ALL'"
+                      (click)="setTeamProfileMatchFilter('ALL')">{{ 'communities.tournaments.fixturesUi.filterAll' | t }}</button>
+                    <button type="button" [class.is-active]="teamProfileMatchFilter === 'PENDING'"
+                      [attr.aria-pressed]="teamProfileMatchFilter === 'PENDING'"
+                      (click)="setTeamProfileMatchFilter('PENDING')">{{ 'communities.tournaments.fixturesUi.filterPending' | t }}</button>
+                    <button type="button" [class.is-active]="teamProfileMatchFilter === 'COMPLETED'"
+                      [attr.aria-pressed]="teamProfileMatchFilter === 'COMPLETED'"
+                      (click)="setTeamProfileMatchFilter('COMPLETED')">{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</button>
+                  </div>
+                  <p role="status">{{ 'communities.tournaments.fixturesUi.loadedSummary' | t:{shown:visibleTeamProfileMatches.length,loaded:teamProfileMatches.length} }}</p>
+                </div>
+              }
+              @if (teamProfileMatches.length && !visibleTeamProfileMatches.length) {
+                <p class="team-fixtures-empty" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
+              }
+              @for (game of visibleTeamProfileMatches; track game.id) {
                 <div class="team-page-fixture">
                   <span class="team-page-fixture-round">{{ teamMatchStageLabel(game) }}</span>
                   <span class="team-page-fixture-participants">
-                    <strong [class.is-own-team]="game.homeTeamId === team.id">{{ game.homeTeamName }}</strong>
+                    <a [class.is-own-team]="game.homeTeamId === team.id"
+                      [routerLink]="['/menu/communities', community.id]"
+                      [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:game.homeTeamId}">{{ game.homeTeamName }}</a>
                     <span class="team-page-fixture-score">
                       {{ game.status === 'COMPLETED' ? game.homeScore : '—' }}
                       :
                       {{ game.status === 'COMPLETED' ? game.awayScore : '—' }}
                     </span>
-                    <strong [class.is-own-team]="game.awayTeamId === team.id">{{ game.awayTeamName }}</strong>
+                    <a [class.is-own-team]="game.awayTeamId === team.id"
+                      [routerLink]="['/menu/communities', community.id]"
+                      [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:game.awayTeamId}">{{ game.awayTeamName }}</a>
                   </span>
                   <span class="team-page-fixture-status">
                     {{ (game.status === 'COMPLETED'
@@ -1173,11 +1216,11 @@
                   <label for="tournament-team-search">{{ 'communities.tournaments.teamPage.searchLabel' | t }}</label>
                   <div class="team-directory-search">
                     <input id="tournament-team-search" type="search" maxlength="100" autocomplete="off"
-                      [ngModel]="teamDirectoryQuery" (ngModelChange)="teamDirectoryQuery = $event"
+                      [ngModel]="teamDirectoryQuery" (ngModelChange)="setTeamDirectoryQuery($event)"
                       [placeholder]="'communities.tournaments.teamPage.searchPlaceholder' | t">
                     @if (teamDirectoryQuery) {
                       <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                        (click)="teamDirectoryQuery = ''">{{ 'communities.tournaments.teamPage.clearSearch' | t }}</button>
+                        (click)="setTeamDirectoryQuery('')">{{ 'communities.tournaments.teamPage.clearSearch' | t }}</button>
                     }
                   </div>
                   <p role="status">{{ 'communities.tournaments.teamPage.searchCount' | t:{shown:visibleTournamentTeams.length,total:teams.length} }}</p>
@@ -1207,6 +1250,13 @@
                   </a>
                 }
               </div>
+              @if (hasMoreTournamentTeams) {
+                <button type="button" class="t-btn t-btn-secondary team-directory-more"
+                  (click)="expandTeamDirectory()">{{ 'communities.tournaments.teamPage.moreTeams' | t }}</button>
+              } @else if (teamDirectoryLimit > teamDirectoryPageSize) {
+                <button type="button" class="t-btn t-btn-secondary team-directory-more"
+                  (click)="teamDirectoryLimit = teamDirectoryPageSize">{{ 'communities.tournaments.teamPage.lessTeams' | t }}</button>
+              }
               @if (canManage && selected.status === 'DRAFT' && !isRelayCompetition) {
                 <div class="team-schedule-action">
                   <div>
@@ -1456,7 +1506,9 @@
                     }
                     <div class="team-fixture" [class.is-completed]="game.status === 'COMPLETED'">
                        <div class="team-fixture-matchup">
-                         <strong class="team-fixture-home">{{ game.homeTeamName }}</strong>
+                         <strong class="team-fixture-home"><a class="team-name-link"
+                           [routerLink]="['/menu/communities', community.id]"
+                           [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:game.homeTeamId}">{{ game.homeTeamName }}</a></strong>
                          <div class="team-fixture-score" [class.is-pending]="game.status !== 'COMPLETED'"
                            [attr.aria-label]="(game.status === 'COMPLETED'
                              ? 'communities.tournaments.fixturesUi.scoreAria'
@@ -1471,7 +1523,9 @@
                              <small>{{ 'communities.tournaments.fixturesUi.pending' | t }}</small>
                            }
                          </div>
-                         <strong class="team-fixture-away">{{ game.awayTeamName }}</strong>
+                         <strong class="team-fixture-away"><a class="team-name-link"
+                           [routerLink]="['/menu/communities', community.id]"
+                           [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:game.awayTeamId}">{{ game.awayTeamName }}</a></strong>
                        </div>
                        @if (canManage && selected.status === 'IN_PROGRESS'
                            && game.status === 'COMPLETED' && !isPastKnockoutRound(game)) {
@@ -1566,7 +1620,9 @@
                             @for (row of group.standings; track row.teamId) {
                               <tr [class.is-qualified]="groups.knockoutStarted && row.position <= 2">
                                 <td>{{ row.position }}</td>
-                                <th scope="row">{{ row.teamName }}
+                                <th scope="row"><a class="team-name-link"
+                                  [routerLink]="['/menu/communities', community.id]"
+                                  [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:row.teamId}">{{ row.teamName }}</a>
                                   @if (groups.knockoutStarted && row.position <= 2) {
                                     <span class="tournament-state">{{ 'communities.tournaments.finalUi.qualified' | t }}</span>
                                   }
@@ -1621,7 +1677,9 @@
                       <tbody>
                         @for (row of table.standings; track row.teamId) {
                           <tr [class.is-leader]="row.position === 1 && row.played > 0">
-                            <td>{{ row.position }}</td><th scope="row">{{ row.teamName }}</th>
+                            <td>{{ row.position }}</td><th scope="row"><a class="team-name-link"
+                              [routerLink]="['/menu/communities', community.id]"
+                              [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:row.teamId}">{{ row.teamName }}</a></th>
                             <td>{{ row.played }}</td><td>{{ row.won }}</td>
                             <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>
                             <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
