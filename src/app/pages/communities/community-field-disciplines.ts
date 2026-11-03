@@ -27,7 +27,9 @@ const ORIENTEERING: readonly OrienteeringCourse[] = [
   'ORIENT_SPRINT', 'ORIENT_MIDDLE', 'ORIENT_LONG'
 ];
 export type CanoeK1Distance = 'K1_200' | 'K1_500' | 'K1_1000';
+export type RowingSingleDistance = 'SINGLE_500' | 'SINGLE_1000' | 'SINGLE_2000';
 const CANOE_K1: readonly CanoeK1Distance[] = ['K1_200','K1_500','K1_1000'];
+const ROWING_SINGLE: readonly RowingSingleDistance[] = ['SINGLE_500','SINGLE_1000','SINGLE_2000'];
 export type OpenWaterDistance = 'OWS_5K' | 'OWS_10K';
 const OPEN_WATER: readonly OpenWaterDistance[] = ['OWS_5K', 'OWS_10K'];
 export type SwimmingPoolEvent = 'FREE_50' | 'FREE_100' | 'FREE_200' | 'BACK_100'
@@ -52,7 +54,7 @@ const OPTIONS: Record<string, readonly AthleticsDiscipline[]> = {
 
 export function athleticsDisciplineOptions(
   sport: string | null | undefined, eventType: string | null | undefined
-): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | CanoeK1Distance | OrienteeringCourse | TrackSprintPhase | TrackSprintClassification | typeof TRACK_SPRINT_REPECHAGES[number])[] {
+): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | CanoeK1Distance | RowingSingleDistance | OrienteeringCourse | TrackSprintPhase | TrackSprintClassification | typeof TRACK_SPRINT_REPECHAGES[number])[] {
   const normalized = sport?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
   if (normalized === 'ciclismo de pista' && eventType === 'TRACK_SPRINT_HEAT')
     return TRACK_SPRINT_PHASES;
@@ -64,6 +66,7 @@ export function athleticsDisciplineOptions(
   if (normalized === 'natacao em aguas abertas' && eventType === 'OWS_INDIVIDUAL') return OPEN_WATER;
   if (normalized === 'natacao' && eventType === 'SWIM_LCM') return SWIMMING_LCM;
   if (normalized === 'canoagem velocidade' && eventType === 'CANOE_SPRINT') return CANOE_K1;
+  if (normalized === 'remo' && eventType === 'ROWING_SINGLE') return ROWING_SINGLE;
   if (normalized === 'atletismo') return OPTIONS[eventType || ''] ?? [];
   if (normalized === 'ginastica artistica' && eventType === 'APPARATUS') return GYM_APPARATUS;
   if (normalized === 'bodyboard' && eventType === 'BODYBOARD_HEAT') return BODYBOARD_STANCES;
@@ -77,6 +80,6 @@ export function athleticsDisciplineValid(
 ): boolean {
   const options = athleticsDisciplineOptions(sport, eventType);
   return options.length
-    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | CanoeK1Distance | OrienteeringCourse | TrackSprintPhase | TrackSprintClassification | typeof TRACK_SPRINT_REPECHAGES[number])
+    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | CanoeK1Distance | RowingSingleDistance | OrienteeringCourse | TrackSprintPhase | TrackSprintClassification | typeof TRACK_SPRINT_REPECHAGES[number])
     : !discipline;
 }

@@ -76,6 +76,15 @@ export class CommunityTournamentsService {
     });
   }
 
+  /** Individual rowing skiff (1x) best time per exact distance. */
+  createRowingChampionship(communityId:number,name:string,
+      discipline:'SINGLE_500'|'SINGLE_1000'|'SINGLE_2000'):Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId),{
+      name,sport:'Remo',entryType:'INDIVIDUAL',format:'LEAGUE',
+      eventType:'ROWING_SINGLE',eventDiscipline:discipline,scoringMode:'ROWING_BEST_TIME'
+    });
+  }
+
   /** One K1 distance per best-time championship. Not an official race ranking. */
   createCanoeChampionship(communityId:number,name:string,discipline:'K1_200'|'K1_500'|'K1_1000'):Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId),{

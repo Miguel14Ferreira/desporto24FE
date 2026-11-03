@@ -2,6 +2,13 @@ import { eventOptionsForSport, eventView, isRaceEvent, isNeutralEvent,
   eventPresentationFormat } from './community-round-event-type';
 
 describe('multi-format sports should not reuse unrelated scoring rules', () => {
+  it('keeps rowing skiff 1x as typed race timing', () => {
+    expect(eventOptionsForSport('Remo').map(x=>x.code)).toEqual(['ROWING_SINGLE']);
+    expect(isRaceEvent('Remo','ROWING_SINGLE')).toBeTrue();
+    expect(eventPresentationFormat('Remo','ROWING_SINGLE')).toBe('race');
+    expect(isNeutralEvent('Remo','ROWING_SINGLE')).toBeFalse();
+    expect(isRaceEvent('Remo','CANOE_SPRINT')).toBeFalse();
+  });
   it('keeps canoe sprint timed K1 separate from match and freestyle rules', () => {
     expect(eventOptionsForSport('Canoagem Velocidade').map(x=>x.code)).toEqual(['CANOE_SPRINT']);
     expect(isRaceEvent('Canoagem Velocidade','CANOE_SPRINT')).toBeTrue();

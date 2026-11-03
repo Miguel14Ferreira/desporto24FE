@@ -1,6 +1,6 @@
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
-import { tournamentEventChoices, validatedTournamentEventType, validCanoeDiscipline } from './community-tournament-event-types';
+import { tournamentEventChoices, validatedTournamentEventType, validCanoeDiscipline, validRowingDiscipline } from './community-tournament-event-types';
 
 describe('Sport-specific tournament event types',()=>{
   it('maps all 121 catalog sports without invented event fallbacks',()=>{
@@ -15,6 +15,14 @@ describe('Sport-specific tournament event types',()=>{
             .withContext(sport+'/'+option.code).toBe(option.supported?option.code:null);
       }
     }
+  });
+  it('isolates rowing 1x distances and rejects crew boats and points',()=>{
+    expect(validatedTournamentEventType('Remo','ROWING_BEST_TIME','ROWING_SINGLE')).toBe('ROWING_SINGLE');
+    expect(validatedTournamentEventType('Remo','RACE_POINTS','ROWING_SINGLE')).toBeNull();
+    for(const code of ['SINGLE_500','SINGLE_1000','SINGLE_2000'])
+      expect(validRowingDiscipline('ROWING_SINGLE',code)).toBeTrue();
+    for(const code of ['DOUBLE_2000','K1_500',null])
+      expect(validRowingDiscipline('ROWING_SINGLE',code)).toBeFalse();
   });
   it('allows only one exact canoe sprint timed contract per K1 distance',()=>{
     expect(validatedTournamentEventType('Canoagem Velocidade','CANOE_BEST_TIME','CANOE_SPRINT'))
