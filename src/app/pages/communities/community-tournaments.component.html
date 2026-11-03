@@ -1145,7 +1145,10 @@
                   @if (!relay.finalPublished) {
                     <div class="race-round-card" role="group">
                       <h6>{{ 'communities.relay.qualifying' | t }}</h6>
-                      <p class="t-muted">{{ 'communities.inlineSpeed.warningTie' | t }}</p>
+                      @if ((relay.qualifyingStandings?.length ?? 0)>8 &&
+                          relay.qualifyingStandings?.[7]?.bestSeconds === relay.qualifyingStandings?.[8]?.bestSeconds) {
+                        <p class="field-validation" role="status">{{ 'communities.inlineSpeed.warningTie' | t }}</p>
+                      }
                       @if (canManage && selected.status === 'IN_PROGRESS') {
                         @if (relayFinalConfirm) {
                           <p role="alert">{{ 'communities.relay.finalWarning' | t }}</p>
