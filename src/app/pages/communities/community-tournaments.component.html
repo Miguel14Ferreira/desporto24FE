@@ -155,10 +155,10 @@
           }
           @if (canoeDisciplineOptions.length) {
             <div class="tournament-event-choices" role="group"
-              [attr.aria-label]="'communities.canoeTournament.disciplineTitle' | t">
+              [attr.aria-label]="'cno.disciplineTitle' | t">
               <div class="tournament-event-choices-intro">
-                <strong>{{ 'communities.canoeTournament.disciplineTitle' | t }}</strong>
-                <p>{{ 'communities.canoeTournament.disciplineHelp' | t }}</p>
+                <strong>{{ 'cno.disciplineTitle' | t }}</strong>
+                <p>{{ 'cno.disciplineHelp' | t }}</p>
               </div>
               <div class="tournament-event-options">
                 @for (discipline of canoeDisciplineOptions; track discipline) {
@@ -166,7 +166,7 @@
                     [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
                     [class.is-selected]="eventDisciplineDraft === discipline"
                     (click)="chooseCanoeDiscipline(discipline)">
-                    <span>{{ ('communities.canoeTournament.discipline.' + discipline) | t }}</span>
+                    <span>{{ ('cno.d.' + discipline) | t }}</span>
                     <small>{{ 'communities.swimTournament.secondsUnit' | t }}</small>
                   </button>
                 }

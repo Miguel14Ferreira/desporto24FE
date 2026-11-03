@@ -70,7 +70,7 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
   musculacao: [{ code: 'STRENGTH_TRAINING', labelKey: 'communities.strengthTraining.event' }],
   natacao: [{ code: 'SWIM_LCM', labelKey: 'communities.swimming.pool50m' }],
-  'canoagem velocidade': [{ code: 'CANOE_SPRINT', labelKey: 'communities.canoeTournament.eventTitle' }],
+  'canoagem velocidade': [{ code: 'CANOE_SPRINT', labelKey: 'cno.title' }],
   'natacao em aguas abertas': [{ code: 'OWS_INDIVIDUAL', labelKey: 'communities.openWater.individual' }],
   orientacao: [{ code: 'FOOT_ORIENTEERING', labelKey: 'communities.orienteering.foot' }],
   'patinagem de velocidade': [

@@ -287,7 +287,7 @@ describe('Community tournaments management', () => {
     await component.create();
     expect(api.createCanoeChampionship).toHaveBeenCalledOnceWith(7,'K1 500 m','K1_500');
     expect(component.isTimedCompetition).toBeTrue();
-    expect(component.timedUiKey('title')).toBe('communities.canoeTournament.title');
+    expect(component.timedUiKey('title')).toBe('cno.title');
     expect(api.timedOverview).toHaveBeenCalledWith(7,119);
     expect(api.create).not.toHaveBeenCalled();
     expect(api.generateSchedule).not.toHaveBeenCalled();

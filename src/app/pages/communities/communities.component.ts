@@ -839,7 +839,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return t('communities.trackTournament.discipline.' + code);
     }
     if (['K1_200','K1_500','K1_1000'].includes(code))
-      return t('communities.canoeTournament.discipline.' + code);
+      return t('cno.d.' + code);
     return t('communities.discipline.' + code.toLowerCase());
   }
   performanceKind = performanceKind;

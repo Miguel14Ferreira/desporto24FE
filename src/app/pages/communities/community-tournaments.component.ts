@@ -459,10 +459,12 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
   timedUiKey(key:string):string {
     const common=['rounds','linked','unlink','link','empty','place','bestTime','attempts','unlinked','loading','loadError','available','noAvailable','resultsTitle','noResults','provisional'];
-    const canoe = this.selected?.scoringMode==='CANOE_BEST_TIME';
-    return 'communities.'+(canoe && !common.includes(key) ? 'canoeTournament'
-      : this.selected?.scoringMode==='TRACK_BEST_TIME' && !common.includes(key)
-        ? 'trackTournament':'swimTournament')+'.'+key;
+    if (this.selected?.scoringMode==='CANOE_BEST_TIME' && !common.includes(key))
+      return key==='description'
+        ? 'communities.tournaments.capabilities.model.CANOE_BEST_TIME'
+        : key==='discipline.' ? 'cno.d.' : 'cno.'+key;
+    return 'communities.'+(this.selected?.scoringMode==='TRACK_BEST_TIME'
+      && !common.includes(key) ? 'trackTournament':'swimTournament')+'.'+key;
   }
 
   /** A speed-skating bracket uses timed heats, never generic league points. */
@@ -934,7 +936,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       case 'EVENT_REQUIRED': return 'communities.tournaments.events.title';
       case 'DISCIPLINE_REQUIRED':
         return this.selectedSportCreationModel === 'CANOE_BEST_TIME'
-          ? 'communities.canoeTournament.disciplineTitle'
+          ? 'cno.disciplineTitle'
           : this.selectedSportCreationModel === 'SWIM_BEST_TIME'
           ? 'communities.swimTournament.disciplineTitle'
           : this.selectedSportCreationModel === 'FIELD_BEST_MARK'
@@ -964,7 +966,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (model === 'FIELD_BEST_MARK') return t('communities.fieldTournament.disciplineHelp');
     if (model === 'TRACK_BEST_TIME') return t('communities.trackTournament.disciplineHelp');
     if (model === 'SWIM_BEST_TIME') return t('communities.swimTournament.disciplineHelp');
-    if (model === 'CANOE_BEST_TIME') return t('communities.canoeTournament.disciplineHelp');
+    if (model === 'CANOE_BEST_TIME') return t('cno.disciplineHelp');
     if (model === 'RELAY_BEST_TIME') return t('communities.tournaments.capabilities.model.RELAY_BEST_TIME');
     return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
       ? t('communities.tournaments.organizerUi.teamChessUnavailable')
