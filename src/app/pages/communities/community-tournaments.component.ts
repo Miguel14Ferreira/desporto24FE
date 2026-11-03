@@ -1399,7 +1399,8 @@ export class CommunityTournamentsComponent implements OnChanges {
       stage.loaded++;
       if (game.status === 'COMPLETED') stage.completed++;
     }
-    return [...stages.values()].sort((a, b) => a.order - b.order);
+    return [...stages.values()].sort((a, b) => a.order - b.order)
+      .map(({order, ...stage}) => stage);
   }
 
   teamPhaseKey(game: TournamentTeamMatch): string {
