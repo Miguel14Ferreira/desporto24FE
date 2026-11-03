@@ -232,10 +232,10 @@
           }
           @if (relayDisciplineOptions.length) {
             <div class="tournament-event-choices" role="group"
-              [attr.aria-label]="'communities.relay.disciplineTitle' | t">
+              [attr.aria-label]="'communities.trackTournament.disciplineTitle' | t">
               <div class="tournament-event-choices-intro">
-                <strong>{{ 'communities.relay.disciplineTitle' | t }}</strong>
-                <p>{{ 'communities.relay.disciplineHelp' | t }}</p>
+                <strong>{{ 'communities.trackTournament.disciplineTitle' | t }}</strong>
+                <p>{{ 'communities.relay.description' | t }}</p>
               </div>
               <div class="tournament-event-options">
                 @for (discipline of relayDisciplineOptions; track discipline) {
@@ -1139,7 +1139,7 @@
                     [disabled]="busy" (click)="loadRelayOverview()">{{ 'common.retry' | t }}</button>
                 </div>
                 @if (relayError) {
-                  <p class="field-validation" role="alert">{{ 'communities.relay.loadError' | t }}</p>
+                  <p class="field-validation" role="alert">{{ 'communities.swimTournament.loadError' | t }}</p>
                 }
                 @if (relayOverview; as relay) {
                   @if (canManage && selected.status !== 'COMPLETED') {
@@ -1152,11 +1152,11 @@
                             <p class="t-muted">{{ 'communities.relay.rosterRequired' | t }}</p>
                           } @else {
                             <div class="team-create-actions">
-                              <label>{{ 'communities.relay.heat' | t }}
+                              <label>{{ 'communities.inlineSpeed.heat' | t }}
                                 <input type="number" min="1" max="20" step="1"
                                   [(ngModel)]="relayHeatDraft[team.id]" [disabled]="busy">
                               </label>
-                              <label>{{ 'communities.relay.seconds' | t }}
+                              <label>{{ 'communities.swimTournament.secondsUnit' | t }}
                                 <input type="number" min="0.001" step="0.001"
                                   [(ngModel)]="relayTimeDraft[team.id]" [disabled]="busy">
                               </label>
@@ -1176,24 +1176,24 @@
                             </div>
                             <button type="button" class="t-btn t-btn-primary t-btn-small"
                               [disabled]="busy || !relayTeamReady(team) || !validRelayTime(team.id)"
-                              (click)="saveRelayHeat(team)">{{ 'communities.relay.save' | t }}</button>
+                              (click)="saveRelayHeat(team)">{{ 'communities.tournaments.fixturesUi.save' | t }}</button>
                           }
                         </div>
                       }
                     </div>
                   }
                   <div class="swim-standings">
-                    <h6>{{ 'communities.relay.results' | t }}</h6>
+                    <h6>{{ 'communities.swimTournament.resultsTitle' | t }}</h6>
                     @if (!relay.standings.length) {
-                      <p class="t-muted">{{ 'communities.relay.noResults' | t }}</p>
+                      <p class="t-muted">{{ 'communities.swimTournament.noResults' | t }}</p>
                     } @else {
                       <div class="standings-scroll">
                         <table class="team-standings-table">
                           <thead><tr>
                             <th scope="col">#</th>
-                            <th scope="col">{{ 'communities.relay.team' | t }}</th>
-                            <th scope="col">{{ 'communities.relay.bestTime' | t }}</th>
-                            <th scope="col">{{ 'communities.relay.heats' | t }}</th>
+                            <th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
+                            <th scope="col">{{ 'communities.swimTournament.bestTime' | t }}</th>
+                            <th scope="col">{{ 'communities.swimTournament.rounds' | t }}</th>
                           </tr></thead>
                           <tbody>
                             @for (row of relay.standings; track row.teamId) {
@@ -1208,16 +1208,16 @@
                         </table>
                       </div>
                     }
-                    <h6>{{ 'communities.relay.recorded' | t }}</h6>
+                    <h6>{{ 'communities.swimTournament.linked' | t }}</h6>
                     @for (heat of relay.heats; track heat.id) {
                       <div class="race-available-row">
-                        <span><strong>{{ heat.teamName }} · {{ 'communities.relay.heat' | t }} {{ heat.heatNumber }}</strong>
+                        <span><strong>{{ heat.teamName }} · {{ 'communities.inlineSpeed.heat' | t }} {{ heat.heatNumber }}</strong>
                           <small>{{ relayRunnerNames(heat.teamId,heat.runnerProfileIds) }}</small>
                         </span>
                         <strong>{{ heat.elapsedSeconds | number:'1.2-3' }} s</strong>
                       </div>
                     }
-                    <p class="t-muted">{{ 'communities.relay.provisional' | t }}</p>
+                    <p class="t-muted">{{ 'communities.trackTournament.provisional' | t }}</p>
                   </div>
                 }
               </section>
