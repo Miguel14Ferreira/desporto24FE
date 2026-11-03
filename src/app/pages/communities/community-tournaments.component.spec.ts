@@ -1212,7 +1212,7 @@ describe('Community tournaments management', () => {
           awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const}
       ];
       expect(component.teamPhases).toEqual([{
-        key:'round-1',label:'Eliminatória 1',completed:0,loaded:1
+        key:'round-1',label:'Ronda 1',completed:0,loaded:1
       }]);
       expect(component.teamPhases.some(s=>s.label==='Final')).toBeFalse();
     });
