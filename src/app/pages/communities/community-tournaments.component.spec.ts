@@ -1930,6 +1930,60 @@ describe('Community tournaments management', () => {
       expect(component.teamGroupHighlights).toEqual([]);
     });
 
+    it('links only qualified group teams to their uniquely published first knockout match', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      const standing=(teamId:number,position:number)=>({
+        teamId,position,teamName:'Equipa '+teamId,played:3,won:2,drawn:0,
+        lost:1,goalsFor:4,goalsAgainst:2,goalDifference:2,points:6
+      });
+      component.teamGroups={tournamentId:19,knockoutStarted:false,groups:[
+        {groupNumber:1,standings:[standing(40,1),standing(41,2),standing(42,3)]},
+        {groupNumber:2,standings:[standing(43,1),standing(44,2)]}
+      ]};
+      const semi={id:86,roundNumber:1,groupNumber:null,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:44,awayTeamName:'Amarelos',
+        status:'SCHEDULED' as const};
+      component.teamMatches=[semi];
+      expect(component.publishedGroupKnockoutFixture(1,40)).toBeNull();
+      component.teamGroups.knockoutStarted=true;
+      expect(component.publishedGroupKnockoutFixture(1,40)?.id).toBe(86);
+      expect(component.publishedGroupKnockoutFixture(2,44)?.id).toBe(86);
+      expect(component.publishedGroupKnockoutFixture(1,42)).toBeNull();
+      expect(component.publishedGroupKnockoutFixture(2,40)).toBeNull();
+      expect(component.publishedGroupKnockoutFixture(1,99)).toBeNull();
+      const focus=spyOn(component,'focusPublishedKnockoutInBoard');
+      component.showGroupTeamKnockout(1,40);
+      expect(component.knockoutFocusTeamId).toBe(40);
+      expect(focus).toHaveBeenCalledOnceWith(semi);
+      component.showGroupTeamKnockout(1,42);
+      expect(focus).toHaveBeenCalledTimes(1);
+      component.teamMatches=[{...semi,groupNumber:1}];
+      expect(component.publishedGroupKnockoutFixture(1,40)).toBeNull();
+      component.teamMatches=[semi,{...semi,id:87}];
+      expect(component.publishedGroupKnockoutFixture(1,40)).toBeNull();
+      component.teamMatches=[semi];
+      component.teamGroups.groups[1].standings.push(standing(40,2));
+      expect(component.publishedGroupKnockoutFixture(1,40)).toBeNull();
+      component.teamGroups={...component.teamGroups,tournamentId:777};
+      expect(component.publishedGroupKnockoutFixture(1,40)).toBeNull();
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      expect(component.publishedGroupKnockoutFixture(1,40)).toBeNull();
+    });
+
+    it('never links a later knockout stage as the immediate group qualifier', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:4};
+      component.teamGroups={tournamentId:19,knockoutStarted:true,groups:[
+        {groupNumber:1,standings:[{teamId:40,teamName:'Verdes',position:1,played:2,
+          won:2,drawn:0,lost:0,goalsFor:4,goalsAgainst:0,goalDifference:4,points:6}]}
+      ]};
+      component.teamMatches=[{id:91,roundNumber:2,groupNumber:null,
+        homeTeamId:40,homeTeamName:'Verdes',awayTeamId:44,
+        awayTeamName:'Amarelos',status:'SCHEDULED'}];
+      expect(component.publishedGroupKnockoutFixture(1,40)).toBeNull();
+      component.teamMatches=[{...component.teamMatches[0],roundNumber:1}];
+      expect(component.publishedGroupKnockoutFixture(1,40)?.id).toBe(91);
+    });
+
     it('offers only actual published team sections, never draft or relay brackets', () => {
       component.selectTournament(teamDraft);
       expect(component.teamOverviewSections).toEqual(['teams']);

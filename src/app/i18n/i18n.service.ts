@@ -3104,6 +3104,7 @@ const PT: Dictionary = {
   'communities.tournaments.bracketUi.focusAll': "Todas as equipas",
   'communities.tournaments.bracketUi.showAll': "Ver todos os jogos",
   'communities.tournaments.bracketUi.showLess': "Ver menos jogos",
+  'communities.tournaments.groupBridge.open': "Ver no quadro",
   'communities.tournaments.bracketUi.viewPrevious': "Ver jogo anterior",
   'communities.specializedStats.heading': "Estatísticas por modalidade",
   'communities.specializedStats.raceDescription': "Corridas da época, sem confrontos.",

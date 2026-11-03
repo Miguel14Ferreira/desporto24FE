@@ -1978,6 +1978,14 @@
                                   <span class="team-standings-spotlight-points">{{ row.points }} {{ 'communities.tournaments.finalUi.pointsCol' | t }}</span>
                                   <span class="team-standings-spotlight-arrow" aria-hidden="true">↗</span>
                                 </a>
+                                @if (publishedGroupKnockoutFixture(group.groupNumber, row.teamId); as game) {
+                                  <button type="button" class="team-group-knockout-jump"
+                                    (click)="showGroupTeamKnockout(group.groupNumber, row.teamId)"
+                                    [attr.aria-label]="('communities.tournaments.groupBridge.open' | t) + ': ' + row.teamName">
+                                    <span>{{ 'communities.tournaments.groupBridge.open' | t }}</span>
+                                    <small>{{ teamMatchStageLabel(game) }} ↗</small>
+                                  </button>
+                                }
                               }
                             </section>
                           }
@@ -2014,6 +2022,13 @@
                                   [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:row.teamId}">{{ row.teamName }}</a>
                                   @if (groups.knockoutStarted && row.position <= 2) {
                                     <span class="tournament-state">{{ 'communities.tournaments.finalUi.qualified' | t }}</span>
+                                  }
+                                  @if (publishedGroupKnockoutFixture(group.groupNumber, row.teamId)) {
+                                    <button type="button" class="team-group-knockout-jump is-inline"
+                                      (click)="showGroupTeamKnockout(group.groupNumber, row.teamId)"
+                                      [attr.aria-label]="('communities.tournaments.groupBridge.open' | t) + ': ' + row.teamName">
+                                      {{ 'communities.tournaments.groupBridge.open' | t }} ↗
+                                    </button>
                                   }
                                 </th>
                                 <td>{{ row.played }}</td><td>{{ row.won }}</td><td>{{ row.drawn }}</td>

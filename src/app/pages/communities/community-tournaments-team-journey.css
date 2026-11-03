@@ -134,3 +134,10 @@
 :host .tournaments .team-knockout-round-expand:hover{background:rgba(25,114,88,.63);border-color:#8ef6c3;}
 :host .tournaments .team-knockout-round-expand small{white-space:nowrap;font-size:.72rem;font-variant-numeric:tabular-nums;color:#c2eadc;}
 :host .tournaments .team-knockout-round-expand:focus-visible{outline:2px solid #a6ffdb;outline-offset:3px;}
+
+/* Published group-to-knockout links, never speculative pairings. */
+:host .tournaments .team-group-knockout-jump{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0;padding:7px 9px;border:1px solid rgba(93,228,171,.48);border-radius:9px;background:rgba(20,95,81,.5);color:#b9ffe0;font:inherit;font-size:.76rem;font-weight:750;text-align:left;cursor:pointer;}
+:host .tournaments .team-group-knockout-jump small{font-size:.7rem;color:#a7d9cc;}
+:host .tournaments .team-group-knockout-jump.is-inline{width:auto;display:inline-flex;margin-top:6px;padding:5px 8px;}
+:host .tournaments .team-group-knockout-jump:hover{border-color:#9affd2;background:rgba(24,124,94,.65);}
+:host .tournaments .team-group-knockout-jump:focus-visible{outline:2px solid #b3ffe1;outline-offset:2px;}

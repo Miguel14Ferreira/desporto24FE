@@ -1346,6 +1346,31 @@ export class CommunityTournamentsComponent implements OnChanges {
     })).filter(group => group.rows.length > 0);
   }
 
+  /** Link only a backend-qualified team to its unique published first-round fixture. */
+  publishedGroupKnockoutFixture(groupNumber: number, teamId: number): TournamentTeamMatch | null {
+    const groups = this.teamGroups;
+    if (!this.isGroupKnockout || this.isRelayCompetition || this.teamGroupsError
+        || !groups?.knockoutStarted || groups.tournamentId !== this.selected?.id
+        || !Number.isSafeInteger(teamId) || teamId <= 0) return null;
+    const containing = groups.groups.filter(group =>
+      group.standings.some(row => row.teamId === teamId));
+    if (containing.length !== 1 || containing[0].groupNumber !== groupNumber) return null;
+    const row = containing[0].standings.find(entry => entry.teamId === teamId);
+    if (!row || !Number.isSafeInteger(row.position) || row.position < 1
+        || row.position > 2) return null;
+    const fixtures = this.teamMatches.filter(game =>
+      this.isEliminationMatch(game) && game.roundNumber === 1
+      && (game.homeTeamId === teamId || game.awayTeamId === teamId));
+    return fixtures.length === 1 ? fixtures[0] : null;
+  }
+
+  showGroupTeamKnockout(groupNumber: number, teamId: number): void {
+    const fixture = this.publishedGroupKnockoutFixture(groupNumber, teamId);
+    if (!fixture) return;
+    this.setKnockoutFocusTeam(teamId);
+    this.focusPublishedKnockoutInBoard(fixture);
+  }
+
   get focusedTeamStanding() {
     const team = this.focusedTeam;
     if (!team || this.isRelayCompetition) return undefined;
