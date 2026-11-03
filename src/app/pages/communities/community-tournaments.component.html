@@ -1648,6 +1648,56 @@
                       </span>
                       <span aria-hidden="true">⌄</span>
                     </summary>
+                    <div class="team-knockout-focus">
+                      <label>
+                        {{ 'communities.tournaments.bracketUi.focusTeam' | t }}
+                        <select [ngModel]="knockoutFocusTeamId ?? 'ALL'"
+                          (ngModelChange)="setKnockoutFocusTeam($event)"
+                          [attr.aria-label]="'communities.tournaments.bracketUi.focusTeam' | t">
+                          <option value="ALL">{{ 'communities.tournaments.bracketUi.focusAll' | t }}</option>
+                          @for (team of knockoutFocusTeams; track team.id) {
+                            <option [ngValue]="team.id">{{ team.name }}</option>
+                          }
+                        </select>
+                      </label>
+                      @if (knockoutFocusTeamId !== null) {
+                        <button type="button" class="team-knockout-focus-clear"
+                          (click)="setKnockoutFocusTeam('ALL')">
+                          {{ 'communities.tournaments.teamPage.clearSearch' | t }}
+                        </button>
+                      }
+                    </div>
+                    @if (knockoutFocusTeamId !== null) {
+                      @let path = focusedKnockoutPath;
+                      @if (path.length) {
+                        <div class="team-knockout-path-section">
+                          <strong>{{ 'communities.tournaments.teamPage.journeyTitle' | t }}</strong>
+                          <div class="team-knockout-path-strip" tabindex="0" role="region"
+                            [attr.aria-label]="'communities.tournaments.teamPage.journeyTitle' | t">
+                            @for (step of path; track step.game.id; let last = $last) {
+                              <button type="button" class="team-knockout-path-card"
+                                [attr.aria-label]="teamMatchStageLabel(step.game) + ' · ' + step.game.homeTeamName + ' · ' + step.game.awayTeamName"
+                                (click)="focusPublishedKnockoutInBoard(step.game)">
+                                <span>{{ teamMatchStageLabel(step.game) }}</span>
+                                <b>{{ step.game.homeTeamName }} × {{ step.game.awayTeamName }}</b>
+                                <small>
+                                  @if (step.game.status === 'COMPLETED' && step.game.homeScore != null && step.game.awayScore != null) {
+                                    {{ step.game.homeScore }} : {{ step.game.awayScore }}
+                                  } @else {
+                                    {{ (step.game.status === 'COMPLETED' ? 'communities.tournaments.fixturesUi.filterCompleted' : 'communities.tournaments.fixturesUi.filterPending') | t }}
+                                  }
+                                </small>
+                              </button>
+                              @if (step.linkedToNext && !last) {
+                                <span class="team-knockout-path-arrow"
+                                  [title]="'communities.tournaments.bracketUi.advanced' | t"
+                                  aria-hidden="true">→</span>
+                              }
+                            }
+                          </div>
+                        </div>
+                      }
+                    }
                     <div class="team-knockout-scroll" tabindex="0"
                       role="region" [attr.aria-label]="'communities.tournaments.bracketUi.title' | t">
                       <div class="team-knockout-columns">
@@ -1661,7 +1711,11 @@
                               <span>{{ round.matches.length }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
                             </button>
                             @for (item of round.matches; track item.game.id) {
-                              <article class="team-knockout-match" [class.is-done]="item.winnerId !== null">
+                              <article class="team-knockout-match" tabindex="-1"
+                                [attr.data-knockout-fixture-id]="item.game.id"
+                                [class.is-done]="item.winnerId !== null"
+                                [class.is-focus-match]="isKnockoutTeamFocused(item.game)"
+                                [class.is-dimmed]="knockoutFocusTeamId !== null && !isKnockoutTeamFocused(item.game)">
                                 @if (item.incoming.length) {
                                   <div class="team-knockout-incoming">
                                     <small>{{ 'communities.tournaments.bracketUi.incoming' | t }}</small>
@@ -1677,12 +1731,14 @@
                                     </div>
                                   </div>
                                 }
-                                <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.homeTeamId">
+                                <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.homeTeamId"
+                                  [class.is-focus-contender]="knockoutFocusTeamId === item.game.homeTeamId">
                                   <a [routerLink]="['/menu/communities', community.id]"
                                     [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.homeTeamId}">{{ item.game.homeTeamName }}</a>
                                   <b>{{ item.game.status === 'COMPLETED' && item.game.homeScore != null ? item.game.homeScore : '—' }}</b>
                                 </div>
-                                <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.awayTeamId">
+                                <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.awayTeamId"
+                                  [class.is-focus-contender]="knockoutFocusTeamId === item.game.awayTeamId">
                                   <a [routerLink]="['/menu/communities', community.id]"
                                     [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.awayTeamId}">{{ item.game.awayTeamName }}</a>
                                   <b>{{ item.game.status === 'COMPLETED' && item.game.awayScore != null ? item.game.awayScore : '—' }}</b>

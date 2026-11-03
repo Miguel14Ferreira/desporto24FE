@@ -196,6 +196,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   private teamProfileMatchesRevision = 0;
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamPhaseFilter = 'ALL';
+  knockoutFocusTeamId: number | null = null;
   teamMatchesPage = 0;
   teamMatchesHasMore = false;
   teamMatchesLoading = false;
@@ -1149,6 +1150,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.resetTeamProfileMatches();
       this.teamMatchFilter = 'ALL';
       this.teamPhaseFilter = 'ALL';
+      this.knockoutFocusTeamId = null;
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
@@ -1539,7 +1541,13 @@ export class CommunityTournamentsComponent implements OnChanges {
           : null;
         // One published fixture in the immediately following round is proof
         // of progression. Duplicated or missing links cannot prove advancement.
-        const nextFixtures = winnerId === null ? [] : fixtures.filter(next =>
+        // A team must have a unique source match within the same round.
+        // Duplicate appearances never establish a reliable progression link.
+        const uniqueSource = winnerId !== null && fixtures.filter(previous =>
+          previous.roundNumber === round
+          && (previous.homeTeamId === winnerId || previous.awayTeamId === winnerId)
+        ).length === 1;
+        const nextFixtures = !uniqueSource ? [] : fixtures.filter(next =>
           next.roundNumber === round + 1
           && (next.homeTeamId === winnerId || next.awayTeamId === winnerId));
         const nextFixture = nextFixtures.length === 1 ? nextFixtures[0] : null;
@@ -1584,6 +1592,69 @@ export class CommunityTournamentsComponent implements OnChanges {
         };
       })
     }));
+  }
+
+  /** The selector only offers teams found in actually loaded elimination fixtures. */
+  get knockoutFocusTeams(): { id: number; name: string }[] {
+    if (!this.isCupFormat || this.isRelayCompetition) return [];
+    const teams = new Map<number, string>();
+    for (const game of this.teamMatches.filter(match => this.isEliminationMatch(match))) {
+      if (Number.isSafeInteger(game.homeTeamId) && game.homeTeamId > 0)
+        teams.set(game.homeTeamId, game.homeTeamName);
+      if (Number.isSafeInteger(game.awayTeamId) && game.awayTeamId > 0)
+        teams.set(game.awayTeamId, game.awayTeamName);
+    }
+    return [...teams].map(([id,name]) => ({id,name}))
+      .sort((a,b) => a.name.localeCompare(b.name) || a.id-b.id);
+  }
+
+  setKnockoutFocusTeam(value: number | string | null): void {
+    if (value == null || value === 'ALL') {
+      this.knockoutFocusTeamId = null;
+      return;
+    }
+    const id = Number(value);
+    if (Number.isSafeInteger(id) && id > 0
+        && this.knockoutFocusTeams.some(team => team.id === id))
+      this.knockoutFocusTeamId = id;
+  }
+
+  isKnockoutTeamFocused(game: TournamentTeamMatch): boolean {
+    return this.knockoutFocusTeamId !== null &&
+      (game.homeTeamId === this.knockoutFocusTeamId
+        || game.awayTeamId === this.knockoutFocusTeamId);
+  }
+
+  /** This visual route contains published fixtures only, and an arrow only when
+   * a unique winning team appears in the immediately following published round. */
+  get focusedKnockoutPath(): { game: TournamentTeamMatch; linkedToNext: boolean }[] {
+    const teamId = this.knockoutFocusTeamId;
+    if (teamId === null || !this.knockoutFocusTeams.some(team => team.id === teamId))
+      return [];
+    const matches = this.knockoutBracket.flatMap(round => round.matches)
+      .filter(item => item.game.homeTeamId === teamId || item.game.awayTeamId === teamId);
+    return matches.map((item, index) => ({
+      game: item.game,
+      linkedToNext: item.winnerId === teamId &&
+        item.nextFixture?.id === matches[index+1]?.game.id
+    }));
+  }
+
+  /** Keep focus inside the published bracket; the existing fixture list
+   * remains available through the normal match navigation. */
+  focusPublishedKnockoutInBoard(fixture: TournamentTeamMatch): void {
+    if (!this.isCupFormat || this.isRelayCompetition || !Number.isSafeInteger(fixture.id)
+        || !this.isKnockoutTeamFocused(fixture)
+        || !this.teamMatches.some(game =>
+          game.id === fixture.id && this.isEliminationMatch(game))) return;
+    const board = this.teamTournamentBracket?.nativeElement;
+    if (board instanceof HTMLDetailsElement) board.open = true;
+    this.changeDetector.detectChanges();
+    const match = board?.querySelector<HTMLElement>(
+      `[data-knockout-fixture-id="${fixture.id}"]`
+    );
+    match?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+    match?.focus({preventScroll:true});
   }
 
   /** Open the real loaded fixture for a confirmed progression, without
@@ -1838,6 +1909,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.resetTeamProfileMatches();
     this.teamMatchFilter = 'ALL';
     this.teamPhaseFilter = 'ALL';
+    this.knockoutFocusTeamId = null;
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
@@ -2550,6 +2622,9 @@ export class CommunityTournamentsComponent implements OnChanges {
             && !this.teamPhases.some(stage => stage.key === this.teamPhaseFilter)) {
           this.teamPhaseFilter = 'ALL';
         }
+        if (reset && this.knockoutFocusTeamId !== null
+            && !this.knockoutFocusTeams.some(team => team.id === this.knockoutFocusTeamId))
+          this.knockoutFocusTeamId = null;
         this.teamMatchesPage = page;
         this.teamMatchesHasMore = result.hasMore;
         for (const game of result.matches) {

@@ -1181,6 +1181,14 @@ describe('Community tournaments management', () => {
         .toEqual(['Verdes','Amarelos']);
       expect(bracket[1].matches[0].incoming.map(source=>source.game.id))
         .toEqual([70,71]);
+      expect(component.knockoutFocusTeams.map(team=>team.id)).toEqual([43,41,42,40]);
+      component.setKnockoutFocusTeam(40);
+      expect(component.focusedKnockoutPath.map(step=>step.game.id)).toEqual([70,72]);
+      expect(component.focusedKnockoutPath.map(step=>step.linkedToNext)).toEqual([true,false]);
+      expect(component.isKnockoutTeamFocused(bracket[0].matches[0].game)).toBeTrue();
+      expect(component.isKnockoutTeamFocused(bracket[0].matches[1].game)).toBeFalse();
+      component.setKnockoutFocusTeam('ALL');
+      expect(component.focusedKnockoutPath).toEqual([]);
       expect(bracket[0].matches.every(item=>item.incoming.length===0)).toBeTrue();
       expect(bracket.some(round=>round.round===3)).toBeFalse();
       expect(component.teamMatches.map(game=>game.id)).toEqual([72,70,71]);
@@ -1196,7 +1204,28 @@ describe('Community tournaments management', () => {
         {id:200,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
           awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED'}
       ];
-      expect(component.knockoutBracket[1].matches[0].incoming).toEqual([]);
+      const bracket = component.knockoutBracket;
+      expect(bracket[1].matches[0].incoming).toEqual([]);
+      expect(bracket[0].matches.every(item=>item.nextFixture===null && !item.advanced)).toBeTrue();
+      component.setKnockoutFocusTeam(40);
+      expect(component.focusedKnockoutPath.map(step=>step.linkedToNext))
+        .toEqual([false,false,false]);
+    });
+
+    it('clears team bracket focus when switching competitions or resetting loaded fixtures', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:400,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED'}
+      ];
+      component.setKnockoutFocusTeam(40);
+      component.setKnockoutFocusTeam(9999);
+      expect(component.knockoutFocusTeamId).toBe(40);
+      component.selectTournament({...teamDraft,id:28,status:'DRAFT',format:'KNOCKOUT'});
+      expect(component.knockoutFocusTeamId).toBeNull();
+      expect(component.focusedKnockoutPath).toEqual([]);
+      component.setKnockoutFocusTeam(40);
+      expect(component.knockoutFocusTeamId).toBeNull();
     });
 
     it('does not invent knockout progress, winners, draws or championships', () => {

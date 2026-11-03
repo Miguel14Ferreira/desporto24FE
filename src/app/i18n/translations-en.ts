@@ -3094,6 +3094,8 @@ export const EN: Record<string, string> = {
   'communities.tournaments.bracketUi.advanced': "Advanced to next round",
   'communities.tournaments.bracketUi.viewNext': "View next match",
   'communities.tournaments.bracketUi.incoming': "Confirmed qualifiers",
+  'communities.tournaments.bracketUi.focusTeam': "Highlight team",
+  'communities.tournaments.bracketUi.focusAll': "All teams",
   'communities.tournaments.bracketUi.viewPrevious': "View qualifying match",
   'communities.specializedStats.heading': "Sport-specific statistics",
   'communities.specializedStats.raceDescription': "Recorded race results for this season, separate from head-to-head matches.",
