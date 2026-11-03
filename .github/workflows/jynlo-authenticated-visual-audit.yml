@@ -10,6 +10,7 @@ on:
       - 'src/app/app.component.*'
       - 'src/app/app-routing.module.ts'
       - 'src/app/pages/**'
+      - 'src/app/services/community-groups.service.ts'
       - 'src/app/shared/**'
       - 'src/app/i18n/**'
       - 'src/styles.css'
