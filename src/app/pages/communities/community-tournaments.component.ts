@@ -1346,6 +1346,47 @@ export class CommunityTournamentsComponent implements OnChanges {
     })).filter(group => group.rows.length > 0);
   }
 
+  /** Group snapshot from published, currently loaded fixtures only.
+   * Never describe an incomplete paginated response as the full schedule. */
+  publishedGroupFixtureOverview(groupNumber: number): {
+    total: number; completed: number;
+    results: TournamentTeamMatch[]; pending: TournamentTeamMatch[];
+  } {
+    const empty = { total: 0, completed: 0,
+      results: [] as TournamentTeamMatch[], pending: [] as TournamentTeamMatch[] };
+    if (!this.isGroupKnockout || this.isRelayCompetition
+        || !Number.isSafeInteger(groupNumber) || groupNumber < 1
+        || !this.teamGroups || this.teamGroupsError
+        || this.teamGroups.tournamentId !== this.selected?.id
+        || !this.teamGroups.groups.some(group => group.groupNumber === groupNumber))
+      return empty;
+    const games = this.teamMatches.filter(game => game.groupNumber === groupNumber);
+    const results = games.filter(game => game.status === 'COMPLETED')
+      .sort((a,b) => b.roundNumber-a.roundNumber || b.id-a.id).slice(0,3);
+    const pending = games.filter(game => game.status !== 'COMPLETED')
+      .sort((a,b) => a.roundNumber-b.roundNumber || a.id-b.id).slice(0,3);
+    return { total: games.length,
+      completed: games.filter(game => game.status === 'COMPLETED').length,
+      results, pending };
+  }
+
+  /** Navigate back to one actual loaded group fixture without changing the tournament. */
+  showPublishedGroupFixture(groupNumber: number, fixture: TournamentTeamMatch): void {
+    if (!this.isGroupKnockout || this.isRelayCompetition
+        || !Number.isSafeInteger(groupNumber) || groupNumber < 1
+        || !Number.isSafeInteger(fixture.id) || fixture.id <= 0
+        || fixture.groupNumber !== groupNumber || !this.teamMatches.some(game =>
+          game.id === fixture.id && game.groupNumber === groupNumber)) return;
+    this.teamPhaseFilter = `group-${groupNumber}`;
+    this.teamMatchFilter = 'ALL';
+    this.editingTeamResultId = null;
+    this.changeDetector.detectChanges();
+    const match = this.teamFixturesList?.nativeElement.querySelector<HTMLElement>(
+      `[data-team-fixture-id="${fixture.id}"]`);
+    match?.scrollIntoView({behavior:'smooth',block:'center'});
+    match?.focus({preventScroll:true});
+  }
+
   /** Link only a backend-qualified team to its unique published first-round fixture. */
   publishedGroupKnockoutFixture(groupNumber: number, teamId: number): TournamentTeamMatch | null {
     const groups = this.teamGroups;

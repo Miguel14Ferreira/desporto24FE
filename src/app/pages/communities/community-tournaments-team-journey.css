@@ -141,3 +141,18 @@
 :host .tournaments .team-group-knockout-jump.is-inline{width:auto;display:inline-flex;margin-top:6px;padding:5px 8px;}
 :host .tournaments .team-group-knockout-jump:hover{border-color:#9affd2;background:rgba(24,124,94,.65);}
 :host .tournaments .team-group-knockout-jump:focus-visible{outline:2px solid #b3ffe1;outline-offset:2px;}
+
+/* Read-only group fixture snapshots, always linked to their published source. */
+:host .tournaments .team-group-fixtures-preview{display:grid;gap:10px;padding:12px 14px 15px;border-top:1px solid rgba(99,198,172,.24);}
+:host .tournaments .team-group-fixtures-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;color:#ccffe7;}
+:host .tournaments .team-group-fixtures-heading strong{font-size:.8rem;}
+:host .tournaments .team-group-fixtures-heading small{font-size:.73rem;color:#a9d6cf;}
+:host .tournaments .team-group-fixtures-preview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:8px;}
+:host .tournaments .team-group-fixture-preview{display:grid;gap:7px;min-width:0;padding:10px;border:1px solid rgba(92,198,170,.33);border-radius:10px;background:rgba(9,53,64,.75);color:#e5fff4;font:inherit;text-align:left;cursor:pointer;}
+:host .tournaments .team-group-fixture-preview:hover{border-color:#8cf5c7;background:rgba(23,95,79,.73);}
+:host .tournaments .team-group-fixture-preview>small{color:#a5d9cc;font-size:.69rem;}
+:host .tournaments .team-group-fixture-preview>span{display:flex;align-items:center;gap:6px;min-width:0;font-size:.77rem;}
+:host .tournaments .team-group-fixture-preview>span strong{min-width:0;flex:1;overflow-wrap:anywhere;font-weight:730;}
+:host .tournaments .team-group-fixture-preview>span b{flex:none;font-variant-numeric:tabular-nums;color:#9effcb;}
+:host .tournaments .team-group-fixture-preview em{font-size:.7rem;color:#9cf1ca;font-style:normal;}
+:host .tournaments .team-group-fixture-preview:focus-visible{outline:2px solid #b2ffdf;outline-offset:2px;}

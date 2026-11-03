@@ -2039,6 +2039,39 @@
                           </tbody>
                         </table>
                       </div>
+                      @let fixtures = publishedGroupFixtureOverview(group.groupNumber);
+                      @if (fixtures.total) {
+                        <div class="team-group-fixtures-preview">
+                          <div class="team-group-fixtures-heading">
+                            <strong>{{ 'communities.tournaments.phaseUi.loadedOnly' | t }}</strong>
+                            <small>{{ fixtures.completed }}/{{ fixtures.total }}
+                              {{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</small>
+                          </div>
+                          <div class="team-group-fixtures-preview-grid">
+                            @for (game of fixtures.results; track game.id) {
+                              <button type="button" class="team-group-fixture-preview"
+                                (click)="showPublishedGroupFixture(group.groupNumber, game)"
+                                [attr.aria-label]="teamMatchStageLabel(game) + ' · ' + game.homeTeamName + ' · ' + game.awayTeamName">
+                                <small>{{ teamMatchStageLabel(game) }}</small>
+                                <span><strong>{{ game.homeTeamName }}</strong>
+                                  <b>{{ game.homeScore ?? '—' }} : {{ game.awayScore ?? '—' }}</b>
+                                  <strong>{{ game.awayTeamName }}</strong></span>
+                                <em>{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }} ↗</em>
+                              </button>
+                            }
+                            @for (game of fixtures.pending; track game.id) {
+                              <button type="button" class="team-group-fixture-preview"
+                                (click)="showPublishedGroupFixture(group.groupNumber, game)"
+                                [attr.aria-label]="teamMatchStageLabel(game) + ' · ' + game.homeTeamName + ' · ' + game.awayTeamName">
+                                <small>{{ teamMatchStageLabel(game) }}</small>
+                                <span><strong>{{ game.homeTeamName }}</strong>
+                                  <b>VS</b><strong>{{ game.awayTeamName }}</strong></span>
+                                <em>{{ 'communities.tournaments.fixturesUi.filterPending' | t }} ↗</em>
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      }
                       </details>
                     }
                   }

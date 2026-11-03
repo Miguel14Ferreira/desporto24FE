@@ -1930,6 +1930,56 @@ describe('Community tournaments management', () => {
       expect(component.teamGroupHighlights).toEqual([]);
     });
 
+    it('summarizes only loaded group fixtures and keeps groups independent', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamGroups={tournamentId:19,knockoutStarted:false,groups:[
+        {groupNumber:1,standings:[]},{groupNumber:2,standings:[]}]};
+      component.teamMatches=[
+        {id:11,roundNumber:2,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED',homeScore:1,awayScore:0},
+        {id:10,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:42,awayTeamName:'Roxos',status:'COMPLETED',homeScore:2,awayScore:1},
+        {id:14,roundNumber:3,groupNumber:1,homeTeamId:41,homeTeamName:'Azuis',
+          awayTeamId:42,awayTeamName:'Roxos',status:'SCHEDULED'},
+        {id:12,roundNumber:1,groupNumber:2,homeTeamId:43,homeTeamName:'Brancos',
+          awayTeamId:44,awayTeamName:'Pretos',status:'COMPLETED',homeScore:0,awayScore:0},
+        {id:13,roundNumber:1,groupNumber:null,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Brancos',status:'SCHEDULED'}
+      ];
+      expect(component.publishedGroupFixtureOverview(1)).toEqual({
+        total:3,completed:2,results:[component.teamMatches[0],component.teamMatches[1]],
+        pending:[component.teamMatches[2]]});
+      expect(component.publishedGroupFixtureOverview(2)).toEqual({
+        total:1,completed:1,results:[component.teamMatches[3]],pending:[]});
+      expect(component.publishedGroupFixtureOverview(3).total).toBe(0);
+      component.teamGroups={...component.teamGroups,tournamentId:20};
+      expect(component.publishedGroupFixtureOverview(1).total).toBe(0);
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      expect(component.publishedGroupFixtureOverview(1).total).toBe(0);
+    });
+
+    it('opens a genuine group fixture without retaining conflicting filters', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      const fixture={id:18,roundNumber:1,groupNumber:2,
+        homeTeamId:40,homeTeamName:'Verdes',awayTeamId:43,awayTeamName:'Brancos',
+        status:'COMPLETED' as const,homeScore:2,awayScore:1};
+      component.teamMatches=[fixture];
+      component.teamPhaseFilter='ALL';
+      component.teamMatchFilter='PENDING';
+      component.editingTeamResultId=18;
+      component.showPublishedGroupFixture(2,fixture);
+      expect(component.teamPhaseFilter).toBe('group-2');
+      expect(component.teamMatchFilter).toBe('ALL');
+      expect(component.editingTeamResultId).toBeNull();
+      component.showPublishedGroupFixture(1,fixture);
+      expect(component.teamPhaseFilter).toBe('group-2');
+      component.showPublishedGroupFixture(2,{...fixture,id:999});
+      expect(component.teamPhaseFilter).toBe('group-2');
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      component.showPublishedGroupFixture(2,fixture);
+      expect(component.teamPhaseFilter).toBe('group-2');
+    });
+
     it('links only qualified group teams to their uniquely published first knockout match', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
       const standing=(teamId:number,position:number)=>({
