@@ -15,7 +15,7 @@ import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './comm
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { historicalMatchReviewFlags } from './community-historical-match-review';
 import { importDiagnosticLabel as localizedImportDiagnostic, importHttpErrorLabel } from './community-import-diagnostic';
-import { sportForRound, CommunityRoundView } from './community-round-sport';
+import { sportForRound, formatForSport, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
   isInlineSpeedTimedEvent, isDiscontinuedInlineFinalB, CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
@@ -1972,6 +1972,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   communitySports(group: Pick<CommunityGroup, 'sport' | 'sports'>): string[] {
     return group.sports?.length ? group.sports : (group.sport ? [group.sport] : []);
+  }
+
+  /** W/D/L is not a valid fallback for Karting or other measured/judged events. */
+  usesMatchPointsModel(): boolean {
+    const sports = this.selected ? this.communitySports(this.selected) : [];
+    return sports.length === 0 || sports.some(sport => {
+      const format = formatForSport(sport);
+      return format === 'team' || format === 'duel';
+    });
   }
 
   editSports(): void {
@@ -3970,9 +3979,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
     this.communityService.updateCompetitionSettings(this.selected.id, {
       rankingsEnabled: this.rankingsEnabledDraft,
-      winPoints: Math.max(0, Number(this.winPointsDraft) || 0),
-      drawPoints: Math.max(0, Number(this.drawPointsDraft) || 0),
-      lossPoints: Math.max(0, Number(this.lossPointsDraft) || 0)
+      winPoints: this.usesMatchPointsModel() ? Math.max(0, Number(this.winPointsDraft) || 0) : null,
+      drawPoints: this.usesMatchPointsModel() ? Math.max(0, Number(this.drawPointsDraft) || 0) : null,
+      lossPoints: this.usesMatchPointsModel() ? Math.max(0, Number(this.lossPointsDraft) || 0) : null
     })
       .pipe(
         timeout(10_000),
