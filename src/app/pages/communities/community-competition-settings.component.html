@@ -13,6 +13,17 @@
 
   <p>{{ 'communities.rankingsOptionalHint' | t }}</p>
 
+  @for (sport of sports; track sport) {
+    @if (specializedClassificationKey(sport)) {
+      <div class="sport-scoring-guidance" role="note">
+        <strong>{{ sport }}</strong>
+        <span>{{ specializedClassificationKey(sport)! | t }}</span>
+        <p>{{ specializedDescriptionKey(sport) | t }}</p>
+      </div>
+    }
+  }
+
+  @if (usesMatchPoints) {
   <div class="points-settings">
     <label>
       <span>{{ 'communities.winPoints' | t }}</span>
@@ -27,6 +38,8 @@
       <input type="number" min="0" [ngModel]="lossPoints" (ngModelChange)="lossPointsChange.emit($event)">
     </label>
   </div>
+
+  }
 
   <button type="button" class="primary-action jynlo-action jynlo-action--primary"
     [disabled]="saving" (click)="saveRequested.emit()">
