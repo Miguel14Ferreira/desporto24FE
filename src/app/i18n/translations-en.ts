@@ -3020,7 +3020,7 @@ export const EN: Record<string, string> = {
   'communities.relay.dq': "Disqualify",
   'communities.relay.leg': "Leg",
   'communities.relay.bad': "Choose 4 runners and a time.",
-  'communities.tournaments.capabilities.model.RELAY_BEST_TIME': "4-runner timed relays",,
+  'communities.tournaments.capabilities.model.RELAY_BEST_TIME': "4-runner timed relays",
   'communities.tournaments.events.type.TRACK_RELAY': "Relays",
   'communities.trackTournament.discipline.TRACK_100': "100 m",
   'communities.trackTournament.discipline.TRACK_200': "200 m",

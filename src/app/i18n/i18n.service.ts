@@ -3026,7 +3026,7 @@ const PT: Dictionary = {
   'communities.relay.dq': "Desqualificar",
   'communities.relay.leg': "Percurso",
   'communities.relay.bad': "Indica 4 atletas e um tempo.",
-  'communities.tournaments.capabilities.model.RELAY_BEST_TIME': "Estafetas · 4 corredores · tempo",,
+  'communities.tournaments.capabilities.model.RELAY_BEST_TIME': "Estafetas · 4 corredores · tempo",
   'communities.tournaments.events.type.TRACK_RELAY': "Estafetas",
   'communities.trackTournament.discipline.TRACK_100': "100 m",
   'communities.trackTournament.discipline.TRACK_200': "200 m",
