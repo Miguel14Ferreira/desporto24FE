@@ -1966,7 +1966,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     await this.mutate(this.api.recordRelayHeat(this.community.id,this.selected.id,
       team.id,heat,seconds,[...this.relayLegDraft[team.id]]),
-      t('communities.relay.saved'),overview=>{
+      t('communities.tournaments.organizerUi.teamScoreSaved'),overview=>{
         this.relayOverview=overview;
         if(this.selected?.status==='DRAFT')
           this.updateSelected({...this.selected!,status:'IN_PROGRESS'});

@@ -244,7 +244,7 @@
                     [class.is-selected]="eventDisciplineDraft===discipline"
                     (click)="chooseRelayDiscipline(discipline)">
                     <span>{{ ('communities.relay.discipline.'+discipline) | t }}</span>
-                    <small>{{ 'communities.relay.fourAthletes' | t }}</small>
+                    <small>4 {{ 'communities.tournaments.teamUi.players' | t }}</small>
                   </button>
                 }
               </div>
@@ -1129,10 +1129,10 @@
               }
             </section>
             @if (isRelayCompetition) {
-              <section class="t-section timed-championship" [attr.aria-label]="'communities.relay.title' | t">
+              <section class="t-section timed-championship" [attr.aria-label]="'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t">
                 <div class="t-section-heading">
                   <div>
-                    <h5>{{ 'communities.relay.title' | t }} · {{ ('communities.relay.discipline.'+selected.eventDiscipline) | t }}</h5>
+                    <h5>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }} · {{ ('communities.relay.discipline.'+selected.eventDiscipline) | t }}</h5>
                     <p>{{ 'communities.relay.description' | t }}</p>
                   </div>
                   <button type="button" class="t-btn t-btn-secondary t-btn-small"
@@ -1144,7 +1144,7 @@
                 @if (relayOverview; as relay) {
                   @if (canManage && selected.status !== 'COMPLETED') {
                     <div class="race-available">
-                      <h6>{{ 'communities.relay.recordTitle' | t }}</h6>
+                      <h6>{{ 'communities.tournaments.fixturesUi.save' | t }}</h6>
                       @for (team of teams; track team.id) {
                         <div class="race-round-card">
                           <strong>{{ team.name }}</strong>
