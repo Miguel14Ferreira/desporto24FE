@@ -746,7 +746,7 @@ describe('Community tournaments management', () => {
       expect(component.isSportFormatSupported).toBeFalse();
     }
     component.startIndividualCreation();
-    for (const sport of ['Corrida de obstáculos', 'Triatlo']) {
+    for (const sport of ['Canoagem', 'Triatlo']) {
       component.chooseSport(sport);
       expect(component.isRaceChampionshipDraft).toBeFalse();
       expect(component.isSportFormatSupported).toBeFalse();
