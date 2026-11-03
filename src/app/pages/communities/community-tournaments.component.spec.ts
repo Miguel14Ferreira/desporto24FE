@@ -1710,7 +1710,7 @@ describe('Community tournaments management', () => {
       ],page:0,hasMore:false}));
       component.teamPageId=40;
       component.selectTournament(groups);
-      const expected=[['group-1','Grupo A',1,2],['round-1','Meia-final',0,1]];
+      const expected=[['group-1','Grupo A',1,2],['round-1','Meias-finais',0,1]];
       expect(component.teamProfilePhases.map(phase=>
         [phase.key,phase.label,phase.completed,phase.loaded])).toEqual(expected);
       const loadedCalls=api.teamProfileMatches.calls.count();
