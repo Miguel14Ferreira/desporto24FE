@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunitySwitchComponent } from './community-switch.component';
+import { formatForSport } from './community-round-sport';
 
 /** Display and draft editing only: permission, persistence and official point rules stay in the page. */
 @Component({
@@ -13,6 +14,7 @@ import { CommunitySwitchComponent } from './community-switch.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CommunityCompetitionSettingsComponent {
+  @Input() sports: readonly string[] = [];
   @Input() enabled = false;
   @Input() winPoints = 3;
   @Input() drawPoints = 1;
@@ -23,4 +25,26 @@ export class CommunityCompetitionSettingsComponent {
   @Output() drawPointsChange = new EventEmitter<number>();
   @Output() lossPointsChange = new EventEmitter<number>();
   @Output() saveRequested = new EventEmitter<void>();
+
+  /** Generic W/D/L applies only to head-to-head sports, never to a race by default. */
+  get usesMatchPoints(): boolean {
+    return this.sports.length === 0 || this.sports.some(sport => {
+      const family = formatForSport(sport);
+      return family === 'team' || family === 'duel';
+    });
+  }
+
+  /** Read-only guidance; official race points are configured per sport and season. */
+  specializedClassificationKey(sport: string): string | null {
+    const family = formatForSport(sport);
+    if (family === 'team' || family === 'duel') return null;
+    return 'communities.tournaments.classificationUi.' + family + '.heading';
+  }
+
+  specializedDescriptionKey(sport: string): string {
+    const family = formatForSport(sport);
+    return family === 'race'
+      ? 'communities.race.metricsEntryHint'
+      : 'communities.tournaments.classificationUi.' + family + '.detail';
+  }
 }
