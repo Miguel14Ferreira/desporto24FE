@@ -592,6 +592,61 @@
                   <div><span>{{ 'communities.tournaments.finalUi.pointsCol' | t }}</span><strong>{{ row.points }}</strong></div>
                 </div>
               }
+              @if (teamProfileMatches.length) {
+                @let journey = focusedTeamJourney;
+                <section class="team-page-journey" [attr.aria-label]="'communities.tournaments.teamPage.journeyTitle' | t">
+                  <div class="team-page-journey-heading">
+                    <h4>{{ 'communities.tournaments.teamPage.journeyTitle' | t }}</h4>
+                    @if (teamProfileMatchesHasMore) {
+                      <span class="team-page-journey-partial">{{ 'communities.tournaments.teamPage.moreMatches' | t }}</span>
+                    }
+                  </div>
+                  <div class="team-page-journey-columns">
+                    <div class="team-page-journey-panel">
+                      <h5>{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</h5>
+                      @for (item of journey.recent; track item.fixture.id) {
+                        <div class="team-page-journey-match">
+                          <span class="team-page-journey-stage">{{ teamMatchStageLabel(item.fixture) }}</span>
+                          <div class="team-page-journey-score">
+                            <strong>{{ item.opponentName }}</strong>
+                            <b>{{ item.ownScore }} : {{ item.opponentScore }}</b>
+                          </div>
+                          <span class="team-page-journey-result"
+                            [class.is-win]="item.outcome === 'WIN'"
+                            [class.is-loss]="item.outcome === 'LOSS'">
+                            {{ ('communities.result.' + item.outcome.toLowerCase()) | t }}
+                          </span>
+                        </div>
+                      } @empty {
+                        <p class="team-page-journey-empty">{{ 'communities.tournaments.teamPage.noResults' | t }}</p>
+                      }
+                    </div>
+                    <div class="team-page-journey-panel">
+                      <h5>{{ 'communities.tournaments.fixturesUi.filterPending' | t }}</h5>
+                      @for (item of journey.pending; track item.fixture.id) {
+                        <div class="team-page-journey-match">
+                          <span class="team-page-journey-stage">{{ teamMatchStageLabel(item.fixture) }}</span>
+                          <div class="team-page-journey-score">
+                            <strong>{{ item.opponentName }}</strong>
+                            <b>— : —</b>
+                          </div>
+                        </div>
+                      } @empty {
+                        <p class="team-page-journey-empty">{{ 'communities.tournaments.fixturesUi.empty' | t }}</p>
+                      }
+                    </div>
+                  </div>
+                  @if (journey.advancement; as advance) {
+                    <div class="team-page-journey-advancement">
+                      <span aria-hidden="true">✓</span>
+                      <div>
+                        <strong>{{ 'communities.tournaments.bracketUi.advanced' | t }}</strong>
+                        <span>{{ teamMatchStageLabel(advance.nextFixture) }} · {{ advance.opponentName }}</span>
+                      </div>
+                    </div>
+                  }
+                </section>
+              }
               @if (teamProfileMatchesError) {
                 <div class="team-page-fixtures-feedback">
                   <p role="alert" class="field-validation">{{ 'communities.tournaments.fixturesUi.matchesError' | t }}</p>

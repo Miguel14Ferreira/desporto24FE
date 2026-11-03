@@ -3073,6 +3073,7 @@ export const EN: Record<string, string> = {
   'communities.tournaments.teamPage.searchCount': '{{shown}} of {{total}} teams',
   'communities.tournaments.teamPage.noSearchResults': 'No team matches your search.',
   'communities.tournaments.teamPage.resultsTitle': 'Results and fixtures',
+  'communities.tournaments.teamPage.journeyTitle': 'Team journey',
   'communities.tournaments.teamPage.champion': 'Champion',
   'communities.tournaments.teamPage.noResults': 'No results recorded yet.',
   'communities.tournaments.teamPage.moreMatches': 'Load more matches',

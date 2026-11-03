@@ -19,6 +19,7 @@ import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
 import { tournamentEventChoices, validatedTournamentEventType, SWIM_TOURNAMENT_DISCIPLINES, validSwimTournamentDiscipline, FIELD_TOURNAMENT_DISCIPLINES, validFieldTournamentDiscipline, TRACK_TOURNAMENT_DISTANCES, validTrackTournamentDistance, RELAY_TOURNAMENT_DISCIPLINES, validRelayTournamentDiscipline, CANOE_K1_DISCIPLINES, validCanoeDiscipline, ROWING_SINGLE_DISCIPLINES, validRowingDiscipline } from './community-tournament-event-types';
 import { tournamentClassificationProfile } from './community-tournament-classification';
+import { summarizePublishedTeamJourney } from './community-team-journey';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildTournamentTeamInviteUrl, teamInvitationWhatsAppUrl } from './community-team-invite';
@@ -2329,6 +2330,14 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     return [...phases.values()].sort((a, b) => a.order - b.order)
       .map(({ order, ...phase }) => phase);
+  }
+
+  /** Read-only results based only on the selected team's loaded fixture pages. */
+  get focusedTeamJourney() {
+    return summarizePublishedTeamJourney(
+      this.teamProfileMatches, this.focusedTeam?.id ?? -1,
+      this.selected?.format ?? 'LEAGUE'
+    );
   }
 
   get visibleTeamProfileMatches(): TournamentTeamMatch[] {

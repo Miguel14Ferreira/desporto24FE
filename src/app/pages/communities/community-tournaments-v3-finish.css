@@ -749,6 +749,30 @@
   background:rgba(137,46,43,.22);
 }
 
+/* Compact competitive journey from the team's actual published fixtures. */
+:host .tournaments .team-page-journey{display:grid;gap:12px;min-width:0;}
+:host .tournaments .team-page-journey-heading{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;}
+:host .tournaments .team-page-journey-heading h4{margin:0;font-size:1rem;color:#eafff8;}
+:host .tournaments .team-page-journey-partial{font-size:.73rem;color:#a7c9ca;}
+:host .tournaments .team-page-journey-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+:host .tournaments .team-page-journey-panel{min-width:0;display:grid;align-content:start;gap:8px;padding:14px;border-radius:13px;border:1px solid rgba(80,198,178,.24);background:rgba(7,36,49,.78);}
+:host .tournaments .team-page-journey-panel h5{font-size:.79rem;color:#a8e8d4;margin:0 0 4px;}
+:host .tournaments .team-page-journey-match{display:grid;gap:6px;min-width:0;padding:10px 0;border-top:1px solid rgba(148,202,193,.15);}
+:host .tournaments .team-page-journey-stage{font-size:.72rem;color:#96d6c6;}
+:host .tournaments .team-page-journey-score{display:flex;align-items:center;justify-content:space-between;min-width:0;gap:9px;}
+:host .tournaments .team-page-journey-score strong{min-width:0;overflow-wrap:anywhere;font-size:.87rem;color:#f1fff9;}
+:host .tournaments .team-page-journey-score b{flex:none;font-variant-numeric:tabular-nums;color:#e8fff8;font-size:.88rem;}
+:host .tournaments .team-page-journey-result{justify-self:start;border:1px solid rgba(148,202,193,.22);border-radius:999px;padding:3px 8px;font-size:.7rem;color:#cce2e2;}
+:host .tournaments .team-page-journey-result.is-win{color:#a7f3d0;border-color:rgba(85,220,171,.43);background:rgba(23,114,82,.19);}
+:host .tournaments .team-page-journey-result.is-loss{color:#ffd1c9;border-color:rgba(250,150,135,.36);background:rgba(127,54,51,.19);}
+:host .tournaments .team-page-journey-empty{margin:0;font-size:.8rem;color:#acc9cd;line-height:1.5;}
+:host .tournaments .team-page-journey-advancement{display:flex;gap:11px;align-items:center;padding:13px;border-radius:12px;border:1px solid rgba(91,216,153,.34);background:rgba(15,104,79,.23);}
+:host .tournaments .team-page-journey-advancement>span{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:100%;background:rgba(64,173,118,.3);color:#bbffdb;font-weight:850;}
+:host .tournaments .team-page-journey-advancement>div{min-width:0;display:grid;gap:3px;}
+:host .tournaments .team-page-journey-advancement strong{color:#d4ffe9;font-size:.86rem;}
+:host .tournaments .team-page-journey-advancement div>span{color:#b9ddd4;font-size:.79rem;overflow-wrap:anywhere;}
+@media(max-width:740px){:host .tournaments .team-page-journey-columns{grid-template-columns:minmax(0,1fr);}}
+
 /* Read-only performance on a dedicated team page; fixtures come from its own API. */
 :host .tournaments .team-page-performance{
   display:grid;gap:11px;min-width:0;padding:clamp(17px,2vw,24px);

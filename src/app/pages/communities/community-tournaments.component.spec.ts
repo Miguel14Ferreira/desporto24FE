@@ -1696,6 +1696,33 @@ describe('Community tournaments management', () => {
       expect(component.visibleTeamProfileMatches.length).toBe(2);
     });
 
+    it('keeps the team journey scoped to loaded results and resets on switching teams', () => {
+      api.teams.and.returnValue(of([team,{...team,id:41,name:'Azuis'}]));
+      const first={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,
+        homeScore:2,awayScore:1};
+      const second={id:71,roundNumber:2,homeTeamId:41,homeTeamName:'Azuis',
+        awayTeamId:40,awayTeamName:'Verdes',status:'SCHEDULED' as const};
+      api.teamProfileMatches.and.returnValues(
+        of({matches:[first],page:0,hasMore:true}),
+        of({matches:[second],page:1,hasMore:false}),
+        of({matches:[second],page:0,hasMore:false})
+      );
+      component.teamPageId=40;
+      component.selectTournament({...teamDraft,format:'KNOCKOUT',status:'IN_PROGRESS'});
+      expect(component.focusedTeamJourney.recent.map(x=>x.fixture.id)).toEqual([70]);
+      expect(component.focusedTeamJourney.pending).toEqual([]);
+      expect(component.focusedTeamJourney.advancement).toBeNull();
+      component.loadTeamProfileMatches();
+      expect(component.focusedTeamJourney.advancement?.nextFixture.id).toBe(71);
+      expect(component.focusedTeamJourney.pending.map(x=>x.fixture.id)).toEqual([71]);
+      component.teamPageId=41;
+      component.ngOnChanges({teamPageId:new SimpleChange(40,41,false)});
+      expect(component.focusedTeamJourney.recent).toEqual([]);
+      expect(component.focusedTeamJourney.pending.map(x=>x.fixture.id)).toEqual([71]);
+      expect(component.focusedTeamJourney.advancement).toBeNull();
+    });
+
     it('filters the team page by real group and elimination phases, not global fixtures', () => {
       const groups={...teamDraft,format:'GROUP_KNOCKOUT' as const,groupCount:2 as const,
         status:'IN_PROGRESS' as const};
