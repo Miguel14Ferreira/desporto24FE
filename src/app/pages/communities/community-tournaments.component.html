@@ -1730,7 +1730,7 @@
                               <strong>{{ round.label }}</strong>
                               <span>{{ round.matches.length }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
                             </button>
-                            @for (item of round.matches; track item.game.id) {
+                            @for (item of visibleKnockoutMatches(round.round, round.matches); track item.game.id) {
                               <article class="team-knockout-match" tabindex="-1"
                                 [attr.data-knockout-fixture-id]="item.game.id"
                                 [class.is-done]="item.winnerId !== null"
@@ -1778,6 +1778,20 @@
                                   </button>
                                 }
                               </article>
+                            }
+                            @if (round.matches.length > knockoutCompactThreshold) {
+                              <button type="button" class="team-knockout-round-expand"
+                                [attr.aria-expanded]="expandedKnockoutRounds.has(round.round)"
+                                (click)="toggleKnockoutRound(round.round)">
+                                <span>
+                                  {{ (expandedKnockoutRounds.has(round.round)
+                                    ? 'communities.tournaments.bracketUi.showLess'
+                                    : 'communities.tournaments.bracketUi.showAll') | t }}
+                                </span>
+                                <small>
+                                  {{ visibleKnockoutMatches(round.round, round.matches).length }}/{{ round.matches.length }}
+                                </small>
+                              </button>
                             }
                           </section>
                         }

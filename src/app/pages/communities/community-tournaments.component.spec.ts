@@ -1229,6 +1229,51 @@ describe('Community tournaments management', () => {
       expect(component.selectedKnockoutRound).toBeNull();
     });
 
+    it('compacts 16 and 32 team brackets without dropping any loaded fixtures', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      for (const matchCount of [8,16]) {
+        component.teamMatches=Array.from({length:matchCount},(_,i)=>({
+          id:200+i,roundNumber:1,homeTeamId:100+i*2,
+          homeTeamName:'Casa '+i,awayTeamId:101+i*2,
+          awayTeamName:'Fora '+i,status:'SCHEDULED' as const
+        }));
+        const matches=component.knockoutBracket[0].matches;
+        expect(matches.length).toBe(matchCount);
+        expect(component.visibleKnockoutMatches(1,matches).map(item=>item.game.id))
+          .toEqual([200,201,202,203]);
+        component.setKnockoutFocusTeam(100+(matchCount-1)*2);
+        expect(component.visibleKnockoutMatches(1,matches).map(item=>item.game.id))
+          .toEqual([200,201,202,203,200+matchCount-1]);
+        component.toggleKnockoutRound(1);
+        expect(component.visibleKnockoutMatches(1,matches).length).toBe(matchCount);
+        expect(component.teamMatches.length).toBe(matchCount);
+        component.toggleKnockoutRound(1);
+        expect(component.visibleKnockoutMatches(1,matches).length).toBe(5);
+        component.setKnockoutFocusTeam('ALL');
+      }
+    });
+
+    it('keeps small rounds expanded, refuses missing rounds and clears expansion on tournament change', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=Array.from({length:6},(_,i)=>({
+        id:300+i,roundNumber:1,homeTeamId:10+i*2,
+        homeTeamName:'A '+i,awayTeamId:11+i*2,
+        awayTeamName:'B '+i,status:'SCHEDULED' as const
+      }));
+      const round=component.knockoutBracket[0];
+      expect(component.visibleKnockoutMatches(round.round,round.matches).length).toBe(6);
+      component.toggleKnockoutRound(1);
+      component.toggleKnockoutRound(2);
+      expect(component.expandedKnockoutRounds.size).toBe(0);
+      component.teamMatches.push(
+        {id:400,roundNumber:1,homeTeamId:100,homeTeamName:'A',
+         awayTeamId:101,awayTeamName:'B',status:'SCHEDULED'});
+      component.toggleKnockoutRound(1);
+      expect(component.expandedKnockoutRounds.has(1)).toBeTrue();
+      component.selectTournament({...teamDraft,id:45,status:'DRAFT',format:'KNOCKOUT'});
+      expect(component.expandedKnockoutRounds.size).toBe(0);
+    });
+
     it('does not connect an ambiguous duplicate winner to the next published round', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       component.teamMatches=[

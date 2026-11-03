@@ -3102,6 +3102,8 @@ const PT: Dictionary = {
   'communities.tournaments.bracketUi.incoming': "Apurados",
   'communities.tournaments.bracketUi.focusTeam': "Destacar equipa",
   'communities.tournaments.bracketUi.focusAll': "Todas as equipas",
+  'communities.tournaments.bracketUi.showAll': "Ver todos os jogos da ronda",
+  'communities.tournaments.bracketUi.showLess': "Ver menos jogos",
   'communities.tournaments.bracketUi.viewPrevious': "Ver jogo de apuramento",
   'communities.specializedStats.heading': "Estatísticas por modalidade",
   'communities.specializedStats.raceDescription': "Resumo das corridas da época, sem confrontos.",

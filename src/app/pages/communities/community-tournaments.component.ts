@@ -198,6 +198,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamPhaseFilter = 'ALL';
   knockoutFocusTeamId: number | null = null;
   selectedKnockoutRound: number | null = null;
+  readonly knockoutCompactLimit = 4;
+  readonly knockoutCompactThreshold = 6;
+  expandedKnockoutRounds = new Set<number>();
   teamMatchesPage = 0;
   teamMatchesHasMore = false;
   teamMatchesLoading = false;
@@ -1153,6 +1156,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamPhaseFilter = 'ALL';
       this.knockoutFocusTeamId = null;
       this.selectedKnockoutRound = null;
+      this.expandedKnockoutRounds.clear();
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
@@ -1596,6 +1600,27 @@ export class CommunityTournamentsComponent implements OnChanges {
     }));
   }
 
+  /** Compact the long published rounds, never the underlying data.
+   * Show a focused team's fixture even when it lies beyond the initial cards. */
+  visibleKnockoutMatches<T extends {game: TournamentTeamMatch}>(
+    round: number, matches: T[]
+  ): T[] {
+    if (matches.length <= this.knockoutCompactThreshold
+        || this.expandedKnockoutRounds.has(round)) return matches;
+    return matches.filter((item, index) =>
+      index < this.knockoutCompactLimit || this.isKnockoutTeamFocused(item.game));
+  }
+
+  toggleKnockoutRound(round: number): void {
+    if (!Number.isSafeInteger(round) || !this.isCupFormat || this.isRelayCompetition
+        || !this.knockoutBracket.some(stage =>
+          stage.round === round && stage.matches.length > this.knockoutCompactThreshold))
+      return;
+    if (this.expandedKnockoutRounds.has(round)) this.expandedKnockoutRounds.delete(round);
+    else this.expandedKnockoutRounds.add(round);
+    this.changeDetector.markForCheck();
+  }
+
   /** Jump to one already published column; leave fixture filters unchanged. */
   jumpToKnockoutRound(round: number): void {
     if (!Number.isSafeInteger(round) || round < 1 || !this.isCupFormat
@@ -1931,6 +1956,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamPhaseFilter = 'ALL';
     this.knockoutFocusTeamId = null;
     this.selectedKnockoutRound = null;
+    this.expandedKnockoutRounds.clear();
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
@@ -2649,6 +2675,11 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (reset && this.selectedKnockoutRound !== null
             && !this.knockoutBracket.some(stage => stage.round === this.selectedKnockoutRound))
           this.selectedKnockoutRound = null;
+        if (reset) {
+          const publishedRounds = new Set(this.knockoutBracket.map(stage => stage.round));
+          for (const round of this.expandedKnockoutRounds)
+            if (!publishedRounds.has(round)) this.expandedKnockoutRounds.delete(round);
+        }
         this.teamMatchesPage = page;
         this.teamMatchesHasMore = result.hasMore;
         for (const game of result.matches) {

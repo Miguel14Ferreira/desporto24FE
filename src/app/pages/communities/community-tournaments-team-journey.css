@@ -128,3 +128,9 @@
 :host .tournaments .team-knockout-round-jump:focus-visible{outline:2px solid #acffe0;outline-offset:2px;}
 :host .tournaments .team-knockout-round.is-selected-round>.team-knockout-round-title{border-color:#7ef5bf;box-shadow:0 0 0 1px rgba(126,245,191,.35);}
 :host .tournaments .team-knockout-round{scroll-margin-inline:14px;}
+
+/* Compact large bracket rounds while preserving every published fixture. */
+:host .tournaments .team-knockout-round-expand{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 12px;border:1px dashed rgba(106,226,183,.6);border-radius:10px;background:rgba(12,73,71,.62);color:#caffea;font:inherit;font-size:.77rem;font-weight:780;text-align:left;cursor:pointer;}
+:host .tournaments .team-knockout-round-expand:hover{background:rgba(25,114,88,.63);border-color:#8ef6c3;}
+:host .tournaments .team-knockout-round-expand small{white-space:nowrap;font-size:.72rem;font-variant-numeric:tabular-nums;color:#c2eadc;}
+:host .tournaments .team-knockout-round-expand:focus-visible{outline:2px solid #a6ffdb;outline-offset:3px;}
