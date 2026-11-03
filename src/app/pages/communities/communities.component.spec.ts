@@ -661,6 +661,30 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.gif.backup')).toBeFalse();
   });
 
+  it('does not save football scoring fields for a Karting-only community', () => {
+    const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
+      .and.returnValue(of({ rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 }));
+    component.selected = { id: 7, sport: 'Karting', sports: ['Karting'], myRole: 'OWNER' } as any;
+    component.competitionSaving = false;
+    component.rankingsEnabledDraft = true;
+    component.winPointsDraft = 3;
+    component.drawPointsDraft = 1;
+    component.lossPointsDraft = 0;
+    component.selectedSeasonId = null;
+    (component as any).communityService = { updateCompetitionSettings };
+    spyOn(component as any, 'replaceCommunity');
+    spyOn(component, 'loadCompetition');
+
+    expect(component.usesMatchPointsModel()).toBeFalse();
+    component.saveCompetitionSettings();
+    expect(updateCompetitionSettings).toHaveBeenCalledOnceWith(7, {
+      rankingsEnabled: true, winPoints: null, drawPoints: null, lossPoints: null
+    });
+
+    component.selected = { id: 7, sport: 'Futebol', sports: ['Futebol', 'Karting'], myRole: 'OWNER' } as any;
+    expect(component.usesMatchPointsModel()).toBeTrue();
+  });
+
   it('keeps rankings activation as an explicit saved setting, independent of switch styling', () => {
     const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
       .and.returnValue(of({ rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 }));
