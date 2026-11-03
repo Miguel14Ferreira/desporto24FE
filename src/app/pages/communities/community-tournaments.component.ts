@@ -1984,11 +1984,6 @@ export class CommunityTournamentsComponent implements OnChanges {
     return ids.map(id=>team?.players.find(p=>p.profileId===id)?.displayName
       ?? team?.players.find(p=>p.profileId===id)?.username ?? String(id)).join(' · ');
   }
-  validRelayTime(teamId:number):boolean {
-    const seconds=this.relayTimeDraft[teamId];
-    return seconds!=null && Number.isFinite(seconds) && seconds>0
-      && seconds<1e8 && Math.round(seconds*1000)/1000===seconds;
-  }
   setRelayLeg(teamId:number,index:number,value:number|null):void {
     const current=[...(this.relayLegDraft[teamId]??[])];
     current[index]=value??0;

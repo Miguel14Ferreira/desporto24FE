@@ -1133,7 +1133,7 @@
                 <div class="t-section-heading">
                   <div>
                     <h5>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }} · {{ ('communities.relay.discipline.'+selected.eventDiscipline) | t }}</h5>
-                    <p>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }}</p>
+
                   </div>
                   <button type="button" class="t-btn t-btn-secondary t-btn-small"
                     [disabled]="busy" (click)="loadRelayOverview()">{{ 'common.retry' | t }}</button>
@@ -1212,7 +1212,7 @@
                               }
                             </div>
                             <button type="button" class="t-btn t-btn-primary t-btn-small"
-                              [disabled]="busy || !relayTeamReady(team) || !validRelayTime(team.id)"
+                              [disabled]="busy || !relayTeamReady(team) || !(relayTimeDraft[team.id] > 0)"
                               (click)="saveRelayHeat(team)">{{ 'communities.tournaments.fixturesUi.save' | t }}</button>
                           }
                         </div>

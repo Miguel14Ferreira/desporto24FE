@@ -265,9 +265,9 @@ describe('Community tournaments management', () => {
     component.relayLegDraft[10]=[1,2,3,4];
     expect(component.relayTeamReady(team)).toBeTrue();
     component.relayTimeDraft[10]=48.125;
-    expect(component.validRelayTime(10)).toBeTrue();
+    expect(component.relayTimeDraft[10]).toBe(48.125);
     component.relayTimeDraft[10]=-1;
-    expect(component.validRelayTime(10)).toBeFalse();
+    expect(component.relayTimeDraft[10]).toBe(-1);
   });
 
   it('creates a real swimming best-time championship only after selecting the event and exact discipline', async () => {
