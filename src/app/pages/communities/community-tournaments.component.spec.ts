@@ -1201,6 +1201,20 @@ describe('Community tournaments management', () => {
       expect(component.knockoutBracket[0].matches.every(item=>!item.champion)).toBeTrue();
     });
 
+    it('reserves the champion badge for the final published round only', () => {
+      component.selected={...teamDraft,status:'COMPLETED',format:'KNOCKOUT',championTeamId:40};
+      component.teamMatches=[
+        {id:41,roundNumber:1,homeTeamId:40,homeTeamName:'A',awayTeamId:41,
+          awayTeamName:'B',status:'COMPLETED',homeScore:2,awayScore:0},
+        {id:42,roundNumber:2,homeTeamId:40,homeTeamName:'A',awayTeamId:42,
+          awayTeamName:'C',status:'COMPLETED',homeScore:1,awayScore:0}
+      ];
+      expect(component.knockoutBracket[0].matches[0].champion).toBeFalse();
+      expect(component.knockoutBracket[1].matches[0].champion).toBeTrue();
+      component.teamMatchesHasMore=true;
+      expect(component.knockoutBracket[1].matches[0].champion).toBeFalse();
+    });
+
     it('excludes group fixtures and sport-specific relay competitions from the knockout board', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
       component.teamMatches=[
@@ -1217,6 +1231,7 @@ describe('Community tournaments management', () => {
         scoringMode:'RELAY_BEST_TIME'};
       // Relay overview uses times and qualification, never a football-style fixture board.
       expect(component.isRelayCompetition).toBeTrue();
+      expect(component.knockoutBracket).toEqual([]);
     });
 
     it('builds group and knockout stages strictly from published match data', () => {

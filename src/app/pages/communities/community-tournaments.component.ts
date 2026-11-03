@@ -1441,8 +1441,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     matches: { game: TournamentTeamMatch; winnerId: number | null;
       advanced: boolean; champion: boolean }[];
   }[] {
-    if (!this.isCupFormat) return [];
+    if (!this.isCupFormat || this.isRelayCompetition) return [];
     const fixtures = this.teamMatches.filter(game => this.isEliminationMatch(game));
+    const lastPublishedRound = fixtures.reduce((last, game) => Math.max(last, game.roundNumber), 0);
     const rounds = new Map<number, TournamentTeamMatch[]>();
     for (const fixture of fixtures) {
       const matches = rounds.get(fixture.roundNumber) ?? [];
@@ -1463,6 +1464,7 @@ export class CommunityTournamentsComponent implements OnChanges {
           next.roundNumber === round + 1
           && (next.homeTeamId === winnerId || next.awayTeamId === winnerId));
         const champion = winnerId !== null && this.selected?.status === 'COMPLETED'
+          && !this.teamMatchesHasMore && game.roundNumber === lastPublishedRound
           && this.selected.championTeamId === winnerId;
         return { game, winnerId, advanced, champion };
       })
