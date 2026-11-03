@@ -1940,8 +1940,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   get relayEligibleTeams():TournamentTeam[] {
     const overview=this.relayOverview;
     if(!overview?.finalPublished) return this.teams;
-    const finalists=new Set((overview.finalists??[]).map(x=>x.teamId));
-    return this.teams.filter(team=>finalists.has(team.id));
+    return this.teams.filter(team=>overview.finalists?.some(f=>f.teamId===team.id));
   }
   get canPublishRelayFinal():boolean {
     const overview=this.relayOverview;
@@ -1958,7 +1957,6 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.relayFinalConfirm=false;
         this.relayHeatDraft={};
         this.relayTimeDraft={};
-        this.changeDetector.markForCheck();
       });
   }
   canDecideRelayHeat(heat:RelayHeat):boolean {
@@ -1976,13 +1974,11 @@ export class CommunityTournamentsComponent implements OnChanges {
       heat.id,status,reason),t('communities.tournaments.organizerUi.teamScoreSaved'),overview=>{
         this.relayOverview=overview;
         this.relayDecisionReasons[heat.id]='';
-        this.changeDetector.markForCheck();
       });
   }
   relayRunnerNames(teamId:number,ids:number[]):string {
     const team=this.teams.find(t=>t.id===teamId);
-    return ids.map(id=>team?.players.find(p=>p.profileId===id)?.displayName
-      ?? team?.players.find(p=>p.profileId===id)?.username ?? String(id)).join(' · ');
+    return ids.map(id=>team?.players.find(p=>p.profileId===id)?.displayName??String(id)).join(' · ');
   }
   setRelayLeg(teamId:number,index:number,value:number|null):void {
     const current=[...(this.relayLegDraft[teamId]??[])];
@@ -2008,12 +2004,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     if(!this.relayEligibleTeams.some(eligible=>eligible.id===team.id)){
       this.showError(t('communities.relay.invalid'));return;
     }
-    const record=(this.relayOverview?.finalPublished
-      ? this.api.recordRelayFinal(this.community.id,this.selected.id,
-          team.id,heat,seconds,[...this.relayLegDraft[team.id]])
-      : this.api.recordRelayHeat(this.community.id,this.selected.id,
-          team.id,heat,seconds,[...this.relayLegDraft[team.id]]));
-    await this.mutate(record,
+    await this.mutate(this.api.recordRelayHeat(this.community.id,this.selected.id,
+      team.id,heat,seconds,[...this.relayLegDraft[team.id]],!!this.relayOverview?.finalPublished),
       t('communities.tournaments.organizerUi.teamScoreSaved'),overview=>{
         this.relayOverview=overview;
         if(this.selected?.status==='DRAFT')

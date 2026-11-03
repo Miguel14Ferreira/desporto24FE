@@ -87,20 +87,14 @@ export class CommunityTournamentsService {
     return this.http.get<RelayOverview>(this.url(communityId,tournamentId)+'/relays');
   }
   recordRelayHeat(communityId:number,tournamentId:number,teamId:number,heatNumber:number,
-                  elapsedSeconds:number,runnerProfileIds:number[]):Observable<RelayOverview> {
+                  elapsedSeconds:number,runnerProfileIds:number[],final=false):Observable<RelayOverview> {
     return this.http.put<RelayOverview>(
-      this.url(communityId,tournamentId)+'/relays/heats/'+heatNumber+'/teams/'+teamId,
+      this.url(communityId,tournamentId)+'/relays'+(final?'/final':'')+'/heats/'+heatNumber+'/teams/'+teamId,
       {elapsedSeconds,runnerProfileIds});
   }
 
   publishRelayFinal(communityId:number,tournamentId:number):Observable<RelayOverview> {
     return this.http.post<RelayOverview>(this.url(communityId,tournamentId)+'/relays/final/publish',{});
-  }
-  recordRelayFinal(communityId:number,tournamentId:number,teamId:number,heatNumber:number,
-                   elapsedSeconds:number,runnerProfileIds:number[]):Observable<RelayOverview> {
-    return this.http.put<RelayOverview>(
-      this.url(communityId,tournamentId)+'/relays/final/heats/'+heatNumber+'/teams/'+teamId,
-      {elapsedSeconds,runnerProfileIds});
   }
   decideRelayHeat(communityId:number,tournamentId:number,heatId:number,
                   status:'VALID'|'DISQUALIFIED',reason:string):Observable<RelayOverview> {

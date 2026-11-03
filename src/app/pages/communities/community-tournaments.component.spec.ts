@@ -30,7 +30,7 @@ describe('Community tournaments management', () => {
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'createRelayChampionship', 'relayOverview', 'recordRelayHeat',
-      'publishRelayFinal', 'recordRelayFinal', 'decideRelayHeat', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
+      'publishRelayFinal', 'decideRelayHeat', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
       'createTimedChampionship', 'createTrackChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
@@ -214,10 +214,9 @@ describe('Community tournaments management', () => {
     const response={...overview,heats:[{id:88,teamId:7,teamName:'Equipa',
       heatNumber:1,elapsedSeconds:44.123,runnerProfileIds:[1,2,3,4],
       recordedAt:'2026-11-03T00:00:00Z',stage:'FINAL' as const,decisionStatus:'VALID' as const}]};
-    api.recordRelayFinal.and.returnValue(of(response));
+    api.recordRelayHeat.and.returnValue(of(response));
     await component.saveRelayHeat(team);
-    expect(api.recordRelayFinal).toHaveBeenCalledOnceWith(7,103,7,1,44.123,[1,2,3,4]);
-    expect(api.recordRelayHeat).not.toHaveBeenCalled();
+    expect(api.recordRelayHeat).toHaveBeenCalledOnceWith(7,103,7,1,44.123,[1,2,3,4],true);
     const qualifying={...response.heats[0],stage:'QUALIFICATION' as const};
     expect(component.canDecideRelayHeat(qualifying)).toBeFalse();
     expect(component.canDecideRelayHeat(response.heats[0])).toBeTrue();
