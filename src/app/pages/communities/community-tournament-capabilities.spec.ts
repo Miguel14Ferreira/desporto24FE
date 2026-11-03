@@ -39,7 +39,7 @@ describe('Tournament capabilities for all 121 modalities', () => {
     expect(tournamentSportCapabilities('Atletismo').team).toBe('RELAY_BEST_TIME');
     expect(tournamentSportCapabilities('Natação').individual).toBe('SWIM_BEST_TIME');
     expect(tournamentSportCapabilities('Natação').team).toBe('UNAVAILABLE');
-    for (const sport of ['Triatlo', 'Corrida', 'Remo', 'Vela']) {
+    for (const sport of ['Triatlo', 'Canoagem', 'Remo', 'Vela']) {
       expect(tournamentSportCapabilities(sport).individual).withContext(sport).toBe('UNAVAILABLE');
     }
   });
