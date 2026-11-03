@@ -3021,7 +3021,6 @@ const PT: Dictionary = {
   'communities.trackTournament.linkedSuccess': "Prova de pista associada.",
   'communities.relay.qual': "Qualificação",
   'communities.relay.lock': "Fechar qualificação?",
-  'communities.relay.final': "Finalistas",
   'communities.relay.valid': "Repor tempo",
   'communities.relay.dq': "Desqualificar",
   'communities.relay.leg': "Percurso",

@@ -3015,7 +3015,6 @@ export const EN: Record<string, string> = {
   'communities.trackTournament.linkedSuccess': "Track event linked.",
   'communities.relay.qual': "Qualifying",
   'communities.relay.lock': "Close qualifying?",
-  'communities.relay.final': "Finalists",
   'communities.relay.valid': "Reinstate",
   'communities.relay.dq': "Disqualify",
   'communities.relay.leg': "Leg",
