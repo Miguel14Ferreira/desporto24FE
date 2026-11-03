@@ -1161,7 +1161,7 @@ describe('Community tournaments management', () => {
 
     it('builds group and knockout stages strictly from published match data', () => {
       const cup = {...teamDraft, status:'IN_PROGRESS' as const,
-        format:'GROUP_KNOCKOUT' as const, groupCount:4};
+        format:'GROUP_KNOCKOUT' as const, groupCount:4 as const};
       const fixtures = [
         {id:4,roundNumber:1,groupNumber:2,homeTeamId:40,homeTeamName:'A',
           awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const},
