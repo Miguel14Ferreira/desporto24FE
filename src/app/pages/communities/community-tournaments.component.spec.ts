@@ -1726,7 +1726,9 @@ describe('Community tournaments management', () => {
     it('offers only actual published team sections, never draft or relay brackets', () => {
       component.selectTournament(teamDraft);
       expect(component.teamOverviewSections).toEqual(['teams']);
-      component.selectTournament({...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'});
+      // selectTournament intentionally ignores reselecting the same ID.
+      // Simulate the backend's in-progress status update directly.
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       expect(component.teamOverviewSections).toEqual(['teams','fixtures']);
       component.teamMatches=[{id:71,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
         awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED'}];
