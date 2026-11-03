@@ -1249,12 +1249,33 @@
         }
 
         @if (isTeamCompetition) {
+          @if (teamOverviewSections.length > 1) {
+            <nav class="team-tournament-jump" [attr.aria-label]="'communities.tournaments.navigation.region' | t">
+              <div class="team-tournament-jump-links">
+                @for (section of teamOverviewSections; track section) {
+                  <button type="button" class="team-tournament-jump-link"
+                    (click)="showTeamOverviewSection(section)">
+                    {{ ('communities.tournaments.navigation.' + section) | t }}
+                  </button>
+                }
+              </div>
+              @if (myTeam; as mine) {
+                <a class="team-tournament-jump-mine"
+                  [routerLink]="['/menu/communities', community.id]"
+                  [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:mine.id}"
+                  [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:mine.name}">
+                  {{ 'communities.tournaments.navigation.myTeam' | t }} · {{ mine.name }}
+                  <span aria-hidden="true">↗</span>
+                </a>
+              }
+            </nav>
+          }
           @if (!isMember) {
             <div class="notice notice-info" role="status">{{ 'communities.tournaments.teamUi.memberOnly' | t }}</div>
           } @else if (detailsLoading) {
             <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.loading' | t }}</p>
           } @else {
-            <section class="t-section team-roster-section" [attr.aria-label]="'communities.tournaments.teamUi.region' | t">
+            <section #teamTournamentTeams class="t-section team-roster-section" tabindex="-1" [attr.aria-label]="'communities.tournaments.teamUi.region' | t">
               <div class="t-section-heading">
                 <div>
                   <h5>{{ 'communities.tournaments.teamUi.title' | t }}</h5>
@@ -1547,7 +1568,7 @@
               </section>
             }
             @if (selected.status !== 'DRAFT' && !isRelayCompetition) {
-              <section class="t-section team-fixtures-section" [attr.aria-label]="'communities.tournaments.fixturesUi.fixturesRegion' | t">
+              <section #teamTournamentFixtures class="t-section team-fixtures-section" tabindex="-1" [attr.aria-label]="'communities.tournaments.fixturesUi.fixturesRegion' | t">
                 <div class="t-section-heading">
                   <div>
                     <h5>{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.groupsTitle' : (isKnockout ? 'communities.tournaments.fixturesUi.knockoutTitle' : 'communities.tournaments.fixturesUi.leagueTitle')) | t }}</h5>
@@ -1579,7 +1600,7 @@
                 }
                 @let bracket = knockoutBracket;
                 @if (bracket.length) {
-                  <details class="team-knockout-board" open>
+                  <details #teamTournamentBracket class="team-knockout-board" tabindex="-1" open>
                     <summary>
                       <span>
                         <strong>{{ 'communities.tournaments.bracketUi.title' | t }}</strong>
@@ -1776,7 +1797,7 @@
                 }
               </section>
               @if (isGroupKnockout) {
-                <section class="t-section team-standings-section" [attr.aria-label]="'communities.tournaments.finalUi.groupStandingsAria' | t">
+                <section #teamTournamentStandings class="t-section team-standings-section" tabindex="-1" [attr.aria-label]="'communities.tournaments.finalUi.groupStandingsAria' | t">
                   <div class="t-section-heading">
                     <div>
                       <h5>{{ 'communities.tournaments.finalUi.groupStandings' | t }}</h5>
@@ -1837,7 +1858,7 @@
                 </section>
               }
               @if (selected.format === 'LEAGUE' && !isRelayCompetition) {
-              <section class="t-section team-standings-section" [attr.aria-label]="'communities.tournaments.finalUi.teamStandings' | t">
+              <section #teamTournamentStandings class="t-section team-standings-section" tabindex="-1" [attr.aria-label]="'communities.tournaments.finalUi.teamStandings' | t">
                 <div class="t-section-heading">
                   <div>
                     <h5>{{ 'communities.tournaments.finalUi.teamStandings' | t }}</h5>

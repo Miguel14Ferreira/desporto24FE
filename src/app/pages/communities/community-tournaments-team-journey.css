@@ -43,3 +43,15 @@
 :host .tournaments .team-page-path-link{margin-left:23px;min-height:53px;display:flex;align-items:center;gap:10px;border-left:2px solid #52d39b;padding:10px 13px;color:#c5f7df;font-size:.78rem;font-weight:750;}
 :host .tournaments .team-page-path-link-marker{display:grid;place-items:center;min-width:24px;height:24px;border-radius:50%;background:rgba(44,156,111,.44);color:#d7ffe8;font-weight:900;}
 @media(max-width:560px){:host .tournaments .team-page-path-match{grid-template-columns:minmax(0,1fr);} :host .tournaments .team-page-path-status{justify-self:start;} }
+
+/* Accessible overview jump links to already rendered tournament sections. */
+:host .tournaments .team-tournament-jump{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;min-width:0;padding:12px 14px;border:1px solid rgba(77,209,167,.31);border-radius:14px;background:linear-gradient(120deg,rgba(6,51,58,.9),rgba(9,40,55,.92));}
+:host .tournaments .team-tournament-jump-links{display:flex;flex-wrap:wrap;gap:7px;min-width:0;}
+:host .tournaments .team-tournament-jump-link{cursor:pointer;padding:9px 13px;border:1px solid rgba(109,210,182,.25);border-radius:10px;background:rgba(11,73,70,.56);color:#dffbf1;font:inherit;font-size:.82rem;font-weight:760;white-space:nowrap;}
+:host .tournaments .team-tournament-jump-link:hover{background:rgba(26,109,88,.62);border-color:rgba(103,239,183,.66);}
+:host .tournaments .team-tournament-jump-link:focus-visible,:host .tournaments .team-tournament-jump-mine:focus-visible{outline:2px solid #9efcd1;outline-offset:3px;}
+:host .tournaments .team-tournament-jump-mine{display:inline-flex;align-items:center;gap:8px;min-width:0;padding:9px 12px;border:1px solid rgba(122,229,160,.48);border-radius:10px;background:rgba(27,126,81,.28);color:#c4ffe1;font-size:.79rem;font-weight:800;text-decoration:none;overflow-wrap:anywhere;}
+:host .tournaments .team-tournament-jump-mine:hover{background:rgba(27,126,81,.44);}
+:host .tournaments .team-roster-section:focus,:host .tournaments .team-fixtures-section:focus,:host .tournaments .team-standings-section:focus,:host .tournaments .team-knockout-board:focus{outline:none;}
+:host .tournaments .team-roster-section,:host .tournaments .team-fixtures-section,:host .tournaments .team-standings-section,:host .tournaments .team-knockout-board{scroll-margin-top:82px;}
+@media(max-width:620px){:host .tournaments .team-tournament-jump{align-items:stretch;flex-direction:column;} :host .tournaments .team-tournament-jump-links{width:100%;} :host .tournaments .team-tournament-jump-mine{align-self:flex-start;}}

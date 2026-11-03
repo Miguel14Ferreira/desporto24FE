@@ -48,6 +48,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   @ViewChild('historicalArchiveFixtures') private historicalArchiveFixtures?: ElementRef<HTMLElement>;
   @ViewChild('teamFixturesList') private teamFixturesList?: ElementRef<HTMLElement>;
   @ViewChild('teamProfileSection') private teamProfileSection?: ElementRef<HTMLElement>;
+  @ViewChild('teamTournamentTeams') private teamTournamentTeams?: ElementRef<HTMLElement>;
+  @ViewChild('teamTournamentFixtures') private teamTournamentFixtures?: ElementRef<HTMLElement>;
+  @ViewChild('teamTournamentBracket') private teamTournamentBracket?: ElementRef<HTMLElement>;
+  @ViewChild('teamTournamentStandings') private teamTournamentStandings?: ElementRef<HTMLElement>;
 
   /** Source-labelled stages, without inventing a fixture, bracket or official rank. */
   get historicalKnockoutPhases() {
@@ -1377,6 +1381,37 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get isCupFormat(): boolean {
     return this.isKnockout || this.isGroupKnockout;
+  }
+
+  /** Only existing sections are navigable; there is no fictitious bracket in draft or relay mode. */
+  get teamOverviewSections(): ('teams' | 'fixtures' | 'bracket' | 'standings')[] {
+    if (!this.isTeamCompetition || !this.selected || !this.isMember
+      || this.detailsLoading || this.teamPageId !== null) return [];
+    const sections: ('teams' | 'fixtures' | 'bracket' | 'standings')[] = ['teams'];
+    if (this.selected.status !== 'DRAFT' && !this.isRelayCompetition) {
+      sections.push('fixtures');
+      if (this.isCupFormat && this.teamMatches.some(game => this.isEliminationMatch(game)))
+        sections.push('bracket');
+      if (this.selected.format === 'LEAGUE' || this.isGroupKnockout)
+        sections.push('standings');
+    }
+    return sections;
+  }
+
+  /** Scroll and keyboard focus stay within the selected tournament and actual DOM. */
+  showTeamOverviewSection(section: 'teams' | 'fixtures' | 'bracket' | 'standings'): void {
+    if (!this.teamOverviewSections.includes(section)) return;
+    const element = {
+      teams: this.teamTournamentTeams,
+      fixtures: this.teamTournamentFixtures,
+      bracket: this.teamTournamentBracket,
+      standings: this.teamTournamentStandings
+    }[section]?.nativeElement;
+    if (!element) return;
+    if (section === 'bracket' && element instanceof HTMLDetailsElement)
+      element.open = true;
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    element.focus({ preventScroll: true });
   }
 
   /**

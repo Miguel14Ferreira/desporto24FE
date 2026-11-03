@@ -1723,6 +1723,51 @@ describe('Community tournaments management', () => {
       expect(component.focusedTeamJourney.advancement).toBeNull();
     });
 
+    it('offers only actual published team sections, never draft or relay brackets', () => {
+      component.selectTournament(teamDraft);
+      expect(component.teamOverviewSections).toEqual(['teams']);
+      component.selectTournament({...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'});
+      expect(component.teamOverviewSections).toEqual(['teams','fixtures']);
+      component.teamMatches=[{id:71,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED'}];
+      expect(component.teamOverviewSections).toEqual(['teams','fixtures','bracket']);
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      expect(component.teamOverviewSections).toEqual(['teams','fixtures','standings']);
+      component.teamMatches[0]={...component.teamMatches[0],groupNumber:null};
+      expect(component.teamOverviewSections).toEqual(['teams','fixtures','bracket','standings']);
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      expect(component.teamOverviewSections).toEqual(['teams','fixtures','standings']);
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE',scoringMode:'RELAY_BEST_TIME'};
+      expect(component.teamOverviewSections).toEqual(['teams']);
+      component.teamPageId=40;
+      expect(component.teamOverviewSections).toEqual([]);
+    });
+
+    it('focuses an existing overview section without touching results or page filters', () => {
+      component.selectTournament({...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'});
+      const game={id:71,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED' as const};
+      component.teamMatches=[game];
+      const section=document.createElement('details');
+      section.open=false;
+      const scroll=jasmine.createSpy('scrollIntoView');
+      const focus=jasmine.createSpy('focus');
+      section.scrollIntoView=scroll;
+      section.focus=focus;
+      (component as any).teamTournamentBracket={nativeElement:section};
+      component.teamMatchFilter='COMPLETED';
+      component.showTeamOverviewSection('bracket');
+      expect(section.open).toBeTrue();
+      expect(scroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'start'});
+      expect(focus).toHaveBeenCalledOnceWith({preventScroll:true});
+      expect(component.teamMatchFilter).toBe('COMPLETED');
+      component.showTeamOverviewSection('standings');
+      expect(scroll).toHaveBeenCalledTimes(1);
+      component.selected={...teamDraft,status:'DRAFT'};
+      component.showTeamOverviewSection('bracket');
+      expect(scroll).toHaveBeenCalledTimes(1);
+    });
+
     it('navigates a verified team fixture by clearing filters and focusing its real card', () => {
       const game={id:90,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
         awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED' as const};
