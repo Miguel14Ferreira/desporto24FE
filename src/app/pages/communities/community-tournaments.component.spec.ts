@@ -1159,6 +1159,64 @@ describe('Community tournaments management', () => {
       expect(component.focusedTeamRelayHeats.map(h=>h.id)).toEqual([19]);
     });
 
+    it('builds group and knockout stages strictly from published match data', () => {
+      const cup = {...teamDraft, status:'IN_PROGRESS' as const,
+        format:'GROUP_KNOCKOUT' as const, groupCount:4};
+      const fixtures = [
+        {id:4,roundNumber:1,groupNumber:2,homeTeamId:40,homeTeamName:'A',
+          awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const},
+        {id:5,roundNumber:1,groupNumber:1,homeTeamId:42,homeTeamName:'C',
+          awayTeamId:43,awayTeamName:'D',status:'COMPLETED' as const,
+          homeScore:2,awayScore:0},
+        {id:6,roundNumber:2,groupNumber:1,homeTeamId:42,homeTeamName:'C',
+          awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const},
+        {id:7,roundNumber:1,groupNumber:null,homeTeamId:42,homeTeamName:'C',
+          awayTeamId:40,awayTeamName:'A',status:'SCHEDULED' as const}
+      ];
+      component.selected=cup;
+      component.teamMatches=fixtures;
+      expect(component.teamPhases.map(p=>[p.key,p.label,p.completed,p.loaded])).toEqual([
+        ['group-1','Grupo A',1,2],['group-2','Grupo B',0,1],
+        ['round-1','Quartos de final',0,1]
+      ]);
+      component.setTeamPhaseFilter('group-1');
+      expect(component.visibleTeamMatches.map(g=>g.id)).toEqual([5,6]);
+      component.setTeamMatchFilter('COMPLETED');
+      expect(component.visibleTeamMatches.map(g=>g.id)).toEqual([5]);
+      component.setTeamPhaseFilter('round-1');
+      expect(component.visibleTeamMatches).toEqual([]);
+      component.setTeamMatchFilter('ALL');
+      expect(component.visibleTeamMatches.map(g=>g.id)).toEqual([7]);
+      component.setTeamPhaseFilter('round-9'); // Unpublished stages must not appear.
+      expect(component.teamPhaseFilter).toBe('round-1');
+      component.setTeamPhaseFilter('ALL');
+      expect(component.visibleTeamMatches.length).toBe(4);
+    });
+
+    it('keeps league rounds separate and resets stage selection across competitions', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      const fixture={id:11,roundNumber:3,homeTeamId:40,homeTeamName:'A',
+        awayTeamId:41,awayTeamName:'B',status:'COMPLETED' as const,homeScore:1,awayScore:0};
+      component.teamMatches=[fixture];
+      expect(component.teamPhases.map(s=>s.label)).toEqual(['Jornada 3']);
+      component.setTeamPhaseFilter('round-3');
+      component.selectTournament(draft);
+      expect(component.teamPhaseFilter).toBe('ALL');
+      expect(component.teamPhases).toEqual([]);
+    });
+
+    it('does not claim a future cup final or infer its winner from pending fixtures', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:21,roundNumber:1,homeTeamId:40,homeTeamName:'A',
+          awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const}
+      ];
+      expect(component.teamPhases).toEqual([{
+        key:'round-1',label:'Eliminatória 1',completed:0,loaded:1
+      }]);
+      expect(component.teamPhases.some(s=>s.label==='Final')).toBeFalse();
+    });
+
     it('filters only fetched matches without touching paging or results', () => {
       const pending = { id: 71, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
         awayTeamId: 41, awayTeamName: 'Azuis', status: 'SCHEDULED' as const };

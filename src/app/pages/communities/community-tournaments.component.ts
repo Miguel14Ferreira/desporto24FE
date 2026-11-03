@@ -187,6 +187,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamProfileMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   private teamProfileMatchesRevision = 0;
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
+  teamPhaseFilter = 'ALL';
   teamMatchesPage = 0;
   teamMatchesHasMore = false;
   teamMatchesLoading = false;
@@ -1139,6 +1140,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatches = [];
       this.resetTeamProfileMatches();
       this.teamMatchFilter = 'ALL';
+      this.teamPhaseFilter = 'ALL';
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
@@ -1373,11 +1375,51 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.isKnockout || this.isGroupKnockout;
   }
 
-  /** Filters the fetched matches only; fixture pagination and scores are unchanged. */
+  /**
+   * Only backend-published fixtures contribute to the phase view.
+   * In group cups each group is one overview card; elimination fixtures are
+   * organised by actual knockout round. No future bracket is invented.
+   */
+  get teamPhases(): { key: string; label: string; loaded: number; completed: number }[] {
+    const stages = new Map<string, { key: string; label: string; loaded: number; completed: number; order: number }>();
+    for (const game of this.teamMatches) {
+      const isGroup = this.isGroupKnockout && game.groupNumber != null;
+      const key = isGroup ? `group-${game.groupNumber}` : `round-${game.roundNumber}`;
+      let stage = stages.get(key);
+      if (!stage) {
+        stage = {
+          key, label: isGroup
+            ? t('communities.tournaments.finalUi.groupLabel', { group: this.groupLabel(game.groupNumber!) })
+            : this.teamMatchStageLabel(game),
+          loaded: 0, completed: 0,
+          order: isGroup ? game.groupNumber! : 100 + game.roundNumber
+        };
+        stages.set(key, stage);
+      }
+      stage.loaded++;
+      if (game.status === 'COMPLETED') stage.completed++;
+    }
+    return [...stages.values()].sort((a, b) => a.order - b.order);
+  }
+
+  teamPhaseKey(game: TournamentTeamMatch): string {
+    return this.isGroupKnockout && game.groupNumber != null
+      ? `group-${game.groupNumber}` : `round-${game.roundNumber}`;
+  }
+
+  /** Phase and status filters are only a view on already loaded matches. */
   get visibleTeamMatches(): TournamentTeamMatch[] {
-    return this.teamMatches.filter(game => this.teamMatchFilter === 'ALL'
-      || (this.teamMatchFilter === 'COMPLETED'
-        ? game.status === 'COMPLETED' : game.status !== 'COMPLETED'));
+    return this.teamMatches.filter(game =>
+      (this.teamPhaseFilter === 'ALL' || this.teamPhaseFilter === this.teamPhaseKey(game))
+      && (this.teamMatchFilter === 'ALL' || (this.teamMatchFilter === 'COMPLETED'
+        ? game.status === 'COMPLETED' : game.status !== 'COMPLETED')));
+  }
+
+  setTeamPhaseFilter(key: string): void {
+    if (key !== 'ALL' && !this.teamPhases.some(stage => stage.key === key)) return;
+    this.teamPhaseFilter = key;
+    this.editingTeamResultId = null;
+    this.changeDetector.markForCheck();
   }
 
   setTeamMatchFilter(filter: 'ALL' | 'PENDING' | 'COMPLETED'): void {
@@ -1617,6 +1659,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMatches = [];
     this.resetTeamProfileMatches();
     this.teamMatchFilter = 'ALL';
+    this.teamPhaseFilter = 'ALL';
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
@@ -2260,6 +2303,10 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision !== this.teamMatchesRevision || this.community.id !== cid
             || this.selected?.id !== tournament.id) return;
         this.teamMatches = reset ? result.matches : [...this.teamMatches, ...result.matches];
+        if (reset && this.teamPhaseFilter !== 'ALL'
+            && !this.teamPhases.some(stage => stage.key === this.teamPhaseFilter)) {
+          this.teamPhaseFilter = 'ALL';
+        }
         this.teamMatchesPage = page;
         this.teamMatchesHasMore = result.hasMore;
         for (const game of result.matches) {

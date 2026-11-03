@@ -1478,6 +1478,27 @@
                   </p>
                 }
                 @if (teamMatches.length) {
+                  @if (isCupFormat) {
+                    <div class="team-phase-overview" role="group"
+                      [attr.aria-label]="'communities.tournaments.phaseUi.title' | t">
+                      <div class="team-phase-heading">
+                        <strong>{{ 'communities.tournaments.phaseUi.title' | t }}</strong>
+                        <small>{{ 'communities.tournaments.phaseUi.loadedOnly' | t }}</small>
+                      </div>
+                      <div class="team-phase-grid">
+                        @for (stage of teamPhases; track stage.key) {
+                          <button type="button" class="team-phase-card"
+                            [class.is-active]="teamPhaseFilter === stage.key"
+                            [attr.aria-pressed]="teamPhaseFilter === stage.key"
+                            (click)="setTeamPhaseFilter(teamPhaseFilter === stage.key ? 'ALL' : stage.key)">
+                            <strong>{{ stage.label }}</strong>
+                            <span>{{ stage.completed }} / {{ stage.loaded }}</span>
+                            <small>{{ 'communities.tournaments.phaseUi.completedOfLoaded' | t }}</small>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
                   <div class="team-fixtures-toolbar">
                     <div class="team-fixtures-filters" role="group"
                       [attr.aria-label]="'communities.tournaments.fixturesUi.filterLabel' | t">
@@ -1491,6 +1512,18 @@
                         [attr.aria-pressed]="teamMatchFilter === 'COMPLETED'"
                         (click)="setTeamMatchFilter('COMPLETED')">{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</button>
                     </div>
+                    @if (teamPhases.length > 1) {
+                      <label class="team-phase-select">
+                        {{ 'communities.tournaments.phaseUi.filter' | t }}
+                        <select [ngModel]="teamPhaseFilter" (ngModelChange)="setTeamPhaseFilter($event)"
+                          [attr.aria-label]="'communities.tournaments.phaseUi.filter' | t">
+                          <option value="ALL">{{ 'communities.tournaments.phaseUi.all' | t }}</option>
+                          @for (stage of teamPhases; track stage.key) {
+                            <option [value]="stage.key">{{ stage.label }}</option>
+                          }
+                        </select>
+                      </label>
+                    }
                     <p role="status">{{ 'communities.tournaments.fixturesUi.loadedSummary' | t:{shown:visibleTeamMatches.length,loaded:teamMatches.length} }}</p>
                   </div>
                 }
@@ -1601,10 +1634,11 @@
                       <p class="t-muted">{{ 'communities.tournaments.finalUi.groupsComplete' | t }}</p>
                     }
                     @for (group of groups.groups; track group.groupNumber) {
-                      <div class="team-group-heading">
-                        <h6>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group: groupLabel(group.groupNumber)} }}</h6>
-                        <span>{{ group.standings.length }} {{ 'communities.tournaments.teamUi.teamsShort' | t }}</span>
-                      </div>
+                      <details class="team-group-panel" [open]="group.groupNumber === 1">
+                        <summary class="team-group-heading">
+                          <strong>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group: groupLabel(group.groupNumber)} }}</strong>
+                          <span>{{ group.standings.length }} {{ 'communities.tournaments.teamUi.teamsShort' | t }}</span>
+                        </summary>
                       <div class="standings-scroll">
                         <table class="standings-table team-standings-table"
                           [attr.aria-label]="'communities.tournaments.finalUi.groupTableLabel' | t:{group: groupLabel(group.groupNumber)}">
@@ -1635,6 +1669,7 @@
                           </tbody>
                         </table>
                       </div>
+                      </details>
                     }
                   }
                 </section>

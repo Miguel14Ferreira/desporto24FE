@@ -826,3 +826,29 @@
 :host .tournaments .team-page-fixture-participants a:first-child{text-align:right;}
 :host .tournaments .team-page-fixture-participants a.is-own-team{color:#abffe4;font-weight:850;}
 :host .tournaments .team-directory-more{margin-top:12px;}
+
+/* Published group/knockout fixtures: phase selection reflects loaded matches only. */
+:host .tournaments .team-phase-overview{display:grid;gap:10px;min-width:0;}
+:host .tournaments .team-phase-heading{display:flex;gap:8px 15px;justify-content:space-between;flex-wrap:wrap;align-items:center;}
+:host .tournaments .team-phase-heading strong{color:#eafff8;}
+:host .tournaments .team-phase-heading small{color:#b1d5d7;font-size:.76rem;}
+:host .tournaments .team-phase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:9px;}
+:host .tournaments .team-phase-card{
+  display:grid;justify-items:start;gap:5px;text-align:left;min-width:0;padding:13px;
+  color:#d8f8f0;background:rgba(9,53,63,.75);border:1px solid rgba(70,192,178,.28);border-radius:12px;
+}
+:host .tournaments .team-phase-card strong{font-size:.85rem;color:#f0fff9;}
+:host .tournaments .team-phase-card>span{font-size:1.3rem;font-weight:900;font-variant-numeric:tabular-nums;}
+:host .tournaments .team-phase-card small{font-size:.71rem;color:#afced0;}
+:host .tournaments .team-phase-card.is-active{
+  border-color:#68e8c5;background:rgba(25,126,112,.35);box-shadow:inset 0 0 0 1px rgba(113,235,202,.26);
+}
+:host .tournaments .team-phase-card:focus-visible,
+:host .tournaments .team-group-panel>summary:focus-visible{outline:2px solid #a0ffdf;outline-offset:3px;}
+:host .tournaments .team-phase-select{display:flex;align-items:center;gap:8px;color:#d4eee9;font-size:.8rem;font-weight:750;}
+:host .tournaments .team-phase-select select{width:min(100%,260px);min-width:120px;border:1px solid rgba(88,222,181,.43);border-radius:9px;background:#0a3944;color:#f0fff9;padding:8px;}
+:host .tournaments .team-group-panel{min-width:0;border:1px solid rgba(65,183,170,.25);border-radius:12px;overflow:hidden;}
+:host .tournaments .team-group-panel>summary{cursor:pointer;padding:12px 16px;background:rgba(7,52,63,.68);}
+:host .tournaments .team-group-panel>summary strong{color:#effff9;}
+:host .tournaments .team-group-panel[open]>summary{border-bottom:1px solid rgba(65,183,170,.25);}
+:host .tournaments .team-group-panel>.standings-scroll{padding:4px 9px 10px;}
