@@ -24,8 +24,20 @@ export interface TeamKnockoutPathStep extends TeamJourneyMatch {
   /** Only a unique, immediately subsequent published fixture verifies progression. */
   confirmedNextFixture: TournamentTeamMatch | null;
 }
+export interface TeamJourneyPhase {
+  key: string;
+  firstFixture: TournamentTeamMatch;
+  published: number;
+  recorded: number;
+  wins: number;
+  draws: number;
+  losses: number;
+}
 export interface PublishedTeamJourney {
   recent: RecordedTeamJourneyMatch[];
+  /** Up to five latest valid results by published round, not by a missing match date. */
+  form: RecordedTeamJourneyMatch[];
+  phases: TeamJourneyPhase[];
   pending: TeamJourneyMatch[];
   advancement: TeamVerifiedAdvancement | null;
   /** All loaded elimination matches, in published round order, without speculative byes. */
@@ -70,7 +82,27 @@ export function summarizePublishedTeamJourney(
   const recorded = fixtures.filter(game => game.status === 'COMPLETED')
     .map(view).filter((item): item is RecordedTeamJourneyMatch =>
       item.outcome !== null && item.ownScore !== null && item.opponentScore !== null);
-  const recent = recorded.slice().sort((a,b)=>order(b.fixture,a.fixture)).slice(0,3);
+  const form = recorded.slice().sort((a,b)=>order(b.fixture,a.fixture)).slice(0,5);
+  const recent = form.slice(0,3);
+  const phasesByKey = new Map<string, TeamJourneyPhase>();
+  for (const game of fixtures.slice().sort(order)) {
+    const key = format === 'GROUP_KNOCKOUT' && game.groupNumber != null
+      ? `group-${game.groupNumber}` : `round-${game.roundNumber}`;
+    let phase = phasesByKey.get(key);
+    if (!phase) {
+      phase = {key, firstFixture:game,published:0,recorded:0,wins:0,draws:0,losses:0};
+      phasesByKey.set(key,phase);
+    }
+    phase.published++;
+    const outcome = view(game).outcome;
+    if (outcome) {
+      phase.recorded++;
+      if (outcome === 'WIN') phase.wins++;
+      if (outcome === 'DRAW') phase.draws++;
+      if (outcome === 'LOSS') phase.losses++;
+    }
+  }
+  const phases = [...phasesByKey.values()];
   const pending = fixtures.filter(game=>game.status === 'SCHEDULED')
     .sort(order).slice(0,3).map(view);
 
@@ -93,5 +125,5 @@ export function summarizePublishedTeamJourney(
         ? lastConfirmed.confirmedNextFixture.awayTeamName
         : lastConfirmed.confirmedNextFixture.homeTeamName
     } : null;
-  return { recent, pending, advancement, knockoutPath };
+  return { recent, form, phases, pending, advancement, knockoutPath };
 }

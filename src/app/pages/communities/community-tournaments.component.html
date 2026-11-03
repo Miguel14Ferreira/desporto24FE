@@ -601,6 +601,46 @@
                       <span class="team-page-journey-partial">{{ 'communities.tournaments.teamPage.moreMatches' | t }}</span>
                     }
                   </div>
+                  @if (journey.form.length) {
+                    <div class="team-page-form" [attr.aria-label]="'communities.tournaments.teamPage.formTitle' | t">
+                      <strong>{{ 'communities.tournaments.teamPage.formTitle' | t }}</strong>
+                      <div class="team-page-form-results">
+                        @for (item of journey.form; track item.fixture.id) {
+                          <button type="button" class="team-page-form-result"
+                            [class.is-win]="item.outcome === 'WIN'"
+                            [class.is-loss]="item.outcome === 'LOSS'"
+                            [attr.aria-label]="teamMatchStageLabel(item.fixture) + ' · ' + item.opponentName + ' · ' + (('communities.result.' + item.outcome.toLowerCase()) | t)"
+                            [title]="teamMatchStageLabel(item.fixture) + ' · ' + item.opponentName + ' (' + item.ownScore + ':' + item.opponentScore + ')'"
+                            (click)="showTeamProfileFixture(item.fixture)">
+                            {{ ('communities.result.' + item.outcome.toLowerCase()) | t }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                  @if (journey.phases.length > 1) {
+                    <section class="team-page-phases" [attr.aria-label]="'communities.tournaments.teamPage.phaseFormTitle' | t">
+                      <h5>{{ 'communities.tournaments.teamPage.phaseFormTitle' | t }}</h5>
+                      <div class="team-page-phases-grid">
+                        @for (phase of journey.phases; track phase.key) {
+                          <button type="button" class="team-page-phase"
+                            [class.is-active]="teamProfilePhaseFilter === phase.key"
+                            [attr.aria-pressed]="teamProfilePhaseFilter === phase.key"
+                            (click)="setTeamProfilePhaseFilter(teamProfilePhaseFilter === phase.key ? 'ALL' : phase.key)">
+                            <strong>{{ isGroupKnockout && phase.firstFixture.groupNumber != null
+                              ? ('communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(phase.firstFixture.groupNumber)})
+                              : teamMatchStageLabel(phase.firstFixture) }}</strong>
+                            <small>{{ phase.recorded }}/{{ phase.published }} {{ 'communities.tournaments.teamPage.phaseCount' | t }}</small>
+                            <span class="team-page-phase-form">
+                              <span>{{ phase.wins }} {{ 'communities.tournaments.finalUi.winsCol' | t }}</span>
+                              <span>{{ phase.draws }} {{ 'communities.tournaments.finalUi.drawsCol' | t }}</span>
+                              <span>{{ phase.losses }} {{ 'communities.tournaments.finalUi.lossesCol' | t }}</span>
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    </section>
+                  }
                   <div class="team-page-journey-columns">
                     <div class="team-page-journey-panel">
                       <h5>{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</h5>

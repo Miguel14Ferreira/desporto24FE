@@ -76,3 +76,21 @@
 :host .tournaments .team-standings-spotlight-own{display:grid;gap:7px;padding-top:10px;border-top:1px solid rgba(122,202,176,.23);}
 :host .tournaments .team-standings-spotlight-own>span{font-size:.78rem;color:#dbf8e7;font-weight:800;}
 :host .tournaments .team-standings-table tr.is-own-team>td,:host .tournaments .team-standings-table tr.is-own-team>th{background:rgba(65,133,87,.23);}
+
+/* Form and phases are read only, scoped to the selected team's fetched match pages. */
+:host .tournaments .team-page-form{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid rgba(111,214,169,.2);border-radius:12px;background:rgba(5,43,47,.48);padding:12px 14px;}
+:host .tournaments .team-page-form>strong{font-size:.83rem;color:#c2f5df;}
+:host .tournaments .team-page-form-results{display:flex;gap:7px;flex-wrap:wrap;}
+:host .tournaments .team-page-form-result{padding:7px 10px;border:1px solid rgba(145,193,189,.4);border-radius:9px;background:rgba(53,76,90,.4);color:#deedf0;font:inherit;font-weight:850;font-size:.75rem;cursor:pointer;}
+:host .tournaments .team-page-form-result.is-win{border-color:rgba(73,223,145,.55);color:#bbffdd;background:rgba(20,112,76,.35);}
+:host .tournaments .team-page-form-result.is-loss{border-color:rgba(240,122,113,.47);color:#ffcec6;background:rgba(116,48,48,.33);}
+:host .tournaments .team-page-form-result:hover{filter:brightness(1.2);}
+:host .tournaments .team-page-form-result:focus-visible,:host .tournaments .team-page-phase:focus-visible{outline:2px solid #b3ffe2;outline-offset:3px;}
+:host .tournaments .team-page-phases{display:grid;gap:10px;min-width:0;}
+:host .tournaments .team-page-phases h5{font-size:.85rem;color:#cbf7e4;margin:0;}
+:host .tournaments .team-page-phases-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:9px;min-width:0;}
+:host .tournaments .team-page-phase{display:grid;align-content:start;gap:6px;min-width:0;padding:11px 12px;text-align:left;border:1px solid rgba(107,204,174,.27);border-radius:12px;background:rgba(9,57,63,.68);color:#e7fff5;font:inherit;cursor:pointer;}
+:host .tournaments .team-page-phase:hover,:host .tournaments .team-page-phase.is-active{border-color:rgba(112,240,178,.7);background:rgba(18,92,78,.68);}
+:host .tournaments .team-page-phase>strong{font-size:.82rem;overflow-wrap:anywhere;}
+:host .tournaments .team-page-phase>small{font-size:.7rem;color:#a1d9d0;}
+:host .tournaments .team-page-phase-form{display:flex;gap:8px;flex-wrap:wrap;font-size:.73rem;font-variant-numeric:tabular-nums;color:#c5ecd9;}

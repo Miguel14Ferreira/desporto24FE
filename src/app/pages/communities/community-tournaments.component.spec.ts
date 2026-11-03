@@ -1696,6 +1696,32 @@ describe('Community tournaments management', () => {
       expect(component.visibleTeamProfileMatches.length).toBe(2);
     });
 
+    it('scopes recent form and phase counts to the selected team and loaded pages', () => {
+      const first={id:70,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,
+        homeScore:2,awayScore:1};
+      const second={...first,id:71,roundNumber:2,status:'SCHEDULED' as const};
+      api.teams.and.returnValue(of([team]));
+      api.teamProfileMatches.and.returnValues(
+        of({matches:[first],page:0,hasMore:true}),
+        of({matches:[second],page:1,hasMore:false})
+      );
+      component.teamPageId=40;
+      component.selectTournament({...teamDraft,format:'GROUP_KNOCKOUT',groupCount:2,status:'IN_PROGRESS'});
+      expect(component.focusedTeamJourney.form.map(x=>x.fixture.id)).toEqual([70]);
+      expect(component.focusedTeamJourney.phases.map(x=>x.key)).toEqual(['group-1']);
+      expect(component.focusedTeamJourney.phases[0].recorded).toBe(1);
+      component.loadTeamProfileMatches();
+      expect(component.focusedTeamJourney.phases[0].published).toBe(2);
+      expect(component.focusedTeamJourney.phases[0].recorded).toBe(1);
+      component.setTeamProfilePhaseFilter('group-1');
+      expect(component.visibleTeamProfileMatches).toHaveSize(2);
+      component.teamPageId=99;
+      component.ngOnChanges({teamPageId:new SimpleChange(40,99,false)});
+      expect(component.focusedTeamJourney.form).toEqual([]);
+      expect(component.focusedTeamJourney.phases).toEqual([]);
+    });
+
     it('keeps the team journey scoped to loaded results and resets on switching teams', () => {
       api.teams.and.returnValue(of([team,{...team,id:41,name:'Azuis'}]));
       const first={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
