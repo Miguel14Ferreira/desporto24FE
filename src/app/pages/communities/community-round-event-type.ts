@@ -29,7 +29,7 @@ export type CommunityEventType = 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_F
     | 'WAKO_POINT_FIGHTING' | 'WAKO_LIGHT_CONTACT' | 'WAKO_KICK_LIGHT'
     | 'WAKO_FULL_CONTACT' | 'WAKO_LOW_KICK' | 'WAKO_K1'
     | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI'
-    | 'STRENGTH_TRAINING' | 'SWIM_LCM' | 'OWS_INDIVIDUAL' | 'FOOT_ORIENTEERING' | 'INLINE_TRACK_200_TT'
+    | 'STRENGTH_TRAINING' | 'SWIM_LCM' | 'CANOE_SPRINT' | 'OWS_INDIVIDUAL' | 'FOOT_ORIENTEERING' | 'INLINE_TRACK_200_TT'
     | 'INLINE_TRACK_500D_FIRST_ROUND' | 'INLINE_ROAD_LAP_FIRST_ROUND'
     | 'INLINE_TRACK_500D_QUARTER_HEAT' | 'INLINE_TRACK_500D_SEMI_HEAT' | 'INLINE_TRACK_500D_FINAL_A' | 'INLINE_TRACK_500D_FINAL_B' | 'INLINE_ROAD_LAP_QUARTER_HEAT' | 'INLINE_ROAD_LAP_SEMI_HEAT' | 'INLINE_ROAD_LAP_FINAL_A' | 'INLINE_ROAD_LAP_FINAL_B';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
@@ -70,6 +70,7 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
   musculacao: [{ code: 'STRENGTH_TRAINING', labelKey: 'communities.strengthTraining.event' }],
   natacao: [{ code: 'SWIM_LCM', labelKey: 'communities.swimming.pool50m' }],
+  'canoagem velocidade': [{ code: 'CANOE_SPRINT', labelKey: 'communities.canoeTournament.eventTitle' }],
   'natacao em aguas abertas': [{ code: 'OWS_INDIVIDUAL', labelKey: 'communities.openWater.individual' }],
   orientacao: [{ code: 'FOOT_ORIENTEERING', labelKey: 'communities.orienteering.foot' }],
   'patinagem de velocidade': [
@@ -229,6 +230,7 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
   const name = sport ? normalize(sport) : '';
   if (name === 'atletismo') return eventType === 'TRACK';
   if (name === 'natacao') return eventType == null || eventType === 'SWIM_LCM';
+  if (name === 'canoagem velocidade') return eventType == null || eventType === 'CANOE_SPRINT';
   if (name === 'natacao em aguas abertas') return eventType == null || eventType === 'OWS_INDIVIDUAL';
   if (name === 'orientacao') return eventType == null || eventType === 'FOOT_ORIENTEERING';
   if (name === 'patinagem de velocidade') return eventType == null || isInlineSpeedTimedEvent(eventType) || isInlineSpeedHeatEvent(eventType);

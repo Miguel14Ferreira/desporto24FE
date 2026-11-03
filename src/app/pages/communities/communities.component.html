@@ -2561,7 +2561,8 @@
                                     </label>
                                   }
                                   @if (viewForNewRound() === 'race') {
-                                    @if (newRoundEventType !== 'SWIM_LCM' && newRoundEventType !== 'OWS_INDIVIDUAL'
+                                    @if (newRoundEventType !== 'SWIM_LCM' && newRoundEventType !== 'CANOE_SPRINT'
+                                        && newRoundEventType !== 'OWS_INDIVIDUAL'
                                         && newRoundEventType !== 'FOOT_ORIENTEERING'
                                         && !isInlineSpeedTimedEvent(newRoundEventType)) {
                                       <label>
@@ -3268,7 +3269,7 @@
                                         } @else {
                                           <span class="race-round-unranked">{{ 'communities.openWater.noTime' | t }}</span>
                                         }
-                                      } @else if (round.eventType === 'SWIM_LCM') {
+                                      } @else if (round.eventType === 'SWIM_LCM' || round.eventType === 'CANOE_SPRINT') {
                                         @if (swimTime(entry.elapsedSeconds); as swimTotal) {
                                           <span class="round-performance-mark">{{ swimTotal }}</span>
                                         } @else {

@@ -12,6 +12,7 @@ const CHOICES: Record<string, readonly string[]> = {
   Xadrez: ['CHESS_GAME'],
   Atletismo: ['TRACK','JUMP','THROW','TRACK_RELAY'],
   'Natação': ['SWIM_LCM'],
+  'Canoagem Velocidade': ['CANOE_SPRINT'],
   Snowboard: ['RACE','FREESTYLE'],
   Golfe: ['GOLF_STROKE_9','GOLF_STROKE_18'],
   Surf: ['HEAT'],
@@ -23,7 +24,8 @@ const COMPATIBLE: Record<string,{code:string; model:TournamentCreationModel}> = 
   'Ciclismo de Estrada': {code:'ROAD_RACE',model:'RACE_POINTS'},
   'Ciclismo de Pista': {code:'TRACK_SCRATCH',model:'RACE_POINTS'},
   Xadrez: {code:'CHESS_GAME',model:'NUMERIC_INDIVIDUAL'},
-  'Natação': {code:'SWIM_LCM',model:'SWIM_BEST_TIME'}
+  'Natação': {code:'SWIM_LCM',model:'SWIM_BEST_TIME'},
+  'Canoagem Velocidade': {code:'CANOE_SPRINT',model:'CANOE_BEST_TIME'}
 };
 export function tournamentEventChoices(sport: string, model: TournamentCreationModel): TournamentEventChoice[] {
   return (CHOICES[sport]??[]).map(code=>({
@@ -36,6 +38,12 @@ export function tournamentEventChoices(sport: string, model: TournamentCreationM
 export function validatedTournamentEventType(sport:string,model:TournamentCreationModel,code:string|null|undefined):string|null{
   if(!code)return null;
   return tournamentEventChoices(sport,model).find(x=>x.code===code && x.supported)?.code ?? null;
+}
+
+/** Single-athlete K1 distances; crew boats require a separate team result model. */
+export const CANOE_K1_DISCIPLINES = ['K1_200','K1_500','K1_1000'] as const;
+export function validCanoeDiscipline(eventType:string|null,discipline:string|null):boolean {
+  return eventType==='CANOE_SPRINT' && CANOE_K1_DISCIPLINES.some(code=>code===discipline);
 }
 
 /** Exact, independently comparable 50m pool events validated by the backend. */

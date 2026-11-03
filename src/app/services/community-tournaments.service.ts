@@ -76,6 +76,14 @@ export class CommunityTournamentsService {
     });
   }
 
+  /** One K1 distance per best-time championship. Not an official race ranking. */
+  createCanoeChampionship(communityId:number,name:string,discipline:'K1_200'|'K1_500'|'K1_1000'):Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId),{
+      name,sport:'Canoagem Velocidade',entryType:'INDIVIDUAL',format:'LEAGUE',
+      eventType:'CANOE_SPRINT',eventDiscipline:discipline,scoringMode:'CANOE_BEST_TIME'
+    });
+  }
+
   /** Per-distance athletics, sharing only the time API (not swimming distances). */
   createRelayChampionship(communityId:number,name:string,discipline:'RELAY_4X100'|'RELAY_4X400'):Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId),{
