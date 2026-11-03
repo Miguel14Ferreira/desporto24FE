@@ -661,6 +661,25 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.gif.backup')).toBeFalse();
   });
 
+  it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
+    component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
+    component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
+    expect(component.usesMatchPointsModel()).toBeFalse();
+    expect(component.raceRankingGroups.map(group=>group.sport)).toEqual(['Karting']);
+    expect(component.specializedStatsUnavailableSports).toEqual([]);
+
+    component.selected = { id:7, sport:'Natação',
+      sports:['Natação','Futebol','Karting','Golfe'] } as any;
+    expect(component.usesMatchPointsModel()).toBeTrue();
+    expect(component.raceRankingGroups.map(group=>group.sport)).toEqual(['Karting']);
+    expect(component.specializedStatsUnavailableSports).toEqual(['Natação','Golfe']);
+
+    component.selected = { id:7, sport:'Atletismo', sports:['Atletismo'] } as any;
+    expect(component.usesMatchPointsModel()).toBeFalse();
+    expect(component.raceRankingGroups).toEqual([]);
+    expect(component.specializedStatsUnavailableSports).toEqual(['Atletismo']);
+  });
+
   it('does not save football scoring fields for a Karting-only community', () => {
     const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
       .and.returnValue(of({ rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 }));

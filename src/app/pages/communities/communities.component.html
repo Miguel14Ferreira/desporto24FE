@@ -4912,6 +4912,7 @@
                     </div>
                   }
 
+                  @if (usesMatchPointsModel()) {
                   <app-community-stat-leaders
                     [leader]="leader()"
                     [goals]="topGoals()"
@@ -4936,6 +4937,13 @@
                   ></app-community-performance-insights>
 
                   <app-community-stats-table [rows]="rankingParticipants"></app-community-stats-table>
+                  }
+                  @if (raceRankingGroups.length || specializedStatsUnavailableSports.length) {
+                    <app-community-specialized-stats
+                      [raceGroups]="raceRankingGroups"
+                      [unsupportedSports]="specializedStatsUnavailableSports">
+                    </app-community-specialized-stats>
+                  }
                 }
               </section>
             }

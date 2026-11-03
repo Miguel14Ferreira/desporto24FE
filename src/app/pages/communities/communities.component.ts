@@ -1990,6 +1990,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       : [];
   }
 
+  /** Modalities without a supported race standings contract get a neutral
+   * explanation, never football goals/assists or speculative rankings. */
+  get specializedStatsUnavailableSports(): string[] {
+    if (!this.selected) return [];
+    const raceSports = new Set(this.raceRankingGroups.map(group => group.sport.trim().toLowerCase()));
+    return this.communitySports(this.selected).filter(sport => {
+      const family = formatForSport(sport);
+      return family !== 'team' && family !== 'duel'
+        && !raceSports.has(sport.trim().toLowerCase());
+    });
+  }
+
   /** W/D/L is not a valid fallback for Karting or other measured/judged events. */
   usesMatchPointsModel(): boolean {
     const sports = this.selected ? this.communitySports(this.selected) : [];

@@ -1,0 +1,54 @@
+<section class="specialized-stats" [attr.aria-label]="'communities.specializedStats.heading' | t">
+  <header class="specialized-stats__heading">
+    <span class="section-kicker">{{ 'communities.race.championshipKicker' | t }}</span>
+    <h3>{{ 'communities.specializedStats.heading' | t }}</h3>
+    @if (raceGroups.length) {
+      <p>{{ 'communities.specializedStats.raceDescription' | t }}</p>
+    }
+  </header>
+
+  @for (group of raceGroups; track group.sport) {
+    <article class="specialized-stats__sport">
+      <div class="specialized-stats__sport-heading">
+        <h4>🏁 {{ group.sport }}</h4>
+        <span>{{ (group.rule ? 'communities.race.scoringOn' : 'communities.race.noScoring') | t }}</span>
+      </div>
+      @if (group.standings.length) {
+        <div class="specialized-stats__drivers">
+          @for (driver of group.standings; track driver.playerId) {
+            <div class="specialized-stats__driver">
+              <div class="specialized-stats__identity">
+                <span class="specialized-stats__position">{{ driver.position }}.º</span>
+                <div>
+                  <strong>{{ driver.fullName || driver.username || ('communities.tournaments.kartingUnknownDriver' | t) }}</strong>
+                  @if (driver.username) { <small>@{{ driver.username }}</small> }
+                </div>
+              </div>
+              <dl class="specialized-stats__metrics">
+                <div><dt>{{ 'communities.race.races' | t }}</dt><dd>{{ driver.races }}</dd></div>
+                <div><dt>{{ 'communities.race.wins' | t }}</dt><dd>{{ driver.wins }}</dd></div>
+                <div><dt>{{ 'communities.race.podiums' | t }}</dt><dd>{{ driver.podiums }}</dd></div>
+                <div><dt>{{ 'communities.race.bestFinish' | t }}</dt><dd>{{ driver.bestFinish ?? '—' }}</dd></div>
+                @if (group.rule) {
+                  <div><dt>{{ 'communities.race.penaltiesShort' | t }}</dt><dd>{{ driver.penaltyPoints }}</dd></div>
+                  <div><dt>{{ 'communities.racket.championshipPoints' | t }}</dt><dd>{{ driver.championshipPoints ?? '—' }}</dd></div>
+                }
+              </dl>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="specialized-stats__empty">{{ 'communities.specializedStats.raceEmpty' | t }}</p>
+      }
+    </article>
+  }
+
+  @if (unsupportedSports.length) {
+    <div class="specialized-stats__unavailable" role="note">
+      <p>{{ 'communities.specializedStats.unavailable' | t }}</p>
+      <ul>
+        @for (sport of unsupportedSports; track sport) { <li>{{ sport }}</li> }
+      </ul>
+    </div>
+  }
+</section>
