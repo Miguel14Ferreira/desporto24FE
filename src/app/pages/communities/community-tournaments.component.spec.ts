@@ -29,7 +29,8 @@ describe('Community tournaments management', () => {
     api = jasmine.createSpyObj<CommunityTournamentsService>('CommunityTournamentsService', [
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
-      'createTeamTournament', 'createRelayChampionship', 'relayOverview', 'recordRelayHeat', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
+      'createTeamTournament', 'createRelayChampionship', 'relayOverview', 'recordRelayHeat',
+      'publishRelayFinal', 'recordRelayFinal', 'decideRelayHeat', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
       'createTimedChampionship', 'createTrackChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
@@ -155,6 +156,79 @@ describe('Community tournaments management', () => {
       { winPoints: 2, drawPoints: 1, lossPoints: 0 },
       'CHESS_HALF_POINTS', 'CHESS_GAME'
     );
+  });
+
+  it('publishes finalists from qualifying standings only after confirmation',async()=>{
+    component.selected={...draft,id:103,entryType:'TEAM',sport:'Atletismo',
+      status:'IN_PROGRESS',scoringMode:'RELAY_BEST_TIME',
+      eventType:'TRACK_RELAY',eventDiscipline:'RELAY_4X100'};
+    const rows=[1,2,3].map(n=>({
+      position:n,teamId:n,teamName:'Equipa '+n,
+      bestSeconds:42+n,recordedHeats:1,runnerProfileIds:[11,12,13,14]
+    }));
+    component.relayOverview={
+      tournamentId:103,eventDiscipline:'RELAY_4X100',
+      teams:[],heats:[],standings:rows,qualifyingStandings:rows,finalPublished:false
+    };
+    expect(component.canPublishRelayFinal).toBeTrue();
+    component.relayFinalConfirm=true;
+    api.publishRelayFinal.and.returnValue(of({
+      ...component.relayOverview,standings:[],finalPublished:true,
+      finalists:rows.map(row=>({teamId:row.teamId,teamName:row.teamName,
+        seed:row.position,qualifyingSeconds:row.bestSeconds}))
+    }));
+    await component.publishRelayFinal();
+    expect(api.publishRelayFinal).toHaveBeenCalledOnceWith(7,103);
+    expect(component.relayOverview?.finalPublished).toBeTrue();
+    expect(component.relayFinalConfirm).toBeFalse();
+  });
+
+  it('refuses automatic qualification when eighth and ninth teams tie',()=>{
+    component.selected={...draft,id:103,entryType:'TEAM',sport:'Atletismo',
+      status:'IN_PROGRESS',scoringMode:'RELAY_BEST_TIME'};
+    const rows=Array.from({length:9},(_,i)=>({
+      position:i+1,teamId:i+1,teamName:'Equipa '+i,
+      bestSeconds:i>=7?50:i+40,recordedHeats:1,runnerProfileIds:[1,2,3,4]
+    }));
+    component.relayOverview={tournamentId:103,eventDiscipline:'RELAY_4X100',
+      teams:[],heats:[],standings:rows,qualifyingStandings:rows,finalPublished:false};
+    expect(component.canPublishRelayFinal).toBeFalse();
+  });
+
+  it('keeps qualification read-only after the final and allows jury corrections in final',async()=>{
+    component.selected={...draft,id:103,status:'IN_PROGRESS',entryType:'TEAM',
+      sport:'Atletismo',scoringMode:'RELAY_BEST_TIME'};
+    const team:TournamentTeam={
+      id:7,name:'Equipa',playersPerTeam:4,createdAt:'2026-11-03T00:00:00Z',
+      players:[1,2,3,4].map(n=>({profileId:n,username:'a'+n,displayName:'Atleta '+n}))
+    };
+    component.teams=[team];
+    component.relayLegDraft[7]=[1,2,3,4];
+    component.relayHeatDraft[7]=1;
+    component.relayTimeDraft[7]=44.123;
+    const overview={
+      tournamentId:103,eventDiscipline:'RELAY_4X100',teams:[team],heats:[],standings:[],
+      finalPublished:true,finalists:[{teamId:7,teamName:'Equipa',seed:1,qualifyingSeconds:44.789}]
+    };
+    component.relayOverview=overview;
+    const response={...overview,heats:[{id:88,teamId:7,teamName:'Equipa',
+      heatNumber:1,elapsedSeconds:44.123,runnerProfileIds:[1,2,3,4],
+      recordedAt:'2026-11-03T00:00:00Z',stage:'FINAL' as const,decisionStatus:'VALID' as const}]};
+    api.recordRelayFinal.and.returnValue(of(response));
+    await component.saveRelayHeat(team);
+    expect(api.recordRelayFinal).toHaveBeenCalledOnceWith(7,103,7,1,44.123,[1,2,3,4]);
+    expect(api.recordRelayHeat).not.toHaveBeenCalled();
+    const qualifying={...response.heats[0],stage:'QUALIFICATION' as const};
+    expect(component.canDecideRelayHeat(qualifying)).toBeFalse();
+    expect(component.canDecideRelayHeat(response.heats[0])).toBeTrue();
+    component.relayDecisionReasons[88]='Troca de testemunho fora da zona';
+    api.decideRelayHeat.and.returnValue(of({
+      ...response,heats:[{...response.heats[0],decisionStatus:'DISQUALIFIED' as const}]
+    }));
+    await component.decideRelayHeat(response.heats[0]);
+    expect(api.decideRelayHeat).toHaveBeenCalledOnceWith(7,103,88,
+      'DISQUALIFIED','Troca de testemunho fora da zona');
+    expect(component.relayOverview?.heats[0].decisionStatus).toBe('DISQUALIFIED');
   });
 
   it('creates four-runner relay championship without generic match scoring',async()=>{

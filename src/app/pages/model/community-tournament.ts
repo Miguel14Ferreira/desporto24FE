@@ -372,6 +372,7 @@ export interface TournamentMeasuredOverview {
 export interface RelayHeat {
   id:number; teamId:number; teamName:string; heatNumber:number; elapsedSeconds:number;
   runnerProfileIds:number[]; recordedAt:string;
+  stage?:'QUALIFICATION'|'FINAL'; decisionStatus?:'VALID'|'DISQUALIFIED';
 }
 export interface RelayStanding {
   position:number; teamId:number; teamName:string; bestSeconds:number;
@@ -380,4 +381,16 @@ export interface RelayStanding {
 export interface RelayOverview {
   tournamentId:number; eventDiscipline:string;
   teams:TournamentTeam[]; heats:RelayHeat[]; standings:RelayStanding[];
+  finalPublished?:boolean;
+  finalists?:RelayFinalist[];
+  qualifyingStandings?:RelayStanding[];
+  finalStandings?:RelayStanding[];
+  decisions?:RelayDecision[];
+}
+export interface RelayFinalist {
+  teamId:number; teamName:string; seed:number; qualifyingSeconds:number;
+}
+export interface RelayDecision {
+  id:number; heatId:number; previousStatus:'VALID'|'DISQUALIFIED';
+  status:'VALID'|'DISQUALIFIED'; reason:string; actorProfileId:number; decidedAt:string;
 }

@@ -10,7 +10,7 @@ import { historicalMatchReviewFlags } from './community-historical-match-review'
 import {
   CommunityTournament, TournamentStatus, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
-  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry, TournamentTimedOverview, TournamentMeasuredOverview, RelayOverview,
+  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry, TournamentTimedOverview, TournamentMeasuredOverview, RelayOverview, RelayHeat,
   InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../model/community-tournament';
 import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
@@ -166,6 +166,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   relayHeatDraft: Record<number, number> = {};
   relayTimeDraft: Record<number, number | null> = {};
   relayLegDraft: Record<number, number[]> = {};
+  relayFinalConfirm=false;
+  relayDecisionReasons:Record<number,string>={};
   readonly relayLegIndexes=[0,1,2,3] as const;
   teamPlayerDraft: Record<number, number | null> = {};
   teamMemberSearch: Record<number, string> = {};
@@ -1455,6 +1457,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.relayTimeDraft={};
     this.relayHeatDraft={};
     this.relayLegDraft={};
+    this.relayFinalConfirm=false;
+    this.relayDecisionReasons={};
     ++this.relayRevision;
     this.teamDirectoryQuery = '';
     this.teamPlayerDraft = {};
@@ -1933,6 +1937,48 @@ export class CommunityTournamentsComponent implements OnChanges {
     });
   }
 
+  get relayEligibleTeams():TournamentTeam[] {
+    const overview=this.relayOverview;
+    if(!overview?.finalPublished) return this.teams;
+    const finalists=new Set((overview.finalists??[]).map(x=>x.teamId));
+    return this.teams.filter(team=>finalists.has(team.id));
+  }
+  get canPublishRelayFinal():boolean {
+    const overview=this.relayOverview;
+    const rows=overview?.qualifyingStandings??overview?.standings??[];
+    return this.canManage && !this.busy && this.selected?.status==='IN_PROGRESS'
+      && !overview?.finalPublished && rows.length>=2
+      && !(rows.length>8 && rows[7].bestSeconds===rows[8].bestSeconds);
+  }
+  async publishRelayFinal():Promise<void> {
+    if(!this.selected || !this.canPublishRelayFinal || !this.relayFinalConfirm)return;
+    await this.mutate(this.api.publishRelayFinal(this.community.id,this.selected.id),
+      t('communities.relay.finalPublished'),overview=>{
+        this.relayOverview=overview;
+        this.relayFinalConfirm=false;
+        this.relayHeatDraft={};
+        this.relayTimeDraft={};
+        this.changeDetector.markForCheck();
+      });
+  }
+  canDecideRelayHeat(heat:RelayHeat):boolean {
+    return this.canManage && !this.busy && this.selected?.status!=='COMPLETED'
+      && (!this.relayOverview?.finalPublished || heat.stage==='FINAL');
+  }
+  async decideRelayHeat(heat:RelayHeat):Promise<void> {
+    if(!this.selected || !this.canDecideRelayHeat(heat))return;
+    const reason=(this.relayDecisionReasons[heat.id]??'').trim();
+    if(reason.length<5 || reason.length>500){
+      this.showError(t('communities.relay.decisionReasonRequired'));return;
+    }
+    const status=heat.decisionStatus==='DISQUALIFIED'?'VALID':'DISQUALIFIED';
+    await this.mutate(this.api.decideRelayHeat(this.community.id,this.selected.id,
+      heat.id,status,reason),t('communities.relay.decisionSaved'),overview=>{
+        this.relayOverview=overview;
+        this.relayDecisionReasons[heat.id]='';
+        this.changeDetector.markForCheck();
+      });
+  }
   relayRunnerNames(teamId:number,ids:number[]):string {
     const team=this.teams.find(t=>t.id===teamId);
     return ids.map(id=>team?.players.find(p=>p.profileId===id)?.displayName
@@ -1964,8 +2010,15 @@ export class CommunityTournamentsComponent implements OnChanges {
        || Math.round(seconds*1000)/1000!==seconds) {
       this.showError(t('communities.relay.invalid'));return;
     }
-    await this.mutate(this.api.recordRelayHeat(this.community.id,this.selected.id,
-      team.id,heat,seconds,[...this.relayLegDraft[team.id]]),
+    if(!this.relayEligibleTeams.some(eligible=>eligible.id===team.id)){
+      this.showError(t('communities.relay.invalid'));return;
+    }
+    const record=(this.relayOverview?.finalPublished
+      ? this.api.recordRelayFinal(this.community.id,this.selected.id,
+          team.id,heat,seconds,[...this.relayLegDraft[team.id]])
+      : this.api.recordRelayHeat(this.community.id,this.selected.id,
+          team.id,heat,seconds,[...this.relayLegDraft[team.id]]));
+    await this.mutate(record,
       t('communities.tournaments.organizerUi.teamScoreSaved'),overview=>{
         this.relayOverview=overview;
         if(this.selected?.status==='DRAFT')

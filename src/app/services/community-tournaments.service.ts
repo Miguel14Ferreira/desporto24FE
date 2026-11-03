@@ -93,6 +93,21 @@ export class CommunityTournamentsService {
       {elapsedSeconds,runnerProfileIds});
   }
 
+  publishRelayFinal(communityId:number,tournamentId:number):Observable<RelayOverview> {
+    return this.http.post<RelayOverview>(this.url(communityId,tournamentId)+'/relays/final/publish',{});
+  }
+  recordRelayFinal(communityId:number,tournamentId:number,teamId:number,heatNumber:number,
+                   elapsedSeconds:number,runnerProfileIds:number[]):Observable<RelayOverview> {
+    return this.http.put<RelayOverview>(
+      this.url(communityId,tournamentId)+'/relays/final/heats/'+heatNumber+'/teams/'+teamId,
+      {elapsedSeconds,runnerProfileIds});
+  }
+  decideRelayHeat(communityId:number,tournamentId:number,heatId:number,
+                  status:'VALID'|'DISQUALIFIED',reason:string):Observable<RelayOverview> {
+    return this.http.put<RelayOverview>(this.url(communityId,tournamentId)+'/relays/decisions/'+heatId,
+      {status,reason});
+  }
+
   createTrackChampionship(communityId:number,name:string,eventDiscipline:string):Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId),{
       name,sport:'Atletismo',entryType:'INDIVIDUAL',format:'LEAGUE',
