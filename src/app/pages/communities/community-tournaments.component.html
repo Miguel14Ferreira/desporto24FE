@@ -1149,7 +1149,7 @@
                         <div class="race-round-card">
                           <strong>{{ team.name }}</strong>
                           @if (team.players.length !== 4) {
-                            <p class="t-muted">{{ 'communities.relay.rosterRequired' | t }}</p>
+                            <p class="t-muted">{{ 'communities.relay.invalid' | t }}</p>
                           } @else {
                             <div class="team-create-actions">
                               <label>{{ 'communities.inlineSpeed.heat' | t }}

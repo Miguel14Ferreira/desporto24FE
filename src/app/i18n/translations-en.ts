@@ -3015,7 +3015,6 @@ export const EN: Record<string, string> = {
   'communities.trackTournament.linkedSuccess': "Track event linked.",
   'communities.relay.discipline.RELAY_4X100': "4×100 m",
   'communities.relay.discipline.RELAY_4X400': "4×400 m",
-  'communities.relay.rosterRequired': "Four runners required.",
   'communities.relay.leg': "Leg",
   'communities.relay.invalid': "Choose four runners and a valid time.",
   'communities.tournaments.capabilities.model.RELAY_BEST_TIME': "Four-runner timed relays.",

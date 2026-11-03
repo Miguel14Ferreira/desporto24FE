@@ -3021,7 +3021,6 @@ const PT: Dictionary = {
   'communities.trackTournament.linkedSuccess': "Prova de pista associada.",
   'communities.relay.discipline.RELAY_4X100': "4×100 m",
   'communities.relay.discipline.RELAY_4X400': "4×400 m",
-  'communities.relay.rosterRequired': "É necessário ter quatro atletas.",
   'communities.relay.leg': "Percurso",
   'communities.relay.invalid': "Indica quatro atletas e um tempo válido.",
   'communities.tournaments.capabilities.model.RELAY_BEST_TIME': "Estafetas de 4 corredores por tempo.",
