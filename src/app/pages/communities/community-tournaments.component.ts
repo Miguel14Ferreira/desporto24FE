@@ -186,6 +186,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamProfileMatchesLoading = false;
   teamProfileMatchesError = false;
   teamProfileMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
+  teamProfilePhaseFilter = 'ALL';
   private teamProfileMatchesRevision = 0;
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamPhaseFilter = 'ALL';
@@ -2297,12 +2298,52 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamProfileMatchesLoading = false;
     this.teamProfileMatchesError = false;
     this.teamProfileMatchFilter = 'ALL';
+    this.teamProfilePhaseFilter = 'ALL';
+  }
+
+  /**
+   * A team's own published fixture pages define its available stages. Never
+   * borrow tournament-wide matches or fabricate rounds not returned by the API.
+   */
+  get teamProfilePhases(): { key: string; label: string; loaded: number; completed: number }[] {
+    if (!this.focusedTeam || this.isRelayCompetition) return [];
+    const phases = new Map<string, { key: string; label: string; loaded: number;
+      completed: number; order: number }>();
+    for (const game of this.teamProfileMatches) {
+      const isGroup = this.isGroupKnockout && game.groupNumber != null;
+      const key = this.teamPhaseKey(game);
+      let phase = phases.get(key);
+      if (!phase) {
+        phase = {
+          key,
+          label: isGroup
+            ? t('communities.tournaments.finalUi.groupLabel', { group: this.groupLabel(game.groupNumber!) })
+            : this.teamMatchStageLabel(game),
+          loaded: 0, completed: 0,
+          order: isGroup ? game.groupNumber! : 100 + game.roundNumber
+        };
+        phases.set(key, phase);
+      }
+      phase.loaded++;
+      if (game.status === 'COMPLETED') phase.completed++;
+    }
+    return [...phases.values()].sort((a, b) => a.order - b.order)
+      .map(({ order, ...phase }) => phase);
   }
 
   get visibleTeamProfileMatches(): TournamentTeamMatch[] {
-    return this.teamProfileMatches.filter(game => this.teamProfileMatchFilter === 'ALL'
-      || (this.teamProfileMatchFilter === 'COMPLETED'
-        ? game.status === 'COMPLETED' : game.status !== 'COMPLETED'));
+    return this.teamProfileMatches.filter(game =>
+      (this.teamProfilePhaseFilter === 'ALL'
+        || this.teamProfilePhaseFilter === this.teamPhaseKey(game))
+      && (this.teamProfileMatchFilter === 'ALL'
+        || (this.teamProfileMatchFilter === 'COMPLETED'
+          ? game.status === 'COMPLETED' : game.status !== 'COMPLETED')));
+  }
+
+  setTeamProfilePhaseFilter(key: string): void {
+    if (key !== 'ALL' && !this.teamProfilePhases.some(phase => phase.key === key)) return;
+    this.teamProfilePhaseFilter = key;
+    this.changeDetector.markForCheck();
   }
 
   setTeamProfileMatchFilter(filter: 'ALL' | 'PENDING' | 'COMPLETED'): void {

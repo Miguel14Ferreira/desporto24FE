@@ -612,6 +612,19 @@
                       [attr.aria-pressed]="teamProfileMatchFilter === 'COMPLETED'"
                       (click)="setTeamProfileMatchFilter('COMPLETED')">{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</button>
                   </div>
+                  @if (teamProfilePhases.length > 1) {
+                    <label class="team-phase-select team-page-phase-filter">
+                      {{ 'communities.tournaments.phaseUi.filter' | t }}
+                      <select [ngModel]="teamProfilePhaseFilter"
+                        (ngModelChange)="setTeamProfilePhaseFilter($event)"
+                        [attr.aria-label]="'communities.tournaments.phaseUi.filter' | t">
+                        <option value="ALL">{{ 'communities.tournaments.phaseUi.all' | t }}</option>
+                        @for (phase of teamProfilePhases; track phase.key) {
+                          <option [value]="phase.key">{{ phase.label }} · {{ phase.completed }}/{{ phase.loaded }}</option>
+                        }
+                      </select>
+                    </label>
+                  }
                   <p role="status">{{ 'communities.tournaments.fixturesUi.loadedSummary' | t:{shown:visibleTeamProfileMatches.length,loaded:teamProfileMatches.length} }}</p>
                 </div>
               }

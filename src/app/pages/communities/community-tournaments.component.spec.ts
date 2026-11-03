@@ -1696,6 +1696,68 @@ describe('Community tournaments management', () => {
       expect(component.visibleTeamProfileMatches.length).toBe(2);
     });
 
+    it('filters the team page by real group and elimination phases, not global fixtures', () => {
+      const groups={...teamDraft,format:'GROUP_KNOCKOUT' as const,groupCount:2 as const,
+        status:'IN_PROGRESS' as const};
+      api.teams.and.returnValue(of([team,{...team,id:41}]));
+      api.teamProfileMatches.and.returnValue(of({matches:[
+        {id:90,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'A',
+          awayTeamId:41,awayTeamName:'B',status:'COMPLETED',homeScore:1,awayScore:0},
+        {id:91,roundNumber:2,groupNumber:1,homeTeamId:41,homeTeamName:'B',
+          awayTeamId:40,awayTeamName:'A',status:'SCHEDULED'},
+        {id:92,roundNumber:1,groupNumber:null,homeTeamId:40,homeTeamName:'A',
+          awayTeamId:42,awayTeamName:'C',status:'SCHEDULED'}
+      ],page:0,hasMore:false}));
+      component.teamPageId=40;
+      component.selectTournament(groups);
+      const expected=[['group-1','Grupo A',1,2],['round-1','Meia-final',0,1]];
+      expect(component.teamProfilePhases.map(phase=>
+        [phase.key,phase.label,phase.completed,phase.loaded])).toEqual(expected);
+      const loadedCalls=api.teamProfileMatches.calls.count();
+      component.setTeamProfilePhaseFilter('group-1');
+      expect(component.visibleTeamProfileMatches.map(game=>game.id)).toEqual([90,91]);
+      component.setTeamProfileMatchFilter('PENDING');
+      expect(component.visibleTeamProfileMatches.map(game=>game.id)).toEqual([91]);
+      component.setTeamProfilePhaseFilter('round-1');
+      expect(component.visibleTeamProfileMatches.map(game=>game.id)).toEqual([92]);
+      component.setTeamProfileMatchFilter('COMPLETED');
+      expect(component.visibleTeamProfileMatches).toEqual([]);
+      component.setTeamProfilePhaseFilter('round-9');
+      expect(component.teamProfilePhaseFilter).toBe('round-1');
+      component.setTeamProfileMatchFilter('ALL');
+      component.setTeamProfilePhaseFilter('ALL');
+      expect(component.visibleTeamProfileMatches.map(game=>game.id)).toEqual([90,91,92]);
+      expect(api.teamProfileMatches.calls.count()).toBe(loadedCalls);
+      expect(component.teamMatches).toEqual([]); // The global board is a different source.
+      component.teamPageId=41;
+      component.ngOnChanges({teamPageId:new SimpleChange(40,41,false)});
+      expect(component.teamProfilePhaseFilter).toBe('ALL');
+      expect(component.teamProfileMatchFilter).toBe('ALL');
+    });
+
+    it('never invents later league rounds while loading paginated team fixtures', () => {
+      const fixture={id:100,roundNumber:2,homeTeamId:40,homeTeamName:'A',
+        awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const};
+      api.teams.and.returnValue(of([team]));
+      api.teamProfileMatches.and.returnValues(
+        of({matches:[fixture],page:0,hasMore:true}),
+        of({matches:[{...fixture,id:101,roundNumber:4,status:'COMPLETED',
+          homeScore:2,awayScore:1}],page:1,hasMore:false})
+      );
+      component.teamPageId=40;
+      component.selectTournament({...teamDraft,status:'IN_PROGRESS'});
+      expect(component.teamProfilePhases.map(phase=>phase.key)).toEqual(['round-2']);
+      component.setTeamProfilePhaseFilter('round-4');
+      expect(component.teamProfilePhaseFilter).toBe('ALL');
+      component.loadTeamProfileMatches();
+      expect(component.teamProfilePhases.map(phase=>phase.key)).toEqual(['round-2','round-4']);
+      component.setTeamProfilePhaseFilter('round-4');
+      expect(component.visibleTeamProfileMatches.map(game=>game.id)).toEqual([101]);
+      component.selectTournament({...teamDraft,id:20});
+      expect(component.teamProfilePhaseFilter).toBe('ALL');
+      expect(component.teamProfilePhases).toEqual([]);
+    });
+
     it('searches the team directory without changing saved teams or fixtures', () => {
       const blue = { ...team, id: 41, name: 'São Azul' };
       const green = { ...team, id: 42, name: 'Verdes' };
