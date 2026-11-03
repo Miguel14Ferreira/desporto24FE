@@ -252,6 +252,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.eventDisciplineDraft=code;
     this.changeDetector.markForCheck();
   }
+  relayDisciplineLabel(code:string|null|undefined):string {
+    return code?.startsWith('RELAY_4X') ? code.replace('RELAY_4X','4×')+' m' : '—';
+  }
   get relayDisciplineOptions():readonly string[] {
     return this.selectedSportCreationModel==='RELAY_BEST_TIME'
       && this.savedSportEventType==='TRACK_RELAY' ? RELAY_TOURNAMENT_DISCIPLINES : [];
@@ -1967,7 +1970,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if(!this.selected || !this.canDecideRelayHeat(heat))return;
     const reason=(this.relayDecisionReasons[heat.id]??'').trim();
     if(reason.length<5 || reason.length>500){
-      this.showError(t('communities.relay.decisionReasonRequired'));return;
+      this.showError(t('communities.race.decisionReason'));return;
     }
     const status=heat.decisionStatus==='DISQUALIFIED'?'VALID':'DISQUALIFIED';
     await this.mutate(this.api.decideRelayHeat(this.community.id,this.selected.id,

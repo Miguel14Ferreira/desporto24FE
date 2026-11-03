@@ -243,7 +243,7 @@
                     [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft===discipline"
                     [class.is-selected]="eventDisciplineDraft===discipline"
                     (click)="chooseRelayDiscipline(discipline)">
-                    <span>{{ ('communities.relay.discipline.'+discipline) | t }}</span>
+                    <span>{{ relayDisciplineLabel(discipline) }}</span>
                     <small>4 {{ 'communities.tournaments.teamUi.players' | t }}</small>
                   </button>
                 }
@@ -1132,7 +1132,7 @@
               <section class="t-section timed-championship" [attr.aria-label]="'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t">
                 <div class="t-section-heading">
                   <div>
-                    <h5>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }} · {{ ('communities.relay.discipline.'+selected.eventDiscipline) | t }}</h5>
+                    <h5>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }} · {{ relayDisciplineLabel(selected.eventDiscipline) }}</h5>
 
                   </div>
                   <button type="button" class="t-btn t-btn-secondary t-btn-small"
