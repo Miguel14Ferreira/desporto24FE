@@ -14,3 +14,11 @@ import { CommunitySeason } from '../model/community-group';
 export class CommunitySeasonTrophiesComponent {
   @Input() seasons: readonly CommunitySeason[] = [];
 }
+
+/** A race champion imported by name can exist without a linked account. */
+export function hasRecordedSeasonChampion(
+  season: Pick<CommunitySeason,'active'|'championUsername'|'championDisplayName'>
+): boolean {
+  return !season.active
+    && Boolean(season.championUsername?.trim() || season.championDisplayName?.trim());
+}

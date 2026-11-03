@@ -57,6 +57,7 @@ import { openWaterTimeError, formatOpenWaterTime } from './community-open-water-
 import { orienteeringTimeError, formatOrienteeringTime } from './community-orienteering-results';
 import { raceDecisionError } from './community-race-decisions';
 import { raceRankingGroupsForCommunity } from './community-race-ranking-groups';
+import { hasRecordedSeasonChampion } from './community-season-trophies.component';
 import { performanceKind, performanceError, eventPerformanceEntries,
   eventPerformancePlace, performanceDisplay, surfWaveError, surfWaveTotal,
   isWaveHeatEvent } from './community-performance-results';
@@ -3759,9 +3760,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.activeCommunitySeason = competition.seasons.find(
             season => season.id === competition.activeSeasonId
           );
-          this.communityTrophies = competition.seasons.filter(
-            season => !season.active && Boolean(season.championUsername)
-          );
+          this.communityTrophies = competition.seasons.filter(hasRecordedSeasonChampion);
           this.selectedSeasonId = competition.selectedSeasonId;
           this.loadSprintBrackets(community.id, competition.selectedSeasonId);
           if (this.editingSeasonId !== null &&
