@@ -790,12 +790,13 @@
                     (venueSaved)="onHabitualVenueSaved($event)"></app-community-habitual-venue-picker>
                 </section>
 
-                @if (competition?.settings?.rankingsEnabled && leader()) {
+                @if (competition?.settings?.rankingsEnabled && usesMatchPointsModel() && leader()) {
                   <app-community-leader-highlight [standing]="leader()"></app-community-leader-highlight>
                 }
 
                 @if (canManage()) {
                   <app-community-competition-settings
+                    [sports]="communitySports(selected)"
                     [enabled]="rankingsEnabledDraft"
                     [winPoints]="winPointsDraft"
                     [drawPoints]="drawPointsDraft"
@@ -4684,6 +4685,7 @@
                       </section>
                     }
 
+                  @if (usesMatchPointsModel()) {
                   <div class="section-heading">
                     <div>
                       <span class="section-kicker">{{ 'communities.rankingKicker' | t }}</span>
@@ -4712,6 +4714,7 @@
                   }
                   <app-community-ranking-table [rows]="displayedRankings"
                     (historicalSelected)="openRankingHistoricalPlayer($event)"></app-community-ranking-table>
+                  }
 
                   @if (rankingHistoricalRow) {
                     <div class="ranking-identity-backdrop" role="presentation"
