@@ -176,6 +176,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamDirectoryQuery = '';
   teamsLoadError = false;
   teamMatches: TournamentTeamMatch[] = [];
+  /** Independent, server-scoped fixture pagination for the selected team page. */
+  teamProfileMatches: TournamentTeamMatch[] = [];
+  teamProfileMatchesPage = -1;
+  teamProfileMatchesHasMore = false;
+  teamProfileMatchesLoading = false;
+  teamProfileMatchesError = false;
+  private teamProfileMatchesRevision = 0;
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamMatchesPage = 0;
   teamMatchesHasMore = false;
@@ -1126,6 +1133,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamDirectoryQuery = '';
       this.teamsLoadError = false;
       this.teamMatches = [];
+      this.resetTeamProfileMatches();
       this.teamMatchFilter = 'ALL';
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
@@ -1165,6 +1173,11 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.focusPlayersAfterReload = false;
       this.scoreTouched.clear();
       this.loadTournaments(true);
+    }
+    if (changes['teamPageId'] && !changes['community']) {
+      this.resetTeamProfileMatches();
+      if (this.focusedTeam && this.selected?.status !== 'DRAFT' && !this.isRelayCompetition)
+        this.loadTeamProfileMatches();
     }
   }
 
@@ -1249,6 +1262,30 @@ export class CommunityTournamentsComponent implements OnChanges {
   get focusedTeam(): TournamentTeam | undefined {
     return this.isTeamCompetition && this.teamPageId !== null
       ? this.teams.find(team => team.id === this.teamPageId) : undefined;
+  }
+
+  /** Never derive another team's form or classification from the tournament-wide UI. */
+  get focusedTeamStanding() {
+    const team = this.focusedTeam;
+    if (!team) return undefined;
+    if (this.selected?.format === 'GROUP_KNOCKOUT') {
+      return this.teamGroups?.groups.flatMap(group => group.standings)
+        .find(row => row.teamId === team.id);
+    }
+    return this.selected?.format === 'LEAGUE'
+      ? this.teamStandings?.standings.find(row => row.teamId === team.id) : undefined;
+  }
+
+  get focusedTeamRelayStanding() {
+    const team = this.focusedTeam;
+    return team && this.isRelayCompetition
+      ? this.relayOverview?.standings.find(row => row.teamId === team.id) : undefined;
+  }
+
+  get focusedTeamRelayHeats(): RelayHeat[] {
+    const team = this.focusedTeam;
+    return team && this.isRelayCompetition
+      ? (this.relayOverview?.heats ?? []).filter(heat => heat.teamId === team.id) : [];
   }
 
   get invitedTeam(): TournamentTeam | undefined {
@@ -1549,6 +1586,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMemberSearch = {};
     this.teamsLoadError = false;
     this.teamMatches = [];
+    this.resetTeamProfileMatches();
     this.teamMatchFilter = 'ALL';
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;
@@ -1979,6 +2017,9 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision !== this.detailRevision || this.community.id !== communityId
             || this.selected?.id !== tournament.id) return;
         this.teams = teams;
+        this.resetTeamProfileMatches();
+        if (this.focusedTeam && tournament.status !== 'DRAFT' && !this.isRelayCompetition)
+          this.loadTeamProfileMatches();
         if(this.isRelayCompetition) {
           for(const team of teams) {
             if(!this.relayLegDraft[team.id] || this.relayLegDraft[team.id].length!==4)
@@ -2100,6 +2141,61 @@ export class CommunityTournamentsComponent implements OnChanges {
           this.updateSelected({...this.selected!,status:'IN_PROGRESS'});
         this.changeDetector.markForCheck();
       });
+  }
+
+  private resetTeamProfileMatches(): void {
+    ++this.teamProfileMatchesRevision;
+    this.teamProfileMatches = [];
+    this.teamProfileMatchesPage = -1;
+    this.teamProfileMatchesHasMore = false;
+    this.teamProfileMatchesLoading = false;
+    this.teamProfileMatchesError = false;
+  }
+
+  loadTeamProfileMatches(): void {
+    const team = this.focusedTeam;
+    const tournament = this.selected;
+    if (!team || !tournament || !this.isMember || tournament.status === 'DRAFT'
+        || this.isRelayCompetition || this.teamProfileMatchesLoading
+        || (this.teamProfileMatchesPage >= 0 && !this.teamProfileMatchesHasMore)) return;
+    const communityId = this.community.id, tournamentId = tournament.id, teamId = team.id;
+    const revision = ++this.teamProfileMatchesRevision;
+    const page = this.teamProfileMatchesPage + 1;
+    this.teamProfileMatchesLoading = true;
+    this.teamProfileMatchesError = false;
+    this.api.teamProfileMatches(communityId, tournamentId, teamId, page).pipe(
+      timeout(12000),
+      finalize(() => {
+        if (revision === this.teamProfileMatchesRevision) {
+          this.teamProfileMatchesLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: result => {
+        if (revision !== this.teamProfileMatchesRevision
+            || this.community.id !== communityId || this.selected?.id !== tournamentId
+            || this.teamPageId !== teamId) return;
+        // The backend enforces the team scope. Keep the profile defensive too.
+        this.teamProfileMatches = [...this.teamProfileMatches, ...result.matches.filter(
+          fixture => fixture.homeTeamId === teamId || fixture.awayTeamId === teamId)];
+        this.teamProfileMatchesPage = page;
+        this.teamProfileMatchesHasMore = result.hasMore;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        if (revision === this.teamProfileMatchesRevision) {
+          this.teamProfileMatchesError = true;
+          this.changeDetector.markForCheck();
+        }
+      }
+    });
+  }
+
+  retryTeamProfileMatches(): void {
+    if (this.teamProfileMatchesLoading) return;
+    this.teamProfileMatchesError = false;
+    this.loadTeamProfileMatches();
   }
 
   loadTeamMatches(reset = false): void {

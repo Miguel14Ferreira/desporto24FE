@@ -259,6 +259,14 @@ export class CommunityTournamentsService {
     return this.http.get<TournamentTeam[]>(this.url(communityId, tournamentId) + '/teams');
   }
 
+  /** Dedicated team profile: paginated by this team's matches, not the full fixture list. */
+  teamProfileMatches(communityId: number, tournamentId: number, teamId: number, page: number):
+    Observable<TournamentTeamMatchPage> {
+    return this.http.get<TournamentTeamMatchPage>(
+      this.url(communityId, tournamentId) + '/teams/' + teamId + '/matches',
+      { params: new HttpParams().set('page', String(page)) });
+  }
+
   createTeam(communityId: number, tournamentId: number, name: string): Observable<TournamentTeam> {
     return this.http.post<TournamentTeam>(this.url(communityId, tournamentId) + '/teams', { name });
   }

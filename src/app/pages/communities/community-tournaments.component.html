@@ -498,7 +498,7 @@
           @if (selected?.status === 'DRAFT' && !myTeam && !isTeamRosterFull(team) && invitedTeam?.id !== team.id) {
             <a class="t-btn t-btn-secondary"
               [routerLink]="['/menu/communities', community.id]"
-              [queryParams]="{tab:'tournaments',tournament:selected?.id,team:team.id}">
+              [queryParams]="{tab:'tournaments',tournament:selected?.id,team:team.id,teamPage:team.id}">
               {{ 'communities.tournaments.teamPage.joinTeam' | t }}
             </a>
           }
@@ -524,6 +524,92 @@
                 </button>
               }
             </div>
+          </section>
+        }
+        @if (selected?.status !== 'DRAFT') {
+          <section class="team-page-performance" [attr.aria-label]="'communities.tournaments.teamPage.resultsTitle' | t">
+            <div class="team-page-performance-heading">
+              <div>
+                <span class="team-page-eyebrow">{{ selected?.name }}</span>
+                <h3>{{ 'communities.tournaments.teamPage.resultsTitle' | t }}</h3>
+              </div>
+              @if (selected?.status === 'COMPLETED' && selected?.championTeamId === team.id) {
+                <span class="team-page-champion">🏆 {{ 'communities.tournaments.teamPage.champion' | t }}</span>
+              }
+            </div>
+            @if (isRelayCompetition) {
+              @if (focusedTeamRelayStanding; as row) {
+                <div class="team-page-stat-grid">
+                  <div><span>{{ 'communities.archive.position' | t }}</span><strong>{{ row.position }}.º</strong></div>
+                  <div><span>{{ 'communities.swimTournament.bestTime' | t }}</span><strong>{{ row.bestSeconds | number:'1.2-3' }} s</strong></div>
+                  <div><span>{{ 'communities.swimTournament.rounds' | t }}</span><strong>{{ row.recordedHeats }}</strong></div>
+                </div>
+              }
+              @if (relayError) {
+                <p role="alert" class="field-validation">{{ 'communities.swimTournament.loadError' | t }}</p>
+              }
+              @for (heat of focusedTeamRelayHeats; track heat.id) {
+                <div class="team-page-fixture">
+                  <span>{{ (heat.stage === 'FINAL' ? 'communities.inlineSpeed.stage.FINAL'
+                    : 'communities.relay.qual') | t }} · {{ 'communities.inlineSpeed.heat' | t }} {{ heat.heatNumber }}</span>
+                  <strong>{{ heat.decisionStatus === 'DISQUALIFIED' ? 'DSQ'
+                    : ((heat.elapsedSeconds | number:'1.2-3') + ' s') }}</strong>
+                </div>
+              }
+              @if (!relayError && !relayOverview) {
+                <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.loading' | t }}</p>
+              } @else if (!relayError && focusedTeamRelayHeats.length === 0) {
+                <p class="t-muted">{{ 'communities.tournaments.teamPage.noResults' | t }}</p>
+              }
+            } @else {
+              @if (focusedTeamStanding; as row) {
+                <div class="team-page-stat-grid">
+                  <div><span>{{ 'communities.archive.position' | t }}</span><strong>{{ row.position }}.º</strong></div>
+                  <div><span>{{ 'communities.tournaments.finalUi.playedCol' | t }}</span><strong>{{ row.played }}</strong></div>
+                  <div><span>{{ 'communities.tournaments.finalUi.winsCol' | t }}</span><strong>{{ row.won }}</strong></div>
+                  <div><span>{{ 'communities.tournaments.finalUi.drawsCol' | t }}</span><strong>{{ row.drawn }}</strong></div>
+                  <div><span>{{ 'communities.tournaments.finalUi.lossesCol' | t }}</span><strong>{{ row.lost }}</strong></div>
+                  <div><span>{{ 'communities.tournaments.finalUi.pointsCol' | t }}</span><strong>{{ row.points }}</strong></div>
+                </div>
+              }
+              @if (teamProfileMatchesError) {
+                <div class="team-page-fixtures-feedback">
+                  <p role="alert" class="field-validation">{{ 'communities.tournaments.fixturesUi.matchesError' | t }}</p>
+                  <button type="button" class="t-btn t-btn-secondary" [disabled]="teamProfileMatchesLoading"
+                    (click)="retryTeamProfileMatches()">{{ 'communities.tournaments.fixturesUi.retry' | t }}</button>
+                </div>
+              }
+              @for (game of teamProfileMatches; track game.id) {
+                <div class="team-page-fixture">
+                  <span class="team-page-fixture-round">{{ teamMatchStageLabel(game) }}</span>
+                  <span class="team-page-fixture-participants">
+                    <strong [class.is-own-team]="game.homeTeamId === team.id">{{ game.homeTeamName }}</strong>
+                    <span class="team-page-fixture-score">
+                      {{ game.status === 'COMPLETED' ? game.homeScore : '—' }}
+                      :
+                      {{ game.status === 'COMPLETED' ? game.awayScore : '—' }}
+                    </span>
+                    <strong [class.is-own-team]="game.awayTeamId === team.id">{{ game.awayTeamName }}</strong>
+                  </span>
+                  <span class="team-page-fixture-status">
+                    {{ (game.status === 'COMPLETED'
+                      ? 'communities.tournaments.fixturesUi.filterCompleted'
+                      : 'communities.tournaments.fixturesUi.filterPending') | t }}
+                  </span>
+                </div>
+              }
+              @if (teamProfileMatchesLoading) {
+                <p class="t-muted" role="status">{{ 'communities.tournaments.fixturesUi.loading' | t }}</p>
+              } @else if (!teamProfileMatches.length && !teamProfileMatchesError) {
+                <p class="t-muted">{{ 'communities.tournaments.fixturesUi.empty' | t }}</p>
+              }
+              @if (teamProfileMatchesHasMore && !teamProfileMatchesError) {
+                <button type="button" class="t-btn t-btn-secondary team-page-more"
+                  [disabled]="teamProfileMatchesLoading" (click)="loadTeamProfileMatches()">
+                  {{ 'communities.tournaments.teamPage.moreMatches' | t }}
+                </button>
+              }
+            }
           </section>
         }
         <div class="team-page-content">
