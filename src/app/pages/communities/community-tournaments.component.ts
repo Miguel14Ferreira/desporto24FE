@@ -1267,7 +1267,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   /** Never derive another team's form or classification from the tournament-wide UI. */
   get focusedTeamStanding() {
     const team = this.focusedTeam;
-    if (!team) return undefined;
+    if (!team || this.isRelayCompetition) return undefined;
     if (this.selected?.format === 'GROUP_KNOCKOUT') {
       return this.teamGroups?.groups.flatMap(group => group.standings)
         .find(row => row.teamId === team.id);
