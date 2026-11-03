@@ -1152,7 +1152,7 @@
                           <div class="confirm-actions">
                             <button type="button" class="t-btn t-btn-primary"
                               [disabled]="!canPublishRelayFinal" (click)="publishRelayFinal()">
-                              {{ 'communities.relay.confirmFinal' | t }}
+                              {{ 'communities.inlineSpeed.confirm' | t }}
                             </button>
                             <button type="button" class="t-btn t-btn-secondary"
                               (click)="relayFinalConfirm=false">{{ 'common.cancel' | t }}</button>
@@ -1174,7 +1174,7 @@
                           <thead><tr>
                             <th scope="col">#</th>
                             <th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
-                            <th scope="col">{{ 'communities.relay.qualifyingTime' | t }}</th>
+                            <th scope="col">{{ 'communities.swimTournament.bestTime' | t }}</th>
                           </tr></thead>
                           <tbody>
                             @for (f of relay.finalists ?? []; track f.teamId) {
@@ -1228,7 +1228,7 @@
                   }
                   <div class="swim-standings">
                     <h6>{{ (relay.finalPublished
-                      ? 'communities.relay.finalResults' : 'communities.relay.qualifying') | t }}</h6>
+                      ? 'communities.inlineSpeed.stage.FINAL' : 'communities.relay.qualifying') | t }}</h6>
                     @if (!relay.standings.length) {
                       <p class="t-muted">{{ 'communities.swimTournament.noResults' | t }}</p>
                     } @else {
@@ -1253,28 +1253,11 @@
                         </table>
                       </div>
                     }
-                    @if (relay.finalPublished && (relay.qualifyingStandings?.length ?? 0)>0) {
-                      <details class="race-round-card">
-                        <summary>{{ 'communities.relay.qualifying' | t }}</summary>
-                        <div class="standings-scroll"><table class="team-standings-table">
-                          <thead><tr><th scope="col">#</th>
-                            <th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
-                            <th scope="col">{{ 'communities.swimTournament.bestTime' | t }}</th></tr></thead>
-                          <tbody>
-                            @for (row of relay.qualifyingStandings ?? []; track row.teamId) {
-                              <tr><td>{{ row.position }}</td>
-                                <th scope="row">{{ row.teamName }}</th>
-                                <td>{{ row.bestSeconds | number:'1.2-3' }} s</td></tr>
-                            }
-                          </tbody>
-                        </table></div>
-                      </details>
-                    }
                     <h6>{{ 'communities.swimTournament.linked' | t }}</h6>
                     @for (heat of relay.heats; track heat.id) {
                       <div class="race-available-row">
                         <span><strong>{{ heat.teamName }} · {{ 'communities.inlineSpeed.heat' | t }} {{ heat.heatNumber }}</strong>
-                          <small>{{ (heat.stage === 'FINAL' ? 'communities.relay.final' : 'communities.relay.qualifying') | t }}
+                          <small>{{ (heat.stage === 'FINAL' ? 'communities.inlineSpeed.stage.FINAL' : 'communities.relay.qualifying') | t }}
                             · {{ relayRunnerNames(heat.teamId,heat.runnerProfileIds) }}</small>
                         </span>
                         <strong>{{ heat.decisionStatus==='DISQUALIFIED' ? 'DSQ' : ((heat.elapsedSeconds | number:'1.2-3') + ' s') }}</strong>
@@ -1282,7 +1265,7 @@
                       @if (canDecideRelayHeat(heat)) {
                         <details class="race-round-card">
                           <summary>{{ 'communities.relay.juryDecision' | t }} · {{ heat.teamName }}</summary>
-                          <label>{{ 'communities.relay.decisionReason' | t }}
+                          <label>{{ 'communities.race.decisionReason' | t }}
                             <input type="text" maxlength="500" [(ngModel)]="relayDecisionReasons[heat.id]"
                               [disabled]="busy" autocomplete="off">
                           </label>
@@ -1296,7 +1279,7 @@
                     }
                     @if ((relay.decisions?.length ?? 0)>0) {
                       <details class="race-round-card">
-                        <summary>{{ 'communities.relay.juryHistory' | t }} ({{ relay.decisions?.length }})</summary>
+                        <summary>{{ 'communities.history' | t }} ({{ relay.decisions?.length }})</summary>
                         @for (decision of relay.decisions ?? []; track decision.id) {
                           <p><strong>{{ decision.status }}</strong> · {{ decision.reason }}
                             <small>{{ decision.decidedAt | date:'dd/MM/yyyy HH:mm' }}</small></p>

@@ -1953,7 +1953,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   async publishRelayFinal():Promise<void> {
     if(!this.selected || !this.canPublishRelayFinal || !this.relayFinalConfirm)return;
     await this.mutate(this.api.publishRelayFinal(this.community.id,this.selected.id),
-      t('communities.relay.finalPublished'),overview=>{
+      t('communities.inlineSpeed.confirmed'),overview=>{
         this.relayOverview=overview;
         this.relayFinalConfirm=false;
         this.relayHeatDraft={};
