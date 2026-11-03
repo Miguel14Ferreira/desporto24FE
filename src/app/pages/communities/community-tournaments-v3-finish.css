@@ -742,3 +742,9 @@
 :host .tournaments .swim-standings tr.is-leader{
   background:rgba(38,142,118,.19);
 }
+
+/* A missing event/discipline is an actionable setup step, not an unsupported sport. */
+:host .tournaments .tournament-sport-capability-status.is-unavailable{
+  color:#ffd2c7;border-color:rgba(247,136,119,.43);
+  background:rgba(137,46,43,.22);
+}

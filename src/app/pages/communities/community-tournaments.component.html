@@ -257,10 +257,10 @@
                 <span class="tournament-sport-capability-label">{{ 'communities.tournaments.capabilities.sportModel' | t }}</span>
                 <strong>{{ ('communities.tournaments.capabilities.family.' + selectedSportCapabilities.family) | t }}</strong>
                 <span class="tournament-sport-capability-status"
-                  [class.is-available]="isSportFormatSupported">
-                  {{ (isSportFormatSupported
-                    ? 'communities.tournaments.capabilities.partialAvailable'
-                    : 'communities.tournaments.capabilities.pending') | t }}
+                  aria-live="polite"
+                  [class.is-available]="creationReadiness === 'READY'"
+                  [class.is-unavailable]="creationReadiness === 'UNAVAILABLE'">
+                  {{ creationReadinessLabelKey | t }}
                 </span>
               </div>
               <p>{{ ('communities.tournaments.capabilities.model.' + selectedSportCreationModel) | t }}</p>

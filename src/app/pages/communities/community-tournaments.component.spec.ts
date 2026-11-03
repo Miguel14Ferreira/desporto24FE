@@ -488,12 +488,56 @@ describe('Community tournaments management', () => {
     expect(component.showCommunitySportShortcuts).toBeTrue();
   });
 
+  it('shows truthful sport readiness: supported, needs event/discipline or unavailable', () => {
+    component.startIndividualCreation();
+    component.chooseSport('Karting');
+    expect(component.creationReadiness).toBe('READY');
+    expect(component.creationReadinessLabelKey).toBe('communities.tournaments.capabilities.partialAvailable');
+
+    component.chooseSport('Atletismo');
+    expect(component.creationReadiness).toBe('EVENT_REQUIRED');
+    component.chooseTournamentEventType('TRACK');
+    expect(component.selectedSportCreationModel).toBe('TRACK_BEST_TIME');
+    expect(component.creationReadiness).toBe('DISCIPLINE_REQUIRED');
+    component.chooseTrackDiscipline('TRACK_100');
+    expect(component.creationReadiness).toBe('READY');
+    expect(component.creationSportNoticeKey).toBeNull();
+
+    component.chooseSport('Natação');
+    expect(component.creationReadiness).toBe('EVENT_REQUIRED');
+    component.chooseTournamentEventType('SWIM_LCM');
+    expect(component.creationReadiness).toBe('DISCIPLINE_REQUIRED');
+    component.chooseSwimDiscipline('FREE_50');
+    expect(component.creationReadiness).toBe('READY');
+
+    component.chooseSport('Triatlo');
+    expect(component.creationReadiness).toBe('UNAVAILABLE');
+    expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationRaceNotice');
+
+    component.chooseSport('Futebol');
+    expect(component.creationReadiness).toBe('READY');
+  });
+
+  it('respects the relay-only league format and four-runner discipline', () => {
+    component.startTeamCreation();
+    component.chooseSport('Atletismo');
+    expect(component.creationReadiness).toBe('EVENT_REQUIRED');
+    component.chooseTournamentEventType('TRACK_RELAY');
+    expect(component.creationReadiness).toBe('DISCIPLINE_REQUIRED');
+    component.chooseRelayDiscipline('RELAY_4X400');
+    expect(component.creationReadiness).toBe('READY');
+
+    component.teamFormatDraft = 'KNOCKOUT';
+    expect(component.creationReadiness).toBe('LEAGUE_REQUIRED');
+    expect(component.isSportFormatSupported).toBeFalse();
+  });
+
   it('explains when sport-specific race or combat results need community rounds', () => {
     component.sportDraft = 'Futebol';
     expect(component.creationSportNoticeKey).toBeNull();
 
     component.chooseSport('Karting');
-    expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationRaceNotice');
+    expect(component.creationSportNoticeKey).toBeNull();
 
     component.chooseSport('Judo');
     expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationDuelNotice');

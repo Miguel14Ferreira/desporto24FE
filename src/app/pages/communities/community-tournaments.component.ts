@@ -295,10 +295,18 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.changeDetector.markForCheck();
   }
 
+  /** An unsupported route must not masquerade as a head-to-head competition. */
   get creationSportNoticeKey(): string | null {
     if (!this.sportDraft.trim()) return null;
-    if (this.sportDraft === 'Patinagem de Velocidade' && !this.showTeamCreate)
-      return null;
+    const model = this.selectedSportCreationModel;
+    if (model !== 'UNAVAILABLE') {
+      // The specialised engines and their own guides already describe valid
+      // races, marks and times; a legacy 1-v-1 warning is incorrect here.
+      return model === 'NUMERIC_INDIVIDUAL' || model === 'NUMERIC_TEAM'
+        ? (this.selectedSportCapabilities.family === 'duel'
+          ? 'communities.tournaments.creationDuelNotice' : null)
+        : null;
+    }
     switch (this.selectedSportCapabilities.family) {
       case 'race':
         return 'communities.tournaments.creationRaceNotice';
@@ -894,6 +902,27 @@ export class CommunityTournamentsComponent implements OnChanges {
             && validRelayTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft)));
   }
 
+  /** Present selection work separately from a genuinely unavailable model. */
+  get creationReadiness(): 'READY' | 'UNAVAILABLE' | 'EVENT_REQUIRED' | 'DISCIPLINE_REQUIRED' | 'LEAGUE_REQUIRED' {
+    const model = this.selectedSportCreationModel;
+    if (model === 'UNAVAILABLE') return 'UNAVAILABLE';
+    if (this.isSportFormatSupported) return 'READY';
+    if (model === 'RELAY_BEST_TIME' && this.teamFormatDraft !== 'LEAGUE')
+      return 'LEAGUE_REQUIRED';
+    if (!this.savedSportEventType) return 'EVENT_REQUIRED';
+    return 'DISCIPLINE_REQUIRED';
+  }
+
+  get creationReadinessLabelKey(): string {
+    switch (this.creationReadiness) {
+      case 'READY': return 'communities.tournaments.capabilities.partialAvailable';
+      case 'EVENT_REQUIRED': return 'communities.tournaments.capabilities.chooseEvent';
+      case 'DISCIPLINE_REQUIRED': return 'communities.tournaments.capabilities.chooseDiscipline';
+      case 'LEAGUE_REQUIRED': return 'communities.tournaments.capabilities.leagueRequired';
+      default: return 'communities.tournaments.capabilities.pending';
+    }
+  }
+
   get sportFormatWarning(): string {
     if (!this.showTeamCreate && this.sportDraft === 'Patinagem de Velocidade')
       return t('communities.inlineSpeed.creationHelp');
@@ -907,6 +936,13 @@ export class CommunityTournamentsComponent implements OnChanges {
       }
       return t('communities.karting.creationHint');
     }
+    const model = this.selectedSportCreationModel;
+    // A supported measured/timed tournament must not display legacy guidance
+    // claiming it is an incompatible numeric 1-v-1 league.
+    if (model === 'FIELD_BEST_MARK') return t('communities.fieldTournament.disciplineHelp');
+    if (model === 'TRACK_BEST_TIME') return t('communities.trackTournament.disciplineHelp');
+    if (model === 'SWIM_BEST_TIME') return t('communities.swimTournament.disciplineHelp');
+    if (model === 'RELAY_BEST_TIME') return t('communities.tournaments.capabilities.model.RELAY_BEST_TIME');
     return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
       ? t('communities.tournaments.organizerUi.teamChessUnavailable')
       : this.classificationProfile.detail;
