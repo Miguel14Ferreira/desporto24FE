@@ -3,7 +3,7 @@ import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { CommunityGroup } from '../model/community-group';
-import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage, TournamentTeam, InlineSpeedOverview } from '../model/community-tournament';
+import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage, TournamentTeam, TournamentTeamMatchPage, InlineSpeedOverview } from '../model/community-tournament';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -31,7 +31,7 @@ describe('Community tournaments management', () => {
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'createRelayChampionship', 'relayOverview', 'recordRelayHeat',
       'publishRelayFinal', 'decideRelayHeat', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
-      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
+      'generateTeamSchedule', 'teamMatches', 'teamProfileMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
       'createTimedChampionship', 'createCanoeChampionship', 'createRowingChampionship', 'createTrackChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
       'createMeasuredChampionship', 'measuredOverview', 'linkMeasuredRound', 'unlinkMeasuredRound',
@@ -61,6 +61,7 @@ describe('Community tournaments management', () => {
       proposals: [], decisions: []
     }));
     api.teamMatches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
+    api.teamProfileMatches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.teamGroups.and.returnValue(of({
       tournamentId: 19, knockoutStarted: false, groups: []
     }));
@@ -1078,6 +1079,85 @@ describe('Community tournaments management', () => {
       expect(component.isGroupKnockout).toBeTrue();
     });
 
+
+    it('loads a team page by its own server-scoped fixture pages, not global fixtures', () => {
+      const fixture = { id: 71, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
+        awayTeamId: 41, awayTeamName: 'Azuis', status: 'COMPLETED' as const,
+        homeScore: 3, awayScore: 1 };
+      api.teams.and.returnValue(of([team]));
+      api.teamProfileMatches.and.returnValues(
+        of({ matches: [fixture], page: 0, hasMore: true }),
+        of({ matches: [{...fixture, id: 72, roundNumber: 2,
+          homeTeamId: 41, awayTeamId: 40}], page: 1, hasMore: false })
+      );
+      component.teamPageId = 40;
+      component.selectTournament({...teamDraft, status: 'IN_PROGRESS'});
+      expect(component.teamProfileMatches.map(match => match.id)).toEqual([71]);
+      expect(component.teamProfileMatchesHasMore).toBeTrue();
+      expect(api.teamMatches).toHaveBeenCalledWith(7, 19, 0); // existing tournament overview
+      expect(api.teamProfileMatches).toHaveBeenCalledOnceWith(7, 19, 40, 0);
+      component.loadTeamProfileMatches();
+      expect(component.teamProfileMatches.map(match => match.id)).toEqual([71,72]);
+      expect(api.teamProfileMatches).toHaveBeenCalledWith(7, 19, 40, 1);
+      expect(component.teamProfileMatchesHasMore).toBeFalse();
+      component.loadTeamProfileMatches();
+      expect(api.teamProfileMatches).toHaveBeenCalledTimes(2);
+    });
+
+    it('switching team pages discards an outstanding request for the former team', () => {
+      const pending = new Subject<TournamentTeamMatchPage>();
+      const second = {...team, id: 41, name: 'Azuis'};
+      api.teams.and.returnValue(of([team, second]));
+      const first = { id: 71, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
+        awayTeamId: 41, awayTeamName: 'Azuis', status: 'SCHEDULED' as const };
+      api.teamProfileMatches.and.returnValues(pending.asObservable(),
+        of({ matches: [{...first,id:72}], page: 0, hasMore: false }));
+      component.teamPageId = 40;
+      component.selectTournament({...teamDraft, status: 'IN_PROGRESS'});
+      expect(component.teamProfileMatchesLoading).toBeTrue();
+      component.teamPageId = 41;
+      component.ngOnChanges({teamPageId:new SimpleChange(40, 41, false)});
+      expect(component.focusedTeam?.id).toBe(41);
+      expect(component.teamProfileMatches.map(match=>match.id)).toEqual([72]);
+      pending.next({matches: [first], page:0, hasMore:false});
+      pending.complete();
+      expect(component.teamProfileMatches.map(match=>match.id)).toEqual([72]);
+      expect(api.teamProfileMatches).toHaveBeenCalledWith(7, 19, 41, 0);
+    });
+
+    it('does not present other-team fixtures even if a response is incorrectly scoped', () => {
+      api.teams.and.returnValue(of([team]));
+      api.teamProfileMatches.and.returnValue(of({matches: [
+        {id:100,roundNumber:1,homeTeamId:81,homeTeamName:'Outra',
+          awayTeamId:82,awayTeamName:'Outra B',status:'SCHEDULED'},
+        {id:101,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:82,awayTeamName:'Outra B',status:'SCHEDULED'}
+      ],page:0,hasMore:false}));
+      component.teamPageId=40;
+      component.selectTournament({...teamDraft,status:'IN_PROGRESS'});
+      expect(component.teamProfileMatches.map(f=>f.id)).toEqual([101]);
+    });
+
+    it('shows independent league and relay results without football fields on relay pages', () => {
+      api.teams.and.returnValue(of([team]));
+      component.teamPageId=40;
+      component.selectTournament({...teamDraft,status:'IN_PROGRESS'});
+      component.teamStandings={tournamentId:19,status:'IN_PROGRESS',totalMatches:1,
+        completedMatches:1,winPoints:3,drawPoints:1,lossPoints:0,standings:[
+          {position:1,teamId:40,teamName:'Verdes',played:1,won:1,drawn:0,
+            lost:0,goalsFor:3,goalsAgainst:1,goalDifference:2,points:3}]};
+      expect(component.focusedTeamStanding?.points).toBe(3);
+      component.selected={...teamDraft,scoringMode:'RELAY_BEST_TIME',
+        entryType:'TEAM',sport:'Atletismo',status:'IN_PROGRESS'};
+      component.relayOverview={tournamentId:19,eventDiscipline:'RELAY_4X100',teams:[team],
+        standings:[{position:2,teamId:40,teamName:'Verdes',bestSeconds:44.2,
+          recordedHeats:2,runnerProfileIds:[]}],
+        heats:[{id:19,teamId:40,teamName:'Verdes',heatNumber:1,
+          elapsedSeconds:44.2,runnerProfileIds:[],recordedAt:'2026-11-03T00:00:00Z'}]};
+      expect(component.focusedTeamStanding).toBeUndefined();
+      expect(component.focusedTeamRelayStanding?.bestSeconds).toBe(44.2);
+      expect(component.focusedTeamRelayHeats.map(h=>h.id)).toEqual([19]);
+    });
 
     it('filters only fetched matches without touching paging or results', () => {
       const pending = { id: 71, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',

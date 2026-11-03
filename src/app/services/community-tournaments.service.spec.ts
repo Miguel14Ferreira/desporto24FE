@@ -25,6 +25,13 @@ describe('CommunityTournamentsService API contract', () => {
     expect((options as any).params.get('page')).toBe('2');
   });
 
+  it('queries the exact team profile with independent match pagination', () => {
+    service.teamProfileMatches(7, 9, 40, 2).subscribe();
+    const [url, options] = http.get.calls.mostRecent().args;
+    expect(url).toBe(base + '/teams/40/matches');
+    expect((options as any).params.get('page')).toBe('2');
+  });
+
   it('creates timed K1 without football points and with an explicit discipline', () => {
     service.createCanoeChampionship(7,'K1 500 m','K1_500').subscribe();
     expect(http.post).toHaveBeenCalledWith(
