@@ -582,6 +582,43 @@
                 <p class="t-muted">{{ 'communities.tournaments.teamPage.noResults' | t }}</p>
               }
             } @else {
+              @if (focusedTeamGroupOverview; as group) {
+                <section class="team-page-group-overview"
+                  [attr.aria-label]="'communities.tournaments.finalUi.groupTableLabel' | t:{group:groupLabel(group.groupNumber)}">
+                  <header class="team-page-group-heading">
+                    <div>
+                      <span class="team-page-eyebrow">{{ 'communities.tournaments.finalUi.groupStandings' | t }}</span>
+                      <h4>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(group.groupNumber)} }}</h4>
+                    </div>
+                    @if (group.qualified) {
+                      <span class="team-page-group-qualified">{{ 'communities.tournaments.finalUi.qualified' | t }}</span>
+                    }
+                  </header>
+                  <div class="team-page-group-rows" role="list">
+                    @for (row of group.rows; track row.teamId) {
+                      <div class="team-page-group-row" role="listitem"
+                        [class.is-current]="row.teamId === team.id">
+                        <span class="team-page-group-position">{{ row.position }}.</span>
+                        <a [routerLink]="['/menu/communities', community.id]"
+                          [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:row.teamId}"
+                          [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:row.teamName}">
+                          {{ row.teamName }}
+                        </a>
+                        <span class="team-page-group-played">{{ row.played }} {{ 'communities.tournaments.finalUi.playedCol' | t }}</span>
+                        <strong>{{ row.points }} {{ 'communities.tournaments.finalUi.pointsCol' | t }}</strong>
+                      </div>
+                    }
+                  </div>
+                  @if (group.firstFixture; as fixture) {
+                    <button type="button" class="team-page-group-first-fixture"
+                      (click)="showTeamProfileFixture(fixture)"
+                      [attr.aria-label]="('communities.tournaments.teamPage.viewKnockoutFixture' | t) + ': ' + fixture.homeTeamName + ' · ' + fixture.awayTeamName">
+                      <span>{{ 'communities.tournaments.teamPage.viewKnockoutFixture' | t }}</span>
+                      <small>{{ teamMatchStageLabel(fixture) }} ↗</small>
+                    </button>
+                  }
+                </section>
+              }
               @if (focusedTeamStanding; as row) {
                 <div class="team-page-stat-grid">
                   <div><span>{{ 'communities.archive.position' | t }}</span><strong>{{ row.position }}.º</strong></div>

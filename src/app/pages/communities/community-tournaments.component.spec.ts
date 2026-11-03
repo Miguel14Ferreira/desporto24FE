@@ -1876,6 +1876,67 @@ describe('Community tournaments management', () => {
       expect(component.focusedTeamJourney.advancement).toBeNull();
     });
 
+    it('shows only the selected team official group, sorted without inventing qualification', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      component.teams=[team,{...team,id:41,name:'Azuis'}];
+      const standing=(id:number,position:number)=>({
+        teamId:id,teamName:'Equipa '+id,position,played:3,won:2,
+        drawn:0,lost:1,goalsFor:4,goalsAgainst:2,goalDifference:2,points:6
+      });
+      component.teamGroups={tournamentId:19,knockoutStarted:false,groups:[
+        {groupNumber:1,standings:[standing(41,2),standing(40,1)]},
+        {groupNumber:2,standings:[standing(42,1),standing(43,2)]}
+      ]};
+      expect(component.focusedTeamGroupOverview?.groupNumber).toBe(1);
+      expect(component.focusedTeamGroupOverview?.rows.map(row=>row.teamId)).toEqual([40,41]);
+      expect(component.focusedTeamGroupOverview?.qualified).toBeFalse();
+      expect(component.focusedTeamStanding?.teamId).toBe(40);
+      component.teamGroups.knockoutStarted=true;
+      expect(component.focusedTeamGroupOverview?.qualified).toBeTrue();
+      component.teamPageId=41;
+      expect(component.focusedTeamGroupOverview?.rows.map(row=>row.teamId)).toEqual([40,41]);
+      component.teamPageId=40;
+      component.teamGroups={...component.teamGroups,tournamentId:123};
+      expect(component.focusedTeamGroupOverview).toBeNull();
+      expect(component.focusedTeamStanding).toBeUndefined();
+      component.teamGroups={...component.teamGroups,tournamentId:19};
+      component.teamGroups.groups[1].standings.push(standing(40,2));
+      expect(component.focusedTeamGroupOverview).toBeNull();
+      component.teamGroups.groups[1].standings.pop();
+      component.teamGroups.groups[0].standings.push(standing(40,3));
+      expect(component.focusedTeamGroupOverview).toBeNull();
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      expect(component.focusedTeamGroupOverview).toBeNull();
+    });
+
+    it('opens only a uniquely published first-round group qualifier on the team page', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:4};
+      component.teamPageId=40;
+      component.teams=[team];
+      const row={teamId:40,teamName:'Verdes',position:2,played:3,won:1,
+        drawn:1,lost:1,goalsFor:2,goalsAgainst:2,goalDifference:0,points:4};
+      component.teamGroups={tournamentId:19,knockoutStarted:true,groups:[
+        {groupNumber:1,standings:[row]}]};
+      const first={id:200,groupNumber:null,roundNumber:1,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:51,awayTeamName:'Pretos',status:'SCHEDULED' as const};
+      component.teamProfileMatches=[first];
+      expect(component.focusedTeamGroupOverview?.firstFixture?.id).toBe(200);
+      const jump=spyOn(component,'showTeamProfileFixture');
+      component.showTeamProfileFixture(first);
+      expect(jump).toHaveBeenCalledWith(first);
+      component.teamProfileMatches=[{...first,roundNumber:2}];
+      expect(component.focusedTeamGroupOverview?.firstFixture).toBeNull();
+      component.teamProfileMatches=[{...first,groupNumber:1}];
+      expect(component.focusedTeamGroupOverview?.firstFixture).toBeNull();
+      component.teamProfileMatches=[first,{...first,id:201}];
+      expect(component.focusedTeamGroupOverview?.firstFixture).toBeNull();
+      component.teamProfileMatches=[first];
+      component.teamGroups.knockoutStarted=false;
+      expect(component.focusedTeamGroupOverview?.qualified).toBeFalse();
+      expect(component.focusedTeamGroupOverview?.firstFixture).toBeNull();
+    });
+
     it('highlights only recorded league rankings, with a separate current-team position when outside the top three', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
       component.teams=[

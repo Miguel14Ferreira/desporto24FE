@@ -156,3 +156,21 @@
 :host .tournaments .team-group-fixture-preview>span b{flex:none;font-variant-numeric:tabular-nums;color:#9effcb;}
 :host .tournaments .team-group-fixture-preview em{font-size:.7rem;color:#9cf1ca;font-style:normal;}
 :host .tournaments .team-group-fixture-preview:focus-visible{outline:2px solid #b2ffdf;outline-offset:2px;}
+
+/* Dedicated team page: official per-group standings and published first knockout fixture. */
+:host .tournaments .team-page-group-overview{display:grid;gap:11px;padding:15px;border:1px solid rgba(104,220,182,.36);border-radius:14px;background:linear-gradient(135deg,rgba(11,67,67,.76),rgba(6,38,56,.91));}
+:host .tournaments .team-page-group-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+:host .tournaments .team-page-group-heading h4{margin:3px 0 0;font-size:1rem;color:#f0fff8;}
+:host .tournaments .team-page-group-qualified{padding:6px 10px;border:1px solid rgba(135,251,187,.55);border-radius:999px;background:rgba(40,133,90,.28);color:#b9ffdb;font-size:.73rem;font-weight:800;}
+:host .tournaments .team-page-group-rows{display:grid;gap:5px;min-width:0;}
+:host .tournaments .team-page-group-row{display:grid;grid-template-columns:2.1rem minmax(0,1fr) auto auto;gap:8px;align-items:center;min-width:0;padding:9px 11px;border:1px solid rgba(135,203,185,.16);border-radius:9px;background:rgba(9,48,59,.6);}
+:host .tournaments .team-page-group-row.is-current{border-color:rgba(128,250,183,.6);background:rgba(28,114,82,.33);}
+:host .tournaments .team-page-group-position{color:#95eccc;font-size:.8rem;font-weight:820;font-variant-numeric:tabular-nums;}
+:host .tournaments .team-page-group-row a{color:#e9fff5;font-size:.82rem;font-weight:750;min-width:0;overflow-wrap:anywhere;}
+:host .tournaments .team-page-group-row strong{color:#c6ffe0;font-size:.78rem;font-variant-numeric:tabular-nums;white-space:nowrap;}
+:host .tournaments .team-page-group-played{color:#a8d3ce;font-size:.72rem;white-space:nowrap;}
+:host .tournaments .team-page-group-first-fixture{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 12px;border:1px solid rgba(125,232,171,.6);border-radius:10px;background:rgba(35,118,88,.38);color:#d0ffe7;font:inherit;text-align:left;font-size:.8rem;font-weight:750;cursor:pointer;}
+:host .tournaments .team-page-group-first-fixture small{font-size:.73rem;color:#a6e4d2;}
+:host .tournaments .team-page-group-first-fixture:hover{background:rgba(38,141,98,.53);}
+:host .tournaments .team-page-group-first-fixture:focus-visible{outline:2px solid #b8ffe3;outline-offset:2px;}
+@media(max-width:540px){:host .tournaments .team-page-group-row{grid-template-columns:1.5rem minmax(0,1fr) auto;gap:5px;}:host .tournaments .team-page-group-played{display:none;}}

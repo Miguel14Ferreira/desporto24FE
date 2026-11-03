@@ -1412,12 +1412,44 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.focusPublishedKnockoutInBoard(fixture);
   }
 
+  /** Official group-only context for the dedicated team page. Do not infer rankings
+   * from fixtures or connect an uncertain first knockout match. */
+  get focusedTeamGroupOverview(): {
+    groupNumber: number; rows: TournamentTeamStandingRow[];
+    qualified: boolean; firstFixture: TournamentTeamMatch | null;
+  } | null {
+    const team = this.focusedTeam, groups = this.teamGroups;
+    if (!team || !this.isGroupKnockout || this.isRelayCompetition
+        || this.teamGroupsError || !groups
+        || groups.tournamentId !== this.selected?.id) return null;
+    const matchingGroups = groups.groups.filter(group =>
+      group.standings.some(row => row.teamId === team.id));
+    if (matchingGroups.length !== 1) return null;
+    const group = matchingGroups[0];
+    if (!Number.isSafeInteger(group.groupNumber) || group.groupNumber < 1
+        || group.standings.filter(row => row.teamId === team.id).length !== 1)
+      return null;
+    const rows = group.standings.filter(row =>
+      Number.isSafeInteger(row.teamId) && row.teamId > 0
+      && Number.isSafeInteger(row.position) && row.position > 0)
+      .slice().sort((a,b) => a.position-b.position || a.teamId-b.teamId);
+    const own = rows.find(row => row.teamId === team.id);
+    if (!own) return null;
+    const qualified = groups.knockoutStarted && own.position <= 2;
+    // The team's own paginated fixtures are authoritative for this page.
+    // Missing or duplicate first-round records never create a shortcut.
+    const firstMatches = qualified ? this.teamProfileMatches.filter(game =>
+      game.groupNumber == null && game.roundNumber === 1
+      && (game.homeTeamId === team.id || game.awayTeamId === team.id)) : [];
+    return {groupNumber:group.groupNumber, rows, qualified,
+      firstFixture:firstMatches.length === 1 ? firstMatches[0] : null};
+  }
+
   get focusedTeamStanding() {
     const team = this.focusedTeam;
     if (!team || this.isRelayCompetition) return undefined;
     if (this.selected?.format === 'GROUP_KNOCKOUT') {
-      return this.teamGroups?.groups.flatMap(group => group.standings)
-        .find(row => row.teamId === team.id);
+      return this.focusedTeamGroupOverview?.rows.find(row => row.teamId === team.id);
     }
     return this.selected?.format === 'LEAGUE'
       ? this.teamStandings?.standings.find(row => row.teamId === team.id) : undefined;
