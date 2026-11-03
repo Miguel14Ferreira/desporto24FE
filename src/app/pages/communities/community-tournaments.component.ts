@@ -916,9 +916,14 @@ export class CommunityTournamentsComponent implements OnChanges {
   get creationReadinessLabelKey(): string {
     switch (this.creationReadiness) {
       case 'READY': return 'communities.tournaments.capabilities.partialAvailable';
-      case 'EVENT_REQUIRED': return 'communities.tournaments.capabilities.chooseEvent';
-      case 'DISCIPLINE_REQUIRED': return 'communities.tournaments.capabilities.chooseDiscipline';
-      case 'LEAGUE_REQUIRED': return 'communities.tournaments.capabilities.leagueRequired';
+      case 'EVENT_REQUIRED': return 'communities.tournaments.events.title';
+      case 'DISCIPLINE_REQUIRED':
+        return this.selectedSportCreationModel === 'SWIM_BEST_TIME'
+          ? 'communities.swimTournament.disciplineTitle'
+          : this.selectedSportCreationModel === 'FIELD_BEST_MARK'
+            ? 'communities.fieldTournament.disciplineTitle'
+            : 'communities.trackTournament.disciplineTitle';
+      case 'LEAGUE_REQUIRED': return 'communities.tournaments.formatLeagueTitle';
       default: return 'communities.tournaments.capabilities.pending';
     }
   }
