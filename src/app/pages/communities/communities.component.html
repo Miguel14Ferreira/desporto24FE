@@ -4685,6 +4685,71 @@
                       </section>
                     }
 
+                  @if (!usesMatchPointsModel()) {
+                    <section class="racket-standings-section community-race-ranking-summary"
+                      aria-labelledby="community-race-ranking-summary-title">
+                      <div class="section-heading">
+                        <div>
+                          <span class="section-kicker">{{ 'communities.rankingKicker' | t }}</span>
+                          <h3 id="community-race-ranking-summary-title">{{ 'communities.rankingsModule' | t }}</h3>
+                        </div>
+                        @if ((competition?.seasons?.length || 0) > 0) {
+                          <app-community-season-filter
+                            [seasons]="competition?.seasons || []"
+                            [selectedSeasonId]="selectedSeasonId"
+                            (selectionChange)="selectSeason($event === null ? '' : $event.toString())"
+                          ></app-community-season-filter>
+                        }
+                      </div>
+
+                      @if ((competition?.raceStandings?.length || 0) > 0) {
+                        <p class="racket-standings-explainer">{{ 'communities.race.championshipHint' | t }}</p>
+                        @for (group of competition?.raceStandings || []; track group.sport) {
+                          <div class="racket-standings-group">
+                            <div class="racket-standings-group-head">
+                              <h4>{{ group.sport }}</h4>
+                              <span class="competition-badge">{{ (group.rule
+                                ? 'communities.race.scoringOn' : 'communities.race.noScoring') | t }}</span>
+                            </div>
+                            <div class="t-table-scroll">
+                              <table [attr.aria-label]="group.sport + ' — ' + ('communities.race.championshipTitle' | t)">
+                                <thead>
+                                  <tr>
+                                    <th scope="col">{{ 'communities.archive.position' | t }}</th>
+                                    <th scope="col">{{ 'communities.karting.participant' | t }}</th>
+                                    <th scope="col">{{ 'communities.race.races' | t }}</th>
+                                    <th scope="col">{{ 'communities.race.wins' | t }}</th>
+                                    <th scope="col">{{ 'communities.race.podiums' | t }}</th>
+                                    <th scope="col">{{ 'communities.race.bestFinish' | t }}</th>
+                                    <th scope="col">{{ 'communities.karting.points' | t }}</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (row of group.standings; track row.playerId) {
+                                    <tr>
+                                      <td>{{ row.position }}</td>
+                                      <td>{{ row.fullName || row.username || ('communities.karting.unknownDriver' | t) }}</td>
+                                      <td>{{ row.races }}</td>
+                                      <td>{{ row.wins }}</td>
+                                      <td>{{ row.podiums }}</td>
+                                      <td>{{ row.bestFinish ?? '—' }}</td>
+                                      <td>{{ row.championshipPoints ?? '—' }}</td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                            @if (!group.standings.length) {
+                              <p class="racket-standings-explainer">{{ 'communities.race.noPositions' | t }}</p>
+                            }
+                          </div>
+                        }
+                      } @else {
+                        <p class="racket-standings-explainer">{{ 'communities.rankingsOptionalHint' | t }}</p>
+                      }
+                    </section>
+                  }
+
                   @if (usesMatchPointsModel()) {
                   <div class="section-heading">
                     <div>
