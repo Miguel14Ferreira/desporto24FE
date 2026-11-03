@@ -1212,7 +1212,7 @@
                               }
                             </div>
                             <button type="button" class="t-btn t-btn-primary t-btn-small"
-                              [disabled]="busy || !relayTeamReady(team) || !(relayTimeDraft[team.id] > 0)"
+                              [disabled]="busy || !relayTeamReady(team) || !((relayTimeDraft[team.id] ?? 0) > 0)"
                               (click)="saveRelayHeat(team)">{{ 'communities.tournaments.fixturesUi.save' | t }}</button>
                           }
                         </div>
