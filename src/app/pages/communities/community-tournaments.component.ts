@@ -1973,7 +1973,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     const status=heat.decisionStatus==='DISQUALIFIED'?'VALID':'DISQUALIFIED';
     await this.mutate(this.api.decideRelayHeat(this.community.id,this.selected.id,
-      heat.id,status,reason),t('communities.relay.decisionSaved'),overview=>{
+      heat.id,status,reason),t('communities.tournaments.organizerUi.teamScoreSaved'),overview=>{
         this.relayOverview=overview;
         this.relayDecisionReasons[heat.id]='';
         this.changeDetector.markForCheck();
