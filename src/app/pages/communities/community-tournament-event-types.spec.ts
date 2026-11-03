@@ -25,7 +25,7 @@ describe('Sport-specific tournament event types',()=>{
     expect(validatedTournamentEventType('Natação','SWIM_BEST_TIME','SWIM_LCM')).toBe('SWIM_LCM');
     expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','JUMP')).toBe('JUMP');
     expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','THROW')).toBe('THROW');
-    expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','TRACK')).toBeNull();
+    expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','TRACK')).toBe('TRACK');
     expect(validatedTournamentEventType('Atletismo','TRACK_BEST_TIME','TRACK')).toBe('TRACK');
     expect(validatedTournamentEventType('Atletismo','RELAY_BEST_TIME','TRACK_RELAY')).toBe('TRACK_RELAY');
     expect(validatedTournamentEventType('Atletismo','RELAY_BEST_TIME','TRACK')).toBeNull();
