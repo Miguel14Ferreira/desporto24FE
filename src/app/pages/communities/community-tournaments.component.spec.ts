@@ -1732,6 +1732,7 @@ describe('Community tournaments management', () => {
         awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED'}];
       expect(component.teamOverviewSections).toEqual(['teams','fixtures','bracket']);
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamMatches[0]={...component.teamMatches[0],groupNumber:1};
       expect(component.teamOverviewSections).toEqual(['teams','fixtures','standings']);
       component.teamMatches[0]={...component.teamMatches[0],groupNumber:null};
       expect(component.teamOverviewSections).toEqual(['teams','fixtures','bracket','standings']);
