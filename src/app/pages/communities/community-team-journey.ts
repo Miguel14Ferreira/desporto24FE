@@ -10,13 +10,18 @@ export interface TeamJourneyMatch {
   opponentScore: number | null;
   outcome: TeamJourneyOutcome | null;
 }
+export interface RecordedTeamJourneyMatch extends TeamJourneyMatch {
+  ownScore: number;
+  opponentScore: number;
+  outcome: TeamJourneyOutcome;
+}
 export interface TeamVerifiedAdvancement {
   previousFixture: TournamentTeamMatch;
   nextFixture: TournamentTeamMatch;
   opponentName: string;
 }
 export interface PublishedTeamJourney {
-  recent: TeamJourneyMatch[];
+  recent: RecordedTeamJourneyMatch[];
   pending: TeamJourneyMatch[];
   advancement: TeamVerifiedAdvancement | null;
 }
@@ -57,7 +62,8 @@ export function summarizePublishedTeamJourney(
     };
   };
   const recorded = fixtures.filter(game => game.status === 'COMPLETED')
-    .map(view).filter(item => item.outcome !== null);
+    .map(view).filter((item): item is RecordedTeamJourneyMatch =>
+      item.outcome !== null && item.ownScore !== null && item.opponentScore !== null);
   const recent = recorded.slice().sort((a,b)=>order(b.fixture,a.fixture)).slice(0,3);
   const pending = fixtures.filter(game=>game.status === 'SCHEDULED')
     .sort(order).slice(0,3).map(view);
