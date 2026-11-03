@@ -3080,6 +3080,7 @@ export const EN: Record<string, string> = {
   'communities.tournaments.bracketUi.description': "Published fixtures by round. Progression requires a confirmed next fixture.",
   'communities.tournaments.bracketUi.matches': "matches",
   'communities.tournaments.bracketUi.advanced': "Advanced to next round",
+  'communities.tournaments.bracketUi.viewNext': "View next match",
   'communities.tournaments.bracketUi.won': "Confirmed win",
   'communities.tournaments.bracketUi.champion': "Confirmed champion",
   'communities.tournaments.bracketUi.partial': "Partial bracket: load more fixtures to see later rounds.",

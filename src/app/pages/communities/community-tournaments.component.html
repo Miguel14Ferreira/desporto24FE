@@ -1518,6 +1518,13 @@
                                 } @else if (item.winnerId !== null) {
                                   <small class="team-knockout-outcome">{{ 'communities.tournaments.bracketUi.won' | t }}</small>
                                 }
+                                @if (item.nextFixture; as nextFixture) {
+                                  <button type="button" class="team-knockout-next"
+                                    (click)="showPublishedKnockoutFixture(nextFixture)">
+                                    <strong>{{ 'communities.tournaments.bracketUi.viewNext' | t }}</strong>
+                                    <span>{{ nextFixture.homeTeamName }} × {{ nextFixture.awayTeamName }}</span>
+                                  </button>
+                                }
                               </article>
                             }
                           </section>
@@ -1585,13 +1592,14 @@
                 @if (teamMatches.length && !shownTeamMatches.length) {
                   <p class="team-fixtures-empty" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
                 }
-                <div class="team-fixtures-list">
+                <div #teamFixturesList class="team-fixtures-list">
                   @for (game of shownTeamMatches; track game.id; let index = $index) {
                     @if (index === 0 || shownTeamMatches[index - 1].roundNumber !== game.roundNumber
                           || shownTeamMatches[index - 1].groupNumber !== game.groupNumber) {
                       <h6>{{ teamMatchStageLabel(game) }}</h6>
                     }
-                    <div class="team-fixture" [class.is-completed]="game.status === 'COMPLETED'">
+                    <div class="team-fixture" [class.is-completed]="game.status === 'COMPLETED'"
+                      [attr.data-team-fixture-id]="game.id" tabindex="-1">
                        <div class="team-fixture-matchup">
                          <strong class="team-fixture-home"><a class="team-name-link"
                            [routerLink]="['/menu/communities', community.id]"

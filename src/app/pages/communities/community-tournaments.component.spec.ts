@@ -1174,6 +1174,7 @@ describe('Community tournaments management', () => {
       expect(bracket[0].matches.map(item=>item.game.id)).toEqual([70,71]);
       expect(bracket[0].matches.map(item=>item.winnerId)).toEqual([40,43]);
       expect(bracket[0].matches.every(item=>item.advanced)).toBeTrue();
+      expect(bracket[0].matches.map(item=>item.nextFixture?.id)).toEqual([72,72]);
       expect(bracket[0].matches.every(item=>!item.champion)).toBeTrue();
       expect(bracket[1].matches[0].winnerId).toBeNull();
       expect(bracket.some(round=>round.round===3)).toBeFalse();
@@ -1194,14 +1195,17 @@ describe('Community tournaments management', () => {
       ];
       const matches=component.knockoutBracket[0].matches;
       expect(matches.map(item=>item.winnerId)).toEqual([40,null,null,null]);
-      expect(matches.every(item=>!item.advanced && !item.champion)).toBeTrue();
+      expect(matches.every(item=>!item.advanced && !item.champion && !item.nextFixture)).toBeTrue();
       component.selected={...component.selected,status:'COMPLETED',championTeamId:40};
-      expect(component.knockoutBracket[0].matches[0].champion).toBeTrue();
+      // A completed flag without the actual final is insufficient evidence.
+      expect(component.knockoutBracket[0].matches[0].champion).toBeFalse();
       component.selected={...component.selected,championTeamId:41};
       expect(component.knockoutBracket[0].matches.every(item=>!item.champion)).toBeTrue();
     });
 
     it('reserves the champion badge for the final published round only', () => {
+      component.teams=[40,41,42,43].map(id=>({id,name:`Team ${id}`,playersPerTeam:null,
+        createdAt:'2026-11-03T00:00:00Z',players:[]}));
       component.selected={...teamDraft,status:'COMPLETED',format:'KNOCKOUT',championTeamId:40};
       component.teamMatches=[
         {id:41,roundNumber:1,homeTeamId:40,homeTeamName:'A',awayTeamId:41,
@@ -1213,6 +1217,56 @@ describe('Community tournaments management', () => {
       expect(component.knockoutBracket[1].matches[0].champion).toBeTrue();
       component.teamMatchesHasMore=true;
       expect(component.knockoutBracket[1].matches[0].champion).toBeFalse();
+    });
+
+    it('does not mistake a partial first-round page for confirmed byes', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teams=[40,41,42,43,44].map(id=>({id,name:`Team ${id}`,playersPerTeam:null,
+        createdAt:'2026-11-03T00:00:00Z',players:[]}));
+      component.teamMatches=[{id:91,roundNumber:1,homeTeamId:40,homeTeamName:'A',
+        awayTeamId:41,awayTeamName:'B',status:'SCHEDULED'}];
+      component.teamMatchesHasMore=true;
+      expect(component.knockoutFirstRoundByes).toEqual([]);
+      component.teamMatchesHasMore=false;
+      expect(component.knockoutFirstRoundByes.map(team=>team.id)).toEqual([42,43,44]);
+      component.teamMatchesLoading=true;
+      expect(component.knockoutFirstRoundByes).toEqual([]);
+      component.teamMatchesLoading=false;
+      component.teamMatchesError=true;
+      expect(component.knockoutFirstRoundByes).toEqual([]);
+    });
+
+    it('links only unambiguous published next-round fixtures', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      const first={id:100,roundNumber:1,homeTeamId:40,homeTeamName:'A',
+        awayTeamId:41,awayTeamName:'B',status:'COMPLETED' as const,
+        homeScore:2,awayScore:0};
+      const next={id:101,roundNumber:2,homeTeamId:40,homeTeamName:'A',
+        awayTeamId:42,awayTeamName:'C',status:'SCHEDULED' as const};
+      component.teamMatches=[first,next];
+      expect(component.knockoutBracket[0].matches[0].nextFixture?.id).toBe(101);
+      component.teamMatchFilter='COMPLETED';
+      component.showPublishedKnockoutFixture(next);
+      expect(component.teamPhaseFilter).toBe('round-2');
+      expect(component.teamMatchFilter).toBe('ALL');
+      component.teamMatches.push({...next,id:102,awayTeamId:43,awayTeamName:'D'});
+      const firstMatch=component.knockoutBracket[0].matches[0];
+      expect(firstMatch.advanced).toBeFalse();
+      expect(firstMatch.nextFixture).toBeNull();
+      component.teamPhaseFilter='ALL';
+      component.showPublishedKnockoutFixture({...next,id:999});
+      expect(component.teamPhaseFilter).toBe('ALL');
+    });
+
+    it('does not award the championship when the published round is not the final', () => {
+      component.teams=[40,41,42,43,44,45,46,47].map(id=>({id,name:`Team ${id}`,
+        playersPerTeam:null,createdAt:'2026-11-03T00:00:00Z',players:[]}));
+      component.selected={...teamDraft,status:'COMPLETED',format:'KNOCKOUT',
+        championTeamId:40};
+      component.teamMatches=[{id:110,roundNumber:1,homeTeamId:40,homeTeamName:'A',
+        awayTeamId:41,awayTeamName:'B',status:'COMPLETED',homeScore:1,awayScore:0}];
+      expect(component.knockoutTotalRounds).toBe(3);
+      expect(component.knockoutBracket[0].matches[0].champion).toBeFalse();
     });
 
     it('excludes group fixtures and sport-specific relay competitions from the knockout board', () => {

@@ -45,6 +45,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     { quarterfinal: -1, semifinal: -1, final: -1 };
   readonly historicalMatchReviewFlags = historicalMatchReviewFlags;
   @ViewChild('historicalArchiveFixtures') private historicalArchiveFixtures?: ElementRef<HTMLElement>;
+  @ViewChild('teamFixturesList') private teamFixturesList?: ElementRef<HTMLElement>;
 
   /** Source-labelled stages, without inventing a fixture, bracket or official rank. */
   get historicalKnockoutPhases() {
@@ -1439,11 +1440,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   get knockoutBracket(): {
     round: number; label: string;
     matches: { game: TournamentTeamMatch; winnerId: number | null;
-      advanced: boolean; champion: boolean }[];
+      nextFixture: TournamentTeamMatch | null; advanced: boolean; champion: boolean }[];
   }[] {
     if (!this.isCupFormat || this.isRelayCompetition) return [];
     const fixtures = this.teamMatches.filter(game => this.isEliminationMatch(game));
     const lastPublishedRound = fixtures.reduce((last, game) => Math.max(last, game.roundNumber), 0);
+    const finalRound = this.knockoutTotalRounds;
+    const publishedFinals = fixtures.filter(game => game.roundNumber === finalRound);
     const rounds = new Map<number, TournamentTeamMatch[]>();
     for (const fixture of fixtures) {
       const matches = rounds.get(fixture.roundNumber) ?? [];
@@ -1460,15 +1463,40 @@ export class CommunityTournamentsComponent implements OnChanges {
         const winnerId = valid
           ? (game.homeScore! > game.awayScore! ? game.homeTeamId : game.awayTeamId)
           : null;
-        const advanced = winnerId !== null && fixtures.some(next =>
+        // One published fixture in the immediately following round is proof
+        // of progression. Duplicated or missing links cannot prove advancement.
+        const nextFixtures = winnerId === null ? [] : fixtures.filter(next =>
           next.roundNumber === round + 1
           && (next.homeTeamId === winnerId || next.awayTeamId === winnerId));
+        const nextFixture = nextFixtures.length === 1 ? nextFixtures[0] : null;
+        const advanced = nextFixture !== null;
+        // The last *loaded* round is not necessarily the actual final.
         const champion = winnerId !== null && this.selected?.status === 'COMPLETED'
-          && !this.teamMatchesHasMore && game.roundNumber === lastPublishedRound
+          && !this.teamMatchesHasMore && !this.teamMatchesLoading
+          && !this.teamMatchesError && finalRound > 0
+          && game.roundNumber === finalRound && lastPublishedRound === finalRound
+          && publishedFinals.length === 1
           && this.selected.championTeamId === winnerId;
-        return { game, winnerId, advanced, champion };
+        return { game, winnerId, nextFixture, advanced, champion };
       })
     }));
+  }
+
+  /** Open the real loaded fixture for a confirmed progression, without
+   * navigating to an invented matchup or leaving an incompatible filter on. */
+  showPublishedKnockoutFixture(fixture: TournamentTeamMatch): void {
+    if (!this.isCupFormat || this.isRelayCompetition
+      || !Number.isSafeInteger(fixture.id) || fixture.id <= 0
+      || !this.teamMatches.some(game => game.id === fixture.id && this.isEliminationMatch(game))) return;
+    this.teamPhaseFilter = this.teamPhaseKey(fixture);
+    this.teamMatchFilter = 'ALL';
+    this.editingTeamResultId = null;
+    this.changeDetector.detectChanges();
+    const element = this.teamFixturesList?.nativeElement.querySelector<HTMLElement>(
+      `[data-team-fixture-id="${fixture.id}"]`
+    );
+    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element?.focus({ preventScroll: true });
   }
 
   isEliminationMatch(game: TournamentTeamMatch): boolean {
@@ -1514,7 +1542,11 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get knockoutFirstRoundByes(): TournamentTeam[] {
-    if (!this.isKnockout || !this.teamMatches.length) return [];
+    // An incomplete fixtures page cannot distinguish a true bye from an
+    // unrequested first-round match. Never announce speculative byes.
+    if (!this.isKnockout || this.teamMatchesHasMore || this.teamMatchesLoading
+      || this.teamMatchesError || this.teamsLoadError || this.teams.length < 3
+      || !this.teamMatches.some(game => game.roundNumber === 1)) return [];
     const competing = new Set(this.teamMatches.filter(game => game.roundNumber === 1)
       .flatMap(game => [game.homeTeamId, game.awayTeamId]));
     return this.teams.filter(team => !competing.has(team.id));

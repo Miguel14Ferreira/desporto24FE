@@ -3086,6 +3086,7 @@ const PT: Dictionary = {
   'communities.tournaments.bracketUi.description': "Confrontos publicados por ronda. A progressão é confirmada pelo jogo seguinte.",
   'communities.tournaments.bracketUi.matches': "jogos",
   'communities.tournaments.bracketUi.advanced': "Avançou para a próxima ronda",
+  'communities.tournaments.bracketUi.viewNext': "Ver confronto seguinte",
   'communities.tournaments.bracketUi.won': "Vitória confirmada",
   'communities.tournaments.bracketUi.champion': "Campeão confirmado",
   'communities.tournaments.bracketUi.partial': "Quadro parcial: carrega mais jogos para ver outras rondas.",
