@@ -47,6 +47,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   readonly historicalMatchReviewFlags = historicalMatchReviewFlags;
   @ViewChild('historicalArchiveFixtures') private historicalArchiveFixtures?: ElementRef<HTMLElement>;
   @ViewChild('teamFixturesList') private teamFixturesList?: ElementRef<HTMLElement>;
+  @ViewChild('teamProfileSection') private teamProfileSection?: ElementRef<HTMLElement>;
 
   /** Source-labelled stages, without inventing a fixture, bracket or official rank. */
   get historicalKnockoutPhases() {
@@ -2347,6 +2348,23 @@ export class CommunityTournamentsComponent implements OnChanges {
       && (this.teamProfileMatchFilter === 'ALL'
         || (this.teamProfileMatchFilter === 'COMPLETED'
           ? game.status === 'COMPLETED' : game.status !== 'COMPLETED')));
+  }
+
+  /** Reveal only the actual loaded team fixture; never open another team's match. */
+  showTeamProfileFixture(fixture: TournamentTeamMatch): void {
+    const team = this.focusedTeam;
+    if (!team || this.isRelayCompetition || !Number.isSafeInteger(fixture.id)
+      || fixture.id <= 0 || !this.teamProfileMatches.some(game =>
+        game.id === fixture.id
+        && (game.homeTeamId === team.id || game.awayTeamId === team.id))) return;
+    this.teamProfilePhaseFilter = 'ALL';
+    this.teamProfileMatchFilter = 'ALL';
+    this.changeDetector.detectChanges();
+    const row = this.teamProfileSection?.nativeElement.querySelector<HTMLElement>(
+      `[data-team-profile-fixture-id="${fixture.id}"]`
+    );
+    row?.scrollIntoView({behavior: 'smooth', block: 'center'});
+    row?.focus({preventScroll: true});
   }
 
   setTeamProfilePhaseFilter(key: string): void {

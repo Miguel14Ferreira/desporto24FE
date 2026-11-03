@@ -1723,6 +1723,31 @@ describe('Community tournaments management', () => {
       expect(component.focusedTeamJourney.advancement).toBeNull();
     });
 
+    it('navigates a verified team fixture by clearing filters and focusing its real card', () => {
+      const game={id:90,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED' as const};
+      api.teams.and.returnValue(of([team]));
+      api.teamProfileMatches.and.returnValue(of({matches:[game],page:0,hasMore:false}));
+      component.teamPageId=40;
+      component.selectTournament({...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'});
+      component.teamProfileMatchFilter='COMPLETED';
+      component.teamProfilePhaseFilter='round-2';
+      const row={scrollIntoView:jasmine.createSpy('scrollIntoView'),
+        focus:jasmine.createSpy('focus')};
+      const querySelector=jasmine.createSpy('querySelector').and.returnValue(row);
+      (component as any).teamProfileSection={nativeElement:{querySelector}};
+      component.showTeamProfileFixture(game);
+      expect(component.teamProfileMatchFilter).toBe('ALL');
+      expect(component.teamProfilePhaseFilter).toBe('ALL');
+      expect(querySelector).toHaveBeenCalledWith('[data-team-profile-fixture-id="90"]');
+      expect(row.scrollIntoView).toHaveBeenCalled();
+      expect(row.focus).toHaveBeenCalled();
+      component.teamProfileMatchFilter='COMPLETED';
+      component.showTeamProfileFixture({...game,id:100,homeTeamId:800,awayTeamId:900});
+      expect(component.teamProfileMatchFilter).toBe('COMPLETED');
+      expect(querySelector).toHaveBeenCalledTimes(1);
+    });
+
     it('filters the team page by real group and elimination phases, not global fixtures', () => {
       const groups={...teamDraft,format:'GROUP_KNOCKOUT' as const,groupCount:2 as const,
         status:'IN_PROGRESS' as const};

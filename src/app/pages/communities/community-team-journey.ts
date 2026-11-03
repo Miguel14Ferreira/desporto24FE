@@ -20,10 +20,16 @@ export interface TeamVerifiedAdvancement {
   nextFixture: TournamentTeamMatch;
   opponentName: string;
 }
+export interface TeamKnockoutPathStep extends TeamJourneyMatch {
+  /** Only a unique, immediately subsequent published fixture verifies progression. */
+  confirmedNextFixture: TournamentTeamMatch | null;
+}
 export interface PublishedTeamJourney {
   recent: RecordedTeamJourneyMatch[];
   pending: TeamJourneyMatch[];
   advancement: TeamVerifiedAdvancement | null;
+  /** All loaded elimination matches, in published round order, without speculative byes. */
+  knockoutPath: TeamKnockoutPathStep[];
 }
 
 /** The match contract has no dates. Published round order never implies a start time.
@@ -68,26 +74,24 @@ export function summarizePublishedTeamJourney(
   const pending = fixtures.filter(game=>game.status === 'SCHEDULED')
     .sort(order).slice(0,3).map(view);
 
-  let advancement: TeamVerifiedAdvancement | null = null;
-  if (knockout) {
-    const won = recorded.filter(item => item.outcome === 'WIN' && elimination(item.fixture))
-      .sort((a,b)=>order(b.fixture,a.fixture));
-    for (const item of won) {
-      const previous = item.fixture;
-      // A second leg in the same round prevents claiming qualification.
-      if (fixtures.filter(game => elimination(game)
-        && game.roundNumber === previous.roundNumber).length !== 1) continue;
-      const following = fixtures.filter(game => elimination(game)
-        && game.roundNumber === previous.roundNumber + 1);
-      if (following.length !== 1) continue;
-      const nextFixture = following[0];
-      advancement = {
-        previousFixture: previous, nextFixture,
-        opponentName: nextFixture.homeTeamId === teamId
-          ? nextFixture.awayTeamName : nextFixture.homeTeamName
-      };
-      break;
-    }
-  }
-  return { recent, pending, advancement };
+  const eliminations = fixtures.filter(elimination).sort(order);
+  const knockoutPath: TeamKnockoutPathStep[] = eliminations.map(game => {
+    const item = view(game);
+    const inSameRound = eliminations.filter(other => other.roundNumber === game.roundNumber);
+    const inNextRound = eliminations.filter(other => other.roundNumber === game.roundNumber + 1);
+    const confirmedNextFixture = item.outcome === 'WIN'
+      && inSameRound.length === 1 && inNextRound.length === 1 ? inNextRound[0] : null;
+    return { ...item, confirmedNextFixture };
+  });
+  const lastConfirmed = knockoutPath.slice().reverse()
+    .find(item => item.confirmedNextFixture !== null);
+  const advancement: TeamVerifiedAdvancement | null = lastConfirmed?.confirmedNextFixture
+    ? {
+      previousFixture: lastConfirmed.fixture,
+      nextFixture: lastConfirmed.confirmedNextFixture,
+      opponentName: lastConfirmed.confirmedNextFixture.homeTeamId === teamId
+        ? lastConfirmed.confirmedNextFixture.awayTeamName
+        : lastConfirmed.confirmedNextFixture.homeTeamName
+    } : null;
+  return { recent, pending, advancement, knockoutPath };
 }

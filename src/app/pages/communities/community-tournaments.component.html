@@ -547,7 +547,7 @@
           </section>
         }
         @if (selected?.status !== 'DRAFT') {
-          <section class="team-page-performance" [attr.aria-label]="'communities.tournaments.teamPage.resultsTitle' | t">
+          <section class="team-page-performance" #teamProfileSection [attr.aria-label]="'communities.tournaments.teamPage.resultsTitle' | t">
             <div class="team-page-performance-heading">
               <div>
                 <span class="team-page-eyebrow">{{ selected?.name }}</span>
@@ -636,12 +636,43 @@
                       }
                     </div>
                   </div>
-                  @if (journey.advancement; as advance) {
-                    <div class="team-page-journey-advancement">
-                      <span aria-hidden="true">✓</span>
-                      <div>
-                        <strong>{{ 'communities.tournaments.bracketUi.advanced' | t }}</strong>
-                        <span>{{ teamMatchStageLabel(advance.nextFixture) }} · {{ advance.opponentName }}</span>
+                  @if (journey.knockoutPath.length) {
+                    <div class="team-page-path" [attr.aria-label]="'communities.tournaments.bracketUi.title' | t">
+                      <div class="team-page-path-heading">
+                        <h5>{{ 'communities.tournaments.bracketUi.title' | t }}</h5>
+                        <p>{{ 'communities.tournaments.bracketUi.description' | t }}</p>
+                      </div>
+                      <div class="team-page-path-steps" role="list">
+                        @for (step of journey.knockoutPath; track step.fixture.id) {
+                          <div class="team-page-path-step" role="listitem">
+                            <button type="button" class="team-page-path-match"
+                              [attr.aria-label]="teamMatchStageLabel(step.fixture) + ' · ' + step.opponentName"
+                              (click)="showTeamProfileFixture(step.fixture)">
+                              <span class="team-page-path-round">{{ teamMatchStageLabel(step.fixture) }}</span>
+                              <span class="team-page-path-match-main">
+                                <strong>{{ step.opponentName }}</strong>
+                                <b>{{ step.ownScore ?? '—' }} : {{ step.opponentScore ?? '—' }}</b>
+                              </span>
+                              <span class="team-page-path-status"
+                                [class.is-win]="step.outcome === 'WIN'"
+                                [class.is-loss]="step.outcome === 'LOSS'">
+                                @if (step.outcome; as outcome) {
+                                  {{ ('communities.result.' + outcome.toLowerCase()) | t }}
+                                } @else {
+                                  {{ (step.fixture.status === 'SCHEDULED'
+                                    ? 'communities.tournaments.fixturesUi.filterPending'
+                                    : 'communities.tournaments.fixturesUi.filterCompleted') | t }}
+                                }
+                              </span>
+                            </button>
+                            @if (step.confirmedNextFixture) {
+                              <div class="team-page-path-link">
+                                <span class="team-page-path-link-marker" aria-hidden="true">✓</span>
+                                <span>{{ 'communities.tournaments.bracketUi.advanced' | t }}</span>
+                              </div>
+                            }
+                          </div>
+                        }
                       </div>
                     </div>
                   }
@@ -687,7 +718,8 @@
                 <p class="team-fixtures-empty" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
               }
               @for (game of visibleTeamProfileMatches; track game.id) {
-                <div class="team-page-fixture">
+                <div class="team-page-fixture" tabindex="-1"
+                  [attr.data-team-profile-fixture-id]="game.id">
                   <span class="team-page-fixture-round">{{ teamMatchStageLabel(game) }}</span>
                   <span class="team-page-fixture-participants">
                     <a [class.is-own-team]="game.homeTeamId === team.id"

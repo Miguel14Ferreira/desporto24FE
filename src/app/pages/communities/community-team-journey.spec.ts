@@ -59,6 +59,39 @@ describe('published team journey',()=>{
     expect(result.advancement?.nextFixture.id).toBe(3);
     expect(result.recent.map(x=>x.fixture.id)).toEqual([4,1]);
   });
+  it('draws a path only through real knockout fixtures in chronological rounds',()=>{
+    const first=fixture(15,1,'COMPLETED',3,0);
+    const semi={...fixture(16,2,'COMPLETED',1,0),homeTeamId:20,
+      homeTeamName:'Azuis',awayTeamId:10,awayTeamName:'Verdes'};
+    // Away side lost this semifinal, so it must not qualify for the final.
+    const final=fixture(17,3,'SCHEDULED');
+    const result=journey([final,semi,first],10,'KNOCKOUT');
+    expect(result.knockoutPath.map(step=>step.fixture.id)).toEqual([15,16,17]);
+    expect(result.knockoutPath.map(step=>step.confirmedNextFixture?.id??null))
+      .toEqual([16,null,null]);
+    expect(result.knockoutPath.map(step=>step.outcome)).toEqual(['WIN','LOSS',null]);
+    expect(result.advancement?.nextFixture.id).toBe(16);
+    expect(journey([first],10,'KNOCKOUT').knockoutPath).toHaveSize(1);
+    expect(journey([first],10,'KNOCKOUT').knockoutPath[0].confirmedNextFixture).toBeNull();
+    expect(journey([first,final],10,'KNOCKOUT').knockoutPath
+      .map(step=>step.confirmedNextFixture)).toEqual([null,null]);
+  });
+
+  it('leaves an ambiguous round unconnected and never treats group games as knockout',()=>{
+    const first=fixture(1,1,'COMPLETED',3,1,null);
+    const duplicate={...fixture(2,1,'COMPLETED',2,0),homeTeamId:20,awayTeamId:10};
+    const next=fixture(3,2,'SCHEDULED',null,null,null);
+    const result=journey([first,duplicate,next],10,'GROUP_KNOCKOUT');
+    expect(result.knockoutPath).toHaveSize(3);
+    expect(result.knockoutPath.every(step=>!step.confirmedNextFixture)).toBeTrue();
+    const group=fixture(6,1,'COMPLETED',4,0,1);
+    const resultWithGroup=journey([group,first,next],10,'GROUP_KNOCKOUT');
+    expect(resultWithGroup.knockoutPath.map(step=>step.fixture.id)).toEqual([1,3]);
+    expect(resultWithGroup.knockoutPath[0].confirmedNextFixture?.id).toBe(3);
+    expect(journey([group],10,'GROUP_KNOCKOUT').knockoutPath).toEqual([]);
+    expect(journey([first,next],10,'LEAGUE').knockoutPath).toEqual([]);
+  });
+
   it('shows at most three published results or pending matches in round order',()=>{
     const list=[fixture(1,1,'COMPLETED',1,0),fixture(2,2,'COMPLETED',1,0),
       fixture(3,3,'COMPLETED',1,0),fixture(4,4,'COMPLETED',1,0),
