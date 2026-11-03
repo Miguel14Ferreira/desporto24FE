@@ -1177,8 +1177,26 @@ describe('Community tournaments management', () => {
       expect(bracket[0].matches.map(item=>item.nextFixture?.id)).toEqual([72,72]);
       expect(bracket[0].matches.every(item=>!item.champion)).toBeTrue();
       expect(bracket[1].matches[0].winnerId).toBeNull();
+      expect(bracket[1].matches[0].incoming.map(source=>source.winnerName))
+        .toEqual(['Verdes','Amarelos']);
+      expect(bracket[1].matches[0].incoming.map(source=>source.game.id))
+        .toEqual([70,71]);
+      expect(bracket[0].matches.every(item=>item.incoming.length===0)).toBeTrue();
       expect(bracket.some(round=>round.round===3)).toBeFalse();
       expect(component.teamMatches.map(game=>game.id)).toEqual([72,70,71]);
+    });
+
+    it('does not connect an ambiguous duplicate winner to the next published round', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:100,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED',homeScore:2,awayScore:0},
+        {id:101,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:42,awayTeamName:'Pretos',status:'COMPLETED',homeScore:3,awayScore:1},
+        {id:200,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED'}
+      ];
+      expect(component.knockoutBracket[1].matches[0].incoming).toEqual([]);
     });
 
     it('does not invent knockout progress, winners, draws or championships', () => {

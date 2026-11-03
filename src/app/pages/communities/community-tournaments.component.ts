@@ -1513,7 +1513,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   get knockoutBracket(): {
     round: number; label: string;
     matches: { game: TournamentTeamMatch; winnerId: number | null;
-      nextFixture: TournamentTeamMatch | null; advanced: boolean; champion: boolean }[];
+      nextFixture: TournamentTeamMatch | null; advanced: boolean; champion: boolean;
+      incoming: { game: TournamentTeamMatch; winnerName: string }[] }[];
   }[] {
     if (!this.isCupFormat || this.isRelayCompetition) return [];
     const fixtures = this.teamMatches.filter(game => this.isEliminationMatch(game));
@@ -1526,7 +1527,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       matches.push(fixture);
       rounds.set(fixture.roundNumber, matches);
     }
-    return [...rounds].sort(([a], [b]) => a - b).map(([round, matches]) => ({
+    const bracket = [...rounds].sort(([a], [b]) => a - b).map(([round, matches]) => ({
       round, label: this.teamMatchStageLabel(matches[0]),
       matches: matches.sort((a, b) => a.id - b.id).map(game => {
         const valid = game.status === 'COMPLETED'
@@ -1551,6 +1552,36 @@ export class CommunityTournamentsComponent implements OnChanges {
           && publishedFinals.length === 1
           && this.selected.championTeamId === winnerId;
         return { game, winnerId, nextFixture, advanced, champion };
+      })
+    }));
+    // Show incoming links only for a uniquely verified winner in the immediately
+    // preceding published round. Ambiguous duplicate winners are never linked.
+    const incomingByFixture = new Map<number,
+      { game: TournamentTeamMatch; winnerId: number; winnerName: string }[]>();
+    for (const round of bracket) {
+      for (const item of round.matches) {
+        if (!item.nextFixture || item.winnerId === null) continue;
+        const incoming = incomingByFixture.get(item.nextFixture.id) ?? [];
+        incoming.push({
+          game: item.game, winnerId: item.winnerId,
+          winnerName: item.winnerId === item.game.homeTeamId
+            ? item.game.homeTeamName : item.game.awayTeamName
+        });
+        incomingByFixture.set(item.nextFixture.id, incoming);
+      }
+    }
+    return bracket.map(round => ({
+      ...round,
+      matches: round.matches.map(item => {
+        const sources = incomingByFixture.get(item.game.id) ?? [];
+        const winnerCounts = new Map<number, number>();
+        for (const source of sources)
+          winnerCounts.set(source.winnerId, (winnerCounts.get(source.winnerId) ?? 0) + 1);
+        return {
+          ...item,
+          incoming: sources.filter(source => winnerCounts.get(source.winnerId) === 1)
+            .map(({game, winnerName}) => ({game, winnerName}))
+        };
       })
     }));
   }

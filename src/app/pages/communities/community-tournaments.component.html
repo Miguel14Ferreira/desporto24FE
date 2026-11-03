@@ -1662,6 +1662,21 @@
                             </button>
                             @for (item of round.matches; track item.game.id) {
                               <article class="team-knockout-match" [class.is-done]="item.winnerId !== null">
+                                @if (item.incoming.length) {
+                                  <div class="team-knockout-incoming">
+                                    <small>{{ 'communities.tournaments.bracketUi.incoming' | t }}</small>
+                                    <div class="team-knockout-incoming-links">
+                                      @for (source of item.incoming; track source.game.id) {
+                                        <button type="button" class="team-knockout-incoming-link"
+                                          [attr.aria-label]="('communities.tournaments.bracketUi.viewPrevious' | t) + ': ' + source.winnerName"
+                                          (click)="showPublishedKnockoutFixture(source.game)">
+                                          <span aria-hidden="true">↖</span>
+                                          <span>{{ source.winnerName }}</span>
+                                        </button>
+                                      }
+                                    </div>
+                                  </div>
+                                }
                                 <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.homeTeamId">
                                   <a [routerLink]="['/menu/communities', community.id]"
                                     [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.homeTeamId}">{{ item.game.homeTeamName }}</a>

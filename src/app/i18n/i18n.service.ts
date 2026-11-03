@@ -3099,6 +3099,8 @@ const PT: Dictionary = {
   'communities.tournaments.bracketUi.matches': "jogos",
   'communities.tournaments.bracketUi.advanced': "Avançou para a próxima ronda",
   'communities.tournaments.bracketUi.viewNext': "Ver confronto seguinte",
+  'communities.tournaments.bracketUi.incoming': "Apuramentos confirmados",
+  'communities.tournaments.bracketUi.viewPrevious': "Ver confronto de apuramento",
   'communities.specializedStats.heading': "Estatísticas por modalidade",
   'communities.specializedStats.raceDescription': "Resumo das corridas da época, sem confrontos.",
   'communities.specializedStats.raceEmpty': "Sem corridas classificadas.",
