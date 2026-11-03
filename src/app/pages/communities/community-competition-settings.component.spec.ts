@@ -22,6 +22,31 @@ describe('CommunityCompetitionSettingsComponent', () => {
     expect(Array.from(root.querySelectorAll<HTMLInputElement>('input[type=number]')).map(x=>x.value)).toEqual(['3','1','0']);
     expect(root.querySelectorAll('input[type=number][min="0"]').length).toBe(3);
   });
+  it('shows a race-specific ranking model for Karting without football points', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('sports', ['Karting']);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('input[type=number]').length).toBe(0);
+    expect(root.querySelector('.sport-scoring-guidance')?.textContent).toContain('Karting');
+    expect(fixture.componentInstance.usesMatchPoints).toBeFalse();
+    expect(root.querySelector<HTMLInputElement>('input[type=checkbox]')).not.toBeNull();
+  });
+  it('keeps football point settings in a mixed Football and Karting community', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('sports', ['Futebol', 'Karting']);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('input[type=number]').length).toBe(3);
+    expect(root.querySelectorAll('.sport-scoring-guidance').length).toBe(1);
+  });
+  it('does not invent match scoring for unsupported and measured sports', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('sports', ['Atletismo', 'Unknown Sport']);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('input[type=number]').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.sport-scoring-guidance').length).toBe(2);
+  });
   it('reports individual draft changes without editing another value', async () => {
     const fixture=await render();
     const win=jasmine.createSpy('win'),draw=jasmine.createSpy('draw'),loss=jasmine.createSpy('loss');
