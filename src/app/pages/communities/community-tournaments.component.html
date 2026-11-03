@@ -153,40 +153,26 @@
               }
             </div>
           }
-          @if (canoeDisciplineOptions.length) {
+          @if (swimDisciplineOptions.length || canoeDisciplineOptions.length) {
             <div class="tournament-event-choices" role="group"
-              [attr.aria-label]="'cno.disciplineTitle' | t">
+              [attr.aria-label]="(selectedSportCreationModel === 'CANOE_BEST_TIME' ? 'cno.disciplineTitle'
+                : 'communities.swimTournament.disciplineTitle') | t">
               <div class="tournament-event-choices-intro">
-                <strong>{{ 'cno.disciplineTitle' | t }}</strong>
-                <p>{{ 'cno.disciplineHelp' | t }}</p>
+                <strong>{{ (selectedSportCreationModel === 'CANOE_BEST_TIME' ? 'cno.disciplineTitle'
+                  : 'communities.swimTournament.disciplineTitle') | t }}</strong>
+                <p>{{ (selectedSportCreationModel === 'CANOE_BEST_TIME' ? 'cno.disciplineHelp'
+                  : 'communities.swimTournament.disciplineHelp') | t }}</p>
               </div>
               <div class="tournament-event-options">
-                @for (discipline of canoeDisciplineOptions; track discipline) {
+                @for (discipline of (selectedSportCreationModel === 'CANOE_BEST_TIME'
+                  ? canoeDisciplineOptions : swimDisciplineOptions); track discipline) {
                   <button type="button" class="tournament-event-option"
                     [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
                     [class.is-selected]="eventDisciplineDraft === discipline"
-                    (click)="chooseCanoeDiscipline(discipline)">
-                    <span>{{ ('cno.d.' + discipline) | t }}</span>
-                    <small>{{ 'communities.swimTournament.secondsUnit' | t }}</small>
-                  </button>
-                }
-              </div>
-            </div>
-          }
-          @if (swimDisciplineOptions.length) {
-            <div class="tournament-event-choices" role="group"
-              [attr.aria-label]="'communities.swimTournament.disciplineTitle' | t">
-              <div class="tournament-event-choices-intro">
-                <strong>{{ 'communities.swimTournament.disciplineTitle' | t }}</strong>
-                <p>{{ 'communities.swimTournament.disciplineHelp' | t }}</p>
-              </div>
-              <div class="tournament-event-options">
-                @for (discipline of swimDisciplineOptions; track discipline) {
-                  <button type="button" class="tournament-event-option"
-                    [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
-                    [class.is-selected]="eventDisciplineDraft === discipline"
-                    (click)="chooseSwimDiscipline(discipline)">
-                    <span>{{ ('communities.swimTournament.discipline.' + discipline) | t }}</span>
+                    (click)="selectedSportCreationModel === 'CANOE_BEST_TIME'
+                      ? chooseCanoeDiscipline(discipline) : chooseSwimDiscipline(discipline)">
+                    <span>{{ ((selectedSportCreationModel === 'CANOE_BEST_TIME'
+                      ? 'cno.d.' : 'communities.swimTournament.discipline.') + discipline) | t }}</span>
                     <small>{{ 'communities.swimTournament.secondsUnit' | t }}</small>
                   </button>
                 }
