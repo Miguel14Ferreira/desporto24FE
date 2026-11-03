@@ -235,7 +235,7 @@
               [attr.aria-label]="'communities.trackTournament.disciplineTitle' | t">
               <div class="tournament-event-choices-intro">
                 <strong>{{ 'communities.trackTournament.disciplineTitle' | t }}</strong>
-                <p>{{ 'communities.relay.description' | t }}</p>
+                <p>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }}</p>
               </div>
               <div class="tournament-event-options">
                 @for (discipline of relayDisciplineOptions; track discipline) {
@@ -696,7 +696,7 @@
             <span class="t-tournament-sport">{{ selected.sport || ('communities.tournaments.overview.sportUndefined' | t) }}</span>
             @if (isTeamCompetition) {
               @if (isRelayCompetition) {
-                <p>{{ 'communities.relay.description' | t }}</p>
+                <p>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }}</p>
               } @else if (selected.format === 'GROUP_KNOCKOUT') {
                 <p>{{ 'communities.tournaments.detailUi.groupsKnockout' | t }} · {{ 'communities.tournaments.detailUi.groupsCount' | t:{count:selected.groupCount ?? 0} }} ·
                   @if (selected.playersPerTeam != null) {
@@ -1133,7 +1133,7 @@
                 <div class="t-section-heading">
                   <div>
                     <h5>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }} · {{ ('communities.relay.discipline.'+selected.eventDiscipline) | t }}</h5>
-                    <p>{{ 'communities.relay.description' | t }}</p>
+                    <p>{{ 'communities.tournaments.capabilities.model.RELAY_BEST_TIME' | t }}</p>
                   </div>
                   <button type="button" class="t-btn t-btn-secondary t-btn-small"
                     [disabled]="busy" (click)="loadRelayOverview()">{{ 'common.retry' | t }}</button>

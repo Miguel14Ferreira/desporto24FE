@@ -28,7 +28,7 @@ const COMPATIBLE: Record<string,{code:string; model:TournamentCreationModel}> = 
 export function tournamentEventChoices(sport: string, model: TournamentCreationModel): TournamentEventChoice[] {
   return (CHOICES[sport]??[]).map(code=>({
     code, supported:(sport==='Atletismo' && ((model==='FIELD_BEST_MARK' && (code==='TRACK' || code==='JUMP' || code==='THROW'))
-      || (model==='TRACK_BEST_TIME' && code==='TRACK')
+      || (model==='TRACK_BEST_TIME' && (code==='TRACK' || code==='JUMP' || code==='THROW'))
       || (model==='RELAY_BEST_TIME' && code==='TRACK_RELAY')))
       || (COMPATIBLE[sport]?.code===code && COMPATIBLE[sport]?.model===model)
   }));

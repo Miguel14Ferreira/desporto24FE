@@ -3019,7 +3019,6 @@ const PT: Dictionary = {
   'communities.trackTournament.athletes': "Atletas",
   'communities.trackTournament.athlete': "Atleta",
   'communities.trackTournament.linkedSuccess': "Prova de pista associada.",
-  'communities.relay.description': "Melhores tempos das equipas, sem jogos 1×1.",
   'communities.relay.discipline.RELAY_4X100': "4×100 m",
   'communities.relay.discipline.RELAY_4X400': "4×400 m",
   'communities.relay.rosterRequired': "É necessário ter quatro atletas.",

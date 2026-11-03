@@ -3013,7 +3013,6 @@ export const EN: Record<string, string> = {
   'communities.trackTournament.athletes': "Athletes",
   'communities.trackTournament.athlete': "Athlete",
   'communities.trackTournament.linkedSuccess': "Track event linked.",
-  'communities.relay.description': "Best team times, not head-to-head games.",
   'communities.relay.discipline.RELAY_4X100': "4×100 m",
   'communities.relay.discipline.RELAY_4X400': "4×400 m",
   'communities.relay.rosterRequired': "Four runners required.",
