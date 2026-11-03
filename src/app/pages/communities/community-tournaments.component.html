@@ -1698,11 +1698,31 @@
                         </div>
                       }
                     }
+                    @if (bracket.length > 1) {
+                      <nav class="team-knockout-round-nav"
+                        [attr.aria-label]="'communities.tournaments.phaseUi.title' | t">
+                        <strong>{{ 'communities.tournaments.phaseUi.title' | t }}</strong>
+                        <div class="team-knockout-round-nav-links">
+                          @for (round of bracket; track round.round) {
+                            <button type="button" class="team-knockout-round-jump"
+                              [class.is-selected]="selectedKnockoutRound === round.round"
+                              [attr.aria-pressed]="selectedKnockoutRound === round.round"
+                              [attr.aria-label]="('communities.tournaments.phaseUi.filter' | t) + ': ' + round.label"
+                              (click)="jumpToKnockoutRound(round.round)">
+                              <span>{{ round.label }}</span>
+                              <small>{{ round.matches.length }}</small>
+                            </button>
+                          }
+                        </div>
+                      </nav>
+                    }
                     <div class="team-knockout-scroll" tabindex="0"
                       role="region" [attr.aria-label]="'communities.tournaments.bracketUi.title' | t">
                       <div class="team-knockout-columns">
                         @for (round of bracket; track round.round) {
-                          <section class="team-knockout-round">
+                          <section class="team-knockout-round"
+                            [attr.data-knockout-round]="round.round"
+                            [class.is-selected-round]="selectedKnockoutRound === round.round">
                             <button type="button" class="team-knockout-round-title"
                               [class.is-active]="teamPhaseFilter === 'round-' + round.round"
                               [attr.aria-pressed]="teamPhaseFilter === 'round-' + round.round"

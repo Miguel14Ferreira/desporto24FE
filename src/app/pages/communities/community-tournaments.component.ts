@@ -197,6 +197,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamPhaseFilter = 'ALL';
   knockoutFocusTeamId: number | null = null;
+  selectedKnockoutRound: number | null = null;
   teamMatchesPage = 0;
   teamMatchesHasMore = false;
   teamMatchesLoading = false;
@@ -1151,6 +1152,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatchFilter = 'ALL';
       this.teamPhaseFilter = 'ALL';
       this.knockoutFocusTeamId = null;
+      this.selectedKnockoutRound = null;
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
@@ -1594,6 +1596,23 @@ export class CommunityTournamentsComponent implements OnChanges {
     }));
   }
 
+  /** Jump to one already published column; leave fixture filters unchanged. */
+  jumpToKnockoutRound(round: number): void {
+    if (!Number.isSafeInteger(round) || round < 1 || !this.isCupFormat
+        || this.isRelayCompetition || !this.knockoutBracket.some(stage => stage.round === round))
+      return;
+    this.selectedKnockoutRound = round;
+    const board = this.teamTournamentBracket?.nativeElement;
+    if (board instanceof HTMLDetailsElement) board.open = true;
+    this.changeDetector.detectChanges();
+    const column = board?.querySelector<HTMLElement>(
+      `[data-knockout-round="${round}"]`
+    );
+    column?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+    column?.querySelector<HTMLElement>('.team-knockout-round-title')
+      ?.focus({preventScroll:true});
+  }
+
   /** The selector only offers teams found in actually loaded elimination fixtures. */
   get knockoutFocusTeams(): { id: number; name: string }[] {
     if (!this.isCupFormat || this.isRelayCompetition) return [];
@@ -1647,6 +1666,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         || !this.isKnockoutTeamFocused(fixture)
         || !this.teamMatches.some(game =>
           game.id === fixture.id && this.isEliminationMatch(game))) return;
+    this.selectedKnockoutRound = fixture.roundNumber;
     const board = this.teamTournamentBracket?.nativeElement;
     if (board instanceof HTMLDetailsElement) board.open = true;
     this.changeDetector.detectChanges();
@@ -1910,6 +1930,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMatchFilter = 'ALL';
     this.teamPhaseFilter = 'ALL';
     this.knockoutFocusTeamId = null;
+    this.selectedKnockoutRound = null;
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
@@ -2625,6 +2646,9 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (reset && this.knockoutFocusTeamId !== null
             && !this.knockoutFocusTeams.some(team => team.id === this.knockoutFocusTeamId))
           this.knockoutFocusTeamId = null;
+        if (reset && this.selectedKnockoutRound !== null
+            && !this.knockoutBracket.some(stage => stage.round === this.selectedKnockoutRound))
+          this.selectedKnockoutRound = null;
         this.teamMatchesPage = page;
         this.teamMatchesHasMore = result.hasMore;
         for (const game of result.matches) {

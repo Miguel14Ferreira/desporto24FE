@@ -1194,6 +1194,41 @@ describe('Community tournaments management', () => {
       expect(component.teamMatches.map(game=>game.id)).toEqual([72,70,71]);
     });
 
+    it('jumps only to loaded knockout rounds without modifying fixture filters', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED',homeScore:2,awayScore:1},
+        {id:72,roundNumber:3,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED'}
+      ];
+      expect(component.knockoutBracket.map(stage=>stage.round)).toEqual([1,3]);
+      component.teamPhaseFilter='round-1';
+      component.teamMatchFilter='COMPLETED';
+      component.jumpToKnockoutRound(3);
+      expect(component.selectedKnockoutRound).toBe(3);
+      expect(component.teamPhaseFilter).toBe('round-1');
+      expect(component.teamMatchFilter).toBe('COMPLETED');
+      component.jumpToKnockoutRound(2);
+      component.jumpToKnockoutRound(-1);
+      component.jumpToKnockoutRound(NaN);
+      expect(component.selectedKnockoutRound).toBe(3);
+    });
+
+    it('clears selected knockout round when changing competitions', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:72,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED'}
+      ];
+      component.jumpToKnockoutRound(2);
+      expect(component.selectedKnockoutRound).toBe(2);
+      component.selectTournament({...teamDraft,id:39,status:'DRAFT',format:'KNOCKOUT'});
+      expect(component.selectedKnockoutRound).toBeNull();
+      component.jumpToKnockoutRound(2);
+      expect(component.selectedKnockoutRound).toBeNull();
+    });
+
     it('does not connect an ambiguous duplicate winner to the next published round', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       component.teamMatches=[
