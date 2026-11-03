@@ -25,6 +25,14 @@ describe('CommunityTournamentsService API contract', () => {
     expect((options as any).params.get('page')).toBe('2');
   });
 
+  it('creates timed K1 without football points and with an explicit discipline', () => {
+    service.createCanoeChampionship(7,'K1 500 m','K1_500').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl+'/api/communities/7/tournaments',
+      {name:'K1 500 m',sport:'Canoagem Velocidade',entryType:'INDIVIDUAL',format:'LEAGUE',
+       eventType:'CANOE_SPRINT',eventDiscipline:'K1_500',scoringMode:'CANOE_BEST_TIME'});
+  });
+
   it('sends competition points in both team and individual creation requests', () => {
     service.create(7, 'Liga Individual', 'Ténis', {
       winPoints: 2, drawPoints: 1, lossPoints: 0

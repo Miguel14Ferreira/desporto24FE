@@ -1,6 +1,6 @@
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
-import { tournamentEventChoices, validatedTournamentEventType } from './community-tournament-event-types';
+import { tournamentEventChoices, validatedTournamentEventType, validCanoeDiscipline } from './community-tournament-event-types';
 
 describe('Sport-specific tournament event types',()=>{
   it('maps all 121 catalog sports without invented event fallbacks',()=>{
@@ -15,6 +15,16 @@ describe('Sport-specific tournament event types',()=>{
             .withContext(sport+'/'+option.code).toBe(option.supported?option.code:null);
       }
     }
+  });
+  it('allows only one exact canoe sprint timed contract per K1 distance',()=>{
+    expect(validatedTournamentEventType('Canoagem Velocidade','CANOE_BEST_TIME','CANOE_SPRINT'))
+      .toBe('CANOE_SPRINT');
+    expect(validatedTournamentEventType('Canoagem Velocidade','RACE_POINTS','CANOE_SPRINT')).toBeNull();
+    expect(validCanoeDiscipline('CANOE_SPRINT','K1_200')).toBeTrue();
+    expect(validCanoeDiscipline('CANOE_SPRINT','K1_500')).toBeTrue();
+    expect(validCanoeDiscipline('CANOE_SPRINT','K1_1000')).toBeTrue();
+    expect(validCanoeDiscipline('CANOE_SPRINT','K2_500')).toBeFalse();
+    expect(validCanoeDiscipline('CANOE_SPRINT',null)).toBeFalse();
   });
   it('allows only race-position and individual chess types with matching scoring',()=>{
     for(const [sport,code] of [['BMX','RACE'],['Ciclismo de Estrada','ROAD_RACE'],['Ciclismo de Pista','TRACK_SCRATCH']]){

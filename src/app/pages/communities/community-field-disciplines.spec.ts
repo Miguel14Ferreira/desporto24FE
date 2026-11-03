@@ -1,6 +1,14 @@
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 
 describe('Athletics field disciplines', () => {
+  it('requires a specific canoe K1 distance and excludes team boats', () => {
+    expect(athleticsDisciplineOptions('Canoagem Velocidade','CANOE_SPRINT'))
+      .toEqual(['K1_200','K1_500','K1_1000']);
+    expect(athleticsDisciplineValid('Canoagem Velocidade','CANOE_SPRINT','K1_500')).toBeTrue();
+    expect(athleticsDisciplineValid('Canoagem Velocidade','CANOE_SPRINT',null)).toBeFalse();
+    expect(athleticsDisciplineValid('Canoagem Velocidade','CANOE_SPRINT','K2_500')).toBeFalse();
+    expect(athleticsDisciplineValid('Canoagem','CANOE_SPRINT','K1_500')).toBeFalse();
+  });
   it('offers compatible jump or throw disciplines only', () => {
     expect(athleticsDisciplineOptions('Atletismo', 'JUMP')).toEqual([
       'LONG_JUMP', 'TRIPLE_JUMP', 'HIGH_JUMP', 'POLE_VAULT'

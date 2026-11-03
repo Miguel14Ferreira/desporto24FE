@@ -2,6 +2,14 @@ import { eventOptionsForSport, eventView, isRaceEvent, isNeutralEvent,
   eventPresentationFormat } from './community-round-event-type';
 
 describe('multi-format sports should not reuse unrelated scoring rules', () => {
+  it('keeps canoe sprint timed K1 separate from match and freestyle rules', () => {
+    expect(eventOptionsForSport('Canoagem Velocidade').map(x=>x.code)).toEqual(['CANOE_SPRINT']);
+    expect(isRaceEvent('Canoagem Velocidade','CANOE_SPRINT')).toBeTrue();
+    expect(eventView('Canoagem Velocidade','CANOE_SPRINT')).toBe('race');
+    expect(eventPresentationFormat('Canoagem Velocidade','CANOE_SPRINT')).toBe('race');
+    expect(isNeutralEvent('Canoagem Velocidade','CANOE_SPRINT')).toBeFalse();
+    expect(isRaceEvent('Canoagem Velocidade','SWIM_LCM')).toBeFalse();
+  });
   it('requires choosing from the allowed variants of selected sports', () => {
     expect(eventOptionsForSport('BMX').map(o => o.code)).toEqual(['RACE', 'FREESTYLE']);
     expect(eventOptionsForSport('Ciclismo de Pista').map(o => o.code))

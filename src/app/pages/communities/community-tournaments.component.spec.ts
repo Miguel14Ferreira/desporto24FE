@@ -33,7 +33,7 @@ describe('Community tournaments management', () => {
       'publishRelayFinal', 'decideRelayHeat', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
-      'createTimedChampionship', 'createTrackChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
+      'createTimedChampionship', 'createCanoeChampionship', 'createTrackChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
       'createMeasuredChampionship', 'measuredOverview', 'linkMeasuredRound', 'unlinkMeasuredRound',
       'completeRaceChampionship', 'inlineSpeedOverview', 'resolveInlineSpeedTieBreak', 'recordInlineSpeedTrial'
     ]);
@@ -267,6 +267,35 @@ describe('Community tournaments management', () => {
     expect(component.relayTimeDraft[10]).toBe(48.125);
     component.relayTimeDraft[10]=-1;
     expect(component.relayTimeDraft[10]).toBe(-1);
+  });
+
+  it('creates timed K1 championships only after selecting the event and distance', async () => {
+    component.startIndividualCreation();
+    component.nameDraft='K1 500 m';
+    component.chooseSport('Canoagem Velocidade');
+    expect(component.selectedSportCreationModel).toBe('CANOE_BEST_TIME');
+    expect(component.isSportFormatSupported).toBeFalse();
+    expect(component.creationReadiness).toBe('EVENT_REQUIRED');
+    component.chooseTournamentEventType('CANOE_SPRINT');
+    expect(component.creationReadiness).toBe('DISCIPLINE_REQUIRED');
+    component.chooseCanoeDiscipline('K1_500');
+    expect(component.isSportFormatSupported).toBeTrue();
+    api.createCanoeChampionship.and.returnValue(of({
+      ...draft,id:119,name:'K1 500 m',sport:'Canoagem Velocidade',
+      eventType:'CANOE_SPRINT',eventDiscipline:'K1_500',scoringMode:'CANOE_BEST_TIME'
+    }));
+    await component.create();
+    expect(api.createCanoeChampionship).toHaveBeenCalledOnceWith(7,'K1 500 m','K1_500');
+    expect(component.isTimedCompetition).toBeTrue();
+    expect(component.timedUiKey('title')).toBe('communities.canoeTournament.title');
+    expect(api.timedOverview).toHaveBeenCalledWith(7,119);
+    expect(api.create).not.toHaveBeenCalled();
+    expect(api.generateSchedule).not.toHaveBeenCalled();
+
+    component.startTeamCreation();
+    component.chooseSport('Canoagem Velocidade');
+    expect(component.selectedSportCreationModel).toBe('UNAVAILABLE');
+    expect(component.isSportFormatSupported).toBeFalse();
   });
 
   it('creates a real swimming best-time championship only after selecting the event and exact discipline', async () => {
