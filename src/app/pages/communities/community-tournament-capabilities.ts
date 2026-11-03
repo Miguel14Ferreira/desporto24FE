@@ -32,7 +32,7 @@ export function tournamentSportCapabilities(sport: string | null | undefined): T
   } else if (sport === 'Patinagem de Velocidade') {
     individual = 'INLINE_SPEED';
   } else if (sport && isRaceChampionshipSport(sport)) {
-    // Only the seven verified race-championship sports use this API.
+    // Only explicitly verified race-championship sports use this API.
     individual = 'RACE_POINTS';
   } else if (profile.isRoundRobinSupported) {
     individual = 'NUMERIC_INDIVIDUAL';

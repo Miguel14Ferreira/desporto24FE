@@ -650,6 +650,33 @@ describe('Community tournaments management', () => {
     expect(component.isSportFormatSupported).toBeFalse();
   });
 
+  it('creates motorsport championships using real positions, not numeric football fixtures', async () => {
+    for (const [index, sport] of (['Automobilismo', 'Motociclismo', 'Motocross'] as const).entries()) {
+      component.startIndividualCreation();
+      component.nameDraft = 'Campeonato ' + sport;
+      component.chooseSport(sport);
+      expect(component.isRaceChampionshipDraft).toBeTrue();
+      expect(component.isSportFormatSupported).toBeTrue();
+      expect(component.creationReadiness).toBe('READY');
+      expect(component.selectedSportCreationModel).toBe('RACE_POINTS');
+      expect(component.sportEventChoices).toEqual([]);
+
+      const id = 300 + index;
+      api.createRaceChampionship.and.returnValue(of({
+        ...draft, id, name: 'Campeonato ' + sport, sport, scoringMode: 'RACE_POINTS'
+      }));
+      await component.create();
+      expect(api.createRaceChampionship).toHaveBeenCalledWith(7, 'Campeonato ' + sport, sport);
+      expect(api.raceOverview).toHaveBeenCalledWith(7, id);
+    }
+    expect(api.create).not.toHaveBeenCalled();
+    expect(api.matches).not.toHaveBeenCalled();
+    component.startTeamCreation();
+    component.chooseSport('Motocross');
+    expect(component.isSportFormatSupported).toBeFalse();
+    expect(component.selectedSportCreationModel).toBe('UNAVAILABLE');
+  });
+
   it('creates Ciclismo, Mountain Bike and Ciclocrosse championships using recorded race positions', async () => {
     for (const [index, sport] of (['Ciclismo', 'Mountain Bike', 'Ciclocrosse', 'Ciclismo de Estrada', 'Ciclismo de Pista'] as const).entries()) {
       component.startIndividualCreation();

@@ -2163,6 +2163,9 @@
                   @if (selected.sport === 'Ciclismo' || selected.sport === 'Mountain Bike' || selected.sport === 'Ciclocrosse') {
                     <p>{{ 'communities.race.communityScoring' | t }}</p>
                   }
+                  @if (selected.sport === 'Automobilismo' || selected.sport === 'Motociclismo' || selected.sport === 'Motocross') {
+                    <p>{{ 'communities.race.scoringDisclaimer' | t }}</p>
+                  }
                 </div>
               </div>
               @if (selected.status === 'COMPLETED' && finalKartingPodium.length) {

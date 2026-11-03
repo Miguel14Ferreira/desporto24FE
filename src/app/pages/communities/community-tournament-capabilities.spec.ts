@@ -19,13 +19,17 @@ describe('Tournament capabilities for all 121 modalities', () => {
     }
   });
 
-  it('only enables the seven race championship sports supported by the backend', () => {
-    expect(RACE_CHAMPIONSHIP_SPORTS).toHaveSize(7);
+  it('only enables the ten race championship sports supported by the backend', () => {
+    expect(RACE_CHAMPIONSHIP_SPORTS).toHaveSize(10);
     for (const sport of RACE_CHAMPIONSHIP_SPORTS) {
       expect(tournamentSportCapabilities(sport)).toEqual({
         family: 'race', individual: 'RACE_POINTS', team: 'UNAVAILABLE',
         fullSportRulesImplemented: false
       });
+    }
+    for (const sport of ['Automobilismo', 'Motociclismo', 'Motocross']) {
+      expect(tournamentSportCapabilities(sport).individual).withContext(sport).toBe('RACE_POINTS');
+      expect(tournamentSportCapabilities(sport).team).withContext(sport).toBe('UNAVAILABLE');
     }
     expect(tournamentSportCapabilities('Atletismo').individual).toBe('FIELD_BEST_MARK');
     expect(tournamentSportCapabilities('Atletismo').team).toBe('RELAY_BEST_TIME');
