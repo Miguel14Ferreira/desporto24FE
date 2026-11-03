@@ -55,3 +55,24 @@
 :host .tournaments .team-roster-section:focus,:host .tournaments .team-fixtures-section:focus,:host .tournaments .team-standings-section:focus,:host .tournaments .team-knockout-board:focus{outline:none;}
 :host .tournaments .team-roster-section,:host .tournaments .team-fixtures-section,:host .tournaments .team-standings-section,:host .tournaments .team-knockout-board{scroll-margin-top:82px;}
 @media(max-width:620px){:host .tournaments .team-tournament-jump{align-items:stretch;flex-direction:column;} :host .tournaments .team-tournament-jump-links{width:100%;} :host .tournaments .team-tournament-jump-mine{align-self:flex-start;}}
+
+/* Read-only standings previews: positions from the official API, never inferred medals. */
+:host .tournaments .team-standings-spotlight{display:grid;gap:12px;min-width:0;padding:16px;border:1px solid rgba(77,201,168,.3);border-radius:14px;background:linear-gradient(140deg,rgba(7,53,60,.76),rgba(8,34,49,.83));}
+:host .tournaments .team-standings-spotlight-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;}
+:host .tournaments .team-standings-spotlight-heading strong{font-size:.95rem;color:#e9fff6;}
+:host .tournaments .team-standings-spotlight-heading span{font-size:.73rem;color:#a3d2c8;}
+:host .tournaments .team-standings-spotlight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px;min-width:0;}
+:host .tournaments .team-standings-spotlight-grid.is-groups{grid-template-columns:repeat(auto-fit,minmax(235px,1fr));}
+:host .tournaments .team-standings-spotlight-group{display:grid;align-content:start;gap:8px;min-width:0;padding:10px;border:1px solid rgba(91,195,168,.17);border-radius:10px;background:rgba(5,31,46,.55);}
+:host .tournaments .team-standings-spotlight-group h6{font-size:.82rem;color:#c5f8e5;margin:2px 3px 0;}
+:host .tournaments .team-standings-spotlight-row{display:flex;align-items:center;gap:10px;min-width:0;padding:10px 11px;border:1px solid rgba(106,202,173,.26);border-radius:11px;background:rgba(12,76,70,.36);color:#e8fff8;text-decoration:none;}
+:host .tournaments .team-standings-spotlight-row:hover{background:rgba(18,99,84,.55);border-color:rgba(125,236,185,.65);}
+:host .tournaments .team-standings-spotlight-row:focus-visible{outline:2px solid #a6ffda;outline-offset:3px;}
+:host .tournaments .team-standings-spotlight-row.is-own{border-color:rgba(170,226,108,.65);background:rgba(67,111,50,.27);}
+:host .tournaments .team-standings-spotlight-rank{font-size:.95rem;white-space:nowrap;font-weight:850;color:#a7f4dc;}
+:host .tournaments .team-standings-spotlight-row strong{min-width:0;flex:1;overflow-wrap:anywhere;font-size:.83rem;}
+:host .tournaments .team-standings-spotlight-points{font-size:.74rem;white-space:nowrap;color:#c7eadf;font-variant-numeric:tabular-nums;}
+:host .tournaments .team-standings-spotlight-arrow{color:#a1ead6;font-size:1.06rem;}
+:host .tournaments .team-standings-spotlight-own{display:grid;gap:7px;padding-top:10px;border-top:1px solid rgba(122,202,176,.23);}
+:host .tournaments .team-standings-spotlight-own>span{font-size:.78rem;color:#dbf8e7;font-weight:800;}
+:host .tournaments .team-standings-table tr.is-own-team>td,:host .tournaments .team-standings-table tr.is-own-team>th{background:rgba(65,133,87,.23);}

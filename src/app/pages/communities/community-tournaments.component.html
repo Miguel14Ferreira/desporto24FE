@@ -1813,6 +1813,32 @@
                     <p class="field-validation" role="alert">{{ 'communities.tournaments.finalUi.groupsError' | t }}</p>
                   }
                   @if (teamGroups; as groups) {
+                    @if (teamGroupHighlights.length) {
+                      <div class="team-standings-spotlight" [attr.aria-label]="'communities.tournaments.spotlight.title' | t">
+                        <div class="team-standings-spotlight-heading">
+                          <strong>{{ 'communities.tournaments.spotlight.title' | t }}</strong>
+                          <span>{{ 'communities.tournaments.spotlight.recorded' | t }}</span>
+                        </div>
+                        <div class="team-standings-spotlight-grid is-groups">
+                          @for (group of teamGroupHighlights; track group.groupNumber) {
+                            <section class="team-standings-spotlight-group">
+                              <h6>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(group.groupNumber)} }}</h6>
+                              @for (row of group.rows; track row.teamId) {
+                                <a class="team-standings-spotlight-row" [class.is-own]="myTeam?.id === row.teamId"
+                                  [routerLink]="['/menu/communities', community.id]"
+                                  [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:row.teamId}"
+                                  [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:row.teamName}">
+                                  <span class="team-standings-spotlight-rank">{{ row.position }}.º</span>
+                                  <strong>{{ row.teamName }}</strong>
+                                  <span class="team-standings-spotlight-points">{{ row.points }} {{ 'communities.tournaments.finalUi.pointsCol' | t }}</span>
+                                  <span class="team-standings-spotlight-arrow" aria-hidden="true">↗</span>
+                                </a>
+                              }
+                            </section>
+                          }
+                        </div>
+                      </div>
+                    }
                     @if (groups.knockoutStarted) {
                       <p class="t-muted">{{ 'communities.tournaments.finalUi.groupsComplete' | t }}</p>
                     }
@@ -1835,7 +1861,8 @@
                           </thead>
                           <tbody>
                             @for (row of group.standings; track row.teamId) {
-                              <tr [class.is-qualified]="groups.knockoutStarted && row.position <= 2">
+                              <tr [class.is-qualified]="groups.knockoutStarted && row.position <= 2"
+                                [class.is-own-team]="myTeam?.id === row.teamId">
                                 <td>{{ row.position }}</td>
                                 <th scope="row"><a class="team-name-link"
                                   [routerLink]="['/menu/communities', community.id]"
@@ -1879,6 +1906,41 @@
                   <p class="field-validation" role="alert">{{ 'communities.tournaments.finalUi.teamError' | t }}</p>
                 }
                 @if (teamStandings; as table) {
+                  @if (teamLeagueHighlights.length) {
+                    <div class="team-standings-spotlight" [attr.aria-label]="'communities.tournaments.spotlight.title' | t">
+                      <div class="team-standings-spotlight-heading">
+                        <strong>{{ 'communities.tournaments.spotlight.title' | t }}</strong>
+                        <span>{{ 'communities.tournaments.spotlight.recorded' | t }}</span>
+                      </div>
+                      <div class="team-standings-spotlight-grid">
+                        @for (row of teamLeagueHighlights; track row.teamId) {
+                          <a class="team-standings-spotlight-row" [class.is-own]="myTeam?.id === row.teamId"
+                            [routerLink]="['/menu/communities', community.id]"
+                            [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:row.teamId}"
+                            [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:row.teamName}">
+                            <span class="team-standings-spotlight-rank">{{ row.position }}.º</span>
+                            <strong>{{ row.teamName }}</strong>
+                            <span class="team-standings-spotlight-points">{{ row.points }} {{ 'communities.tournaments.finalUi.pointsCol' | t }}</span>
+                            <span class="team-standings-spotlight-arrow" aria-hidden="true">↗</span>
+                          </a>
+                        }
+                      </div>
+                      @if (myLeagueHighlightOutsideTop; as mine) {
+                        <div class="team-standings-spotlight-own">
+                          <span>{{ 'communities.tournaments.navigation.myTeam' | t }}</span>
+                          <a class="team-standings-spotlight-row is-own"
+                            [routerLink]="['/menu/communities', community.id]"
+                            [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:mine.teamId}"
+                            [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:mine.teamName}">
+                            <span class="team-standings-spotlight-rank">{{ mine.position }}.º</span>
+                            <strong>{{ mine.teamName }}</strong>
+                            <span class="team-standings-spotlight-points">{{ mine.points }} {{ 'communities.tournaments.finalUi.pointsCol' | t }}</span>
+                            <span class="team-standings-spotlight-arrow" aria-hidden="true">↗</span>
+                          </a>
+                        </div>
+                      }
+                    </div>
+                  }
                   <div class="team-standings-progress">
                     <p>{{ 'communities.tournaments.finalUi.completedMatches' | t:{completed: table.completedMatches, total: table.totalMatches} }}</p>
                     <progress [value]="table.completedMatches" [max]="table.totalMatches || 1"
@@ -1894,7 +1956,8 @@
                       </thead>
                       <tbody>
                         @for (row of table.standings; track row.teamId) {
-                          <tr [class.is-leader]="row.position === 1 && row.played > 0">
+                          <tr [class.is-leader]="row.position === 1 && row.played > 0"
+                            [class.is-own-team]="myTeam?.id === row.teamId">
                             <td>{{ row.position }}</td><th scope="row"><a class="team-name-link"
                               [routerLink]="['/menu/communities', community.id]"
                               [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:row.teamId}">{{ row.teamName }}</a></th>

@@ -3086,6 +3086,8 @@ const PT: Dictionary = {
   'communities.tournaments.navigation.bracket': 'Eliminatórias',
   'communities.tournaments.navigation.standings': 'Classificação',
   'communities.tournaments.navigation.myTeam': 'A minha equipa',
+  'communities.tournaments.spotlight.title': 'Classificação em destaque',
+  'communities.tournaments.spotlight.recorded': 'Com jogos registados',
   'communities.tournaments.teamPage.champion': 'Campeã',
   'communities.tournaments.teamPage.noResults': 'Ainda não existem resultados.',
   'communities.tournaments.teamPage.moreMatches': 'Carregar mais jogos',

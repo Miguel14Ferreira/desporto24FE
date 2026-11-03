@@ -3080,6 +3080,8 @@ export const EN: Record<string, string> = {
   'communities.tournaments.navigation.bracket': 'Knockout',
   'communities.tournaments.navigation.standings': 'Standings',
   'communities.tournaments.navigation.myTeam': 'My team',
+  'communities.tournaments.spotlight.title': 'Standings at a glance',
+  'communities.tournaments.spotlight.recorded': 'With recorded matches',
   'communities.tournaments.teamPage.champion': 'Champion',
   'communities.tournaments.teamPage.noResults': 'No results recorded yet.',
   'communities.tournaments.teamPage.moreMatches': 'Load more matches',

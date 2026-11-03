@@ -9,7 +9,7 @@ import { historicalKnockoutPhaseOverview, HistoricalKnockoutPhaseOverview, Histo
 import { historicalMatchReviewFlags } from './community-historical-match-review';
 import {
   CommunityTournament, TournamentStatus, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
-  TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
+  TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamStandingRow, TournamentTeamGroups,
   TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry, TournamentTimedOverview, TournamentMeasuredOverview, RelayOverview, RelayHeat,
   InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../model/community-tournament';
@@ -1303,6 +1303,41 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   /** Never derive another team's form or classification from the tournament-wide UI. */
+  /** Live positions only: trust the standings API and never infer medals or qualification. */
+  get teamLeagueHighlights(): TournamentTeamStandingRow[] {
+    if (!this.isTeamCompetition || this.isRelayCompetition
+      || this.selected?.format !== 'LEAGUE' || this.teamStandingsError
+      || !this.teamStandings || this.teamStandings.tournamentId !== this.selected.id) return [];
+    return this.teamStandings.standings
+      .filter(row => row.played > 0 && Number.isSafeInteger(row.position)
+        && row.position > 0 && Number.isSafeInteger(row.teamId) && row.teamId > 0)
+      .slice().sort((a,b) => a.position - b.position || a.teamId - b.teamId).slice(0,3);
+  }
+
+  /** A separate current-team card is only needed when absent from the top 3. */
+  get myLeagueHighlightOutsideTop(): TournamentTeamStandingRow | undefined {
+    const teamId = this.myTeam?.id;
+    if (!teamId || !this.teamStandings || !this.isTeamCompetition
+      || this.isRelayCompetition || this.selected?.format !== 'LEAGUE'
+      || this.teamStandingsError || this.teamStandings.tournamentId !== this.selected.id
+      || this.teamLeagueHighlights.some(row => row.teamId === teamId)) return undefined;
+    return this.teamStandings.standings.find(row => row.teamId === teamId
+      && row.played > 0 && Number.isSafeInteger(row.position) && row.position > 0);
+  }
+
+  /** Each group keeps its independent backend-defined ranking (never a global top 2). */
+  get teamGroupHighlights(): { groupNumber: number; rows: TournamentTeamStandingRow[] }[] {
+    if (!this.isGroupKnockout || this.isRelayCompetition || this.teamGroupsError
+      || !this.teamGroups || this.teamGroups.tournamentId !== this.selected?.id) return [];
+    return this.teamGroups.groups.map(group => ({
+      groupNumber: group.groupNumber,
+      rows: group.standings
+        .filter(row => row.played > 0 && Number.isSafeInteger(row.position)
+          && row.position > 0 && Number.isSafeInteger(row.teamId) && row.teamId > 0)
+        .slice().sort((a,b) => a.position - b.position || a.teamId - b.teamId).slice(0,2)
+    })).filter(group => group.rows.length > 0);
+  }
+
   get focusedTeamStanding() {
     const team = this.focusedTeam;
     if (!team || this.isRelayCompetition) return undefined;

@@ -1723,6 +1723,60 @@ describe('Community tournaments management', () => {
       expect(component.focusedTeamJourney.advancement).toBeNull();
     });
 
+    it('highlights only recorded league rankings, with a separate current-team position when outside the top three', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      component.teams=[
+        {...team,id:40,players:[{profileId:1,username:'owner',displayName:'Organizador'}]},
+        {...team,id:41,name:'Azuis'}, {...team,id:42,name:'Roxos'},
+        {...team,id:43,name:'Brancos'}, {...team,id:44,name:'Amarelos'}
+      ];
+      const standing=(id:number, position:number, played:number) => ({
+        position,teamId:id,teamName:'Equipa '+id,played,won:played,drawn:0,
+        lost:0,goalsFor:played,goalsAgainst:0,goalDifference:played,points:played*3
+      });
+      component.teamStandings={
+        tournamentId:19,status:'IN_PROGRESS',totalMatches:10,completedMatches:4,
+        winPoints:3,drawPoints:1,lossPoints:0,standings:[
+          standing(44,5,0),standing(40,4,1),standing(43,3,2),
+          standing(41,1,3),standing(42,2,2)
+        ]
+      };
+      expect(component.teamLeagueHighlights.map(r=>r.teamId)).toEqual([41,42,43]);
+      expect(component.myLeagueHighlightOutsideTop?.teamId).toBe(40);
+      component.teamStandings.standings[1].position=2;
+      expect(component.myLeagueHighlightOutsideTop).toBeUndefined();
+      component.teamStandings={...component.teamStandings,tournamentId:123};
+      expect(component.teamLeagueHighlights).toEqual([]);
+      expect(component.myLeagueHighlightOutsideTop).toBeUndefined();
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE',
+        scoringMode:'RELAY_BEST_TIME'};
+      expect(component.teamLeagueHighlights).toEqual([]);
+    });
+
+    it('shows the leading recorded standings of each independent group without inventing qualification', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',
+        format:'GROUP_KNOCKOUT',groupCount:2};
+      const standing=(id:number,position:number,played:number)=>({
+        position,teamId:id,teamName:'Equipa '+id,played,won:played,
+        drawn:0,lost:0,goalsFor:played,goalsAgainst:0,goalDifference:played,
+        points:played*3
+      });
+      component.teamGroups={
+        tournamentId:19,knockoutStarted:false,groups:[
+          {groupNumber:1,standings:[standing(1,3,1),standing(2,1,2),
+            standing(3,2,1)]},
+          {groupNumber:2,standings:[standing(4,1,0),standing(5,2,0)]}
+        ]
+      };
+      expect(component.teamGroupHighlights).toEqual([
+        {groupNumber:1,rows:[standing(2,1,2),standing(3,2,1)]}
+      ]);
+      component.teamGroups={...component.teamGroups, tournamentId:123};
+      expect(component.teamGroupHighlights).toEqual([]);
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      expect(component.teamGroupHighlights).toEqual([]);
+    });
+
     it('offers only actual published team sections, never draft or relay brackets', () => {
       component.selectTournament(teamDraft);
       expect(component.teamOverviewSections).toEqual(['teams']);
