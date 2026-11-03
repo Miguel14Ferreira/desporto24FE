@@ -1159,6 +1159,66 @@ describe('Community tournaments management', () => {
       expect(component.focusedTeamRelayHeats.map(h=>h.id)).toEqual([19]);
     });
 
+    it('renders only published knockout rounds and advances winners only when confirmed in the next fixture', () => {
+      component.selected = {...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches = [
+        {id:72,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED'},
+        {id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED',homeScore:2,awayScore:1},
+        {id:71,roundNumber:1,homeTeamId:42,homeTeamName:'Pretos',
+          awayTeamId:43,awayTeamName:'Amarelos',status:'COMPLETED',homeScore:0,awayScore:3}
+      ];
+      const bracket=component.knockoutBracket;
+      expect(bracket.map(round=>round.round)).toEqual([1,2]);
+      expect(bracket[0].matches.map(item=>item.game.id)).toEqual([70,71]);
+      expect(bracket[0].matches.map(item=>item.winnerId)).toEqual([40,43]);
+      expect(bracket[0].matches.every(item=>item.advanced)).toBeTrue();
+      expect(bracket[0].matches.every(item=>!item.champion)).toBeTrue();
+      expect(bracket[1].matches[0].winnerId).toBeNull();
+      expect(bracket.some(round=>round.round===3)).toBeFalse();
+      expect(component.teamMatches.map(game=>game.id)).toEqual([72,70,71]);
+    });
+
+    it('does not invent knockout progress, winners, draws or championships', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:7,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',awayTeamId:41,
+          awayTeamName:'Azuis',status:'COMPLETED',homeScore:3,awayScore:1},
+        {id:8,roundNumber:1,homeTeamId:42,homeTeamName:'Pretos',awayTeamId:43,
+          awayTeamName:'Amarelos',status:'SCHEDULED',homeScore:8,awayScore:0},
+        {id:9,roundNumber:1,homeTeamId:44,homeTeamName:'Rosas',awayTeamId:45,
+          awayTeamName:'Laranjas',status:'COMPLETED',homeScore:1,awayScore:1},
+        {id:10,roundNumber:1,homeTeamId:46,homeTeamName:'A',awayTeamId:47,
+          awayTeamName:'B',status:'COMPLETED',homeScore:null,awayScore:2}
+      ];
+      const matches=component.knockoutBracket[0].matches;
+      expect(matches.map(item=>item.winnerId)).toEqual([40,null,null,null]);
+      expect(matches.every(item=>!item.advanced && !item.champion)).toBeTrue();
+      component.selected={...component.selected,status:'COMPLETED',championTeamId:40};
+      expect(component.knockoutBracket[0].matches[0].champion).toBeTrue();
+      component.selected={...component.selected,championTeamId:41};
+      expect(component.knockoutBracket[0].matches.every(item=>!item.champion)).toBeTrue();
+    });
+
+    it('excludes group fixtures and sport-specific relay competitions from the knockout board', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamMatches=[
+        {id:21,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'A',
+          awayTeamId:41,awayTeamName:'B',status:'COMPLETED',homeScore:1,awayScore:0},
+        {id:22,roundNumber:1,groupNumber:null,homeTeamId:40,homeTeamName:'A',
+          awayTeamId:42,awayTeamName:'C',status:'COMPLETED',homeScore:2,awayScore:0}
+      ];
+      expect(component.knockoutBracket.length).toBe(1);
+      expect(component.knockoutBracket[0].matches.map(item=>item.game.id)).toEqual([22]);
+      component.selected={...component.selected,format:'LEAGUE'};
+      expect(component.knockoutBracket).toEqual([]);
+      component.selected={...component.selected,format:'GROUP_KNOCKOUT',
+        scoringMode:'RELAY_BEST_TIME'};
+      // Relay overview uses times and qualification, never a football-style fixture board.
+      expect(component.isRelayCompetition).toBeTrue();
+    });
+
     it('builds group and knockout stages strictly from published match data', () => {
       const cup = {...teamDraft, status:'IN_PROGRESS' as const,
         format:'GROUP_KNOCKOUT' as const, groupCount:4 as const};

@@ -1477,6 +1477,60 @@
                     }
                   </p>
                 }
+                @let bracket = knockoutBracket;
+                @if (bracket.length) {
+                  <details class="team-knockout-board" open>
+                    <summary>
+                      <span>
+                        <strong>{{ 'communities.tournaments.bracketUi.title' | t }}</strong>
+                        <small>{{ 'communities.tournaments.bracketUi.description' | t }}</small>
+                      </span>
+                      <span aria-hidden="true">⌄</span>
+                    </summary>
+                    <div class="team-knockout-scroll" tabindex="0"
+                      role="region" [attr.aria-label]="'communities.tournaments.bracketUi.title' | t">
+                      <div class="team-knockout-columns">
+                        @for (round of bracket; track round.round) {
+                          <section class="team-knockout-round">
+                            <button type="button" class="team-knockout-round-title"
+                              [class.is-active]="teamPhaseFilter === 'round-' + round.round"
+                              [attr.aria-pressed]="teamPhaseFilter === 'round-' + round.round"
+                              (click)="setTeamPhaseFilter(teamPhaseFilter === 'round-' + round.round ? 'ALL' : 'round-' + round.round)">
+                              <strong>{{ round.label }}</strong>
+                              <span>{{ round.matches.length }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
+                            </button>
+                            @for (item of round.matches; track item.game.id) {
+                              <article class="team-knockout-match" [class.is-done]="item.winnerId !== null">
+                                <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.homeTeamId">
+                                  <a [routerLink]="['/menu/communities', community.id]"
+                                    [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.homeTeamId}">{{ item.game.homeTeamName }}</a>
+                                  <b>{{ item.game.status === 'COMPLETED' && item.game.homeScore != null ? item.game.homeScore : '—' }}</b>
+                                </div>
+                                <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.awayTeamId">
+                                  <a [routerLink]="['/menu/communities', community.id]"
+                                    [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.awayTeamId}">{{ item.game.awayTeamName }}</a>
+                                  <b>{{ item.game.status === 'COMPLETED' && item.game.awayScore != null ? item.game.awayScore : '—' }}</b>
+                                </div>
+                                @if (item.champion) {
+                                  <small class="team-knockout-outcome">🏆 {{ 'communities.tournaments.bracketUi.champion' | t }}</small>
+                                } @else if (item.advanced) {
+                                  <small class="team-knockout-outcome">↗ {{ 'communities.tournaments.bracketUi.advanced' | t }}</small>
+                                } @else if (item.winnerId !== null) {
+                                  <small class="team-knockout-outcome">{{ 'communities.tournaments.bracketUi.won' | t }}</small>
+                                }
+                              </article>
+                            }
+                          </section>
+                        }
+                      </div>
+                    </div>
+                    @if (teamMatchesHasMore) {
+                      <p class="team-knockout-note">{{ 'communities.tournaments.bracketUi.partial' | t }}</p>
+                    }
+                  </details>
+                } @else if (isGroupKnockout && teamMatches.length && !teamMatchesHasMore) {
+                  <p class="t-muted">{{ 'communities.tournaments.bracketUi.notLoaded' | t }}</p>
+                }
                 @if (teamMatches.length) {
                   @if (isCupFormat) {
                     <div class="team-phase-overview" role="group"

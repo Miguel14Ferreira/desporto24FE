@@ -1430,6 +1430,45 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.changeDetector.markForCheck();
   }
 
+  /**
+   * Actual published cup fixtures, grouped in columns by knockout round.
+   * Completed scores identify the winner; advancement is only confirmed by a
+   * published next-round fixture containing that team. Do not fill in byes,
+   * fabricate matches or assume a completed match awards the championship.
+   */
+  get knockoutBracket(): {
+    round: number; label: string;
+    matches: { game: TournamentTeamMatch; winnerId: number | null;
+      advanced: boolean; champion: boolean }[];
+  }[] {
+    if (!this.isCupFormat) return [];
+    const fixtures = this.teamMatches.filter(game => this.isEliminationMatch(game));
+    const rounds = new Map<number, TournamentTeamMatch[]>();
+    for (const fixture of fixtures) {
+      const matches = rounds.get(fixture.roundNumber) ?? [];
+      matches.push(fixture);
+      rounds.set(fixture.roundNumber, matches);
+    }
+    return [...rounds].sort(([a], [b]) => a - b).map(([round, matches]) => ({
+      round, label: this.teamMatchStageLabel(matches[0]),
+      matches: matches.sort((a, b) => a.id - b.id).map(game => {
+        const valid = game.status === 'COMPLETED'
+          && typeof game.homeScore === 'number' && Number.isFinite(game.homeScore)
+          && typeof game.awayScore === 'number' && Number.isFinite(game.awayScore)
+          && game.homeScore >= 0 && game.awayScore >= 0 && game.homeScore !== game.awayScore;
+        const winnerId = valid
+          ? (game.homeScore! > game.awayScore! ? game.homeTeamId : game.awayTeamId)
+          : null;
+        const advanced = winnerId !== null && fixtures.some(next =>
+          next.roundNumber === round + 1
+          && (next.homeTeamId === winnerId || next.awayTeamId === winnerId));
+        const champion = winnerId !== null && this.selected?.status === 'COMPLETED'
+          && this.selected.championTeamId === winnerId;
+        return { game, winnerId, advanced, champion };
+      })
+    }));
+  }
+
   isEliminationMatch(game: TournamentTeamMatch): boolean {
     return this.isKnockout || (this.isGroupKnockout && game.groupNumber == null);
   }

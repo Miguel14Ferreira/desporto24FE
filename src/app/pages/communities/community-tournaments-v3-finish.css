@@ -852,3 +852,32 @@
 :host .tournaments .team-group-panel>summary strong{color:#effff9;}
 :host .tournaments .team-group-panel[open]>summary{border-bottom:1px solid rgba(65,183,170,.25);}
 :host .tournaments .team-group-panel>.standings-scroll{padding:4px 9px 10px;}
+
+/* Real published knockout bracket. Visual links never imply unconfirmed pairings. */
+:host .tournaments .team-knockout-board{min-width:0;border:1px solid rgba(85,215,183,.32);border-radius:14px;background:rgba(6,37,47,.65);overflow:hidden;}
+:host .tournaments .team-knockout-board>summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 18px;color:#f0fff9;}
+:host .tournaments .team-knockout-board>summary span:first-child{display:grid;gap:5px;}
+:host .tournaments .team-knockout-board>summary strong{font-size:1rem;}
+:host .tournaments .team-knockout-board>summary small{font-size:.77rem;color:#a9cfcf;}
+:host .tournaments .team-knockout-board[open]>summary{border-bottom:1px solid rgba(88,188,175,.22);}
+:host .tournaments .team-knockout-board>summary:focus-visible,
+:host .tournaments .team-knockout-scroll:focus-visible{outline:2px solid #9bffe0;outline-offset:-3px;}
+:host .tournaments .team-knockout-scroll{overflow-x:auto;padding:14px;scrollbar-color:#408e83 transparent;}
+:host .tournaments .team-knockout-columns{display:flex;align-items:flex-start;gap:12px;min-width:max-content;}
+:host .tournaments .team-knockout-round{display:grid;align-content:start;gap:10px;width:235px;min-width:235px;}
+:host .tournaments .team-knockout-round:not(:last-child){padding-right:12px;border-right:1px dashed rgba(101,193,176,.31);}
+:host .tournaments .team-knockout-round-title{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;width:100%;padding:9px 10px;border:1px solid rgba(100,192,173,.26);border-radius:10px;background:rgba(20,75,77,.65);color:#ecfff8;text-align:left;}
+:host .tournaments .team-knockout-round-title strong{font-size:.81rem;}
+:host .tournaments .team-knockout-round-title span{font-size:.7rem;color:#acdbd0;}
+:host .tournaments .team-knockout-round-title.is-active{border-color:#77eac5;background:rgba(44,145,120,.4);}
+:host .tournaments .team-knockout-round-title:focus-visible,
+:host .tournaments .team-knockout-contender a:focus-visible{outline:2px solid #a2ffe0;outline-offset:2px;}
+:host .tournaments .team-knockout-match{display:grid;gap:1px;min-width:0;background:rgba(80,157,150,.2);border:1px solid rgba(87,167,164,.28);border-radius:10px;overflow:hidden;}
+:host .tournaments .team-knockout-match.is-done{border-color:rgba(94,219,179,.4);}
+:host .tournaments .team-knockout-contender{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;padding:10px 11px;background:rgba(6,45,58,.94);font-size:.81rem;color:#b7d7db;}
+:host .tournaments .team-knockout-contender.is-winner{color:#c4ffe3;background:rgba(19,91,77,.75);}
+:host .tournaments .team-knockout-contender a{color:inherit;font-weight:700;text-decoration:none;overflow-wrap:anywhere;min-width:0;}
+:host .tournaments .team-knockout-contender a:hover{text-decoration:underline;}
+:host .tournaments .team-knockout-contender b{font-variant-numeric:tabular-nums;font-size:1rem;}
+:host .tournaments .team-knockout-outcome{padding:5px 10px;color:#a5f2d5;background:rgba(13,85,71,.7);font-size:.69rem;font-weight:700;}
+:host .tournaments .team-knockout-note{margin:0;padding:0 18px 12px;color:#acd5d3;font-size:.75rem;}
