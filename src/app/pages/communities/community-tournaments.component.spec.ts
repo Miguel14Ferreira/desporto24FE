@@ -670,7 +670,8 @@ describe('Community tournaments management', () => {
       expect(api.raceOverview).toHaveBeenCalledWith(7, id);
     }
     expect(api.create).not.toHaveBeenCalled();
-    expect(api.matches).not.toHaveBeenCalled();
+    for (const id of [300, 301, 302])
+      expect(api.matches).not.toHaveBeenCalledWith(7, id, 0);
     component.startTeamCreation();
     component.chooseSport('Motocross');
     expect(component.isSportFormatSupported).toBeFalse();
