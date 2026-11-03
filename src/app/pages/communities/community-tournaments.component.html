@@ -153,6 +153,26 @@
               }
             </div>
           }
+          @if (canoeDisciplineOptions.length) {
+            <div class="tournament-event-choices" role="group"
+              [attr.aria-label]="'communities.canoeTournament.disciplineTitle' | t">
+              <div class="tournament-event-choices-intro">
+                <strong>{{ 'communities.canoeTournament.disciplineTitle' | t }}</strong>
+                <p>{{ 'communities.canoeTournament.disciplineHelp' | t }}</p>
+              </div>
+              <div class="tournament-event-options">
+                @for (discipline of canoeDisciplineOptions; track discipline) {
+                  <button type="button" class="tournament-event-option"
+                    [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
+                    [class.is-selected]="eventDisciplineDraft === discipline"
+                    (click)="chooseCanoeDiscipline(discipline)">
+                    <span>{{ ('communities.canoeTournament.discipline.' + discipline) | t }}</span>
+                    <small>{{ 'communities.swimTournament.secondsUnit' | t }}</small>
+                  </button>
+                }
+              </div>
+            </div>
+          }
           @if (swimDisciplineOptions.length) {
             <div class="tournament-event-choices" role="group"
               [attr.aria-label]="'communities.swimTournament.disciplineTitle' | t">

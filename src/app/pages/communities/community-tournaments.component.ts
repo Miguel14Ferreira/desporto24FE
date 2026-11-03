@@ -17,7 +17,7 @@ import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipS
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
-import { tournamentEventChoices, validatedTournamentEventType, SWIM_TOURNAMENT_DISCIPLINES, validSwimTournamentDiscipline, FIELD_TOURNAMENT_DISCIPLINES, validFieldTournamentDiscipline, TRACK_TOURNAMENT_DISTANCES, validTrackTournamentDistance, RELAY_TOURNAMENT_DISCIPLINES, validRelayTournamentDiscipline } from './community-tournament-event-types';
+import { tournamentEventChoices, validatedTournamentEventType, SWIM_TOURNAMENT_DISCIPLINES, validSwimTournamentDiscipline, FIELD_TOURNAMENT_DISCIPLINES, validFieldTournamentDiscipline, TRACK_TOURNAMENT_DISTANCES, validTrackTournamentDistance, RELAY_TOURNAMENT_DISCIPLINES, validRelayTournamentDiscipline, CANOE_K1_DISCIPLINES, validCanoeDiscipline } from './community-tournament-event-types';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -270,6 +270,15 @@ export class CommunityTournamentsComponent implements OnChanges {
   get isRelayCompetition():boolean {
     return this.selected?.scoringMode==='RELAY_BEST_TIME';
   }
+  get canoeDisciplineOptions(): readonly string[] {
+    return this.savedSportEventType==='CANOE_SPRINT'
+      && this.selectedSportCreationModel==='CANOE_BEST_TIME' ? CANOE_K1_DISCIPLINES : [];
+  }
+  chooseCanoeDiscipline(code:string):void {
+    if (this.busy || !this.canoeDisciplineOptions.includes(code)) return;
+    this.eventDisciplineDraft=code;
+    this.changeDetector.markForCheck();
+  }
   get swimDisciplineOptions(): readonly string[] {
     return this.savedSportEventType === 'SWIM_LCM' && this.selectedSportCreationModel === 'SWIM_BEST_TIME'
       ? SWIM_TOURNAMENT_DISCIPLINES : [];
@@ -437,19 +446,23 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
   get isTimedCompetition(): boolean {
     return this.selected?.scoringMode === 'SWIM_BEST_TIME'
-      || this.selected?.scoringMode === 'TRACK_BEST_TIME';
+      || this.selected?.scoringMode === 'TRACK_BEST_TIME'
+      || this.selected?.scoringMode === 'CANOE_BEST_TIME';
   }
   get isTrackCompetition():boolean {
     return this.selected?.scoringMode==='TRACK_BEST_TIME';
   }
   get isTimedDraft(): boolean {
     return this.selectedSportCreationModel === 'SWIM_BEST_TIME'
-      || this.selectedSportCreationModel === 'TRACK_BEST_TIME';
+      || this.selectedSportCreationModel === 'TRACK_BEST_TIME'
+      || this.selectedSportCreationModel === 'CANOE_BEST_TIME';
   }
   timedUiKey(key:string):string {
     const common=['rounds','linked','unlink','link','empty','place','bestTime','attempts','unlinked','loading','loadError','available','noAvailable','resultsTitle','noResults','provisional'];
-    return 'communities.'+(this.selected?.scoringMode==='TRACK_BEST_TIME'
-      && !common.includes(key) ? 'trackTournament':'swimTournament')+'.'+key;
+    const canoe = this.selected?.scoringMode==='CANOE_BEST_TIME';
+    return 'communities.'+(canoe && !common.includes(key) ? 'canoeTournament'
+      : this.selected?.scoringMode==='TRACK_BEST_TIME' && !common.includes(key)
+        ? 'trackTournament':'swimTournament')+'.'+key;
   }
 
   /** A speed-skating bracket uses timed heats, never generic league points. */
@@ -893,6 +906,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.selectedSportCreationModel !== 'UNAVAILABLE'
       && (this.selectedSportCreationModel !== 'SWIM_BEST_TIME'
         || validSwimTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft))
+      && (this.selectedSportCreationModel !== 'CANOE_BEST_TIME'
+        || validCanoeDiscipline(this.savedSportEventType,this.eventDisciplineDraft))
       && (this.selectedSportCreationModel !== 'FIELD_BEST_MARK'
         || validFieldTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft))
       && (this.selectedSportCreationModel !== 'TRACK_BEST_TIME'
@@ -918,7 +933,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       case 'READY': return 'communities.tournaments.capabilities.partialAvailable';
       case 'EVENT_REQUIRED': return 'communities.tournaments.events.title';
       case 'DISCIPLINE_REQUIRED':
-        return this.selectedSportCreationModel === 'SWIM_BEST_TIME'
+        return this.selectedSportCreationModel === 'CANOE_BEST_TIME'
+          ? 'communities.canoeTournament.disciplineTitle'
+          : this.selectedSportCreationModel === 'SWIM_BEST_TIME'
           ? 'communities.swimTournament.disciplineTitle'
           : this.selectedSportCreationModel === 'FIELD_BEST_MARK'
             ? 'communities.fieldTournament.disciplineTitle'
@@ -947,6 +964,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (model === 'FIELD_BEST_MARK') return t('communities.fieldTournament.disciplineHelp');
     if (model === 'TRACK_BEST_TIME') return t('communities.trackTournament.disciplineHelp');
     if (model === 'SWIM_BEST_TIME') return t('communities.swimTournament.disciplineHelp');
+    if (model === 'CANOE_BEST_TIME') return t('communities.canoeTournament.disciplineHelp');
     if (model === 'RELAY_BEST_TIME') return t('communities.tournaments.capabilities.model.RELAY_BEST_TIME');
     return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
       ? t('communities.tournaments.organizerUi.teamChessUnavailable')
@@ -1552,7 +1570,8 @@ export class CommunityTournamentsComponent implements OnChanges {
       return;
     }
     if (tournament.scoringMode === 'SWIM_BEST_TIME'
-        || tournament.scoringMode === 'TRACK_BEST_TIME') {
+        || tournament.scoringMode === 'TRACK_BEST_TIME'
+        || tournament.scoringMode === 'CANOE_BEST_TIME') {
       this.loadTimedOverview();
       return;
     }
@@ -1636,7 +1655,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   loadTimedOverview(): void {
     const tournament=this.selected;
     if (!tournament || (tournament.scoringMode!=='SWIM_BEST_TIME'
-        && tournament.scoringMode!=='TRACK_BEST_TIME')
+        && tournament.scoringMode!=='TRACK_BEST_TIME'
+        && tournament.scoringMode!=='CANOE_BEST_TIME')
         || !this.isMember || this.detailsLoading) return;
     const communityId=this.community.id, revision=++this.timedRevision;
     this.detailsLoading=true;this.timedError=false;
@@ -2383,7 +2403,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       return;
     }
     const scoringMode = this.classificationProfile.scoringMode;
-    const createRequest = this.selectedSportCreationModel==='TRACK_BEST_TIME'
+    const createRequest = this.selectedSportCreationModel==='CANOE_BEST_TIME'
+      ? this.api.createCanoeChampionship(this.community.id,name,
+          this.eventDisciplineDraft as 'K1_200'|'K1_500'|'K1_1000')
+      : this.selectedSportCreationModel==='TRACK_BEST_TIME'
       ? this.api.createTrackChampionship(this.community.id,name,this.eventDisciplineDraft!)
       : this.isMeasuredDraft
       ? this.api.createMeasuredChampionship(this.community.id,name,
