@@ -56,6 +56,7 @@ import { isInlineSpeedHeatEvent, isInlineSpeedFinalHeat, inlineSpeedHeatError,
 import { openWaterTimeError, formatOpenWaterTime } from './community-open-water-results';
 import { orienteeringTimeError, formatOrienteeringTime } from './community-orienteering-results';
 import { raceDecisionError } from './community-race-decisions';
+import { raceRankingGroupsForCommunity } from './community-race-ranking-groups';
 import { performanceKind, performanceError, eventPerformanceEntries,
   eventPerformancePlace, performanceDisplay, surfWaveError, surfWaveTotal,
   isWaveHeatEvent } from './community-performance-results';
@@ -1978,6 +1979,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   communitySports(group: Pick<CommunityGroup, 'sport' | 'sports'>): string[] {
     return group.sports?.length ? group.sports : (group.sport ? [group.sport] : []);
+  }
+
+  /** Include the race-specific panel even before the first classified finish. */
+  get raceRankingGroups(): CommunityRaceStandingGroup[] {
+    return this.selected && this.competition
+      ? raceRankingGroupsForCommunity(
+          this.communitySports(this.selected), this.competition.raceStandings)
+      : [];
   }
 
   /** W/D/L is not a valid fallback for Karting or other measured/judged events. */

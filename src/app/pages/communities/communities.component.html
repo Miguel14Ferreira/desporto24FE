@@ -2917,7 +2917,7 @@
                       </section>
                     }
 
-                    @if ((competition?.raceStandings?.length || 0) > 0) {
+                    @if ((raceRankingGroups.length || 0) > 0) {
                       <section class="racket-standings-section" aria-labelledby="race-standings-title">
                         <div class="section-heading">
                           <div>
@@ -2926,7 +2926,7 @@
                           </div>
                         </div>
                         <p class="racket-standings-explainer">{{ 'communities.race.championshipHint' | t }}</p>
-                        @for (group of competition?.raceStandings || []; track group.sport) {
+                        @for (group of raceRankingGroups; track group.sport) {
                           <div class="racket-standings-group">
                             <div class="racket-standings-group-head">
                               <h4>🏁 {{ group.sport }}</h4>
@@ -3013,6 +3013,9 @@
                               </table>
                             </div>
                           </div>
+                          @if (!group.standings.length) {
+                            <p class="racket-standings-explainer">{{ 'communities.race.noPositions' | t }}</p>
+                          }
                         }
                         @if (raceRuleMessage) {
                           <p class="season-management-message" role="status">{{ raceRuleMessage }}</p>
@@ -4691,7 +4694,7 @@
                       </section>
                     }
 
-                  @if (!usesMatchPointsModel() || (competition?.raceStandings?.length || 0) > 0) {
+                  @if (!usesMatchPointsModel() || (raceRankingGroups.length || 0) > 0) {
                     <section class="racket-standings-section community-race-ranking-summary"
                       aria-labelledby="community-race-ranking-summary-title">
                       <div class="section-heading">
@@ -4708,9 +4711,9 @@
                         }
                       </div>
 
-                      @if ((competition?.raceStandings?.length || 0) > 0) {
+                      @if ((raceRankingGroups.length || 0) > 0) {
                         <p class="racket-standings-explainer">{{ 'communities.race.championshipHint' | t }}</p>
-                        @for (group of competition?.raceStandings || []; track group.sport) {
+                        @for (group of raceRankingGroups; track group.sport) {
                           <div class="racket-standings-group">
                             <div class="racket-standings-group-head">
                               <h4>{{ group.sport }}</h4>
