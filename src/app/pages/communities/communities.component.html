@@ -4685,7 +4685,7 @@
                       </section>
                     }
 
-                  @if (!usesMatchPointsModel()) {
+                  @if (!usesMatchPointsModel() || (competition?.raceStandings?.length || 0) > 0) {
                     <section class="racket-standings-section community-race-ranking-summary"
                       aria-labelledby="community-race-ranking-summary-title">
                       <div class="section-heading">
