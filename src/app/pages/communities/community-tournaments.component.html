@@ -179,6 +179,26 @@
               </div>
             </div>
           }
+          @if (rowingDisciplineOptions.length) {
+            <div class="tournament-event-choices" role="group"
+              [attr.aria-label]="'row1x.disciplineTitle' | t">
+              <div class="tournament-event-choices-intro">
+                <strong>{{ 'row1x.disciplineTitle' | t }}</strong>
+                <p>{{ 'row1x.disciplineHelp' | t }}</p>
+              </div>
+              <div class="tournament-event-options">
+                @for (discipline of rowingDisciplineOptions; track discipline) {
+                  <button type="button" class="tournament-event-option"
+                    [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft === discipline"
+                    [class.is-selected]="eventDisciplineDraft === discipline"
+                    (click)="chooseRowingDiscipline(discipline)">
+                    <span>{{ ('row1x.d.' + discipline) | t }}</span>
+                    <small>{{ 'communities.swimTournament.secondsUnit' | t }}</small>
+                  </button>
+                }
+              </div>
+            </div>
+          }
           @if (trackDisciplineOptions.length) {
             <div class="tournament-event-choices" role="group"
               [attr.aria-label]="'communities.trackTournament.disciplineTitle' | t">

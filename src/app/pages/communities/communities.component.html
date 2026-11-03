@@ -2226,6 +2226,8 @@
                                 ? 'communities.bodyboard.category'
                                 : newRoundEventType === 'SWIM_LCM'
                                 ? 'communities.swimming.eventLabel'
+                                : newRoundEventType === 'ROWING_SINGLE'
+                                ? 'row1x.disciplineTitle'
                                 : newRoundEventType === 'OWS_INDIVIDUAL'
                                 ? 'communities.openWater.distanceLabel'
                                 : newRoundEventType === 'FOOT_ORIENTEERING'
@@ -2238,6 +2240,8 @@
                                   ? 'communities.bodyboard.category'
                                   : newRoundEventType === 'SWIM_LCM'
                                   ? 'communities.swimming.eventLabel'
+                                  : newRoundEventType === 'ROWING_SINGLE'
+                                  ? 'row1x.disciplineTitle'
                                   : newRoundEventType === 'OWS_INDIVIDUAL'
                                   ? 'communities.openWater.distanceLabel'
                                   : newRoundEventType === 'FOOT_ORIENTEERING'
@@ -2308,6 +2312,7 @@
                               : newRoundEventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.hint'
                               : newRoundEventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.hint'
                               : newRoundEventType === 'SWIM_LCM' ? 'communities.swimming.hint'
+                              : newRoundEventType === 'ROWING_SINGLE' ? 'row1x.hint'
                               : newRoundEventType === 'PARKOUR_SPEED' ? 'communities.parkour.speedHint'
                               : newRoundEventType === 'ROAD_RACE' ? 'communities.roadCycling.roadRaceHint'
                               : newRoundEventType === 'TIME_TRIAL' ? 'communities.roadCycling.timeTrialHint'
@@ -2561,7 +2566,7 @@
                                     </label>
                                   }
                                   @if (viewForNewRound() === 'race') {
-                                    @if (newRoundEventType !== 'SWIM_LCM' && newRoundEventType !== 'CANOE_SPRINT'
+                                    @if (newRoundEventType !== 'SWIM_LCM' && newRoundEventType !== 'CANOE_SPRINT' && newRoundEventType !== 'ROWING_SINGLE'
                                         && newRoundEventType !== 'OWS_INDIVIDUAL'
                                         && newRoundEventType !== 'FOOT_ORIENTEERING'
                                         && !isInlineSpeedTimedEvent(newRoundEventType)) {

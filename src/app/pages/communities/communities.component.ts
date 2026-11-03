@@ -840,6 +840,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     if (['K1_200','K1_500','K1_1000'].includes(code))
       return t('cno.d.' + code);
+    if (['SINGLE_500','SINGLE_1000','SINGLE_2000'].includes(code))
+      return t('row1x.d.' + code);
     return t('communities.discipline.' + code.toLowerCase());
   }
   performanceKind = performanceKind;
@@ -1172,6 +1174,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   isKickboxingEvent = isKickboxingEvent;
   clearSwimmingHiddenScores(): void {
     if (this.newRoundEventType !== 'SWIM_LCM'
+        && this.newRoundEventType !== 'CANOE_SPRINT'
+        && this.newRoundEventType !== 'ROWING_SINGLE'
         && this.newRoundEventType !== 'OWS_INDIVIDUAL'
         && this.newRoundEventType !== 'FOOT_ORIENTEERING'
         && !isInlineSpeedTimedEvent(this.newRoundEventType)
