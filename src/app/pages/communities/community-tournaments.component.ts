@@ -10,14 +10,14 @@ import { historicalMatchReviewFlags } from './community-historical-match-review'
 import {
   CommunityTournament, TournamentStatus, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
-  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry, TournamentTimedOverview, TournamentMeasuredOverview,
+  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry, TournamentTimedOverview, TournamentMeasuredOverview, RelayOverview,
   InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../model/community-tournament';
 import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
-import { tournamentEventChoices, validatedTournamentEventType, SWIM_TOURNAMENT_DISCIPLINES, validSwimTournamentDiscipline, FIELD_TOURNAMENT_DISCIPLINES, validFieldTournamentDiscipline, TRACK_TOURNAMENT_DISTANCES, validTrackTournamentDistance } from './community-tournament-event-types';
+import { tournamentEventChoices, validatedTournamentEventType, SWIM_TOURNAMENT_DISCIPLINES, validSwimTournamentDiscipline, FIELD_TOURNAMENT_DISCIPLINES, validFieldTournamentDiscipline, TRACK_TOURNAMENT_DISTANCES, validTrackTournamentDistance, RELAY_TOURNAMENT_DISCIPLINES, validRelayTournamentDiscipline } from './community-tournament-event-types';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -160,6 +160,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   drawPointsDraft = 1;
   lossPointsDraft = 0;
   teamNameDraft = '';
+  relayOverview?: RelayOverview;
+  relayError = false;
+  private relayRevision=0;
+  relayHeatDraft: Record<number, number> = {};
+  relayTimeDraft: Record<number, number | null> = {};
+  relayLegDraft: Record<number, number[]> = {};
+  readonly relayLegIndexes=[0,1,2,3] as const;
   teamPlayerDraft: Record<number, number | null> = {};
   teamMemberSearch: Record<number, string> = {};
   inviteCopyFeedback: Record<number, string> = {};
@@ -242,6 +249,21 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (this.busy || !this.trackDisciplineOptions.includes(code)) return;
     this.eventDisciplineDraft=code;
     this.changeDetector.markForCheck();
+  }
+  get relayDisciplineOptions():readonly string[] {
+    return this.selectedSportCreationModel==='RELAY_BEST_TIME'
+      && this.savedSportEventType==='TRACK_RELAY' ? RELAY_TOURNAMENT_DISCIPLINES : [];
+  }
+  chooseRelayDiscipline(code:string):void {
+    if (this.busy || !this.relayDisciplineOptions.includes(code)) return;
+    this.eventDisciplineDraft=code;
+    this.changeDetector.markForCheck();
+  }
+  get isRelayDraft():boolean {
+    return this.selectedSportCreationModel==='RELAY_BEST_TIME';
+  }
+  get isRelayCompetition():boolean {
+    return this.selected?.scoringMode==='RELAY_BEST_TIME';
   }
   get swimDisciplineOptions(): readonly string[] {
     return this.savedSportEventType === 'SWIM_LCM' && this.selectedSportCreationModel === 'SWIM_BEST_TIME'
@@ -861,7 +883,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       && (this.selectedSportCreationModel !== 'FIELD_BEST_MARK'
         || validFieldTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft))
       && (this.selectedSportCreationModel !== 'TRACK_BEST_TIME'
-        || validTrackTournamentDistance(this.savedSportEventType,this.eventDisciplineDraft));
+        || validTrackTournamentDistance(this.savedSportEventType,this.eventDisciplineDraft))
+      && (this.selectedSportCreationModel !== 'RELAY_BEST_TIME'
+        || (this.teamFormatDraft==='LEAGUE'
+            && validRelayTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft)));
   }
 
   get sportFormatWarning(): string {
@@ -1281,7 +1306,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get canPublishTeamSchedule(): boolean {
-    return this.canManageTeamRoster && !this.detailsLoading && !this.teamsLoadError
+    return !this.isRelayCompetition && this.canManageTeamRoster && !this.detailsLoading && !this.teamsLoadError
       && this.teams.length >= (this.isGroupKnockout ? (this.selected?.groupCount ?? 2) * 2 : 2)
       && this.teams.length <= 32
       && this.readyTeamCount === this.teams.length;
@@ -1289,7 +1314,7 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get canCompleteTeam(): boolean {
     const table = this.teamStandings;
-    if (!table || !this.canManage || this.selected?.entryType !== 'TEAM'
+    if (!table || this.isRelayCompetition || !this.canManage || this.selected?.entryType !== 'TEAM'
         || this.selected.format !== 'LEAGUE'
         || this.selected.status !== 'IN_PROGRESS' || this.teamStandingsLoading
         || this.teamStandingsError || this.busy) return false;
@@ -1425,6 +1450,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.matches = [];
     this.standings = undefined;
     this.teams = [];
+    this.relayOverview=undefined;
+    this.relayError=false;
+    this.relayTimeDraft={};
+    this.relayHeatDraft={};
+    this.relayLegDraft={};
+    ++this.relayRevision;
     this.teamDirectoryQuery = '';
     this.teamPlayerDraft = {};
     this.teamMemberSearch = {};
@@ -1856,11 +1887,20 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision !== this.detailRevision || this.community.id !== communityId
             || this.selected?.id !== tournament.id) return;
         this.teams = teams;
+        if(this.isRelayCompetition) {
+          for(const team of teams) {
+            if(!this.relayLegDraft[team.id] || this.relayLegDraft[team.id].length!==4)
+              this.relayLegDraft[team.id]=team.players.map(p=>p.profileId).slice(0,4);
+            this.relayHeatDraft[team.id] ??= 1;
+            this.relayTimeDraft[team.id] ??= null;
+          }
+          this.loadRelayOverview();
+        }
         this.teamPlayerDraft = {};
         this.teamMemberSearch = {};
         this.confirmingTeamPlayerRemoval = null;
         this.confirmingEmptyTeamId = null;
-        if (tournament.status !== 'DRAFT') {
+        if (tournament.status !== 'DRAFT' && !this.isRelayCompetition) {
           this.loadTeamMatches(true);
           if (tournament.format === 'LEAGUE') this.loadTeamStandings();
           if (tournament.format === 'GROUP_KNOCKOUT') this.loadGroupStandings();
@@ -1874,6 +1914,64 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
       }
     });
+  }
+
+  loadRelayOverview():void {
+    const tournament=this.selected;
+    if(!tournament || !this.isRelayCompetition || !this.isMember) return;
+    const cid=this.community.id,revision=++this.relayRevision;
+    this.relayError=false;
+    this.api.relayOverview(cid,tournament.id).pipe(timeout(12000)).subscribe({
+      next: overview=>{
+        if(revision!==this.relayRevision || this.community.id!==cid
+           || this.selected?.id!==tournament.id)return;
+        this.relayOverview=overview;this.changeDetector.markForCheck();
+      },
+      error:()=>{
+        if(revision===this.relayRevision){this.relayError=true;this.changeDetector.markForCheck();}
+      }
+    });
+  }
+
+  relayRunnerNames(teamId:number,ids:number[]):string {
+    const team=this.teams.find(t=>t.id===teamId);
+    return ids.map(id=>team?.players.find(p=>p.profileId===id)?.displayName
+      ?? team?.players.find(p=>p.profileId===id)?.username ?? String(id)).join(' · ');
+  }
+  validRelayTime(teamId:number):boolean {
+    const seconds=this.relayTimeDraft[teamId];
+    return seconds!=null && Number.isFinite(seconds) && seconds>0
+      && seconds<1e8 && Math.round(seconds*1000)/1000===seconds;
+  }
+  setRelayLeg(teamId:number,index:number,value:number|null):void {
+    const current=[...(this.relayLegDraft[teamId]??[])];
+    current[index]=value??0;
+    this.relayLegDraft[teamId]=current;
+  }
+  relayTeamReady(team:TournamentTeam):boolean {
+    const legs=this.relayLegDraft[team.id]??[];
+    return team.players.length===4 && legs.length===4
+      && new Set(legs).size===4
+      && legs.every(id=>team.players.some(p=>p.profileId===id));
+  }
+  async saveRelayHeat(team:TournamentTeam):Promise<void> {
+    const heat=this.relayHeatDraft[team.id]??1;
+    const seconds=this.relayTimeDraft[team.id];
+    if(!this.isRelayCompetition || !this.canManage || this.busy || !this.selected
+       || this.selected.status==='COMPLETED' || !this.relayTeamReady(team)
+       || !Number.isInteger(heat) || heat<1 || heat>20
+       || seconds==null || !Number.isFinite(seconds) || seconds<=0 || seconds>=1e8
+       || Math.round(seconds*1000)/1000!==seconds) {
+      this.showError(t('communities.relay.invalid'));return;
+    }
+    await this.mutate(this.api.recordRelayHeat(this.community.id,this.selected.id,
+      team.id,heat,seconds,[...this.relayLegDraft[team.id]]),
+      t('communities.relay.saved'),overview=>{
+        this.relayOverview=overview;
+        if(this.selected?.status==='DRAFT')
+          this.updateSelected({...this.selected!,status:'IN_PROGRESS'});
+        this.changeDetector.markForCheck();
+      });
   }
 
   loadTeamMatches(reset = false): void {
@@ -2088,16 +2186,19 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError(t('communities.tournaments.organizerUi.invalidLegs'));
       return;
     }
-    if (this.teamFormatDraft !== 'KNOCKOUT' && !this.validPointRules) {
+    if (!this.isRelayDraft && this.teamFormatDraft !== 'KNOCKOUT' && !this.validPointRules) {
       this.showError(t('communities.tournaments.organizerUi.invalidPoints'));
       return;
     }
-    if (this.teamFormatDraft !== 'KNOCKOUT'
+    if (!this.isRelayDraft && this.teamFormatDraft !== 'KNOCKOUT'
         && !this.teamTieBreakChoices.some(choice => choice.value === this.teamTieBreakPriorityDraft)) {
       this.showError(t('communities.tournaments.organizerUi.invalidTiebreak'));
       return;
     }
-    const createRequest = this.teamFormatDraft === 'GROUP_KNOCKOUT'
+    const createRequest = this.isRelayDraft
+      ? this.api.createRelayChampionship(this.community.id,name,
+          this.eventDisciplineDraft as 'RELAY_4X100'|'RELAY_4X400')
+      : this.teamFormatDraft === 'GROUP_KNOCKOUT'
       ? this.api.createTeamTournament(this.community.id, name, this.sportDraft, null,
           this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
           this.teamFormatDraft, this.teamGroupCountDraft)

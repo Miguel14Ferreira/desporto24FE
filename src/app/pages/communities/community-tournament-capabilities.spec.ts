@@ -28,7 +28,7 @@ describe('Tournament capabilities for all 121 modalities', () => {
       });
     }
     expect(tournamentSportCapabilities('Atletismo').individual).toBe('FIELD_BEST_MARK');
-    expect(tournamentSportCapabilities('Atletismo').team).toBe('UNAVAILABLE');
+    expect(tournamentSportCapabilities('Atletismo').team).toBe('RELAY_BEST_TIME');
     expect(tournamentSportCapabilities('Natação').individual).toBe('SWIM_BEST_TIME');
     expect(tournamentSportCapabilities('Natação').team).toBe('UNAVAILABLE');
     for (const sport of ['Triatlo', 'Corrida', 'Remo', 'Vela']) {
@@ -45,7 +45,7 @@ describe('Tournament capabilities for all 121 modalities', () => {
 
   it('retains existing numeric team and individual tournament creation paths', () => {
     const models: readonly TournamentCreationModel[] = [
-      'NUMERIC_INDIVIDUAL', 'NUMERIC_TEAM', 'RACE_POINTS', 'INLINE_SPEED', 'SWIM_BEST_TIME', 'FIELD_BEST_MARK', 'TRACK_BEST_TIME', 'UNAVAILABLE'
+      'NUMERIC_INDIVIDUAL', 'NUMERIC_TEAM', 'RACE_POINTS', 'INLINE_SPEED', 'SWIM_BEST_TIME', 'FIELD_BEST_MARK', 'TRACK_BEST_TIME', 'RELAY_BEST_TIME', 'UNAVAILABLE'
     ];
     for (const sport of SPORTS_CATALOG) {
       const cap = tournamentSportCapabilities(sport);

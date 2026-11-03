@@ -10,7 +10,7 @@ const CHOICES: Record<string, readonly string[]> = {
   'Ciclismo de Estrada': ['ROAD_RACE','TIME_TRIAL'],
   'Ciclismo de Pista': ['TRACK_SCRATCH','TRACK_TIME_TRIAL','TRACK_SPRINT_HEAT'],
   Xadrez: ['CHESS_GAME'],
-  Atletismo: ['TRACK','JUMP','THROW'],
+  Atletismo: ['TRACK','JUMP','THROW','TRACK_RELAY'],
   'Natação': ['SWIM_LCM'],
   Snowboard: ['RACE','FREESTYLE'],
   Golfe: ['GOLF_STROKE_9','GOLF_STROKE_18'],
@@ -27,8 +27,9 @@ const COMPATIBLE: Record<string,{code:string; model:TournamentCreationModel}> = 
 };
 export function tournamentEventChoices(sport: string, model: TournamentCreationModel): TournamentEventChoice[] {
   return (CHOICES[sport]??[]).map(code=>({
-    code, supported:(sport==='Atletismo' && (model==='FIELD_BEST_MARK' || model==='TRACK_BEST_TIME')
-      && (code==='TRACK' || code==='JUMP' || code==='THROW'))
+    code, supported:(sport==='Atletismo' && ((model==='FIELD_BEST_MARK' && (code==='JUMP' || code==='THROW'))
+      || (model==='TRACK_BEST_TIME' && code==='TRACK')
+      || (model==='RELAY_BEST_TIME' && code==='TRACK_RELAY')))
       || (COMPATIBLE[sport]?.code===code && COMPATIBLE[sport]?.model===model)
   }));
 }
@@ -62,4 +63,9 @@ export const TRACK_TOURNAMENT_DISTANCES = [
 ] as const;
 export function validTrackTournamentDistance(eventType:string|null,discipline:string|null):boolean {
   return eventType==='TRACK' && TRACK_TOURNAMENT_DISTANCES.some(code=>code===discipline);
+}
+
+export const RELAY_TOURNAMENT_DISCIPLINES = ['RELAY_4X100','RELAY_4X400'] as const;
+export function validRelayTournamentDiscipline(type:string|null,discipline:string|null):boolean {
+  return type==='TRACK_RELAY' && RELAY_TOURNAMENT_DISCIPLINES.some(x=>x===discipline);
 }

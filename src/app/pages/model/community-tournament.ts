@@ -21,7 +21,7 @@ export interface CommunityTournament {
   eventDiscipline?: string | null;
   // Older individual competitions may omit these fields in cached responses.
   entryType?: 'INDIVIDUAL' | 'TEAM';
-  scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | 'SWIM_BEST_TIME' | 'FIELD_BEST_MARK' | 'TRACK_BEST_TIME' | null;
+  scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | 'SWIM_BEST_TIME' | 'FIELD_BEST_MARK' | 'TRACK_BEST_TIME' | 'RELAY_BEST_TIME' | null;
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: TeamTieBreakPriority;
@@ -367,4 +367,17 @@ export interface TournamentMeasuredOverview {
   tournamentId:number;eventType:string;eventDiscipline:string;
   linkedRounds:TournamentMeasuredRound[];availableRounds:TournamentMeasuredRound[];
   standings:TournamentMeasuredStanding[];
+}
+
+export interface RelayHeat {
+  id:number; teamId:number; teamName:string; heatNumber:number; elapsedSeconds:number;
+  runnerProfileIds:number[]; recordedAt:string;
+}
+export interface RelayStanding {
+  position:number; teamId:number; teamName:string; bestSeconds:number;
+  recordedHeats:number; runnerProfileIds:number[];
+}
+export interface RelayOverview {
+  tournamentId:number; eventDiscipline:string;
+  teams:TournamentTeam[]; heats:RelayHeat[]; standings:RelayStanding[];
 }

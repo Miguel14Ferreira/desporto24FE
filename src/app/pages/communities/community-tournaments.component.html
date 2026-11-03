@@ -230,6 +230,26 @@
               </div>
             </div>
           }
+          @if (relayDisciplineOptions.length) {
+            <div class="tournament-event-choices" role="group"
+              [attr.aria-label]="'communities.relay.disciplineTitle' | t">
+              <div class="tournament-event-choices-intro">
+                <strong>{{ 'communities.relay.disciplineTitle' | t }}</strong>
+                <p>{{ 'communities.relay.disciplineHelp' | t }}</p>
+              </div>
+              <div class="tournament-event-options">
+                @for (discipline of relayDisciplineOptions; track discipline) {
+                  <button type="button" class="tournament-event-option"
+                    [disabled]="busy" [attr.aria-pressed]="eventDisciplineDraft===discipline"
+                    [class.is-selected]="eventDisciplineDraft===discipline"
+                    (click)="chooseRelayDiscipline(discipline)">
+                    <span>{{ ('communities.relay.discipline.'+discipline) | t }}</span>
+                    <small>{{ 'communities.relay.fourAthletes' | t }}</small>
+                  </button>
+                }
+              </div>
+            </div>
+          }
           @if (sportDraft) {
             <div class="tournament-sport-capability" role="group"
               [attr.aria-label]="'communities.tournaments.capabilities.region' | t">
@@ -252,7 +272,7 @@
           }
         </section>
 
-        @if (showTeamCreate) {
+        @if (showTeamCreate && !isRelayDraft) {
           <section class="create-step create-step-format" [attr.aria-label]="'communities.tournaments.createUi.formatRegion' | t">
             <div class="create-step-heading">
               <span class="create-step-index" aria-hidden="true">02</span>
@@ -299,7 +319,7 @@
           </section>
         }
 
-        @if (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT') {
+        @if ((!showTeamCreate || teamFormatDraft !== 'KNOCKOUT') && !isRelayDraft) {
           <section class="create-step create-step-rules" [attr.aria-label]="'communities.tournaments.createUi.rulesRegion' | t">
             <div class="create-step-heading">
               <span class="create-step-index" aria-hidden="true">{{ showTeamCreate ? '03' : '02' }}</span>
@@ -675,7 +695,9 @@
             <h4>{{ selected.name }}</h4>
             <span class="t-tournament-sport">{{ selected.sport || ('communities.tournaments.overview.sportUndefined' | t) }}</span>
             @if (isTeamCompetition) {
-              @if (selected.format === 'GROUP_KNOCKOUT') {
+              @if (isRelayCompetition) {
+                <p>{{ 'communities.relay.description' | t }}</p>
+              } @else if (selected.format === 'GROUP_KNOCKOUT') {
                 <p>{{ 'communities.tournaments.detailUi.groupsKnockout' | t }} · {{ 'communities.tournaments.detailUi.groupsCount' | t:{count:selected.groupCount ?? 0} }} ·
                   @if (selected.playersPerTeam != null) {
                     {{ 'communities.tournaments.detailUi.teamSize' | t:{count:selected.playersPerTeam} }}
@@ -712,7 +734,8 @@
               <button type="button" class="t-btn t-btn-secondary" (click)="loadDetails()"
                 [disabled]="detailsLoading || busy">{{ 'communities.tournaments.detailUi.refresh' | t }}</button>
             }
-            @if (canManage && selected.status !== 'COMPLETED') {
+            @if (canManage && selected.status !== 'COMPLETED'
+                && (!isRelayCompetition || selected.status === 'DRAFT')) {
               @if (confirmAction === 'delete') {
                 <div class="competition-delete-confirm" role="group" [attr.aria-label]="'communities.tournaments.detailUi.deleteLabel' | t">
                   <p>{{ 'communities.tournaments.detailUi.deleteWarning' | t:{name:selected.name} }}</p>
@@ -1072,7 +1095,7 @@
                   </a>
                 }
               </div>
-              @if (canManage && selected.status === 'DRAFT') {
+              @if (canManage && selected.status === 'DRAFT' && !isRelayCompetition) {
                 <div class="team-schedule-action">
                   <div>
                     <strong>{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.readyGroups' : (isKnockout ? 'communities.tournaments.fixturesUi.readyKnockout' : 'communities.tournaments.fixturesUi.readyLeague')) | t }}</strong>
@@ -1105,7 +1128,101 @@
                 </div>
               }
             </section>
-            @if (selected.status !== 'DRAFT') {
+            @if (isRelayCompetition) {
+              <section class="t-section timed-championship" [attr.aria-label]="'communities.relay.title' | t">
+                <div class="t-section-heading">
+                  <div>
+                    <h5>{{ 'communities.relay.title' | t }} · {{ ('communities.relay.discipline.'+selected.eventDiscipline) | t }}</h5>
+                    <p>{{ 'communities.relay.description' | t }}</p>
+                  </div>
+                  <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                    [disabled]="busy" (click)="loadRelayOverview()">{{ 'common.retry' | t }}</button>
+                </div>
+                @if (relayError) {
+                  <p class="field-validation" role="alert">{{ 'communities.relay.loadError' | t }}</p>
+                }
+                @if (relayOverview; as relay) {
+                  @if (canManage && selected.status !== 'COMPLETED') {
+                    <div class="race-available">
+                      <h6>{{ 'communities.relay.recordTitle' | t }}</h6>
+                      @for (team of teams; track team.id) {
+                        <div class="race-round-card">
+                          <strong>{{ team.name }}</strong>
+                          @if (team.players.length !== 4) {
+                            <p class="t-muted">{{ 'communities.relay.rosterRequired' | t }}</p>
+                          } @else {
+                            <div class="team-create-actions">
+                              <label>{{ 'communities.relay.heat' | t }}
+                                <input type="number" min="1" max="20" step="1"
+                                  [(ngModel)]="relayHeatDraft[team.id]" [disabled]="busy">
+                              </label>
+                              <label>{{ 'communities.relay.seconds' | t }}
+                                <input type="number" min="0.001" step="0.001"
+                                  [(ngModel)]="relayTimeDraft[team.id]" [disabled]="busy">
+                              </label>
+                            </div>
+                            <div class="t-points-fields">
+                              @for (leg of relayLegIndexes; track leg) {
+                                <label>
+                                  <span>{{ 'communities.relay.leg' | t }} {{ leg+1 }}</span>
+                                  <select [ngModel]="relayLegDraft[team.id]?.[leg]"
+                                    (ngModelChange)="setRelayLeg(team.id,leg,$event)" [disabled]="busy">
+                                    @for (runner of team.players; track runner.profileId) {
+                                      <option [ngValue]="runner.profileId">{{ runner.displayName || runner.username }}</option>
+                                    }
+                                  </select>
+                                </label>
+                              }
+                            </div>
+                            <button type="button" class="t-btn t-btn-primary t-btn-small"
+                              [disabled]="busy || !relayTeamReady(team) || !validRelayTime(team.id)"
+                              (click)="saveRelayHeat(team)">{{ 'communities.relay.save' | t }}</button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                  <div class="swim-standings">
+                    <h6>{{ 'communities.relay.results' | t }}</h6>
+                    @if (!relay.standings.length) {
+                      <p class="t-muted">{{ 'communities.relay.noResults' | t }}</p>
+                    } @else {
+                      <div class="standings-scroll">
+                        <table class="team-standings-table">
+                          <thead><tr>
+                            <th scope="col">#</th>
+                            <th scope="col">{{ 'communities.relay.team' | t }}</th>
+                            <th scope="col">{{ 'communities.relay.bestTime' | t }}</th>
+                            <th scope="col">{{ 'communities.relay.heats' | t }}</th>
+                          </tr></thead>
+                          <tbody>
+                            @for (row of relay.standings; track row.teamId) {
+                              <tr [class.is-leader]="row.position===1">
+                                <td>{{ row.position }}</td>
+                                <th scope="row">{{ row.teamName }}</th>
+                                <td>{{ row.bestSeconds | number:'1.2-3' }} s</td>
+                                <td>{{ row.recordedHeats }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                    <h6>{{ 'communities.relay.recorded' | t }}</h6>
+                    @for (heat of relay.heats; track heat.id) {
+                      <div class="race-available-row">
+                        <span><strong>{{ heat.teamName }} · {{ 'communities.relay.heat' | t }} {{ heat.heatNumber }}</strong>
+                          <small>{{ relayRunnerNames(heat.teamId,heat.runnerProfileIds) }}</small>
+                        </span>
+                        <strong>{{ heat.elapsedSeconds | number:'1.2-3' }} s</strong>
+                      </div>
+                    }
+                    <p class="t-muted">{{ 'communities.relay.provisional' | t }}</p>
+                  </div>
+                }
+              </section>
+            }
+            @if (selected.status !== 'DRAFT' && !isRelayCompetition) {
               <section class="t-section team-fixtures-section" [attr.aria-label]="'communities.tournaments.fixturesUi.fixturesRegion' | t">
                 <div class="t-section-heading">
                   <div>
@@ -1292,7 +1409,7 @@
                   }
                 </section>
               }
-              @if (selected.format === 'LEAGUE') {
+              @if (selected.format === 'LEAGUE' && !isRelayCompetition) {
               <section class="t-section team-standings-section" [attr.aria-label]="'communities.tournaments.finalUi.teamStandings' | t">
                 <div class="t-section-heading">
                   <div>

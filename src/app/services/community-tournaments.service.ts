@@ -13,7 +13,7 @@ import {
   TournamentParticipant,
   TournamentParticipantPage,
   TournamentScheduleSummary,
-  TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
+  RelayOverview, TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
   TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, TournamentTimedOverview, TournamentMeasuredOverview, InlineSpeedOverview, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../pages/model/community-tournament';
 
@@ -77,6 +77,22 @@ export class CommunityTournamentsService {
   }
 
   /** Per-distance athletics, sharing only the time API (not swimming distances). */
+  createRelayChampionship(communityId:number,name:string,discipline:'RELAY_4X100'|'RELAY_4X400'):Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId),{
+      name,sport:'Atletismo',entryType:'TEAM',playersPerTeam:4,format:'LEAGUE',
+      eventType:'TRACK_RELAY',eventDiscipline:discipline,scoringMode:'RELAY_BEST_TIME'
+    });
+  }
+  relayOverview(communityId:number,tournamentId:number):Observable<RelayOverview> {
+    return this.http.get<RelayOverview>(this.url(communityId,tournamentId)+'/relays');
+  }
+  recordRelayHeat(communityId:number,tournamentId:number,teamId:number,heatNumber:number,
+                  elapsedSeconds:number,runnerProfileIds:number[]):Observable<RelayOverview> {
+    return this.http.put<RelayOverview>(
+      this.url(communityId,tournamentId)+'/relays/heats/'+heatNumber+'/teams/'+teamId,
+      {elapsedSeconds,runnerProfileIds});
+  }
+
   createTrackChampionship(communityId:number,name:string,eventDiscipline:string):Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId),{
       name,sport:'Atletismo',entryType:'INDIVIDUAL',format:'LEAGUE',

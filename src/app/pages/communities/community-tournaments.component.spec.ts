@@ -29,7 +29,7 @@ describe('Community tournaments management', () => {
     api = jasmine.createSpyObj<CommunityTournamentsService>('CommunityTournamentsService', [
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
-      'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
+      'createTeamTournament', 'createRelayChampionship', 'relayOverview', 'recordRelayHeat', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
       'createTimedChampionship', 'createTrackChampionship', 'timedOverview', 'linkTimedRound', 'unlinkTimedRound',
@@ -40,6 +40,9 @@ describe('Community tournaments management', () => {
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
     api.matches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.teams.and.returnValue(of([]));
+    api.relayOverview.and.returnValue(of({
+      tournamentId:103,eventDiscipline:'RELAY_4X100',teams:[],heats:[],standings:[]
+    }));
     api.raceOverview.and.returnValue(of({
       tournamentId: 19, pointsByPlace: [25, 18, 15], linkedRaces: [], availableRaces: [],
       standings: []
@@ -152,6 +155,45 @@ describe('Community tournaments management', () => {
       { winPoints: 2, drawPoints: 1, lossPoints: 0 },
       'CHESS_HALF_POINTS', 'CHESS_GAME'
     );
+  });
+
+  it('creates four-runner relay championship without generic match scoring',async()=>{
+    component.startTeamCreation();
+    component.nameDraft='Estafetas 4x100';
+    component.chooseSport('Atletismo');
+    expect(component.selectedSportCreationModel).toBe('RELAY_BEST_TIME');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseTournamentEventType('TRACK_RELAY');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseRelayDiscipline('RELAY_4X100');
+    expect(component.isSportFormatSupported).toBeTrue();
+    api.createRelayChampionship.and.returnValue(of({
+      ...draft,id:103,name:'Estafetas 4x100',sport:'Atletismo',entryType:'TEAM',
+      eventType:'TRACK_RELAY',eventDiscipline:'RELAY_4X100',scoringMode:'RELAY_BEST_TIME',
+      playersPerTeam:4
+    }));
+    await component.createTeamCompetition();
+    expect(api.createRelayChampionship).toHaveBeenCalledOnceWith(7,'Estafetas 4x100','RELAY_4X100');
+    expect(component.isRelayCompetition).toBeTrue();
+    expect(component.canPublishTeamSchedule).toBeFalse();
+    expect(api.generateTeamSchedule).not.toHaveBeenCalled();
+    expect(api.createTeamTournament).not.toHaveBeenCalled();
+  });
+
+  it('validates relay legs without duplicate runners or invalid times',()=>{
+    component.selected={...draft,entryType:'TEAM',sport:'Atletismo',
+      scoringMode:'RELAY_BEST_TIME',eventType:'TRACK_RELAY',eventDiscipline:'RELAY_4X400'};
+    const team:TournamentTeam={id:10,name:'A',createdAt:'2026-11-02T12:00:00Z',
+      playersPerTeam:4,players:[1,2,3,4].map(n=>({profileId:n,username:'p'+n,displayName:'Atleta '+n}))};
+    component.teams=[team];
+    component.relayLegDraft[10]=[1,2,2,4];
+    expect(component.relayTeamReady(team)).toBeFalse();
+    component.relayLegDraft[10]=[1,2,3,4];
+    expect(component.relayTeamReady(team)).toBeTrue();
+    component.relayTimeDraft[10]=48.125;
+    expect(component.validRelayTime(10)).toBeTrue();
+    component.relayTimeDraft[10]=-1;
+    expect(component.validRelayTime(10)).toBeFalse();
   });
 
   it('creates a real swimming best-time championship only after selecting the event and exact discipline', async () => {
