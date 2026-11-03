@@ -678,6 +678,31 @@ describe('Community tournaments management', () => {
     expect(component.selectedSportCreationModel).toBe('UNAVAILABLE');
   });
 
+  it('creates running, trail, obstacles and powerboat circuits only from race positions', async () => {
+    for (const [index, sport] of (['Corrida', 'Trail Running', 'Corrida de obstáculos', 'Motonáutica'] as const).entries()) {
+      component.startIndividualCreation();
+      component.nameDraft = 'Circuito ' + sport;
+      component.chooseSport(sport);
+      expect(component.isRaceChampionshipDraft).toBeTrue();
+      expect(component.selectedSportCreationModel).toBe('RACE_POINTS');
+      expect(component.creationReadiness).toBe('READY');
+      expect(component.sportEventChoices).toEqual([]);
+
+      const id = 410 + index;
+      api.createRaceChampionship.and.returnValue(of({
+        ...draft, id, name: 'Circuito ' + sport, sport, scoringMode: 'RACE_POINTS'
+      }));
+      await component.create();
+      expect(api.createRaceChampionship).toHaveBeenCalledWith(7, 'Circuito ' + sport, sport);
+      expect(api.raceOverview).toHaveBeenCalledWith(7, id);
+      expect(api.matches).not.toHaveBeenCalledWith(7, id, 0);
+    }
+    expect(api.create).not.toHaveBeenCalled();
+    component.startTeamCreation();
+    component.chooseSport('Motonáutica');
+    expect(component.isSportFormatSupported).toBeFalse();
+  });
+
   it('creates Ciclismo, Mountain Bike and Ciclocrosse championships using recorded race positions', async () => {
     for (const [index, sport] of (['Ciclismo', 'Mountain Bike', 'Ciclocrosse', 'Ciclismo de Estrada', 'Ciclismo de Pista'] as const).entries()) {
       component.startIndividualCreation();

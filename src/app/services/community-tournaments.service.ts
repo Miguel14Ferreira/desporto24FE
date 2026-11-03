@@ -18,10 +18,10 @@ import {
 } from '../pages/model/community-tournament';
 
 /** Community result-by-position formats verified end to end. */
-export type RaceChampionshipSport = 'Karting' | 'BMX' | 'Ciclismo' | 'Mountain Bike' | 'Ciclocrosse' | 'Ciclismo de Estrada' | 'Ciclismo de Pista' | 'Automobilismo' | 'Motociclismo' | 'Motocross';
+export type RaceChampionshipSport = 'Karting' | 'BMX' | 'Ciclismo' | 'Mountain Bike' | 'Ciclocrosse' | 'Ciclismo de Estrada' | 'Ciclismo de Pista' | 'Automobilismo' | 'Motociclismo' | 'Motocross' | 'Corrida' | 'Trail Running' | 'Corrida de obstáculos' | 'Motonáutica';
 
 export const RACE_CHAMPIONSHIP_SPORTS: readonly RaceChampionshipSport[] =
-  ['Karting', 'BMX', 'Ciclismo', 'Mountain Bike', 'Ciclocrosse', 'Ciclismo de Estrada', 'Ciclismo de Pista', 'Automobilismo', 'Motociclismo', 'Motocross'];
+  ['Karting', 'BMX', 'Ciclismo', 'Mountain Bike', 'Ciclocrosse', 'Ciclismo de Estrada', 'Ciclismo de Pista', 'Automobilismo', 'Motociclismo', 'Motocross', 'Corrida', 'Trail Running', 'Corrida de obstáculos', 'Motonáutica'];
 
 export function isRaceChampionshipSport(value: string): value is RaceChampionshipSport {
   return RACE_CHAMPIONSHIP_SPORTS.some(sport => sport === value);

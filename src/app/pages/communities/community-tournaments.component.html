@@ -2163,7 +2163,9 @@
                   @if (selected.sport === 'Ciclismo' || selected.sport === 'Mountain Bike' || selected.sport === 'Ciclocrosse') {
                     <p>{{ 'communities.race.communityScoring' | t }}</p>
                   }
-                  @if (selected.sport === 'Automobilismo' || selected.sport === 'Motociclismo' || selected.sport === 'Motocross') {
+                  @if (selected.sport === 'Automobilismo' || selected.sport === 'Motociclismo' || selected.sport === 'Motocross'
+                    || selected.sport === 'Corrida' || selected.sport === 'Trail Running'
+                    || selected.sport === 'Corrida de obstáculos' || selected.sport === 'Motonáutica') {
                     <p>{{ 'communities.race.scoringDisclaimer' | t }}</p>
                   }
                 </div>

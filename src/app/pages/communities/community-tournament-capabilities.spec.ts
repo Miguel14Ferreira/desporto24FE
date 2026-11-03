@@ -19,8 +19,8 @@ describe('Tournament capabilities for all 121 modalities', () => {
     }
   });
 
-  it('only enables the ten race championship sports supported by the backend', () => {
-    expect(RACE_CHAMPIONSHIP_SPORTS).toHaveSize(10);
+  it('only enables the fourteen race championship sports supported by the backend', () => {
+    expect(RACE_CHAMPIONSHIP_SPORTS).toHaveSize(14);
     for (const sport of RACE_CHAMPIONSHIP_SPORTS) {
       expect(tournamentSportCapabilities(sport)).toEqual({
         family: 'race', individual: 'RACE_POINTS', team: 'UNAVAILABLE',
@@ -28,6 +28,10 @@ describe('Tournament capabilities for all 121 modalities', () => {
       });
     }
     for (const sport of ['Automobilismo', 'Motociclismo', 'Motocross']) {
+      expect(tournamentSportCapabilities(sport).individual).withContext(sport).toBe('RACE_POINTS');
+      expect(tournamentSportCapabilities(sport).team).withContext(sport).toBe('UNAVAILABLE');
+    }
+    for (const sport of ['Corrida', 'Trail Running', 'Corrida de obstáculos', 'Motonáutica']) {
       expect(tournamentSportCapabilities(sport).individual).withContext(sport).toBe('RACE_POINTS');
       expect(tournamentSportCapabilities(sport).team).withContext(sport).toBe('UNAVAILABLE');
     }
