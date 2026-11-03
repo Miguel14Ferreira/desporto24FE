@@ -1440,6 +1440,75 @@ describe('Community tournaments management', () => {
     });
 
 
+    it('progressively reveals team cards without hiding teams from management', () => {
+      const many = Array.from({length:32}, (_,i) => ({...team,id:40+i,name:'Equipa '+(i+1)}));
+      api.teams.and.returnValue(of(many));
+      component.selectTournament(teamDraft);
+      expect(component.teams.length).toBe(32);
+      expect(component.visibleTournamentTeams.length).toBe(12);
+      expect(component.hasMoreTournamentTeams).toBeTrue();
+      component.expandTeamDirectory();
+      expect(component.visibleTournamentTeams.length).toBe(24);
+      component.expandTeamDirectory();
+      expect(component.visibleTournamentTeams.length).toBe(32);
+      expect(component.hasMoreTournamentTeams).toBeFalse();
+      const calls=api.teams.calls.count();
+      component.setTeamDirectoryQuery('Equipa 2');
+      expect(component.visibleTournamentTeams.length).toBe(11);
+      expect(component.teamDirectoryLimit).toBe(12);
+      component.setTeamDirectoryQuery('');
+      expect(component.visibleTournamentTeams.length).toBe(12);
+      expect(component.teams.length).toBe(32);
+      expect(api.teams.calls.count()).toBe(calls);
+      component.selectTournament(draft);
+      expect(component.teamDirectoryLimit).toBe(12);
+    });
+
+    it('resolves adjacent team-page navigation only within the selected tournament', () => {
+      const teams=Array.from({length:3},(_,i)=>({...team,id:40+i,name:'Equipa '+i}));
+      api.teams.and.returnValue(of(teams));
+      component.teamPageId=40;
+      component.selectTournament(teamDraft);
+      expect(component.teamProfileNavigation).toEqual({
+        index:1,total:3,previous:undefined,next:teams[1]
+      });
+      component.teamPageId=41;
+      expect(component.teamProfileNavigation).toEqual({
+        index:2,total:3,previous:teams[0],next:teams[2]
+      });
+      component.teamPageId=42;
+      expect(component.teamProfileNavigation.index).toBe(3);
+      expect(component.teamProfileNavigation.next).toBeUndefined();
+      component.teamPageId=500;
+      expect(component.teamProfileNavigation).toEqual({index:0,total:3});
+      component.selectTournament(draft);
+      expect(component.teamProfileNavigation).toEqual({index:0,total:0});
+    });
+
+    it('filters only loaded matches on the team page and resets on team changes', () => {
+      const first={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'A',
+        awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const};
+      const second={...first,id:71,status:'COMPLETED' as const,
+        homeScore:2,awayScore:1};
+      api.teams.and.returnValue(of([team,{...team,id:41}]));
+      api.teamProfileMatches.and.returnValue(of({
+        matches:[first,second],page:0,hasMore:false
+      }));
+      component.teamPageId=40;
+      component.selectTournament({...teamDraft,status:'IN_PROGRESS'});
+      const calls=api.teamProfileMatches.calls.count();
+      expect(component.visibleTeamProfileMatches.length).toBe(2);
+      component.setTeamProfileMatchFilter('PENDING');
+      expect(component.visibleTeamProfileMatches.map(x=>x.id)).toEqual([70]);
+      component.setTeamProfileMatchFilter('COMPLETED');
+      expect(component.visibleTeamProfileMatches.map(x=>x.id)).toEqual([71]);
+      expect(api.teamProfileMatches.calls.count()).toBe(calls);
+      component.teamPageId=41;
+      component.ngOnChanges({teamPageId:new SimpleChange(40,41,false)});
+      expect(component.teamProfileMatchFilter).toBe('ALL');
+      expect(component.visibleTeamProfileMatches.length).toBe(2);
+    });
+
     it('searches the team directory without changing saved teams or fixtures', () => {
       const blue = { ...team, id: 41, name: 'São Azul' };
       const green = { ...team, id: 42, name: 'Verdes' };
