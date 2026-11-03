@@ -1170,7 +1170,7 @@
                     </div>
                   } @else {
                     <div class="race-round-card">
-                      <h6>{{ 'communities.relay.finalists' | t }}</h6>
+                      <h6>{{ 'communities.relay.final' | t }}</h6>
                       @for (f of relay.finalists ?? []; track f.teamId) {
                         <div class="race-available-row">
                           <span>{{ f.seed }} · <strong>{{ f.teamName }}</strong></span>
@@ -1186,7 +1186,7 @@
                         <div class="race-round-card">
                           <strong>{{ team.name }}</strong>
                           @if (team.players.length !== 4) {
-                            <p class="t-muted">{{ 'communities.relay.invalid' | t }}</p>
+                            <p class="t-muted">{{ 'communities.relay.bad' | t }}</p>
                           } @else {
                             <div class="team-create-actions">
                               <label>{{ 'communities.inlineSpeed.heat' | t }}
@@ -1265,7 +1265,7 @@
                           <button type="button" class="t-btn t-btn-secondary t-btn-small"
                             [disabled]="busy || (relayDecisionReasons[heat.id] ?? '').trim().length < 5"
                             (click)="decideRelayHeat(heat)">
-                            {{ (heat.decisionStatus==='DISQUALIFIED' ? 'communities.relay.restore' : 'communities.relay.dq') | t }}
+                            {{ (heat.decisionStatus==='DISQUALIFIED' ? 'communities.relay.valid' : 'communities.relay.dq') | t }}
                           </button>
                         </details>
                       }

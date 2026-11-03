@@ -253,7 +253,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.changeDetector.markForCheck();
   }
   relayDisciplineLabel(code:string|null|undefined):string {
-    return code?.startsWith('RELAY_4X') ? code.replace('RELAY_4X','4×')+' m' : '—';
+    return code ? code.replace('RELAY_4X','4×')+' m' : '—';
   }
   get relayDisciplineOptions():readonly string[] {
     return this.selectedSportCreationModel==='RELAY_BEST_TIME'
@@ -2002,10 +2002,10 @@ export class CommunityTournamentsComponent implements OnChanges {
        || !Number.isInteger(heat) || heat<1 || heat>20
        || seconds==null || !Number.isFinite(seconds) || seconds<=0 || seconds>=1e8
        || Math.round(seconds*1000)/1000!==seconds) {
-      this.showError(t('communities.relay.invalid'));return;
+      this.showError(t('communities.relay.bad'));return;
     }
     if(!this.relayEligibleTeams.some(eligible=>eligible.id===team.id)){
-      this.showError(t('communities.relay.invalid'));return;
+      this.showError(t('communities.relay.bad'));return;
     }
     await this.mutate(this.api.recordRelayHeat(this.community.id,this.selected.id,
       team.id,heat,seconds,[...this.relayLegDraft[team.id]],!!this.relayOverview?.finalPublished),
