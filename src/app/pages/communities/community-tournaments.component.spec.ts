@@ -2461,9 +2461,12 @@ describe('Community tournaments management', () => {
         homeScore:undefined,awayScore:undefined};
       const invalid={...home,id:734,homeScore:-1,awayScore:2};
       const missing={...home,id:735,homeScore:null,awayScore:2};
+      const fractional={...home,id:738,homeScore:1.5,awayScore:1};
+      const unsafe={...home,id:739,homeScore:Number.MAX_SAFE_INTEGER+1,awayScore:1};
       const outsider={...home,id:736,homeTeamId:77,awayTeamId:78};
       const unknownOpponent={...home,id:737,awayTeamId:99,awayTeamName:'Desconhecidos'};
-      const fixtures=[home,away,tie,pending,invalid,missing,outsider,unknownOpponent];
+      const fixtures=[home,away,tie,pending,invalid,missing,outsider,unknownOpponent,
+        fractional,unsafe];
       component.teamProfileMatches=fixtures;
       const snapshot=JSON.stringify(fixtures);
       expect(component.teamProfileFixtureOutcome(home)).toBe('WIN');
@@ -2472,6 +2475,8 @@ describe('Community tournaments management', () => {
       expect(component.teamProfileFixtureOutcome(pending)).toBeNull();
       expect(component.teamProfileFixtureOutcome(invalid)).toBeNull();
       expect(component.teamProfileFixtureOutcome(missing)).toBeNull();
+      expect(component.teamProfileFixtureOutcome(fractional)).toBeNull();
+      expect(component.teamProfileFixtureOutcome(unsafe)).toBeNull();
       expect(component.teamProfileFixtureOutcome(outsider)).toBeNull();
       expect(component.teamProfileFixtureOutcome({...home,id:888})).toBeNull();
       expect(component.teamProfileFixtureRival(home)?.id).toBe(41);
