@@ -34,17 +34,24 @@ export class CommunityCompetitionSettingsComponent {
     });
   }
 
-  /** Read-only guidance; official race points are configured per sport and season. */
-  specializedClassificationKey(sport: string): string | null {
-    const family = formatForSport(sport);
-    if (family === 'team' || family === 'duel') return null;
-    return 'communities.tournaments.classificationUi.' + family + '.heading';
+  /** Every selected sport has an explicit format; no football default for others. */
+  get classifiedSports(): { sport: string; family: ReturnType<typeof formatForSport> }[] {
+    const unique = new Set<string>();
+    return this.sports.filter(sport => {
+      const key = sport.trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
+      if (!key || unique.has(key)) return false;
+      unique.add(key);
+      return true;
+    }).map(sport => ({ sport, family: formatForSport(sport) }));
   }
 
-  specializedDescriptionKey(sport: string): string {
+  classificationHeadingKey(sport: string): string {
+    return 'communities.tournaments.classificationUi.' + formatForSport(sport) + '.heading';
+  }
+
+  classificationDescriptionKey(sport: string): string {
     const family = formatForSport(sport);
-    return family === 'race'
-      ? 'communities.race.metricsEntryHint'
+    return family === 'race' ? 'communities.race.metricsEntryHint'
       : 'communities.tournaments.classificationUi.' + family + '.detail';
   }
 }
