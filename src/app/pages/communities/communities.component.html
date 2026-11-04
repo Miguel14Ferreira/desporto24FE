@@ -4774,9 +4774,11 @@
                           (selectionChange)="selectSeason($event === null ? '' : $event.toString())"
                         ></app-community-season-filter>
                       }
-                      <span class="scoring-caption">
-                        {{ competition?.settings?.winPoints }}/{{ competition?.settings?.drawPoints }}/{{ competition?.settings?.lossPoints }}
-                      </span>
+                      @if (!scopedMatchRankingGroups.length) {
+                        <span class="scoring-caption">
+                          {{ competition?.settings?.winPoints }}/{{ competition?.settings?.drawPoints }}/{{ competition?.settings?.lossPoints }}
+                        </span>
+                      }
                     </div>
                   </div>
 
