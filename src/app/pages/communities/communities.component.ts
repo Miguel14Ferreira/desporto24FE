@@ -5074,6 +5074,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.roundSportRequired');
       return;
     }
+    // Never silently create a seasonless round when several seasons are active.
+    // Explicitly selecting another sport requires its own active season first.
+    if ((this.competition?.seasons.filter(season => season.active).length ?? 0) > 1
+        && this.roundTargetSeasonId == null) {
+      this.errorMessage = 'Cria ou seleciona uma época ativa para esta modalidade antes de registares a jornada.';
+      return;
+    }
     if (eventOptionsForSport(this.newRoundSport).length && !this.newRoundEventType) {
       this.errorMessage = t('feedback.communities.roundEventTypeRequired');
       return;
