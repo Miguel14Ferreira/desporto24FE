@@ -1925,7 +1925,7 @@ describe('Community tournaments management', () => {
       expect(reveal).toHaveBeenCalledWith(third);
       expect(component.teamProfileOpponentId).toBeNull();
       component.setTeamProfileOpponent('41');
-      component.resetTeamProfileMatches();
+      component['resetTeamProfileMatches']();
       expect(component.teamProfileOpponentId).toBeNull();
       component.teamPageId=99;
       expect(component.teamProfileOpponents).toEqual([]);

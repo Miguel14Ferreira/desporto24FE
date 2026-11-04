@@ -2664,14 +2664,14 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   /** Only real opponents from the selected team's loaded fixtures. */
   get teamProfileOpponents(): {id:number; name:string}[] {
-    const teamId = this.focusedTeam?.id;
+    const teamId: number | undefined = this.focusedTeam?.id;
     if (!teamId || this.isRelayCompetition) return [];
     const names = new Map<number,string>();
     for (const game of this.teamProfileMatches) {
-      const isHome = game.homeTeamId === teamId;
+      const isHome: boolean = game.homeTeamId === teamId;
       if (!isHome && game.awayTeamId !== teamId) continue;
-      const id = isHome ? game.awayTeamId : game.homeTeamId;
-      const name = isHome ? game.awayTeamName : game.homeTeamName;
+      const id: number = isHome ? game.awayTeamId : game.homeTeamId;
+      const name: string = isHome ? game.awayTeamName : game.homeTeamName;
       if (Number.isSafeInteger(id) && id > 0 && id !== teamId && !names.has(id))
         names.set(id,name);
     }
