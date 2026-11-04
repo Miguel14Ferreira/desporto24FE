@@ -196,6 +196,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamProfileMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamProfilePhaseFilter = 'ALL';
   teamProfileOpponentId: number | null = null;
+  teamProfileOpponentsExpanded = false;
+  readonly teamProfileOpponentPreviewSize = 6;
   private teamProfileMatchesRevision = 0;
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamPhaseFilter = 'ALL';
@@ -2840,6 +2842,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamProfileMatchFilter = 'ALL';
     this.teamProfilePhaseFilter = 'ALL';
     this.teamProfileOpponentId = null;
+    this.teamProfileOpponentsExpanded = false;
   }
 
   /**
@@ -2909,41 +2912,73 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   /**
-   * Head-to-head summary is provisional: only the selected team's loaded,
-   * published fixtures count. Duplicate pages and incomplete scores are ignored.
+   * Rival summaries use only the selected team's published fixture pages.
+   * The same fixture ID never counts twice across overlapping API pages.
+   * Completed games with missing/invalid scores do not imply any outcome.
    */
+  get teamProfileOpponentCards(): {
+    id: number; name: string; played: number; wins: number;
+    draws: number; losses: number; pending: number
+  }[] {
+    const teamId = this.focusedTeam?.id;
+    if (!teamId || this.isRelayCompetition) return [];
+    const cards = new Map(this.teamProfileOpponents.map(item => [item.id, {
+      ...item, played: 0, wins: 0, draws: 0, losses: 0, pending: 0
+    }]));
+    const seen = new Set<number>();
+    for (const fixture of this.teamProfileMatches) {
+      if (!Number.isSafeInteger(fixture.id) || fixture.id <= 0 || seen.has(fixture.id)) continue;
+      const home = fixture.homeTeamId === teamId;
+      if (!home && fixture.awayTeamId !== teamId) continue;
+      const card = cards.get(home ? fixture.awayTeamId : fixture.homeTeamId);
+      if (!card) continue;
+      seen.add(fixture.id);
+      if (fixture.status !== 'COMPLETED') {
+        card.pending++;
+        continue;
+      }
+      const own = home ? fixture.homeScore : fixture.awayScore;
+      const other = home ? fixture.awayScore : fixture.homeScore;
+      if (!Number.isSafeInteger(own) || !Number.isSafeInteger(other)) continue;
+      card.played++;
+      if (own! > other!) card.wins++;
+      else if (own! < other!) card.losses++;
+      else card.draws++;
+    }
+    return [...cards.values()];
+  }
+
+  get visibleTeamProfileOpponentCards() {
+    const cards = this.teamProfileOpponentCards;
+    if (this.teamProfileOpponentsExpanded || cards.length <= this.teamProfileOpponentPreviewSize)
+      return cards;
+    const visible = cards.slice(0, this.teamProfileOpponentPreviewSize);
+    // Keep an actively filtered opponent reachable when collapsing the overview.
+    const selected = cards.find(item => item.id === this.teamProfileOpponentId);
+    if (selected && !visible.some(item => item.id === selected.id)) visible.push(selected);
+    return visible;
+  }
+
+  /** A quick card toggles only filters; the official fixture data stays unchanged. */
+  showTeamProfileOpponentCard(opponentId: number): void {
+    if (!this.teamProfileOpponentCards.some(card => card.id === opponentId)) return;
+    this.teamProfileMatchFilter = 'ALL';
+    this.teamProfilePhaseFilter = 'ALL';
+    this.setTeamProfileOpponent(this.teamProfileOpponentId === opponentId ? 'ALL' : String(opponentId));
+    this.changeDetector.detectChanges();
+    const list = this.teamProfileFixtures?.nativeElement;
+    list?.scrollIntoView({behavior:'smooth',block:'start'});
+    list?.focus({preventScroll:true});
+  }
+
+  /** Comparison stays provisional while only part of the team's fixtures is loaded. */
   get teamProfileHeadToHead(): {
     opponentName: string; played: number; wins: number; draws: number;
     losses: number; pending: number
   } | null {
-    const teamId = this.focusedTeam?.id;
-    const opponentId = this.teamProfileOpponentId;
-    if (!teamId || opponentId === null || this.isRelayCompetition) return null;
-    const opponent = this.teamProfileOpponents.find(item => item.id === opponentId);
-    if (!opponent) return null;
-
-    let wins = 0, draws = 0, losses = 0, pending = 0;
-    const seen = new Set<number>();
-    for (const fixture of this.teamProfileMatches) {
-      if (!Number.isSafeInteger(fixture.id) || seen.has(fixture.id)) continue;
-      const home = fixture.homeTeamId === teamId && fixture.awayTeamId === opponentId;
-      const away = fixture.awayTeamId === teamId && fixture.homeTeamId === opponentId;
-      if (!home && !away) continue;
-      seen.add(fixture.id);
-      if (fixture.status !== 'COMPLETED') {
-        pending++;
-        continue;
-      }
-      const ownScore = home ? fixture.homeScore : fixture.awayScore;
-      const rivalScore = home ? fixture.awayScore : fixture.homeScore;
-      if (typeof ownScore !== 'number' || typeof rivalScore !== 'number'
-          || !Number.isSafeInteger(ownScore) || !Number.isSafeInteger(rivalScore)) continue;
-      if (ownScore > rivalScore) wins++;
-      else if (ownScore < rivalScore) losses++;
-      else draws++;
-    }
-    return { opponentName: opponent.name, played: wins + draws + losses,
-      wins, draws, losses, pending };
+    const card = this.teamProfileOpponentCards.find(item => item.id === this.teamProfileOpponentId);
+    return card ? {opponentName: card.name, played: card.played,
+      wins: card.wins, draws: card.draws, losses: card.losses, pending: card.pending} : null;
   }
 
   /** A loaded knockout opponent must also belong to this tournament's roster. */

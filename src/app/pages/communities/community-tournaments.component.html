@@ -820,6 +820,34 @@
                 </div>
               }
               @if (teamProfileMatches.length) {
+                @if (teamProfileOpponentCards.length) {
+                  <section class="team-page-rivals"
+                    [attr.aria-label]="'communities.tournaments.teamPage.opponentFilter' | t">
+                    <div class="team-page-rivals-heading">
+                      <strong>{{ 'communities.tournaments.teamPage.opponentFilter' | t }}</strong>
+                      <small>{{ 'communities.tournaments.phaseUi.loadedOnly' | t }}</small>
+                    </div>
+                    <div class="team-page-rivals-grid">
+                      @for (rival of visibleTeamProfileOpponentCards; track rival.id) {
+                        <button type="button" class="team-page-rival-card"
+                          [class.is-selected]="teamProfileOpponentId === rival.id"
+                          [attr.aria-pressed]="teamProfileOpponentId === rival.id"
+                          (click)="showTeamProfileOpponentCard(rival.id)">
+                          <strong>{{ rival.name }}</strong>
+                          <small>{{ rival.played }} {{ 'communities.tournaments.finalUi.playedCol' | t }} · {{ rival.pending }} {{ 'communities.tournaments.fixturesUi.filterPending' | t }}</small>
+                          <span>{{ rival.wins }} {{ 'communities.tournaments.finalUi.winsCol' | t }} · {{ rival.draws }} {{ 'communities.tournaments.finalUi.drawsCol' | t }} · {{ rival.losses }} {{ 'communities.tournaments.finalUi.lossesCol' | t }}</span>
+                        </button>
+                      }
+                    </div>
+                    @if (teamProfileOpponentCards.length > teamProfileOpponentPreviewSize) {
+                      <button type="button" class="team-page-rivals-toggle"
+                        [attr.aria-expanded]="teamProfileOpponentsExpanded"
+                        (click)="teamProfileOpponentsExpanded = !teamProfileOpponentsExpanded">
+                        {{ (teamProfileOpponentsExpanded ? 'mySessions.showLess' : 'mySessions.showMore') | t }}
+                      </button>
+                    }
+                  </section>
+                }
                 <div class="team-fixtures-toolbar" #teamProfileFixtures tabindex="-1"
                   [attr.aria-label]="'communities.tournaments.fixturesUi.filterLabel' | t">
                   <div class="team-fixtures-filters" role="group" [attr.aria-label]="'communities.tournaments.fixturesUi.filterLabel' | t">

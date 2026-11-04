@@ -245,3 +245,19 @@
 :host .tournaments .team-knockout-search-preview strong{color:#9cf2c6;}
 :host .tournaments .team-knockout-search-preview span{overflow-wrap:anywhere;}
 :host .tournaments .team-knockout-search-open{border-color:#8cf4be!important;background:rgba(25,118,85,.83)!important;font-weight:800!important;}
+
+/* Compact, read-only opponent overview scoped to the team's loaded fixtures. */
+:host .tournaments .team-page-rivals{display:grid;gap:10px;min-width:0;padding:13px;border:1px solid rgba(93,209,177,.32);border-radius:14px;background:rgba(7,43,55,.72);}
+:host .tournaments .team-page-rivals-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+:host .tournaments .team-page-rivals-heading strong{font-size:.85rem;color:#e7fff3;}
+:host .tournaments .team-page-rivals-heading small{font-size:.72rem;color:#9bcfc0;}
+:host .tournaments .team-page-rivals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:8px;}
+:host .tournaments .team-page-rival-card{display:grid;gap:6px;min-width:0;text-align:left;padding:12px;border:1px solid rgba(111,204,174,.33);border-radius:11px;background:rgba(11,63,69,.75);color:#e6fff5;font:inherit;cursor:pointer;}
+:host .tournaments .team-page-rival-card>strong{font-size:.82rem;overflow-wrap:anywhere;}
+:host .tournaments .team-page-rival-card>small{font-size:.71rem;color:#b3e4d4;}
+:host .tournaments .team-page-rival-card>span{font-size:.7rem;color:#9fdfc9;font-variant-numeric:tabular-nums;}
+:host .tournaments .team-page-rival-card:hover,
+:host .tournaments .team-page-rival-card.is-selected{border-color:#9ef2c7;background:rgba(26,111,86,.68);}
+:host .tournaments .team-page-rival-card:focus-visible,
+:host .tournaments .team-page-rivals-toggle:focus-visible{outline:2px solid #afffda;outline-offset:2px;}
+:host .tournaments .team-page-rivals-toggle{justify-self:start;border:1px solid rgba(109,222,172,.44);border-radius:9px;padding:7px 12px;background:rgba(10,77,67,.74);color:#eafff3;font:inherit;font-size:.75rem;cursor:pointer;}

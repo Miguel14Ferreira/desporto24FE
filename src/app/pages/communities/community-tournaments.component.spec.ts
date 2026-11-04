@@ -2359,6 +2359,46 @@ describe('Community tournaments management', () => {
       expect(component.teamProfileOpponents).toEqual([]);
     });
 
+    it('shows scoped opponent cards without duplicate fixtures, and keeps selected rivals accessible', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      component.teamPageId=40;
+      component.teams=[team,...Array.from({length:9},(_,i)=>({...team,id:50+i,name:'Rival '+i}))];
+      const first={id:101,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:50,awayTeamName:'Rival 0',status:'COMPLETED' as const,homeScore:3,awayScore:1};
+      const second={id:102,roundNumber:2,homeTeamId:50,homeTeamName:'Rival 0',
+        awayTeamId:40,awayTeamName:'Verdes',status:'COMPLETED' as const,homeScore:2,awayScore:2};
+      component.teamProfileMatches=[
+        first,{...first},second,{...first,id:103,awayTeamId:50,status:'SCHEDULED'},
+        {...first,id:104,homeScore:null,awayScore:1},
+        ...Array.from({length:8},(_,i)=>({...first,id:200+i,
+          awayTeamId:51+i,awayTeamName:'Rival '+(i+1),status:'SCHEDULED' as const})),
+        {...first,id:999,homeTeamId:90,awayTeamId:91}
+      ];
+      const snapshot=JSON.stringify(component.teamProfileMatches);
+      const cards=component.teamProfileOpponentCards;
+      expect(cards.length).toBe(9);
+      expect(cards[0]).toEqual({id:50,name:'Rival 0',played:2,
+        wins:1,draws:1,losses:0,pending:1});
+      expect(component.visibleTeamProfileOpponentCards.length).toBe(6);
+      const originalCallCount=api.teamProfileMatches.calls.count();
+      component.showTeamProfileOpponentCard(58);
+      expect(component.teamProfileOpponentId).toBe(58);
+      expect(component.visibleTeamProfileOpponentCards.map(c=>c.id)).toContain(58);
+      expect(component.visibleTeamProfileMatches.map(m=>m.id)).toEqual([207]);
+      component.showTeamProfileOpponentCard(58);
+      expect(component.teamProfileOpponentId).toBeNull();
+      expect(component.visibleTeamProfileOpponentCards.length).toBe(6);
+      component.showTeamProfileOpponentCard(5000);
+      expect(component.teamProfileOpponentId).toBeNull();
+      component.teamProfileOpponentsExpanded=true;
+      expect(component.visibleTeamProfileOpponentCards.length).toBe(9);
+      expect(api.teamProfileMatches.calls.count()).toBe(originalCallCount);
+      expect(JSON.stringify(component.teamProfileMatches)).toBe(snapshot);
+      component.selectTournament({...teamDraft,id:72,status:'DRAFT',format:'LEAGUE'});
+      expect(component.teamProfileOpponentsExpanded).toBeFalse();
+      expect(component.teamProfileOpponentCards).toEqual([]);
+    });
+
     it('summarizes only scored, unique loaded head-to-head fixtures without guessing outcomes', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
       component.teamPageId=40;

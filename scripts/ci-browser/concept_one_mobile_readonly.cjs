@@ -353,6 +353,14 @@ async function main() {
               page: 0, hasMore: false
             });
           }
+          // Dedicated team-page fixtures are scoped before pagination.
+          const ownTeamMatch = endpoint.match(/^\/api\/communities\/77\/tournaments\/(902[0-3])\/teams\/(\d+)\/matches$/);
+          if (ownTeamMatch) {
+            const tournamentId = Number(ownTeamMatch[1]), ownTeamId = Number(ownTeamMatch[2]);
+            return respond(route, 200, {matches:(fictionalTeamMatches[tournamentId] || [])
+              .filter(match => match.homeTeamId === ownTeamId || match.awayTeamId === ownTeamId),
+              page:0,hasMore:false});
+          }
           const teamParts = endpoint.split('/');
           const teamApi = teamParts.length >= 7
             && teamParts[1] === 'api' && teamParts[2] === 'communities'
@@ -443,6 +451,7 @@ async function main() {
           ['/menu/communities/77?tab=tournaments&tournament=9021', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9022', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9023', '.tournament-browser'],
+          ['/menu/communities/77?tab=tournaments&tournament=9021&teamPage=701', '.team-profile-page'],
           ['/menu/communities/77?tab=tournaments&tournament=9023&teamPage=701', '.team-profile-page'],
           ['/menu/communities/77?tab=tournaments&tournament=9023&teamPage=999', '.team-profile-page'],
           ['/menu/communities/77?tab=tournaments&tournament=9023&team=701', '.team-invite-accept'],
@@ -620,6 +629,20 @@ async function main() {
                   'Dedicated page does not repeat the entire tournament directory');
                 assert.equal(await page.locator('.team-fixture').count(),0,
                   'The team page must not duplicate tournament fixtures');
+                if (teamId === '9021') {
+                  const rivals=detail.locator('.team-page-rival-card');
+                  await rivals.first().waitFor({state:'visible'});
+                  assert.equal(await rivals.count(),2,
+                    'Only real opponents in this teams loaded fixtures appear');
+                  assert.equal(await detail.locator('.team-page-fixture').count(),2);
+                  await rivals.first().click();
+                  assert.equal(await rivals.first().getAttribute('aria-pressed'),'true');
+                  assert.equal(await detail.locator('.team-page-fixture').count(),1,
+                    'Opponent card filters this teams real published fixture history');
+                  await rivals.first().click();
+                  assert.equal(await detail.locator('.team-page-fixture').count(),2,
+                    'Toggling the same rival restores all loaded fixtures');
+                }
                 const join = detail.locator('.team-page-hero a').last();
                 assert.ok((await join.getAttribute('href')).includes('team=701'),
                   'Team page offers the existing invitation flow without changing old links');
