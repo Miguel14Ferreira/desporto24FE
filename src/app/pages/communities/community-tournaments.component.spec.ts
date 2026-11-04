@@ -764,6 +764,14 @@ describe('Community tournaments management', () => {
     expect(component.hasRaceBestLap([entry])).toBeFalse();
     expect(component.hasRaceLaps([{ ...entry, lapsCompleted: 3 }])).toBeTrue();
     expect(component.hasRaceBestLap([{ ...entry, bestLapSeconds: 45.55 }])).toBeTrue();
+    expect(component.hasRaceLaps([{ ...entry, lapsCompleted: -1 }])).toBeFalse();
+    expect(component.hasRaceLaps([{ ...entry, lapsCompleted: 2.5 }])).toBeFalse();
+    expect(component.hasRaceLaps([{ ...entry, lapsCompleted: Infinity }])).toBeFalse();
+    expect(component.hasRaceLaps([{ ...entry, lapsCompleted: 0 }])).toBeTrue();
+    expect(component.hasRaceBestLap([{ ...entry, bestLapSeconds: -1 }])).toBeFalse();
+    expect(component.hasRaceBestLap([{ ...entry, bestLapSeconds: NaN }])).toBeFalse();
+    expect(component.hasRaceBestLap([{ ...entry, bestLapSeconds: Infinity }])).toBeFalse();
+    expect(component.hasRaceBestLap([{ ...entry, bestLapSeconds: 0 }])).toBeFalse();
     expect(component.hasRaceLaps([])).toBeFalse();
     expect(component.hasRaceBestLap([])).toBeFalse();
   });
