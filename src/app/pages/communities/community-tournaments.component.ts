@@ -3313,7 +3313,11 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.teamMatchesHasMore = result.hasMore;
         // A full refresh replaces the published fixture set; discard drafts
         // for fixtures no longer present. Incremental pages keep edits intact.
-        if (reset) this.teamScoreDrafts = {};
+        if (reset) {
+          this.teamScoreDrafts = {};
+          this.teamScoreTouched.clear();
+          this.editingTeamResultId = null;
+        }
         for (const game of newFixtures) {
           this.teamScoreDrafts[game.id] = { home: game.homeScore ?? null, away: game.awayScore ?? null };
         }
