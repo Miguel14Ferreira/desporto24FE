@@ -583,7 +583,7 @@ export class CommunityGroupsService {
 
   createSeason(
     id: number,
-    request: { name: string; startsAt: string | null }
+    request: { name: string; startsAt: string | null; sport?: string }
   ): Observable<CommunitySeason> {
     return this.http.post<CommunitySeason>(
       this.url + '/' + id + '/seasons',
