@@ -29,7 +29,6 @@ export interface TeamKnockoutPathStep extends TeamJourneyMatch {
   confirmedNextFixture: TournamentTeamMatch | null;
 }
 export interface TeamKnockoutProgress {
-  published: number;
   wins: number;
   losses: number;
   toPlay: number;
@@ -136,7 +135,6 @@ export function summarizePublishedTeamJourney(
     return { ...item, state, confirmedNextFixture };
   });
   const knockoutProgress: TeamKnockoutProgress = {
-    published: knockoutPath.length,
     wins: knockoutPath.filter(item => item.outcome === 'WIN').length,
     losses: knockoutPath.filter(item => item.outcome === 'LOSS').length,
     toPlay: knockoutPath.filter(item => item.state === 'TO_PLAY').length,

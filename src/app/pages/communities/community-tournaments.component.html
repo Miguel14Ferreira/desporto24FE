@@ -776,13 +776,13 @@
                                 } @else if (step.state === 'WON') {
                                   {{ 'communities.tournaments.bracketUi.won' | t }}
                                 } @else if (step.state === 'ELIMINATED') {
-                                  {{ 'communities.tournaments.teamPage.knockoutEliminated' | t }}
+                                  {{ 'communities.tournaments.teamPage.eliminated' | t }}
                                 } @else if (step.state === 'LOST') {
                                   {{ 'communities.result.loss' | t }}
                                 } @else if (step.state === 'TO_PLAY') {
                                   {{ 'communities.tournaments.fixturesUi.filterPending' | t }}
                                 } @else {
-                                  {{ 'communities.tournaments.teamPage.knockoutUnverified' | t }}
+                                  {{ 'communities.tournaments.teamPage.unverified' | t }}
                                 }
                               </span>
                             </button>
