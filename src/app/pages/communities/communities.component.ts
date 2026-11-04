@@ -926,6 +926,17 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   /** Sport-tagged active seasons only accept rounds in that sport.
    * Shared legacy seasons retain the complete community catalogue. */
   /** Historical ranking filter is never a destination for new rounds. */
+  get canCreateAdditionalSeason(): boolean {
+    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    if (active.length === 0) return true;
+    if (active.some(season => !season.sport)) return false;
+    const sports = this.communityRoundSports;
+    const normalize = (value: string): string => value.normalize('NFD')
+      .replace(/[\\u0300-\\u036f]/g, '').trim().toLowerCase();
+    return sports.some(sport => !active.some(season =>
+      season.sport && normalize(season.sport) === normalize(sport)));
+  }
+
   get roundTargetSeasonId(): number | null {
     const active = this.competition?.seasons.filter(season => season.active) ?? [];
     if (active.length === 1) return active[0].id;
