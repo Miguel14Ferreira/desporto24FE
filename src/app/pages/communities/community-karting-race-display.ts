@@ -44,6 +44,9 @@ export function kartingRaceAward(entry: TournamentRaceEntry, pointsByPlace: read
   const place = entry.finishPosition;
   if (entry.raceDisqualified || place == null || !Number.isInteger(place) || place < 1) return 0;
   const base = pointsByPlace[place - 1] ?? 0;
-  const penalty = Math.max(0, entry.racePenaltyPoints ?? 0);
+  const rawPenalty = entry.racePenaltyPoints ?? 0;
+  // Malformed or incomplete API values must never produce NaN in the UI.
+  if (!Number.isFinite(base) || base < 0 || !Number.isFinite(rawPenalty)) return 0;
+  const penalty = Math.max(0, rawPenalty);
   return Math.max(0, base - penalty);
 }
