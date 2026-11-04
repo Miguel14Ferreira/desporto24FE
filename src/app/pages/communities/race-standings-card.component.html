@@ -9,12 +9,38 @@
             <tr [class.is-podium-first]="podiumPosition(driver.position) === 1"
                 [class.is-podium-second]="podiumPosition(driver.position) === 2"
                 [class.is-podium-third]="podiumPosition(driver.position) === 3">
-              <td>{{ displayPosition(driver.position) }}{{ displayPosition(driver.position) === '—' ? '' : ('communities.karting.ordinalSuffix' | t) }}</td><td>{{ driver.fullName }}</td>
+              <td>{{ displayPosition(driver.position) }}{{ displayPosition(driver.position) === '—' ? '' : ('communities.karting.ordinalSuffix' | t) }}</td>
+              <td>
+                @if (driverRaceResults(driver.playerId).length) {
+                  <button type="button" class="race-driver-details-toggle"
+                    [attr.aria-expanded]="expandedPlayerId === driver.playerId"
+                    (click)="toggleDriverRaces(driver.playerId)">
+                    {{ driver.fullName || '—' }}
+                    <span aria-hidden="true">{{ expandedPlayerId === driver.playerId ? '−' : '+' }}</span>
+                  </button>
+                } @else {
+                  {{ driver.fullName || '—' }}
+                }
+              </td>
               <td>{{ displayCount(driver.races) }}</td><td>{{ displayCount(driver.wins) }}</td><td>{{ displayCount(driver.podiums) }}</td>
               <td>{{ displayPosition(driver.bestFinish) }}</td>
               <td>{{ displayCount(driver.penaltyPoints) }}</td>
               <td><strong>{{ displayPoints(driver.championshipPoints) }}</strong></td>
             </tr>
+            @if (expandedPlayerId === driver.playerId && driverRaceResults(driver.playerId).length) {
+              <tr class="race-driver-details-row">
+                <td colspan="8">
+                  <div class="race-driver-race-history">
+                    @for (result of driverRaceResults(driver.playerId); track $index) {
+                      <div class="race-driver-race-result">
+                        <span>{{ result.name }}</span>
+                        <strong>{{ result.position }}</strong>
+                      </div>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>
