@@ -1588,6 +1588,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   seasonSport = '';
   seasonSaving = false;
   closeSeasonConfirming = false;
+  closingSeasonId: number | null = null;
   editingSeasonId: number | null = null;
   editingSeasonName = '';
   deletingSeasonId: number | null = null;
@@ -4125,19 +4126,22 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       });
   }
 
-  requestCloseSeason(): void {
-    if (this.activeSeason()) {
+  requestCloseSeason(seasonId: number): void {
+    if (this.competition?.seasons.some(season => season.id === seasonId && season.active)) {
+      this.closingSeasonId = seasonId;
       this.closeSeasonConfirming = true;
     }
   }
 
   cancelCloseSeason(): void {
     this.closeSeasonConfirming = false;
+    this.closingSeasonId = null;
   }
 
-  closeActiveSeason(): void {
-    const active = this.activeSeason();
-    if (!this.selected || !active || !this.canManage() || this.seasonSaving) {
+  closeActiveSeason(seasonId: number): void {
+    const active = this.competition?.seasons.find(season => season.id === seasonId && season.active);
+    if (!this.selected || !active || !this.canManage() || this.seasonSaving
+        || !this.closeSeasonConfirming || this.closingSeasonId !== seasonId) {
       return;
     }
 
@@ -4151,7 +4155,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       )
       .subscribe({
         next: season => {
-          this.closeSeasonConfirming = false;
+          this.cancelCloseSeason();
           this.selectedSeasonId = season.id;
           this.loadCompetition(this.selected as CommunityGroup, season.id);
         },
