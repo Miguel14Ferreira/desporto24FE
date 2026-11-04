@@ -14,6 +14,10 @@ import { TournamentRaceStanding } from '../model/community-tournament';
 export class RaceStandingsCardComponent {
   @Input({ required: true }) standings!: readonly TournamentRaceStanding[];
 
+  podiumPosition(value: number | null | undefined): number | null {
+    return Number.isSafeInteger(value) && value! >= 1 && value! <= 3 ? value! : null;
+  }
+
   displayPosition(value: number | null | undefined): string {
     return Number.isSafeInteger(value) && value! > 0 ? String(value) : '—';
   }
