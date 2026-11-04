@@ -791,7 +791,7 @@
                     (venueSaved)="onHabitualVenueSaved($event)"></app-community-habitual-venue-picker>
                 </section>
 
-                @if (competition?.settings?.rankingsEnabled && usesMatchPointsModel() && leader()) {
+                @if (competition?.settings?.rankingsEnabled && usesMatchPointsModel() && showLegacyAggregateStats && leader()) {
                   <app-community-leader-highlight [standing]="leader()"></app-community-leader-highlight>
                 }
 
@@ -4780,7 +4780,7 @@
                     </div>
                   </div>
 
-                  @if (!hasScopedMatchRankingContract) {
+                  @if (showLegacyMatchRanking) {
                     <app-community-ranking-visibility
                       [showAll]="showAllStandings"
                       (showAllChange)="showAllStandings = $event"
@@ -4789,7 +4789,7 @@
                   @if (rankingHistoricalSuccess) {
                     <p class="ranking-identity-success" role="status">{{ rankingHistoricalSuccess }}</p>
                   }
-                  @if (hasScopedMatchRankingContract) {
+                  @if (scopedMatchRankingGroups.length) {
                     @for (group of scopedMatchRankingGroups; track group.sport) {
                       <section class="racket-standings-group">
                         <div class="racket-standings-group-head">
@@ -4799,12 +4799,11 @@
                           (historicalSelected)="openRankingHistoricalPlayer($event)"></app-community-ranking-table>
                       </section>
                     }
-                    @if (!scopedMatchRankingGroups.length) {
-                      <p class="racket-standings-explainer">{{ 'communities.rankingsOptionalHint' | t }}</p>
-                    }
-                  } @else {
+                  } @else if (showLegacyMatchRanking) {
                     <app-community-ranking-table [rows]="displayedRankings"
                       (historicalSelected)="openRankingHistoricalPlayer($event)"></app-community-ranking-table>
+                  } @else {
+                    <p class="racket-standings-explainer">{{ 'communities.rankingsOptionalHint' | t }}</p>
                   }
                   }
 
@@ -4930,7 +4929,7 @@
                     </div>
                   }
 
-                  @if (usesMatchPointsModel()) {
+                  @if (usesMatchPointsModel() && showLegacyAggregateStats) {
                   <app-community-stat-leaders
                     [leader]="leader()"
                     [goals]="topGoals()"
