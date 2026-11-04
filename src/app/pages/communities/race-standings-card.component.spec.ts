@@ -44,6 +44,27 @@ describe('RaceStandingsCardComponent', () => {
     expect(displayed[1].querySelectorAll('td')[5].textContent?.trim()).toBe('0');
     expect(rows[0].position).toBe(-1);
   });
+  it('highlights official podium places, including ties, without inferring row order', () => {
+    const rows: TournamentRaceStanding[] = [
+      {...standings[0], playerId: 30, fullName: 'Quarto', position: 4},
+      {...standings[0], playerId: 31, fullName: 'Segundo A', position: 2},
+      {...standings[0], playerId: 32, fullName: 'Primeiro', position: 1},
+      {...standings[0], playerId: 33, fullName: 'Segundo B', position: 2},
+      {...standings[0], playerId: 34, fullName: 'Terceiro', position: 3},
+      {...standings[0], playerId: 35, fullName: 'Desconhecido', position: -1}
+    ];
+    const root = render(rows);
+    const resultRows = root.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect(resultRows.length).toBe(6);
+    expect(resultRows[0].textContent).toContain('Quarto');
+    expect(resultRows[0].classList.contains('is-podium-first')).toBeFalse();
+    expect(resultRows[1].classList.contains('is-podium-second')).toBeTrue();
+    expect(resultRows[2].classList.contains('is-podium-first')).toBeTrue();
+    expect(resultRows[3].classList.contains('is-podium-second')).toBeTrue();
+    expect(resultRows[4].classList.contains('is-podium-third')).toBeTrue();
+    expect(resultRows[5].classList.contains('is-podium-third')).toBeFalse();
+    expect(rows.map(row => row.position)).toEqual([4, 2, 1, 2, 3, -1]);
+  });
   it('shows an empty-state notice instead of an empty results table', () => {
     const root = render([]);
     expect(root.querySelector('table')).toBeNull();
