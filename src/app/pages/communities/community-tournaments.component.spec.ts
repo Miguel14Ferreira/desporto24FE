@@ -2580,6 +2580,26 @@ describe('Community tournaments management', () => {
       expect(api.teamMatches).toHaveBeenCalledTimes(2);
     });
 
+    it('replaces old score drafts on full fixture refresh', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS'};
+      component.teamMatchesPage=-1;
+      const fixture=(id:number)=>({id,roundNumber:1,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:41,awayTeamName:'Azuis',
+        status:'SCHEDULED' as const,homeScore:0,awayScore:0});
+      api.teamMatches.and.returnValues(
+        of({matches:[fixture(801),fixture(802)],page:0,hasMore:false}),
+        of({matches:[fixture(802)],page:0,hasMore:false})
+      );
+      component.loadTeamMatches(true);
+      component.teamScoreDrafts[801]={home:3,away:1};
+      component.teamScoreDrafts[802]={home:4,away:2};
+      component.loadTeamMatches(true);
+      expect(component.teamMatches.map(match=>match.id)).toEqual([802]);
+      expect(component.teamScoreDrafts[801]).toBeUndefined();
+      expect(component.teamScoreDrafts[802]).toEqual({home:0,away:0});
+      expect(api.teamMatches).toHaveBeenCalledTimes(2);
+    });
+
     it('bounds deep-link scans and never claims an absent match is loaded', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS'};
       component.invitedTournamentId=19;
