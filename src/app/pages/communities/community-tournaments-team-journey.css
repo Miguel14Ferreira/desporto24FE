@@ -190,3 +190,11 @@
 :host .tournaments .team-page-content:focus,:host .tournaments .team-page-performance:focus,:host .tournaments .team-page-group-overview:focus{outline:none;}
 :host .tournaments .team-page-content,:host .tournaments .team-page-performance,:host .tournaments .team-page-group-overview{scroll-margin-top:80px;}
 @media(max-width:650px){:host .tournaments .team-page-quick-nav .team-page-quick-next{margin-left:0;width:100%;}}
+
+/* Compact group navigation, separate from the saturated tournament stylesheet. */
+:host .tournaments .team-group-switcher{display:flex;flex-wrap:wrap;gap:8px;min-width:0;}
+:host .tournaments .team-group-switch{display:grid;gap:3px;min-width:110px;padding:10px 14px;border-radius:11px;border:1px solid rgba(65,183,170,.34);background:rgba(7,52,63,.64);text-align:left;color:#eafff8;cursor:pointer;font:inherit;}
+:host .tournaments .team-group-switch strong{font-size:.83rem;}
+:host .tournaments .team-group-switch small{font-size:.72rem;color:#a6cbd2;}
+:host .tournaments .team-group-switch.is-active{border-color:#7de7c6;background:rgba(26,115,94,.34);}
+:host .tournaments .team-group-switch:focus-visible{outline:2px solid #a0ffdf;outline-offset:3px;}
