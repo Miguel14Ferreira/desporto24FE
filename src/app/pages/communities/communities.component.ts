@@ -1544,6 +1544,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   importSeasonId: number | null = null;
   seasonName = '';
   seasonStartsAt = '';
+  seasonSport = '';
   seasonSaving = false;
   closeSeasonConfirming = false;
   editingSeasonId: number | null = null;
@@ -3958,7 +3959,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
     this.communityService.createSeason(this.selected.id, {
       name,
-      startsAt
+      startsAt,
+      ...(this.seasonSport ? { sport: this.seasonSport } : {})
     })
       .pipe(
         timeout(10_000),
@@ -3968,6 +3970,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         next: season => {
           this.seasonName = '';
           this.seasonStartsAt = '';
+          this.seasonSport = '';
           this.selectedSeasonId = season.id;
           this.loadCompetition(this.selected as CommunityGroup, season.id);
         },
