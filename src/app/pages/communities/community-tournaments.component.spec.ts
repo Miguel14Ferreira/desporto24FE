@@ -1464,6 +1464,26 @@ describe('Community tournaments management', () => {
       expect(component.knockoutSearchFixtureId).toBe(91);
       component.moveKnockoutSearch(-1);
       expect(component.knockoutSearchFixtureId).toBe(93);
+      // A round filter must never leave the highlighted result invisible.
+      component.jumpToKnockoutRound(1);
+      expect(component.knockoutSearchFixtureId).toBe(91);
+      expect(component.shownKnockoutRounds(component.knockoutBracket)
+        .map(round=>round.round)).toEqual([1]);
+      component.moveKnockoutSearch(-1);
+      expect(component.knockoutSearchFixtureId).toBe(93);
+      expect(component.selectedKnockoutRound).toBe(2);
+      expect(component.shownKnockoutRounds(component.knockoutBracket)
+        .map(round=>round.round)).toEqual([2]);
+      component.moveKnockoutSearch(1);
+      expect(component.knockoutSearchFixtureId).toBe(91);
+      expect(component.selectedKnockoutRound).toBe(1);
+      component.jumpToKnockoutRound(2);
+      expect(component.knockoutSearchFixtureId).toBe(93);
+      component.showAllKnockoutRounds();
+      expect(component.selectedKnockoutRound).toBeNull();
+      component.knockoutSearchFixtureId = -1;
+      component.moveKnockoutSearch(-1);
+      expect(component.knockoutSearchFixtureId).toBe(93);
       component.setKnockoutMatchQuery('no match');
       expect(component.knockoutSearchMatches).toEqual([]);
       expect(component.knockoutSearchPosition).toBe(0);

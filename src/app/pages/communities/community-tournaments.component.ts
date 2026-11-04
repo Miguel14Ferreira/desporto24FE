@@ -1825,8 +1825,13 @@ export class CommunityTournamentsComponent implements OnChanges {
     const results = this.knockoutSearchMatches;
     if (!results.length) return;
     const current = results.findIndex(game => game.id === this.knockoutSearchFixtureId);
-    const index = (current + direction + results.length) % results.length;
+    const index = current < 0
+      ? (direction === 1 ? 0 : results.length - 1)
+      : (current + direction + results.length) % results.length;
     this.knockoutSearchFixtureId = results[index].id;
+    // Keep the selected fixture visible when browsing across filtered rounds.
+    if (this.selectedKnockoutRound !== null)
+      this.selectedKnockoutRound = results[index].roundNumber;
     const board = this.teamTournamentBracket?.nativeElement;
     if (board instanceof HTMLDetailsElement) board.open = true;
     this.changeDetector.detectChanges();
@@ -1885,6 +1890,9 @@ export class CommunityTournamentsComponent implements OnChanges {
         || this.isRelayCompetition || !this.knockoutBracket.some(stage => stage.round === round))
       return;
     this.selectedKnockoutRound = round;
+    if (this.knockoutMatchQuery.trim())
+      this.knockoutSearchFixtureId = this.knockoutSearchMatches
+        .find(game => game.roundNumber === round)?.id ?? null;
     const board = this.teamTournamentBracket?.nativeElement;
     if (board instanceof HTMLDetailsElement) board.open = true;
     this.changeDetector.detectChanges();
