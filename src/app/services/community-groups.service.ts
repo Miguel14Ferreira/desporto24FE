@@ -837,6 +837,7 @@ export class CommunityGroupsService {
     request: {
       name: string;
       playedAt: string;
+      seasonId?: number | null;
       sport?: string | null;
       eventType?: 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_FLYING_200' | 'TRACK_SPRINT_HEAT' | 'TRACK_SPRINT_REPECHAGE' | 'TRACK_SPRINT_5_8' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
         | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
