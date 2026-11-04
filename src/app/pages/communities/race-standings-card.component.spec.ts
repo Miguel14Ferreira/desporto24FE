@@ -87,6 +87,57 @@ describe('RaceStandingsCardComponent', () => {
     expect(displayed[1].querySelectorAll('td')[7].textContent?.trim()).toBe('8');
     expect(rows[1].championshipPoints).toBe(8);
   });
+  it('expands only the selected driver\'s recorded races, preserving official totals', () => {
+    const rows: TournamentRaceStanding[] = [
+      {...standings[0]},
+      {...standings[0], playerId: 23, fullName: 'Piloto B', position: 2}
+    ];
+    const races = [{
+      id: 81, name: 'Primeira corrida', sport: 'Karting', playedAt: '2026-10-20T10:00:00Z',
+      entries: [
+        {communityPlayerId: 22, fullName: 'Piloto A', finishPosition: 1,
+          elapsedSeconds: 100, bestLapSeconds: null, racePenaltyPoints: 0, raceDisqualified: false},
+        {communityPlayerId: 23, fullName: 'Piloto B', finishPosition: null,
+          elapsedSeconds: null, bestLapSeconds: null, racePenaltyPoints: 0, raceDisqualified: false}
+      ]
+    }, {
+      id: 82, name: 'Segunda corrida', sport: 'Karting', playedAt: '2026-10-21T10:00:00Z',
+      entries: [
+        {communityPlayerId: 22, fullName: 'Piloto A', finishPosition: 2,
+          elapsedSeconds: 102, bestLapSeconds: null, racePenaltyPoints: 0, raceDisqualified: true}
+      ]
+    }];
+    const fixture = TestBed.createComponent(RaceStandingsCardComponent);
+    fixture.componentRef.setInput('standings', rows);
+    fixture.componentRef.setInput('races', races);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const toggles = root.querySelectorAll<HTMLButtonElement>('.race-driver-details-toggle');
+    expect(toggles.length).toBe(2);
+    expect(root.querySelector('.race-driver-details-row')).toBeNull();
+
+    toggles[0].click();
+    fixture.detectChanges();
+    const detail = root.querySelector('.race-driver-details-row');
+    expect(detail?.textContent).toContain('Primeira corrida');
+    expect(detail?.textContent).toContain('Segunda corrida');
+    expect(detail?.textContent).toContain('DSQ');
+    expect(detail?.textContent).not.toContain('DNF');
+    expect(root.querySelectorAll('tbody tr').length).toBe(3);
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('true');
+
+    toggles[1].click();
+    fixture.detectChanges();
+    expect(root.querySelector('.race-driver-details-row')?.textContent).toContain('DNF');
+    expect(root.querySelector('.race-driver-details-row')?.textContent).not.toContain('Segunda corrida');
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('false');
+    expect(rows[0].championshipPoints).toBe(45);
+
+    toggles[1].click();
+    fixture.detectChanges();
+    expect(root.querySelector('.race-driver-details-row')).toBeNull();
+  });
+
   it('shows an empty-state notice instead of an empty results table', () => {
     const root = render([]);
     expect(root.querySelector('table')).toBeNull();
