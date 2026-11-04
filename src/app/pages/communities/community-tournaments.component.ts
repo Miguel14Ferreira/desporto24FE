@@ -3283,7 +3283,16 @@ export class CommunityTournamentsComponent implements OnChanges {
       next: result => {
         if (revision !== this.teamMatchesRevision || this.community.id !== cid
             || this.selected?.id !== tournament.id) return;
-        this.teamMatches = reset ? result.matches : [...this.teamMatches, ...result.matches];
+        // Pagination can overlap after organizers edit fixtures. Preserve one row per
+        // published fixture so counts, filters and deep-links remain deterministic.
+        const existing = reset ? [] : this.teamMatches;
+        const seenFixtureIds = new Set(existing.map(game => game.id));
+        const newFixtures = result.matches.filter(game => {
+          if (!Number.isSafeInteger(game.id) || game.id <= 0 || seenFixtureIds.has(game.id)) return false;
+          seenFixtureIds.add(game.id);
+          return true;
+        });
+        this.teamMatches = [...existing, ...newFixtures];
         if (reset && this.teamPhaseFilter !== 'ALL'
             && !this.teamPhases.some(stage => stage.key === this.teamPhaseFilter)) {
           this.teamPhaseFilter = 'ALL';
