@@ -2055,7 +2055,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         || !this.canEditSportPoints(this.sportPointsEditor)) return;
     const values = Object.values(this.sportPointsDraft);
     if (values.some(value => !Number.isSafeInteger(value) || value < 0 || value > 1000)) {
-      this.sportPointsError = t('communities.tournaments.classificationUi.unknown.detail');
+      this.sportPointsError = t('communities.sportPoints.invalid');
       return;
     }
     const communityId = this.selected.id;
@@ -2069,7 +2069,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       next: () => {
         if (this.selected?.id !== communityId || this.selectedSeasonId !== seasonId) return;
         this.sportPointsEditor = null;
-        this.sportPointsSuccess = t('communities.saveCompetition');
+        this.sportPointsSuccess = t('communities.sportPoints.saved');
         this.loadCompetition(this.selected, seasonId);
       },
       error: () => { this.sportPointsError = t('feedback.communities.competitionSettingsError'); }
