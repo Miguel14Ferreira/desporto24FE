@@ -451,6 +451,7 @@ async function main() {
           ['/menu/communities/77?tab=tournaments&tournament=9021', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9022', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9023', '.tournament-browser'],
+          ['/menu/communities/77?tab=tournaments&tournament=9021&fixture=9221', '.tournament-browser'],
           ['/menu/communities/77?tab=tournaments&tournament=9021&teamPage=701', '.team-profile-page'],
           ['/menu/communities/77?tab=tournaments&tournament=9023&teamPage=701', '.team-profile-page'],
           ['/menu/communities/77?tab=tournaments&tournament=9023&teamPage=999', '.team-profile-page'],
@@ -658,8 +659,9 @@ async function main() {
                   assert.ok(rivalLink.includes('teamPage=702'),
                     'Rival link leads to that existing tournament team page');
                   const tournamentLink=await completed.locator('.team-page-fixture-tournament-link').getAttribute('href');
-                  assert.ok(tournamentLink.includes('tournament=9021') && !tournamentLink.includes('teamPage='),
-                    'Tournament link exits the dedicated team page without fabricating a fixture link');
+                  assert.ok(tournamentLink.includes('tournament=9021')
+                    && tournamentLink.includes('fixture=9221') && !tournamentLink.includes('teamPage='),
+                    'Tournament link targets exactly this existing published fixture');
                   await rivals.first().click();
                   assert.equal(await rivals.first().getAttribute('aria-pressed'),'true');
                   assert.equal(await detail.locator('.team-page-fixture').count(),1,
@@ -685,6 +687,15 @@ async function main() {
                   'Back returns to the same tournament team directory');
                 }
               } else {
+              if (query.get('fixture') === '9221') {
+                const targeted=page.locator('.team-fixture.is-direct-target');
+                await targeted.waitFor({state:'visible'});
+                assert.equal(await targeted.getAttribute('data-team-fixture-id'),'9221',
+                  'Exact match deep link focuses the real published fixture');
+                assert.equal(await targeted.getAttribute('aria-current'),'location');
+                assert.equal(await page.locator('.team-fixture.is-direct-target').count(),1,
+                  'Only the requested fixture is highlighted');
+              }
               const options = page.locator('.tournament-option');
               await options.first().waitFor({state:'visible'});
               assert.equal(await options.count(), 5,

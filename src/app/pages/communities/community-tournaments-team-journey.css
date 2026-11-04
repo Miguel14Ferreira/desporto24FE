@@ -286,3 +286,12 @@
 :host .tournaments .team-page-fixture-links a{font-size:.73rem;color:#b8efd9;text-decoration:none;overflow-wrap:anywhere;}
 :host .tournaments .team-page-fixture-links a:hover{text-decoration:underline;color:#e6fff5;}
 :host .tournaments .team-page-fixture-links a:focus-visible{outline:2px solid #a7ffda;outline-offset:3px;}
+
+/* Exact real-match deep links highlight only the loaded published fixture. */
+:host .tournaments .team-fixture.is-direct-target{
+  border-color:#a8f8d2;box-shadow:0 0 0 2px rgba(116,239,183,.44);
+  background:linear-gradient(110deg,rgba(19,94,80,.82),rgba(12,59,78,.9));
+}
+:host .tournaments .team-fixture.is-direct-target:focus-visible{
+  outline:2px solid #cbffe2;outline-offset:3px;
+}

@@ -977,8 +977,9 @@
                     }
                     <a class="team-page-fixture-tournament-link"
                       [routerLink]="['/menu/communities', community.id]"
-                      [queryParams]="{tab:'tournaments',tournament:selected?.id}">
-                      {{ 'communities.tournaments.teamPage.back' | t }} <span aria-hidden="true">↗</span>
+                      [queryParams]="{tab:'tournaments',tournament:selected?.id,fixture:game.id}"
+                      [attr.aria-label]="'communities.tournaments.fixturesUi.openDirectFixture' | t">
+                      {{ 'communities.tournaments.fixturesUi.openDirectFixture' | t }} <span aria-hidden="true">↗</span>
                     </a>
                   </div>
                 </div>
@@ -2141,6 +2142,13 @@
                     <p role="status">{{ 'communities.tournaments.fixturesUi.loadedSummary' | t:{shown:visibleTeamMatches.length,loaded:teamMatches.length} }}</p>
                   </div>
                 }
+                @if (requestedTeamFixtureMissing) {
+                  <p class="team-fixtures-empty" role="status">
+                    {{ (teamMatchesHasMore
+                      ? 'communities.tournaments.fixturesUi.directFixtureMore'
+                      : 'communities.tournaments.fixturesUi.directFixtureNotFound') | t }}
+                  </p>
+                }
                 @let shownTeamMatches = visibleTeamMatches;
                 @if (teamMatches.length && !shownTeamMatches.length) {
                   <p class="team-fixtures-empty" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
@@ -2152,6 +2160,8 @@
                       <h6>{{ teamMatchStageLabel(game) }}</h6>
                     }
                     <div class="team-fixture" [class.is-completed]="game.status === 'COMPLETED'"
+                      [class.is-direct-target]="focusedPublishedFixtureId === game.id"
+                      [attr.aria-current]="focusedPublishedFixtureId === game.id ? 'location' : null"
                       [attr.data-team-fixture-id]="game.id" tabindex="-1">
                        <div class="team-fixture-matchup">
                          <strong class="team-fixture-home"><a class="team-name-link"

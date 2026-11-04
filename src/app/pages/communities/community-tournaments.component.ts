@@ -36,6 +36,11 @@ export class CommunityTournamentsComponent implements OnChanges {
   @Input() invitedTournamentId: number | null = null;
   @Input() invitedTeamId: number | null = null;
   @Input() teamPageId: number | null = null;
+  /** Validated from the route's tournament-scoped fixture query parameter. */
+  @Input() requestedFixtureId: number | null = null;
+  focusedPublishedFixtureId: number | null = null;
+  readonly directFixtureMaxExtraPages = 20;
+  private directFixtureExtraPages = 0;
 
   tournaments: CommunityTournament[] = [];
   selected?: CommunityTournament;
@@ -1185,6 +1190,8 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamDirectoryLimit = this.teamDirectoryPageSize;
       this.teamsLoadError = false;
       this.teamMatches = [];
+      this.focusedPublishedFixtureId = null;
+      this.directFixtureExtraPages = 0;
       this.resetTeamProfileMatches();
       this.teamMatchFilter = 'ALL';
       this.teamPhaseFilter = 'ALL';
@@ -1239,6 +1246,11 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.resetTeamProfileMatches();
       if (this.focusedTeam && this.selected?.status !== 'DRAFT' && !this.isRelayCompetition)
         this.loadTeamProfileMatches();
+    }
+    if ((changes['requestedFixtureId'] || changes['teamPageId']) && !changes['community']) {
+      this.focusedPublishedFixtureId = null;
+      this.directFixtureExtraPages = 0;
+      this.revealRequestedTeamFixture();
     }
   }
 
@@ -2265,6 +2277,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMemberSearch = {};
     this.teamsLoadError = false;
     this.teamMatches = [];
+    this.focusedPublishedFixtureId = null;
+    this.directFixtureExtraPages = 0;
     this.resetTeamProfileMatches();
     this.teamMatchFilter = 'ALL';
     this.teamPhaseFilter = 'ALL';
@@ -2698,6 +2712,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       finalize(() => {
         if (revision === this.detailRevision) {
           this.detailsLoading = false;
+          this.revealRequestedTeamFixture();
           this.changeDetector.markForCheck();
         }
       })
@@ -3196,6 +3211,47 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.loadTeamProfileMatches();
   }
 
+  /** Resolve only a real published tournament fixture from the requested link.
+   * Later pages are scanned with a hard bound; unrelated teams cannot be inferred. */
+  revealRequestedTeamFixture(): void {
+    const id = this.requestedFixtureId;
+    if (id === null || !Number.isSafeInteger(id) || id <= 0
+        || this.teamPageId !== null || !this.isTeamCompetition
+        || this.isRelayCompetition || !this.isMember || this.selected?.status === 'DRAFT'
+        || this.invitedTournamentId !== this.selected?.id) return;
+    const fixture = this.teamMatches.find(game => game.id === id);
+    if (fixture) {
+      this.focusedPublishedFixtureId = fixture.id;
+      this.teamPhaseFilter = this.teamPhaseKey(fixture);
+      this.teamMatchFilter = 'ALL';
+      this.editingTeamResultId = null;
+      this.changeDetector.detectChanges();
+      const row = this.teamFixturesList?.nativeElement.querySelector<HTMLElement>(
+        `[data-team-fixture-id="${fixture.id}"]`
+      );
+      row?.scrollIntoView({behavior:'smooth',block:'center'});
+      row?.focus({preventScroll:true});
+      return;
+    }
+    if (this.detailsLoading || this.teamMatchesLoading || this.teamMatchesError
+        || !this.teamMatchesHasMore
+        || this.directFixtureExtraPages >= this.directFixtureMaxExtraPages) return;
+    this.directFixtureExtraPages++;
+    this.loadTeamMatches();
+  }
+
+  /** A capped scan is partial while more pages exist, never a missing-fixture claim. */
+  get requestedTeamFixtureMissing(): boolean {
+    return this.requestedFixtureId !== null
+      && this.invitedTournamentId === this.selected?.id
+      && this.teamPageId === null && this.isTeamCompetition
+      && !this.isRelayCompetition && this.isMember
+      && this.selected?.status !== 'DRAFT'
+      && !this.detailsLoading && !this.teamMatchesLoading && !this.teamMatchesError
+      && this.focusedPublishedFixtureId !== this.requestedFixtureId
+      && (!this.teamMatchesHasMore || this.directFixtureExtraPages >= this.directFixtureMaxExtraPages);
+  }
+
   loadTeamMatches(reset = false): void {
     const tournament = this.selected;
     if (!tournament || tournament.entryType !== 'TEAM'
@@ -3210,6 +3266,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       finalize(() => {
         if (revision === this.teamMatchesRevision) {
           this.teamMatchesLoading = false;
+          this.revealRequestedTeamFixture();
           this.changeDetector.markForCheck();
         }
       })

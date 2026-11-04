@@ -1674,6 +1674,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.invitedTournamentId ? this.positiveQueryId('teamPage') : null;
   }
 
+  /** Exact published fixture selection is scoped to a tournament, never a team invite. */
+  get tournamentFixtureId(): number | null {
+    return this.invitedTournamentId && !this.tournamentTeamPageId
+      ? this.positiveQueryId('fixture') : null;
+  }
+
   ngOnInit(): void {
     this.isDetailMode = Boolean(this.route.snapshot.paramMap.get('id'));
     this.reload();
