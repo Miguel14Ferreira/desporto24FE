@@ -3198,7 +3198,7 @@
                   }
                 </div>
               }
-              <app-race-standings-card [standings]="raceOverview.standings"></app-race-standings-card>
+              <app-race-standings-card [standings]="raceOverview.standings" [races]="raceOverview.linkedRaces"></app-race-standings-card>
               @if (selected.status === 'COMPLETED') {
                 <div class="race-archive-notice" role="status">
                   <strong>{{ 'communities.karting.archiveTitle' | t }}</strong>
