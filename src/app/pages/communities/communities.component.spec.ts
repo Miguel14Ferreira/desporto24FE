@@ -661,6 +661,29 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.gif.backup')).toBeFalse();
   });
 
+  it('restricts new round sports to the active sport-tagged season', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Ténis', 'Karting'] } as any;
+    component.roundSportDraft = 'Karting';
+    spyOn(component, 'activeSeason').and.returnValue({
+      id: 44, name: 'Época de Ténis', sport: 'Tenis', active: true
+    } as any);
+    expect(component.communityRoundSports).toEqual(['Futebol', 'Ténis', 'Karting']);
+    expect(component.roundEligibleSports).toEqual(['Ténis']);
+    expect(component.newRoundSport).toBe('Ténis');
+  });
+
+  it('retains all declared sports when the active season is shared', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Ténis'] } as any;
+    component.roundSportDraft = 'Ténis';
+    spyOn(component, 'activeSeason').and.returnValue({
+      id: 44, name: 'Época partilhada', sport: null, active: true
+    } as any);
+    expect(component.roundEligibleSports).toEqual(['Futebol', 'Ténis']);
+    expect(component.newRoundSport).toBe('Ténis');
+  });
+
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
     component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
     component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
