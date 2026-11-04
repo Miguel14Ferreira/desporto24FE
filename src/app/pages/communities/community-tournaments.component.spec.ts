@@ -2553,6 +2553,26 @@ describe('Community tournaments management', () => {
       expect(component.focusedPublishedFixtureId).toBeNull();
     });
 
+    it('deduplicates overlapping fixture pages without losing new matches', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS'};
+      component.teamMatches=[];
+      component.teamMatchesPage=-1;
+      component.teamMatchesHasMore=true;
+      const fixture=(id:number)=>({id,roundNumber:1,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:41,awayTeamName:'Azuis',
+        status:'SCHEDULED' as const});
+      api.teamMatches.and.returnValues(
+        of({matches:[fixture(701),fixture(702)],page:0,hasMore:true}),
+        of({matches:[fixture(702),fixture(703),fixture(703)],page:1,hasMore:false})
+      );
+      component.loadTeamMatches(true);
+      component.loadTeamMatches();
+      expect(component.teamMatches.map(match=>match.id)).toEqual([701,702,703]);
+      expect(component.teamMatchesPage).toBe(1);
+      expect(component.teamMatchesHasMore).toBeFalse();
+      expect(api.teamMatches).toHaveBeenCalledTimes(2);
+    });
+
     it('bounds deep-link scans and never claims an absent match is loaded', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS'};
       component.invitedTournamentId=19;
