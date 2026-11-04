@@ -932,7 +932,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (active.some(season => !season.sport)) return false;
     const sports = this.communityRoundSports;
     const normalize = (value: string): string => value.normalize('NFD')
-      .replace(/[\\u0300-\\u036f]/g, '').trim().toLowerCase();
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     return sports.some(sport => !active.some(season =>
       season.sport && normalize(season.sport) === normalize(sport)));
   }
@@ -943,7 +943,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const sport = this.newRoundSport;
     if (!sport) return null;
     const normalized = (value: string): string => value.normalize('NFD')
-      .replace(/[\\u0300-\\u036f]/g, '').trim().toLowerCase();
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     const matches = active.filter(season => season.sport &&
       normalized(season.sport) === normalized(sport));
     return matches.length === 1 ? matches[0].id : null;
@@ -3978,6 +3978,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const name = this.seasonName.trim();
     if (!name) {
       this.errorMessage = t('feedback.communities.seasonCreateError');
+      return;
+    }
+    // Multiple active seasons require an explicit sport. Shared legacy seasons
+    // cannot overlap with per-sport seasons.
+    if ((this.competition?.seasons.some(season => season.active) ?? false)
+        && !this.seasonSport) {
+      this.errorMessage = 'Seleciona uma modalidade para a nova época.';
       return;
     }
     // An old draft must not create a season for a sport removed from the community.
