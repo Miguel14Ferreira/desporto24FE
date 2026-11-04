@@ -158,6 +158,8 @@ export interface CommunitySeason {
   championUsername: string | null;
   championDisplayName: string | null;
   championPoints: number | null;
+  /** null/undefined for legacy shared seasons. */
+  sport?: string | null;
 }
 
 export interface CommunityStanding {
