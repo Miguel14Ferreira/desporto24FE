@@ -75,6 +75,37 @@ describe('KartingRaceTableComponent', () => {
     expect(root.querySelectorAll('tbody tr').length).toBe(3);
   });
 
+  it('hides invalid metric columns and does not print invalid positions or penalties', () => {
+    const root = render({
+      ...race, entries: [
+        {...race.entries[0], finishPosition: Number.MAX_SAFE_INTEGER + 1,
+          lapsCompleted: -1, bestLapSeconds: NaN, racePenaltyPoints: Infinity,
+          raceTimePenaltySeconds: Infinity},
+        {...race.entries[1], finishPosition: null,
+          lapsCompleted: 1.5, bestLapSeconds: -2}
+      ]
+    }).nativeElement as HTMLElement;
+    expect(root.querySelectorAll('thead th').length).toBe(4);
+    const rows = root.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect(rows.length).toBe(2);
+    expect(rows[0].querySelector('.karting-race-position')?.textContent?.trim()).toBe('—');
+    expect(rows[0].textContent).not.toContain('Infinity');
+    expect(rows[0].textContent).not.toContain(String(Number.MAX_SAFE_INTEGER + 1));
+    expect(rows[1].textContent).toContain('DNF');
+    expect(rows[0].querySelector('.karting-race-award')?.textContent?.trim()).toBe('0');
+  });
+
+  it('renders an em dash for an invalid lap value in an otherwise valid lap table', () => {
+    const root = render({
+      ...race, entries: [
+        {...race.entries[0], lapsCompleted: 4},
+        {...race.entries[1], lapsCompleted: -2}
+      ]
+    }).nativeElement as HTMLElement;
+    expect(root.querySelectorAll('thead th').length).toBe(6);
+    expect(root.querySelectorAll('tbody tr')[1].textContent).toContain('—');
+  });
+
   it('retains PT/EN content and shows non-Karting race athletes', async () => {
     await preloadEnglishTranslations();
     localStorage.setItem('d24-language', 'en');
