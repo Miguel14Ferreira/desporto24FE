@@ -739,6 +739,24 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.canCreateAdditionalSeason).toBeTrue();
   });
 
+  it('confirms closing only the requested active sport season', () => {
+    component.competition = { seasons: [
+      { id: 44, name: 'Futebol', sport: 'Futebol', active: true },
+      { id: 45, name: 'Karting', sport: 'Karting', active: true },
+      { id: 46, name: 'Ténis', sport: 'Ténis', active: false }
+    ] } as any;
+    component.requestCloseSeason(45);
+    expect(component.closeSeasonConfirming).toBeTrue();
+    expect(component.closingSeasonId).toBe(45);
+    component.requestCloseSeason(46);
+    expect(component.closingSeasonId).toBe(45);
+    component.cancelCloseSeason();
+    expect(component.closeSeasonConfirming).toBeFalse();
+    expect(component.closingSeasonId).toBeNull();
+    component.requestCloseSeason(44);
+    expect(component.closingSeasonId).toBe(44);
+  });
+
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
     component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
     component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
