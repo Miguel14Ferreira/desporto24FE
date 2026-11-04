@@ -2400,6 +2400,51 @@ describe('Community tournaments management', () => {
       expect(component.teamProfileOpponentCards).toEqual([]);
     });
 
+    it('separates scheduled and completed team fixtures in published round order', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      component.teams=[team];
+      const fixtures=[
+        {id:303,roundNumber:3,groupNumber:null,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED' as const},
+        {id:301,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:42,awayTeamName:'Roxos',status:'COMPLETED' as const,homeScore:2,awayScore:1},
+        {id:306,roundNumber:1,groupNumber:null,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Pretos',status:'COMPLETED' as const,homeScore:1,awayScore:0},
+        {id:302,roundNumber:2,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:44,awayTeamName:'Amarelos',status:'SCHEDULED' as const},
+        {id:305,roundNumber:2,groupNumber:null,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:45,awayTeamName:'Rosas',status:'COMPLETED' as const,homeScore:3,awayScore:0},
+        {id:304,roundNumber:1,groupNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:46,awayTeamName:'Violetas',status:'SCHEDULED' as const}
+      ];
+      component.teamProfileMatches=fixtures;
+      const snapshot=JSON.stringify(fixtures);
+      expect(component.teamProfileFixtureSections.map(section=>section.status))
+        .toEqual(['PENDING','COMPLETED']);
+      expect(component.teamProfileFixtureSections[0].matches.map(game=>game.id))
+        .toEqual([304,302,303]);
+      expect(component.teamProfileFixtureSections[1].matches.map(game=>game.id))
+        .toEqual([305,306,301]);
+      component.setTeamProfileMatchFilter('COMPLETED');
+      expect(component.teamProfileFixtureSections.map(section=>section.status))
+        .toEqual(['COMPLETED']);
+      component.setTeamProfileMatchFilter('PENDING');
+      expect(component.teamProfileFixtureSections.map(section=>section.status))
+        .toEqual(['PENDING']);
+      component.setTeamProfileMatchFilter('ALL');
+      component.setTeamProfilePhaseFilter('round-2');
+      expect(component.teamProfileFixtureSections.map(section=>section.status))
+        .toEqual(['COMPLETED']);
+      expect(component.teamProfileFixtureSections[0].matches.map(game=>game.id))
+        .toEqual([305]);
+      // The phase filter uses the actual registered fixture stage, never a guessed date.
+      component.setTeamProfilePhaseFilter('ALL');
+      expect(JSON.stringify(fixtures)).toBe(snapshot);
+      component.teamProfileMatches=[];
+      expect(component.teamProfileFixtureSections).toEqual([]);
+    });
+
     it('summarizes only scored, unique loaded head-to-head fixtures without guessing outcomes', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
       component.teamPageId=40;

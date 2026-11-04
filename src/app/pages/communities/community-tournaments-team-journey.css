@@ -261,3 +261,12 @@
 :host .tournaments .team-page-rival-card:focus-visible,
 :host .tournaments .team-page-rivals-toggle:focus-visible{outline:2px solid #afffda;outline-offset:2px;}
 :host .tournaments .team-page-rivals-toggle{justify-self:start;border:1px solid rgba(109,222,172,.44);border-radius:9px;padding:7px 12px;background:rgba(10,77,67,.74);color:#eafff3;font:inherit;font-size:.75rem;cursor:pointer;}
+
+/* Team fixtures: upcoming rounds first, latest recorded rounds after them.
+   The API does not expose dates; labels deliberately refer to loaded fixtures. */
+:host .tournaments .team-page-fixture-section{display:grid;gap:9px;min-width:0;padding:13px;border:1px solid rgba(90,194,174,.24);border-radius:14px;background:rgba(8,35,49,.58);}
+:host .tournaments .team-page-fixture-section-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:5px;border-bottom:1px solid rgba(97,195,162,.19);}
+:host .tournaments .team-page-fixture-section-heading h4{margin:0;color:#ceffe7;font-size:.86rem;}
+:host .tournaments .team-page-fixture-section-heading small{font-size:.73rem;color:#b4ddd4;font-variant-numeric:tabular-nums;}
+:host .tournaments .team-page-fixture-section[data-status="PENDING"]{border-color:rgba(100,216,172,.4);}
+:host .tournaments .team-page-fixture-section[data-status="COMPLETED"]{border-color:rgba(111,151,192,.26);}

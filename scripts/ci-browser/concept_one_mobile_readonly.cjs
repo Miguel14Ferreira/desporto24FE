@@ -635,10 +635,23 @@ async function main() {
                   assert.equal(await rivals.count(),2,
                     'Only real opponents in this teams loaded fixtures appear');
                   assert.equal(await detail.locator('.team-page-fixture').count(),2);
+                  const sections=detail.locator('.team-page-fixture-section');
+                  assert.deepEqual(await sections.evaluateAll(elements =>
+                    elements.map(element => element.getAttribute('data-status'))),
+                    ['PENDING','COMPLETED'],
+                    'Upcoming published stages precede already completed fixtures');
+                  assert.deepEqual(await sections.first().locator('.team-page-fixture').evaluateAll(
+                    elements => elements.map(element => element.getAttribute('data-team-profile-fixture-id'))),
+                    ['9223'], 'The pending stage contains the real scheduled fixture');
+                  assert.deepEqual(await sections.last().locator('.team-page-fixture').evaluateAll(
+                    elements => elements.map(element => element.getAttribute('data-team-profile-fixture-id'))),
+                    ['9221'], 'The completed stage contains the real scored fixture');
                   await rivals.first().click();
                   assert.equal(await rivals.first().getAttribute('aria-pressed'),'true');
                   assert.equal(await detail.locator('.team-page-fixture').count(),1,
                     'Opponent card filters this teams real published fixture history');
+                  assert.equal(await detail.locator('.team-page-fixture-section').count(),1,
+                    'Only the matching status section remains when filtering opponents');
                   await rivals.first().click();
                   assert.equal(await detail.locator('.team-page-fixture').count(),2,
                     'Toggling the same rival restores all loaded fixtures');

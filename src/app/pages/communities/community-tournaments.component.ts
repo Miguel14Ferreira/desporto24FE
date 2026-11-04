@@ -3030,6 +3030,27 @@ export class CommunityTournamentsComponent implements OnChanges {
           ? game.status === 'COMPLETED' : game.status !== 'COMPLETED')));
   }
 
+  /** The fixture API has rounds, not match dates. Order by published stage/round
+   * only, never imply that a match was played on a particular calendar day. */
+  get teamProfileFixtureSections(): {
+    status: 'PENDING' | 'COMPLETED'; matches: TournamentTeamMatch[]
+  }[] {
+    const matches = this.visibleTeamProfileMatches;
+    const phase = (game: TournamentTeamMatch): number =>
+      this.isGroupKnockout && game.groupNumber != null ? 0 : 1;
+    const byPublishedRound = (a: TournamentTeamMatch,b: TournamentTeamMatch): number =>
+      phase(a) - phase(b) || a.roundNumber - b.roundNumber
+      || (a.groupNumber ?? 0) - (b.groupNumber ?? 0) || a.id - b.id;
+    const pending = matches.filter(game => game.status !== 'COMPLETED')
+      .sort(byPublishedRound);
+    const completed = matches.filter(game => game.status === 'COMPLETED')
+      .sort((a,b) => byPublishedRound(b,a));
+    return [
+      {status:'PENDING' as const,matches:pending},
+      {status:'COMPLETED' as const,matches:completed}
+    ].filter(section => section.matches.length > 0);
+  }
+
   /** Navigate within this loaded team's page, never to a hidden or nonexistent section. */
   showTeamProfileSection(section: 'results' | 'group' | 'roster'): void {
     if (!this.focusedTeam || !this.isMember) return;

@@ -923,7 +923,19 @@
               @if (teamProfileMatches.length && !visibleTeamProfileMatches.length) {
                 <p class="team-fixtures-empty" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
               }
-              @for (game of visibleTeamProfileMatches; track game.id) {
+              @for (section of teamProfileFixtureSections; track section.status) {
+                <section class="team-page-fixture-section"
+                  [attr.data-status]="section.status"
+                  [attr.aria-label]="(section.status === 'COMPLETED'
+                    ? 'communities.tournaments.fixturesUi.filterCompleted'
+                    : 'communities.tournaments.fixturesUi.filterPending') | t">
+                  <div class="team-page-fixture-section-heading">
+                    <h4>{{ (section.status === 'COMPLETED'
+                      ? 'communities.tournaments.fixturesUi.filterCompleted'
+                      : 'communities.tournaments.fixturesUi.filterPending') | t }}</h4>
+                    <small>{{ section.matches.length }} {{ 'communities.tournaments.bracketUi.matches' | t }}</small>
+                  </div>
+                  @for (game of section.matches; track game.id) {
                 <div class="team-page-fixture" tabindex="-1"
                   [attr.data-team-profile-fixture-id]="game.id">
                   <span class="team-page-fixture-round">{{ teamMatchStageLabel(game) }}</span>
@@ -946,6 +958,8 @@
                       : 'communities.tournaments.fixturesUi.filterPending') | t }}
                   </span>
                 </div>
+                  }
+                </section>
               }
               @if (teamProfileMatchesLoading) {
                 <p class="t-muted" role="status">{{ 'communities.tournaments.fixturesUi.loading' | t }}</p>
