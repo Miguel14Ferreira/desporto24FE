@@ -712,6 +712,33 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.canCreateAdditionalSeason).toBeTrue();
   });
 
+  it('excludes sports with active seasons from the create-season selector', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Ténis', 'Karting'] } as any;
+    component.competition = { seasons: [
+      { id: 44, name: 'Futebol 2026', sport: 'futebol', active: true },
+      { id: 45, name: 'Ténis 2026', sport: 'Tenis', active: true }
+    ] } as any;
+    expect(component.availableSeasonSports).toEqual(['Karting']);
+    expect(component.canCreateAdditionalSeason).toBeTrue();
+    component.competition = { seasons: [
+      { id: 44, name: 'Partilhada', sport: null, active: true }
+    ] } as any;
+    expect(component.availableSeasonSports).toEqual([]);
+    expect(component.canCreateAdditionalSeason).toBeFalse();
+  });
+
+  it('restores the season selector after a tagged season closes', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Karting'] } as any;
+    component.competition = { seasons: [
+      { id: 44, name: 'Futebol 2026', sport: 'Futebol', active: false },
+      { id: 45, name: 'Karting 2026', sport: 'Karting', active: true }
+    ] } as any;
+    expect(component.availableSeasonSports).toEqual(['Futebol']);
+    expect(component.canCreateAdditionalSeason).toBeTrue();
+  });
+
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
     component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
     component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
