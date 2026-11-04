@@ -3103,8 +3103,6 @@ const PT: Dictionary = {
   'communities.tournaments.bracketUi.viewNext': "Ver próximo jogo",
   'communities.tournaments.bracketUi.incoming': "Apurados",
   'communities.tournaments.bracketUi.focusTeam': "Destacar equipa",
-  'ko.prev': 'Jogo anterior',
-  'ko.next': 'Próximo jogo',
   'communities.tournaments.bracketUi.focusAll': "Todas as equipas",
   'communities.tournaments.bracketUi.showAll': "Ver todos os jogos",
   'communities.tournaments.bracketUi.showLess': "Ver menos jogos",
