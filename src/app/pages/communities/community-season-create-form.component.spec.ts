@@ -38,6 +38,27 @@ describe('CommunitySeasonCreateFormComponent', () => {
     (fixture.nativeElement as HTMLElement).querySelector('button')?.click();
     expect(create).toHaveBeenCalledTimes(1);
   });
+  it('allows an optional sport for multi-sport communities without creating results', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('sports', ['Futebol', 'Ténis']);
+    fixture.componentRef.setInput('sport', '');
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const selector = root.querySelector<HTMLSelectElement>('select');
+    expect(selector).not.toBeNull();
+    expect(selector?.options.length).toBe(3);
+    expect(selector?.options[0].value).toBe('');
+    const changed = jasmine.createSpy('sportChanged');
+    const create = jasmine.createSpy('create');
+    fixture.componentInstance.sportChange.subscribe(changed);
+    fixture.componentInstance.createRequested.subscribe(create);
+    selector!.value = 'Ténis';
+    selector!.dispatchEvent(new Event('change', { bubbles: true }));
+    await fixture.whenStable();
+    expect(changed).toHaveBeenCalledOnceWith('Ténis');
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('disables creating during persistence without erasing the draft', async () => {
     const root=(await render(true)).nativeElement as HTMLElement;
     expect(root.querySelector<HTMLButtonElement>('button')?.disabled).toBeTrue();
