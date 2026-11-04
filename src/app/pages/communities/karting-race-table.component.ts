@@ -22,11 +22,20 @@ export class KartingRaceTableComponent {
   @Input() sport: string | null | undefined;
   @Input() pointsByPlace: readonly number[] = [];
 
+  validFinishPosition(position: number | null | undefined): boolean {
+    return Number.isSafeInteger(position) && position! > 0;
+  }
+  validLapCount(laps: number | null | undefined): boolean {
+    return Number.isSafeInteger(laps) && laps! >= 0;
+  }
+  validBestLap(seconds: number | null | undefined): boolean {
+    return typeof seconds === 'number' && Number.isFinite(seconds) && seconds > 0;
+  }
   hasRaceLaps(entries: readonly TournamentRaceEntry[]): boolean {
-    return entries.some(entry => entry.lapsCompleted != null);
+    return entries.some(entry => this.validLapCount(entry.lapsCompleted));
   }
   hasRaceBestLap(entries: readonly TournamentRaceEntry[]): boolean {
-    return entries.some(entry => entry.bestLapSeconds != null);
+    return entries.some(entry => this.validBestLap(entry.bestLapSeconds));
   }
   orderedKartingRaceEntries(entries: readonly TournamentRaceEntry[]): TournamentRaceEntry[] {
     return orderedKartingRaceEntries(entries);
