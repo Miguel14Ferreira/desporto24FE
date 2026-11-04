@@ -718,7 +718,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.showLegacyMatchRanking).toBeFalse();
     expect(component.scopedMatchRankingGroups.map(g => g.sport)).toEqual(['Futsal', 'Futebol']);
     expect(component.scopedMatchRankingGroups.map(g => g.standings[0].points)).toEqual([3, 6]);
-    expect(component.competition.standings[0].points).toBe(99);
+    expect(component.competition!.standings[0].points).toBe(99);
   });
 
   it('keeps the legacy global leaderboard when the scoped contract is unavailable', () => {
@@ -728,7 +728,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.hasScopedMatchRankingContract).toBeFalse();
     expect(component.showLegacyMatchRanking).toBeTrue();
     expect(component.scopedMatchRankingGroups).toEqual([]);
-    component.competition = { ...component.competition, sportStandings: [] };
+    component.competition = { ...component.competition!, sportStandings: [] };
     expect(component.hasScopedMatchRankingContract).toBeTrue();
     expect(component.showLegacyAggregateStats).toBeFalse();
     expect(component.showLegacyMatchRanking).toBeFalse();
