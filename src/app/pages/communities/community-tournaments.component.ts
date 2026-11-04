@@ -48,6 +48,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   @ViewChild('historicalArchiveFixtures') private historicalArchiveFixtures?: ElementRef<HTMLElement>;
   @ViewChild('teamFixturesList') private teamFixturesList?: ElementRef<HTMLElement>;
   @ViewChild('teamProfileSection') private teamProfileSection?: ElementRef<HTMLElement>;
+  @ViewChild('teamProfileRoster') private teamProfileRoster?: ElementRef<HTMLElement>;
   @ViewChild('teamTournamentTeams') private teamTournamentTeams?: ElementRef<HTMLElement>;
   @ViewChild('teamTournamentFixtures') private teamTournamentFixtures?: ElementRef<HTMLElement>;
   @ViewChild('teamTournamentBracket') private teamTournamentBracket?: ElementRef<HTMLElement>;
@@ -2666,6 +2667,26 @@ export class CommunityTournamentsComponent implements OnChanges {
       && (this.teamProfileMatchFilter === 'ALL'
         || (this.teamProfileMatchFilter === 'COMPLETED'
           ? game.status === 'COMPLETED' : game.status !== 'COMPLETED')));
+  }
+
+  /** Navigate within this loaded team's page, never to a hidden or nonexistent section. */
+  showTeamProfileSection(section: 'results' | 'group' | 'roster'): void {
+    if (!this.focusedTeam || !this.isMember) return;
+    const element = section === 'roster' ? this.teamProfileRoster?.nativeElement
+      : this.selected?.status === 'DRAFT' ? null
+      : section === 'group' ? (this.focusedTeamGroupOverview
+          ? this.teamProfileSection?.nativeElement.querySelector<HTMLElement>(
+              '.team-page-group-overview') : null)
+        : this.teamProfileSection?.nativeElement;
+    element?.scrollIntoView({behavior:'smooth',block:'start'});
+    element?.focus({preventScroll:true});
+  }
+
+  /** The earliest still-scheduled loaded team match, never an invented fixture. */
+  showTeamProfileNextMatch(): void {
+    if (!this.focusedTeam || this.isRelayCompetition || this.selected?.status === 'DRAFT') return;
+    const match = this.focusedTeamJourney.pending[0];
+    if (match) this.showTeamProfileFixture(match.fixture);
   }
 
   /** Reveal only the actual loaded team fixture; never open another team's match. */

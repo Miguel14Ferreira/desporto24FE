@@ -523,6 +523,30 @@
             </a>
           }
         </header>
+        <nav class="team-page-quick-nav" [attr.aria-label]="'communities.tournaments.teamPage.gridLabel' | t">
+          @if (selected?.status !== 'DRAFT') {
+            <button type="button" (click)="showTeamProfileSection('results')">
+              {{ 'communities.tournaments.teamPage.resultsTitle' | t }}
+            </button>
+            @if (focusedTeamGroupOverview) {
+              <button type="button" (click)="showTeamProfileSection('group')">
+                {{ 'communities.tournaments.finalUi.groupStandings' | t }}
+              </button>
+            }
+          }
+          <button type="button" (click)="showTeamProfileSection('roster')">
+            {{ 'communities.tournaments.teamPage.rosterTitle' | t }}
+          </button>
+          @if (!isRelayCompetition && selected?.status !== 'DRAFT' && focusedTeamJourney.pending[0]; as next) {
+            <button type="button" class="team-page-quick-next"
+              (click)="showTeamProfileNextMatch()"
+              [attr.aria-label]="teamMatchStageLabel(next.fixture) + ' · ' + next.opponentName">
+              <span>{{ 'communities.tournaments.fixturesUi.filterPending' | t }}:</span>
+              <strong>{{ next.opponentName }}</strong>
+              <small>{{ teamMatchStageLabel(next.fixture) }} ↗</small>
+            </button>
+          }
+        </nav>
         @if (invitedTeam?.id === team.id && selected?.id === invitedTournamentId) {
           <section class="team-invite-accept" [attr.aria-label]="'communities.tournaments.teamUi.inviteRegion' | t">
             <div>
@@ -547,7 +571,7 @@
           </section>
         }
         @if (selected?.status !== 'DRAFT') {
-          <section class="team-page-performance" #teamProfileSection [attr.aria-label]="'communities.tournaments.teamPage.resultsTitle' | t">
+          <section class="team-page-performance" #teamProfileSection tabindex="-1" [attr.aria-label]="'communities.tournaments.teamPage.resultsTitle' | t">
             <div class="team-page-performance-heading">
               <div>
                 <span class="team-page-eyebrow">{{ selected?.name }}</span>
@@ -583,7 +607,7 @@
               }
             } @else {
               @if (focusedTeamGroupOverview; as group) {
-                <section class="team-page-group-overview"
+                <section class="team-page-group-overview" tabindex="-1"
                   [attr.aria-label]="'communities.tournaments.finalUi.groupTableLabel' | t:{group:groupLabel(group.groupNumber)}">
                   <header class="team-page-group-heading">
                     <div>
@@ -832,7 +856,7 @@
             }
           </section>
         }
-        <div class="team-page-content">
+        <div #teamProfileRoster class="team-page-content" tabindex="-1">
           <div class="team-page-section-label">
             <h3>{{ 'communities.tournaments.teamPage.rosterTitle' | t }}</h3>
             <span>{{ team.players.length }} {{ 'communities.tournaments.teamUi.players' | t }}</span>

@@ -1778,6 +1778,71 @@ describe('Community tournaments management', () => {
       expect(component.teamDirectoryLimit).toBe(12);
     });
 
+    it('jumps only to available sections of the currently selected team page', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      component.teams=[team];
+      component.teamGroups={tournamentId:19,knockoutStarted:false,groups:[{
+        groupNumber:1,standings:[{teamId:40,teamName:'Verdes',position:1,
+          played:1,won:1,drawn:0,lost:0,goalsFor:2,goalsAgainst:0,
+          goalDifference:2,points:3}]
+      }]};
+      const results=document.createElement('section');
+      const group=document.createElement('section');group.className='team-page-group-overview';
+      results.append(group);
+      const roster=document.createElement('div');
+      const resultsScroll=spyOn(results,'scrollIntoView' as keyof HTMLElement);
+      const resultsFocus=spyOn(results,'focus');
+      const groupScroll=spyOn(group,'scrollIntoView' as keyof HTMLElement);
+      const groupFocus=spyOn(group,'focus');
+      const rosterScroll=spyOn(roster,'scrollIntoView' as keyof HTMLElement);
+      const rosterFocus=spyOn(roster,'focus');
+      (component as any).teamProfileSection={nativeElement:results};
+      (component as any).teamProfileRoster={nativeElement:roster};
+      component.showTeamProfileSection('group');
+      expect(groupScroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'start'});
+      expect(groupFocus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.showTeamProfileSection('results');
+      expect(resultsScroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'start'});
+      expect(resultsFocus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.showTeamProfileSection('roster');
+      expect(rosterScroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'start'});
+      expect(rosterFocus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.teamGroups={...component.teamGroups,tournamentId:22};
+      component.showTeamProfileSection('group');
+      expect(groupScroll).toHaveBeenCalledTimes(1);
+      component.selected={...teamDraft,status:'DRAFT'};
+      component.showTeamProfileSection('results');
+      expect(resultsScroll).toHaveBeenCalledTimes(1);
+      component.teamPageId=998;
+      component.showTeamProfileSection('roster');
+      expect(rosterScroll).toHaveBeenCalledTimes(1);
+    });
+
+    it('opens only a real scheduled match from the selected team journey', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      component.teams=[team];
+      const pending={id:15,roundNumber:2,groupNumber:1,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED' as const};
+      const other={id:12,roundNumber:1,groupNumber:2,homeTeamId:89,
+        homeTeamName:'Roxos',awayTeamId:42,awayTeamName:'Brancos',status:'SCHEDULED' as const};
+      component.teamProfileMatches=[other,pending];
+      const open=spyOn(component,'showTeamProfileFixture');
+      component.showTeamProfileNextMatch();
+      expect(open).toHaveBeenCalledOnceWith(pending);
+      component.teamProfileMatches=[other];
+      component.showTeamProfileNextMatch();
+      expect(open).toHaveBeenCalledTimes(1);
+      component.selected={...teamDraft,status:'DRAFT'};
+      component.teamProfileMatches=[pending];
+      component.showTeamProfileNextMatch();
+      expect(open).toHaveBeenCalledTimes(1);
+      component.selected={...teamDraft,status:'IN_PROGRESS',scoringMode:'RELAY_BEST_TIME'};
+      component.showTeamProfileNextMatch();
+      expect(open).toHaveBeenCalledTimes(1);
+    });
+
     it('resolves adjacent team-page navigation only within the selected tournament', () => {
       const teams=Array.from({length:3},(_,i)=>({...team,id:40+i,name:'Equipa '+i}));
       api.teams.and.returnValue(of(teams));
