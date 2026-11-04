@@ -4780,15 +4780,32 @@
                     </div>
                   </div>
 
-                  <app-community-ranking-visibility
-                    [showAll]="showAllStandings"
-                    (showAllChange)="showAllStandings = $event"
-                  ></app-community-ranking-visibility>
+                  @if (!hasScopedMatchRankingContract) {
+                    <app-community-ranking-visibility
+                      [showAll]="showAllStandings"
+                      (showAllChange)="showAllStandings = $event"
+                    ></app-community-ranking-visibility>
+                  }
                   @if (rankingHistoricalSuccess) {
                     <p class="ranking-identity-success" role="status">{{ rankingHistoricalSuccess }}</p>
                   }
-                  <app-community-ranking-table [rows]="displayedRankings"
-                    (historicalSelected)="openRankingHistoricalPlayer($event)"></app-community-ranking-table>
+                  @if (hasScopedMatchRankingContract) {
+                    @for (group of scopedMatchRankingGroups; track group.sport) {
+                      <section class="racket-standings-group">
+                        <div class="racket-standings-group-head">
+                          <h4>{{ group.sport }}</h4>
+                        </div>
+                        <app-community-ranking-table [rows]="group.standings"
+                          (historicalSelected)="openRankingHistoricalPlayer($event)"></app-community-ranking-table>
+                      </section>
+                    }
+                    @if (!scopedMatchRankingGroups.length) {
+                      <p class="racket-standings-explainer">{{ 'communities.rankingsOptionalHint' | t }}</p>
+                    }
+                  } @else {
+                    <app-community-ranking-table [rows]="displayedRankings"
+                      (historicalSelected)="openRankingHistoricalPlayer($event)"></app-community-ranking-table>
+                  }
                   }
 
                   @if (rankingHistoricalRow) {
