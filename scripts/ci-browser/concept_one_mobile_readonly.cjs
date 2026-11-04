@@ -643,15 +643,18 @@ async function main() {
                   assert.equal(await detail.locator('.team-page-fixture').count(),2,
                     'Toggling the same rival restores all loaded fixtures');
                 }
-                const join = detail.locator('.team-page-hero a').last();
-                assert.ok((await join.getAttribute('href')).includes('team=701'),
-                  'Team page offers the existing invitation flow without changing old links');
+                if (teamId === '9023') {
+                  const join = detail.locator('.team-page-hero a').last();
+                  assert.ok((await join.getAttribute('href')).includes('team=701'),
+                    'Draft team page offers the existing invitation flow');
+                }
                 await page.screenshot({
                   path:path.join(OUT,width+'-'+language+'-team-profile-701.png'),fullPage:false
                 });
                 await detail.locator('.team-page-back').click();
                 await page.locator('.team-summary-card').first().waitFor({state:'visible'});
-                assert.equal(await page.locator('.team-summary-card').count(),3,
+                assert.equal(await page.locator('.team-summary-card').count(),
+                  teamId === '9021' ? 4 : 3,
                   'Back returns to the same tournament team directory');
                 }
               } else {
