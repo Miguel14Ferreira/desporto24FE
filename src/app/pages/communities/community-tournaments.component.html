@@ -940,23 +940,47 @@
                   [attr.data-team-profile-fixture-id]="game.id">
                   <span class="team-page-fixture-round">{{ teamMatchStageLabel(game) }}</span>
                   <span class="team-page-fixture-participants">
-                    <a [class.is-own-team]="game.homeTeamId === team.id"
-                      [routerLink]="['/menu/communities', community.id]"
-                      [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:game.homeTeamId}">{{ game.homeTeamName }}</a>
-                    <span class="team-page-fixture-score">
-                      {{ game.status === 'COMPLETED' && game.homeScore != null ? game.homeScore : '—' }}
-                      :
-                      {{ game.status === 'COMPLETED' && game.awayScore != null ? game.awayScore : '—' }}
+                    <strong [class.is-own-team]="game.homeTeamId === team.id">{{ game.homeTeamName }}</strong>
+                    <span class="team-page-fixture-score"
+                      [attr.aria-label]="(game.status === 'COMPLETED'
+                        ? 'communities.tournaments.fixturesUi.scoreAria'
+                        : 'communities.tournaments.fixturesUi.pendingAria') | t:{
+                          home:game.homeTeamName,away:game.awayTeamName,
+                          homeScore:game.homeScore ?? '—',awayScore:game.awayScore ?? '—'}">
+                      <b [class.is-own-score]="game.homeTeamId === team.id">{{ game.status === 'COMPLETED' && game.homeScore != null ? game.homeScore : '—' }}</b>
+                      <i aria-hidden="true">:</i>
+                      <b [class.is-own-score]="game.awayTeamId === team.id">{{ game.status === 'COMPLETED' && game.awayScore != null ? game.awayScore : '—' }}</b>
                     </span>
-                    <a [class.is-own-team]="game.awayTeamId === team.id"
+                    <strong [class.is-own-team]="game.awayTeamId === team.id">{{ game.awayTeamName }}</strong>
+                  </span>
+                  <div class="team-page-fixture-meta">
+                    <span class="team-page-fixture-status">
+                      {{ (game.status === 'COMPLETED'
+                        ? 'communities.tournaments.fixturesUi.filterCompleted'
+                        : 'communities.tournaments.fixturesUi.filterPending') | t }}
+                    </span>
+                    @if (teamProfileFixtureOutcome(game); as outcome) {
+                      <span class="team-page-fixture-outcome" [class.is-win]="outcome === 'WIN'"
+                        [class.is-loss]="outcome === 'LOSS'" [attr.data-outcome]="outcome">
+                        {{ ('communities.result.' + outcome.toLowerCase()) | t }}
+                      </span>
+                    }
+                  </div>
+                  <div class="team-page-fixture-links">
+                    @if (teamProfileFixtureRival(game); as rival) {
+                      <a class="team-page-fixture-rival-link"
+                        [routerLink]="['/menu/communities', community.id]"
+                        [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:rival.id}"
+                        [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:rival.name}">
+                        {{ 'communities.tournaments.teamPage.opponentFilter' | t }}: {{ rival.name }} <span aria-hidden="true">↗</span>
+                      </a>
+                    }
+                    <a class="team-page-fixture-tournament-link"
                       [routerLink]="['/menu/communities', community.id]"
-                      [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:game.awayTeamId}">{{ game.awayTeamName }}</a>
-                  </span>
-                  <span class="team-page-fixture-status">
-                    {{ (game.status === 'COMPLETED'
-                      ? 'communities.tournaments.fixturesUi.filterCompleted'
-                      : 'communities.tournaments.fixturesUi.filterPending') | t }}
-                  </span>
+                      [queryParams]="{tab:'tournaments',tournament:selected?.id}">
+                      {{ 'communities.tournaments.teamPage.back' | t }} <span aria-hidden="true">↗</span>
+                    </a>
+                  </div>
                 </div>
                   }
                 </section>

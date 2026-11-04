@@ -270,3 +270,19 @@
 :host .tournaments .team-page-fixture-section-heading small{font-size:.73rem;color:#b4ddd4;font-variant-numeric:tabular-nums;}
 :host .tournaments .team-page-fixture-section[data-status="PENDING"]{border-color:rgba(100,216,172,.4);}
 :host .tournaments .team-page-fixture-section[data-status="COMPLETED"]{border-color:rgba(111,151,192,.26);}
+
+/* Fixture score is always home:away, but the focused team's score is highlighted. */
+:host .tournaments .team-page-fixture-participants strong{font-size:.81rem;}
+:host .tournaments .team-page-fixture-score{display:inline-flex;gap:5px;align-items:center;white-space:nowrap;}
+:host .tournaments .team-page-fixture-score b{font-weight:800;color:#d0e9e9;}
+:host .tournaments .team-page-fixture-score b.is-own-score{color:#a7ffda;}
+:host .tournaments .team-page-fixture-score i{font-style:normal;opacity:.7;}
+:host .tournaments .team-page-fixture-meta{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-left:auto;}
+:host .tournaments .team-page-fixture-meta .team-page-fixture-status{margin-left:0;}
+:host .tournaments .team-page-fixture-outcome{border:1px solid rgba(160,201,207,.35);border-radius:999px;padding:4px 8px;color:#e5eff1;background:rgba(63,86,109,.32);font-size:.73rem;font-weight:800;}
+:host .tournaments .team-page-fixture-outcome.is-win{color:#a4f8d5;border-color:rgba(91,216,153,.55);background:rgba(21,112,78,.28);}
+:host .tournaments .team-page-fixture-outcome.is-loss{color:#ffd0ca;border-color:rgba(233,140,135,.45);background:rgba(132,59,64,.2);}
+:host .tournaments .team-page-fixture-links{display:flex;flex-wrap:wrap;align-items:center;gap:9px 14px;flex:1 0 100%;border-top:1px solid rgba(140,202,188,.14);padding-top:9px;}
+:host .tournaments .team-page-fixture-links a{font-size:.73rem;color:#b8efd9;text-decoration:none;overflow-wrap:anywhere;}
+:host .tournaments .team-page-fixture-links a:hover{text-decoration:underline;color:#e6fff5;}
+:host .tournaments .team-page-fixture-links a:focus-visible{outline:2px solid #a7ffda;outline-offset:3px;}

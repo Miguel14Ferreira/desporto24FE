@@ -3051,6 +3051,35 @@ export class CommunityTournamentsComponent implements OnChanges {
     ].filter(section => section.matches.length > 0);
   }
 
+  /** The team-page result is from the focused team's perspective.
+   * Missing/invalid scores never imply a victory, draw, or defeat. */
+  teamProfileFixtureOutcome(game: TournamentTeamMatch): 'WIN' | 'DRAW' | 'LOSS' | null {
+    const team = this.focusedTeam;
+    if (!team || this.isRelayCompetition || game.status !== 'COMPLETED'
+        || !Number.isSafeInteger(game.id) || game.id <= 0
+        || !this.teamProfileMatches.some(item => item.id === game.id
+          && item.homeTeamId === game.homeTeamId && item.awayTeamId === game.awayTeamId)
+        || (game.homeTeamId !== team.id && game.awayTeamId !== team.id)
+        || typeof game.homeScore !== 'number' || typeof game.awayScore !== 'number'
+        || !Number.isFinite(game.homeScore) || !Number.isFinite(game.awayScore)
+        || game.homeScore < 0 || game.awayScore < 0) return null;
+    const own = game.homeTeamId === team.id ? game.homeScore : game.awayScore;
+    const rival = game.homeTeamId === team.id ? game.awayScore : game.homeScore;
+    return own > rival ? 'WIN' : own < rival ? 'LOSS' : 'DRAW';
+  }
+
+  /** Only link to a rival's actual roster entry in this selected tournament. */
+  teamProfileFixtureRival(game: TournamentTeamMatch): TournamentTeam | undefined {
+    const team = this.focusedTeam;
+    if (!team || !Number.isSafeInteger(game.id) || game.id <= 0
+        || !this.teamProfileMatches.some(item => item.id === game.id
+          && item.homeTeamId === game.homeTeamId && item.awayTeamId === game.awayTeamId))
+      return undefined;
+    const rivalId = game.homeTeamId === team.id ? game.awayTeamId
+      : game.awayTeamId === team.id ? game.homeTeamId : null;
+    return this.teams.find(rival => rival.id === rivalId && rival.id !== team.id);
+  }
+
   /** Navigate within this loaded team's page, never to a hidden or nonexistent section. */
   showTeamProfileSection(section: 'results' | 'group' | 'roster'): void {
     if (!this.focusedTeam || !this.isMember) return;

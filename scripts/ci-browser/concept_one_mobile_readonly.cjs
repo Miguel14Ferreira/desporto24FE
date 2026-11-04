@@ -646,6 +646,20 @@ async function main() {
                   assert.deepEqual(await sections.last().locator('.team-page-fixture').evaluateAll(
                     elements => elements.map(element => element.getAttribute('data-team-profile-fixture-id'))),
                     ['9221'], 'The completed stage contains the real scored fixture');
+                  const completed=sections.last().locator('.team-page-fixture');
+                  const scheduled=sections.first().locator('.team-page-fixture');
+                  assert.equal(await completed.locator('.team-page-fixture-outcome.is-win').count(),1,
+                    'A completed own-team win is identified without changing the official home-away score');
+                  assert.equal(await scheduled.locator('.team-page-fixture-outcome').count(),0,
+                    'An unplayed match must not imply a result');
+                  assert.equal(await completed.locator('.team-page-fixture-score .is-own-score').count(),1,
+                    'Only the focused team score is highlighted');
+                  const rivalLink=await completed.locator('.team-page-fixture-rival-link').getAttribute('href');
+                  assert.ok(rivalLink.includes('teamPage=702'),
+                    'Rival link leads to that existing tournament team page');
+                  const tournamentLink=await completed.locator('.team-page-fixture-tournament-link').getAttribute('href');
+                  assert.ok(tournamentLink.includes('tournament=9021') && !tournamentLink.includes('teamPage='),
+                    'Tournament link exits the dedicated team page without fabricating a fixture link');
                   await rivals.first().click();
                   assert.equal(await rivals.first().getAttribute('aria-pressed'),'true');
                   assert.equal(await detail.locator('.team-page-fixture').count(),1,

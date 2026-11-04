@@ -2445,6 +2445,47 @@ describe('Community tournaments management', () => {
       expect(component.teamProfileFixtureSections).toEqual([]);
     });
 
+    it('shows only validated own-team outcomes and links existing tournament opponents', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      const blue={...team,id:41,name:'Azuis'};
+      component.teams=[team,blue];
+      const home={id:730,roundNumber:1,groupNumber:1,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:41,awayTeamName:'Azuis',
+        status:'COMPLETED' as const,homeScore:3,awayScore:1};
+      const away={...home,id:731,roundNumber:2,homeTeamId:41,
+        homeTeamName:'Azuis',awayTeamId:40,awayTeamName:'Verdes',
+        homeScore:2,awayScore:3};
+      const tie={...home,id:732,homeScore:1,awayScore:1};
+      const pending={...home,id:733,status:'SCHEDULED' as const,
+        homeScore:undefined,awayScore:undefined};
+      const invalid={...home,id:734,homeScore:-1,awayScore:2};
+      const missing={...home,id:735,homeScore:null,awayScore:2};
+      const outsider={...home,id:736,homeTeamId:77,awayTeamId:78};
+      const unknownOpponent={...home,id:737,awayTeamId:99,awayTeamName:'Desconhecidos'};
+      const fixtures=[home,away,tie,pending,invalid,missing,outsider,unknownOpponent];
+      component.teamProfileMatches=fixtures;
+      const snapshot=JSON.stringify(fixtures);
+      expect(component.teamProfileFixtureOutcome(home)).toBe('WIN');
+      expect(component.teamProfileFixtureOutcome(away)).toBe('WIN');
+      expect(component.teamProfileFixtureOutcome(tie)).toBe('DRAW');
+      expect(component.teamProfileFixtureOutcome(pending)).toBeNull();
+      expect(component.teamProfileFixtureOutcome(invalid)).toBeNull();
+      expect(component.teamProfileFixtureOutcome(missing)).toBeNull();
+      expect(component.teamProfileFixtureOutcome(outsider)).toBeNull();
+      expect(component.teamProfileFixtureOutcome({...home,id:888})).toBeNull();
+      expect(component.teamProfileFixtureRival(home)?.id).toBe(41);
+      expect(component.teamProfileFixtureRival(away)?.id).toBe(41);
+      expect(component.teamProfileFixtureRival(unknownOpponent)).toBeUndefined();
+      expect(component.teamProfileFixtureRival({...home,id:888})).toBeUndefined();
+      expect(component.teamProfileFixtureRival(outsider)).toBeUndefined();
+      component.teams=[team];
+      expect(component.teamProfileFixtureRival(home)).toBeUndefined();
+      component.teamPageId=99;
+      expect(component.teamProfileFixtureOutcome(home)).toBeNull();
+      expect(JSON.stringify(component.teamProfileMatches)).toBe(snapshot);
+    });
+
     it('summarizes only scored, unique loaded head-to-head fixtures without guessing outcomes', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
       component.teamPageId=40;
