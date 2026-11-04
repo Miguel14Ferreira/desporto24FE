@@ -697,6 +697,39 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.racketRankingGroups).toEqual([]);
   });
 
+  it('uses independently-scoped standings when the backend provides them', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Futsal', 'Karting'] } as any;
+    const standing = (points: number) => ({
+      position: 1, username: 'ana', games: 1, wins: 1, points
+    });
+    component.competition = {
+      standings: [standing(99)],
+      sportStandings: [
+        { sport: 'Futsal', standings: [standing(3)] },
+        { sport: 'Karting', standings: [standing(25)] },
+        { sport: 'Futebol', standings: [standing(6)] },
+        { sport: 'Padel', standings: [standing(100)] },
+        { sport: 'futsal', standings: [standing(8)] }
+      ]
+    } as any;
+    expect(component.hasScopedMatchRankingContract).toBeTrue();
+    expect(component.scopedMatchRankingGroups.map(g => g.sport)).toEqual(['Futsal', 'Futebol']);
+    expect(component.scopedMatchRankingGroups.map(g => g.standings[0].points)).toEqual([3, 6]);
+    expect(component.competition.standings[0].points).toBe(99);
+  });
+
+  it('keeps the legacy global leaderboard when the scoped contract is unavailable', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Futsal'] } as any;
+    component.competition = { standings: [{ games: 2, points: 7 }] } as any;
+    expect(component.hasScopedMatchRankingContract).toBeFalse();
+    expect(component.scopedMatchRankingGroups).toEqual([]);
+    component.competition = { ...component.competition, sportStandings: [] };
+    expect(component.hasScopedMatchRankingContract).toBeTrue();
+    expect(component.scopedMatchRankingGroups).toEqual([]);
+  });
+
   it('does not save football scoring fields for a Karting-only community', () => {
     const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
       .and.returnValue(of({ rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 }));
