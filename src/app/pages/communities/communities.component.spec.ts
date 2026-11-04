@@ -680,6 +680,23 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.specializedStatsUnavailableSports).toEqual(['Atletismo']);
   });
 
+  it('shows racket standings only for currently selected community sports', () => {
+    component.selected = { id: 7, sport: 'Ténis', sports: ['Ténis', 'Karting'] } as any;
+    const group = (sport: string) => ({
+      sport, matchFormat: 'SINGLES' as const, standings: []
+    });
+    component.competition = { racketStandings: [
+      group('Tenis'), group('Padel'), group('Karting'), group('Xadrez')
+    ] } as any;
+    expect(component.racketRankingGroups.map(g => g.sport)).toEqual(['Tenis']);
+    component.selected = { id: 7, sport: 'Padel', sports: ['Padel', 'Xadrez'] } as any;
+    expect(component.racketRankingGroups.map(g => g.sport)).toEqual(['Padel', 'Xadrez']);
+    component.selected = { id: 7, sport: 'Atletismo', sports: ['Atletismo'] } as any;
+    expect(component.racketRankingGroups).toEqual([]);
+    component.competition = { racketStandings: undefined } as any;
+    expect(component.racketRankingGroups).toEqual([]);
+  });
+
   it('does not save football scoring fields for a Karting-only community', () => {
     const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
       .and.returnValue(of({ rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 }));
