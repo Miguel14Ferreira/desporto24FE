@@ -1963,6 +1963,56 @@ describe('Community tournaments management', () => {
       expect(component.teamProfileHeadToHead).toBeNull();
     });
 
+    it('deduplicates overlapping fixture pages while rejecting invalid or unrelated rows', () => {
+      const first={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,
+        homeScore:3,awayScore:1};
+      const second={...first,id:71,roundNumber:2,homeTeamId:41,awayTeamId:40,
+        homeScore:0,awayScore:1};
+      api.teams.and.returnValue(of([team,{...team,id:41,name:'Azuis'}]));
+      api.teamProfileMatches.and.returnValues(
+        of({matches:[first,{...first}],page:0,hasMore:true}),
+        of({matches:[first,second,{...second},
+          {...first,id:0},{...first,id:72,homeTeamId:98,awayTeamId:99}],
+          page:1,hasMore:false})
+      );
+      component.teamPageId=40;
+      component.selectTournament({...teamDraft,status:'IN_PROGRESS'});
+      expect(component.teamProfileMatches.map(m=>m.id)).toEqual([70]);
+      component.loadTeamProfileMatches();
+      expect(component.teamProfileMatches.map(m=>m.id)).toEqual([70,71]);
+      expect(component.visibleTeamProfileMatches.map(m=>m.id)).toEqual([70,71]);
+      expect(component.focusedTeamJourney.phases.reduce((sum,p)=>sum+p.recorded,0)).toBe(2);
+      component.setTeamProfileOpponent('41');
+      expect(component.teamProfileOpponentTeam?.name).toBe('Azuis');
+      expect(component.teamProfileHeadToHead?.played).toBe(2);
+      expect(component.teamProfileHeadToHead?.wins).toBe(2);
+      expect(component.teamProfileMatchesHasMore).toBeFalse();
+    });
+
+    it('clears combined match filters without refetching and keeps one rival selectable', () => {
+      const first={id:70,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,
+        homeScore:2,awayScore:0};
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      component.teams=[team,{...team,id:41,name:'Azuis'}];
+      component.teamProfileMatches=[first];
+      expect(component.teamProfileOpponents).toHaveSize(1);
+      expect(component.teamProfileHasActiveFilters).toBeFalse();
+      component.setTeamProfileOpponent('41');
+      component.setTeamProfilePhaseFilter('group-1');
+      component.setTeamProfileMatchFilter('PENDING');
+      expect(component.teamProfileHasActiveFilters).toBeTrue();
+      expect(component.visibleTeamProfileMatches).toEqual([]);
+      const calls=api.teamProfileMatches.calls.count();
+      component.clearTeamProfileFilters();
+      expect(component.teamProfileHasActiveFilters).toBeFalse();
+      expect(component.visibleTeamProfileMatches.map(m=>m.id)).toEqual([70]);
+      expect(component.teamProfileOpponentTeam).toBeUndefined();
+      expect(api.teamProfileMatches.calls.count()).toBe(calls);
+    });
+
     it('scopes recent form and phase counts to the selected team and loaded pages', () => {
       const first={id:70,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
         awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,

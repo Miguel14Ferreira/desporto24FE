@@ -2728,6 +2728,24 @@ export class CommunityTournamentsComponent implements OnChanges {
       wins, draws, losses, pending };
   }
 
+  /** Existing tournament roster is the only safe source for rival page links. */
+  get teamProfileOpponentTeam(): TournamentTeam | undefined {
+    const id = this.teamProfileOpponentId;
+    return id === null ? undefined : this.teams.find(team => team.id === id);
+  }
+
+  get teamProfileHasActiveFilters(): boolean {
+    return this.teamProfileMatchFilter !== 'ALL'
+      || this.teamProfilePhaseFilter !== 'ALL' || this.teamProfileOpponentId !== null;
+  }
+
+  clearTeamProfileFilters(): void {
+    this.teamProfileMatchFilter = 'ALL';
+    this.teamProfilePhaseFilter = 'ALL';
+    this.teamProfileOpponentId = null;
+    this.changeDetector.markForCheck();
+  }
+
   get visibleTeamProfileMatches(): TournamentTeamMatch[] {
     const teamId = this.focusedTeam?.id;
     if (!teamId) return [];
@@ -2815,9 +2833,17 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision !== this.teamProfileMatchesRevision
             || this.community.id !== communityId || this.selected?.id !== tournamentId
             || this.teamPageId !== teamId) return;
-        // The backend enforces the team scope. Keep the profile defensive too.
-        this.teamProfileMatches = [...this.teamProfileMatches, ...result.matches.filter(
-          fixture => fixture.homeTeamId === teamId || fixture.awayTeamId === teamId)];
+        // Pages can overlap after edits. Keep only valid, unique own-team fixtures.
+        const seen = new Set(this.teamProfileMatches.map(fixture => fixture.id));
+        const added: TournamentTeamMatch[] = [];
+        for (const fixture of result.matches) {
+          if (!Number.isSafeInteger(fixture.id) || fixture.id <= 0
+              || (fixture.homeTeamId !== teamId && fixture.awayTeamId !== teamId)
+              || seen.has(fixture.id)) continue;
+          seen.add(fixture.id);
+          added.push(fixture);
+        }
+        this.teamProfileMatches = [...this.teamProfileMatches, ...added];
         this.teamProfileMatchesPage = page;
         this.teamProfileMatchesHasMore = result.hasMore;
         if (this.teamProfileOpponentId !== null

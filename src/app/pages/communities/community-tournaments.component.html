@@ -812,7 +812,7 @@
                       </select>
                     </label>
                   }
-                  @if (teamProfileOpponents.length > 1) {
+                  @if (teamProfileOpponents.length > 0) {
                     <label class="team-phase-select team-page-phase-filter">
                       {{ 'communities.tournaments.teamPage.opponentFilter' | t }}
                       <select [ngModel]="teamProfileOpponentId === null ? 'ALL' : '' + teamProfileOpponentId"
@@ -825,6 +825,10 @@
                       </select>
                     </label>
                   }
+                  @if (teamProfileHasActiveFilters) {
+                    <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                      (click)="clearTeamProfileFilters()">{{ 'mySessions.resetFilters' | t }}</button>
+                  }
                   <p role="status">{{ 'communities.tournaments.fixturesUi.loadedSummary' | t:{shown:visibleTeamProfileMatches.length,loaded:teamProfileMatches.length} }}</p>
                 </div>
               }
@@ -836,6 +840,14 @@
                       <span class="team-page-eyebrow">{{ 'communities.tournaments.phaseUi.loadedOnly' | t }}</span>
                       <h4>{{ 'communities.tournaments.teamPage.opponentFilter' | t }}: {{ headToHead.opponentName }}</h4>
                     </div>
+                    @if (teamProfileOpponentTeam; as rival) {
+                      <a class="t-btn t-btn-secondary t-btn-small"
+                        [routerLink]="['/menu/communities', community.id]"
+                        [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:rival.id}"
+                        [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:rival.name}">
+                        {{ rival.name }} <span aria-hidden="true">↗</span>
+                      </a>
+                    }
                   </header>
                   <div class="team-page-stat-grid">
                     <div><span>{{ 'communities.tournaments.finalUi.playedCol' | t }}</span><strong>{{ headToHead.played }}</strong></div>
@@ -858,9 +870,9 @@
                       [routerLink]="['/menu/communities', community.id]"
                       [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:game.homeTeamId}">{{ game.homeTeamName }}</a>
                     <span class="team-page-fixture-score">
-                      {{ game.status === 'COMPLETED' ? game.homeScore : '—' }}
+                      {{ game.status === 'COMPLETED' && game.homeScore != null ? game.homeScore : '—' }}
                       :
-                      {{ game.status === 'COMPLETED' ? game.awayScore : '—' }}
+                      {{ game.status === 'COMPLETED' && game.awayScore != null ? game.awayScore : '—' }}
                     </span>
                     <a [class.is-own-team]="game.awayTeamId === team.id"
                       [routerLink]="['/menu/communities', community.id]"
