@@ -831,9 +831,12 @@
                         <app-community-season-create-form
                           [name]="seasonName"
                           [startsAt]="seasonStartsAt"
+                          [sports]="selected ? communitySports(selected) : []"
+                          [sport]="seasonSport"
                           [saving]="seasonSaving"
                           (nameChange)="seasonName = $event"
                           (startsAtChange)="seasonStartsAt = $event"
+                          (sportChange)="seasonSport = $event"
                           (createRequested)="createSeason()"
                         ></app-community-season-create-form>
                       } @else {
