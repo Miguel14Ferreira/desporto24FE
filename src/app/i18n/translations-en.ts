@@ -3097,6 +3097,8 @@ export const EN: Record<string, string> = {
   'communities.tournaments.bracketUi.viewNext': "View next match",
   'communities.tournaments.bracketUi.incoming': "Confirmed qualifiers",
   'communities.tournaments.bracketUi.focusTeam': "Highlight team",
+  'ko.prev': 'Previous match',
+  'ko.next': 'Next match',
   'communities.tournaments.bracketUi.focusAll': "All teams",
   'communities.tournaments.bracketUi.showAll': "Show all round matches",
   'communities.tournaments.bracketUi.showLess': "Show fewer matches",

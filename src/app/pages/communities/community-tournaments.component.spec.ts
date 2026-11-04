@@ -1421,6 +1421,61 @@ describe('Community tournaments management', () => {
       expect(component.knockoutMatchQuery).toBe('Azuis');
     });
 
+    it('navigates actual search results in round order and focuses the selected fixture', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      const fixtures=[
+        {id:93,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Águias',status:'SCHEDULED' as const},
+        {id:92,roundNumber:1,homeTeamId:42,homeTeamName:'Verdes B',
+          awayTeamId:44,awayTeamName:'Azuis',status:'SCHEDULED' as const},
+        {id:91,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Pretos',status:'SCHEDULED' as const},
+        {id:94,roundNumber:1,homeTeamId:45,homeTeamName:'Rosas',
+          awayTeamId:46,awayTeamName:'Amarelos',status:'SCHEDULED' as const}
+      ];
+      component.teamMatches=fixtures;
+      const original=JSON.stringify(component.teamMatches);
+      const board=document.createElement('details');
+      const targets=new Map<number, {scroll:jasmine.Spy; focus:jasmine.Spy}>();
+      for (const fixture of fixtures) {
+        const row=document.createElement('article');
+        row.dataset['knockoutFixtureId']=''+fixture.id;
+        const scroll=jasmine.createSpy('scrollIntoView');
+        row.scrollIntoView=scroll;
+        const focus=spyOn(row,'focus');
+        board.appendChild(row);
+        targets.set(fixture.id,{scroll,focus});
+      }
+      (component as any).teamTournamentBracket={nativeElement:board};
+      component.setKnockoutMatchQuery('verdes');
+      expect(component.knockoutSearchMatches.map(game=>game.id)).toEqual([91,92,93]);
+      expect(component.knockoutSearchFixtureId).toBe(91);
+      expect(component.knockoutSearchPosition).toBe(1);
+      component.moveKnockoutSearch(1);
+      expect(component.knockoutSearchFixtureId).toBe(92);
+      expect(component.knockoutSearchPosition).toBe(2);
+      expect(board.open).toBeTrue();
+      expect(targets.get(92)!.scroll).toHaveBeenCalledOnceWith({
+        behavior:'smooth',block:'nearest',inline:'center'});
+      expect(targets.get(92)!.focus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.moveKnockoutSearch(1);
+      expect(component.knockoutSearchFixtureId).toBe(93);
+      component.moveKnockoutSearch(1);
+      expect(component.knockoutSearchFixtureId).toBe(91);
+      component.moveKnockoutSearch(-1);
+      expect(component.knockoutSearchFixtureId).toBe(93);
+      component.setKnockoutMatchQuery('no match');
+      expect(component.knockoutSearchMatches).toEqual([]);
+      expect(component.knockoutSearchPosition).toBe(0);
+      component.moveKnockoutSearch(1);
+      expect(component.knockoutSearchFixtureId).toBeNull();
+      expect(JSON.stringify(component.teamMatches)).toBe(original);
+      component.setKnockoutMatchQuery('Verdes');
+      component.selectTournament({...teamDraft,id:70,status:'DRAFT',format:'KNOCKOUT'});
+      expect(component.knockoutSearchFixtureId).toBeNull();
+      expect(component.knockoutSearchMatches).toEqual([]);
+    });
+
     it('compacts 16 and 32 team brackets without dropping any loaded fixtures', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       for (const matchCount of [8,16]) {

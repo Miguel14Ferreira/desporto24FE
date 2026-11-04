@@ -1879,7 +1879,16 @@
                         </div>
                       </nav>
                     }
-                    @if (knockoutMatchQuery.trim() && !shownKnockoutRounds(bracket).length) {
+                    @if (knockoutMatchQuery.trim() && knockoutSearchMatches.length) {
+                      <nav class="team-knockout-search-nav"
+                        [attr.aria-label]="'communities.tournaments.teamPage.searchLabel' | t">
+                        <span role="status">{{ knockoutSearchPosition }} / {{ knockoutSearchMatches.length }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
+                        <button type="button" (click)="moveKnockoutSearch(-1)"
+                          [attr.aria-label]="'ko.prev' | t">{{ 'ko.prev' | t }}</button>
+                        <button type="button" (click)="moveKnockoutSearch(1)"
+                          [attr.aria-label]="'ko.next' | t">{{ 'ko.next' | t }}</button>
+                      </nav>
+                    } @else if (knockoutMatchQuery.trim()) {
                       <p class="t-muted" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
                     }
                     <div class="team-knockout-scroll" tabindex="0"
@@ -1899,6 +1908,7 @@
                             @for (item of visibleKnockoutMatches(round.round, round.matches); track item.game.id) {
                               <article class="team-knockout-match" tabindex="-1"
                                 [attr.data-knockout-fixture-id]="item.game.id"
+                                [class.is-search-current]="knockoutSearchFixtureId === item.game.id && !!knockoutMatchQuery.trim()"
                                 [class.is-done]="item.winnerId !== null"
                                 [class.is-focus-match]="isKnockoutTeamFocused(item.game)"
                                 [class.is-dimmed]="knockoutFocusTeamId !== null && !isKnockoutTeamFocused(item.game)">

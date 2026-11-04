@@ -745,11 +745,29 @@ async function main() {
                     await board.waitFor({state:'visible'});
                     const search=board.locator('.team-knockout-focus input[type="search"]');
                     assert.equal(await board.locator('.team-knockout-match').count(),2);
+                    await search.fill('a');
+                    assert.equal(await board.locator('.team-knockout-match').count(),2,
+                      'Multiple published fixtures remain available to search navigation');
+                    const current=board.locator('.team-knockout-match.is-search-current');
+                    assert.equal(await current.count(),1,
+                      'The first matching fixture is visually identified');
+                    const firstId=await current.getAttribute('data-knockout-fixture-id');
+                    await board.locator('.team-knockout-search-nav button').last().click();
+                    const nextId=await current.getAttribute('data-knockout-fixture-id');
+                    assert.notEqual(nextId,firstId,
+                      'Next search result moves to another real loaded knockout fixture');
+                    assert.equal(await page.evaluate(() => document.activeElement
+                      ?.getAttribute('data-knockout-fixture-id')),nextId,
+                      'The selected knockout result receives keyboard focus');
+                    await board.locator('.team-knockout-search-nav button').first().click();
+                    assert.equal(await current.getAttribute('data-knockout-fixture-id'),firstId,
+                      'Previous result returns to the first published fixture');
                     await search.fill('atlantico');
                     assert.equal(await board.locator('.team-knockout-match').count(),1,
                       'Team search finds a published knockout match ignoring accents');
                     assert.ok((await board.locator('.team-knockout-match').innerText())
                       .includes('Smash Atlântico'));
+                    assert.equal(await board.locator('.team-knockout-match.is-search-current').count(),1);
                     await search.fill('zzz-sem-jogos');
                     assert.equal(await board.locator('.team-knockout-match').count(),0,
                       'No matches search never invents a fixture');

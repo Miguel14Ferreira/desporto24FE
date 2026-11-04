@@ -132,6 +132,14 @@
 :host .tournaments button.team-knockout-path-arrow:focus-visible{outline:2px solid #abffd6;outline-offset:2px;}
 :host .tournaments .team-knockout-match.is-dimmed{opacity:.38;}
 :host .tournaments .team-knockout-match.is-focus-match{border-color:#85fac7;box-shadow:0 0 0 1px rgba(113,238,175,.38);}
+
+:host .tournaments .team-knockout-match.is-search-current{border-color:#a8f5c5;box-shadow:0 0 0 2px rgba(149,255,192,.5);background:linear-gradient(120deg,rgba(20,96,78,.85),rgba(12,59,75,.9));}
+:host .tournaments .team-knockout-search-nav{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 16px 12px;color:#d8ffeb;font-size:.78rem;}
+:host .tournaments .team-knockout-search-nav>span{margin-right:5px;font-variant-numeric:tabular-nums;font-weight:800;}
+:host .tournaments .team-knockout-search-nav button{border:1px solid rgba(103,231,178,.48);border-radius:9px;background:rgba(16,91,74,.68);color:#eafff4;padding:7px 11px;cursor:pointer;font:inherit;}
+:host .tournaments .team-knockout-search-nav button:hover{background:rgba(28,134,104,.7);}
+:host .tournaments .team-knockout-search-nav button:focus-visible{outline:2px solid #abffd6;outline-offset:2px;}
+
 :host .tournaments .team-knockout-contender.is-focus-contender{box-shadow:inset 4px 0 #66edac;}
 :host .tournaments .team-knockout-match:focus-visible,
 :host .tournaments .team-knockout-path-card:focus-visible,
