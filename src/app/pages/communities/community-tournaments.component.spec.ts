@@ -1822,6 +1822,43 @@ describe('Community tournaments management', () => {
       expect(rosterScroll).toHaveBeenCalledTimes(1);
     });
 
+    it('jumps from a published phase card to the loaded team fixtures and preserves other filters', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      component.teams=[team];
+      component.teamProfileMatches=[
+        {id:70,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED',homeScore:1,awayScore:0},
+        {id:71,roundNumber:1,groupNumber:null,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:42,awayTeamName:'Roxos',status:'SCHEDULED'}
+      ];
+      component.teamProfileMatchFilter='PENDING';
+      const section=document.createElement('div');
+      const scroll=jasmine.createSpy('scrollIntoView');
+      section.scrollIntoView=scroll;
+      const focus=spyOn(section,'focus');
+      (component as any).teamProfileFixtures={nativeElement:section};
+      const calls=api.teamProfileMatches.calls.count();
+
+      component.showTeamProfilePhase('group-1');
+      expect(component.teamProfilePhaseFilter).toBe('group-1');
+      expect(component.teamProfileMatchFilter).toBe('PENDING');
+      expect(scroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'start'});
+      expect(focus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.showTeamProfilePhase('group-1');
+      expect(component.teamProfilePhaseFilter).toBe('ALL');
+      component.showTeamProfilePhase('round-100');
+      expect(scroll).toHaveBeenCalledTimes(2);
+      expect(api.teamProfileMatches.calls.count()).toBe(calls);
+
+      component.selected={...teamDraft,status:'DRAFT',format:'GROUP_KNOCKOUT'};
+      component.showTeamProfilePhase('group-1');
+      expect(scroll).toHaveBeenCalledTimes(2);
+      component.selected={...teamDraft,status:'IN_PROGRESS',scoringMode:'RELAY_BEST_TIME'};
+      component.showTeamProfilePhase('group-1');
+      expect(scroll).toHaveBeenCalledTimes(2);
+    });
+
     it('opens only a real scheduled match from the selected team journey', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
       component.teamPageId=40;

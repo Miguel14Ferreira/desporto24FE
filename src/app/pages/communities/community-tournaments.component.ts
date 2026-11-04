@@ -48,6 +48,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   @ViewChild('historicalArchiveFixtures') private historicalArchiveFixtures?: ElementRef<HTMLElement>;
   @ViewChild('teamFixturesList') private teamFixturesList?: ElementRef<HTMLElement>;
   @ViewChild('teamProfileSection') private teamProfileSection?: ElementRef<HTMLElement>;
+  @ViewChild('teamProfileFixtures') private teamProfileFixtures?: ElementRef<HTMLElement>;
   @ViewChild('teamProfileRoster') private teamProfileRoster?: ElementRef<HTMLElement>;
   @ViewChild('teamTournamentTeams') private teamTournamentTeams?: ElementRef<HTMLElement>;
   @ViewChild('teamTournamentFixtures') private teamTournamentFixtures?: ElementRef<HTMLElement>;
@@ -2797,6 +2798,17 @@ export class CommunityTournamentsComponent implements OnChanges {
     );
     row?.scrollIntoView({behavior: 'smooth', block: 'center'});
     row?.focus({preventScroll: true});
+  }
+
+  /** Phase cards navigate to real loaded fixtures without changing other filters. */
+  showTeamProfilePhase(key: string): void {
+    if (!this.focusedTeam || this.isRelayCompetition || this.selected?.status === 'DRAFT'
+        || !this.teamProfilePhases.some(phase => phase.key === key)) return;
+    this.setTeamProfilePhaseFilter(this.teamProfilePhaseFilter === key ? 'ALL' : key);
+    this.changeDetector.detectChanges();
+    const section = this.teamProfileFixtures?.nativeElement;
+    section?.scrollIntoView({behavior:'smooth',block:'start'});
+    section?.focus({preventScroll:true});
   }
 
   setTeamProfilePhaseFilter(key: string): void {

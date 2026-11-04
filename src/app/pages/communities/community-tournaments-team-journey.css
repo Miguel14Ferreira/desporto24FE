@@ -7,6 +7,9 @@
 :host .tournaments .team-page-journey-panel{min-width:0;display:grid;align-content:start;gap:8px;padding:14px;border-radius:13px;border:1px solid rgba(80,198,178,.24);background:rgba(7,36,49,.78);}
 :host .tournaments .team-page-journey-panel h5{font-size:.79rem;color:#a8e8d4;margin:0 0 4px;}
 :host .tournaments .team-page-journey-match{display:grid;gap:6px;min-width:0;padding:10px 0;border-top:1px solid rgba(148,202,193,.15);}
+:host .tournaments .team-page-journey-open{width:100%;background:transparent;border-right:0;border-bottom:0;border-left:0;color:inherit;font:inherit;text-align:left;cursor:pointer;}
+:host .tournaments .team-page-journey-open:hover{background:rgba(68,183,150,.1);}
+:host .tournaments .team-page-journey-open:focus-visible{outline:2px solid #abffd6;outline-offset:2px;}
 :host .tournaments .team-page-journey-stage{font-size:.72rem;color:#96d6c6;}
 :host .tournaments .team-page-journey-score{display:flex;align-items:center;justify-content:space-between;min-width:0;gap:9px;}
 :host .tournaments .team-page-journey-score strong{min-width:0;overflow-wrap:anywhere;font-size:.87rem;color:#f1fff9;}

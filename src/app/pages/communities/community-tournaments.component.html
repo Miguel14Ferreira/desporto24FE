@@ -687,7 +687,7 @@
                           <button type="button" class="team-page-phase"
                             [class.is-active]="teamProfilePhaseFilter === phase.key"
                             [attr.aria-pressed]="teamProfilePhaseFilter === phase.key"
-                            (click)="setTeamProfilePhaseFilter(teamProfilePhaseFilter === phase.key ? 'ALL' : phase.key)">
+                            (click)="showTeamProfilePhase(phase.key)">
                             <strong>{{ isGroupKnockout && phase.firstFixture.groupNumber != null
                               ? ('communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(phase.firstFixture.groupNumber)})
                               : teamMatchStageLabel(phase.firstFixture) }}</strong>
@@ -706,18 +706,20 @@
                     <div class="team-page-journey-panel">
                       <h5>{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</h5>
                       @for (item of journey.recent; track item.fixture.id) {
-                        <div class="team-page-journey-match">
+                        <button type="button" class="team-page-journey-match team-page-journey-open"
+                          (click)="showTeamProfileFixture(item.fixture)"
+                          [attr.aria-label]="teamMatchStageLabel(item.fixture) + ' · ' + item.opponentName + ' · ' + (('communities.result.' + item.outcome.toLowerCase()) | t)">
                           <span class="team-page-journey-stage">{{ teamMatchStageLabel(item.fixture) }}</span>
-                          <div class="team-page-journey-score">
+                          <span class="team-page-journey-score">
                             <strong>{{ item.opponentName }}</strong>
                             <b>{{ item.ownScore }} : {{ item.opponentScore }}</b>
-                          </div>
+                          </span>
                           <span class="team-page-journey-result"
                             [class.is-win]="item.outcome === 'WIN'"
                             [class.is-loss]="item.outcome === 'LOSS'">
                             {{ ('communities.result.' + item.outcome.toLowerCase()) | t }}
                           </span>
-                        </div>
+                        </button>
                       } @empty {
                         <p class="team-page-journey-empty">{{ 'communities.tournaments.teamPage.noResults' | t }}</p>
                       }
@@ -725,13 +727,15 @@
                     <div class="team-page-journey-panel">
                       <h5>{{ 'communities.tournaments.fixturesUi.filterPending' | t }}</h5>
                       @for (item of journey.pending; track item.fixture.id) {
-                        <div class="team-page-journey-match">
+                        <button type="button" class="team-page-journey-match team-page-journey-open"
+                          (click)="showTeamProfileFixture(item.fixture)"
+                          [attr.aria-label]="teamMatchStageLabel(item.fixture) + ' · ' + item.opponentName + ' · ' + ('communities.tournaments.fixturesUi.filterPending' | t)">
                           <span class="team-page-journey-stage">{{ teamMatchStageLabel(item.fixture) }}</span>
-                          <div class="team-page-journey-score">
+                          <span class="team-page-journey-score">
                             <strong>{{ item.opponentName }}</strong>
                             <b>— : —</b>
-                          </div>
-                        </div>
+                          </span>
+                        </button>
                       } @empty {
                         <p class="team-page-journey-empty">{{ 'communities.tournaments.fixturesUi.empty' | t }}</p>
                       }
@@ -787,7 +791,8 @@
                 </div>
               }
               @if (teamProfileMatches.length) {
-                <div class="team-fixtures-toolbar">
+                <div class="team-fixtures-toolbar" #teamProfileFixtures tabindex="-1"
+                  [attr.aria-label]="'communities.tournaments.fixturesUi.filterLabel' | t">
                   <div class="team-fixtures-filters" role="group" [attr.aria-label]="'communities.tournaments.fixturesUi.filterLabel' | t">
                     <button type="button" [class.is-active]="teamProfileMatchFilter === 'ALL'"
                       [attr.aria-pressed]="teamProfileMatchFilter === 'ALL'"
