@@ -31,6 +31,9 @@ export class KartingRaceTableComponent {
   validBestLap(seconds: number | null | undefined): boolean {
     return typeof seconds === 'number' && Number.isFinite(seconds) && seconds > 0;
   }
+  validPenalty(value: number | null | undefined): boolean {
+    return typeof value === 'number' && Number.isFinite(value) && value > 0;
+  }
   hasRaceLaps(entries: readonly TournamentRaceEntry[]): boolean {
     return entries.some(entry => this.validLapCount(entry.lapsCompleted));
   }
