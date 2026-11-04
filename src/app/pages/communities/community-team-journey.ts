@@ -134,12 +134,14 @@ export function summarizePublishedTeamJourney(
       : game.status === 'SCHEDULED' ? 'TO_PLAY' : 'UNVERIFIED';
     return { ...item, state, confirmedNextFixture };
   });
-  const knockoutProgress: TeamKnockoutProgress = {
-    wins: knockoutPath.filter(item => item.outcome === 'WIN').length,
-    losses: knockoutPath.filter(item => item.outcome === 'LOSS').length,
-    toPlay: knockoutPath.filter(item => item.state === 'TO_PLAY').length,
-    verifiedAdvances: knockoutPath.filter(item => item.confirmedNextFixture !== null).length
-  };
+  let wins=0, losses=0, toPlay=0, verifiedAdvances=0;
+  for (const item of knockoutPath) {
+    if (item.outcome === 'WIN') wins++;
+    else if (item.outcome === 'LOSS') losses++;
+    if (item.state === 'TO_PLAY') toPlay++;
+    if (item.confirmedNextFixture) verifiedAdvances++;
+  }
+  const knockoutProgress: TeamKnockoutProgress = {wins, losses, toPlay, verifiedAdvances};
   const lastConfirmed = knockoutPath.slice().reverse()
     .find(item => item.confirmedNextFixture !== null);
   const advancement: TeamVerifiedAdvancement | null = lastConfirmed?.confirmedNextFixture
