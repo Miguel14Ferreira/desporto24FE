@@ -25,6 +25,25 @@ describe('RaceStandingsCardComponent', () => {
     expect(row?.textContent).toContain('3');
     expect(root.querySelector('table[aria-label]')).not.toBeNull();
   });
+  it('keeps original API order but hides invalid numeric standings values', () => {
+    const rows: TournamentRaceStanding[] = [
+      {...standings[0], position: -1, races: -2, wins: NaN,
+        podiums: Infinity, championshipPoints: NaN},
+      {...standings[0], playerId: 23, position: 2, fullName: 'Piloto B',
+        races: 0, wins: 0, podiums: 0, championshipPoints: 0}
+    ];
+    const root = render(rows);
+    const displayed = root.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect(displayed.length).toBe(2);
+    expect(displayed[0].textContent).toContain('Piloto A');
+    expect(displayed[1].textContent).toContain('Piloto B');
+    expect(displayed[0].textContent).not.toContain('NaN');
+    expect(displayed[0].textContent).not.toContain('Infinity');
+    expect(displayed[0].textContent).not.toContain('-2');
+    expect(displayed[0].querySelectorAll('td')[0].textContent?.trim()).toBe('—');
+    expect(displayed[1].querySelectorAll('td')[5].textContent?.trim()).toBe('0');
+    expect(rows[0].position).toBe(-1);
+  });
   it('shows an empty-state notice instead of an empty results table', () => {
     const root = render([]);
     expect(root.querySelector('table')).toBeNull();
