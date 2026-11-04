@@ -923,6 +923,17 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.selected ? this.communitySports(this.selected) : [];
   }
 
+  /** Sport-tagged active seasons only accept rounds in that sport.
+   * Shared legacy seasons retain the complete community catalogue. */
+  get roundEligibleSports(): string[] {
+    const available = this.communityRoundSports;
+    const sport = this.activeSeason()?.sport;
+    if (!sport) return available;
+    const normalized = (value: string): string => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return available.filter(candidate => normalized(candidate) === normalized(sport));
+  }
+
   /** The optional W/D/L standings switch must not hide tournament heat recording. */
   get canRecordInlineSpeedWithoutRankings(): boolean {
     return !!this.selected && !this.selected.rankingsEnabled
@@ -951,8 +962,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   get newRoundSport(): string | null {
     if (this.canRecordInlineSpeedWithoutRankings) return 'Patinagem de Velocidade';
-    return this.communityRoundSports.length === 1
-      ? this.communityRoundSports[0] : (this.roundSportDraft || null);
+    return this.roundEligibleSports.length === 1
+      ? this.roundEligibleSports[0] : (this.roundSportDraft || null);
   }
 
   get newImportSport(): string | null {
@@ -5025,7 +5036,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('communities.inlineSpeed.selectProgressionHeat');
       return;
     }
-    if (this.communityRoundSports.length > 1 && !this.newRoundSport) {
+    if (this.roundEligibleSports.length > 1 && !this.newRoundSport) {
       this.errorMessage = t('feedback.communities.roundSportRequired');
       return;
     }
