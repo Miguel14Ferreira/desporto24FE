@@ -661,6 +661,17 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.gif.backup')).toBeFalse();
   });
 
+  it('uses the active season ID rather than the selected historical season for new rounds', () => {
+    component.selectedSeasonId = 17;
+    spyOn(component, 'activeSeason').and.returnValue({
+      id: 44, name: 'Época atual', active: true, sport: 'Futsal'
+    } as any);
+    expect(component.roundTargetSeasonId).toBe(44);
+    expect(component.selectedSeasonId).toBe(17);
+    (component.activeSeason as jasmine.Spy).and.returnValue(undefined);
+    expect(component.roundTargetSeasonId).toBeNull();
+  });
+
   it('restricts new round sports to the active sport-tagged season', () => {
     component.selected = { id: 7, sport: 'Futebol',
       sports: ['Futebol', 'Ténis', 'Karting'] } as any;
