@@ -3311,7 +3311,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
         this.teamMatchesPage = page;
         this.teamMatchesHasMore = result.hasMore;
-        for (const game of result.matches) {
+        for (const game of newFixtures) {
           this.teamScoreDrafts[game.id] = { home: game.homeScore ?? null, away: game.awayScore ?? null };
         }
       },
