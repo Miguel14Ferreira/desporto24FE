@@ -1988,6 +1988,29 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return group.sports?.length ? group.sports : (group.sport ? [group.sport] : []);
   }
 
+  /** API-backed W/D/L standings, isolated by a sport currently selected here.
+   * Older backends may omit the field entirely; retain legacy rendering then. */
+  get scopedMatchRankingGroups(): { sport: string; standings: CommunityStanding[] }[] {
+    if (!this.selected || !this.competition?.sportStandings) return [];
+    const normalize = (sport: string) => sport.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const selected = new Set(this.communitySports(this.selected).map(normalize));
+    const seen = new Set<string>();
+    return this.competition.sportStandings.filter(group => {
+      if (!group?.sport) return false;
+      const key = normalize(group.sport);
+      if (!selected.has(key) || seen.has(key)) return false;
+      const family = formatForSport(group.sport);
+      if (family !== 'team' && family !== 'duel') return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  get hasScopedMatchRankingContract(): boolean {
+    return Array.isArray(this.competition?.sportStandings);
+  }
+
   /** Include the race-specific panel even before the first classified finish. */
   get raceRankingGroups(): CommunityRaceStandingGroup[] {
     return this.selected && this.competition
