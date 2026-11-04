@@ -963,11 +963,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   hasRaceLaps(entries: readonly TournamentRaceEntry[]): boolean {
-    return entries.some(entry => entry.lapsCompleted != null);
+    return entries.some(entry => Number.isSafeInteger(entry.lapsCompleted)
+      && entry.lapsCompleted! >= 0);
   }
 
   hasRaceBestLap(entries: readonly TournamentRaceEntry[]): boolean {
-    return entries.some(entry => entry.bestLapSeconds != null);
+    return entries.some(entry => typeof entry.bestLapSeconds === 'number'
+      && Number.isFinite(entry.bestLapSeconds) && entry.bestLapSeconds > 0);
   }
 
   orderedKartingRaceEntries(entries: readonly TournamentRaceEntry[]): TournamentRaceEntry[] {
