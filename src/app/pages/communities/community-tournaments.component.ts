@@ -3076,9 +3076,8 @@ export class CommunityTournamentsComponent implements OnChanges {
         || !this.teamProfileMatches.some(item => item.id === game.id
           && item.homeTeamId === game.homeTeamId && item.awayTeamId === game.awayTeamId)
         || (game.homeTeamId !== team.id && game.awayTeamId !== team.id)
-        || typeof game.homeScore !== 'number' || typeof game.awayScore !== 'number'
-        || !Number.isFinite(game.homeScore) || !Number.isFinite(game.awayScore)
-        || game.homeScore < 0 || game.awayScore < 0) return null;
+        || !Number.isSafeInteger(game.homeScore) || !Number.isSafeInteger(game.awayScore)
+        || game.homeScore! < 0 || game.awayScore! < 0) return null;
     const own = game.homeTeamId === team.id ? game.homeScore : game.awayScore;
     const rival = game.homeTeamId === team.id ? game.awayScore : game.homeScore;
     return own > rival ? 'WIN' : own < rival ? 'LOSS' : 'DRAW';
