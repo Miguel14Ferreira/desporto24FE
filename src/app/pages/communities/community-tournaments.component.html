@@ -830,15 +830,12 @@
               }
               @if (teamProfileHeadToHead; as headToHead) {
                 <section class="team-page-group-overview"
-                  [attr.aria-label]="'communities.tournaments.teamPage.headToHeadTitle' | t:{team:headToHead.opponentName}">
+                  [attr.aria-label]="('communities.tournaments.teamPage.opponentFilter' | t) + ': ' + headToHead.opponentName">
                   <header class="team-page-group-heading">
                     <div>
-                      <span class="team-page-eyebrow">{{ 'communities.tournaments.teamPage.headToHeadScope' | t }}</span>
-                      <h4>{{ 'communities.tournaments.teamPage.headToHeadTitle' | t:{team:headToHead.opponentName} }}</h4>
+                      <span class="team-page-eyebrow">{{ 'communities.tournaments.phaseUi.loadedOnly' | t }}</span>
+                      <h4>{{ 'communities.tournaments.teamPage.opponentFilter' | t }}: {{ headToHead.opponentName }}</h4>
                     </div>
-                    @if (teamProfileMatchesHasMore) {
-                      <small class="team-page-journey-partial">{{ 'communities.tournaments.teamPage.headToHeadPartial' | t }}</small>
-                    }
                   </header>
                   <div class="team-page-stat-grid">
                     <div><span>{{ 'communities.tournaments.finalUi.playedCol' | t }}</span><strong>{{ headToHead.played }}</strong></div>
