@@ -2800,6 +2800,21 @@ export class CommunityTournamentsComponent implements OnChanges {
       wins, draws, losses, pending };
   }
 
+  /** A loaded knockout opponent must also belong to this tournament's roster. */
+  teamPathOpponent(fixture: TournamentTeamMatch): TournamentTeam | undefined {
+    const ownId = this.focusedTeam?.id;
+    if (!ownId || !this.isCupFormat || this.isRelayCompetition
+        || this.selected?.status === 'DRAFT'
+        || !this.teamProfileMatches.some(game => game.id === fixture.id
+          && game.homeTeamId === fixture.homeTeamId
+          && game.awayTeamId === fixture.awayTeamId
+          && (game.homeTeamId === ownId || game.awayTeamId === ownId)))
+      return undefined;
+    const otherId = fixture.homeTeamId === ownId
+      ? fixture.awayTeamId : fixture.homeTeamId;
+    return this.teams.find(team => team.id === otherId && otherId !== ownId);
+  }
+
   /** Existing tournament roster is the only safe source for rival page links. */
   get teamProfileOpponentTeam(): TournamentTeam | undefined {
     const id = this.teamProfileOpponentId;

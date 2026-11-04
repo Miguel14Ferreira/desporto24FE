@@ -1241,6 +1241,37 @@ describe('Community tournaments management', () => {
       expect(component.focusedTeamJourney.knockoutPath).toEqual([]);
     });
 
+    it('links each published knockout opponent only to a real tournament team page', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      const rival={...team,id:41,name:'Azuis'};
+      component.teams=[team,rival];
+      const game={id:85,roundNumber:1,groupNumber:null,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:41,awayTeamName:'Azuis',
+        status:'SCHEDULED' as const};
+      component.teamProfileMatches=[game];
+      expect(component.teamPathOpponent(game)?.id).toBe(41);
+      const reverse={...game,id:86,homeTeamId:41,homeTeamName:'Azuis',
+        awayTeamId:40,awayTeamName:'Verdes'};
+      component.teamProfileMatches.push(reverse);
+      expect(component.teamPathOpponent(reverse)?.id).toBe(41);
+      expect(component.teamPathOpponent({...game,id:999})).toBeUndefined();
+      expect(component.teamPathOpponent({...game,awayTeamId:99})).toBeUndefined();
+      component.teams=[team];
+      expect(component.teamPathOpponent(game)).toBeUndefined();
+      component.teams=[team,rival];
+      component.teamPageId=42;
+      expect(component.teamPathOpponent(game)).toBeUndefined();
+      component.teamPageId=40;
+      component.selected={...teamDraft,status:'DRAFT',format:'GROUP_KNOCKOUT'};
+      expect(component.teamPathOpponent(game)).toBeUndefined();
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      expect(component.teamPathOpponent(game)).toBeUndefined();
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT',
+        scoringMode:'RELAY_BEST_TIME'};
+      expect(component.teamPathOpponent(game)).toBeUndefined();
+    });
+
     it('opens the next verified team-page fixture without exposing unconfirmed rounds', () => {
       const won={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
         awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,homeScore:2,awayScore:0};

@@ -36,6 +36,9 @@
 :host .tournaments .team-page-path-totals strong{font-variant-numeric:tabular-nums;font-size:.92rem;color:#f0fff5;}
 :host .tournaments .team-page-path-steps{display:grid;gap:0;min-width:0;}
 :host .tournaments .team-page-path-step{display:grid;min-width:0;}
+:host .tournaments .team-page-path-opponent{justify-self:start;max-width:100%;margin:6px 10px 10px;padding:4px 8px;border:1px solid rgba(104,219,183,.35);border-radius:8px;color:#baf2d9;text-decoration:none;font-size:.72rem;overflow-wrap:anywhere;}
+:host .tournaments .team-page-path-opponent:hover{border-color:#97f6cb;background:rgba(19,89,74,.5);}
+:host .tournaments .team-page-path-opponent:focus-visible{outline:2px solid #abffd6;outline-offset:2px;}
 :host .tournaments .team-page-path-match{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 13px;text-align:left;align-items:center;min-width:0;padding:12px 15px;border:1px solid rgba(101,207,175,.3);border-radius:12px;background:linear-gradient(115deg,rgba(14,70,70,.76),rgba(9,47,63,.9));color:#effff9;cursor:pointer;}
 :host .tournaments .team-page-path-match:hover{border-color:rgba(105,235,184,.8);background:rgba(19,87,78,.84);}
 :host .tournaments .team-page-path-match:focus-visible{outline:2px solid #abffd6;outline-offset:3px;}

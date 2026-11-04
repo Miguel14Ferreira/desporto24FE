@@ -786,6 +786,14 @@
                                 }
                               </span>
                             </button>
+                            @if (teamPathOpponent(step.fixture); as opponent) {
+                              <a class="team-page-path-opponent"
+                                [routerLink]="['/menu/communities', community.id]"
+                                [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:opponent.id}"
+                                [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:opponent.name}">
+                                {{ 'communities.tournaments.teamPage.opponentFilter' | t }}: {{ opponent.name }} ↗
+                              </a>
+                            }
                             @if (step.confirmedNextFixture; as nextFixture) {
                               <button type="button" class="team-page-path-link team-page-path-next"
                                 (click)="showTeamProfileFixture(nextFixture)"
