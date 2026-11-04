@@ -842,15 +842,17 @@
                           (createRequested)="createSeason()"
                         ></app-community-season-create-form>
                       }
-                      @if (activeSeason()) {
-                        <app-community-active-season-card
-                          [name]="activeSeason()?.name || ''"
-                          [confirming]="closeSeasonConfirming"
-                          [saving]="seasonSaving"
-                          (requestClose)="requestCloseSeason()"
-                          (confirmClose)="closeActiveSeason()"
-                          (cancelClose)="cancelCloseSeason()"
-                        ></app-community-active-season-card>
+                      @for (season of competition?.seasons || []; track season.id) {
+                        @if (season.active) {
+                          <app-community-active-season-card
+                            [name]="season.name + (season.sport ? ' · ' + season.sport : '')"
+                            [confirming]="closeSeasonConfirming && closingSeasonId === season.id"
+                            [saving]="seasonSaving"
+                            (requestClose)="requestCloseSeason(season.id)"
+                            (confirmClose)="closeActiveSeason(season.id)"
+                            (cancelClose)="cancelCloseSeason()"
+                          ></app-community-active-season-card>
+                        }
                       }
                     }
 
