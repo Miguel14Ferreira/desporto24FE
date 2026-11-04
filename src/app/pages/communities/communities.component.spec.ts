@@ -738,6 +738,59 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.showLegacyMatchRanking).toBeTrue();
   });
 
+  it('saves scoring for the selected team sport without changing community-wide points', () => {
+    component.selected = { id: 7, sports: ['Futebol', 'Futsal'], sport: 'Futebol' } as any;
+    component.selectedSeasonId = 44;
+    component.competition = {
+      activeSeasonId: 44,
+      settings: {winPoints: 3, drawPoints: 1, lossPoints: 0},
+      sportStandings: [
+        {sport: 'Futebol', standings: [], scoring: {
+          sport: 'Futebol', winPoints: 3, drawPoints: 1, lossPoints: 0
+        }},
+        {sport: 'Futsal', standings: [], scoring: {
+          sport: 'Futsal', winPoints: 2, drawPoints: 1, lossPoints: 0
+        }}
+      ]
+    } as any;
+    component.sportPointsSaving = false;
+    const updateSportPointsRule = jasmine.createSpy('updateSportPointsRule')
+      .and.returnValue(of({sport: 'Futsal', winPoints: 4, drawPoints: 2, lossPoints: 0}));
+    (component as any).communityService = {updateSportPointsRule};
+    spyOn(component, 'loadCompetition');
+    component.editSportPoints(component.scopedMatchRankingGroups[1]);
+    expect(component.sportPointsDraft).toEqual({winPoints: 2, drawPoints: 1, lossPoints: 0});
+    component.sportPointsDraft.winPoints = 4;
+    component.sportPointsDraft.drawPoints = 2;
+    component.saveSportPoints();
+    expect(updateSportPointsRule).toHaveBeenCalledOnceWith(7, 44, {
+      sport: 'Futsal', winPoints: 4, drawPoints: 2, lossPoints: 0
+    });
+    expect(component.sportPointsEditor).toBeNull();
+    expect(component.loadCompetition).toHaveBeenCalledWith(component.selected!, 44);
+    expect(component.competition?.settings.winPoints).toBe(3);
+  });
+
+  it('rejects invalid team points and never offers generic scoring for races', () => {
+    component.selected = { id: 7, sports: ['Futebol', 'Karting'], sport: 'Futebol' } as any;
+    component.selectedSeasonId = 44;
+    component.competition = {
+      activeSeasonId: 44,
+      settings: {winPoints: 3, drawPoints: 1, lossPoints: 0}
+    } as any;
+    component.sportPointsSaving = false;
+    component.sportPointsEditor = 'Futebol';
+    component.sportPointsDraft = {winPoints: -1, drawPoints: 1, lossPoints: 0};
+    const updateSportPointsRule = jasmine.createSpy('updateSportPointsRule');
+    (component as any).communityService = {updateSportPointsRule};
+    component.saveSportPoints();
+    expect(updateSportPointsRule).not.toHaveBeenCalled();
+    expect(component.sportPointsError).toBeTruthy();
+    expect(component.canEditSportPoints('Karting')).toBeFalse();
+    component.selectedSeasonId = 43;
+    expect(component.canEditSportPoints('Futebol')).toBeFalse();
+  });
+
   it('does not save football scoring fields for a Karting-only community', () => {
     const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
       .and.returnValue(of({ rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 }));
