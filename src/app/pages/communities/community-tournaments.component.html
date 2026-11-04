@@ -2104,8 +2104,22 @@
                     @if (groups.knockoutStarted) {
                       <p class="t-muted">{{ 'communities.tournaments.finalUi.groupsComplete' | t }}</p>
                     }
+                    @if (groups.groups.length > 1) {
+                      <nav class="team-group-switcher" [attr.aria-label]="'communities.tournaments.finalUi.groupStandings' | t">
+                        @for (group of groups.groups; track group.groupNumber) {
+                          <button type="button" class="team-group-switch"
+                            [class.is-active]="selectedTeamGroupNumber === group.groupNumber"
+                            [attr.aria-pressed]="selectedTeamGroupNumber === group.groupNumber"
+                            (click)="showTeamStandingsGroup(group.groupNumber)">
+                            <strong>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(group.groupNumber)} }}</strong>
+                            <small>{{ group.standings.length }} {{ 'communities.tournaments.teamUi.teamsShort' | t }}</small>
+                          </button>
+                        }
+                      </nav>
+                    }
                     @for (group of groups.groups; track group.groupNumber) {
-                      <details class="team-group-panel" [open]="group.groupNumber === 1">
+                      @if (selectedTeamGroupNumber === group.groupNumber) {
+                      <details class="team-group-panel" open [attr.data-team-group-number]="group.groupNumber">
                         <summary class="team-group-heading">
                           <strong>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group: groupLabel(group.groupNumber)} }}</strong>
                           <span>{{ group.standings.length }} {{ 'communities.tournaments.teamUi.teamsShort' | t }}</span>
@@ -2182,6 +2196,7 @@
                         </div>
                       }
                       </details>
+                      }
                     }
                   }
                 </section>

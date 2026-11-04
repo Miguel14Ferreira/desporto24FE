@@ -2258,6 +2258,56 @@ describe('Community tournaments management', () => {
       expect(component.teamGroupHighlights).toEqual([]);
     });
 
+    it('keeps group standings isolated and jumps only to published groups', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:4};
+      component.teamGroups={tournamentId:19,knockoutStarted:false,groups:[
+        {groupNumber:2,standings:[{position:1,teamId:41,teamName:'Azuis',played:2,
+          won:1,drawn:1,lost:0,goalsFor:3,goalsAgainst:1,goalDifference:2,points:4}]},
+        {groupNumber:4,standings:[]}
+      ]};
+      expect(component.selectedTeamGroupNumber).toBe(2);
+      const panel=document.createElement('section');
+      const details=document.createElement('details');
+      details.dataset['teamGroupNumber']='4';
+      const heading=document.createElement('summary');
+      details.appendChild(heading);
+      panel.appendChild(details);
+      const scroll=jasmine.createSpy('scrollIntoView');
+      details.scrollIntoView=scroll;
+      const focus=spyOn(heading,'focus');
+      (component as any).teamTournamentStandings={nativeElement:panel};
+      component.showTeamStandingsGroup(4);
+      expect(component.selectedTeamGroupNumber).toBe(4);
+      expect(details.open).toBeTrue();
+      expect(scroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'start'});
+      expect(focus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.showTeamStandingsGroup(3);
+      component.showTeamStandingsGroup(NaN);
+      expect(component.selectedTeamGroupNumber).toBe(4);
+      expect(scroll).toHaveBeenCalledTimes(1);
+      component.teamGroups={...component.teamGroups,tournamentId:29};
+      expect(component.selectedTeamGroupNumber).toBeNull();
+      component.teamGroups={tournamentId:19,knockoutStarted:false,groups:[
+        {groupNumber:2,standings:[]}
+      ]};
+      expect(component.selectedTeamGroupNumber).toBe(2);
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      expect(component.selectedTeamGroupNumber).toBeNull();
+      component.showTeamStandingsGroup(2);
+      expect(scroll).toHaveBeenCalledTimes(1);
+    });
+
+    it('resets the selected group on tournament changes', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamGroups={tournamentId:19,knockoutStarted:false,groups:[
+        {groupNumber:1,standings:[]},{groupNumber:2,standings:[]}
+      ]};
+      component.showTeamStandingsGroup(2);
+      expect(component.selectedTeamGroupNumber).toBe(2);
+      component.selectTournament({...teamDraft,id:29,format:'GROUP_KNOCKOUT',groupCount:2});
+      expect(component.selectedTeamGroupNumber).toBeNull();
+    });
+
     it('summarizes only loaded group fixtures and keeps groups independent', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
       component.teamGroups={tournamentId:19,knockoutStarted:false,groups:[

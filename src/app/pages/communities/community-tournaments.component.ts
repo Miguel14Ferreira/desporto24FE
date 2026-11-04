@@ -201,6 +201,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamPhaseFilter = 'ALL';
   knockoutFocusTeamId: number | null = null;
   selectedKnockoutRound: number | null = null;
+  /** Compact group navigation; never changes the official group standings. */
+  private requestedTeamGroupNumber: number | null = null;
   readonly knockoutCompactLimit = 4;
   readonly knockoutCompactThreshold = 6;
   expandedKnockoutRounds = new Set<number>();
@@ -1182,6 +1184,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamPhaseFilter = 'ALL';
       this.knockoutFocusTeamId = null;
       this.selectedKnockoutRound = null;
+      this.requestedTeamGroupNumber = null;
       this.expandedKnockoutRounds.clear();
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
@@ -1563,6 +1566,31 @@ export class CommunityTournamentsComponent implements OnChanges {
         sections.push('standings');
     }
     return sections;
+  }
+
+  /** Show one backend-defined group at a time; no teams or positions are recalculated. */
+  get selectedTeamGroupNumber(): number | null {
+    if (!this.isGroupKnockout || this.isRelayCompetition || !this.isMember
+        || !this.teamGroups || this.teamGroupsError
+        || this.teamGroups.tournamentId !== this.selected?.id) return null;
+    const groups = this.teamGroups.groups;
+    return groups.some(group => group.groupNumber === this.requestedTeamGroupNumber)
+      ? this.requestedTeamGroupNumber : groups[0]?.groupNumber ?? null;
+  }
+
+  showTeamStandingsGroup(groupNumber: number): void {
+    if (!Number.isSafeInteger(groupNumber) || groupNumber < 1 || this.selected?.status === 'DRAFT'
+        || !this.teamGroups?.groups.some(group => group.groupNumber === groupNumber)
+        || this.selectedTeamGroupNumber === null) return;
+    this.requestedTeamGroupNumber = groupNumber;
+    this.changeDetector.detectChanges();
+    const details = this.teamTournamentStandings?.nativeElement
+      .querySelector<HTMLDetailsElement>(`[data-team-group-number="${groupNumber}"]`);
+    if (details) {
+      details.open = true;
+      details.scrollIntoView({behavior:'smooth',block:'start'});
+      details.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
+    }
   }
 
   /** Scroll and keyboard focus stay within the selected tournament and actual DOM. */
@@ -2080,6 +2108,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamPhaseFilter = 'ALL';
     this.knockoutFocusTeamId = null;
     this.selectedKnockoutRound = null;
+    this.requestedTeamGroupNumber = null;
     this.expandedKnockoutRounds.clear();
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;

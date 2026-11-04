@@ -847,7 +847,13 @@
 :host .tournaments .team-group-panel>summary:focus-visible{outline:2px solid #a0ffdf;outline-offset:3px;}
 :host .tournaments .team-phase-select{display:flex;align-items:center;gap:8px;color:#d4eee9;font-size:.8rem;font-weight:750;}
 :host .tournaments .team-phase-select select{width:min(100%,260px);min-width:120px;border:1px solid rgba(88,222,181,.43);border-radius:9px;background:#0a3944;color:#f0fff9;padding:8px;}
-:host .tournaments .team-group-panel{min-width:0;border:1px solid rgba(65,183,170,.25);border-radius:12px;overflow:hidden;}
+:host .tournaments .team-group-switcher{display:flex;flex-wrap:wrap;gap:8px;min-width:0;}
+:host .tournaments .team-group-switch{display:grid;gap:3px;min-width:110px;padding:10px 14px;border-radius:11px;border:1px solid rgba(65,183,170,.34);background:rgba(7,52,63,.64);text-align:left;color:#eafff8;cursor:pointer;font:inherit;}
+:host .tournaments .team-group-switch strong{font-size:.83rem;}
+:host .tournaments .team-group-switch small{font-size:.72rem;color:#a6cbd2;}
+:host .tournaments .team-group-switch.is-active{border-color:#7de7c6;background:rgba(26,115,94,.34);}
+:host .tournaments .team-group-switch:focus-visible{outline:2px solid #a0ffdf;outline-offset:3px;}
+:host .tournaments .team-group-panel{min-width:0;border:1px solid rgba(65,183,170,.25);border-radius:12px;overflow:hidden;scroll-margin-top:86px;}
 :host .tournaments .team-group-panel>summary{cursor:pointer;padding:12px 16px;background:rgba(7,52,63,.68);}
 :host .tournaments .team-group-panel>summary strong{color:#effff9;}
 :host .tournaments .team-group-panel[open]>summary{border-bottom:1px solid rgba(65,183,170,.25);}
