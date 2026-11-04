@@ -1238,7 +1238,7 @@ describe('Community tournaments management', () => {
       component.teamProfileMatchesHasMore=false;
       expect(component.focusedTeamJourney.knockoutPath[0].state).toBe('ELIMINATED');
       component.selected={...component.selected,format:'LEAGUE'};
-      expect(component.focusedTeamJourney.knockoutProgress.published).toBe(0);
+      expect(component.focusedTeamJourney.knockoutPath).toEqual([]);
     });
 
     it('opens the next verified team-page fixture without exposing unconfirmed rounds', () => {
