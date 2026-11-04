@@ -11,7 +11,7 @@ export function orderedKartingRaceEntries(entries: readonly TournamentRaceEntry[
       const a = left.entry, b = right.entry;
       const rank = (entry: TournamentRaceEntry): number => {
         if (entry.raceDisqualified) return 2;
-        if (entry.finishPosition == null || !Number.isInteger(entry.finishPosition)
+        if (entry.finishPosition == null || !Number.isSafeInteger(entry.finishPosition)
             || entry.finishPosition < 1) return 1;
         return 0;
       };
@@ -30,6 +30,7 @@ export function orderedKartingRaceEntries(entries: readonly TournamentRaceEntry[
 export function formatKartingDuration(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value) || value < 0) return '—';
   const totalMilliseconds = Math.round(value * 1000);
+  if (!Number.isSafeInteger(totalMilliseconds)) return '—';
   const hours = Math.floor(totalMilliseconds / 3_600_000);
   const minutes = Math.floor(totalMilliseconds / 60_000) % 60;
   const seconds = Math.floor(totalMilliseconds / 1000) % 60;
@@ -42,7 +43,7 @@ export function formatKartingDuration(value: number | null | undefined): string 
 /** Same per-race points calculation as CommunityRaceStandings in the backend. */
 export function kartingRaceAward(entry: TournamentRaceEntry, pointsByPlace: readonly number[]): number {
   const place = entry.finishPosition;
-  if (entry.raceDisqualified || place == null || !Number.isInteger(place) || place < 1) return 0;
+  if (entry.raceDisqualified || place == null || !Number.isSafeInteger(place) || place < 1) return 0;
   const base = pointsByPlace[place - 1] ?? 0;
   const rawPenalty = entry.racePenaltyPoints ?? 0;
   // Malformed or incomplete API values must never produce NaN in the UI.
