@@ -3942,6 +3942,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.seasonCreateError');
       return;
     }
+    // An old draft must not create a season for a sport removed from the community.
+    if (this.seasonSport && !this.communitySports(this.selected).includes(this.seasonSport)) {
+      this.errorMessage = t('feedback.communities.seasonCreateError');
+      return;
+    }
 
     this.seasonSaving = true;
     this.errorMessage = '';
