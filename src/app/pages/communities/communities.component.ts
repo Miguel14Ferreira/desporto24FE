@@ -236,6 +236,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintInterruptionSaving = false;
   sprintInterruptionError = '';
   private sprintBracketRequestVersion = 0;
+  sportPointsEditor: string | null = null;
+  sportPointsDraft = { winPoints: 3, drawPoints: 1, lossPoints: 0 };
+  sportPointsSaving = false;
+  sportPointsError = '';
+  sportPointsSuccess = '';
   raceRuleSport: string | null = null;
   raceRulePoints = '25,18,15,12,10,8,6,4,2,1';
   raceRuleSaving = false;
@@ -1990,7 +1995,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   /** API-backed W/D/L standings, isolated by a sport currently selected here.
    * Older backends may omit the field entirely; retain legacy rendering then. */
-  get scopedMatchRankingGroups(): { sport: string; standings: CommunityStanding[] }[] {
+  get scopedMatchRankingGroups(): NonNullable<CommunityCompetitionOverview['sportStandings']> {
     if (!this.selected || !this.competition?.sportStandings) return [];
     const normalize = (sport: string) => sport.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -2024,6 +2029,51 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   get showLegacyMatchRanking(): boolean {
     return !this.hasScopedMatchRankingContract
       || (this.showLegacyAggregateStats && !this.scopedMatchRankingGroups.length);
+  }
+
+  canEditSportPoints(sport: string): boolean {
+    return formatForSport(sport) === 'team'
+      && this.canManage()
+      && this.selectedSeasonId != null
+      && this.selectedSeasonId === this.competition?.activeSeasonId;
+  }
+
+  editSportPoints(group: NonNullable<CommunityCompetitionOverview['sportStandings']>[number]): void {
+    if (!this.canEditSportPoints(group.sport) || this.sportPointsSaving) return;
+    this.sportPointsEditor = group.sport;
+    this.sportPointsDraft = {
+      winPoints: group.scoring?.winPoints ?? this.competition?.settings.winPoints ?? 3,
+      drawPoints: group.scoring?.drawPoints ?? this.competition?.settings.drawPoints ?? 1,
+      lossPoints: group.scoring?.lossPoints ?? this.competition?.settings.lossPoints ?? 0
+    };
+    this.sportPointsError = '';
+    this.sportPointsSuccess = '';
+  }
+
+  saveSportPoints(): void {
+    if (!this.selected || !this.sportPointsEditor || this.sportPointsSaving
+        || !this.canEditSportPoints(this.sportPointsEditor)) return;
+    const values = Object.values(this.sportPointsDraft);
+    if (values.some(value => !Number.isSafeInteger(value) || value < 0 || value > 1000)) {
+      this.sportPointsError = t('communities.tournaments.classificationUi.unknown.detail');
+      return;
+    }
+    const communityId = this.selected.id;
+    const seasonId = this.selectedSeasonId!;
+    const sport = this.sportPointsEditor;
+    this.sportPointsSaving = true;
+    this.sportPointsError = '';
+    this.communityService.updateSportPointsRule(communityId, seasonId, {
+      sport, ...this.sportPointsDraft
+    }).pipe(timeout(10_000), finalize(() => this.sportPointsSaving = false)).subscribe({
+      next: () => {
+        if (this.selected?.id !== communityId || this.selectedSeasonId !== seasonId) return;
+        this.sportPointsEditor = null;
+        this.sportPointsSuccess = t('communities.saveCompetition');
+        this.loadCompetition(this.selected, seasonId);
+      },
+      error: () => { this.sportPointsError = t('feedback.communities.competitionSettingsError'); }
+    });
   }
 
   /** Include the race-specific panel even before the first classified finish. */
