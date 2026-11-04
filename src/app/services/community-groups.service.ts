@@ -394,6 +394,13 @@ export class CommunityGroupsService {
     );
   }
 
+  updateSportPointsRule(communityId: number, seasonId: number,
+    request: { sport: string; winPoints: number; drawPoints: number; lossPoints: number }
+  ): Observable<{ sport: string; winPoints: number; drawPoints: number; lossPoints: number }> {
+    return this.http.put<{ sport: string; winPoints: number; drawPoints: number; lossPoints: number }>(
+      this.url + '/' + communityId + '/seasons/' + seasonId + '/sport-points', request);
+  }
+
   updateRaceRule(communityId: number, seasonId: number,
     request: { sport: string; pointsByPlace: string }
   ): Observable<unknown> {
