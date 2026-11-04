@@ -827,7 +827,7 @@
                     </div>
 
                     @if (canManage()) {
-                      @if (!activeSeason()) {
+                      @if (canCreateAdditionalSeason) {
                         <app-community-season-create-form
                           [name]="seasonName"
                           [startsAt]="seasonStartsAt"
@@ -839,7 +839,8 @@
                           (sportChange)="seasonSport = $event"
                           (createRequested)="createSeason()"
                         ></app-community-season-create-form>
-                      } @else {
+                      }
+                      @if (activeSeason()) {
                         <app-community-active-season-card
                           [name]="activeSeason()?.name || ''"
                           [confirming]="closeSeasonConfirming"
