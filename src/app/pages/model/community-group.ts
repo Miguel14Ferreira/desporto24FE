@@ -248,6 +248,9 @@ export interface CommunityCompetitionOverview {
   standings: CommunityStanding[];
   racketStandings?: CommunityRacketStandingGroup[];
   raceStandings?: CommunityRaceStandingGroup[];
+  /** New backend contract: W/D/L statistics scoped to one selected sport.
+   * Optional until all deployments expose sport-scoped responses. */
+  sportStandings?: { sport: string; standings: CommunityStanding[] }[];
 }
 
 export interface CommunityRoundEntryDraft {
