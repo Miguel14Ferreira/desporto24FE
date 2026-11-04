@@ -7,9 +7,9 @@
         <tbody>
           @for (driver of standings; track driver.playerId) {
             <tr>
-              <td>{{ driver.position }}{{ 'communities.karting.ordinalSuffix' | t }}</td><td>{{ driver.fullName }}</td>
-              <td>{{ driver.races }}</td><td>{{ driver.wins }}</td><td>{{ driver.podiums }}</td>
-              <td><strong>{{ driver.championshipPoints ?? '—' }}</strong></td>
+              <td>{{ displayPosition(driver.position) }}{{ displayPosition(driver.position) === '—' ? '' : ('communities.karting.ordinalSuffix' | t) }}</td><td>{{ driver.fullName }}</td>
+              <td>{{ displayCount(driver.races) }}</td><td>{{ displayCount(driver.wins) }}</td><td>{{ displayCount(driver.podiums) }}</td>
+              <td><strong>{{ displayPoints(driver.championshipPoints) }}</strong></td>
             </tr>
           }
         </tbody>
