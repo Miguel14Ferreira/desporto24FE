@@ -1327,6 +1327,39 @@ describe('Community tournaments management', () => {
       expect(component.selectedKnockoutRound).toBe(3);
     });
 
+    it('shows one published bracket round at a time and restores all without changing fixtures', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED',homeScore:2,awayScore:1},
+        {id:71,roundNumber:1,homeTeamId:42,homeTeamName:'Pretos',
+          awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED'},
+        {id:72,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED'},
+        {id:73,roundNumber:3,homeTeamId:42,homeTeamName:'Pretos',
+          awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED'}
+      ];
+      const published=component.knockoutBracket;
+      const snapshot=JSON.stringify(component.teamMatches);
+      expect(component.shownKnockoutRounds(published).map(r=>r.round)).toEqual([1,2,3]);
+      component.teamPhaseFilter='round-1';
+      component.teamMatchFilter='COMPLETED';
+      component.jumpToKnockoutRound(2);
+      expect(component.shownKnockoutRounds(published).map(r=>r.round)).toEqual([2]);
+      component.jumpToKnockoutRound(3);
+      expect(component.shownKnockoutRounds(published).map(r=>r.round)).toEqual([3]);
+      expect(component.teamPhaseFilter).toBe('round-1');
+      expect(component.teamMatchFilter).toBe('COMPLETED');
+      expect(JSON.stringify(component.teamMatches)).toBe(snapshot);
+      component.showAllKnockoutRounds();
+      expect(component.selectedKnockoutRound).toBeNull();
+      expect(component.shownKnockoutRounds(published).map(r=>r.round)).toEqual([1,2,3]);
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      component.jumpToKnockoutRound(2);
+      component.showAllKnockoutRounds();
+      expect(component.selectedKnockoutRound).toBeNull();
+    });
+
     it('clears selected knockout round when changing competitions', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       component.teamMatches=[

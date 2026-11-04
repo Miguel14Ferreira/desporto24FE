@@ -1781,6 +1781,18 @@ export class CommunityTournamentsComponent implements OnChanges {
       index < this.knockoutCompactLimit || this.isKnockoutTeamFocused(item.game));
   }
 
+  /** Filter bracket columns without altering any loaded fixture or phase filter. */
+  shownKnockoutRounds<T extends {round: number}>(rounds: T[]): T[] {
+    return this.selectedKnockoutRound === null
+      ? rounds : rounds.filter(item => item.round === this.selectedKnockoutRound);
+  }
+
+  showAllKnockoutRounds(): void {
+    if (!this.isCupFormat || this.isRelayCompetition) return;
+    this.selectedKnockoutRound = null;
+    this.changeDetector.markForCheck();
+  }
+
   toggleKnockoutRound(round: number): void {
     if (!Number.isSafeInteger(round) || !this.isCupFormat || this.isRelayCompetition
         || !this.knockoutBracket.some(stage =>

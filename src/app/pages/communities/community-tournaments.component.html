@@ -1843,6 +1843,12 @@
                         [attr.aria-label]="'communities.tournaments.phaseUi.title' | t">
                         <strong>{{ 'communities.tournaments.phaseUi.title' | t }}</strong>
                         <div class="team-knockout-round-nav-links">
+                          <button type="button" class="team-knockout-round-jump"
+                            [class.is-selected]="selectedKnockoutRound === null"
+                            [attr.aria-pressed]="selectedKnockoutRound === null"
+                            (click)="showAllKnockoutRounds()">
+                            {{ 'communities.tournaments.phaseUi.all' | t }}
+                          </button>
                           @for (round of bracket; track round.round) {
                             <button type="button" class="team-knockout-round-jump"
                               [class.is-selected]="selectedKnockoutRound === round.round"
@@ -1859,7 +1865,7 @@
                     <div class="team-knockout-scroll" tabindex="0"
                       role="region" [attr.aria-label]="'communities.tournaments.bracketUi.title' | t">
                       <div class="team-knockout-columns">
-                        @for (round of bracket; track round.round) {
+                        @for (round of shownKnockoutRounds(bracket); track round.round) {
                           <section class="team-knockout-round"
                             [attr.data-knockout-round]="round.round"
                             [class.is-selected-round]="selectedKnockoutRound === round.round">
