@@ -927,12 +927,23 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
    * Shared legacy seasons retain the complete community catalogue. */
   /** Historical ranking filter is never a destination for new rounds. */
   get roundTargetSeasonId(): number | null {
-    return this.activeSeason()?.id ?? null;
+    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    if (active.length === 1) return active[0].id;
+    const sport = this.newRoundSport;
+    if (!sport) return null;
+    const normalized = (value: string): string => value.normalize('NFD')
+      .replace(/[\\u0300-\\u036f]/g, '').trim().toLowerCase();
+    const matches = active.filter(season => season.sport &&
+      normalized(season.sport) === normalized(sport));
+    return matches.length === 1 ? matches[0].id : null;
   }
 
   get roundEligibleSports(): string[] {
     const available = this.communityRoundSports;
-    const sport = this.activeSeason()?.sport;
+    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    // Per-sport seasons must not hide other sports in a multi-sport community.
+    if (active.length > 1) return available;
+    const sport = active[0]?.sport;
     if (!sport) return available;
     const normalized = (value: string): string => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -5992,7 +6003,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   activeSeason(): CommunitySeason | undefined {
-    return this.activeCommunitySeason;
+    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    if (this.selectedSeasonId != null) {
+      const selected = active.find(season => season.id === this.selectedSeasonId);
+      if (selected) return selected;
+    }
+    return active.length === 1 ? active[0] : undefined;
   }
 
   trophies(): CommunitySeason[] {
