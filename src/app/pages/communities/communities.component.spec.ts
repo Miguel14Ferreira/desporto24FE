@@ -723,6 +723,19 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.sportPointsDraft).toEqual({winPoints: 2, drawPoints: 1, lossPoints: 0});
   });
 
+  it('does not create a season for a sport removed from a multi-sport community', () => {
+    component.selected = { id: 7, sport: 'Futebol', sports: ['Futebol', 'Ténis'] } as any;
+    component.seasonName = '2026/27';
+    component.seasonSport = 'Karting';
+    component.seasonSaving = false;
+    const createSeason = jasmine.createSpy('createSeason');
+    (component as any).communityService = { createSeason };
+    component.createSeason();
+    expect(createSeason).not.toHaveBeenCalled();
+    expect(component.seasonSaving).toBeFalse();
+    expect(component.errorMessage).toBeTruthy();
+  });
+
   it('uses independently-scoped standings when the backend provides them', () => {
     component.selected = { id: 7, sport: 'Futebol',
       sports: ['Futebol', 'Futsal', 'Karting'] } as any;
