@@ -2566,8 +2566,10 @@ describe('Community tournaments management', () => {
         of({matches:[fixture(702),fixture(703),fixture(703)],page:1,hasMore:false})
       );
       component.loadTeamMatches(true);
+      component.teamScoreDrafts[702]={home:4,away:2};
       component.loadTeamMatches();
       expect(component.teamMatches.map(match=>match.id)).toEqual([701,702,703]);
+      expect(component.teamScoreDrafts[702]).toEqual({home:4,away:2});
       expect(component.teamMatchesPage).toBe(1);
       expect(component.teamMatchesHasMore).toBeFalse();
       expect(api.teamMatches).toHaveBeenCalledTimes(2);
