@@ -1996,6 +1996,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       : [];
   }
 
+  /** Only display racket standings for sports still selected by this community.
+   * Historic API records remain untouched; removing a sport must not render
+   * its results as if they belonged to another selected modality. */
+  get racketRankingGroups(): CommunityRacketStandingGroup[] {
+    if (!this.selected || !this.competition) return [];
+    const normalized = (sport: string): string =>
+      sport.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const allowed = new Set(this.communitySports(this.selected).map(normalized));
+    return (this.competition.racketStandings ?? []).filter(group =>
+      allowed.has(normalized(group.sport)) && formatForSport(group.sport) === 'duel');
+  }
+
   /** Modalities without a supported race standings contract get a neutral
    * explanation, never football goals/assists or speculative rankings. */
   get specializedStatsUnavailableSports(): string[] {
