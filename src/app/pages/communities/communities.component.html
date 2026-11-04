@@ -2194,14 +2194,14 @@
                         }
 
                         <div class="round-meta-form">
-                          @if (communityRoundSports.length > 1 && !canRecordInlineSpeedWithoutRankings) {
+                          @if (roundEligibleSports.length > 1 && !canRecordInlineSpeedWithoutRankings) {
                             <label>
                               <span>{{ 'communities.roundSport' | t }}</span>
                               <select [(ngModel)]="roundSportDraft"
                                 (ngModelChange)="roundEventTypeDraft = ''; roundDisciplineDraft = ''; resetVolleyballSets()"
                                 [attr.aria-label]="'communities.roundSport' | t">
                                 <option value="">{{ 'communities.selectRoundSport' | t }}</option>
-                                @for (sport of communityRoundSports; track sport) {
+                                @for (sport of roundEligibleSports; track sport) {
                                   <option [value]="sport">{{ sport }}</option>
                                 }
                               </select>
