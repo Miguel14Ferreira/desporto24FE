@@ -38,8 +38,40 @@ describe('CommunityCompetitionSettingsComponent', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelectorAll('input[type=number]').length).toBe(3);
-    expect(root.querySelectorAll('.sport-scoring-guidance').length).toBe(1);
+    expect(root.querySelectorAll('.sport-scoring-guidance').length).toBe(2);
+    const guidance = Array.from(root.querySelectorAll<HTMLElement>('.sport-scoring-guidance'));
+    expect(guidance.map(item => item.dataset['sportFormat'])).toEqual(['team','race']);
+    expect(guidance[0].textContent).toContain('Futebol');
+    expect(guidance[1].textContent).toContain('Karting');
   });
+  it('adapts multi-sport community classification cards without duplicating sports', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('sports', [
+      'Futebol', 'Padel', 'Karting', 'Atletismo', 'Golfe', 'Surf', 'Yoga', 'Unknown Sport',
+      'Futebol', '  padel  '
+    ]);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('.sport-scoring-guidance'));
+    expect(cards.length).toBe(8);
+    expect(cards.map(card => card.dataset['sportFormat'])).toEqual([
+      'team', 'duel', 'race', 'measured', 'score', 'judged', 'activity', 'unknown'
+    ]);
+    expect(cards.map(card => card.querySelector('strong')?.textContent?.trim())).toEqual([
+      'Futebol', 'Padel', 'Karting', 'Atletismo', 'Golfe', 'Surf', 'Yoga', 'Unknown Sport'
+    ]);
+    expect(root.querySelectorAll('input[type=number]').length).toBe(3);
+  });
+
+  it('keeps pure race and judged communities free of generic match scoring', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('sports', ['Karting', 'Surf', 'Ciclismo']);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('input[type=number]').length).toBe(0);
+    expect(root.querySelectorAll('.sport-scoring-guidance').length).toBe(3);
+  });
+
   it('does not invent match scoring for unsupported and measured sports', async () => {
     const fixture = await render();
     fixture.componentRef.setInput('sports', ['Atletismo', 'Unknown Sport']);
