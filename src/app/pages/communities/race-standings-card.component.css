@@ -18,3 +18,11 @@ h6 { margin:0; }
 }
 .race-standings-section th { color: #bcd1df; font-size: .77rem; }
 .race-standings-section td strong { color: #a7f3d0; }
+
+/* The API owns final positions: never derive medals from table row order. */
+.race-standings-section tbody tr.is-podium-first { background: rgba(245, 194, 70, .11); }
+.race-standings-section tbody tr.is-podium-second { background: rgba(175, 194, 211, .10); }
+.race-standings-section tbody tr.is-podium-third { background: rgba(199, 141, 96, .10); }
+.race-standings-section tbody tr.is-podium-first td:first-child { color: #f6d47e; font-weight: 700; }
+.race-standings-section tbody tr.is-podium-second td:first-child { color: #d3dfeb; font-weight: 700; }
+.race-standings-section tbody tr.is-podium-third td:first-child { color: #e9b18b; font-weight: 700; }
