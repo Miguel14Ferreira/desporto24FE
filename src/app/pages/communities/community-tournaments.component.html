@@ -828,6 +828,27 @@
                   <p role="status">{{ 'communities.tournaments.fixturesUi.loadedSummary' | t:{shown:visibleTeamProfileMatches.length,loaded:teamProfileMatches.length} }}</p>
                 </div>
               }
+              @if (teamProfileHeadToHead; as headToHead) {
+                <section class="team-page-group-overview"
+                  [attr.aria-label]="'communities.tournaments.teamPage.headToHeadTitle' | t:{team:headToHead.opponentName}">
+                  <header class="team-page-group-heading">
+                    <div>
+                      <span class="team-page-eyebrow">{{ 'communities.tournaments.teamPage.headToHeadScope' | t }}</span>
+                      <h4>{{ 'communities.tournaments.teamPage.headToHeadTitle' | t:{team:headToHead.opponentName} }}</h4>
+                    </div>
+                    @if (teamProfileMatchesHasMore) {
+                      <small class="team-page-journey-partial">{{ 'communities.tournaments.teamPage.headToHeadPartial' | t }}</small>
+                    }
+                  </header>
+                  <div class="team-page-stat-grid">
+                    <div><span>{{ 'communities.tournaments.finalUi.playedCol' | t }}</span><strong>{{ headToHead.played }}</strong></div>
+                    <div><span>{{ 'communities.tournaments.finalUi.winsCol' | t }}</span><strong>{{ headToHead.wins }}</strong></div>
+                    <div><span>{{ 'communities.tournaments.finalUi.drawsCol' | t }}</span><strong>{{ headToHead.draws }}</strong></div>
+                    <div><span>{{ 'communities.tournaments.finalUi.lossesCol' | t }}</span><strong>{{ headToHead.losses }}</strong></div>
+                    <div><span>{{ 'communities.tournaments.fixturesUi.filterPending' | t }}</span><strong>{{ headToHead.pending }}</strong></div>
+                  </div>
+                </section>
+              }
               @if (teamProfileMatches.length && !visibleTeamProfileMatches.length) {
                 <p class="team-fixtures-empty" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
               }

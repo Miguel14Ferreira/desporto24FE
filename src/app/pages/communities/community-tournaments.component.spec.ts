@@ -1931,6 +1931,38 @@ describe('Community tournaments management', () => {
       expect(component.teamProfileOpponents).toEqual([]);
     });
 
+    it('summarizes only scored, unique loaded head-to-head fixtures without guessing outcomes', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      component.teamPageId=40;
+      component.teams=[team,{...team,id:41,name:'Azuis'}];
+      const fixture={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,
+        homeScore:2,awayScore:1};
+      component.teamProfileMatches=[
+        fixture, {...fixture}, // repeated page must not count twice
+        {...fixture,id:71,homeTeamId:41,awayTeamId:40,homeScore:3,awayScore:1},
+        {...fixture,id:72,homeScore:1,awayScore:1},
+        {...fixture,id:73,status:'SCHEDULED',homeScore:undefined,awayScore:undefined},
+        {...fixture,id:74,homeScore:undefined,awayScore:undefined},
+        {...fixture,id:75,awayTeamId:98},
+      ];
+      expect(component.teamProfileHeadToHead).toBeNull();
+      component.setTeamProfileOpponent('41');
+      expect(component.teamProfileHeadToHead).toEqual({
+        opponentName:'Azuis',played:3,wins:1,draws:1,losses:1,pending:1
+      });
+      component.setTeamProfileMatchFilter('PENDING');
+      expect(component.teamProfileHeadToHead?.played).toBe(3);
+      component.selected={...teamDraft,status:'IN_PROGRESS',scoringMode:'RELAY_BEST_TIME'};
+      expect(component.teamProfileHeadToHead).toBeNull();
+      component.selected={...teamDraft,status:'IN_PROGRESS'};
+      component.teamPageId=99;
+      expect(component.teamProfileHeadToHead).toBeNull();
+      component.teamPageId=40;
+      component['resetTeamProfileMatches']();
+      expect(component.teamProfileHeadToHead).toBeNull();
+    });
+
     it('scopes recent form and phase counts to the selected team and loaded pages', () => {
       const first={id:70,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
         awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,

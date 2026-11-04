@@ -2690,6 +2690,44 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.changeDetector.markForCheck();
   }
 
+  /**
+   * Head-to-head summary is provisional: only the selected team's loaded,
+   * published fixtures count. Duplicate pages and incomplete scores are ignored.
+   */
+  get teamProfileHeadToHead(): {
+    opponentName: string; played: number; wins: number; draws: number;
+    losses: number; pending: number
+  } | null {
+    const teamId = this.focusedTeam?.id;
+    const opponentId = this.teamProfileOpponentId;
+    if (!teamId || opponentId === null || this.isRelayCompetition) return null;
+    const opponent = this.teamProfileOpponents.find(item => item.id === opponentId);
+    if (!opponent) return null;
+
+    let wins = 0, draws = 0, losses = 0, pending = 0;
+    const seen = new Set<number>();
+    for (const fixture of this.teamProfileMatches) {
+      if (!Number.isSafeInteger(fixture.id) || seen.has(fixture.id)) continue;
+      const home = fixture.homeTeamId === teamId && fixture.awayTeamId === opponentId;
+      const away = fixture.awayTeamId === teamId && fixture.homeTeamId === opponentId;
+      if (!home && !away) continue;
+      seen.add(fixture.id);
+      if (fixture.status !== 'COMPLETED') {
+        pending++;
+        continue;
+      }
+      const ownScore = home ? fixture.homeScore : fixture.awayScore;
+      const rivalScore = home ? fixture.awayScore : fixture.homeScore;
+      if (typeof ownScore !== 'number' || typeof rivalScore !== 'number'
+          || !Number.isSafeInteger(ownScore) || !Number.isSafeInteger(rivalScore)) continue;
+      if (ownScore > rivalScore) wins++;
+      else if (ownScore < rivalScore) losses++;
+      else draws++;
+    }
+    return { opponentName: opponent.name, played: wins + draws + losses,
+      wins, draws, losses, pending };
+  }
+
   get visibleTeamProfileMatches(): TournamentTeamMatch[] {
     const teamId = this.focusedTeam?.id;
     if (!teamId) return [];
