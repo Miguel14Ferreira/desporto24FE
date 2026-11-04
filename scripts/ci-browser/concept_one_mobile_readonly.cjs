@@ -612,6 +612,14 @@ async function main() {
               const query = new URL('http://localhost' + route).searchParams;
               const teamPage = query.get('teamPage');
               const teamId = query.get('tournament');
+              if (teamId === '9021' && query.get('fixture') === '9221') {
+                const selected=page.locator('.team-fixture.is-direct-target');
+                await selected.waitFor({state:'visible'});
+                assert.equal(await selected.getAttribute('data-team-fixture-id'),'9221',
+                  'The requested published fixture is selected exactly');
+                assert.equal(await page.locator('.team-direct-fixture-feedback').count(),0,
+                  'A found published fixture does not show a misleading search warning');
+              }
               if (teamPage) {
                 const detail = page.locator('.team-profile-page');
                 if (teamPage === '999') {

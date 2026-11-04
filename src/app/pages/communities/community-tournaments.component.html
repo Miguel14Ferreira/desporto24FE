@@ -2143,11 +2143,17 @@
                   </div>
                 }
                 @if (requestedTeamFixtureMissing) {
-                  <p class="team-fixtures-empty" role="status">
-                    {{ (teamMatchesHasMore
-                      ? 'communities.tournaments.teamPage.moreMatches'
-                      : 'communities.tournaments.fixturesUi.noFilterResults') | t }}
-                  </p>
+                  <div class="team-fixtures-empty team-direct-fixture-feedback" role="status">
+                    <p>{{ (teamMatchesHasMore
+                      ? 'communities.tournaments.fixturesUi.directScanPartial'
+                      : 'communities.tournaments.fixturesUi.directNotFound') | t }}</p>
+                    @if (teamMatchesHasMore) {
+                      <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                        (click)="continueRequestedTeamFixtureSearch()">
+                        {{ 'communities.tournaments.fixturesUi.directContinue' | t }}
+                      </button>
+                    }
+                  </div>
                 }
                 @let shownTeamMatches = visibleTeamMatches;
                 @if (teamMatches.length && !shownTeamMatches.length) {

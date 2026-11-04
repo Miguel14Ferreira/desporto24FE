@@ -2573,6 +2573,59 @@ describe('Community tournaments management', () => {
       expect(component.requestedTeamFixtureMissing).toBeTrue();
     });
 
+    it('resumes only a requested fixture scan in bounded blocks after user action', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS'};
+      component.invitedTournamentId=19;
+      component.requestedFixtureId=999;
+      component.teamPageId=null;
+      component.teamMatchesHasMore=true;
+      component.teamMatchesPage=0;
+      api.teamMatches.and.callFake((_cid,_tid,page)=>of({
+        matches:[{id:100+page,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED' as const}],
+        page,hasMore:true
+      }));
+      component.revealRequestedTeamFixture();
+      expect(api.teamMatches).toHaveBeenCalledTimes(component.directFixtureMaxExtraPages);
+      expect(component.requestedTeamFixtureMissing).toBeTrue();
+      const firstCount=api.teamMatches.calls.count();
+      component.continueRequestedTeamFixtureSearch();
+      expect(api.teamMatches.calls.count()).toBe(firstCount+component.directFixtureMaxExtraPages);
+      expect(component.teamMatchesPage).toBe(component.directFixtureMaxExtraPages*2);
+      expect(component.requestedTeamFixtureMissing).toBeTrue();
+      component.teamMatchesHasMore=false;
+      component.continueRequestedTeamFixtureSearch();
+      expect(api.teamMatches.calls.count()).toBe(firstCount+component.directFixtureMaxExtraPages);
+      component.requestedFixtureId=null;
+      component.teamMatchesHasMore=true;
+      component.continueRequestedTeamFixtureSearch();
+      expect(api.teamMatches.calls.count()).toBe(firstCount+component.directFixtureMaxExtraPages);
+    });
+
+    it('stops resumed fixture search on a real fixture on a subsequent page', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS'};
+      component.invitedTournamentId=19;
+      component.requestedFixtureId=950;
+      component.teamPageId=null;
+      component.teamMatchesHasMore=true;
+      component.teamMatchesPage=0;
+      api.teamMatches.and.callFake((_cid,_tid,page)=>of({
+        matches:[{id:page===23?950:100+page,roundNumber:1,homeTeamId:40,
+          homeTeamName:'Verdes',awayTeamId:41,awayTeamName:'Azuis',
+          status:'SCHEDULED' as const}],
+        page,hasMore:true
+      }));
+      component.revealRequestedTeamFixture();
+      expect(component.focusedPublishedFixtureId).toBeNull();
+      component.continueRequestedTeamFixtureSearch();
+      expect(component.focusedPublishedFixtureId).toBe(950);
+      expect(component.requestedTeamFixtureMissing).toBeFalse();
+      expect(api.teamMatches.calls.count()).toBe(23);
+      const n=api.teamMatches.calls.count();
+      component.continueRequestedTeamFixtureSearch();
+      expect(api.teamMatches.calls.count()).toBe(n);
+    });
+
     it('summarizes only scored, unique loaded head-to-head fixtures without guessing outcomes', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
       component.teamPageId=40;

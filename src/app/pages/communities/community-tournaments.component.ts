@@ -3240,6 +3240,15 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.loadTeamMatches();
   }
 
+  /** Continue a large tournament search only on explicit user action.
+   * Each click authorizes another bounded block, never an unlimited API scan. */
+  continueRequestedTeamFixtureSearch(): void {
+    if (!this.requestedTeamFixtureMissing || !this.teamMatchesHasMore
+        || !this.isMember || this.teamMatchesLoading || this.teamMatchesError) return;
+    this.directFixtureExtraPages = 0;
+    this.revealRequestedTeamFixture();
+  }
+
   /** A capped scan is partial while more pages exist, never a missing-fixture claim. */
   get requestedTeamFixtureMissing(): boolean {
     return this.requestedFixtureId !== null
