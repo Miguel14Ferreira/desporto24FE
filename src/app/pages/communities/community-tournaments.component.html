@@ -770,11 +770,16 @@
                                 }
                               </span>
                             </button>
-                            @if (step.confirmedNextFixture) {
-                              <div class="team-page-path-link">
+                            @if (step.confirmedNextFixture; as nextFixture) {
+                              <button type="button" class="team-page-path-link team-page-path-next"
+                                (click)="showTeamProfileFixture(nextFixture)"
+                                [attr.aria-label]="('communities.tournaments.bracketUi.viewNext' | t) + ': ' + teamMatchStageLabel(nextFixture) + ' · ' + nextFixture.homeTeamName + ' · ' + nextFixture.awayTeamName">
                                 <span class="team-page-path-link-marker" aria-hidden="true">✓</span>
-                                <span>{{ 'communities.tournaments.bracketUi.advanced' | t }}</span>
-                              </div>
+                                <span class="team-page-path-next-copy">
+                                  <strong>{{ 'communities.tournaments.bracketUi.advanced' | t }}</strong>
+                                  <small>{{ 'communities.tournaments.bracketUi.viewNext' | t }} · {{ teamMatchStageLabel(nextFixture) }} ↗</small>
+                                </span>
+                              </button>
                             }
                           </div>
                         }
@@ -1783,7 +1788,7 @@
                           <strong>{{ 'communities.tournaments.teamPage.journeyTitle' | t }}</strong>
                           <div class="team-knockout-path-strip" tabindex="0" role="region"
                             [attr.aria-label]="'communities.tournaments.teamPage.journeyTitle' | t">
-                            @for (step of path; track step.game.id; let last = $last) {
+                            @for (step of path; track step.game.id; let last = $last; let index = $index) {
                               <button type="button" class="team-knockout-path-card"
                                 [attr.aria-label]="teamMatchStageLabel(step.game) + ' · ' + step.game.homeTeamName + ' · ' + step.game.awayTeamName"
                                 (click)="focusPublishedKnockoutInBoard(step.game)">
@@ -1798,9 +1803,11 @@
                                 </small>
                               </button>
                               @if (step.linkedToNext && !last) {
-                                <span class="team-knockout-path-arrow"
-                                  [title]="'communities.tournaments.bracketUi.advanced' | t"
-                                  aria-hidden="true">→</span>
+                                @if (path[index + 1]; as nextStep) {
+                                  <button type="button" class="team-knockout-path-arrow"
+                                    [attr.aria-label]="('communities.tournaments.bracketUi.viewNext' | t) + ': ' + teamMatchStageLabel(nextStep.game)"
+                                    (click)="focusPublishedKnockoutInBoard(nextStep.game)">→</button>
+                                }
                               }
                             }
                           </div>

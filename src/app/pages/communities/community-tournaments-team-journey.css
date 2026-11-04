@@ -45,6 +45,11 @@
 :host .tournaments .team-page-path-status.is-loss{color:#ffd1cb;border-color:rgba(235,129,120,.44);}
 :host .tournaments .team-page-path-link{margin-left:23px;min-height:53px;display:flex;align-items:center;gap:10px;border-left:2px solid #52d39b;padding:10px 13px;color:#c5f7df;font-size:.78rem;font-weight:750;}
 :host .tournaments .team-page-path-link-marker{display:grid;place-items:center;min-width:24px;height:24px;border-radius:50%;background:rgba(44,156,111,.44);color:#d7ffe8;font-weight:900;}
+:host .tournaments .team-page-path-next{width:calc(100% - 23px);border-top:0;border-right:0;border-bottom:0;background:transparent;text-align:left;font:inherit;cursor:pointer;}
+:host .tournaments .team-page-path-next:hover{background:rgba(27,126,81,.17);}
+:host .tournaments .team-page-path-next-copy{display:grid;gap:3px;}
+:host .tournaments .team-page-path-next-copy small{font-size:.72rem;color:#abedce;}
+:host .tournaments .team-page-path-next:focus-visible{outline:2px solid #abffd6;outline-offset:2px;}
 @media(max-width:560px){:host .tournaments .team-page-path-match{grid-template-columns:minmax(0,1fr);} :host .tournaments .team-page-path-status{justify-self:start;} }
 
 /* Accessible overview jump links to already rendered tournament sections. */
@@ -111,6 +116,9 @@
 :host .tournaments .team-knockout-path-card>b{font-size:.83rem;overflow-wrap:anywhere;}
 :host .tournaments .team-knockout-path-card>small{font-size:.74rem;color:#d3f2e5;}
 :host .tournaments .team-knockout-path-arrow{align-self:center;flex:none;color:#8af6c4;font-size:1.25rem;font-weight:900;}
+:host .tournaments button.team-knockout-path-arrow{border:1px solid rgba(103,231,178,.42);border-radius:999px;background:rgba(16,91,74,.68);padding:7px 10px;cursor:pointer;}
+:host .tournaments button.team-knockout-path-arrow:hover{background:rgba(28,134,104,.7);}
+:host .tournaments button.team-knockout-path-arrow:focus-visible{outline:2px solid #abffd6;outline-offset:2px;}
 :host .tournaments .team-knockout-match.is-dimmed{opacity:.38;}
 :host .tournaments .team-knockout-match.is-focus-match{border-color:#85fac7;box-shadow:0 0 0 1px rgba(113,238,175,.38);}
 :host .tournaments .team-knockout-contender.is-focus-contender{box-shadow:inset 4px 0 #66edac;}

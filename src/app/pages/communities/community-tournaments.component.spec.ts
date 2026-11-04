@@ -1194,6 +1194,71 @@ describe('Community tournaments management', () => {
       expect(component.teamMatches.map(game=>game.id)).toEqual([72,70,71]);
     });
 
+    it('navigates from a verified knockout path to the actual next fixture in the bracket', () => {
+      const won={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,homeScore:2,awayScore:1};
+      const next={id:72,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED' as const};
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[won,next];
+      component.setKnockoutFocusTeam(40);
+      const path=component.focusedKnockoutPath;
+      expect(path.map(step=>step.game.id)).toEqual([70,72]);
+      expect(path.map(step=>step.linkedToNext)).toEqual([true,false]);
+      const board=document.createElement('details');
+      const match=document.createElement('article');
+      match.dataset['knockoutFixtureId']='72';
+      const scroll=jasmine.createSpy('scrollIntoView');
+      match.scrollIntoView=scroll;
+      const focus=spyOn(match,'focus');
+      board.appendChild(match);
+      (component as any).teamTournamentBracket={nativeElement:board};
+      component.focusPublishedKnockoutInBoard(path[1].game);
+      expect(component.selectedKnockoutRound).toBe(2);
+      expect(board.open).toBeTrue();
+      expect(scroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'nearest',inline:'center'});
+      expect(focus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.focusPublishedKnockoutInBoard({...next,id:12345});
+      expect(scroll).toHaveBeenCalledTimes(1);
+      component.setKnockoutFocusTeam('ALL');
+      component.focusPublishedKnockoutInBoard(next);
+      expect(scroll).toHaveBeenCalledTimes(1);
+    });
+
+    it('opens the next verified team-page fixture without exposing unconfirmed rounds', () => {
+      const won={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,homeScore:2,awayScore:0};
+      const next={id:72,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+        awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED' as const};
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamPageId=40;
+      component.teams=[team];
+      component.teamProfileMatches=[next,won];
+      expect(component.focusedTeamJourney.knockoutPath.map(step=>
+        step.confirmedNextFixture?.id??null)).toEqual([72,null]);
+      const host=document.createElement('section');
+      const match=document.createElement('div');
+      match.dataset['teamProfileFixtureId']='72';
+      const scroll=jasmine.createSpy('scrollIntoView');
+      match.scrollIntoView=scroll;
+      const focus=spyOn(match,'focus');
+      host.appendChild(match);
+      (component as any).teamProfileSection={nativeElement:host};
+      component.teamProfileMatchFilter='COMPLETED';
+      component.teamProfilePhaseFilter='round-1';
+      component.teamProfileOpponentId=41;
+      component.showTeamProfileFixture(component.focusedTeamJourney.knockoutPath[0].confirmedNextFixture!);
+      expect(component.teamProfileMatchFilter).toBe('ALL');
+      expect(component.teamProfilePhaseFilter).toBe('ALL');
+      expect(component.teamProfileOpponentId).toBeNull();
+      expect(scroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'center'});
+      expect(focus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.teamProfileMatches=[won,next,{...won,id:74,awayTeamId:44}];
+      expect(component.focusedTeamJourney.knockoutPath[0].confirmedNextFixture).toBeNull();
+      component.teamProfileMatches=[won,{...next,roundNumber:3}];
+      expect(component.focusedTeamJourney.knockoutPath[0].confirmedNextFixture).toBeNull();
+    });
+
     it('jumps only to loaded knockout rounds without modifying fixture filters', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       component.teamMatches=[
