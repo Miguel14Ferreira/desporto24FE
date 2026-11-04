@@ -1374,6 +1374,53 @@ describe('Community tournaments management', () => {
       expect(component.selectedKnockoutRound).toBeNull();
     });
 
+    it('searches loaded knockout matchups by team name and ignores accents', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      const first=Array.from({length:16},(_,i)=>({
+        id:800+i,roundNumber:1,homeTeamId:100+i*2,
+        homeTeamName:i===14?'Smash Atlântico':'Casa '+i,
+        awayTeamId:101+i*2,awayTeamName:'Fora '+i,status:'SCHEDULED' as const
+      }));
+      const next={id:900,roundNumber:2,homeTeamId:230,homeTeamName:'Clube Águia',
+        awayTeamId:231,awayTeamName:'Açores',status:'SCHEDULED' as const};
+      component.teamMatches=[...first,next];
+      const original=JSON.stringify(component.teamMatches);
+      const bracket=component.knockoutBracket;
+      expect(component.visibleKnockoutMatches(1,bracket[0].matches).length).toBe(4);
+      component.setKnockoutFocusTeam(128);
+      component.jumpToKnockoutRound(1);
+      component.setKnockoutMatchQuery('  aTlAnTiCo  ');
+      expect(component.selectedKnockoutRound).toBeNull();
+      expect(component.knockoutFocusTeamId).toBeNull();
+      expect(component.visibleKnockoutMatches(1,bracket[0].matches)
+        .map(item=>item.game.id)).toEqual([814]);
+      expect(component.shownKnockoutRounds(bracket).map(item=>item.round)).toEqual([1]);
+      component.setKnockoutMatchQuery('aguia');
+      expect(component.shownKnockoutRounds(bracket).map(item=>item.round)).toEqual([2]);
+      expect(component.visibleKnockoutMatches(2,bracket[1].matches)
+        .map(item=>item.game.id)).toEqual([900]);
+      component.setKnockoutMatchQuery('sem resultados');
+      expect(component.shownKnockoutRounds(bracket)).toEqual([]);
+      expect(component.visibleKnockoutMatches(1,bracket[0].matches)).toEqual([]);
+      component.setKnockoutMatchQuery('');
+      expect(component.shownKnockoutRounds(bracket).map(item=>item.round)).toEqual([1,2]);
+      expect(component.visibleKnockoutMatches(1,bracket[0].matches).length).toBe(4);
+      component.setKnockoutMatchQuery('Atlantico');
+      component.setKnockoutFocusTeam(128);
+      expect(component.knockoutMatchQuery).toBe('');
+      expect(component.knockoutFocusTeamId).toBe(128);
+      component.setKnockoutMatchQuery('x'.repeat(100));
+      expect(component.knockoutMatchQuery.length).toBe(80);
+      expect(JSON.stringify(component.teamMatches)).toBe(original);
+      component.selectTournament({...teamDraft,id:42,status:'DRAFT',format:'KNOCKOUT'});
+      expect(component.knockoutMatchQuery).toBe('');
+      component.setKnockoutMatchQuery('Azuis');
+      expect(component.knockoutMatchQuery).toBe('Azuis');
+      component.selected={...component.selected,format:'LEAGUE'};
+      component.setKnockoutMatchQuery('foo');
+      expect(component.knockoutMatchQuery).toBe('Azuis');
+    });
+
     it('compacts 16 and 32 team brackets without dropping any loaded fixtures', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       for (const matchCount of [8,16]) {

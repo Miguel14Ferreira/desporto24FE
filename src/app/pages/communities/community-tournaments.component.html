@@ -1798,6 +1798,20 @@
                           }
                         </select>
                       </label>
+                      <label>
+                        {{ 'communities.tournaments.teamPage.searchLabel' | t }}
+                        <input type="search" [ngModel]="knockoutMatchQuery"
+                          (ngModelChange)="setKnockoutMatchQuery($event)"
+                          [placeholder]="'communities.tournaments.teamPage.searchPlaceholder' | t"
+                          [attr.aria-label]="'communities.tournaments.teamPage.searchLabel' | t"
+                          maxlength="80" autocomplete="off">
+                      </label>
+                      @if (knockoutMatchQuery) {
+                        <button type="button" class="team-knockout-focus-clear"
+                          (click)="setKnockoutMatchQuery('')">
+                          {{ 'communities.tournaments.teamPage.clearSearch' | t }}
+                        </button>
+                      }
                       @if (knockoutFocusTeamId !== null) {
                         <button type="button" class="team-knockout-focus-clear"
                           (click)="setKnockoutFocusTeam('ALL')">
@@ -1850,6 +1864,8 @@
                             {{ 'communities.tournaments.phaseUi.all' | t }}
                           </button>
                           @for (round of bracket; track round.round) {
+                            @if (!knockoutMatchQuery.trim()
+                              || visibleKnockoutMatches(round.round, round.matches).length) {
                             <button type="button" class="team-knockout-round-jump"
                               [class.is-selected]="selectedKnockoutRound === round.round"
                               [attr.aria-pressed]="selectedKnockoutRound === round.round"
@@ -1858,9 +1874,13 @@
                               <span>{{ round.label }}</span>
                               <small>{{ round.matches.length }}</small>
                             </button>
+                            }
                           }
                         </div>
                       </nav>
+                    }
+                    @if (knockoutMatchQuery.trim() && !shownKnockoutRounds(bracket).length) {
+                      <p class="t-muted" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
                     }
                     <div class="team-knockout-scroll" tabindex="0"
                       role="region" [attr.aria-label]="'communities.tournaments.bracketUi.title' | t">
@@ -1874,7 +1894,7 @@
                               [attr.aria-pressed]="teamPhaseFilter === 'round-' + round.round"
                               (click)="setTeamPhaseFilter(teamPhaseFilter === 'round-' + round.round ? 'ALL' : 'round-' + round.round)">
                               <strong>{{ round.label }}</strong>
-                              <span>{{ round.matches.length }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
+                              <span>{{ (knockoutMatchQuery.trim() ? visibleKnockoutMatches(round.round, round.matches).length : round.matches.length) }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
                             </button>
                             @for (item of visibleKnockoutMatches(round.round, round.matches); track item.game.id) {
                               <article class="team-knockout-match" tabindex="-1"
@@ -1943,7 +1963,7 @@
                                 }
                               </article>
                             }
-                            @if (round.matches.length > knockoutCompactThreshold) {
+                            @if (!knockoutMatchQuery.trim() && round.matches.length > knockoutCompactThreshold) {
                               @let allVisible = expandedKnockoutRounds.has(round.round)
                                 || (knockoutRoundLimits.get(round.round) ?? 0) >= round.matches.length;
                               @if (!allVisible) {

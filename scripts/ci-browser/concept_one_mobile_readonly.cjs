@@ -740,6 +740,23 @@ async function main() {
                   assert.equal(await page.locator('.team-standings-table').count(),0,
                     'Knockout-only tournaments must not invent a league table');
                   await page.locator('.team-fixture').last().scrollIntoViewIfNeeded();
+                  if (Number(teamId) === 9022) {
+                    const board=page.locator('.team-knockout-board');
+                    await board.waitFor({state:'visible'});
+                    const search=board.locator('.team-knockout-focus input[type="search"]');
+                    assert.equal(await board.locator('.team-knockout-match').count(),2);
+                    await search.fill('atlantico');
+                    assert.equal(await board.locator('.team-knockout-match').count(),1,
+                      'Team search finds a published knockout match ignoring accents');
+                    assert.ok((await board.locator('.team-knockout-match').innerText())
+                      .includes('Smash Atlântico'));
+                    await search.fill('zzz-sem-jogos');
+                    assert.equal(await board.locator('.team-knockout-match').count(),0,
+                      'No matches search never invents a fixture');
+                    await board.locator('.team-knockout-focus-clear').click();
+                    assert.equal(await board.locator('.team-knockout-match').count(),2,
+                      'Clearing knockout search restores all published fixtures');
+                  }
                 }
                 if (Number(teamId) === 9021) {
                   const played = page.locator('.team-fixture').first();

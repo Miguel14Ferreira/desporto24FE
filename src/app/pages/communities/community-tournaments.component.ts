@@ -200,6 +200,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamPhaseFilter = 'ALL';
   knockoutFocusTeamId: number | null = null;
+  knockoutMatchQuery = '';
   selectedKnockoutRound: number | null = null;
   /** Compact group navigation; never changes the official group standings. */
   private requestedTeamGroupNumber: number | null = null;
@@ -1184,6 +1185,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatchFilter = 'ALL';
       this.teamPhaseFilter = 'ALL';
       this.knockoutFocusTeamId = null;
+      this.knockoutMatchQuery = '';
       this.selectedKnockoutRound = null;
       this.requestedTeamGroupNumber = null;
       this.expandedKnockoutRounds.clear();
@@ -1777,6 +1779,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   visibleKnockoutMatches<T extends {game: TournamentTeamMatch}>(
     round: number, matches: T[]
   ): T[] {
+    if (this.knockoutMatchQuery.trim())
+      return matches.filter(item => this.knockoutQueryMatches(item.game));
     if (matches.length <= this.knockoutCompactThreshold
         || this.expandedKnockoutRounds.has(round)) return matches;
     return matches.filter((item, index) =>
@@ -1785,9 +1789,31 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   /** Filter bracket columns without altering any loaded fixture or phase filter. */
-  shownKnockoutRounds<T extends {round: number}>(rounds: T[]): T[] {
-    return this.selectedKnockoutRound === null
+  shownKnockoutRounds<T extends {round: number; matches:{game:TournamentTeamMatch}[]}>(rounds: T[]): T[] {
+    const selected = this.selectedKnockoutRound === null
       ? rounds : rounds.filter(item => item.round === this.selectedKnockoutRound);
+    return this.knockoutMatchQuery.trim()
+      ? selected.filter(round => round.matches.some(item => this.knockoutQueryMatches(item.game)))
+      : selected;
+  }
+
+  /** Search only real published names, ignoring accents and letter case. */
+  knockoutQueryMatches(game: TournamentTeamMatch): boolean {
+    const plain = (name: string) => name.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+    const query = plain(this.knockoutMatchQuery.trim());
+    return !query || plain(game.homeTeamName).includes(query)
+      || plain(game.awayTeamName).includes(query);
+  }
+
+  setKnockoutMatchQuery(value: string): void {
+    if (!this.isCupFormat || this.isRelayCompetition) return;
+    this.knockoutMatchQuery = (value ?? '').slice(0, 80);
+    if (this.knockoutMatchQuery.trim()) {
+      this.selectedKnockoutRound = null;
+      this.knockoutFocusTeamId = null;
+    }
+    this.changeDetector.markForCheck();
   }
 
   showAllKnockoutRounds(): void {
@@ -1859,8 +1885,10 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     const id = Number(value);
     if (Number.isSafeInteger(id) && id > 0
-        && this.knockoutFocusTeams.some(team => team.id === id))
+        && this.knockoutFocusTeams.some(team => team.id === id)) {
+      this.knockoutMatchQuery = '';
       this.knockoutFocusTeamId = id;
+    }
   }
 
   isKnockoutTeamFocused(game: TournamentTeamMatch): boolean {
@@ -2155,6 +2183,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMatchFilter = 'ALL';
     this.teamPhaseFilter = 'ALL';
     this.knockoutFocusTeamId = null;
+    this.knockoutMatchQuery = '';
     this.selectedKnockoutRound = null;
     this.requestedTeamGroupNumber = null;
     this.expandedKnockoutRounds.clear();
