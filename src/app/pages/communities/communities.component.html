@@ -819,10 +819,12 @@
                         <h3>{{ (canRecordInlineSpeedWithoutRankings
                           ? 'communities.inlineSpeed.seasonsTitle' : 'communities.seasonsTitle') | t }}</h3>
                       </div>
-                      @if (activeSeason()) {
-                        <span class="competition-badge">
-                          {{ 'communities.activeSeason' | t }} · {{ activeSeason()?.name }}
-                        </span>
+                      @for (season of competition?.seasons || []; track season.id) {
+                        @if (season.active) {
+                          <span class="competition-badge">
+                            {{ 'communities.activeSeason' | t }} · {{ season.sport || season.name }}
+                          </span>
+                        }
                       }
                     </div>
 
