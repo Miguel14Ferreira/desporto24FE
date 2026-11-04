@@ -747,7 +747,7 @@
                         <h5>{{ 'communities.tournaments.bracketUi.title' | t }}</h5>
                         <p>{{ 'communities.tournaments.bracketUi.description' | t }}</p>
                       </div>
-                      <div class="team-page-path-totals" [attr.aria-label]="'communities.tournaments.teamPage.journeyTitle' | t">
+                      <div class="team-page-path-totals">
                         <span><strong>{{ journey.knockoutProgress.wins }}</strong>{{ 'communities.result.win' | t }}</span>
                         <span><strong>{{ journey.knockoutProgress.losses }}</strong>{{ 'communities.result.loss' | t }}</span>
                         <span><strong>{{ journey.knockoutProgress.toPlay }}</strong>{{ 'communities.tournaments.fixturesUi.filterPending' | t }}</span>
@@ -776,13 +776,13 @@
                                 } @else if (step.state === 'WON') {
                                   {{ 'communities.tournaments.bracketUi.won' | t }}
                                 } @else if (step.state === 'ELIMINATED') {
-                                  {{ 'communities.ko.eliminated' | t }}
+                                  {{ 'ko.eliminated' | t }}
                                 } @else if (step.state === 'LOST') {
                                   {{ 'communities.result.loss' | t }}
                                 } @else if (step.state === 'TO_PLAY') {
                                   {{ 'communities.tournaments.fixturesUi.filterPending' | t }}
                                 } @else {
-                                  {{ 'communities.ko.unverified' | t }}
+                                  {{ 'ko.unverified' | t }}
                                 }
                               </span>
                             </button>
