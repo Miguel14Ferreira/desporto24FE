@@ -1791,11 +1791,14 @@ describe('Community tournaments management', () => {
       const group=document.createElement('section');group.className='team-page-group-overview';
       results.append(group);
       const roster=document.createElement('div');
-      const resultsScroll=spyOn(results,'scrollIntoView' as keyof HTMLElement);
+      const resultsScroll=jasmine.createSpy('resultsScroll');
+      results.scrollIntoView=resultsScroll;
       const resultsFocus=spyOn(results,'focus');
-      const groupScroll=spyOn(group,'scrollIntoView' as keyof HTMLElement);
+      const groupScroll=jasmine.createSpy('groupScroll');
+      group.scrollIntoView=groupScroll;
       const groupFocus=spyOn(group,'focus');
-      const rosterScroll=spyOn(roster,'scrollIntoView' as keyof HTMLElement);
+      const rosterScroll=jasmine.createSpy('rosterScroll');
+      roster.scrollIntoView=rosterScroll;
       const rosterFocus=spyOn(roster,'focus');
       (component as any).teamProfileSection={nativeElement:results};
       (component as any).teamProfileRoster={nativeElement:roster};
