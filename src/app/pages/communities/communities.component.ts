@@ -926,15 +926,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   /** Sport-tagged active seasons only accept rounds in that sport.
    * Shared legacy seasons retain the complete community catalogue. */
   /** Historical ranking filter is never a destination for new rounds. */
-  get canCreateAdditionalSeason(): boolean {
+  get availableSeasonSports(): string[] {
     const active = this.competition?.seasons.filter(season => season.active) ?? [];
-    if (active.length === 0) return true;
-    if (active.some(season => !season.sport)) return false;
-    const sports = this.communityRoundSports;
+    if (active.some(season => !season.sport)) return [];
     const normalize = (value: string): string => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-    return sports.some(sport => !active.some(season =>
-      season.sport && normalize(season.sport) === normalize(sport)));
+    const activeSports = new Set(active.map(season => normalize(season.sport!)));
+    return this.communityRoundSports.filter(sport => !activeSports.has(normalize(sport)));
+  }
+
+  get canCreateAdditionalSeason(): boolean {
+    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    return active.length === 0 || this.availableSeasonSports.length > 0;
   }
 
   get roundTargetSeasonId(): number | null {
@@ -3985,6 +3988,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if ((this.competition?.seasons.some(season => season.active) ?? false)
         && !this.seasonSport) {
       this.errorMessage = 'Seleciona uma modalidade para a nova época.';
+      return;
+    }
+    // A stale draft must not duplicate a currently active sport season.
+    if (this.seasonSport && !this.availableSeasonSports.includes(this.seasonSport)) {
+      this.errorMessage = 'Já existe uma época ativa para esta modalidade.';
       return;
     }
     // An old draft must not create a season for a sport removed from the community.
