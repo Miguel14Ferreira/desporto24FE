@@ -752,14 +752,14 @@ async function main() {
                     assert.equal(await current.count(),1,
                       'The first matching fixture is visually identified');
                     const firstId=await current.getAttribute('data-knockout-fixture-id');
-                    await board.locator('.team-knockout-search-nav button').last().click();
+                    await board.locator('.team-knockout-search-next').click();
                     const nextId=await current.getAttribute('data-knockout-fixture-id');
                     assert.notEqual(nextId,firstId,
                       'Next search result moves to another real loaded knockout fixture');
                     assert.equal(await page.evaluate(() => document.activeElement
                       ?.getAttribute('data-knockout-fixture-id')),nextId,
                       'The selected knockout result receives keyboard focus');
-                    await board.locator('.team-knockout-search-nav button').first().click();
+                    await board.locator('.team-knockout-search-previous').click();
                     assert.equal(await current.getAttribute('data-knockout-fixture-id'),firstId,
                       'Previous result returns to the first published fixture');
                     const completed=board.locator('.team-knockout-status-filter [data-status="COMPLETED"]');
@@ -769,9 +769,12 @@ async function main() {
                     assert.equal(await completed.getAttribute('aria-pressed'),'true');
                     assert.equal(await board.locator('.team-knockout-match').count(),1,
                       'Only completed published knockout matches remain visible');
+                    assert.equal(await board.locator('.team-knockout-empty').count(),0,
+                      'The filter must not show a false no-results message');
                     await pending.click();
                     assert.equal(await board.locator('.team-knockout-match').count(),1,
                       'Only pending published knockout matches remain visible');
+                    assert.equal(await board.locator('.team-knockout-empty').count(),0);
                     await all.click();
                     assert.equal(await board.locator('.team-knockout-match').count(),2,
                       'All loaded knockout matches return after clearing the status filter');
@@ -781,9 +784,18 @@ async function main() {
                     assert.ok((await board.locator('.team-knockout-match').innerText())
                       .includes('Smash Atlântico'));
                     assert.equal(await board.locator('.team-knockout-match.is-search-current').count(),1);
+                    assert.ok((await board.locator('.team-knockout-search-preview').innerText())
+                      .includes('Smash Atlântico'), 'Search preview identifies the real selected fixture');
+                    const matchId=await board.locator('.team-knockout-match.is-search-current')
+                      .getAttribute('data-knockout-fixture-id');
+                    await board.locator('.team-knockout-search-open').click();
+                    assert.equal(await page.evaluate(() => document.activeElement
+                      ?.getAttribute('data-team-fixture-id')),matchId,
+                      'View fixture focuses the existing official match row');
                     await search.fill('zzz-sem-jogos');
                     assert.equal(await board.locator('.team-knockout-match').count(),0,
                       'No matches search never invents a fixture');
+                    assert.equal(await board.locator('.team-knockout-empty').count(),1);
                     await board.locator('.team-knockout-focus-clear').click();
                     assert.equal(await board.locator('.team-knockout-match').count(),2,
                       'Clearing knockout search restores all published fixtures');

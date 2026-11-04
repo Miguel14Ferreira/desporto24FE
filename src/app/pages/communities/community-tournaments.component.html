@@ -1893,11 +1893,21 @@
                       <nav class="team-knockout-search-nav"
                         [attr.aria-label]="'communities.tournaments.teamPage.searchLabel' | t">
                         <span role="status">{{ knockoutSearchPosition }} / {{ knockoutSearchMatches.length }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
-                        <button type="button" (click)="moveKnockoutSearch(-1)">{{ 'communities.matches.previous' | t }}</button>
-                        <button type="button" (click)="moveKnockoutSearch(1)">{{ 'communities.matches.next' | t }}</button>
+                        <button type="button" class="team-knockout-search-previous" (click)="moveKnockoutSearch(-1)">{{ 'communities.matches.previous' | t }}</button>
+                        <button type="button" class="team-knockout-search-next" (click)="moveKnockoutSearch(1)">{{ 'communities.matches.next' | t }}</button>
+                        @if (currentKnockoutSearchFixture; as currentFixture) {
+                          <span class="team-knockout-search-preview">
+                            <strong>{{ teamMatchStageLabel(currentFixture) }}</strong>
+                            <span>{{ currentFixture.homeTeamName }} × {{ currentFixture.awayTeamName }}</span>
+                          </span>
+                          <button type="button" class="team-knockout-search-open"
+                            (click)="openCurrentKnockoutSearchFixture()">{{ 'communities.tournaments.teamPage.viewKnockoutFixture' | t }}</button>
+                        }
                       </nav>
-                    } @else if (knockoutMatchQuery.trim() || knockoutStatusFilter !== 'ALL') {
-                      <p class="t-muted" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
+                    }
+                    @if ((knockoutMatchQuery.trim() || knockoutStatusFilter !== 'ALL')
+                      && !shownKnockoutRounds(bracket).length) {
+                      <p class="t-muted team-knockout-empty" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
                     }
                     <div class="team-knockout-scroll" tabindex="0"
                       role="region" [attr.aria-label]="'communities.tournaments.bracketUi.title' | t">

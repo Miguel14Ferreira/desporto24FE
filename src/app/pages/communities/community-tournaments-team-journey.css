@@ -239,3 +239,9 @@
 :host .tournaments .team-knockout-status-filter button:hover,
 :host .tournaments .team-knockout-status-filter button[aria-pressed=true]{border-color:#a1ffd7;background:rgba(26,127,96,.68);color:#fff;}
 :host .tournaments .team-knockout-status-filter button:focus-visible{outline:2px solid #acffe0;outline-offset:2px;}
+
+/* Current searched fixture and direct access to the already loaded match row. */
+:host .tournaments .team-knockout-search-preview{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px 9px;min-width:0;color:#e9fff5;font-size:.76rem;}
+:host .tournaments .team-knockout-search-preview strong{color:#9cf2c6;}
+:host .tournaments .team-knockout-search-preview span{overflow-wrap:anywhere;}
+:host .tournaments .team-knockout-search-open{border-color:#8cf4be!important;background:rgba(25,118,85,.83)!important;font-weight:800!important;}

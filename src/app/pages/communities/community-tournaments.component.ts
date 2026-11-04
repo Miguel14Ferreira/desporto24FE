@@ -1847,6 +1847,18 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.knockoutSearchMatches.findIndex(game => game.id === this.knockoutSearchFixtureId) + 1;
   }
 
+  /** The active result must still be a real match in the visible search. */
+  get currentKnockoutSearchFixture(): TournamentTeamMatch | null {
+    return this.knockoutSearchMatches.find(game =>
+      game.id === this.knockoutSearchFixtureId) ?? null;
+  }
+
+  /** Jump from a highlighted bracket result to its official fixture row. */
+  openCurrentKnockoutSearchFixture(): void {
+    const fixture = this.currentKnockoutSearchFixture;
+    if (fixture) this.showPublishedKnockoutFixture(fixture);
+  }
+
   /** Cycle through matches in visual round order, never changing saved fixtures. */
   moveKnockoutSearch(direction: -1 | 1): void {
     const results = this.knockoutSearchMatches;

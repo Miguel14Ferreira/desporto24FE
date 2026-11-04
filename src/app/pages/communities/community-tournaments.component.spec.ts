@@ -1462,6 +1462,41 @@ describe('Community tournaments management', () => {
       expect(component.knockoutStatusFilter).toBe('ALL');
     });
 
+    it('opens only the selected published search fixture and safely ignores stale results', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:202,roundNumber:2,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:43,awayTeamName:'Amarelos',status:'SCHEDULED'},
+        {id:201,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED',homeScore:2,awayScore:1}
+      ];
+      const original=JSON.stringify(component.teamMatches);
+      const list=document.createElement('section');
+      const row=document.createElement('div');
+      row.dataset['teamFixtureId']='201';
+      const scroll=jasmine.createSpy('scrollIntoView');
+      row.scrollIntoView=scroll;
+      const focus=spyOn(row,'focus');
+      list.appendChild(row);
+      (component as any).teamFixturesList={nativeElement:list};
+      component.setKnockoutMatchQuery('verdes');
+      expect(component.currentKnockoutSearchFixture?.id).toBe(201);
+      component.teamPhaseFilter='round-99';
+      component.teamMatchFilter='COMPLETED';
+      component.openCurrentKnockoutSearchFixture();
+      expect(component.teamPhaseFilter).toBe('round-1');
+      expect(component.teamMatchFilter).toBe('ALL');
+      expect(scroll).toHaveBeenCalledOnceWith({behavior:'smooth',block:'center'});
+      expect(focus).toHaveBeenCalledOnceWith({preventScroll:true});
+      component.setKnockoutMatchQuery('nome inexistente');
+      expect(component.currentKnockoutSearchFixture).toBeNull();
+      component.teamPhaseFilter='ALL';
+      component.openCurrentKnockoutSearchFixture();
+      expect(component.teamPhaseFilter).toBe('ALL');
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(JSON.stringify(component.teamMatches)).toBe(original);
+    });
+
     it('navigates actual search results in round order and focuses the selected fixture', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       const fixtures=[
