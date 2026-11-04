@@ -5271,6 +5271,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.communityService.createRound(this.selected.id, {
       name: this.roundName.trim(),
       playedAt: playedAt.toISOString(),
+      // Always tie the round to the active season, never an archived filter.
+      ...(this.activeSeason()?.id != null ? { seasonId: this.activeSeason()!.id } : {}),
       sport: this.newRoundSport,
       eventType: this.newRoundEventType,
       eventDiscipline: this.roundDisciplineDraft || null,
