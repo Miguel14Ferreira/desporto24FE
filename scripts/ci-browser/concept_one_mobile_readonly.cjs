@@ -767,9 +767,14 @@ async function main() {
                   assert.equal(await page.locator('.team-roster-confirm').count(),0);
                 } else {
                 await page.locator('.team-fixture').first().waitFor({state:'visible'});
+                if (query.get('fixture') === '9221') {
+                  assert.equal(await page.locator('.team-fixture').count(),1,
+                    'Direct links initially show the requested published round only');
+                  await page.locator('.team-phase-select select').first().selectOption('ALL');
+                }
                 assert.equal(await page.locator('.team-fixture').count(),
                   fictionalTeamMatches[Number(teamId)].length,
-                  'Each team format keeps its own scheduled and completed fixtures');
+                  'Clearing a deep-link round filter restores all published fixtures');
                 assert.equal(await page.locator('.team-summary-card').count(),
                   Number(teamId) === 9020 ? 3 : 4,
                   'Team directory retains every real team without full inline rosters');
