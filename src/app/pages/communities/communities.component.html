@@ -4794,7 +4794,50 @@
                       <section class="racket-standings-group">
                         <div class="racket-standings-group-head">
                           <h4>{{ group.sport }}</h4>
+                          @if (group.scoring) {
+                            <span class="scoring-caption">
+                              {{ group.scoring.winPoints }}/{{ group.scoring.drawPoints }}/{{ group.scoring.lossPoints }}
+                            </span>
+                          }
+                          @if (canEditSportPoints(group.sport)) {
+                            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              [disabled]="sportPointsSaving" (click)="editSportPoints(group)">
+                              {{ 'communities.sportPoints.edit' | t }}
+                            </button>
+                          }
                         </div>
+                        @if (sportPointsEditor === group.sport) {
+                          <div class="racket-rule-editor">
+                            <label>
+                              <span>{{ 'communities.winPoints' | t }}</span>
+                              <input type="number" min="0" max="1000" step="1"
+                                [(ngModel)]="sportPointsDraft.winPoints" [disabled]="sportPointsSaving">
+                            </label>
+                            <label>
+                              <span>{{ 'communities.drawPoints' | t }}</span>
+                              <input type="number" min="0" max="1000" step="1"
+                                [(ngModel)]="sportPointsDraft.drawPoints" [disabled]="sportPointsSaving">
+                            </label>
+                            <label>
+                              <span>{{ 'communities.lossPoints' | t }}</span>
+                              <input type="number" min="0" max="1000" step="1"
+                                [(ngModel)]="sportPointsDraft.lossPoints" [disabled]="sportPointsSaving">
+                            </label>
+                            @if (sportPointsError) {
+                              <p role="alert">{{ sportPointsError }}</p>
+                            }
+                            <div class="racket-rule-actions">
+                              <button type="button" class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
+                                [disabled]="sportPointsSaving" (click)="saveSportPoints()">
+                                {{ (sportPointsSaving ? 'communities.savingCompetition' : 'communities.saveCompetition') | t }}
+                              </button>
+                              <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                [disabled]="sportPointsSaving" (click)="sportPointsEditor = null">
+                                {{ 'common.cancel' | t }}
+                              </button>
+                            </div>
+                          </div>
+                        }
                         <app-community-ranking-table [rows]="group.standings"
                           (historicalSelected)="openRankingHistoricalPlayer($event)"></app-community-ranking-table>
                       </section>
