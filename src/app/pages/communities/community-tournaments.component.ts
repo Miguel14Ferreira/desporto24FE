@@ -194,6 +194,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamProfileMatchesError = false;
   teamProfileMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamProfilePhaseFilter = 'ALL';
+  teamProfileOpponentId: number | null = null;
   private teamProfileMatchesRevision = 0;
   teamMatchFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   teamPhaseFilter = 'ALL';
@@ -2620,6 +2621,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamProfileMatchesError = false;
     this.teamProfileMatchFilter = 'ALL';
     this.teamProfilePhaseFilter = 'ALL';
+    this.teamProfileOpponentId = null;
   }
 
   /**
@@ -2660,9 +2662,43 @@ export class CommunityTournamentsComponent implements OnChanges {
     );
   }
 
+  /** Only real opponents from the selected team's loaded fixtures. */
+  get teamProfileOpponents(): {id:number; name:string}[] {
+    const teamId = this.focusedTeam?.id;
+    if (!teamId || this.isRelayCompetition) return [];
+    const names = new Map<number,string>();
+    for (const game of this.teamProfileMatches) {
+      const isHome = game.homeTeamId === teamId;
+      if (!isHome && game.awayTeamId !== teamId) continue;
+      const id = isHome ? game.awayTeamId : game.homeTeamId;
+      const name = isHome ? game.awayTeamName : game.homeTeamName;
+      if (Number.isSafeInteger(id) && id > 0 && id !== teamId && !names.has(id))
+        names.set(id,name);
+    }
+    return [...names].map(([id,name])=>({id,name}))
+      .sort((a,b)=>a.name.localeCompare(b.name) || a.id-b.id);
+  }
+
+  setTeamProfileOpponent(value: string): void {
+    if (value === 'ALL') this.teamProfileOpponentId = null;
+    else {
+      const id = Number(value);
+      if (!Number.isSafeInteger(id) || id <= 0
+          || !this.teamProfileOpponents.some(team=>team.id === id)) return;
+      this.teamProfileOpponentId = id;
+    }
+    this.changeDetector.markForCheck();
+  }
+
   get visibleTeamProfileMatches(): TournamentTeamMatch[] {
+    const teamId = this.focusedTeam?.id;
+    if (!teamId) return [];
     return this.teamProfileMatches.filter(game =>
-      (this.teamProfilePhaseFilter === 'ALL'
+      (game.homeTeamId === teamId || game.awayTeamId === teamId)
+      && (this.teamProfileOpponentId === null
+        || (game.homeTeamId === teamId
+          ? game.awayTeamId : game.homeTeamId) === this.teamProfileOpponentId)
+      && (this.teamProfilePhaseFilter === 'ALL'
         || this.teamProfilePhaseFilter === this.teamPhaseKey(game))
       && (this.teamProfileMatchFilter === 'ALL'
         || (this.teamProfileMatchFilter === 'COMPLETED'
@@ -2698,6 +2734,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         && (game.homeTeamId === team.id || game.awayTeamId === team.id))) return;
     this.teamProfilePhaseFilter = 'ALL';
     this.teamProfileMatchFilter = 'ALL';
+    this.teamProfileOpponentId = null;
     this.changeDetector.detectChanges();
     const row = this.teamProfileSection?.nativeElement.querySelector<HTMLElement>(
       `[data-team-profile-fixture-id="${fixture.id}"]`
@@ -2745,6 +2782,9 @@ export class CommunityTournamentsComponent implements OnChanges {
           fixture => fixture.homeTeamId === teamId || fixture.awayTeamId === teamId)];
         this.teamProfileMatchesPage = page;
         this.teamProfileMatchesHasMore = result.hasMore;
+        if (this.teamProfileOpponentId !== null
+            && !this.teamProfileOpponents.some(team=>team.id === this.teamProfileOpponentId))
+          this.teamProfileOpponentId = null;
         this.changeDetector.markForCheck();
       },
       error: () => {

@@ -1891,6 +1891,46 @@ describe('Community tournaments management', () => {
       expect(component.visibleTeamProfileMatches.length).toBe(2);
     });
 
+    it('filters loaded team games by actual opponent, safely combining phase and status', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      component.teamPageId=40;
+      component.teams=[team,{...team,id:41,name:'Azuis'},{...team,id:42,name:'Roxos'}];
+      const first={id:70,roundNumber:1,groupNumber:1,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:41,awayTeamName:'Azuis',status:'SCHEDULED' as const};
+      const second={...first,id:71,roundNumber:2,groupNumber:1,
+        homeTeamId:42,homeTeamName:'Roxos',awayTeamId:40,awayTeamName:'Verdes',
+        status:'COMPLETED' as const,homeScore:2,awayScore:1};
+      const third={...first,id:72,groupNumber:null,roundNumber:1,status:'COMPLETED' as const,
+        homeScore:3,awayScore:1};
+      const unrelated={...first,id:73,homeTeamId:55,awayTeamId:56};
+      component.teamProfileMatches=[first,second,third,unrelated];
+      expect(component.teamProfileOpponents.map(x=>x.id)).toEqual([41,42]);
+      component.setTeamProfileOpponent('41');
+      expect(component.visibleTeamProfileMatches.map(x=>x.id)).toEqual([70,72]);
+      component.setTeamProfileMatchFilter('COMPLETED');
+      expect(component.visibleTeamProfileMatches.map(x=>x.id)).toEqual([72]);
+      component.setTeamProfilePhaseFilter('group-1');
+      expect(component.visibleTeamProfileMatches).toEqual([]);
+      component.setTeamProfileOpponent('42');
+      expect(component.visibleTeamProfileMatches.map(x=>x.id)).toEqual([71]);
+      component.setTeamProfileOpponent('999');
+      expect(component.teamProfileOpponentId).toBe(42);
+      component.setTeamProfileOpponent('oops');
+      expect(component.teamProfileOpponentId).toBe(42);
+      component.setTeamProfileOpponent('ALL');
+      expect(component.visibleTeamProfileMatches.map(x=>x.id)).toEqual([71]);
+      component.setTeamProfileOpponent('41');
+      const reveal=spyOn(component,'showTeamProfileFixture').and.callThrough();
+      component.showTeamProfileFixture(third);
+      expect(reveal).toHaveBeenCalledWith(third);
+      expect(component.teamProfileOpponentId).toBeNull();
+      component.setTeamProfileOpponent('41');
+      component.resetTeamProfileMatches();
+      expect(component.teamProfileOpponentId).toBeNull();
+      component.teamPageId=99;
+      expect(component.teamProfileOpponents).toEqual([]);
+    });
+
     it('scopes recent form and phase counts to the selected team and loaded pages', () => {
       const first={id:70,roundNumber:1,groupNumber:1,homeTeamId:40,homeTeamName:'Verdes',
         awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,

@@ -3100,6 +3100,7 @@ export const EN: Record<string, string> = {
   'communities.tournaments.bracketUi.showLess': "Show fewer matches",
   'communities.tournaments.groupBridge.open': "View in bracket",
   'communities.tournaments.teamPage.viewKnockoutFixture': "View knockout match",
+  'communities.tournaments.teamPage.opponentFilter': "Opponent",
   'communities.tournaments.bracketUi.viewPrevious': "View qualifying match",
   'communities.specializedStats.heading': "Sport-specific statistics",
   'communities.specializedStats.raceDescription': "Recorded race results for this season, separate from head-to-head matches.",

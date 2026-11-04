@@ -812,6 +812,19 @@
                       </select>
                     </label>
                   }
+                  @if (teamProfileOpponents.length > 1) {
+                    <label class="team-phase-select team-page-phase-filter">
+                      {{ 'communities.tournaments.teamPage.opponentFilter' | t }}
+                      <select [ngModel]="teamProfileOpponentId === null ? 'ALL' : '' + teamProfileOpponentId"
+                        (ngModelChange)="setTeamProfileOpponent($event)"
+                        [attr.aria-label]="'communities.tournaments.teamPage.opponentFilter' | t">
+                        <option value="ALL">{{ 'communities.tournaments.phaseUi.all' | t }}</option>
+                        @for (opponent of teamProfileOpponents; track opponent.id) {
+                          <option [value]="opponent.id">{{ opponent.name }}</option>
+                        }
+                      </select>
+                    </label>
+                  }
                   <p role="status">{{ 'communities.tournaments.fixturesUi.loadedSummary' | t:{shown:visibleTeamProfileMatches.length,loaded:teamProfileMatches.length} }}</p>
                 </div>
               }
