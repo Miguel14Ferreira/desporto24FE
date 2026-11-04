@@ -3080,7 +3080,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         || game.homeScore! < 0 || game.awayScore! < 0) return null;
     const own = game.homeTeamId === team.id ? game.homeScore : game.awayScore;
     const rival = game.homeTeamId === team.id ? game.awayScore : game.homeScore;
-    return own > rival ? 'WIN' : own < rival ? 'LOSS' : 'DRAW';
+    return own! > rival! ? 'WIN' : own! < rival! ? 'LOSS' : 'DRAW';
   }
 
   /** Only link to a rival's actual roster entry in this selected tournament. */
