@@ -27,6 +27,13 @@ describe('Karting championship race presentation', () => {
     expect(input.map(driver => driver.fullName)).toEqual(['Ana', 'Rui', 'João', 'Eva', 'Bia']);
   });
 
+  it('keeps unsafe finishing positions out of the classified group', () => {
+    const sorted = orderedKartingRaceEntries([
+      entry('Ana', Number.MAX_SAFE_INTEGER + 1), entry('Bia', 1), entry('Eva', null)
+    ]);
+    expect(sorted.map(driver => driver.fullName)).toEqual(['Bia', 'Ana', 'Eva']);
+  });
+
   it('preserves original order between equal valid finishing positions', () => {
     const sorted = orderedKartingRaceEntries([
       entry('Eva', 2), entry('Ana', 2), entry('Bia', 1)
@@ -43,6 +50,8 @@ describe('Karting championship race presentation', () => {
     expect(formatKartingDuration(null)).toBe('—');
     expect(formatKartingDuration(NaN)).toBe('—');
     expect(formatKartingDuration(-1)).toBe('—');
+    expect(formatKartingDuration(Number.MAX_VALUE)).toBe('—');
+    expect(formatKartingDuration(Number.MAX_SAFE_INTEGER)).toBe('—');
   });
 
   it('computes championship points like the backend, subtracting penalty points only', () => {
@@ -58,5 +67,6 @@ describe('Karting championship race presentation', () => {
     expect(kartingRaceAward(entry('Ana', 1, { racePenaltyPoints: Infinity }), points)).toBe(0);
     expect(kartingRaceAward(entry('Ana', 1), [NaN])).toBe(0);
     expect(kartingRaceAward(entry('Ana', 1), [-4])).toBe(0);
+    expect(kartingRaceAward(entry('Ana', Number.MAX_SAFE_INTEGER + 1), points)).toBe(0);
   });
 });
