@@ -3,7 +3,7 @@
   @if (standings.length) {
     <div class="t-table-scroll">
       <table [attr.aria-label]="'communities.karting.tableLabel' | t">
-        <thead><tr><th>{{ 'communities.karting.position' | t }}</th><th>{{ 'communities.karting.participant' | t }}</th><th>{{ 'communities.karting.races' | t }}</th><th>{{ 'communities.karting.wins' | t }}</th><th>{{ 'communities.karting.podiums' | t }}</th><th>{{ 'communities.karting.points' | t }}</th></tr></thead>
+        <thead><tr><th>{{ 'communities.karting.position' | t }}</th><th>{{ 'communities.karting.participant' | t }}</th><th>{{ 'communities.karting.races' | t }}</th><th>{{ 'communities.karting.wins' | t }}</th><th>{{ 'communities.karting.podiums' | t }}</th><th>{{ 'communities.race.bestFinish' | t }}</th><th>{{ 'communities.race.penaltyPoints' | t }}</th><th>{{ 'communities.karting.points' | t }}</th></tr></thead>
         <tbody>
           @for (driver of standings; track driver.playerId) {
             <tr [class.is-podium-first]="podiumPosition(driver.position) === 1"
@@ -11,6 +11,8 @@
                 [class.is-podium-third]="podiumPosition(driver.position) === 3">
               <td>{{ displayPosition(driver.position) }}{{ displayPosition(driver.position) === '—' ? '' : ('communities.karting.ordinalSuffix' | t) }}</td><td>{{ driver.fullName }}</td>
               <td>{{ displayCount(driver.races) }}</td><td>{{ displayCount(driver.wins) }}</td><td>{{ displayCount(driver.podiums) }}</td>
+              <td>{{ displayPosition(driver.bestFinish) }}</td>
+              <td>{{ displayCount(driver.penaltyPoints) }}</td>
               <td><strong>{{ displayPoints(driver.championshipPoints) }}</strong></td>
             </tr>
           }
