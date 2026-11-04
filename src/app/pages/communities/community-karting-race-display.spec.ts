@@ -54,5 +54,9 @@ describe('Karting championship race presentation', () => {
     expect(kartingRaceAward(entry('João', null), points)).toBe(0);
     expect(kartingRaceAward(entry('Nuno', 1, { raceDisqualified: true }), points)).toBe(0);
     expect(kartingRaceAward(entry('Ana', 1, { raceTimePenaltySeconds: 5 }), points)).toBe(25);
+    expect(kartingRaceAward(entry('Ana', 1, { racePenaltyPoints: NaN }), points)).toBe(0);
+    expect(kartingRaceAward(entry('Ana', 1, { racePenaltyPoints: Infinity }), points)).toBe(0);
+    expect(kartingRaceAward(entry('Ana', 1), [NaN])).toBe(0);
+    expect(kartingRaceAward(entry('Ana', 1), [-4])).toBe(0);
   });
 });
