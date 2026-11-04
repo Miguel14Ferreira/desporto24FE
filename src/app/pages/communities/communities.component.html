@@ -3025,7 +3025,7 @@
                       </section>
                     }
 
-                    @if ((competition?.racketStandings?.length || 0) > 0) {
+                    @if (racketRankingGroups.length > 0) {
                       <section class="racket-standings-section" aria-labelledby="racket-standings-title">
                         <div class="section-heading">
                           <div>
@@ -3036,7 +3036,7 @@
                         <p class="racket-standings-explainer">
                           {{ 'communities.racket.rankingHint' | t }}
                         </p>
-                        @for (group of competition?.racketStandings || []; track group.sport + ':' + group.matchFormat) {
+                        @for (group of racketRankingGroups; track group.sport + ':' + group.matchFormat) {
                           <div class="racket-standings-group">
                             <div class="racket-standings-group-head">
                               <h4>{{ group.sport }}</h4>
