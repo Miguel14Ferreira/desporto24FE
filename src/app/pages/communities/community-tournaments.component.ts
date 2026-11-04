@@ -2955,7 +2955,8 @@ export class CommunityTournamentsComponent implements OnChanges {
       }
       const own = home ? fixture.homeScore : fixture.awayScore;
       const other = home ? fixture.awayScore : fixture.homeScore;
-      if (!Number.isSafeInteger(own) || !Number.isSafeInteger(other)) continue;
+      if (!Number.isSafeInteger(own) || !Number.isSafeInteger(other)
+          || own! < 0 || other! < 0) continue;
       card.played++;
       if (own! > other!) card.wins++;
       else if (own! < other!) card.losses++;
