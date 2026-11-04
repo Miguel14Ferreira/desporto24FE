@@ -14,6 +14,9 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 export class CommunitySeasonCreateFormComponent {
   @Input() name = '';
   @Input() startsAt = '';
+  @Input() sports: readonly string[] = [];
+  @Input() sport = '';
+  @Output() sportChange = new EventEmitter<string>();
   @Input() saving = false;
   @Output() nameChange = new EventEmitter<string>();
   @Output() startsAtChange = new EventEmitter<string>();
