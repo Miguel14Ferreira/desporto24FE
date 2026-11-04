@@ -978,8 +978,8 @@
                     <a class="team-page-fixture-tournament-link"
                       [routerLink]="['/menu/communities', community.id]"
                       [queryParams]="{tab:'tournaments',tournament:selected?.id,fixture:game.id}"
-                      [attr.aria-label]="'communities.tournaments.fixturesUi.openDirectFixture' | t">
-                      {{ 'communities.tournaments.fixturesUi.openDirectFixture' | t }} <span aria-hidden="true">↗</span>
+                      [attr.aria-label]="'communities.tournaments.teamPage.back' | t">
+                      {{ 'communities.tournaments.teamPage.back' | t }} <span aria-hidden="true">↗</span>
                     </a>
                   </div>
                 </div>
@@ -2145,8 +2145,8 @@
                 @if (requestedTeamFixtureMissing) {
                   <p class="team-fixtures-empty" role="status">
                     {{ (teamMatchesHasMore
-                      ? 'communities.tournaments.fixturesUi.directFixtureMore'
-                      : 'communities.tournaments.fixturesUi.directFixtureNotFound') | t }}
+                      ? 'communities.tournaments.teamPage.moreMatches'
+                      : 'communities.tournaments.fixturesUi.noFilterResults') | t }}
                   </p>
                 }
                 @let shownTeamMatches = visibleTeamMatches;
