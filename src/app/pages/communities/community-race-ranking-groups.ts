@@ -1,5 +1,5 @@
 import { CommunityRaceStandingGroup } from '../model/community-group';
-import { isRaceChampionshipSport } from '../../services/community-tournaments.service';
+import { RACE_CHAMPIONSHIP_SPORTS } from '../../services/community-tournaments.service';
 
 /**
  * A race community has an appropriate standings panel even before its first
@@ -11,11 +11,12 @@ export function raceRankingGroupsForCommunity(
 ): CommunityRaceStandingGroup[] {
   const normalized = (sport: string): string =>
     sport.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  const supported = new Map(RACE_CHAMPIONSHIP_SPORTS.map(sport => [normalized(sport), sport]));
   const selected = new Map<string, string>();
   for (const raw of sports) {
-    const sport = raw.trim();
-    const key = normalized(sport);
-    if (isRaceChampionshipSport(sport) && !selected.has(key)) selected.set(key, sport);
+    const key = normalized(raw);
+    const canonical = supported.get(key);
+    if (canonical && !selected.has(key)) selected.set(key, canonical);
   }
 
   // Never display results from another (or previously selected) sport.
