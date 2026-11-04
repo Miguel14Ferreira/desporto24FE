@@ -3074,6 +3074,8 @@ export const EN: Record<string, string> = {
   'communities.tournaments.teamPage.noSearchResults': 'No team matches your search.',
   'communities.tournaments.teamPage.resultsTitle': 'Results and fixtures',
   'communities.tournaments.teamPage.journeyTitle': 'Team journey',
+  'communities.tournaments.teamPage.knockoutEliminated': 'Eliminated from the knockout',
+  'communities.tournaments.teamPage.knockoutUnverified': 'Result awaiting verification',
   'communities.tournaments.teamPage.formTitle': 'Recent form',
   'communities.tournaments.teamPage.phaseFormTitle': 'Form by stage',
   'communities.tournaments.teamPage.phaseCount': 'with scores',

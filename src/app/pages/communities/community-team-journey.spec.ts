@@ -92,6 +92,47 @@ describe('published team journey',()=>{
     expect(journey([first,next],10,'LEAGUE').knockoutPath).toEqual([]);
   });
 
+  it('classifies only verified knockout progression and keeps unpublished advances unclaimed',()=>{
+    const won=fixture(81,1,'COMPLETED',3,1);
+    const next=fixture(82,2,'SCHEDULED');
+    const path=journey([next,won,fixture(82,2,'SCHEDULED')],10,'KNOCKOUT');
+    expect(path.knockoutPath.map(step=>step.state)).toEqual(['ADVANCED','TO_PLAY']);
+    expect(path.knockoutProgress).toEqual({
+      published:2,wins:1,losses:0,toPlay:1,verifiedAdvances:1
+    });
+    expect(journey([won],10,'KNOCKOUT').knockoutPath[0].state).toBe('WON');
+    expect(journey([won,fixture(83,3,'SCHEDULED')],10,'KNOCKOUT')
+      .knockoutPath[0].state).toBe('WON');
+    expect(journey([fixture(84,1,'COMPLETED',1,2)],10,'KNOCKOUT')
+      .knockoutPath[0].state).toBe('ELIMINATED');
+  });
+  it('only calls a defeat elimination when the last round and all fixture pages are known',()=>{
+    const loss=fixture(90,2,'COMPLETED',0,3);
+    const result=journey([loss],10,'KNOCKOUT');
+    expect(result.knockoutPath[0].state).toBe('ELIMINATED');
+    expect(journey([loss],10,'KNOCKOUT',true)
+      .knockoutPath[0].state).toBe('LOST');
+    const later=fixture(91,3,'SCHEDULED');
+    expect(journey([loss,later],10,'KNOCKOUT')
+      .knockoutPath.map(step=>step.state)).toEqual(['LOST','TO_PLAY']);
+    expect(journey([loss,{...loss,id:92}],10,'KNOCKOUT')
+      .knockoutPath.every(step=>step.state==='LOST')).toBeTrue();
+    const tied=fixture(93,1,'COMPLETED',2,2);
+    const bad=fixture(94,2,'COMPLETED',null,3);
+    expect(journey([tied,bad],10,'KNOCKOUT')
+      .knockoutPath.map(step=>step.state)).toEqual(['UNVERIFIED','UNVERIFIED']);
+    expect(journey([tied,bad],10,'KNOCKOUT').knockoutProgress).toEqual({
+      published:2,wins:0,losses:0,toPlay:0,verifiedAdvances:0
+    });
+  });
+  it('does not count invalid fixture IDs in published knockout records',()=>{
+    const valid=fixture(93,1,'COMPLETED',2,0);
+    const records=[valid,{...valid,id:0},{...valid,id:-4},{...valid,id:NaN}];
+    expect(journey(records,10,'KNOCKOUT').knockoutProgress.published).toBe(1);
+    expect(journey([fixture(1,1,'COMPLETED',1,0,2)],10,'GROUP_KNOCKOUT')
+      .knockoutProgress.published).toBe(0);
+    expect(journey([valid],10,'LEAGUE').knockoutProgress.published).toBe(0);
+  });
   it('summarizes recent form and each published stage without duplicate or invalid scores',()=>{
     const awayLoss={...fixture(4,2,'COMPLETED',2,0),homeTeamId:20,
       awayTeamId:10,homeTeamName:'Azuis',awayTeamName:'Verdes'};

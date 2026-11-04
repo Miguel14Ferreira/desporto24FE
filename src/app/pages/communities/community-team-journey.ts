@@ -20,9 +20,20 @@ export interface TeamVerifiedAdvancement {
   nextFixture: TournamentTeamMatch;
   opponentName: string;
 }
+export type TeamKnockoutStepState =
+  'ADVANCED' | 'WON' | 'ELIMINATED' | 'LOST' | 'TO_PLAY' | 'UNVERIFIED';
 export interface TeamKnockoutPathStep extends TeamJourneyMatch {
+  /** The published score is not enough to claim a new round without its fixture. */
+  state: TeamKnockoutStepState;
   /** Only a unique, immediately subsequent published fixture verifies progression. */
   confirmedNextFixture: TournamentTeamMatch | null;
+}
+export interface TeamKnockoutProgress {
+  published: number;
+  wins: number;
+  losses: number;
+  toPlay: number;
+  verifiedAdvances: number;
 }
 export interface TeamJourneyPhase {
   key: string;
@@ -42,16 +53,19 @@ export interface PublishedTeamJourney {
   advancement: TeamVerifiedAdvancement | null;
   /** All loaded elimination matches, in published round order, without speculative byes. */
   knockoutPath: TeamKnockoutPathStep[];
+  knockoutProgress: TeamKnockoutProgress;
 }
 
 /** The match contract has no dates. Published round order never implies a start time.
  * No completed score or hypothetical bye alone can confirm knockout progression. */
 export function summarizePublishedTeamJourney(
-  published: readonly TournamentTeamMatch[], teamId: number, format: TeamFormat
+  published: readonly TournamentTeamMatch[], teamId: number, format: TeamFormat,
+  hasMorePublishedFixtures = false
 ): PublishedTeamJourney {
   const byId = new Map<number, TournamentTeamMatch>();
   for (const game of published) {
-    if ((game.homeTeamId === teamId || game.awayTeamId === teamId) && !byId.has(game.id))
+    if (Number.isSafeInteger(game.id) && game.id > 0
+        && (game.homeTeamId === teamId || game.awayTeamId === teamId) && !byId.has(game.id))
       byId.set(game.id, game);
   }
   const fixtures = [...byId.values()];
@@ -107,14 +121,27 @@ export function summarizePublishedTeamJourney(
     .sort(order).slice(0,3).map(view);
 
   const eliminations = fixtures.filter(elimination).sort(order);
-  const knockoutPath: TeamKnockoutPathStep[] = eliminations.map(game => {
+  const knockoutPath: TeamKnockoutPathStep[] = eliminations.map((game, index) => {
     const item = view(game);
     const inSameRound = eliminations.filter(other => other.roundNumber === game.roundNumber);
     const inNextRound = eliminations.filter(other => other.roundNumber === game.roundNumber + 1);
     const confirmedNextFixture = item.outcome === 'WIN'
       && inSameRound.length === 1 && inNextRound.length === 1 ? inNextRound[0] : null;
-    return { ...item, confirmedNextFixture };
+    const state: TeamKnockoutStepState = confirmedNextFixture ? 'ADVANCED'
+      : item.outcome === 'WIN' ? 'WON'
+      : item.outcome === 'LOSS'
+        ? (!hasMorePublishedFixtures && index === eliminations.length - 1 && inSameRound.length === 1
+          ? 'ELIMINATED' : 'LOST')
+      : game.status === 'SCHEDULED' ? 'TO_PLAY' : 'UNVERIFIED';
+    return { ...item, state, confirmedNextFixture };
   });
+  const knockoutProgress: TeamKnockoutProgress = {
+    published: knockoutPath.length,
+    wins: knockoutPath.filter(item => item.outcome === 'WIN').length,
+    losses: knockoutPath.filter(item => item.outcome === 'LOSS').length,
+    toPlay: knockoutPath.filter(item => item.state === 'TO_PLAY').length,
+    verifiedAdvances: knockoutPath.filter(item => item.confirmedNextFixture !== null).length
+  };
   const lastConfirmed = knockoutPath.slice().reverse()
     .find(item => item.confirmedNextFixture !== null);
   const advancement: TeamVerifiedAdvancement | null = lastConfirmed?.confirmedNextFixture
@@ -125,5 +152,5 @@ export function summarizePublishedTeamJourney(
         ? lastConfirmed.confirmedNextFixture.awayTeamName
         : lastConfirmed.confirmedNextFixture.homeTeamName
     } : null;
-  return { recent, form, phases, pending, advancement, knockoutPath };
+  return { recent, form, phases, pending, advancement, knockoutPath, knockoutProgress };
 }

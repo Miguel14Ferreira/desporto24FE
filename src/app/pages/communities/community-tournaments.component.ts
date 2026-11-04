@@ -2730,7 +2730,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   get focusedTeamJourney() {
     return summarizePublishedTeamJourney(
       this.teamProfileMatches, this.focusedTeam?.id ?? -1,
-      this.selected?.format ?? 'LEAGUE'
+      this.selected?.format ?? 'LEAGUE', this.teamProfileMatchesHasMore
     );
   }
 

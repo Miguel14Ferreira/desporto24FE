@@ -747,10 +747,18 @@
                         <h5>{{ 'communities.tournaments.bracketUi.title' | t }}</h5>
                         <p>{{ 'communities.tournaments.bracketUi.description' | t }}</p>
                       </div>
+                      <div class="team-page-path-totals" [attr.aria-label]="'communities.tournaments.teamPage.journeyTitle' | t">
+                        <span><strong>{{ journey.knockoutProgress.wins }}</strong>{{ 'communities.result.win' | t }}</span>
+                        <span><strong>{{ journey.knockoutProgress.losses }}</strong>{{ 'communities.result.loss' | t }}</span>
+                        <span><strong>{{ journey.knockoutProgress.toPlay }}</strong>{{ 'communities.tournaments.fixturesUi.filterPending' | t }}</span>
+                        <span><strong>{{ journey.knockoutProgress.verifiedAdvances }}</strong>{{ 'communities.tournaments.bracketUi.advanced' | t }}</span>
+                      </div>
                       <div class="team-page-path-steps" role="list">
                         @for (step of journey.knockoutPath; track step.fixture.id) {
                           <div class="team-page-path-step" role="listitem">
                             <button type="button" class="team-page-path-match"
+                              [class.is-eliminated]="step.state === 'ELIMINATED'"
+                              [class.is-unverified]="step.state === 'UNVERIFIED'"
                               [attr.aria-label]="teamMatchStageLabel(step.fixture) + ' · ' + step.opponentName"
                               (click)="showTeamProfileFixture(step.fixture)">
                               <span class="team-page-path-round">{{ teamMatchStageLabel(step.fixture) }}</span>
@@ -759,14 +767,22 @@
                                 <b>{{ step.ownScore ?? '—' }} : {{ step.opponentScore ?? '—' }}</b>
                               </span>
                               <span class="team-page-path-status"
-                                [class.is-win]="step.outcome === 'WIN'"
-                                [class.is-loss]="step.outcome === 'LOSS'">
-                                @if (step.outcome; as outcome) {
-                                  {{ ('communities.result.' + outcome.toLowerCase()) | t }}
+                                [class.is-win]="step.state === 'ADVANCED' || step.state === 'WON'"
+                                [class.is-loss]="step.state === 'ELIMINATED' || step.state === 'LOST'"
+                                [class.is-pending]="step.state === 'TO_PLAY'"
+                                [class.is-unverified]="step.state === 'UNVERIFIED'">
+                                @if (step.state === 'ADVANCED') {
+                                  {{ 'communities.tournaments.bracketUi.advanced' | t }}
+                                } @else if (step.state === 'WON') {
+                                  {{ 'communities.tournaments.bracketUi.won' | t }}
+                                } @else if (step.state === 'ELIMINATED') {
+                                  {{ 'communities.tournaments.teamPage.knockoutEliminated' | t }}
+                                } @else if (step.state === 'LOST') {
+                                  {{ 'communities.result.loss' | t }}
+                                } @else if (step.state === 'TO_PLAY') {
+                                  {{ 'communities.tournaments.fixturesUi.filterPending' | t }}
                                 } @else {
-                                  {{ (step.fixture.status === 'SCHEDULED'
-                                    ? 'communities.tournaments.fixturesUi.filterPending'
-                                    : 'communities.tournaments.fixturesUi.filterCompleted') | t }}
+                                  {{ 'communities.tournaments.teamPage.knockoutUnverified' | t }}
                                 }
                               </span>
                             </button>

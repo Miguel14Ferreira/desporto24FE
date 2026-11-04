@@ -1225,6 +1225,22 @@ describe('Community tournaments management', () => {
       expect(scroll).toHaveBeenCalledTimes(1);
     });
 
+    it('keeps elimination provisional until all selected team fixture pages are loaded', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamPageId=40;
+      component.teams=[team];
+      component.teamProfileMatches=[{id:200,roundNumber:1,
+        homeTeamId:40,homeTeamName:'Verdes',awayTeamId:41,awayTeamName:'Azuis',
+        status:'COMPLETED',homeScore:0,awayScore:2}];
+      component.teamProfileMatchesHasMore=true;
+      expect(component.focusedTeamJourney.knockoutPath[0].state).toBe('LOST');
+      expect(component.focusedTeamJourney.knockoutProgress.losses).toBe(1);
+      component.teamProfileMatchesHasMore=false;
+      expect(component.focusedTeamJourney.knockoutPath[0].state).toBe('ELIMINATED');
+      component.selected={...component.selected,format:'LEAGUE'};
+      expect(component.focusedTeamJourney.knockoutProgress.published).toBe(0);
+    });
+
     it('opens the next verified team-page fixture without exposing unconfirmed rounds', () => {
       const won={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
         awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED' as const,homeScore:2,awayScore:0};
