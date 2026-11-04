@@ -8,6 +8,18 @@
     <span>{{ 'communities.seasonStart' | t }}</span>
     <input type="datetime-local" [ngModel]="startsAt" (ngModelChange)="startsAtChange.emit($event)">
   </label>
+  @if (sports.length > 1) {
+    <label>
+      <span>{{ 'communities.seasonSport' | t }}</span>
+      <select [ngModel]="sport" (ngModelChange)="sportChange.emit($event)" [disabled]="saving">
+        <option value="">{{ 'communities.seasonAllSports' | t }}</option>
+        @for (option of sports; track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </label>
+    <p>{{ 'communities.seasonSportHint' | t }}</p>
+  }
   <button type="button" class="primary-action jynlo-action jynlo-action--primary"
     [disabled]="saving" (click)="createRequested.emit()">
     {{ (saving ? 'communities.creatingSeason' : 'communities.createSeason') | t }}
