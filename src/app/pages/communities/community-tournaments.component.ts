@@ -2889,6 +2889,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!teamId || this.isRelayCompetition) return [];
     const names = new Map<number,string>();
     for (const game of this.teamProfileMatches) {
+      if (!Number.isSafeInteger(game.id) || game.id <= 0) continue;
       const isHome: boolean = game.homeTeamId === teamId;
       if (!isHome && game.awayTeamId !== teamId) continue;
       const id: number = isHome ? game.awayTeamId : game.homeTeamId;

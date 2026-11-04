@@ -2372,7 +2372,8 @@ describe('Community tournaments management', () => {
         {...first,id:104,homeScore:null,awayScore:1},
         ...Array.from({length:8},(_,i)=>({...first,id:200+i,
           awayTeamId:51+i,awayTeamName:'Rival '+(i+1),status:'SCHEDULED' as const})),
-        {...first,id:999,homeTeamId:90,awayTeamId:91}
+        {...first,id:999,homeTeamId:90,awayTeamId:91},
+        {...first,id:0,awayTeamId:99,awayTeamName:'Fantasma'}
       ];
       const snapshot=JSON.stringify(component.teamProfileMatches);
       const cards=component.teamProfileOpponentCards;
