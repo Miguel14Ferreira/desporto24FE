@@ -210,6 +210,29 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamMatchesError = false;
   private teamMatchesRevision = 0;
   teamStandings?: TournamentTeamStandings;
+  /** Display-only pagination; the full ranking stays in the API response. */
+  readonly teamStandingsPageSize = 12;
+  teamStandingsLimit = 12;
+  get visibleTeamStandings(): TournamentTeamStandingRow[] {
+    if (!this.isTeamCompetition || this.selected?.format !== 'LEAGUE'
+        || this.isRelayCompetition || this.teamStandingsError || !this.teamStandings
+        || this.teamStandings.tournamentId !== this.selected.id) return [];
+    return this.teamStandings.standings.slice(0, this.teamStandingsLimit);
+  }
+  get hasMoreTeamStandings(): boolean {
+    return !!this.teamStandings && this.teamStandings.tournamentId === this.selected?.id
+      && this.teamStandings.standings.length > this.teamStandingsLimit;
+  }
+  expandTeamStandings(): void {
+    if (this.hasMoreTeamStandings) {
+      this.teamStandingsLimit += this.teamStandingsPageSize;
+      this.changeDetector.markForCheck();
+    }
+  }
+  collapseTeamStandings(): void {
+    this.teamStandingsLimit = this.teamStandingsPageSize;
+    this.changeDetector.markForCheck();
+  }
   teamGroups?: TournamentTeamGroups;
   teamGroupsLoading = false;
   teamGroupsError = false;
@@ -2062,6 +2085,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
     this.teamStandings = undefined;
+    this.teamStandingsLimit = this.teamStandingsPageSize;
     this.teamGroups = undefined;
     this.teamGroupsLoading = false;
     this.teamGroupsError = false;

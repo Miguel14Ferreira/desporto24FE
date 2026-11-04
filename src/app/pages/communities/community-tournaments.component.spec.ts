@@ -2194,6 +2194,46 @@ describe('Community tournaments management', () => {
       expect(component.teamLeagueHighlights).toEqual([]);
     });
 
+    it('reveals large league standings progressively without changing published ranking or fetching again', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      const standings=Array.from({length:29},(_,i)=>({
+        position:i+1,teamId:100+i,teamName:'Equipa '+(i+1),
+        played:i===28?0:2,won:1,drawn:0,lost:1,
+        goalsFor:2,goalsAgainst:1,goalDifference:1,points:3
+      }));
+      component.teamStandings={
+        tournamentId:19,status:'IN_PROGRESS',totalMatches:44,completedMatches:30,
+        winPoints:3,drawPoints:1,lossPoints:0,standings
+      };
+      expect(component.visibleTeamStandings.map(row=>row.teamId))
+        .toEqual(standings.slice(0,12).map(row=>row.teamId));
+      expect(component.hasMoreTeamStandings).toBeTrue();
+      const calls=api.teamStandings.calls.count();
+      component.expandTeamStandings();
+      expect(component.visibleTeamStandings).toHaveSize(24);
+      component.expandTeamStandings();
+      expect(component.visibleTeamStandings).toHaveSize(29);
+      expect(component.hasMoreTeamStandings).toBeFalse();
+      component.expandTeamStandings();
+      expect(component.visibleTeamStandings).toHaveSize(29);
+      expect(component.teamStandings.standings).toBe(standings);
+      expect(api.teamStandings.calls.count()).toBe(calls);
+      component.collapseTeamStandings();
+      expect(component.visibleTeamStandings).toHaveSize(12);
+      component.teamStandings={...component.teamStandings,tournamentId:100};
+      expect(component.visibleTeamStandings).toEqual([]);
+      expect(component.hasMoreTeamStandings).toBeFalse();
+      component.selected={...teamDraft,status:'IN_PROGRESS',scoringMode:'RELAY_BEST_TIME'};
+      expect(component.visibleTeamStandings).toEqual([]);
+    });
+
+    it('resets expanded league rankings when selecting a different tournament', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      component.teamStandingsLimit=36;
+      component.selectTournament({...teamDraft,id:29,name:'Outra liga'});
+      expect(component.teamStandingsLimit).toBe(12);
+    });
+
     it('shows the leading recorded standings of each independent group without inventing qualification', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',
         format:'GROUP_KNOCKOUT',groupCount:2};

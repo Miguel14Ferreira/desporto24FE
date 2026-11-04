@@ -2257,7 +2257,7 @@
                           <th scope="col">{{ 'communities.tournaments.finalUi.differenceCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th></tr>
                       </thead>
                       <tbody>
-                        @for (row of table.standings; track row.teamId) {
+                        @for (row of visibleTeamStandings; track row.teamId) {
                           <tr [class.is-leader]="row.position === 1 && row.played > 0"
                             [class.is-own-team]="myTeam?.id === row.teamId">
                             <td>{{ row.position }}</td><th scope="row"><a class="team-name-link"
@@ -2272,6 +2272,19 @@
                       </tbody>
                     </table>
                   </div>
+                  @if (hasMoreTeamStandings) {
+                    <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                      (click)="expandTeamStandings()">
+                      {{ 'communities.tournaments.teamPage.moreTeams' | t }}
+                      ({{ visibleTeamStandings.length }}/{{ table.standings.length }})
+                    </button>
+                  } @else if (teamStandingsLimit > teamStandingsPageSize
+                      && table.standings.length > teamStandingsPageSize) {
+                    <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                      (click)="collapseTeamStandings()">
+                      {{ 'communities.tournaments.teamPage.lessTeams' | t }}
+                    </button>
+                  }
                 }
               </section>
               @if (canManage && selected.status === 'IN_PROGRESS') {
