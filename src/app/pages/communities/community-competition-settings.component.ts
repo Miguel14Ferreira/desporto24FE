@@ -38,7 +38,7 @@ export class CommunityCompetitionSettingsComponent {
   get classifiedSports(): { sport: string; family: ReturnType<typeof formatForSport> }[] {
     const unique = new Set<string>();
     return this.sports.filter(sport => {
-      const key = sport.trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
+      const key = sport.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
       if (!key || unique.has(key)) return false;
       unique.add(key);
       return true;
