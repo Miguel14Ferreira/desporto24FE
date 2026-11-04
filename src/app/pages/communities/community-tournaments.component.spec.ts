@@ -1398,6 +1398,54 @@ describe('Community tournaments management', () => {
       }
     });
 
+    it('reveals large bracket rounds in four-match batches without hiding focused fixtures', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      const roundOne=Array.from({length:16},(_,i)=>({
+        id:500+i,roundNumber:1,homeTeamId:100+i*2,
+        homeTeamName:'Casa '+i,awayTeamId:101+i*2,
+        awayTeamName:'Fora '+i,status:'SCHEDULED' as const
+      }));
+      component.teamMatches=[...roundOne,{
+        id:600,roundNumber:2,homeTeamId:200,homeTeamName:'A',
+        awayTeamId:201,awayTeamName:'B',status:'SCHEDULED' as const
+      }];
+      const original=JSON.stringify(component.teamMatches);
+      const rounds=component.knockoutBracket;
+      const first=rounds[0].matches;
+      expect(component.visibleKnockoutMatches(1,first).length).toBe(4);
+      component.setKnockoutFocusTeam(130);
+      expect(component.visibleKnockoutMatches(1,first).map(item=>item.game.id))
+        .toEqual([500,501,502,503,515]);
+      component.showMoreKnockoutMatches(1);
+      expect(component.visibleKnockoutMatches(1,first).map(item=>item.game.id))
+        .toEqual([500,501,502,503,504,505,506,507,515]);
+      expect(component.visibleKnockoutMatches(2,rounds[1].matches).length).toBe(1);
+      component.showMoreKnockoutMatches(2);
+      component.showMoreKnockoutMatches(-1);
+      component.showMoreKnockoutMatches(NaN);
+      expect(component.knockoutRoundLimits.size).toBe(1);
+      component.showMoreKnockoutMatches(1);
+      expect(component.visibleKnockoutMatches(1,first).length).toBe(13);
+      component.showMoreKnockoutMatches(1);
+      component.showMoreKnockoutMatches(1);
+      expect(component.visibleKnockoutMatches(1,first).length).toBe(16);
+      expect(component.knockoutRoundLimits.get(1)).toBe(16);
+      component.toggleKnockoutRound(1);
+      expect(component.visibleKnockoutMatches(1,first).length).toBe(5);
+      expect(component.knockoutRoundLimits.size).toBe(0);
+      component.setKnockoutFocusTeam('ALL');
+      expect(component.visibleKnockoutMatches(1,first).length).toBe(4);
+      component.showMoreKnockoutMatches(1);
+      component.toggleKnockoutRound(1);
+      expect(component.visibleKnockoutMatches(1,first).length).toBe(16);
+      component.toggleKnockoutRound(1);
+      expect(component.visibleKnockoutMatches(1,first).length).toBe(4);
+      expect(JSON.stringify(component.teamMatches)).toBe(original);
+      component.showMoreKnockoutMatches(1);
+      component.selectTournament({...teamDraft,id:501,status:'DRAFT',format:'KNOCKOUT'});
+      expect(component.knockoutRoundLimits.size).toBe(0);
+    });
+
     it('keeps small rounds expanded, refuses missing rounds and clears expansion on tournament change', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       component.teamMatches=Array.from({length:6},(_,i)=>({

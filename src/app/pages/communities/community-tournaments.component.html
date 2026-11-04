@@ -1944,11 +1944,20 @@
                               </article>
                             }
                             @if (round.matches.length > knockoutCompactThreshold) {
+                              @let allVisible = expandedKnockoutRounds.has(round.round)
+                                || (knockoutRoundLimits.get(round.round) ?? 0) >= round.matches.length;
+                              @if (!allVisible) {
+                                <button type="button" class="team-knockout-round-expand"
+                                  (click)="showMoreKnockoutMatches(round.round)">
+                                  <span>{{ 'mySessions.showMore' | t }}</span>
+                                  <small>{{ visibleKnockoutMatches(round.round, round.matches).length }}/{{ round.matches.length }}</small>
+                                </button>
+                              }
                               <button type="button" class="team-knockout-round-expand"
-                                [attr.aria-expanded]="expandedKnockoutRounds.has(round.round)"
+                                [attr.aria-expanded]="allVisible"
                                 (click)="toggleKnockoutRound(round.round)">
                                 <span>
-                                  {{ (expandedKnockoutRounds.has(round.round)
+                                  {{ (allVisible
                                     ? 'communities.tournaments.bracketUi.showLess'
                                     : 'communities.tournaments.bracketUi.showAll') | t }}
                                 </span>

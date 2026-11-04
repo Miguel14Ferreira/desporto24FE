@@ -206,6 +206,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   readonly knockoutCompactLimit = 4;
   readonly knockoutCompactThreshold = 6;
   expandedKnockoutRounds = new Set<number>();
+  knockoutRoundLimits = new Map<number,number>();
   teamMatchesPage = 0;
   teamMatchesHasMore = false;
   teamMatchesLoading = false;
@@ -1186,6 +1187,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.selectedKnockoutRound = null;
       this.requestedTeamGroupNumber = null;
       this.expandedKnockoutRounds.clear();
+      this.knockoutRoundLimits.clear();
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
@@ -1778,7 +1780,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (matches.length <= this.knockoutCompactThreshold
         || this.expandedKnockoutRounds.has(round)) return matches;
     return matches.filter((item, index) =>
-      index < this.knockoutCompactLimit || this.isKnockoutTeamFocused(item.game));
+      index < (this.knockoutRoundLimits.get(round) ?? this.knockoutCompactLimit)
+      || this.isKnockoutTeamFocused(item.game));
   }
 
   /** Filter bracket columns without altering any loaded fixture or phase filter. */
@@ -1793,13 +1796,28 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.changeDetector.markForCheck();
   }
 
+  /** Reveal more published fixtures in one round without modifying match data. */
+  showMoreKnockoutMatches(round: number): void {
+    const stage = this.knockoutBracket.find(item => item.round === round);
+    if (!Number.isSafeInteger(round) || this.isRelayCompetition || !stage
+        || stage.matches.length <= this.knockoutCompactThreshold
+        || this.expandedKnockoutRounds.has(round)) return;
+    const limit = this.knockoutRoundLimits.get(round) ?? this.knockoutCompactLimit;
+    if (limit >= stage.matches.length) return;
+    this.knockoutRoundLimits.set(round,
+      Math.min(stage.matches.length,limit + this.knockoutCompactLimit));
+    this.changeDetector.markForCheck();
+  }
+
   toggleKnockoutRound(round: number): void {
-    if (!Number.isSafeInteger(round) || !this.isCupFormat || this.isRelayCompetition
-        || !this.knockoutBracket.some(stage =>
-          stage.round === round && stage.matches.length > this.knockoutCompactThreshold))
-      return;
-    if (this.expandedKnockoutRounds.has(round)) this.expandedKnockoutRounds.delete(round);
-    else this.expandedKnockoutRounds.add(round);
+    const stage = this.knockoutBracket.find(item => item.round === round);
+    if (!Number.isSafeInteger(round) || this.isRelayCompetition || !stage
+        || stage.matches.length <= this.knockoutCompactThreshold) return;
+    if (this.expandedKnockoutRounds.has(round)
+        || (this.knockoutRoundLimits.get(round) ?? 0) >= stage.matches.length) {
+      this.expandedKnockoutRounds.delete(round);
+      this.knockoutRoundLimits.delete(round);
+    } else this.expandedKnockoutRounds.add(round);
     this.changeDetector.markForCheck();
   }
 
@@ -2140,6 +2158,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.selectedKnockoutRound = null;
     this.requestedTeamGroupNumber = null;
     this.expandedKnockoutRounds.clear();
+    this.knockoutRoundLimits.clear();
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
@@ -3009,6 +3028,7 @@ export class CommunityTournamentsComponent implements OnChanges {
             && !this.knockoutBracket.some(stage => stage.round === this.selectedKnockoutRound))
           this.selectedKnockoutRound = null;
         if (reset) {
+          this.knockoutRoundLimits.clear();
           const publishedRounds = new Set(this.knockoutBracket.map(stage => stage.round));
           for (const round of this.expandedKnockoutRounds)
             if (!publishedRounds.has(round)) this.expandedKnockoutRounds.delete(round);
