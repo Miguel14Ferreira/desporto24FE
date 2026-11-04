@@ -1862,14 +1862,32 @@
                                 }
                                 <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.homeTeamId"
                                   [class.is-focus-contender]="knockoutFocusTeamId === item.game.homeTeamId">
-                                  <a [routerLink]="['/menu/communities', community.id]"
-                                    [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.homeTeamId}">{{ item.game.homeTeamName }}</a>
+                                  <span class="team-knockout-team-main">
+                                    <a [routerLink]="['/menu/communities', community.id]"
+                                      [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.homeTeamId}">{{ item.game.homeTeamName }}</a>
+                                    @if (publishedKnockoutSourceGroup(item.game, item.game.homeTeamId); as groupNumber) {
+                                      <button type="button" class="team-knockout-group-origin"
+                                        (click)="showTeamStandingsGroup(groupNumber)"
+                                        [attr.aria-label]="('communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(groupNumber)}) + ': ' + item.game.homeTeamName">
+                                        {{ 'communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(groupNumber)} }} ↙
+                                      </button>
+                                    }
+                                  </span>
                                   <b>{{ item.game.status === 'COMPLETED' && item.game.homeScore != null ? item.game.homeScore : '—' }}</b>
                                 </div>
                                 <div class="team-knockout-contender" [class.is-winner]="item.winnerId === item.game.awayTeamId"
                                   [class.is-focus-contender]="knockoutFocusTeamId === item.game.awayTeamId">
-                                  <a [routerLink]="['/menu/communities', community.id]"
-                                    [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.awayTeamId}">{{ item.game.awayTeamName }}</a>
+                                  <span class="team-knockout-team-main">
+                                    <a [routerLink]="['/menu/communities', community.id]"
+                                      [queryParams]="{tab:'tournaments',tournament:selected.id,teamPage:item.game.awayTeamId}">{{ item.game.awayTeamName }}</a>
+                                    @if (publishedKnockoutSourceGroup(item.game, item.game.awayTeamId); as groupNumber) {
+                                      <button type="button" class="team-knockout-group-origin"
+                                        (click)="showTeamStandingsGroup(groupNumber)"
+                                        [attr.aria-label]="('communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(groupNumber)}) + ': ' + item.game.awayTeamName">
+                                        {{ 'communities.tournaments.finalUi.groupLabel' | t:{group:groupLabel(groupNumber)} }} ↙
+                                      </button>
+                                    }
+                                  </span>
                                   <b>{{ item.game.status === 'COMPLETED' && item.game.awayScore != null ? item.game.awayScore : '—' }}</b>
                                 </div>
                                 @if (item.champion) {

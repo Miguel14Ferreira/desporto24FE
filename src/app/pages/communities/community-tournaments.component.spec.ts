@@ -2398,6 +2398,42 @@ describe('Community tournaments management', () => {
       expect(component.publishedGroupKnockoutFixture(1,40)).toBeNull();
     });
 
+    it('links bracket contenders back only to their verified backend group', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:2};
+      const standing=(id:number,position:number)=>({
+        teamId:id,teamName:'Equipa '+id,position,played:2,won:1,drawn:0,lost:1,
+        goalsFor:2,goalsAgainst:1,goalDifference:1,points:3
+      });
+      component.teamGroups={tournamentId:19,knockoutStarted:true,groups:[
+        {groupNumber:1,standings:[standing(40,1),standing(41,3)]},
+        {groupNumber:2,standings:[standing(43,2)]}
+      ]};
+      const fixture={id:91,roundNumber:1,groupNumber:null,homeTeamId:40,
+        homeTeamName:'Verdes',awayTeamId:43,awayTeamName:'Brancos',
+        status:'SCHEDULED' as const};
+      component.teamMatches=[fixture];
+      expect(component.publishedKnockoutSourceGroup(fixture,40)).toBe(1);
+      expect(component.publishedKnockoutSourceGroup(fixture,43)).toBe(2);
+      expect(component.publishedKnockoutSourceGroup(fixture,41)).toBeNull();
+      expect(component.publishedKnockoutSourceGroup({...fixture,roundNumber:2},40)).toBeNull();
+      expect(component.publishedKnockoutSourceGroup({...fixture,groupNumber:1},40)).toBeNull();
+      expect(component.publishedKnockoutSourceGroup({...fixture,id:92},40)).toBeNull();
+      component.teamMatches=[fixture,{...fixture,id:92,awayTeamId:42}];
+      expect(component.publishedKnockoutSourceGroup(fixture,40)).toBeNull();
+      component.teamMatches=[fixture];
+      component.teamGroups.groups[1].standings.push(standing(40,2));
+      expect(component.publishedKnockoutSourceGroup(fixture,40)).toBeNull();
+      component.teamGroups.groups[1].standings.pop();
+      component.teamGroups.knockoutStarted=false;
+      expect(component.publishedKnockoutSourceGroup(fixture,40)).toBeNull();
+      component.teamGroups.knockoutStarted=true;
+      component.teamGroups.tournamentId=777;
+      expect(component.publishedKnockoutSourceGroup(fixture,40)).toBeNull();
+      component.teamGroups.tournamentId=19;
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'LEAGUE'};
+      expect(component.publishedKnockoutSourceGroup(fixture,40)).toBeNull();
+    });
+
     it('never links a later knockout stage as the immediate group qualifier', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'GROUP_KNOCKOUT',groupCount:4};
       component.teamGroups={tournamentId:19,knockoutStarted:true,groups:[

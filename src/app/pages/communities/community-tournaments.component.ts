@@ -1434,6 +1434,24 @@ export class CommunityTournamentsComponent implements OnChanges {
     return fixtures.length === 1 ? fixtures[0] : null;
   }
 
+  /** Reverse link from an actual first knockout fixture to an official group.
+   * A team must have one backend group, a qualifying position and one
+   * published first-round fixture; no speculative paths are displayed. */
+  publishedKnockoutSourceGroup(fixture: TournamentTeamMatch, teamId: number): number | null {
+    const groups = this.teamGroups;
+    if (!this.isGroupKnockout || this.isRelayCompetition || !groups?.knockoutStarted
+        || this.teamGroupsError || groups.tournamentId !== this.selected?.id
+        || !Number.isSafeInteger(fixture.id) || fixture.id <= 0
+        || fixture.roundNumber !== 1 || fixture.groupNumber != null
+        || (fixture.homeTeamId !== teamId && fixture.awayTeamId !== teamId)) return null;
+    const matches = groups.groups.filter(group =>
+      group.standings.some(row => row.teamId === teamId));
+    if (matches.length !== 1) return null;
+    const groupNumber = matches[0].groupNumber;
+    return this.publishedGroupKnockoutFixture(groupNumber, teamId)?.id === fixture.id
+      ? groupNumber : null;
+  }
+
   showGroupTeamKnockout(groupNumber: number, teamId: number): void {
     const fixture = this.publishedGroupKnockoutFixture(groupNumber, teamId);
     if (!fixture) return;

@@ -716,11 +716,26 @@ async function main() {
                   assert.ok((await page.locator('.champion').innerText()).includes('Raquetes Verdes'));
                   await page.locator('.team-standings-table').scrollIntoViewIfNeeded();
                 } else if (Number(teamId) === 9021) {
+                  const groupTabs = page.locator('.team-group-switch');
+                  assert.equal(await groupTabs.count(),2,
+                    'Both independent published groups must remain selectable');
                   await page.locator('.team-standings-table').first().waitFor({state:'visible'});
-                  assert.equal(await page.locator('.team-standings-table').count(),2,
-                    'Group stage must display two independent classifications');
-                  assert.equal(await page.locator('.team-standings-table tbody tr').count(),4);
-                  await page.locator('.team-standings-table').last().scrollIntoViewIfNeeded();
+                  assert.equal(await page.locator('.team-standings-table').count(),1,
+                    'Compact group view displays one classification at a time');
+                  assert.equal(await page.locator('.team-standings-table tbody tr').count(),2);
+                  const firstGroup = await page.locator('.team-standings-table tbody th a').allTextContents();
+                  await groupTabs.nth(1).click();
+                  assert.equal(await groupTabs.nth(1).getAttribute('aria-pressed'),'true');
+                  assert.equal(await page.locator('.team-standings-table').count(),1);
+                  assert.equal(await page.locator('.team-standings-table tbody tr').count(),2);
+                  const secondGroup = await page.locator('.team-standings-table tbody th a').allTextContents();
+                  assert.equal(firstGroup.filter(team => secondGroup.includes(team)).length,0,
+                    'Switching groups never mixes their independent rankings');
+                  await groupTabs.nth(0).click();
+                  assert.equal(await groupTabs.nth(0).getAttribute('aria-pressed'),'true');
+                  assert.deepEqual(await page.locator('.team-standings-table tbody th a').allTextContents(),firstGroup,
+                    'Returning to the first group restores its original published ranking');
+                  await page.locator('.team-standings-table').scrollIntoViewIfNeeded();
                 } else {
                   assert.equal(await page.locator('.team-standings-table').count(),0,
                     'Knockout-only tournaments must not invent a league table');
