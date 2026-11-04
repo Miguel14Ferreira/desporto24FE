@@ -48,7 +48,7 @@ describe('CommunityCompetitionSettingsComponent', () => {
     const fixture = await render();
     fixture.componentRef.setInput('sports', [
       'Futebol', 'Padel', 'Karting', 'Atletismo', 'Golfe', 'Surf', 'Yoga', 'Unknown Sport',
-      'Futebol', '  padel  '
+      'Futebol', '  padel  ', 'Atletísmo'
     ]);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
