@@ -19,12 +19,12 @@
       @for (driver of orderedKartingRaceEntries(race.entries); track $index) {
         <tr [class.is-disqualified]="driver.raceDisqualified"
           [class.is-not-finished]="!driver.raceDisqualified && driver.finishPosition == null"
-          [class.is-race-winner]="driver.finishPosition === 1 && !driver.raceDisqualified">
+          [class.is-race-winner]="validFinishPosition(driver.finishPosition) && driver.finishPosition === 1 && !driver.raceDisqualified">
           <td>
             <span class="karting-race-position"
-              [class.is-status]="driver.raceDisqualified || driver.finishPosition == null">
+              [class.is-status]="driver.raceDisqualified || !validFinishPosition(driver.finishPosition)">
               {{ driver.raceDisqualified ? 'DSQ'
-                : (driver.finishPosition == null ? 'DNF' : driver.finishPosition + '.º') }}
+                : (driver.finishPosition == null ? 'DNF' : (validFinishPosition(driver.finishPosition) ? driver.finishPosition + '.º' : '—')) }}
             </span>
           </td>
           <td class="karting-race-driver">
@@ -32,7 +32,7 @@
             @if (driver.raceDisqualified && driver.raceStewardReason) {
               <small>{{ driver.raceStewardReason }}</small>
             }
-            @if (driver.racePenaltyPoints > 0) {
+            @if (driver.racePenaltyPoints != null && driver.racePenaltyPoints > 0 && validPenalty(driver.racePenaltyPoints)) {
               <small class="karting-race-penalty">
                 −{{ driver.racePenaltyPoints }} {{ 'communities.tournaments.kartingPenaltyPoints' | t }}
                 @if (driver.racePenaltyReason) { · {{ driver.racePenaltyReason }} }
@@ -40,11 +40,11 @@
             }
           </td>
           @if (hasRaceLaps(race.entries)) {
-            <td>{{ driver.lapsCompleted ?? '—' }}</td>
+            <td>{{ validLapCount(driver.lapsCompleted) ? driver.lapsCompleted : '—' }}</td>
           }
           <td class="karting-race-clock">
             <strong>{{ formatKartingDuration(driver.adjustedElapsedSeconds ?? driver.elapsedSeconds) }}</strong>
-            @if (driver.raceTimePenaltySeconds != null && driver.raceTimePenaltySeconds > 0) {
+            @if (driver.raceTimePenaltySeconds != null && driver.raceTimePenaltySeconds > 0 && validPenalty(driver.raceTimePenaltySeconds)) {
               <small>+{{ formatKartingDuration(driver.raceTimePenaltySeconds) }}
                 {{ 'communities.tournaments.kartingTimePenalty' | t }}</small>
             }
