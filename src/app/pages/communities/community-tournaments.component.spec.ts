@@ -2662,6 +2662,8 @@ describe('Community tournaments management', () => {
         {...fixture,id:73,status:'SCHEDULED',homeScore:undefined,awayScore:undefined},
         {...fixture,id:74,homeScore:undefined,awayScore:undefined},
         {...fixture,id:75,awayTeamId:98},
+        {...fixture,id:76,homeScore:-1,awayScore:0},
+        {...fixture,id:77,homeScore:2,awayScore:-2},
       ];
       expect(component.teamProfileHeadToHead).toBeNull();
       component.setTeamProfileOpponent('41');
