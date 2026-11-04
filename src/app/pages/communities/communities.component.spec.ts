@@ -697,6 +697,32 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.racketRankingGroups).toEqual([]);
   });
 
+  it('allows configuring team points before matches without inventing competitors', () => {
+    component.selected = { id: 7, sports: ['Futebol', 'Futsal', 'Karting'],
+      sport: 'Futebol' } as any;
+    component.selectedSeasonId = 44;
+    component.competition = {
+      activeSeasonId: 44,
+      settings: {winPoints: 3, drawPoints: 1, lossPoints: 0},
+      sportStandings: [
+        {sport: 'Futebol', standings: [], scoring: {
+          sport: 'Futebol', winPoints: 3, drawPoints: 1, lossPoints: 0
+        }},
+        {sport: 'Futsal', standings: [], scoring: {
+          sport: 'Futsal', winPoints: 2, drawPoints: 1, lossPoints: 0
+        }}
+      ]
+    } as any;
+    component.sportPointsSaving = false;
+    expect(component.scopedMatchRankingGroups.map(g => g.sport)).toEqual(['Futebol', 'Futsal']);
+    expect(component.scopedMatchRankingGroups.every(g => g.standings.length === 0)).toBeTrue();
+    expect(component.canEditSportPoints('Futsal')).toBeTrue();
+    expect(component.canEditSportPoints('Karting')).toBeFalse();
+    component.editSportPoints(component.scopedMatchRankingGroups[1]);
+    expect(component.sportPointsEditor).toBe('Futsal');
+    expect(component.sportPointsDraft).toEqual({winPoints: 2, drawPoints: 1, lossPoints: 0});
+  });
+
   it('uses independently-scoped standings when the backend provides them', () => {
     component.selected = { id: 7, sport: 'Futebol',
       sports: ['Futebol', 'Futsal', 'Karting'] } as any;
