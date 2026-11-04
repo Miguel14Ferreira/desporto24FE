@@ -2593,10 +2593,14 @@ describe('Community tournaments management', () => {
       component.loadTeamMatches(true);
       component.teamScoreDrafts[801]={home:3,away:1};
       component.teamScoreDrafts[802]={home:4,away:2};
+      component.teamScoreTouched.add(801);
+      component.editingTeamResultId=801;
       component.loadTeamMatches(true);
       expect(component.teamMatches.map(match=>match.id)).toEqual([802]);
       expect(component.teamScoreDrafts[801]).toBeUndefined();
       expect(component.teamScoreDrafts[802]).toEqual({home:0,away:0});
+      expect(component.teamScoreTouched.size).toBe(0);
+      expect(component.editingTeamResultId).toBeNull();
       expect(api.teamMatches).toHaveBeenCalledTimes(2);
     });
 
