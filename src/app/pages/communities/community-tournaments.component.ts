@@ -201,6 +201,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamPhaseFilter = 'ALL';
   knockoutFocusTeamId: number | null = null;
   knockoutMatchQuery = '';
+  knockoutStatusFilter: 'ALL' | 'PENDING' | 'COMPLETED' = 'ALL';
   knockoutSearchFixtureId: number | null = null;
   selectedKnockoutRound: number | null = null;
   /** Compact group navigation; never changes the official group standings. */
@@ -1187,6 +1188,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamPhaseFilter = 'ALL';
       this.knockoutFocusTeamId = null;
       this.knockoutMatchQuery = '';
+      this.knockoutStatusFilter = 'ALL';
       this.knockoutSearchFixtureId = null;
       this.selectedKnockoutRound = null;
       this.requestedTeamGroupNumber = null;
@@ -1776,13 +1778,36 @@ export class CommunityTournamentsComponent implements OnChanges {
     }));
   }
 
-  /** Compact the long published rounds, never the underlying data.
-   * Show a focused team's fixture even when it lies beyond the initial cards. */
+  /** Status filter affects only loaded fixtures on screen, not saved results. */
+  knockoutStatusMatches(game: TournamentTeamMatch): boolean {
+    return this.knockoutStatusFilter === 'ALL'
+      || (this.knockoutStatusFilter === 'COMPLETED'
+        ? game.status === 'COMPLETED' : game.status !== 'COMPLETED');
+  }
+
+  knockoutCompletedCount(matches: {game: TournamentTeamMatch}[]): number {
+    return matches.filter(item => item.game.status === 'COMPLETED').length;
+  }
+
+  setKnockoutStatusFilter(filter: 'ALL' | 'PENDING' | 'COMPLETED'): void {
+    if (!this.isCupFormat || this.isRelayCompetition
+        || !['ALL','PENDING','COMPLETED'].includes(filter)) return;
+    this.knockoutStatusFilter = filter;
+    if (this.selectedKnockoutRound !== null && !this.knockoutBracket.some(round =>
+      round.round === this.selectedKnockoutRound
+      && round.matches.some(item => this.knockoutStatusMatches(item.game)
+        && this.knockoutQueryMatches(item.game)))) this.selectedKnockoutRound = null;
+    this.knockoutSearchFixtureId = this.knockoutSearchMatches[0]?.id ?? null;
+    this.changeDetector.markForCheck();
+  }
+
+  /** Preserve compact boards until a name or status filter is applied. */
   visibleKnockoutMatches<T extends {game: TournamentTeamMatch}>(
     round: number, matches: T[]
   ): T[] {
-    if (this.knockoutMatchQuery.trim())
-      return matches.filter(item => this.knockoutQueryMatches(item.game));
+    if (this.knockoutMatchQuery.trim() || this.knockoutStatusFilter !== 'ALL')
+      return matches.filter(item =>
+        this.knockoutStatusMatches(item.game) && this.knockoutQueryMatches(item.game));
     if (matches.length <= this.knockoutCompactThreshold
         || this.expandedKnockoutRounds.has(round)) return matches;
     return matches.filter((item, index) =>
@@ -1794,8 +1819,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   shownKnockoutRounds<T extends {round: number; matches:{game:TournamentTeamMatch}[]}>(rounds: T[]): T[] {
     const selected = this.selectedKnockoutRound === null
       ? rounds : rounds.filter(item => item.round === this.selectedKnockoutRound);
-    return this.knockoutMatchQuery.trim()
-      ? selected.filter(round => round.matches.some(item => this.knockoutQueryMatches(item.game)))
+    return this.knockoutMatchQuery.trim() || this.knockoutStatusFilter !== 'ALL'
+      ? selected.filter(round => round.matches.some(item =>
+        this.knockoutStatusMatches(item.game) && this.knockoutQueryMatches(item.game)))
       : selected;
   }
 
@@ -1812,7 +1838,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   get knockoutSearchMatches(): TournamentTeamMatch[] {
     if (!this.knockoutMatchQuery.trim() || !this.isCupFormat || this.isRelayCompetition) return [];
     return this.teamMatches.filter(game =>
-      this.isEliminationMatch(game) && this.knockoutQueryMatches(game))
+      this.isEliminationMatch(game) && this.knockoutStatusMatches(game)
+      && this.knockoutQueryMatches(game))
       .sort((a,b) => a.roundNumber - b.roundNumber || a.id - b.id);
   }
 
@@ -1887,7 +1914,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   /** Jump to one already published column; leave fixture filters unchanged. */
   jumpToKnockoutRound(round: number): void {
     if (!Number.isSafeInteger(round) || round < 1 || !this.isCupFormat
-        || this.isRelayCompetition || !this.knockoutBracket.some(stage => stage.round === round))
+        || this.isRelayCompetition || !this.knockoutBracket.some(stage =>
+          stage.round === round && stage.matches.some(item =>
+            this.knockoutStatusMatches(item.game) && this.knockoutQueryMatches(item.game))))
       return;
     this.selectedKnockoutRound = round;
     if (this.knockoutMatchQuery.trim())
@@ -1927,6 +1956,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (Number.isSafeInteger(id) && id > 0
         && this.knockoutFocusTeams.some(team => team.id === id)) {
       this.knockoutMatchQuery = '';
+      this.knockoutStatusFilter = 'ALL';
       this.knockoutSearchFixtureId = null;
       this.knockoutFocusTeamId = id;
     }
@@ -1960,6 +1990,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         || !this.isKnockoutTeamFocused(fixture)
         || !this.teamMatches.some(game =>
           game.id === fixture.id && this.isEliminationMatch(game))) return;
+    this.knockoutStatusFilter = 'ALL';
     this.selectedKnockoutRound = fixture.roundNumber;
     const board = this.teamTournamentBracket?.nativeElement;
     if (board instanceof HTMLDetailsElement) board.open = true;
@@ -2225,6 +2256,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamPhaseFilter = 'ALL';
     this.knockoutFocusTeamId = null;
     this.knockoutMatchQuery = '';
+    this.knockoutStatusFilter = 'ALL';
     this.knockoutSearchFixtureId = null;
     this.selectedKnockoutRound = null;
     this.requestedTeamGroupNumber = null;

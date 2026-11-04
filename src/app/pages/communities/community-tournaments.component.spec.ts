@@ -1421,6 +1421,47 @@ describe('Community tournaments management', () => {
       expect(component.knockoutMatchQuery).toBe('Azuis');
     });
 
+    it('filters loaded knockout statuses without changing actual fixtures', () => {
+      component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
+      component.teamMatches=[
+        {id:71,roundNumber:1,homeTeamId:40,homeTeamName:'Verdes',
+          awayTeamId:41,awayTeamName:'Azuis',status:'COMPLETED',homeScore:2,awayScore:1},
+        {id:72,roundNumber:1,homeTeamId:42,homeTeamName:'Pretos',
+          awayTeamId:40,awayTeamName:'Verdes',status:'SCHEDULED'},
+        {id:73,roundNumber:2,homeTeamId:43,homeTeamName:'Amarelos',
+          awayTeamId:44,awayTeamName:'Rosas',status:'SCHEDULED'}
+      ];
+      const snapshot=JSON.stringify(component.teamMatches), rounds=component.knockoutBracket;
+      expect(component.knockoutCompletedCount(rounds[0].matches)).toBe(1);
+      expect(component.knockoutCompletedCount(rounds[1].matches)).toBe(0);
+      component.setKnockoutMatchQuery('verdes');
+      expect(component.knockoutSearchMatches.map(game=>game.id)).toEqual([71,72]);
+      component.setKnockoutStatusFilter('COMPLETED');
+      expect(component.knockoutSearchMatches.map(game=>game.id)).toEqual([71]);
+      expect(component.shownKnockoutRounds(rounds).map(stage=>stage.round)).toEqual([1]);
+      expect(component.visibleKnockoutMatches(1,rounds[0].matches).map(item=>item.game.id))
+        .toEqual([71]);
+      component.jumpToKnockoutRound(2);
+      expect(component.selectedKnockoutRound).toBeNull();
+      component.setKnockoutStatusFilter('PENDING');
+      expect(component.knockoutSearchMatches.map(game=>game.id)).toEqual([72]);
+      expect(component.knockoutSearchFixtureId).toBe(72);
+      expect(component.visibleKnockoutMatches(1,rounds[0].matches).map(item=>item.game.id))
+        .toEqual([72]);
+      component.setKnockoutMatchQuery('');
+      expect(component.shownKnockoutRounds(rounds).map(stage=>stage.round)).toEqual([1,2]);
+      component.jumpToKnockoutRound(2);
+      expect(component.selectedKnockoutRound).toBe(2);
+      component.setKnockoutStatusFilter('COMPLETED');
+      expect(component.selectedKnockoutRound).toBeNull();
+      expect(component.shownKnockoutRounds(rounds).map(stage=>stage.round)).toEqual([1]);
+      component.setKnockoutStatusFilter('ALL');
+      expect(component.shownKnockoutRounds(rounds).map(stage=>stage.round)).toEqual([1,2]);
+      expect(JSON.stringify(component.teamMatches)).toBe(snapshot);
+      component.selectTournament({...teamDraft,id:99,status:'DRAFT',format:'KNOCKOUT'});
+      expect(component.knockoutStatusFilter).toBe('ALL');
+    });
+
     it('navigates actual search results in round order and focuses the selected fixture', () => {
       component.selected={...teamDraft,status:'IN_PROGRESS',format:'KNOCKOUT'};
       const fixtures=[

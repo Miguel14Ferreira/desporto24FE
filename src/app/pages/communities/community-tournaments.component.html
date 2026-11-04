@@ -1819,6 +1819,16 @@
                         </button>
                       }
                     </div>
+                    <nav class="team-knockout-status-filter"
+                      [attr.aria-label]="'communities.tournaments.fixturesUi.filterLabel' | t">
+                      <span>{{ 'communities.tournaments.phaseUi.loadedOnly' | t }}</span>
+                      <button type="button" data-status="ALL" [attr.aria-pressed]="knockoutStatusFilter === 'ALL'"
+                        (click)="setKnockoutStatusFilter('ALL')">{{ 'communities.tournaments.fixturesUi.filterAll' | t }}</button>
+                      <button type="button" data-status="PENDING" [attr.aria-pressed]="knockoutStatusFilter === 'PENDING'"
+                        (click)="setKnockoutStatusFilter('PENDING')">{{ 'communities.tournaments.fixturesUi.filterPending' | t }}</button>
+                      <button type="button" data-status="COMPLETED" [attr.aria-pressed]="knockoutStatusFilter === 'COMPLETED'"
+                        (click)="setKnockoutStatusFilter('COMPLETED')">{{ 'communities.tournaments.fixturesUi.filterCompleted' | t }}</button>
+                    </nav>
                     @if (knockoutFocusTeamId !== null) {
                       @let path = focusedKnockoutPath;
                       @if (path.length) {
@@ -1864,15 +1874,15 @@
                             {{ 'communities.tournaments.phaseUi.all' | t }}
                           </button>
                           @for (round of bracket; track round.round) {
-                            @if (!knockoutMatchQuery.trim()
-                              || visibleKnockoutMatches(round.round, round.matches).length) {
+                            @if (visibleKnockoutMatches(round.round, round.matches).length) {
                             <button type="button" class="team-knockout-round-jump"
                               [class.is-selected]="selectedKnockoutRound === round.round"
                               [attr.aria-pressed]="selectedKnockoutRound === round.round"
                               [attr.aria-label]="('communities.tournaments.phaseUi.filter' | t) + ': ' + round.label"
                               (click)="jumpToKnockoutRound(round.round)">
                               <span>{{ round.label }}</span>
-                              <small>{{ round.matches.length }}</small>
+                              <small [attr.title]="'communities.tournaments.phaseUi.completedOfLoaded' | t"
+                                [attr.aria-label]="knockoutCompletedCount(round.matches) + '/' + round.matches.length + ' ' + ('communities.tournaments.phaseUi.completedOfLoaded' | t)">{{ knockoutCompletedCount(round.matches) }}/{{ round.matches.length }}</small>
                             </button>
                             }
                           }
@@ -1886,7 +1896,7 @@
                         <button type="button" (click)="moveKnockoutSearch(-1)">{{ 'communities.matches.previous' | t }}</button>
                         <button type="button" (click)="moveKnockoutSearch(1)">{{ 'communities.matches.next' | t }}</button>
                       </nav>
-                    } @else if (knockoutMatchQuery.trim()) {
+                    } @else if (knockoutMatchQuery.trim() || knockoutStatusFilter !== 'ALL') {
                       <p class="t-muted" role="status">{{ 'communities.tournaments.fixturesUi.noFilterResults' | t }}</p>
                     }
                     <div class="team-knockout-scroll" tabindex="0"
@@ -1901,7 +1911,7 @@
                               [attr.aria-pressed]="teamPhaseFilter === 'round-' + round.round"
                               (click)="setTeamPhaseFilter(teamPhaseFilter === 'round-' + round.round ? 'ALL' : 'round-' + round.round)">
                               <strong>{{ round.label }}</strong>
-                              <span>{{ (knockoutMatchQuery.trim() ? visibleKnockoutMatches(round.round, round.matches).length : round.matches.length) }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
+                              <span>{{ (knockoutMatchQuery.trim() || knockoutStatusFilter !== 'ALL' ? visibleKnockoutMatches(round.round, round.matches).length : round.matches.length) }} {{ 'communities.tournaments.bracketUi.matches' | t }}</span>
                             </button>
                             @for (item of visibleKnockoutMatches(round.round, round.matches); track item.game.id) {
                               <article class="team-knockout-match" tabindex="-1"
@@ -1971,7 +1981,7 @@
                                 }
                               </article>
                             }
-                            @if (!knockoutMatchQuery.trim() && round.matches.length > knockoutCompactThreshold) {
+                            @if (!knockoutMatchQuery.trim() && knockoutStatusFilter === 'ALL' && round.matches.length > knockoutCompactThreshold) {
                               @let allVisible = expandedKnockoutRounds.has(round.round)
                                 || (knockoutRoundLimits.get(round.round) ?? 0) >= round.matches.length;
                               @if (!allVisible) {

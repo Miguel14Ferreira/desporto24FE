@@ -762,6 +762,19 @@ async function main() {
                     await board.locator('.team-knockout-search-nav button').first().click();
                     assert.equal(await current.getAttribute('data-knockout-fixture-id'),firstId,
                       'Previous result returns to the first published fixture');
+                    const completed=board.locator('.team-knockout-status-filter [data-status="COMPLETED"]');
+                    const pending=board.locator('.team-knockout-status-filter [data-status="PENDING"]');
+                    const all=board.locator('.team-knockout-status-filter [data-status="ALL"]');
+                    await completed.click();
+                    assert.equal(await completed.getAttribute('aria-pressed'),'true');
+                    assert.equal(await board.locator('.team-knockout-match').count(),1,
+                      'Only completed published knockout matches remain visible');
+                    await pending.click();
+                    assert.equal(await board.locator('.team-knockout-match').count(),1,
+                      'Only pending published knockout matches remain visible');
+                    await all.click();
+                    assert.equal(await board.locator('.team-knockout-match').count(),2,
+                      'All loaded knockout matches return after clearing the status filter');
                     await search.fill('atlantico');
                     assert.equal(await board.locator('.team-knockout-match').count(),1,
                       'Team search finds a published knockout match ignoring accents');
