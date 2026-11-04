@@ -714,6 +714,8 @@ describe('CommunitiesComponent public session eligibility', () => {
       ]
     } as any;
     expect(component.hasScopedMatchRankingContract).toBeTrue();
+    expect(component.showLegacyAggregateStats).toBeFalse();
+    expect(component.showLegacyMatchRanking).toBeFalse();
     expect(component.scopedMatchRankingGroups.map(g => g.sport)).toEqual(['Futsal', 'Futebol']);
     expect(component.scopedMatchRankingGroups.map(g => g.standings[0].points)).toEqual([3, 6]);
     expect(component.competition.standings[0].points).toBe(99);
@@ -724,10 +726,16 @@ describe('CommunitiesComponent public session eligibility', () => {
       sports: ['Futebol', 'Futsal'] } as any;
     component.competition = { standings: [{ games: 2, points: 7 }] } as any;
     expect(component.hasScopedMatchRankingContract).toBeFalse();
+    expect(component.showLegacyMatchRanking).toBeTrue();
     expect(component.scopedMatchRankingGroups).toEqual([]);
     component.competition = { ...component.competition, sportStandings: [] };
     expect(component.hasScopedMatchRankingContract).toBeTrue();
+    expect(component.showLegacyAggregateStats).toBeFalse();
+    expect(component.showLegacyMatchRanking).toBeFalse();
     expect(component.scopedMatchRankingGroups).toEqual([]);
+    component.selected = { id: 7, sport: 'Futebol', sports: ['Futebol'] } as any;
+    expect(component.showLegacyAggregateStats).toBeTrue();
+    expect(component.showLegacyMatchRanking).toBeTrue();
   });
 
   it('does not save football scoring fields for a Karting-only community', () => {
