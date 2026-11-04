@@ -2011,6 +2011,21 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return Array.isArray(this.competition?.sportStandings);
   }
 
+  /** Never present combined W/D/L statistics as one sport's results once
+   * a multi-sport backend contract is available. */
+  get showLegacyAggregateStats(): boolean {
+    return !this.hasScopedMatchRankingContract
+      || (this.selected != null && this.communitySports(this.selected).length <= 1);
+  }
+
+  /** Single-sport historic records may be untyped. Preserve their old view
+   * when no scoped group can be derived. Mixed sports must not fall back
+   * to a misleading combined ranking. */
+  get showLegacyMatchRanking(): boolean {
+    return !this.hasScopedMatchRankingContract
+      || (this.showLegacyAggregateStats && !this.scopedMatchRankingGroups.length);
+  }
+
   /** Include the race-specific panel even before the first classified finish. */
   get raceRankingGroups(): CommunityRaceStandingGroup[] {
     return this.selected && this.competition
