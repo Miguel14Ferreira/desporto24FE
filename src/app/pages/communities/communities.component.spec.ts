@@ -663,12 +663,12 @@ describe('CommunitiesComponent public session eligibility', () => {
 
   it('uses the active season ID rather than the selected historical season for new rounds', () => {
     component.selectedSeasonId = 17;
-    spyOn(component, 'activeSeason').and.returnValue({
-      id: 44, name: 'Época atual', active: true, sport: 'Futsal'
-    } as any);
+    component.competition = { seasons: [
+      { id: 44, name: 'Época atual', active: true, sport: 'Futsal' }
+    ] } as any;
     expect(component.roundTargetSeasonId).toBe(44);
     expect(component.selectedSeasonId).toBe(17);
-    (component.activeSeason as jasmine.Spy).and.returnValue(undefined);
+    component.competition = { seasons: [] } as any;
     expect(component.roundTargetSeasonId).toBeNull();
   });
 
@@ -676,9 +676,9 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selected = { id: 7, sport: 'Futebol',
       sports: ['Futebol', 'Ténis', 'Karting'] } as any;
     component.roundSportDraft = 'Karting';
-    spyOn(component, 'activeSeason').and.returnValue({
-      id: 44, name: 'Época de Ténis', sport: 'Tenis', active: true
-    } as any);
+    component.competition = { seasons: [
+      { id: 44, name: 'Época de Ténis', sport: 'Tenis', active: true }
+    ] } as any;
     expect(component.communityRoundSports).toEqual(['Futebol', 'Ténis', 'Karting']);
     expect(component.roundEligibleSports).toEqual(['Ténis']);
     expect(component.newRoundSport).toBe('Ténis');
@@ -688,11 +688,28 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selected = { id: 7, sport: 'Futebol',
       sports: ['Futebol', 'Ténis'] } as any;
     component.roundSportDraft = 'Ténis';
-    spyOn(component, 'activeSeason').and.returnValue({
-      id: 44, name: 'Época partilhada', sport: null, active: true
-    } as any);
+    component.competition = { seasons: [
+      { id: 44, name: 'Época partilhada', sport: null, active: true }
+    ] } as any;
     expect(component.roundEligibleSports).toEqual(['Futebol', 'Ténis']);
     expect(component.newRoundSport).toBe('Ténis');
+  });
+
+  it('routes new rounds to the correct active sport season without guessing', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Ténis', 'Karting'] } as any;
+    component.competition = { seasons: [
+      { id: 44, name: 'Época Futebol', sport: 'Futebol', active: true },
+      { id: 45, name: 'Época Karting', sport: 'Karting', active: true }
+    ] } as any;
+    expect(component.roundEligibleSports).toEqual(['Futebol', 'Ténis', 'Karting']);
+    component.roundSportDraft = 'Karting';
+    expect(component.roundTargetSeasonId).toBe(45);
+    component.roundSportDraft = 'Ténis';
+    expect(component.roundTargetSeasonId).toBeNull();
+    component.roundSportDraft = 'Futebol';
+    expect(component.roundTargetSeasonId).toBe(44);
+    expect(component.canCreateAdditionalSeason).toBeTrue();
   });
 
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
