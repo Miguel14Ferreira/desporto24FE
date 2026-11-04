@@ -6,7 +6,9 @@
         <thead><tr><th>{{ 'communities.karting.position' | t }}</th><th>{{ 'communities.karting.participant' | t }}</th><th>{{ 'communities.karting.races' | t }}</th><th>{{ 'communities.karting.wins' | t }}</th><th>{{ 'communities.karting.podiums' | t }}</th><th>{{ 'communities.karting.points' | t }}</th></tr></thead>
         <tbody>
           @for (driver of standings; track driver.playerId) {
-            <tr>
+            <tr [class.is-podium-first]="podiumPosition(driver.position) === 1"
+                [class.is-podium-second]="podiumPosition(driver.position) === 2"
+                [class.is-podium-third]="podiumPosition(driver.position) === 3">
               <td>{{ displayPosition(driver.position) }}{{ displayPosition(driver.position) === '—' ? '' : ('communities.karting.ordinalSuffix' | t) }}</td><td>{{ driver.fullName }}</td>
               <td>{{ displayCount(driver.races) }}</td><td>{{ displayCount(driver.wins) }}</td><td>{{ displayCount(driver.podiums) }}</td>
               <td><strong>{{ displayPoints(driver.championshipPoints) }}</strong></td>
