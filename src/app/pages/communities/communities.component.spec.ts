@@ -1089,6 +1089,17 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.specializedStatsUnavailableSports).toEqual(['Atletismo']);
   });
 
+  it('does not label a race result unavailable when API sport casing differs', () => {
+    component.selected = { id: 7, sport: 'Ciclismo de Pista',
+      sports: ['Ciclismo de Pista', 'Atletismo'] } as any;
+    component.competition = { raceStandings: [
+      { sport: 'CICLISMO DE PISTA', rule: null, standings: [] }
+    ] } as any;
+    expect(component.raceRankingGroups.map(group => group.sport))
+      .toEqual(['CICLISMO DE PISTA']);
+    expect(component.specializedStatsUnavailableSports).toEqual(['Atletismo']);
+  });
+
   it('shows racket standings only for currently selected community sports', () => {
     component.selected = { id: 7, sport: 'Ténis', sports: ['Ténis', 'Karting'] } as any;
     const group = (sport: string) => ({
