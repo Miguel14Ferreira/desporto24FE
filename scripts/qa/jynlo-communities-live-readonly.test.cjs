@@ -10,7 +10,8 @@ function fixture({ empty = false, wrong = false } = {}) {
   const group = { id: 701, name: 'QA group', ownerUsername: names[0],
     visibility: 'PRIVATE', memberCount: 2, myRole: 'OWNER', sports: ['Futebol'] };
   const game = { id: 801, communityId: wrong ? 702 : 701, sport: 'Futebol',
-    status: 'OPEN', gameDate: '2026-12-01T18:00:00Z', participantCount: 2,
+    status: 'OPEN', audience: wrong === 'shared' ? 'PUBLIC' : wrong ? 'PRIVATE' : 'COMMUNITY_ONLY',
+    privateGame: false, gameDate: '2026-12-01T18:00:00Z', participantCount: 2,
     maxParticipants: 10, recurrenceSeriesId: 'qa-recurring' };
 
   async function fetchImpl(url, options) {
@@ -58,9 +59,15 @@ test('strict mode rejects absence of QA community sessions', async () => {
     /QA_COMMUNITY_SESSION_COVERAGE_MISSING/);
 });
 
-test('detects cross-community session inconsistencies', async () => {
+test('allows public sessions shared into a different community', async () => {
+  const f = fixture({ wrong: 'shared' });
+  const result = await f.run({ requireCoverage: true });
+  assert.equal(result.sessionsChecked, 1);
+});
+
+test('rejects unrecognized cross-community session audiences', async () => {
   await assert.rejects(() => fixture({ wrong: true }).run(),
-    /QA_CROSS_COMMUNITY_SESSION/);
+    /QA_UNEXPECTED_SHARED_SESSION_AUDIENCE/);
 });
 
 test('requires both QA credentials before network', async () => {
