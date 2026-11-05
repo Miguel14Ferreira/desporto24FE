@@ -1283,7 +1283,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     );
     const kind = terminology.forTitle === 'Golos marcados' ? 'goals'
       : terminology.forTitle === 'Pontos marcados' ? 'points'
-      : terminology.forTitle === 'Sets ganhos' ? 'sets' : 'generic';
+      : terminology.forTitle === 'Sets ganhos' ? 'sets'
+      : terminology.forTitle === 'Corridas marcadas' ? 'runs' : 'generic';
     const translated = (field: string) =>
       t('communities.tournaments.individualUi.scoring.' + kind + '.' + field);
     return {
@@ -1300,11 +1301,12 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   /** Display-only terminology; never infer a sport's official scoring rules. */
-  private get teamScoreFamily(): 'goals' | 'points' | 'sets' | 'generic' {
+  private get teamScoreFamily(): 'goals' | 'points' | 'sets' | 'runs' | 'generic' {
     const labels = tournamentScoreTerminology(this.selected?.sport);
     return labels.forAbbrev === 'GM' ? 'goals'
       : labels.forAbbrev === 'PM' ? 'points'
-      : labels.forAbbrev === 'SG' ? 'sets' : 'generic';
+      : labels.forAbbrev === 'SG' ? 'sets'
+      : labels.forAbbrev === 'CM' ? 'runs' : 'generic';
   }
 
   get teamScoreHeadings(): { for: string; against: string; difference: string } {
