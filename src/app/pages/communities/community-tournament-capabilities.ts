@@ -45,3 +45,19 @@ export function tournamentSportCapabilities(sport: string | null | undefined): T
 
   return { family, individual, team, fullSportRulesImplemented: false };
 }
+
+/**
+ * Selects the implemented result engine for the current event.
+ * Athletics track races use times, field events use marks and relays use
+ * the team engine. This must never fall back to an unrelated numeric league.
+ */
+export function tournamentCreationModelForEvent(
+  sport: string | null | undefined,
+  team: boolean,
+  eventType: string | null | undefined
+): TournamentCreationModel {
+  const capabilities = tournamentSportCapabilities(sport);
+  if (team) return capabilities.team;
+  if (sport === 'Atletismo' && eventType === 'TRACK') return 'TRACK_BEST_TIME';
+  return capabilities.individual;
+}
