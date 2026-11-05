@@ -13,6 +13,7 @@ const KART_SEASON='JYNLO QA - Karting Simulado 2026';
 const FOOT_SEASON='JYNLO QA - Época Simulada 2026';
 const must=(v,label)=>assert.ok(v,'QA_'+label);
 
+let qaStage='START';
 async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}={}) {
   must(process.env.JYNLO_QA_USERNAME_1===QA[0] &&
     process.env.JYNLO_QA_USERNAME_2===QA[1],'UNAUTHORIZED_IDENTITIES');
@@ -78,21 +79,27 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
       try{
         await ctx.addInitScript(token=>localStorage.setItem('t',token),tokens[i]);
         for(const group of fixture){
+          qaStage='OPEN_'+group.kind.toUpperCase();
           const page=await ctx.newPage();
           try{
             await page.goto(SITE+'/menu/communities/'+group.id+'?tab=ranking',
               {waitUntil:'domcontentloaded',timeout:45000});
             const heading=page.locator('.community-detail h2').filter({hasText:group.kind==='karting'?MIX:FOOT});
             await heading.first().waitFor({state:'visible',timeout:30000});
+            qaStage='HEADING_'+group.kind.toUpperCase();
             // The tab is loaded asynchronously from the protected API.
             const race=page.locator('#community-race-ranking-summary-title');
             const table=page.locator('app-community-ranking-table');
             if(group.kind==='karting'){
+              qaStage='RACE_SUMMARY';
               await race.waitFor({state:'visible',timeout:30000});
+              qaStage='RACE_HEADING';
               const region=page.locator('.community-race-ranking-summary');
               await region.getByRole('heading',{name:'Karting'}).waitFor({state:'visible',timeout:15000});
+              qaStage='RACE_TABLE';
               const karting=region.locator('table').filter({hasText:'jynloteste02'});
               await karting.waitFor({state:'visible',timeout:15000});
+              qaStage='RACE_ROWS';
               const rows=karting.locator('tbody tr');
               must(await rows.count()===2,'KARTING_ROWS_COUNT');
               const first=await rows.nth(0).innerText();
@@ -100,9 +107,11 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
               must(first.toLowerCase().includes(QA[1])&&/25/.test(first),'KARTING_FIRST_VISUAL');
               must(second.toLowerCase().includes(QA[0])&&/18/.test(second),'KARTING_SECOND_VISUAL');
               // No W/D/L table rendered for a Karting-only selected season.
+              qaStage='RACE_WDL_GUARD';
               must(await table.count()===0,'KARTING_FOOTBALL_TABLE_RENDERED');
               report('[PASS] QA browser '+(i+1)+' Karting ranking: P1=25, P2=18; no WDL table');
             }else{
+              qaStage='FOOTBALL_TABLE';
               await table.first().waitFor({state:'visible',timeout:30000});
               const text=(await table.first().innerText()).toLowerCase();
               must(text.includes(QA[0])&&text.includes(QA[1]),'FOOTBALL_DRIVERS_MISSING');
@@ -119,7 +128,7 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
 if(require.main===module)run().catch(e=>{
   const message=typeof e?.message==='string'&&/^QA_[A-Z0-9_]+$/.test(e.message)
     ?e.message:'QA_BROWSER_OR_NETWORK_FAILURE';
-  console.error('[FAIL] '+message);
+  console.error('[FAIL] '+qaStage+': '+message);
   process.exitCode=1;
 });
 module.exports={run};
