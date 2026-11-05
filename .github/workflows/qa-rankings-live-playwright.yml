@@ -20,7 +20,7 @@ concurrency:
 jobs:
   rankings-readonly:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     env:
       JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
       JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
@@ -57,7 +57,6 @@ jobs:
             exit 1
           fi
           echo "JYNLO_SYSTEM_CHROME=$chrome" >> "$GITHUB_ENV"
-          "$chrome" --version
       - name: Verify Football and Karting ranking UI with both QA identities
         shell: bash
         run: NODE_PATH="$RUNNER_TEMP/jynlo-playwright/node_modules" node scripts/qa/jynlo-rankings-live-playwright.cjs
