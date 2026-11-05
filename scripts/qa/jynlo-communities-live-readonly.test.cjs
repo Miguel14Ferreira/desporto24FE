@@ -36,7 +36,7 @@ function fixture({ empty = false, wrong = false, nonRecurring = false, privateSh
       throw Error('Unexpected endpoint');
     }
     return { ok: true, status: 200,
-      headers: { get: () => 'application/json' },
+      headers: { get: key => key.toLowerCase() === 'content-type' ? 'application/json' : null },
       text: async () => JSON.stringify(data) };
   }
   return { calls, out,
