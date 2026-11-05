@@ -795,6 +795,38 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.selectedSeasonSupportsSport('Ciclismo de Pista')).toBeFalse();
   });
 
+  it('selects the Excel import destination by sport with parallel active seasons', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Ténis', 'Karting'] } as any;
+    component.competition = { activeSeasonId: null, seasons: [
+      { id: 44, name: 'Futebol 2026', sport: 'Futebol', active: true },
+      { id: 45, name: 'Karting 2026', sport: 'Karting', active: true },
+      { id: 40, name: 'Futebol 2025', sport: 'Futebol', active: false }
+    ] } as any;
+    component.selectedSeasonId = 40;
+    component.importSeasonId = null;
+    component.importSportDraft = 'Karting';
+    expect(component.importDestinationSeasonId).toBe(45);
+    component.importSportDraft = 'Ténis';
+    expect(component.importDestinationSeasonId).toBeNull();
+    component.importSportDraft = '';
+    expect(component.importDestinationSeasonId).toBeNull();
+    component.selectImportSeason(40);
+    expect(component.importDestinationSeasonId).toBe(40);
+  });
+
+  it('does not auto-import an unrelated sport into the only active tagged season', () => {
+    component.selected = { id: 7, sports: ['Futebol', 'Karting'] } as any;
+    component.competition = { seasons: [
+      { id: 44, name: 'Futebol 2026', sport: 'Futebol', active: true }
+    ] } as any;
+    component.importSeasonId = null;
+    component.importSportDraft = 'Karting';
+    expect(component.importDestinationSeasonId).toBeNull();
+    component.importSportDraft = 'Futebol';
+    expect(component.importDestinationSeasonId).toBe(44);
+  });
+
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
     component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
     component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
