@@ -1014,7 +1014,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   canManageRaceChampionship(): boolean {
     return this.canManage() && this.selectedSeasonId != null
-      && this.selectedSeasonId === this.competition?.activeSeasonId;
+      && this.selectedSeasonId === this.activeSeason()?.id;
   }
 
   editRaceRule(group: CommunityRaceStandingGroup): void {
@@ -1147,7 +1147,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   canConfigureRacketRules(): boolean {
     return this.canManage() && this.selectedSeasonId !== null &&
-      this.selectedSeasonId === this.competition?.activeSeasonId;
+      this.selectedSeasonId === this.activeSeason()?.id;
   }
 
   editRacketRule(group: CommunityRacketStandingGroup): void {
@@ -2078,7 +2078,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return formatForSport(sport) === 'team'
       && this.canManage()
       && this.selectedSeasonId != null
-      && this.selectedSeasonId === this.competition?.activeSeasonId;
+      && this.selectedSeasonId === this.activeSeason()?.id;
   }
 
   editSportPoints(group: NonNullable<CommunityCompetitionOverview['sportStandings']>[number]): void {
