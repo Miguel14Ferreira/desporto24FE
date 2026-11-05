@@ -3319,6 +3319,32 @@ describe('Community tournaments management', () => {
       expect(component.visibleTournamentTeams.length).toBe(3);
     });
 
+    it('finds a team through a player name or username without exposing extra cards', () => {
+      const rio = { ...team, id: 41, name: 'Azuis', players: [
+        { profileId: 102, username: 'joao.silva', displayName: 'João da Silva' }
+      ] };
+      const verde = { ...team, id: 42, name: 'Verdes', players: [
+        { profileId: 103, username: 'maria.santos', displayName: 'Maria Santos' }
+      ] };
+      api.teams.and.returnValue(of([rio, verde]));
+      component.selectTournament(teamDraft);
+      const initialCount = component.teams.length;
+      const calls = api.teams.calls.count();
+
+      component.setTeamDirectoryQuery('  JOAO  ');
+      expect(component.visibleTournamentTeams.map(entry => entry.id)).toEqual([41]);
+      component.setTeamDirectoryQuery('MARIA.SANTOS');
+      expect(component.visibleTournamentTeams.map(entry => entry.id)).toEqual([42]);
+      component.setTeamDirectoryQuery('azuis');
+      expect(component.visibleTournamentTeams.map(entry => entry.id)).toEqual([41]);
+      component.setTeamDirectoryQuery('inexistente');
+      expect(component.visibleTournamentTeams).toEqual([]);
+      component.setTeamDirectoryQuery('');
+      expect(component.visibleTournamentTeams.map(entry => entry.id)).toEqual([41, 42]);
+      expect(component.teams.length).toBe(initialCount);
+      expect(api.teams.calls.count()).toBe(calls);
+    });
+
     it('clears a team-directory search when switching tournaments', () => {
       api.teams.and.returnValue(of([team]));
       component.selectTournament(teamDraft);
