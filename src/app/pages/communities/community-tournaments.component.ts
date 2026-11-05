@@ -3579,24 +3579,36 @@ export class CommunityTournamentsComponent implements OnChanges {
       t('communities.tournaments.organizerUi.teamCreated'), () => { this.teamNameDraft = ''; this.loadTeams(); });
   }
 
+  /** Only mutate a roster that is present in the currently loaded tournament. */
+  private currentRosterTeam(team: TournamentTeam): TournamentTeam | undefined {
+    return this.isTeamCompetition && this.selected && !this.detailsLoading && !this.teamsLoadError
+      ? this.teams.find(item => item.id === team.id)
+      : undefined;
+  }
+
   async assignTeamPlayer(team: TournamentTeam): Promise<void> {
     const id = this.teamPlayerDraft[team.id];
-    if (!this.canManageTeamRoster || !this.selected || id == null || !Number.isInteger(id)
-        || this.isTeamRosterFull(team)
+    const current = this.currentRosterTeam(team);
+    if (!this.canManageTeamRoster || !this.selected || !current
+        || id == null || !Number.isInteger(id)
+        || this.isTeamRosterFull(current)
         || !this.filteredTeamMembers(team.id).some(member => member.profileId === id)) return;
     await this.mutate(this.api.addTeamPlayer(this.community.id, this.selected.id, team.id, id),
       t('communities.tournaments.organizerUi.teamPlayerAdded'), () => this.loadTeams());
   }
 
   requestTeamPlayerRemoval(team: TournamentTeam, profileId: number): void {
-    if (!this.canManageTeamRoster || !this.selected
-        || !team.players.some(player => player.profileId === profileId)) return;
+    const current = this.currentRosterTeam(team);
+    if (!this.canManageTeamRoster || !this.selected || !current
+        || !current.players.some(player => player.profileId === profileId)) return;
     this.confirmingTeamPlayerRemoval = { teamId: team.id, profileId };
     this.confirmingEmptyTeamId = null;
   }
 
   requestEmptyTeamDeletion(team: TournamentTeam): void {
-    if (!this.canManageTeamRoster || !this.selected || team.players.length > 0) return;
+    const current = this.currentRosterTeam(team);
+    if (!this.canManageTeamRoster || !this.selected || !current
+        || current.players.length > 0) return;
     this.confirmingEmptyTeamId = team.id;
     this.confirmingTeamPlayerRemoval = null;
   }
@@ -3607,17 +3619,19 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async removeTeamPlayer(team: TournamentTeam, profileId: number): Promise<void> {
-    if (!this.canManageTeamRoster || !this.selected
+    const current = this.currentRosterTeam(team);
+    if (!this.canManageTeamRoster || !this.selected || !current
         || this.confirmingTeamPlayerRemoval?.teamId !== team.id
         || this.confirmingTeamPlayerRemoval.profileId !== profileId
-        || !team.players.some(p => p.profileId === profileId)) return;
+        || !current.players.some(p => p.profileId === profileId)) return;
     await this.mutate(this.api.removeTeamPlayer(this.community.id, this.selected.id, team.id, profileId),
       t('communities.tournaments.organizerUi.teamPlayerRemoved'), () => this.loadTeams());
   }
 
   async deleteTournamentTeam(team: TournamentTeam): Promise<void> {
-    if (!this.canManageTeamRoster || !this.selected || team.players.length > 0
-        || this.confirmingEmptyTeamId !== team.id) return;
+    const current = this.currentRosterTeam(team);
+    if (!this.canManageTeamRoster || !this.selected || !current
+        || current.players.length > 0 || this.confirmingEmptyTeamId !== team.id) return;
     await this.mutate(this.api.deleteTeam(this.community.id, this.selected.id, team.id),
       t('communities.tournaments.organizerUi.teamDeleted'), () => this.loadTeams());
   }
