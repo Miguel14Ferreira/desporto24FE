@@ -502,12 +502,12 @@
             } @else { <span></span> }
           </nav>
         }
-        @if (teamNav.total > 4) {
+        @if (teamQuickSwitchTeams.length > 0) {
           <details class="team-page-quick-switch">
             <summary>{{ 'communities.tournaments.teamPage.searchLabel' | t }} · {{ teamNav.total }}</summary>
             <nav class="team-page-quick-switch-links"
               [attr.aria-label]="'communities.tournaments.teamPage.gridLabel' | t">
-              @for (candidate of teams; track candidate.id) {
+              @for (candidate of teamQuickSwitchTeams; track candidate.id) {
                 <a [routerLink]="['/menu/communities', community.id]"
                   [queryParams]="{tab:'tournaments',tournament:selected?.id,teamPage:candidate.id}"
                   [attr.aria-current]="candidate.id === team.id ? 'page' : null"
