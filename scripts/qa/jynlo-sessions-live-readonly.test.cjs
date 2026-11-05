@@ -97,6 +97,13 @@ test('completes safely without existing QA sessions and reports detail coverage 
   assert.equal(f.calls.some(x => /\/api\/sessions\/\d+/.test(x)), false);
 });
 
+test('strict coverage rejects QA audit with zero session details', async () => {
+  const f = fixture({ noSessions: true });
+  await assert.rejects(() => f.run(undefined, { requireDetails: true }),
+    /QA_DETAIL_COVERAGE_MISSING/);
+  assert.ok(f.calls.every(call => call === 'POST /api/auth/login' || call === 'GET /api/sessions/mine'));
+});
+
 test('requires both secrets before contacting production', async () => {
   const f = fixture();
   await assert.rejects(() => f.run(['password-one', '']), /Both protected QA passwords/);
