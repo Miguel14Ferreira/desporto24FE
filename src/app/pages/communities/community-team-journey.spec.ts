@@ -37,6 +37,24 @@ describe('published team journey',()=>{
     expect(result.pending[0].ownScore).toBeNull();
     expect(result.advancement).toBeNull();
   });
+  it('does not report invalid fractional or oversized scores as official form',()=>{
+    const invalid=[
+      fixture(1,1,'COMPLETED',1.5,0),
+      fixture(2,2,'COMPLETED',4,2.25),
+      fixture(3,3,'COMPLETED',1000,0),
+      fixture(4,4,'COMPLETED',0,1000),
+      fixture(5,5,'COMPLETED',Number.POSITIVE_INFINITY,1)
+    ];
+    const valid=fixture(6,6,'COMPLETED',3,1);
+    const result=journey([...invalid,valid],10,'LEAGUE');
+    expect(result.form.map(item=>item.fixture.id)).toEqual([6]);
+    expect(result.recent.map(item=>item.fixture.id)).toEqual([6]);
+    expect(result.phases.map(phase=>phase.recorded)).toEqual([0,0,0,0,0,1]);
+    expect(result.phases.reduce((wins,phase)=>wins+phase.wins,0)).toBe(1);
+    const knockout=journey([invalid[0]],10,'KNOCKOUT');
+    expect(knockout.knockoutPath[0].state).toBe('UNVERIFIED');
+    expect(knockout.knockoutProgress.wins).toBe(0);
+  });
   it('requires a unique real match in the immediately following round',()=>{
     const won=fixture(1,1,'COMPLETED',2,0);
     const next=fixture(2,2,'SCHEDULED');
