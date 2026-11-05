@@ -1070,6 +1070,51 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.rankingContextSports).toEqual(['Ténis']);
   });
 
+  it('does not invent leaders for zero-result seasons but preserves real records', () => {
+    const zero = { profileId: 5, fullName: 'Sem resultados',
+      games: 0, wins: 0, points: 0, goals: 0, assists: 0,
+      mvps: 0, cleanSheets: 0, winRate: 0, bestWinStreak: 0 } as any;
+    component.competition = { standings: [zero] } as any;
+    component.topGoalsStanding = zero;
+    component.topAssistsStanding = zero;
+    component.topMvpsStanding = zero;
+    component.topCleanSheetsStanding = zero;
+    component.mostGamesStanding = zero;
+    component.bestWinRateStanding = zero;
+    component.bestWinStreakStanding = zero;
+    expect(component.leader()).toBeUndefined();
+    expect(component.topGoals()).toBeUndefined();
+    expect(component.topAssists()).toBeUndefined();
+    expect(component.topMvps()).toBeUndefined();
+    expect(component.topCleanSheets()).toBeUndefined();
+    expect(component.mostGames()).toBeUndefined();
+    expect(component.bestWinRate()).toBeUndefined();
+    expect(component.bestWinStreak()).toBeUndefined();
+
+    const played = { ...zero, games: 3, points: 9, goals: 2, assists: 1,
+      mvps: 1, cleanSheets: 1, winRate: 100, bestWinStreak: 3 };
+    component.competition = { standings: [played] } as any;
+    component.topGoalsStanding = played;
+    component.topAssistsStanding = played;
+    component.topMvpsStanding = played;
+    component.topCleanSheetsStanding = played;
+    component.mostGamesStanding = played;
+    component.bestWinRateStanding = played;
+    component.bestWinStreakStanding = played;
+    expect(component.leader()).toBe(played);
+    expect(component.topGoals()).toBe(played);
+    expect(component.topAssists()).toBe(played);
+    expect(component.topMvps()).toBe(played);
+    expect(component.topCleanSheets()).toBe(played);
+    expect(component.mostGames()).toBe(played);
+    expect(component.bestWinRate()).toBe(played);
+    expect(component.bestWinStreak()).toBe(played);
+
+    // Imported standings can have points without conventional match counts.
+    component.competition = { standings: [{ ...zero, points: 6 }] } as any;
+    expect(component.leader()).toBeDefined();
+  });
+
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
     component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
     component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
