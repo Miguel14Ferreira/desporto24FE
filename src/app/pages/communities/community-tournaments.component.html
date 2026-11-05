@@ -2341,8 +2341,8 @@
                             <tr>
                               <th scope="col">#</th><th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
                               <th scope="col">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
-                              <th scope="col">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.forCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.againstCol' | t }}</th>
-                              <th scope="col">{{ 'communities.tournaments.finalUi.differenceCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th>
+                              <th scope="col">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th><th scope="col">{{ teamScoreHeadings.for }}</th><th scope="col">{{ teamScoreHeadings.against }}</th>
+                              <th scope="col">{{ teamScoreHeadings.difference }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -2478,8 +2478,8 @@
                       <thead>
                         <tr><th scope="col">#</th><th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
                           <th scope="col">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
-                          <th scope="col">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.forCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.againstCol' | t }}</th>
-                          <th scope="col">{{ 'communities.tournaments.finalUi.differenceCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th></tr>
+                          <th scope="col">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th><th scope="col">{{ teamScoreHeadings.for }}</th><th scope="col">{{ teamScoreHeadings.against }}</th>
+                          <th scope="col">{{ teamScoreHeadings.difference }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th></tr>
                       </thead>
                       <tbody>
                         @for (row of visibleTeamStandings; track row.teamId) {
