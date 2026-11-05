@@ -3089,7 +3089,7 @@ export const EN: Record<string, string> = {
   'communities.tournaments.teamPage.playersTitle': 'Players',
   'communities.tournaments.teamPage.manageTitle': 'Manage team',
   'communities.tournaments.teamPage.searchLabel': 'Find a team',
-  'communities.tournaments.teamPage.searchPlaceholder': 'Search teams by name',
+  'communities.tournaments.teamPage.searchPlaceholder': 'Team name or player name',
   'communities.tournaments.teamPage.clearSearch': 'Clear',
   'communities.tournaments.teamPage.searchCount': '{{shown}} of {{total}} teams',
   'communities.tournaments.teamPage.noSearchResults': 'No team matches your search.',
