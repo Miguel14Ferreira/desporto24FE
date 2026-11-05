@@ -1606,6 +1606,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   seasonActionSaving = false;
   seasonActionError = '';
   seasonActionMessage = '';
+  private seasonActionRequestVersion = 0;
 
   importMode: 'ROUNDS' | 'STANDINGS' | 'MATCHES' = 'ROUNDS';
   matchPreviewLoading = false;
@@ -2293,6 +2294,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       next: full => {
         if (openVersion !== this.communityOpenRequestVersion) return;
         this.selected = full;
+        this.resetSeasonManagementState();
         this.loadStandaloneSpeedTournament(full);
         this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
@@ -4090,6 +4092,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.seasonActionMessage = '';
   }
 
+  /** Changing communities invalidates in-flight season management callbacks. */
+  private resetSeasonManagementState(): void {
+    this.seasonActionRequestVersion = (this.seasonActionRequestVersion || 0) + 1;
+    this.editingSeasonId = null;
+    this.editingSeasonName = '';
+    this.deletingSeasonId = null;
+    this.seasonDeleteAcknowledged = false;
+    this.seasonActionSaving = false;
+    this.seasonActionError = '';
+    this.seasonActionMessage = '';
+  }
+
   cancelSeasonAction(): void {
     if (this.seasonActionSaving) return;
     this.editingSeasonId = null;
@@ -4108,21 +4122,26 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return;
     }
     const communityId = this.selected.id;
+    const requestVersion = ++this.seasonActionRequestVersion;
     this.seasonActionSaving = true;
     this.seasonActionError = '';
     this.seasonActionMessage = '';
     this.communityService.renameSeason(communityId, season.id, name)
-      .pipe(timeout(10_000), finalize(() => this.seasonActionSaving = false))
+      .pipe(timeout(10_000), finalize(() => {
+        if (requestVersion === this.seasonActionRequestVersion) this.seasonActionSaving = false;
+      }))
       .subscribe({
         next: () => {
-          if (this.selected?.id !== communityId) return;
+          if (requestVersion !== this.seasonActionRequestVersion ||
+              this.selected?.id !== communityId) return;
           this.editingSeasonId = null;
           this.editingSeasonName = '';
           this.seasonActionMessage = t('communities.seasonRenamed');
           this.loadCompetition(this.selected, this.selectedSeasonId);
         },
         error: () => {
-          if (this.selected?.id === communityId)
+          if (requestVersion === this.seasonActionRequestVersion &&
+              this.selected?.id === communityId)
             this.seasonActionError = t('feedback.communities.seasonRenameError');
         }
       });
@@ -4132,14 +4151,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.selected || !this.canManage() || this.seasonActionSaving
         || this.deletingSeasonId !== season.id || !this.seasonDeleteAcknowledged) return;
     const communityId = this.selected.id;
+    const requestVersion = ++this.seasonActionRequestVersion;
     this.seasonActionSaving = true;
     this.seasonActionError = '';
     this.seasonActionMessage = '';
     this.communityService.deleteSeason(communityId, season.id)
-      .pipe(timeout(10_000), finalize(() => this.seasonActionSaving = false))
+      .pipe(timeout(10_000), finalize(() => {
+        if (requestVersion === this.seasonActionRequestVersion) this.seasonActionSaving = false;
+      }))
       .subscribe({
         next: () => {
-          if (this.selected?.id !== communityId) return;
+          if (requestVersion !== this.seasonActionRequestVersion ||
+              this.selected?.id !== communityId) return;
           this.deletingSeasonId = null;
           this.seasonDeleteAcknowledged = false;
           if (this.selectedSeasonId === season.id) this.selectedSeasonId = null;
@@ -4148,7 +4171,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.loadHistoricalLinks(communityId);
         },
         error: (error: HttpErrorResponse) => {
-          if (this.selected?.id !== communityId) return;
+          if (requestVersion !== this.seasonActionRequestVersion ||
+              this.selected?.id !== communityId) return;
           this.seasonActionError = error.status === 409
             ? t('feedback.communities.seasonDeleteConflict')
             : t('feedback.communities.seasonDeleteError');
@@ -5593,6 +5617,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
         this.selected = community;
         this.cancelCloseSeason();
+        this.resetSeasonManagementState();
         this.activeTab = 'home';
         this.pendingArchiveDeepLinkCommunityId = null;
         this.selectedSeasonId = null;
@@ -5669,6 +5694,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
         this.cancelCloseSeason();
+        this.resetSeasonManagementState();
         this.pendingArchiveDeepLinkCommunityId = null;
         this.resetHistoricalLinks();
         this.competition = undefined;
