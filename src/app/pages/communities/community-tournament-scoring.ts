@@ -30,6 +30,13 @@ const POINTS: TournamentScoreTerminology = {
   forAbbrev: 'PM', againstAbbrev: 'PS', differenceAbbrev: 'DP',
   note: SHARED_LIMIT
 };
+const RUNS: TournamentScoreTerminology = {
+  scoreInput: 'Corridas de',
+  forTitle: 'Corridas marcadas', againstTitle: 'Corridas sofridas',
+  differenceTitle: 'Diferença de corridas',
+  forAbbrev: 'CM', againstAbbrev: 'CS', differenceAbbrev: 'DC',
+  note: SHARED_LIMIT
+};
 const SETS: TournamentScoreTerminology = {
   scoreInput: 'Sets ganhos de',
   forTitle: 'Sets ganhos', againstTitle: 'Sets perdidos',
@@ -50,7 +57,8 @@ export function tournamentScoreTerminology(sport: string | null | undefined): To
   // American football must be recognized before the broader word "futebol".
   if (/\b(futebol americano|american football|rugby|basquetebol|basquete|basketball|streetball)\b/.test(normalized)
       || /\b3x3\b/.test(normalized)) return POINTS;
-  if (/\b(futebol|futsal|football|soccer|andebol|handball|hoquei|hockey|polo aquatico)\b/.test(normalized)) return GOALS;
-  if (/\b(padel|tenis|tennis|voleibol|volleyball|badminton|squash|ping.?pong)\b/.test(normalized)) return SETS;
+  if (/\b(futebol|futsal|football|soccer|andebol|handball|hoquei|hockey|polo aquatico|corfebol|korfball|lacrosse)\b/.test(normalized)) return GOALS;
+  if (/\b(padel|tenis|tennis|voleibol|volleyball|badminton|squash|ping.?pong|futevolei|footvolley)\b/.test(normalized)) return SETS;
+  if (/\b(basebol|baseball|softbol|softball)\b/.test(normalized)) return RUNS;
   return GENERIC;
 }
