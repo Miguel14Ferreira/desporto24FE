@@ -4921,8 +4921,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         season.sport && normalize(season.sport) === normalize(sport));
       return matching.length === 1 ? matching[0].id : null;
     }
-    // Preserve existing single-active and legacy historical import behavior.
-    if (active.length === 1) return active[0].id;
+    // A single sport-tagged season is not an automatic destination for a
+    // different imported sport; shared legacy seasons retain their behavior.
+    if (active.length === 1) {
+      const seasonSport = active[0].sport;
+      const importSport = this.newImportSport;
+      if (seasonSport && importSport) {
+        const normalize = (value: string): string => value.normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+        if (normalize(seasonSport) !== normalize(importSport)) return null;
+      }
+      return active[0].id;
+    }
     if (this.selectedSeasonId != null &&
         (!this.competition || seasons.some(season => season.id === this.selectedSeasonId))) {
       return this.selectedSeasonId;
