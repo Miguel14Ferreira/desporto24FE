@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createRunner } = require('./jynlo-communities-live-readonly.cjs');
 
-function fixture({ empty = false, wrong = false } = {}) {
+function fixture({ empty = false, wrong = false, nonRecurring = false, privateShared = false } = {}) {
   const calls = [];
   const out = [];
   const names = ['jynloteste01', 'jynloteste02'];
@@ -11,8 +11,8 @@ function fixture({ empty = false, wrong = false } = {}) {
     visibility: 'PRIVATE', memberCount: 2, myRole: 'OWNER', sports: ['Futebol'] };
   const game = { id: 801, communityId: wrong ? 702 : 701, sport: 'Futebol',
     status: 'OPEN', audience: wrong === 'shared' ? 'PUBLIC' : wrong ? 'PRIVATE' : 'COMMUNITY_ONLY',
-    privateGame: false, gameDate: '2026-12-01T18:00:00Z', participantCount: 2,
-    maxParticipants: 10, recurrenceSeriesId: 'qa-recurring' };
+    privateGame: privateShared, gameDate: '2026-12-01T18:00:00Z', participantCount: 2,
+    maxParticipants: 10, recurrenceSeriesId: nonRecurring ? null : 'qa-recurring' };
 
   async function fetchImpl(url, options) {
     const route = new URL(url).pathname;
@@ -68,6 +68,17 @@ test('allows public sessions shared into a different community', async () => {
 test('rejects unrecognized cross-community session audiences', async () => {
   await assert.rejects(() => fixture({ wrong: true }).run(),
     /QA_UNEXPECTED_SHARED_SESSION_AUDIENCE/);
+});
+
+test('strict recurring coverage rejects a community with only one-off sessions', async () => {
+  const f = fixture({ nonRecurring: true });
+  await assert.rejects(() => f.run({ requireCoverage: true, requireRecurring: true }),
+    /QA_RECURRING_COVERAGE_MISSING/);
+});
+
+test('rejects public shared sessions marked private', async () => {
+  const f = fixture({ wrong: 'shared', privateShared: true });
+  await assert.rejects(() => f.run(), /QA_PRIVATE_SHARED_PUBLIC_SESSION/);
 });
 
 test('requires both QA credentials before network', async () => {
