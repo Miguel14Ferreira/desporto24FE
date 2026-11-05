@@ -1,0 +1,53 @@
+name: Jynlo authenticated Playwright QA (manual, no TinyFish)
+
+# Two disposable accounts only. Never records screenshots, videos, traces,
+# auth headers or browser state. The existing script sends no messages by default,
+# but opening the inbox may update QA read receipts.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-authenticated-playwright-qa
+  cancel-in-progress: false
+
+jobs:
+  authenticated-browser-qa:
+    name: Two isolated QA browsers - no message sends
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
+      JYNLO_QA_USERNAME_1: ${{ secrets.JYNLO_QA1_USERNAME }}
+      JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require both pre-authorized QA identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$JYNLO_QA_PASSWORD_1" || -z "$JYNLO_QA_PASSWORD_2" ]]; then
+            echo 'QA secrets missing; no login attempted'
+            exit 1
+          fi
+          if [[ "$JYNLO_QA_USERNAME_1" != 'jynloteste01' || "$JYNLO_QA_USERNAME_2" != 'jynloteste02' ]]; then
+            echo 'QA identities not allowlisted; no login attempted'
+            exit 1
+          fi
+      - name: Check existing authenticated browser QA script
+        run: node --check scripts/qa/jynlo-inbox-live-browser.cjs
+      - name: Install standalone Playwright and Chromium
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/jynlo-playwright" \
+            --no-save --no-audit --no-fund --package-lock=false playwright
+          "$RUNNER_TEMP/jynlo-playwright/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Read-only QA browser flow (no --send-once)
+        shell: bash
+        run: NODE_PATH="$RUNNER_TEMP/jynlo-playwright/node_modules" node scripts/qa/jynlo-inbox-live-browser.cjs
