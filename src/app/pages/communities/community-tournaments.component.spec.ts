@@ -4923,4 +4923,28 @@ describe('Community tournaments management', () => {
     }
   });
 
+
+  it('localizes archived league table headers without changing historical scores', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      for (const [language, sport, expected] of [
+        ['pt', 'Basebol', ['CM', 'CS', 'DC']],
+        ['en', 'Basebol', ['RF', 'RA', 'RD']],
+        ['pt', 'Futevólei', ['SG', 'SP', 'DS']],
+        ['en', 'Futevólei', ['SW', 'SL', 'SD']],
+        ['en', 'Futebol', ['GF', 'GA', 'GD']],
+        ['en', 'Karting', ['SF', 'SA', 'SD']]
+      ] as Array<[string, string, string[]]>) {
+        localStorage.setItem('d24-language', language);
+        component.selected = { ...draft, sport };
+        const labels = component.historicalScoreLabels;
+        expect([labels.forAbbrev, labels.againstAbbrev, labels.differenceAbbrev])
+          .withContext(language + ' / ' + sport).toEqual(expected);
+      }
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
 });
