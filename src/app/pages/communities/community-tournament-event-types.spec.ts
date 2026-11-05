@@ -1,6 +1,6 @@
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
-import { tournamentEventChoices, validatedTournamentEventType, tournamentEventReadiness, validCanoeDiscipline, validRowingDiscipline } from './community-tournament-event-types';
+import { tournamentEventChoices, validatedTournamentEventType, tournamentEventReadiness, validCanoeDiscipline, validRowingDiscipline, validFieldTournamentDiscipline } from './community-tournament-event-types';
 
 describe('Sport-specific tournament event types',()=>{
   it('maps all 121 catalog sports without invented event fallbacks',()=>{
@@ -94,6 +94,22 @@ describe('Sport-specific tournament event types',()=>{
     // Legacy numeric/race APIs continue to accept optional event metadata.
     expect(tournamentEventReadiness('RACE_POINTS', null, null, 'LEAGUE')).toBe('READY');
     expect(tournamentEventReadiness('NUMERIC_TEAM', null, null, 'KNOCKOUT')).toBe('READY');
+  });
+
+
+  it('rejects unknown and inherited object keys without throwing or creating fake events', () => {
+    for (const sport of ['__proto__', 'constructor', 'toString', 'hasOwnProperty', 'Unknown sport']) {
+      expect(tournamentEventChoices(sport, 'NUMERIC_INDIVIDUAL')).withContext(sport).toEqual([]);
+      expect(validatedTournamentEventType(sport, 'NUMERIC_INDIVIDUAL', 'TRACK'))
+        .withContext(sport).toBeNull();
+    }
+    for (const event of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
+      expect(validFieldTournamentDiscipline(event, 'LONG_JUMP')).withContext(event).toBeFalse();
+      expect(tournamentEventReadiness('FIELD_BEST_MARK', event, 'LONG_JUMP', 'LEAGUE'))
+        .withContext(event).toBe('DISCIPLINE_REQUIRED');
+    }
+    expect(validFieldTournamentDiscipline('JUMP', 'LONG_JUMP')).toBeTrue();
+    expect(validFieldTournamentDiscipline('THROW', 'JAVELIN')).toBeTrue();
   });
 
 });
