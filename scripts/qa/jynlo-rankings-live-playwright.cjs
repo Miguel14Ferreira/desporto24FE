@@ -78,8 +78,14 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
 
   let chromium=chromiumImpl;
   if(!chromium) chromium=require('playwright').chromium;
-  const browser=await chromium.launch({headless:true,
-    ...(process.env.JYNLO_SYSTEM_CHROME ? {executablePath:process.env.JYNLO_SYSTEM_CHROME} : {})});
+  qaStage='CHROMIUM_LAUNCH';
+  // Playwright's own headless-shell avoids runner Chrome wrappers which may
+  // silently hang. Always fail fast instead of blocking a whole CI job.
+  const browser=await chromium.launch({
+    headless:true,timeout:20000,
+    args:['--no-sandbox','--disable-dev-shm-usage']
+  });
+  qaStage='CHROMIUM_READY';
   try{
     for(let i=0;i<tokens.length;i++){
       const ctx=await browser.newContext({locale:'pt-PT',
