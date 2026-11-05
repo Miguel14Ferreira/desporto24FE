@@ -1325,15 +1325,18 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   // Search stays scoped to one team and excludes already assigned profiles.
-  // Accent-insensitive matching works for Portuguese names and usernames.
+  // Keep the native select manageable in large communities. A member outside
+  // the first 30 is still searchable and selectable by name or username.
+  readonly teamMemberSuggestionLimit = 30;
   filteredTeamMembers(teamId: number) {
     const normalize = (value: string) => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
     const query = normalize(this.teamMemberSearch[teamId] || '');
     const eligible = this.availableTeamMembers;
-    return query ? eligible.filter(member =>
+    const matching = query ? eligible.filter(member =>
       normalize(member.fullName || '').includes(query)
       || normalize(member.username).includes(query)) : eligible;
+    return matching.slice(0, this.teamMemberSuggestionLimit);
   }
 
   setTeamMemberSearch(teamId: number, value: string): void {
