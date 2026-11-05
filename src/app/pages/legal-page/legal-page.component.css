@@ -101,3 +101,30 @@ h1 {
 .legal-footer a:hover {
   text-decoration: underline;
 }
+
+.delete-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin: 0 0 1.5rem;
+}
+
+.delete-account-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: .75rem 1rem;
+  border-radius: .8rem;
+  border: 1px solid rgba(125, 211, 252, .45);
+  color: #e0f2fe;
+  background: rgba(14, 165, 233, .15);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.delete-account-actions a:hover,
+.delete-account-actions a:focus-visible {
+  background: rgba(14, 165, 233, .28);
+  outline-offset: 3px;
+}
