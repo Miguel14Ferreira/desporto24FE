@@ -502,7 +502,7 @@
             } @else { <span></span> }
           </nav>
         }
-        @if (teamQuickSwitchTeams.length > 0) {
+        @if (teamQuickSwitchTotalMatches > 0 || (focusedTeam && teams.length > 4)) {
           <details class="team-page-quick-switch">
             <summary>{{ 'communities.tournaments.teamPage.searchLabel' | t }} · {{ teamNav.total }}</summary>
             <label class="team-directory-search">
