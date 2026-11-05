@@ -794,6 +794,15 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.selectedSeasonSupportsSport('Ciclismo de Pista')).toBeFalse();
   });
 
+  it('labels imported seasons by sport without assigning one to shared history', () => {
+    const season = { id: 44, name: '2026/27', sport: 'Karting', active: true } as any;
+    const label = component.seasonOptionLabel(season);
+    expect(label).toContain('Karting · 2026/27');
+    expect(label).toContain(t('communities.activeShort'));
+    expect(component.seasonOptionLabel({ ...season, sport: null, active: false }))
+      .toBe('2026/27');
+  });
+
   it('selects the Excel import destination by sport with parallel active seasons', () => {
     component.selected = { id: 7, sport: 'Futebol',
       sports: ['Futebol', 'Ténis', 'Karting'] } as any;
