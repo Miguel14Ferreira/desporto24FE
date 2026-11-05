@@ -1,6 +1,6 @@
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { tournamentSportCapabilities } from './community-tournament-capabilities';
-import { tournamentEventChoices, validatedTournamentEventType, validCanoeDiscipline, validRowingDiscipline } from './community-tournament-event-types';
+import { tournamentEventChoices, validatedTournamentEventType, tournamentEventReadiness, validCanoeDiscipline, validRowingDiscipline } from './community-tournament-event-types';
 
 describe('Sport-specific tournament event types',()=>{
   it('maps all 121 catalog sports without invented event fallbacks',()=>{
@@ -55,4 +55,45 @@ describe('Sport-specific tournament event types',()=>{
     expect(validatedTournamentEventType('BMX','RACE_POINTS',null)).toBeNull();
     expect(validatedTournamentEventType('Natação','RACE_POINTS','SWIM_LCM')).toBeNull();
   });
+
+  it('validates each specialist engine with its own event and discipline', () => {
+    const cases = [
+      ['SWIM_BEST_TIME', 'SWIM_LCM', 'FREE_50'],
+      ['CANOE_BEST_TIME', 'CANOE_SPRINT', 'K1_500'],
+      ['ROWING_BEST_TIME', 'ROWING_SINGLE', 'SINGLE_2000'],
+      ['FIELD_BEST_MARK', 'JUMP', 'LONG_JUMP'],
+      ['FIELD_BEST_MARK', 'THROW', 'JAVELIN'],
+      ['TRACK_BEST_TIME', 'TRACK', 'TRACK_100'],
+      ['RELAY_BEST_TIME', 'TRACK_RELAY', 'RELAY_4X400']
+    ] as const;
+    for (const [model, event, discipline] of cases) {
+      expect(tournamentEventReadiness(model, event, discipline, 'LEAGUE'))
+        .withContext(model).toBe('READY');
+      expect(tournamentEventReadiness(model, null, discipline, 'LEAGUE'))
+        .withContext(model).toBe('EVENT_REQUIRED');
+      expect(tournamentEventReadiness(model, event, null, 'LEAGUE'))
+        .withContext(model).toBe('DISCIPLINE_REQUIRED');
+      expect(tournamentEventReadiness(model, event, 'INVALID', 'LEAGUE'))
+        .withContext(model).toBe('DISCIPLINE_REQUIRED');
+    }
+  });
+
+  it('never permits a discipline from another athletics event or team engine', () => {
+    expect(tournamentEventReadiness('TRACK_BEST_TIME', 'TRACK', 'LONG_JUMP', 'LEAGUE'))
+      .toBe('DISCIPLINE_REQUIRED');
+    expect(tournamentEventReadiness('FIELD_BEST_MARK', 'JUMP', 'TRACK_100', 'LEAGUE'))
+      .toBe('DISCIPLINE_REQUIRED');
+    expect(tournamentEventReadiness('FIELD_BEST_MARK', 'THROW', 'LONG_JUMP', 'LEAGUE'))
+      .toBe('DISCIPLINE_REQUIRED');
+    expect(tournamentEventReadiness('RELAY_BEST_TIME', 'TRACK_RELAY', 'RELAY_4X100', 'KNOCKOUT'))
+      .toBe('LEAGUE_REQUIRED');
+    expect(tournamentEventReadiness('RELAY_BEST_TIME', null, null, 'KNOCKOUT'))
+      .toBe('LEAGUE_REQUIRED');
+    expect(tournamentEventReadiness('UNAVAILABLE', null, null, 'LEAGUE'))
+      .toBe('UNAVAILABLE');
+    // Legacy numeric/race APIs continue to accept optional event metadata.
+    expect(tournamentEventReadiness('RACE_POINTS', null, null, 'LEAGUE')).toBe('READY');
+    expect(tournamentEventReadiness('NUMERIC_TEAM', null, null, 'KNOCKOUT')).toBe('READY');
+  });
+
 });
