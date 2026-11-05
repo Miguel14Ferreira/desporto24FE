@@ -777,6 +777,24 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.canManageRaceChampionship()).toBeFalse();
   });
 
+  it('only shows cycling brackets for a cycling or legacy shared selected season', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Ciclismo de Pista'] } as any;
+    component.competition = { seasons: [
+      { id: 44, name: 'Futebol', sport: 'Futebol', active: true },
+      { id: 45, name: 'Pista', sport: 'Ciclismo de Pista', active: true },
+      { id: 46, name: 'Antiga', sport: null, active: false }
+    ] } as any;
+    component.selectedSeasonId = 44;
+    expect(component.selectedSeasonSupportsSport('Ciclismo de Pista')).toBeFalse();
+    component.selectedSeasonId = 45;
+    expect(component.selectedSeasonSupportsSport('Ciclismo de Pista')).toBeTrue();
+    component.selectedSeasonId = 46;
+    expect(component.selectedSeasonSupportsSport('Ciclismo de Pista')).toBeTrue();
+    component.selectedSeasonId = null;
+    expect(component.selectedSeasonSupportsSport('Ciclismo de Pista')).toBeFalse();
+  });
+
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
     component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
     component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
