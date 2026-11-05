@@ -765,7 +765,6 @@ describe('CommunitiesComponent public session eligibility', () => {
       { id: 45, name: 'Karting 2026', sport: 'Karting', active: true },
       { id: 46, name: 'Futebol 2025', sport: 'Futebol', active: false }
     ] } as any;
-    spyOn(component, 'canManage').and.returnValue(true);
     component.selectedSeasonId = 44;
     expect(component.canEditSportPoints('Futebol')).toBeTrue();
     expect(component.canManageRaceChampionship()).toBeTrue();
