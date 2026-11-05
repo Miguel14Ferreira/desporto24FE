@@ -115,10 +115,19 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
               const expected=group.kartingRows;
               must(expected.length===2&&expected[0].points===25&&expected[1].points===18,
                 'KARTING_API_EXPECTED_RANKS_INVALID');
-              must(first.includes(expected[0].displayed)&&/25/.test(first),
-                'KARTING_FIRST_VISUAL');
-              must(second.includes(expected[1].displayed)&&/18/.test(second),
-                'KARTING_SECOND_VISUAL');
+              const normalize=(value)=>String(value).normalize('NFD')
+                .replace(/[\\u0300-\\u036f]/g,'').replace(/\\s+/g,' ').trim().toLowerCase();
+              const firstName=normalize(first).includes(normalize(expected[0].displayed));
+              const secondName=normalize(second).includes(normalize(expected[1].displayed));
+              const firstPoints=/\\b25\\b/.test(first),secondPoints=/\\b18\\b/.test(second);
+              if(!firstName||!secondName||!firstPoints||!secondPoints){
+                // Only booleans of the two disposable QA entries; no page text
+                // or private names are written to the GitHub Actions logs.
+                report('[CHECK] QA_KARTING_DISPLAY name1='+firstName+
+                  ' points1='+firstPoints+' name2='+secondName+' points2='+secondPoints);
+              }
+              must(firstName&&firstPoints,'KARTING_FIRST_VISUAL');
+              must(secondName&&secondPoints,'KARTING_SECOND_VISUAL');
               // No W/D/L table rendered for a Karting-only selected season.
               qaStage='RACE_WDL_GUARD';
               must(await table.count()===0,'KARTING_FOOTBALL_TABLE_RENDERED');
