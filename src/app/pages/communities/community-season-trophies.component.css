@@ -65,3 +65,9 @@
   .trophies-grid{gap:12px;}
   .trophy-card{padding:16px;}
 }
+
+
+/* Keep trophies from each sport together while preserving historical shared seasons. */
+.trophies-history{display:grid;gap:1.2rem;margin-top:.85rem;}
+.trophy-sport-heading{margin:0;color:#f4dc9a;font-size:1rem;font-weight:700;line-height:1.4;}
+.trophy-sport-group .trophies-grid{margin-top:.55rem;}
