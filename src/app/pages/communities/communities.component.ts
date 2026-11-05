@@ -2183,11 +2183,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
    * explanation, never football goals/assists or speculative rankings. */
   get specializedStatsUnavailableSports(): string[] {
     if (!this.selected) return [];
-    const raceSports = new Set(this.raceRankingGroups.map(group => group.sport.trim().toLowerCase()));
+    const normalize = (sport: string): string => sport.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const raceSports = new Set(this.raceRankingGroups.map(group => normalize(group.sport)));
     return this.rankingContextSports.filter(sport => {
       const family = formatForSport(sport);
       return family !== 'team' && family !== 'duel'
-        && !raceSports.has(sport.trim().toLowerCase());
+        && !raceSports.has(normalize(sport));
     });
   }
 
