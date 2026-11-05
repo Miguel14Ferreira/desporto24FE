@@ -85,3 +85,46 @@ export const RELAY_TOURNAMENT_DISCIPLINES = ['RELAY_4X100','RELAY_4X400'] as con
 export function validRelayTournamentDiscipline(type:string|null,discipline:string|null):boolean {
   return type==='TRACK_RELAY' && RELAY_TOURNAMENT_DISCIPLINES.some(x=>x===discipline);
 }
+
+/** Explicit creation readiness for event-based tournament engines.
+ * Numeric and race championship contracts retain their existing optional
+ * event selection; specialist engines must use a compatible discipline.
+ */
+export type TournamentEventReadiness =
+  'READY' | 'UNAVAILABLE' | 'EVENT_REQUIRED' | 'DISCIPLINE_REQUIRED' | 'LEAGUE_REQUIRED';
+
+export function tournamentEventReadiness(
+  model: TournamentCreationModel,
+  eventType: string | null,
+  discipline: string | null,
+  teamFormat: string
+): TournamentEventReadiness {
+  if (model === 'UNAVAILABLE') return 'UNAVAILABLE';
+  if (model === 'RELAY_BEST_TIME' && teamFormat !== 'LEAGUE') return 'LEAGUE_REQUIRED';
+
+  let valid: boolean;
+  switch (model) {
+    case 'SWIM_BEST_TIME':
+      valid = validSwimTournamentDiscipline(eventType, discipline);
+      break;
+    case 'CANOE_BEST_TIME':
+      valid = validCanoeDiscipline(eventType, discipline);
+      break;
+    case 'ROWING_BEST_TIME':
+      valid = validRowingDiscipline(eventType, discipline);
+      break;
+    case 'FIELD_BEST_MARK':
+      valid = validFieldTournamentDiscipline(eventType, discipline);
+      break;
+    case 'TRACK_BEST_TIME':
+      valid = validTrackTournamentDistance(eventType, discipline);
+      break;
+    case 'RELAY_BEST_TIME':
+      valid = validRelayTournamentDiscipline(eventType, discipline);
+      break;
+    default:
+      return 'READY';
+  }
+  if (valid) return 'READY';
+  return eventType ? 'DISCIPLINE_REQUIRED' : 'EVENT_REQUIRED';
+}
