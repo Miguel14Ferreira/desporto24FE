@@ -4907,20 +4907,26 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   get importDestinationSeasonId(): number | null {
     const seasons = this.competition?.seasons ?? [];
-    // Includes a season created moments ago, before the competition refresh finishes.
+    // An explicitly selected import destination may be an archived season.
     if (this.importSeasonId != null) return this.importSeasonId;
-    // Prefer the active season for every new Excel, without changing the ranking filter.
-    if (this.competition?.activeSeasonId != null &&
-        seasons.some(season => season.id === this.competition?.activeSeasonId)) {
-      return this.competition.activeSeasonId;
+    const active = seasons.filter(season => season.active);
+    if (active.length > 1) {
+      // The ranking filter must not silently decide where Excel results land.
+      // Require an import sport and an unambiguous active season for that sport.
+      const sport = this.newImportSport;
+      if (!sport) return null;
+      const normalize = (value: string): string => value.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+      const matching = active.filter(season =>
+        season.sport && normalize(season.sport) === normalize(sport));
+      return matching.length === 1 ? matching[0].id : null;
     }
-    // Older import callers can already have a selected ranking season before
-    // the competition overview has loaded. Keep that destination compatible.
+    // Preserve existing single-active and legacy historical import behavior.
+    if (active.length === 1) return active[0].id;
     if (this.selectedSeasonId != null &&
         (!this.competition || seasons.some(season => season.id === this.selectedSeasonId))) {
       return this.selectedSeasonId;
     }
-    // If there is no active or selected season, use the latest registered one.
     return seasons[0]?.id ?? null;
   }
 
