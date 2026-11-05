@@ -188,6 +188,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   inviteCopyFeedback: Record<number, string> = {};
   teams: TournamentTeam[] = [];
   teamDirectoryQuery = '';
+  teamQuickSwitchQuery = '';
+  readonly teamQuickSwitchPreviewSize = 12;
   readonly teamDirectoryPageSize = 12;
   teamDirectoryLimit = 12;
   teamsLoadError = false;
@@ -1381,9 +1383,26 @@ export class CommunityTournamentsComponent implements OnChanges {
           previous:this.teams[index - 1],next:this.teams[index + 1]};
   }
 
-  /** A shortcut only belongs to a valid focused team in this tournament. */
+  /** A shortcut only belongs to a valid focused team in this tournament.
+   * Bound the quick-switch DOM for large competitions; searching still
+   * considers all loaded team names without modifying the official teams. */
   get teamQuickSwitchTeams(): TournamentTeam[] {
-    return this.focusedTeam && this.teams.length > 4 ? this.teams : [];
+    if (!this.focusedTeam || this.teams.length <= 4) return [];
+    const normalize = (value: string): string => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
+    const query = normalize(this.teamQuickSwitchQuery);
+    return (query
+      ? this.teams.filter(team => normalize(team.name).includes(query))
+      : this.teams).slice(0, this.teamQuickSwitchPreviewSize);
+  }
+
+  get teamQuickSwitchTotalMatches(): number {
+    if (!this.focusedTeam || this.teams.length <= 4) return 0;
+    const normalize = (value: string): string => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
+    const query = normalize(this.teamQuickSwitchQuery);
+    return query ? this.teams.filter(team => normalize(team.name).includes(query)).length
+      : this.teams.length;
   }
 
   get focusedTeam(): TournamentTeam | undefined {
@@ -2315,6 +2334,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.relayDecisionReasons={};
     ++this.relayRevision;
     this.teamDirectoryQuery = '';
+    this.teamQuickSwitchQuery = '';
     this.teamDirectoryLimit = this.teamDirectoryPageSize;
     this.teamPlayerDraft = {};
     this.teamMemberSearch = {};
