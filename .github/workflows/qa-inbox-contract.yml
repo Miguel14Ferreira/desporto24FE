@@ -2,7 +2,7 @@ name: Jynlo QA inbox contract tests
 
 on:
   pull_request:
-    branches: [preview/render-fullstack]
+    branches: [develop]
     paths:
       - 'scripts/qa/jynlo-inbox-live-qa.cjs'
       - 'scripts/qa/jynlo-inbox-live-qa.test.cjs'
