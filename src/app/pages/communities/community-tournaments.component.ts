@@ -1299,18 +1299,28 @@ export class CommunityTournamentsComponent implements OnChanges {
     };
   }
 
-  /** Display labels only: use each sport's scoring vocabulary, not football defaults. */
-  get teamScoreHeadings(): { for: string; against: string; difference: string } {
+  /** Display-only terminology; never infer a sport's official scoring rules. */
+  private get teamScoreFamily(): 'goals' | 'points' | 'sets' | 'generic' {
     const labels = tournamentScoreTerminology(this.selected?.sport);
-    const family = labels.forAbbrev === 'GM' ? 'goals'
+    return labels.forAbbrev === 'GM' ? 'goals'
       : labels.forAbbrev === 'PM' ? 'points'
       : labels.forAbbrev === 'SG' ? 'sets' : 'generic';
-    const key = 'communities.tournaments.teamScore.' + family + '.';
+  }
+
+  get teamScoreHeadings(): { for: string; against: string; difference: string } {
+    const key = 'communities.tournaments.teamScore.' + this.teamScoreFamily + '.';
     return {
       for: t(key + 'for'),
       against: t(key + 'against'),
       difference: t(key + 'difference')
     };
+  }
+
+  /** Accessible score editor label for the selected tournament's sport. */
+  teamScoreInputLabel(teamName: string): string {
+    return t('communities.tournaments.teamScore.' + this.teamScoreFamily + '.input', {
+      team: teamName
+    });
   }
 
   get isTeamCompetition(): boolean {
