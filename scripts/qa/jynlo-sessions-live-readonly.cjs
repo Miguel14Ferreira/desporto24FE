@@ -148,7 +148,7 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
     return checked;
   }
 
-  async function run({ passwords } = {}) {
+  async function run({ passwords, requireDetails = false } = {}) {
     assert.ok(Array.isArray(passwords) && passwords.length === ACCOUNTS.length
       && passwords.every(p => typeof p === 'string' && p.length > 0),
     'Both protected QA passwords required; no production calls were made');
@@ -158,7 +158,11 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
       details += await audit(ACCOUNTS[i], token);
     }
     output('[PASS] LIVE read-only session ownership audit complete: two QA accounts.');
-    if (details === 0) output('[INFO] No sample detail exists; full detail coverage remains unverified.');
+    if (details === 0) {
+      output('[INFO] No sample detail exists; full detail coverage remains unverified.');
+      assert.equal(requireDetails, false,
+        'QA_DETAIL_COVERAGE_MISSING: no existing QA session available for detail checks');
+    }
     return { accountsChecked: ACCOUNTS.length, detailChecks: details };
   }
   return { run };
@@ -170,7 +174,8 @@ if (require.main === module) {
     process.exitCode = 1;
   } else {
     createRunner().run({
-      passwords: [process.env.JYNLO_QA_PASSWORD_1, process.env.JYNLO_QA_PASSWORD_2]
+      passwords: [process.env.JYNLO_QA_PASSWORD_1, process.env.JYNLO_QA_PASSWORD_2],
+      requireDetails: process.env.JYNLO_QA_REQUIRE_SESSION_DETAILS === 'true'
     }).catch(error => {
       // Errors contain only controlled route names/statuses. Never dump request
       // objects, fetch bodies, credentials, JWTs, or player data.
