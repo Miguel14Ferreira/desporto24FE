@@ -28,6 +28,10 @@ async function run(){
       c.ownerUsername?.toLowerCase()===users[0]&&c.visibility==='PRIVATE'&&id(c.id));
     assert.equal(match.length,1,'QA_COMMUNITY_SCOPE_NOT_UNIQUE');
     const group=match[0];
+    console.log('[CHECK] Named private QA group '+(names.indexOf(name)+1)+
+      ': football='+(group.sports?.includes('Futebol')||group.sport==='Futebol')+
+      ', teamTournamentsEnabled='+String(group.teamTournamentsEnabled)+
+      ', managerRole='+String(group.myRole==='OWNER'||group.myRole==='ADMIN'));
     assert.ok(lists[1].some(c=>c.id===group.id),'QA_SECOND_ACCOUNT_NOT_MEMBER');
     for(let page=0;page<3;page++){
       const result=await get('/api/communities/'+group.id+'/tournaments?page='+page,tokens[0]);
