@@ -1,0 +1,56 @@
+name: Jynlo QA - LIVE rankings Playwright (no TinyFish)
+
+# Two disposable accounts, existing QA seasons. Never creates or alters data.
+# Nothing from authenticated pages is persisted in CI artifacts.
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'scripts/qa/jynlo-rankings-live-playwright.cjs'
+      - '.github/workflows/qa-rankings-live-playwright.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-qa-rankings-live
+  cancel-in-progress: false
+
+jobs:
+  rankings-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
+      JYNLO_QA_USERNAME_1: ${{ secrets.JYNLO_QA1_USERNAME }}
+      JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check authorized identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$JYNLO_QA_PASSWORD_1" || -z "$JYNLO_QA_PASSWORD_2" ]]; then
+            echo 'QA secrets missing'
+            exit 1
+          fi
+          if [[ "$JYNLO_QA_USERNAME_1" != 'jynloteste01' || "$JYNLO_QA_USERNAME_2" != 'jynloteste02' ]]; then
+            echo 'QA username allowlist mismatch'
+            exit 1
+          fi
+      - name: Validate LIVE rankings script
+        run: node --check scripts/qa/jynlo-rankings-live-playwright.cjs
+      - name: Install isolated Playwright Chromium
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/jynlo-playwright" \
+            --no-save --no-audit --no-fund --package-lock=false playwright
+          "$RUNNER_TEMP/jynlo-playwright/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify Football and Karting ranking UI with both QA identities
+        shell: bash
+        run: NODE_PATH="$RUNNER_TEMP/jynlo-playwright/node_modules" node scripts/qa/jynlo-rankings-live-playwright.cjs
