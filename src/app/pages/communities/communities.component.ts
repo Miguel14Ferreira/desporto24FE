@@ -6073,9 +6073,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   seasonOptionLabel(season: CommunitySeason): string {
+    const name = (season.sport ? season.sport + ' · ' : '') + season.name;
     return season.active
-      ? season.name + ' · ' + t('communities.activeShort')
-      : season.name;
+      ? name + ' · ' + t('communities.activeShort')
+      : name;
   }
 
   formatSessionDate(value: string): string {
