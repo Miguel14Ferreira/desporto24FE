@@ -3543,6 +3543,39 @@ describe('Community tournaments management', () => {
       expect(component.confirmingEmptyTeamId).toBeNull();
     });
 
+    it('rejects stale roster actions for teams not in the loaded tournament', async () => {
+      const occupied = { ...team, players: [
+        { profileId: 2, username: 'ana', displayName: 'Ana' }
+      ] };
+      component.community = { ...community, members, memberCount: 3 };
+      api.teams.and.returnValue(of([{ ...team, id: 41, name: 'Azuis', players: [] }]));
+      component.selectTournament(teamDraft);
+      component.teamPlayerDraft[40] = 2;
+      await component.assignTeamPlayer(occupied);
+      component.requestTeamPlayerRemoval(occupied, 2);
+      component.requestEmptyTeamDeletion(team);
+      await component.removeTeamPlayer(occupied, 2);
+      await component.deleteTournamentTeam(team);
+      expect(component.confirmingTeamPlayerRemoval).toBeNull();
+      expect(component.confirmingEmptyTeamId).toBeNull();
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+
+      const staleEmpty = { ...team, players: [] };
+      const currentOccupied = { ...occupied };
+      api.teams.and.returnValue(of([currentOccupied]));
+      component.loadTeams();
+      component.requestEmptyTeamDeletion(staleEmpty);
+      await component.deleteTournamentTeam(staleEmpty);
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+      component.requestTeamPlayerRemoval(occupied, 2);
+      api.teams.and.returnValue(of([staleEmpty]));
+      component.loadTeams();
+      await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('cancels an unconfirmed squad removal without any write', async () => {
       const occupied = { ...team, players: [
         { profileId: 2, username: 'ana', displayName: 'Ana' }
