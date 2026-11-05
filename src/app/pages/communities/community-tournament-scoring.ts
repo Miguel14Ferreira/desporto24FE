@@ -59,6 +59,6 @@ export function tournamentScoreTerminology(sport: string | null | undefined): To
       || /\b3x3\b/.test(normalized)) return POINTS;
   if (/\b(futebol|futsal|football|soccer|andebol|handball|hoquei|hockey|polo aquatico|corfebol|korfball|lacrosse)\b/.test(normalized)) return GOALS;
   if (/\b(padel|tenis|tennis|voleibol|volleyball|badminton|squash|ping.?pong|futevolei|footvolley)\b/.test(normalized)) return SETS;
-  if (/\b(basebol|baseball|softbol|softball)\b/.test(normalized)) return RUNS;
+  if (/\b(basebol|baseball|softbol|softball|cricket)\b/.test(normalized)) return RUNS;
   return GENERIC;
 }
