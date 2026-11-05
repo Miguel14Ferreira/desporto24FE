@@ -55,7 +55,7 @@ const GENERIC: TournamentScoreTerminology = {
 export function tournamentScoreTerminology(sport: string | null | undefined): TournamentScoreTerminology {
   const normalized = (sport || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   // American football must be recognized before the broader word "futebol".
-  if (/\b(futebol americano|american football|rugby|basquetebol|basquete|basketball|streetball)\b/.test(normalized)
+  if (/\b(futebol americano|american football|flag football|rugby|basquetebol|basquete|basketball|streetball)\b/.test(normalized)
       || /\b3x3\b/.test(normalized)) return POINTS;
   if (/\b(futebol|futsal|football|soccer|andebol|handball|hoquei|hockey|polo aquatico|corfebol|korfball|lacrosse)\b/.test(normalized)) return GOALS;
   if (/\b(padel|tenis|tennis|voleibol|volleyball|badminton|squash|ping.?pong|futevolei|footvolley)\b/.test(normalized)) return SETS;
