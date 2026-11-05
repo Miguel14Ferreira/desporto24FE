@@ -757,6 +757,68 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.closingSeasonId).toBe(44);
   });
 
+  it('ignores late rename results and does not unlock a newer season operation', () => {
+    component.selected = { id: 7, sport: 'Futebol' } as any;
+    component.seasonActionSaving = false;
+    const oldResponse = new Subject<any>();
+    const newResponse = new Subject<any>();
+    const renameSeason = jasmine.createSpy('renameSeason').and.returnValues(
+      oldResponse.asObservable(), newResponse.asObservable());
+    (component as any).communityService = { renameSeason };
+    const reload = spyOn(component, 'loadCompetition');
+
+    const oldSeason = { id: 44, name: 'Época antiga' } as any;
+    component.editSeason(oldSeason);
+    component.editingSeasonName = 'Primeiro nome';
+    component.saveSeasonName(oldSeason);
+
+    (component as any).resetSeasonManagementState();
+    component.selected = { id: 8, sport: 'Karting' } as any;
+    const newSeason = { id: 45, name: 'Nova época' } as any;
+    component.editSeason(newSeason);
+    component.editingSeasonName = 'Segundo nome';
+    component.saveSeasonName(newSeason);
+    expect(component.seasonActionSaving).toBeTrue();
+
+    oldResponse.next(oldSeason);
+    oldResponse.complete();
+    expect(component.seasonActionSaving).toBeTrue();
+    expect(component.editingSeasonId).toBe(45);
+    expect(reload).not.toHaveBeenCalled();
+
+    newResponse.next(newSeason);
+    newResponse.complete();
+    expect(component.seasonActionSaving).toBeFalse();
+    expect(component.editingSeasonId).toBeNull();
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores late delete responses after leaving the previous community', () => {
+    component.selected = { id: 7, sport: 'Futebol' } as any;
+    component.seasonActionSaving = false;
+    const response = new Subject<any>();
+    const deleteSeason = jasmine.createSpy('deleteSeason').and.returnValue(response.asObservable());
+    (component as any).communityService = { deleteSeason };
+    const reload = spyOn(component, 'loadCompetition');
+    component.loadHistoricalLinks = jasmine.createSpy('loadHistoricalLinks');
+    const season = { id: 44, name: 'Época antiga' } as any;
+
+    component.requestDeleteSeason(season);
+    component.seasonDeleteAcknowledged = true;
+    component.confirmDeleteSeason(season);
+    expect(deleteSeason).toHaveBeenCalledOnceWith(7, 44);
+
+    (component as any).resetSeasonManagementState();
+    component.selected = { id: 8, sport: 'Karting' } as any;
+    component.selectedSeasonId = 45;
+    response.next(undefined);
+    response.complete();
+    expect(component.selectedSeasonId).toBe(45);
+    expect(component.deletingSeasonId).toBeNull();
+    expect(reload).not.toHaveBeenCalled();
+    expect(component.loadHistoricalLinks).not.toHaveBeenCalled();
+  });
+
   it('ignores a late season-close response after switching communities', () => {
     component.selected = { id: 7, sport: 'Futebol' } as any;
     component.competition = { seasons: [
