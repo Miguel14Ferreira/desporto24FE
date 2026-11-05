@@ -812,7 +812,10 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.importSportDraft = '';
     expect(component.importDestinationSeasonId).toBeNull();
     component.selectImportSeason(40);
-    expect(component.importDestinationSeasonId).toBe(40);
+    expect(component.importDestinationSeasonId).toBeNull();
+    component.selectImportSeason(45);
+    component.importSportDraft = 'Karting';
+    expect(component.importDestinationSeasonId).toBe(45);
   });
 
   it('does not auto-import an unrelated sport into the only active tagged season', () => {
@@ -825,6 +828,24 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importDestinationSeasonId).toBeNull();
     component.importSportDraft = 'Futebol';
     expect(component.importDestinationSeasonId).toBe(44);
+  });
+
+  it('rejects incompatible manually selected historical Excel seasons', () => {
+    component.selected = { id: 7, sports: ['Futebol', 'Karting'] } as any;
+    component.competition = { seasons: [
+      { id: 11, name: 'Futebol antigo', sport: 'Futebol', active: false },
+      { id: 12, name: 'Partilhada antiga', sport: null, active: false }
+    ] } as any;
+    component.importSportDraft = 'Karting';
+    component.selectImportSeason(11);
+    expect(component.importDestinationSeasonId).toBeNull();
+    component.selectImportSeason(12);
+    expect(component.importDestinationSeasonId).toBe(12);
+    component.importSportDraft = 'Futebol';
+    component.selectImportSeason(11);
+    expect(component.importDestinationSeasonId).toBe(11);
+    component.selectImportSeason(9999);
+    expect(component.importDestinationSeasonId).toBeNull();
   });
 
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
