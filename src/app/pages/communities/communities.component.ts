@@ -6238,7 +6238,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
    * Keep those players in their tables, but do not name arbitrary leaders. */
   leader(): CommunityStanding | undefined {
     const first = this.competition?.standings[0];
-    return first && first.games > 0 ? first : undefined;
+    return first && (first.games > 0 || first.points > 0) ? first : undefined;
   }
 
   topGoals(): CommunityStanding | undefined {
