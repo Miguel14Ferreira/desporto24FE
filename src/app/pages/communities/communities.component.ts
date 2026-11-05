@@ -952,6 +952,16 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return matches.length === 1 ? matches[0].id : null;
   }
 
+  selectedSeasonSupportsSport(sport: string): boolean {
+    if (this.selectedSeasonId == null || !this.communityRoundSports.includes(sport)) return false;
+    const selected = this.competition?.seasons.find(season => season.id === this.selectedSeasonId);
+    if (!selected) return false;
+    if (!selected.sport) return true; // Historical shared season.
+    const normalize = (value: string): string => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return normalize(selected.sport) === normalize(sport);
+  }
+
   get roundEligibleSports(): string[] {
     const available = this.communityRoundSports;
     const active = this.competition?.seasons.filter(season => season.active) ?? [];
@@ -3011,7 +3021,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.sprintReviewContext = '';
     }
     this.sprintBracketError = '';
-    if (seasonId == null || !this.communityRoundSports.includes('Ciclismo de Pista')) {
+    if (seasonId == null || this.selectedSeasonId !== seasonId
+        || !this.selectedSeasonSupportsSport('Ciclismo de Pista')) {
       this.sprintBracketLoading = false;
       return;
     }
