@@ -927,7 +927,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
    * Shared legacy seasons retain the complete community catalogue. */
   /** Historical ranking filter is never a destination for new rounds. */
   get availableSeasonSports(): string[] {
-    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    const active = this.competition?.seasons?.filter(season => season.active) ?? [];
     if (active.some(season => !season.sport)) return [];
     const normalize = (value: string): string => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -936,12 +936,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   get canCreateAdditionalSeason(): boolean {
-    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    const active = this.competition?.seasons?.filter(season => season.active) ?? [];
     return active.length === 0 || this.availableSeasonSports.length > 0;
   }
 
   get roundTargetSeasonId(): number | null {
-    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    const active = this.competition?.seasons?.filter(season => season.active) ?? [];
     if (active.length === 1) return active[0].id;
     const sport = this.newRoundSport;
     if (!sport) return null;
@@ -964,7 +964,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   get roundEligibleSports(): string[] {
     const available = this.communityRoundSports;
-    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    const active = this.competition?.seasons?.filter(season => season.active) ?? [];
     // Per-sport seasons must not hide other sports in a multi-sport community.
     if (active.length > 1) return available;
     const sport = active[0]?.sport;
@@ -1024,7 +1024,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   canManageRaceChampionship(): boolean {
     return this.canManage() && this.selectedSeasonId != null
-      && this.selectedSeasonId === this.activeSeason()?.id;
+      && this.isSelectedActiveSeason();
   }
 
   editRaceRule(group: CommunityRaceStandingGroup): void {
@@ -1157,7 +1157,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   canConfigureRacketRules(): boolean {
     return this.canManage() && this.selectedSeasonId !== null &&
-      this.selectedSeasonId === this.activeSeason()?.id;
+      this.isSelectedActiveSeason();
   }
 
   editRacketRule(group: CommunityRacketStandingGroup): void {
@@ -2088,7 +2088,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return formatForSport(sport) === 'team'
       && this.canManage()
       && this.selectedSeasonId != null
-      && this.selectedSeasonId === this.activeSeason()?.id;
+      && this.isSelectedActiveSeason();
   }
 
   editSportPoints(group: NonNullable<CommunityCompetitionOverview['sportStandings']>[number]): void {
@@ -5131,7 +5131,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     // Never silently create a seasonless round when several seasons are active.
     // Explicitly selecting another sport requires its own active season first.
-    if ((this.competition?.seasons.filter(season => season.active).length ?? 0) > 1
+    if ((this.competition?.seasons?.filter(season => season.active).length ?? 0) > 1
         && this.roundTargetSeasonId == null) {
       this.errorMessage = 'Cria ou seleciona uma época ativa para esta modalidade antes de registares a jornada.';
       return;
@@ -6082,8 +6082,22 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
   }
 
+  /** Accept legacy API payloads with only activeSeasonId, but never let a
+   * closed or different sport season become editable when seasons are present. */
+  isSelectedActiveSeason(): boolean {
+    if (this.selectedSeasonId == null) return false;
+    const seasons = this.competition?.seasons;
+    if (seasons != null) {
+      const selected = seasons.find(season => season.id === this.selectedSeasonId);
+      if (!selected) return false;
+      return selected.active === true
+        || (selected.active == null && this.competition?.activeSeasonId === this.selectedSeasonId);
+    }
+    return this.competition?.activeSeasonId === this.selectedSeasonId;
+  }
+
   activeSeason(): CommunitySeason | undefined {
-    const active = this.competition?.seasons.filter(season => season.active) ?? [];
+    const active = this.competition?.seasons?.filter(season => season.active) ?? [];
     if (this.selectedSeasonId != null) {
       const selected = active.find(season => season.id === this.selectedSeasonId);
       if (selected) return selected;
