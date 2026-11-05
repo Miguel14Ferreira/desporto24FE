@@ -16,7 +16,7 @@ import {
 import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
-import { tournamentSportCapabilities } from './community-tournament-capabilities';
+import { tournamentSportCapabilities, tournamentCreationModelForEvent } from './community-tournament-capabilities';
 import { tournamentEventChoices, validatedTournamentEventType, SWIM_TOURNAMENT_DISCIPLINES, validSwimTournamentDiscipline, FIELD_TOURNAMENT_DISCIPLINES, validFieldTournamentDiscipline, TRACK_TOURNAMENT_DISTANCES, validTrackTournamentDistance, RELAY_TOURNAMENT_DISCIPLINES, validRelayTournamentDiscipline, CANOE_K1_DISCIPLINES, validCanoeDiscipline, ROWING_SINGLE_DISCIPLINES, validRowingDiscipline } from './community-tournament-event-types';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { summarizePublishedTeamJourney } from './community-team-journey';
@@ -286,10 +286,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get selectedSportCreationModel() {
-    const capability = this.selectedSportCapabilities;
-    if(!this.showTeamCreate && this.sportDraft==='Atletismo' && this.eventTypeDraft==='TRACK')
-      return 'TRACK_BEST_TIME';
-    return this.showTeamCreate ? capability.team : capability.individual;
+    return tournamentCreationModelForEvent(this.sportDraft, this.showTeamCreate, this.eventTypeDraft);
   }
 
   get sportEventChoices() {
