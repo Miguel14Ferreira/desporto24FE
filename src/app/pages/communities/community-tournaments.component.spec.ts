@@ -1125,6 +1125,44 @@ describe('Community tournaments management', () => {
       expect(api.acceptTeamInvite).not.toHaveBeenCalled();
     });
 
+    it('never accepts an invitation with unavailable or stale team roster data', async () => {
+      api.list.and.returnValue(of({ tournaments: [teamDraft], page: 0, hasMore: false }));
+      api.teams.and.returnValue(of([team]));
+      component.invitedTournamentId = 19;
+      component.invitedTeamId = 40;
+      component.ngOnChanges({ community: new SimpleChange(undefined, community, true) });
+      expect(component.invitedTeam?.id).toBe(40);
+
+      component.teamsLoadError = true;
+      expect(component.invitedTeam).toBeUndefined();
+      await component.acceptInvitedTeam();
+      expect(api.acceptTeamInvite).not.toHaveBeenCalled();
+
+      component.teamsLoadError = false;
+      component.detailsLoading = true;
+      expect(component.invitedTeam).toBeUndefined();
+      await component.acceptInvitedTeam();
+      expect(api.acceptTeamInvite).not.toHaveBeenCalled();
+
+      component.detailsLoading = false;
+      component.community = { ...community, myRole: undefined } as any;
+      expect(component.invitedTeam).toBeUndefined();
+      await component.acceptInvitedTeam();
+      expect(api.acceptTeamInvite).not.toHaveBeenCalled();
+
+      component.community = community;
+      component.invitedTeamId = 999;
+      expect(component.invitedTeam).toBeUndefined();
+      await component.acceptInvitedTeam();
+      expect(api.acceptTeamInvite).not.toHaveBeenCalled();
+
+      component.invitedTeamId = 40;
+      component.invitedTournamentId = 999;
+      expect(component.invitedTeam).toBeUndefined();
+      await component.acceptInvitedTeam();
+      expect(api.acceptTeamInvite).not.toHaveBeenCalled();
+    });
+
     it('creates group knockout with four groups and resets the draft', async () => {
       api.createTeamTournament.and.returnValue(of({ ...teamDraft,
         format: 'GROUP_KNOCKOUT', groupCount: 4 }));
