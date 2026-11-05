@@ -90,7 +90,15 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
         assert.ok(s && validId(s.id), 'QA_INVALID_SESSION_ID');
         assert.ok(!sessionIds.has(s.id), 'QA_DUPLICATE_SESSION');
         sessionIds.add(s.id);
-        assert.equal(s.communityId, id, 'QA_CROSS_COMMUNITY_SESSION');
+        if (s.communityId !== id) {
+          // A community can legitimately display public cross-posted sessions
+          // or shared COMMUNITY_ONLY sessions when the viewer is a member.
+          assert.ok(s.audience === 'PUBLIC' || s.audience === 'COMMUNITY_ONLY',
+            'QA_UNEXPECTED_SHARED_SESSION_AUDIENCE');
+          if (s.audience === 'PUBLIC') {
+            assert.equal(s.privateGame, false, 'QA_PRIVATE_SHARED_PUBLIC_SESSION');
+          }
+        }
         assert.ok(typeof s.sport === 'string' && s.sport.trim(), 'QA_INVALID_SESSION_SPORT');
         assert.ok(typeof s.status === 'string' && s.status.length, 'QA_INVALID_SESSION_STATUS');
         assert.ok(Number.isFinite(Date.parse(s.gameDate)), 'QA_INVALID_SESSION_DATE');
