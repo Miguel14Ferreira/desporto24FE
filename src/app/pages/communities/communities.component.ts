@@ -4905,10 +4905,24 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return `${startYear}/${startYear + 1}`;
   }
 
+  /** Check the sport of any known destination, including historical seasons. */
+  importSeasonMatchesSport(seasonId: number): boolean {
+    const season = this.competition?.seasons.find(item => item.id === seasonId);
+    if (!season) return this.competition == null; // Pre-load legacy callers.
+    if (!season.sport) return true; // Historical shared seasons.
+    const sport = this.newImportSport;
+    if (!sport) return false;
+    const normalize = (value: string): string => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return normalize(season.sport) === normalize(sport);
+  }
+
   get importDestinationSeasonId(): number | null {
     const seasons = this.competition?.seasons ?? [];
-    // An explicitly selected import destination may be an archived season.
-    if (this.importSeasonId != null) return this.importSeasonId;
+    // An explicitly selected import destination may be archived, but must
+    // belong to the selected import sport when the season is sport-tagged.
+    if (this.importSeasonId != null)
+      return this.importSeasonMatchesSport(this.importSeasonId) ? this.importSeasonId : null;
     const active = seasons.filter(season => season.active);
     if (active.length > 1) {
       // The ranking filter must not silently decide where Excel results land.
@@ -4935,9 +4949,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     if (this.selectedSeasonId != null &&
         (!this.competition || seasons.some(season => season.id === this.selectedSeasonId))) {
-      return this.selectedSeasonId;
+      return this.importSeasonMatchesSport(this.selectedSeasonId)
+        ? this.selectedSeasonId : null;
     }
-    return seasons[0]?.id ?? null;
+    const latest = seasons[0]?.id;
+    return latest != null && this.importSeasonMatchesSport(latest) ? latest : null;
   }
 
   selectImportSeason(seasonId: number | null): void {
