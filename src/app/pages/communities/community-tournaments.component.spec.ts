@@ -1023,6 +1023,36 @@ describe('Community tournaments management', () => {
       { profileId: 3, username: 'bruno', fullName: 'Bruno', profilePicUrl: null, role: 'MEMBER' as const }
     ];
 
+    it('labels team scoring by sport rather than treating every competition as football', () => {
+      const examples: Array<[string,string,string,string]> = [
+        ['Futebol', 'GM', 'GS', 'DG'],
+        ['Basquetebol', 'PM', 'PS', 'DP'],
+        ['Voleibol', 'SG', 'SP', 'DS'],
+        ['Karting', 'MF', 'MC', 'DM']
+      ];
+      for (const [sport, scoreFor, scoreAgainst, difference] of examples) {
+        component.selected = { ...teamDraft, sport };
+        expect(component.teamScoreHeadings).toEqual({
+          for: scoreFor, against: scoreAgainst, difference
+        });
+      }
+      const earlierLanguage = localStorage.getItem('d24-language');
+      try {
+        localStorage.setItem('d24-language', 'en');
+        component.selected = { ...teamDraft, sport: 'Basketball' };
+        expect(component.teamScoreHeadings).toEqual({
+          for: 'PF', against: 'PA', difference: 'PD'
+        });
+        component.selected = { ...teamDraft, sport: 'Futebol' };
+        expect(component.teamScoreHeadings).toEqual({
+          for: 'GF', against: 'GA', difference: 'GD'
+        });
+      } finally {
+        if (earlierLanguage === null) localStorage.removeItem('d24-language');
+        else localStorage.setItem('d24-language', earlierLanguage);
+      }
+    });
+
     it('shows the invited team using an exact tournament deep link rather than the first result', () => {
       const other = { ...teamDraft, id: 99, name: 'Outro torneio' };
       api.list.and.returnValue(of({ tournaments: [other], page: 0, hasMore: false }));
