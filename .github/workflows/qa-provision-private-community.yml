@@ -20,7 +20,8 @@ concurrency:
 
 jobs:
   provision:
-    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'qa(communities): provision disposable private community once'
+    if: >-
+      github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'qa(communities): provision disposable private community once'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
