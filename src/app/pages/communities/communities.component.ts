@@ -2089,7 +2089,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
    * a multi-sport backend contract is available. */
   get showLegacyAggregateStats(): boolean {
     return !this.hasScopedMatchRankingContract
-      || (this.selected != null && this.rankingContextSports.length <= 1);
+      || (this.selected != null && this.communitySports(this.selected).length <= 1);
   }
 
   /** Single-sport historic records may be untyped. Preserve their old view
@@ -2101,7 +2101,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   canEditSportPoints(sport: string): boolean {
+    const normalize = (value: string): string => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     return formatForSport(sport) === 'team'
+      && this.rankingContextSports.some(item => normalize(item) === normalize(sport))
       && this.canManage()
       && this.selectedSeasonId != null
       && this.isSelectedActiveSeason();
