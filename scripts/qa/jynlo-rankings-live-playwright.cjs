@@ -105,12 +105,15 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
               const option=season.locator('option').filter({hasText:group.seasonName});
               const value=await option.getAttribute('value');
               must(value!=null&&value!=='','KARTING_SEASON_OPTION_MISSING');
-              await season.selectOption(value);
-              // Race championship points are season-specific. All-time overviews
-              // intentionally omit the season points policy.
-              await page.waitForResponse(response=>
-                response.url().includes('/competition?seasonId=')
-                &&response.ok(),{timeout:20000});
+              // Race championship points are season-specific. Register the
+              // response listener before selecting so fast API calls cannot
+              // escape the test.
+              await Promise.all([
+                page.waitForResponse(response=>
+                  response.url().includes('/competition?seasonId=')
+                  &&response.ok(),{timeout:20000}),
+                season.selectOption(value)
+              ]);
               qaStage='RACE_SUMMARY';
               await race.waitFor({state:'visible',timeout:30000});
               qaStage='RACE_HEADING';
