@@ -1589,7 +1589,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get invitedTeam(): TournamentTeam | undefined {
-    if (!this.invitedTeamId || this.selected?.id !== this.invitedTournamentId) return undefined;
+    if (!this.isTeamCompetition || !this.isMember || this.teamsLoadError
+        || this.detailsLoading || !this.invitedTeamId
+        || this.selected?.id !== this.invitedTournamentId) return undefined;
     return this.teams.find(team => team.id === this.invitedTeamId);
   }
 
@@ -1636,7 +1638,8 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   async acceptInvitedTeam(): Promise<void> {
     const team = this.invitedTeam;
-    if (!team || !this.selected || !this.isMember || this.busy || this.detailsLoading
+    if (!team || !this.selected || !this.isTeamCompetition || !this.isMember
+        || this.busy || this.detailsLoading || this.teamsLoadError
         || this.selected.status !== 'DRAFT' || this.myTeam
         || this.isTeamRosterFull(team)) return;
     await this.mutate(
