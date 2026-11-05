@@ -15,6 +15,11 @@ on:
         type: boolean
         required: false
         default: false
+      require_recurring_coverage:
+        description: 'Fail unless a recurring QA session is actually observed'
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -32,6 +37,7 @@ jobs:
       JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
       JYNLO_QA_REQUIRE_SESSION_DETAILS: ${{ inputs.require_session_details }}
       JYNLO_QA_REQUIRE_COMMUNITY_COVERAGE: ${{ inputs.require_community_coverage }}
+      JYNLO_QA_REQUIRE_RECURRING_COVERAGE: ${{ inputs.require_recurring_coverage }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
