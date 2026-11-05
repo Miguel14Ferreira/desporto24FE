@@ -1,0 +1,51 @@
+name: Jynlo public Playwright smoke (no TinyFish)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - 'scripts/qa/jynlo-public-playwright-smoke.cjs'
+      - '.github/workflows/qa-public-playwright.yml'
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'scripts/qa/jynlo-public-playwright-smoke.cjs'
+      - '.github/workflows/qa-public-playwright.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-public-playwright-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  public-browser-smoke:
+    name: Public desktop/mobile browser rendering
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax verification
+        run: node --check scripts/qa/jynlo-public-playwright-smoke.cjs
+      - name: Install standalone Playwright (without changing Jynlo dependencies)
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/jynlo-playwright" \
+            --no-save --no-audit --no-fund --package-lock=false playwright
+          "$RUNNER_TEMP/jynlo-playwright/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Browse public Jynlo on desktop and mobile
+        shell: bash
+        run: NODE_PATH="$RUNNER_TEMP/jynlo-playwright/node_modules" node scripts/qa/jynlo-public-playwright-smoke.cjs
+      - name: Upload anonymous public-page screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-public-playwright-screenshots
+          path: test-results/public-smoke/*.png
+          if-no-files-found: ignore
+          retention-days: 7
