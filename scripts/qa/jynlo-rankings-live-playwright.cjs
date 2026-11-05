@@ -65,7 +65,14 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
       must(!checked.sportStandings?.some(g=>g.sport==='Karting'),
         'KARTING_WRONG_SPORT_STANDINGS');
     }
-    fixture.push({id:groups[index].id,seasonName,kind:index?'karting':'football'});
+    const karting= index===1 ? checked.raceStandings?.find(g=>g.sport==='Karting') : null;
+    fixture.push({id:groups[index].id,seasonName,
+      kind:index?'karting':'football',
+      kartingRows: karting?.standings?.map(row=>({
+        displayed:row.fullName || row.username || '',
+        points:row.championshipPoints,
+        place:row.position
+      }))||[]});
   }
   report('[PASS] Read-only API: Football 3-point result and Karting 25-point result');
 
@@ -97,15 +104,20 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
               const region=page.locator('.community-race-ranking-summary');
               await region.getByRole('heading',{name:'Karting'}).waitFor({state:'visible',timeout:15000});
               qaStage='RACE_TABLE';
-              const karting=region.locator('table').filter({hasText:'jynloteste02'});
+              const karting=region.locator('table').first();
               await karting.waitFor({state:'visible',timeout:15000});
               qaStage='RACE_ROWS';
               const rows=karting.locator('tbody tr');
               must(await rows.count()===2,'KARTING_ROWS_COUNT');
               const first=await rows.nth(0).innerText();
               const second=await rows.nth(1).innerText();
-              must(first.toLowerCase().includes(QA[1])&&/25/.test(first),'KARTING_FIRST_VISUAL');
-              must(second.toLowerCase().includes(QA[0])&&/18/.test(second),'KARTING_SECOND_VISUAL');
+              const expected=group.kartingRows;
+              must(expected.length===2&&expected[0].points===25&&expected[1].points===18,
+                'KARTING_API_EXPECTED_RANKS_INVALID');
+              must(first.includes(expected[0].displayed)&&/25/.test(first),
+                'KARTING_FIRST_VISUAL');
+              must(second.includes(expected[1].displayed)&&/18/.test(second),
+                'KARTING_SECOND_VISUAL');
               // No W/D/L table rendered for a Karting-only selected season.
               qaStage='RACE_WDL_GUARD';
               must(await table.count()===0,'KARTING_FOOTBALL_TABLE_RENDERED');
