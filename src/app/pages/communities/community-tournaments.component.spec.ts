@@ -3385,6 +3385,32 @@ describe('Community tournaments management', () => {
       expect(component.invitedTeam?.id).toBe(40);
       expect(component.teamInviteUrl(team)).toContain('team=40');
       expect(component.teamInviteUrl(team)).toContain('teamPage=40');
+      expect(component.teamInviteUrl({ ...team, id: 999 })).toBe('');
+      expect(component.teamWhatsAppUrl({ ...team, id: 999 })).toBe('');
+      component.selectTournament(draft);
+      expect(component.teamInviteUrl(team)).toBe('');
+    });
+
+    it('ignores clipboard completion after switching tournaments', async () => {
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      let finishCopy!: () => void;
+      const deferred = new Promise<void>(resolve => { finishCopy = resolve; });
+      const oldClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: jasmine.createSpy('writeText').and.returnValue(deferred) }
+      });
+      try {
+        const pending = component.copyTeamInvite(team);
+        component.selectTournament(draft);
+        finishCopy();
+        await pending;
+        expect(component.inviteCopyFeedback[team.id]).toBeUndefined();
+      } finally {
+        if (oldClipboard) Object.defineProperty(navigator, 'clipboard', oldClipboard);
+        else delete (navigator as any).clipboard;
+      }
     });
 
     it('switches between focused teams without sending changes to the backend', () => {
