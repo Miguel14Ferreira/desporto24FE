@@ -30,11 +30,16 @@ const COMPATIBLE: Record<string,{code:string; model:TournamentCreationModel}> = 
   Remo: {code:'ROWING_SINGLE',model:'ROWING_BEST_TIME'}
 };
 export function tournamentEventChoices(sport: string, model: TournamentCreationModel): TournamentEventChoice[] {
-  return (CHOICES[sport]??[]).map(code=>({
+  // Do not resolve inherited object properties as sport/event definitions.
+  // Community imports can contain legacy or unknown sport labels.
+  const codes = Object.prototype.hasOwnProperty.call(CHOICES, sport) ? CHOICES[sport] : [];
+  const compatible = Object.prototype.hasOwnProperty.call(COMPATIBLE, sport)
+    ? COMPATIBLE[sport] : undefined;
+  return codes.map(code=>({
     code, supported:(sport==='Atletismo' && ((model==='FIELD_BEST_MARK' && (code==='TRACK' || code==='JUMP' || code==='THROW'))
       || (model==='TRACK_BEST_TIME' && (code==='TRACK' || code==='JUMP' || code==='THROW'))
       || (model==='RELAY_BEST_TIME' && code==='TRACK_RELAY')))
-      || (COMPATIBLE[sport]?.code===code && COMPATIBLE[sport]?.model===model)
+      || (compatible?.code===code && compatible?.model===model)
   }));
 }
 export function validatedTournamentEventType(sport:string,model:TournamentCreationModel,code:string|null|undefined):string|null{
@@ -69,7 +74,10 @@ export const FIELD_TOURNAMENT_DISCIPLINES: Readonly<Record<string, readonly stri
   THROW: ['SHOT_PUT','DISCUS','JAVELIN','HAMMER']
 };
 export function validFieldTournamentDiscipline(eventType:string|null,discipline:string|null):boolean {
-  return !!discipline && (FIELD_TOURNAMENT_DISCIPLINES[eventType ?? ''] ?? []).includes(discipline);
+  const code = eventType ?? '';
+  return !!discipline
+    && Object.prototype.hasOwnProperty.call(FIELD_TOURNAMENT_DISCIPLINES, code)
+    && FIELD_TOURNAMENT_DISCIPLINES[code].includes(discipline);
 }
 
 export const TRACK_TOURNAMENT_DISTANCES = [
