@@ -6193,16 +6193,19 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.communityTrophies;
   }
 
+  /** Do not award a community record without a recorded result. */
   mostGames(): CommunityStanding | undefined {
-    return this.mostGamesStanding;
+    return this.mostGamesStanding?.games > 0 ? this.mostGamesStanding : undefined;
   }
 
   bestWinRate(): CommunityStanding | undefined {
-    return this.bestWinRateStanding;
+    return this.bestWinRateStanding && this.bestWinRateStanding.games > 0
+      && this.bestWinRateStanding.winRate > 0 ? this.bestWinRateStanding : undefined;
   }
 
   bestWinStreak(): CommunityStanding | undefined {
-    return this.bestWinStreakStanding;
+    return this.bestWinStreakStanding && this.bestWinStreakStanding.bestWinStreak > 0
+      ? this.bestWinStreakStanding : undefined;
   }
 
   /** Each clear button acts on its own comparison column only.
@@ -6231,24 +6234,31 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     );
   }
 
+  /** Empty seasons can contain placeholder participants with zero statistics.
+   * Keep those players in their tables, but do not name arbitrary leaders. */
   leader(): CommunityStanding | undefined {
-    return this.competition?.standings[0];
+    const first = this.competition?.standings[0];
+    return first && first.games > 0 ? first : undefined;
   }
 
   topGoals(): CommunityStanding | undefined {
-    return this.topGoalsStanding;
+    return this.topGoalsStanding && this.topGoalsStanding.goals > 0
+      ? this.topGoalsStanding : undefined;
   }
 
   topAssists(): CommunityStanding | undefined {
-    return this.topAssistsStanding;
+    return this.topAssistsStanding && this.topAssistsStanding.assists > 0
+      ? this.topAssistsStanding : undefined;
   }
 
   topMvps(): CommunityStanding | undefined {
-    return this.topMvpsStanding;
+    return this.topMvpsStanding && this.topMvpsStanding.mvps > 0
+      ? this.topMvpsStanding : undefined;
   }
 
   topCleanSheets(): CommunityStanding | undefined {
-    return this.topCleanSheetsStanding;
+    return this.topCleanSheetsStanding && this.topCleanSheetsStanding.cleanSheets > 0
+      ? this.topCleanSheetsStanding : undefined;
   }
 
   canManage(): boolean {
