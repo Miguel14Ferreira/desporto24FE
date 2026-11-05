@@ -17,7 +17,7 @@ import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipS
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { tournamentSportCapabilities, tournamentCreationModelForEvent } from './community-tournament-capabilities';
-import { tournamentEventChoices, validatedTournamentEventType, SWIM_TOURNAMENT_DISCIPLINES, validSwimTournamentDiscipline, FIELD_TOURNAMENT_DISCIPLINES, validFieldTournamentDiscipline, TRACK_TOURNAMENT_DISTANCES, validTrackTournamentDistance, RELAY_TOURNAMENT_DISCIPLINES, validRelayTournamentDiscipline, CANOE_K1_DISCIPLINES, validCanoeDiscipline, ROWING_SINGLE_DISCIPLINES, validRowingDiscipline } from './community-tournament-event-types';
+import { tournamentEventChoices, validatedTournamentEventType, tournamentEventReadiness, TournamentEventReadiness, SWIM_TOURNAMENT_DISCIPLINES, FIELD_TOURNAMENT_DISCIPLINES, TRACK_TOURNAMENT_DISTANCES, RELAY_TOURNAMENT_DISCIPLINES, CANOE_K1_DISCIPLINES, ROWING_SINGLE_DISCIPLINES } from './community-tournament-event-types';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { summarizePublishedTeamJourney } from './community-team-journey';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
@@ -982,31 +982,17 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get isSportFormatSupported(): boolean {
-    return this.selectedSportCreationModel !== 'UNAVAILABLE'
-      && (this.selectedSportCreationModel !== 'SWIM_BEST_TIME'
-        || validSwimTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft))
-      && (this.selectedSportCreationModel !== 'CANOE_BEST_TIME'
-        || validCanoeDiscipline(this.savedSportEventType,this.eventDisciplineDraft))
-      && (this.selectedSportCreationModel !== 'ROWING_BEST_TIME'
-        || validRowingDiscipline(this.savedSportEventType,this.eventDisciplineDraft))
-      && (this.selectedSportCreationModel !== 'FIELD_BEST_MARK'
-        || validFieldTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft))
-      && (this.selectedSportCreationModel !== 'TRACK_BEST_TIME'
-        || validTrackTournamentDistance(this.savedSportEventType,this.eventDisciplineDraft))
-      && (this.selectedSportCreationModel !== 'RELAY_BEST_TIME'
-        || (this.teamFormatDraft==='LEAGUE'
-            && validRelayTournamentDiscipline(this.savedSportEventType,this.eventDisciplineDraft)));
+    return this.creationReadiness === 'READY';
   }
 
-  /** Present selection work separately from a genuinely unavailable model. */
-  get creationReadiness(): 'READY' | 'UNAVAILABLE' | 'EVENT_REQUIRED' | 'DISCIPLINE_REQUIRED' | 'LEAGUE_REQUIRED' {
-    const model = this.selectedSportCreationModel;
-    if (model === 'UNAVAILABLE') return 'UNAVAILABLE';
-    if (this.isSportFormatSupported) return 'READY';
-    if (model === 'RELAY_BEST_TIME' && this.teamFormatDraft !== 'LEAGUE')
-      return 'LEAGUE_REQUIRED';
-    if (!this.savedSportEventType) return 'EVENT_REQUIRED';
-    return 'DISCIPLINE_REQUIRED';
+  /** Explain the exact missing selection before allowing event-based creation. */
+  get creationReadiness(): TournamentEventReadiness {
+    return tournamentEventReadiness(
+      this.selectedSportCreationModel,
+      this.savedSportEventType,
+      this.eventDisciplineDraft,
+      this.teamFormatDraft
+    );
   }
 
   get creationReadinessLabelKey(): string {
