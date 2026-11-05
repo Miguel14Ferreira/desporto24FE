@@ -6195,7 +6195,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   /** Do not award a community record without a recorded result. */
   mostGames(): CommunityStanding | undefined {
-    return this.mostGamesStanding?.games > 0 ? this.mostGamesStanding : undefined;
+    return this.mostGamesStanding && this.mostGamesStanding.games > 0
+      ? this.mostGamesStanding : undefined;
   }
 
   bestWinRate(): CommunityStanding | undefined {
