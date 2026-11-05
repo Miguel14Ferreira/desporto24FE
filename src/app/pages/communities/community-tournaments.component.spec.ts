@@ -4906,7 +4906,7 @@ describe('Community tournaments management', () => {
         ['en', 'Runs for Verdes', 'RF', 'RA', 'RD', 'Runs scored']
       ]) {
         localStorage.setItem('d24-language', language);
-        for (const sport of ['Basebol', 'Softbol']) {
+        for (const sport of ['Basebol', 'Softbol', 'Cricket']) {
           component.selected = { ...draft, sport, entryType: 'TEAM' };
           expect(component.teamScoreInputLabel('Verdes')).withContext(sport).toBe(input);
           expect(component.teamScoreHeadings).withContext(sport).toEqual({
