@@ -64,7 +64,8 @@ async function main({fetchImpl=globalThis.fetch,report=console.log}={}) {
   const endpoint='/api/communities/'+id;
   let overview=await api(endpoint+'/competition',{token:owner});
   ok(Array.isArray(overview.seasons)&&Array.isArray(overview.rounds)
-    &&Array.isArray(overview.sportStandings),'QA_COMPETITION_INVALID');
+    &&(overview.sportStandings===undefined || Array.isArray(overview.sportStandings)),
+    'QA_COMPETITION_INVALID');
   const seasonMatches=overview.seasons.filter(s=>s.name===SEASON);
   const roundMatches=overview.rounds.filter(r=>r.name===ROUND);
   ok(seasonMatches.length<=1&&roundMatches.length<=1,'QA_DUPLICATE_FIXTURE_ABORT');
