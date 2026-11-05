@@ -73,8 +73,8 @@ function fixture({ noSessions = false, inconsistentMembership = false,
       text: async () => JSON.stringify(body) };
   }
   const runner = createRunner({ fetchImpl, output: x => outputs.push(x) });
-  return { calls, outputs, run: passwords =>
-    runner.run({ passwords: passwords ?? ['password-one', 'password-two'] }) };
+  return { calls, outputs, run: (passwords, options = {}) =>
+    runner.run({ passwords: passwords ?? ['password-one', 'password-two'], requireDetails: options.requireDetails ?? false }) };
 }
 
 test('reads only own sessions, details and authorized participants, with no other mutations', async () => {
