@@ -1147,7 +1147,7 @@
                         {{ 'communities.inlineSpeed.standaloneHeatHint' | t }}
                       </p>
                     }
-                    @if (selectedSeasonId !== null && communityRoundSports.includes('Ciclismo de Pista')
+                    @if (selectedSeasonSupportsSport('Ciclismo de Pista')
                         && !canRecordInlineSpeedWithoutRankings) {
                       <section class="round-editor" [attr.aria-label]="'communities.trackCycling.bracketTitle' | t">
                         <div class="section-heading">
