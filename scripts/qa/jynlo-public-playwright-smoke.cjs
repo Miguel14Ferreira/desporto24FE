@@ -70,7 +70,16 @@ async function main() {
           ? error.message.match(/PUBLIC_[A-Z_]+/)[0]
           : 'PUBLIC_BROWSER_FAILURE';
         console.error('[FAIL] ' + scenario.name + ': ' + code);
-        // Never save browser state or credentials; the test stays anonymous.
+        // Save only the anonymous public browser page for visual diagnostics.
+        try {
+          if (new URL(page.url()).origin === SITE) {
+            await page.screenshot({
+              path: path.join(REPORT, scenario.name + '-failure.png'),
+              fullPage: true, animations: 'disabled', timeout: 15000
+            });
+          }
+        } catch { /* Preserve the original failure; never dump browser state. */ }
+        // Never save browser state, videos, traces or credentials.
       } finally {
         await context.close();
       }
