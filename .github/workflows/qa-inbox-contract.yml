@@ -12,6 +12,8 @@ on:
       - 'scripts/qa/jynlo-read-receipts-live-browser.test.cjs'
       - 'scripts/qa/jynlo-session-live-browser.cjs'
       - 'scripts/qa/jynlo-session-live-browser.test.cjs'
+      - 'scripts/qa/jynlo-communities-live-readonly.cjs'
+      - 'scripts/qa/jynlo-communities-live-readonly.test.cjs'
       - 'scripts/qa/jynlo-notifications-live-readonly.cjs'
       - 'scripts/qa/jynlo-notifications-live-readonly.test.cjs'
       - '.github/workflows/notification-live-readonly.yml'
@@ -46,6 +48,8 @@ jobs:
       - run: node --test scripts/qa/jynlo-read-receipts-live-browser.test.cjs
       - run: node --check scripts/qa/jynlo-session-live-browser.cjs
       - run: node --test scripts/qa/jynlo-session-live-browser.test.cjs
+      - run: node --check scripts/qa/jynlo-communities-live-readonly.cjs
+      - run: node --test scripts/qa/jynlo-communities-live-readonly.test.cjs
       - run: node --check scripts/qa/jynlo-notifications-live-readonly.cjs
       - run: node --test scripts/qa/jynlo-notifications-live-readonly.test.cjs
       - run: node --check scripts/qa/jynlo-email-live-preflight.cjs
