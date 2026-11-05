@@ -1299,6 +1299,20 @@ export class CommunityTournamentsComponent implements OnChanges {
     };
   }
 
+  /** Display labels only: use each sport's scoring vocabulary, not football defaults. */
+  get teamScoreHeadings(): { for: string; against: string; difference: string } {
+    const labels = tournamentScoreTerminology(this.selected?.sport);
+    const family = labels.forAbbrev === 'GM' ? 'goals'
+      : labels.forAbbrev === 'PM' ? 'points'
+      : labels.forAbbrev === 'SG' ? 'sets' : 'generic';
+    const key = 'communities.tournaments.teamScore.' + family + '.';
+    return {
+      for: t(key + 'for'),
+      against: t(key + 'against'),
+      difference: t(key + 'difference')
+    };
+  }
+
   get isTeamCompetition(): boolean {
     return this.selected?.entryType === 'TEAM';
   }
