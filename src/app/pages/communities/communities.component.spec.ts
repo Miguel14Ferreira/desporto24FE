@@ -847,6 +847,51 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importDestinationSeasonId).toBeNull();
   });
 
+  it('limits all ranking panels to the sport of the selected season', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Karting', 'Ténis', 'Natação'] } as any;
+    component.competition = { seasons: [
+      { id: 44, name: 'Karting 2026', sport: 'Karting', active: true },
+      { id: 45, name: 'Ténis 2026', sport: 'Ténis', active: true },
+      { id: 46, name: 'Partilhada', sport: null, active: false }
+    ], sportStandings: [
+      { sport: 'Futebol', standings: [] },
+      { sport: 'Ténis', standings: [] }
+    ], raceStandings: [
+      { sport: 'Karting', rule: null, standings: [] }
+    ], racketStandings: [
+      { sport: 'Ténis', matchFormat: 'SINGLES', standings: [] }
+    ] } as any;
+    component.selectedSeasonId = 44;
+    expect(component.rankingContextSports).toEqual(['Karting']);
+    expect(component.scopedMatchRankingGroups).toEqual([]);
+    expect(component.raceRankingGroups.map(group => group.sport)).toEqual(['Karting']);
+    expect(component.racketRankingGroups).toEqual([]);
+    expect(component.specializedStatsUnavailableSports).toEqual([]);
+    expect(component.usesMatchPointsModel()).toBeFalse();
+
+    component.selectedSeasonId = 45;
+    expect(component.rankingContextSports).toEqual(['Ténis']);
+    expect(component.raceRankingGroups).toEqual([]);
+    expect(component.racketRankingGroups.map(group => group.sport)).toEqual(['Ténis']);
+    expect(component.scopedMatchRankingGroups.map(group => group.sport)).toEqual(['Ténis']);
+    expect(component.usesMatchPointsModel()).toBeTrue();
+
+    component.selectedSeasonId = 46;
+    expect(component.rankingContextSports).toEqual(['Futebol', 'Karting', 'Ténis', 'Natação']);
+    component.selectedSeasonId = null;
+    expect(component.rankingContextSports).toEqual(['Futebol', 'Karting', 'Ténis', 'Natação']);
+  });
+
+  it('normalizes accents for the selected season ranking sport', () => {
+    component.selected = { id: 7, sports: ['Ténis', 'Karting'] } as any;
+    component.selectedSeasonId = 99;
+    component.competition = { seasons: [
+      { id: 99, name: 'Ténis', sport: 'tenis', active: true }
+    ] } as any;
+    expect(component.rankingContextSports).toEqual(['Ténis']);
+  });
+
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
     component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
     component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
