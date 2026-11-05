@@ -3547,6 +3547,7 @@ describe('Community tournaments management', () => {
       const occupied = { ...team, players: [
         { profileId: 2, username: 'ana', displayName: 'Ana' }
       ] };
+      api.teams.and.returnValue(of([occupied]));
       component.selectTournament(teamDraft);
       component.requestTeamPlayerRemoval(occupied, 2);
       expect(component.confirmingTeamPlayerRemoval).toEqual({ teamId: 40, profileId: 2 });
@@ -3555,6 +3556,8 @@ describe('Community tournaments management', () => {
       await component.removeTeamPlayer(occupied, 2);
       expect(api.removeTeamPlayer).not.toHaveBeenCalled();
 
+      api.teams.and.returnValue(of([team]));
+      component.loadTeams();
       component.requestEmptyTeamDeletion(team);
       expect(component.confirmingEmptyTeamId).toBe(40);
       component.cancelTeamRosterConfirmation();
@@ -3566,6 +3569,7 @@ describe('Community tournaments management', () => {
       const occupied = { ...team, players: [
         { profileId: 2, username: 'ana', displayName: 'Ana' }
       ] };
+      api.teams.and.returnValue(of([occupied]));
       component.selectTournament(teamDraft);
       component.requestTeamPlayerRemoval(occupied, 2);
       component.selectTournament(draft);
