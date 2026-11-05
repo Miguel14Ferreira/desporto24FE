@@ -20,7 +20,7 @@ concurrency:
 jobs:
   rankings-readonly:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     env:
       JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
       JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
@@ -45,12 +45,19 @@ jobs:
           fi
       - name: Validate LIVE rankings script
         run: node --check scripts/qa/jynlo-rankings-live-playwright.cjs
-      - name: Install isolated Playwright Chromium
+      - name: Install lightweight Playwright and use runner Chrome
         shell: bash
         run: |
+          set -euo pipefail
           npm install --prefix "$RUNNER_TEMP/jynlo-playwright" \
             --no-save --no-audit --no-fund --package-lock=false playwright
-          "$RUNNER_TEMP/jynlo-playwright/node_modules/.bin/playwright" install --with-deps chromium
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [[ -z "$chrome" ]]; then
+            echo 'Chrome unavailable on GitHub runner'
+            exit 1
+          fi
+          echo "JYNLO_SYSTEM_CHROME=$chrome" >> "$GITHUB_ENV"
+          "$chrome" --version
       - name: Verify Football and Karting ranking UI with both QA identities
         shell: bash
         run: NODE_PATH="$RUNNER_TEMP/jynlo-playwright/node_modules" node scripts/qa/jynlo-rankings-live-playwright.cjs
