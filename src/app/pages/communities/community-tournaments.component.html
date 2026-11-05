@@ -505,6 +505,15 @@
         @if (teamQuickSwitchTeams.length > 0) {
           <details class="team-page-quick-switch">
             <summary>{{ 'communities.tournaments.teamPage.searchLabel' | t }} · {{ teamNav.total }}</summary>
+            <label class="team-directory-search">
+              <span>{{ 'communities.tournaments.teamPage.searchLabel' | t }}</span>
+              <input type="search" [ngModel]="teamQuickSwitchQuery"
+                (ngModelChange)="teamQuickSwitchQuery = $event"
+                [attr.aria-label]="'communities.tournaments.teamPage.searchLabel' | t"/>
+            </label>
+            <p class="t-muted" role="status">
+              {{ teamQuickSwitchTeams.length }} / {{ teamQuickSwitchTotalMatches }}
+            </p>
             <nav class="team-page-quick-switch-links"
               [attr.aria-label]="'communities.tournaments.teamPage.gridLabel' | t">
               @for (candidate of teamQuickSwitchTeams; track candidate.id) {
