@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/qa-karting-race-fixture.yml'
   workflow_dispatch:
+  # Re-run after adding compatibility with the older LIVE API response.
 
 permissions:
   contents: read
