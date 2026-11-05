@@ -4947,4 +4947,33 @@ describe('Community tournaments management', () => {
     }
   });
 
+
+  it('switches athletics track and field engines without keeping an incompatible discipline', () => {
+    component.startIndividualCreation();
+    component.chooseSport('Atletismo');
+    expect(component.selectedSportCreationModel).toBe('FIELD_BEST_MARK');
+    expect(component.sportEventChoices.find(choice => choice.code === 'TRACK')?.supported).toBeTrue();
+
+    component.chooseTournamentEventType('JUMP');
+    component.chooseFieldDiscipline('LONG_JUMP');
+    expect(component.eventDisciplineDraft).toBe('LONG_JUMP');
+    expect(component.savedSportEventType).toBe('JUMP');
+
+    component.chooseTournamentEventType('TRACK');
+    expect(component.selectedSportCreationModel).toBe('TRACK_BEST_TIME');
+    expect(component.eventDisciplineDraft).toBeNull();
+    expect(component.savedSportEventType).toBe('TRACK');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseTrackDiscipline('TRACK_100');
+    expect(component.isSportFormatSupported).toBeTrue();
+
+    component.chooseTournamentEventType('THROW');
+    expect(component.selectedSportCreationModel).toBe('FIELD_BEST_MARK');
+    expect(component.eventDisciplineDraft).toBeNull();
+    expect(component.savedSportEventType).toBe('THROW');
+    expect(component.isSportFormatSupported).toBeFalse();
+    component.chooseFieldDiscipline('JAVELIN');
+    expect(component.isSportFormatSupported).toBeTrue();
+  });
+
 });
