@@ -757,6 +757,57 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.closingSeasonId).toBe(44);
   });
 
+  it('ignores a late create-season success after navigating to another community', () => {
+    component.selected = { id: 7, sport: 'Futebol', sports: ['Futebol'] } as any;
+    component.competition = { seasons: [] } as any;
+    component.seasonName = '2026/27';
+    component.seasonSport = 'Futebol';
+    component.seasonStartsAt = '';
+    component.seasonSaving = false;
+    const oldResponse = new Subject<any>();
+    const createSeason = jasmine.createSpy('createSeason').and.returnValue(oldResponse.asObservable());
+    (component as any).communityService = { createSeason };
+    const reload = spyOn(component, 'loadCompetition');
+
+    component.createSeason();
+    expect(createSeason).toHaveBeenCalledOnceWith(7, {
+      name: '2026/27', startsAt: null, sport: 'Futebol'
+    });
+    expect(component.seasonSaving).toBeTrue();
+
+    (component as any).resetSeasonManagementState();
+    component.selected = { id: 8, sport: 'Karting', sports: ['Karting'] } as any;
+    component.seasonName = 'Época Karting';
+    component.selectedSeasonId = 45;
+
+    oldResponse.next({ id: 44, name: '2026/27' });
+    oldResponse.complete();
+    expect(component.seasonSaving).toBeFalse();
+    expect(component.seasonName).toBe('Época Karting');
+    expect(component.selectedSeasonId).toBe(45);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('ignores a late create-season error after changing the community', () => {
+    component.selected = { id: 7, sport: 'Futebol', sports: ['Futebol'] } as any;
+    component.competition = { seasons: [] } as any;
+    component.seasonName = '2026/27';
+    component.seasonSport = 'Futebol';
+    component.seasonStartsAt = '';
+    component.seasonSaving = false;
+    const oldResponse = new Subject<any>();
+    (component as any).communityService = {
+      createSeason: jasmine.createSpy('createSeason').and.returnValue(oldResponse.asObservable())
+    };
+    component.createSeason();
+    (component as any).resetSeasonManagementState();
+    component.selected = { id: 8, sport: 'Karting' } as any;
+    component.errorMessage = '';
+    oldResponse.error({ error: { message: 'Erro da comunidade antiga' } });
+    expect(component.errorMessage).toBe('');
+    expect(component.seasonSaving).toBeFalse();
+  });
+
   it('ignores late rename results and does not unlock a newer season operation', () => {
     component.selected = { id: 7, sport: 'Futebol' } as any;
     component.seasonActionSaving = false;
