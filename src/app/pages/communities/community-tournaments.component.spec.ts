@@ -1053,6 +1053,30 @@ describe('Community tournaments management', () => {
       }
     });
 
+    it('announces team score editors using the selected sport in PT and EN', () => {
+      const previous = localStorage.getItem('d24-language');
+      try {
+        localStorage.setItem('d24-language', 'pt');
+        for (const [sport, label] of [
+          ['Futebol', 'Golos de Verdes'],
+          ['Basquetebol', 'Pontos de Verdes'],
+          ['Voleibol', 'Sets ganhos de Verdes'],
+          ['Karting', 'Marcador de Verdes']
+        ]) {
+          component.selected = { ...teamDraft, sport };
+          expect(component.teamScoreInputLabel('Verdes')).toBe(label);
+        }
+        localStorage.setItem('d24-language', 'en');
+        component.selected = { ...teamDraft, sport: 'Basketball' };
+        expect(component.teamScoreInputLabel('Blues')).toBe('Points for Blues');
+        component.selected = { ...teamDraft, sport: 'Tennis' };
+        expect(component.teamScoreInputLabel('Blues')).toBe('Sets won by Blues');
+      } finally {
+        if (previous === null) localStorage.removeItem('d24-language');
+        else localStorage.setItem('d24-language', previous);
+      }
+    });
+
     it('shows the invited team using an exact tournament deep link rather than the first result', () => {
       const other = { ...teamDraft, id: 99, name: 'Outro torneio' };
       api.list.and.returnValue(of({ tournaments: [other], page: 0, hasMore: false }));
