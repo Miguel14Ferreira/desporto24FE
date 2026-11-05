@@ -2046,13 +2046,29 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return group.sports?.length ? group.sports : (group.sport ? [group.sport] : []);
   }
 
+  /**
+   * The community catalogue is used for creating new activities, but ranking
+   * panels must follow the selected sport-specific season. Legacy shared
+   * seasons and the all-history view preserve the complete catalogue.
+   */
+  get rankingContextSports(): string[] {
+    if (!this.selected) return [];
+    const sports = this.communitySports(this.selected);
+    if (this.selectedSeasonId == null) return sports;
+    const season = this.competition?.seasons?.find(item => item.id === this.selectedSeasonId);
+    if (!season?.sport) return sports;
+    const normalize = (value: string): string => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return sports.filter(sport => normalize(sport) === normalize(season.sport!));
+  }
+
   /** API-backed W/D/L standings, isolated by a sport currently selected here.
    * Older backends may omit the field entirely; retain legacy rendering then. */
   get scopedMatchRankingGroups(): NonNullable<CommunityCompetitionOverview['sportStandings']> {
     if (!this.selected || !this.competition?.sportStandings) return [];
     const normalize = (sport: string) => sport.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-    const selected = new Set(this.communitySports(this.selected).map(normalize));
+    const selected = new Set(this.rankingContextSports.map(normalize));
     const seen = new Set<string>();
     return this.competition.sportStandings.filter(group => {
       if (!group?.sport) return false;
@@ -2073,7 +2089,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
    * a multi-sport backend contract is available. */
   get showLegacyAggregateStats(): boolean {
     return !this.hasScopedMatchRankingContract
-      || (this.selected != null && this.communitySports(this.selected).length <= 1);
+      || (this.selected != null && this.rankingContextSports.length <= 1);
   }
 
   /** Single-sport historic records may be untyped. Preserve their old view
@@ -2133,7 +2149,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   get raceRankingGroups(): CommunityRaceStandingGroup[] {
     return this.selected && this.competition
       ? raceRankingGroupsForCommunity(
-          this.communitySports(this.selected), this.competition.raceStandings)
+          this.rankingContextSports, this.competition.raceStandings)
       : [];
   }
 
@@ -2144,7 +2160,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.selected || !this.competition) return [];
     const normalized = (sport: string): string =>
       sport.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-    const allowed = new Set(this.communitySports(this.selected).map(normalized));
+    const allowed = new Set(this.rankingContextSports.map(normalized));
     return (this.competition.racketStandings ?? []).filter(group =>
       allowed.has(normalized(group.sport)) && formatForSport(group.sport) === 'duel');
   }
@@ -2154,7 +2170,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   get specializedStatsUnavailableSports(): string[] {
     if (!this.selected) return [];
     const raceSports = new Set(this.raceRankingGroups.map(group => group.sport.trim().toLowerCase()));
-    return this.communitySports(this.selected).filter(sport => {
+    return this.rankingContextSports.filter(sport => {
       const family = formatForSport(sport);
       return family !== 'team' && family !== 'duel'
         && !raceSports.has(sport.trim().toLowerCase());
@@ -2163,7 +2179,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   /** W/D/L is not a valid fallback for Karting or other measured/judged events. */
   usesMatchPointsModel(): boolean {
-    const sports = this.selected ? this.communitySports(this.selected) : [];
+    const sports = this.selected ? this.rankingContextSports : [];
     return sports.length === 0 || sports.some(sport => {
       const format = formatForSport(sport);
       return format === 'team' || format === 'duel';
