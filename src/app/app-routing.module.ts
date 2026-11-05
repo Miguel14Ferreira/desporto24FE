@@ -34,6 +34,7 @@ const routes: Routes = [
   {path:'contact',component:ContactComponent},
   {path:'privacy',component:LegalPageComponent,data:{document:'privacy'}},
   {path:'terms',component:LegalPageComponent,data:{document:'terms'}},
+  {path:'delete-account',component:LegalPageComponent,data:{document:'delete'}},
   {path:'sessions/:id',component:PublicSessionPreviewComponent},
   // The same venue details page can be read by visitors. The authenticated route
   // below still exposes photo uploads, community contributions and suggestions.
