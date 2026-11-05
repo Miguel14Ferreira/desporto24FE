@@ -757,6 +757,30 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.closingSeasonId).toBe(44);
   });
 
+  it('ignores a late season-close response after switching communities', () => {
+    component.selected = { id: 7, sport: 'Futebol' } as any;
+    component.competition = { seasons: [
+      { id: 44, name: 'Futebol 2026', sport: 'Futebol', active: true }
+    ] } as any;
+    component.seasonSaving = false;
+    component.selectedSeasonId = 44;
+    const response = new Subject<any>();
+    const closeSeason = jasmine.createSpy('closeSeason').and.returnValue(response.asObservable());
+    (component as any).communityService = { closeSeason };
+    const reload = spyOn(component, 'loadCompetition');
+    component.requestCloseSeason(44);
+    component.closeActiveSeason(44);
+    expect(closeSeason).toHaveBeenCalledOnceWith(7, 44);
+    component.selected = { id: 8, sport: 'Karting' } as any;
+    component.selectedSeasonId = null;
+    component.cancelCloseSeason();
+    response.next({ id: 44, active: false });
+    response.complete();
+    expect(component.selectedSeasonId).toBeNull();
+    expect(component.closingSeasonId).toBeNull();
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it('allows editing scoring rules for the selected active season with multiple sports', () => {
     component.selected = { id: 7, sport: 'Futebol',
       sports: ['Futebol', 'Karting'], ownerUsername: 'owner' } as any;
