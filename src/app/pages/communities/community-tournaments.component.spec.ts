@@ -3585,6 +3585,31 @@ describe('Community tournaments management', () => {
       expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([1,3,4,5]);
     });
 
+    it('limits a large member dropdown without preventing a late member from joining', async () => {
+      const many = Array.from({length: 75}, (_, i) => ({
+        profileId: 1000 + i, username: 'member-' + i,
+        fullName: 'Membro ' + i, profilePicUrl: null,
+        role: 'MEMBER' as const
+      }));
+      many[65] = { ...many[65], username: 'aguia-65', fullName: 'Águia Especial' };
+      component.community = { ...community, members: many, memberCount: 75 };
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      expect(component.availableTeamMembers.length).toBe(75);
+      expect(component.filteredTeamMembers(team.id).length).toBe(30);
+      expect(component.filteredTeamMembers(team.id).some(member => member.profileId === 1065)).toBeFalse();
+      component.setTeamMemberSearch(team.id, 'AGUIA ESPECIAL');
+      expect(component.filteredTeamMembers(team.id).map(member => member.profileId)).toEqual([1065]);
+      component.teamPlayerDraft[team.id] = 1065;
+      api.addTeamPlayer.and.returnValue(of({ ...team, players: [
+        { profileId: 1065, username: 'aguia-65', displayName: 'Águia Especial' }
+      ] }));
+      await component.assignTeamPlayer(team);
+      expect(api.addTeamPlayer).toHaveBeenCalledWith(7, 19, team.id, 1065);
+      component.setTeamMemberSearch(team.id, '');
+      expect(component.teamPlayerDraft[team.id]).toBeNull();
+    });
+
     it('clears hidden member selections and search when the competition changes', async () => {
       component.community = { ...community, members, memberCount: 3 };
       component.selectTournament(teamDraft);
