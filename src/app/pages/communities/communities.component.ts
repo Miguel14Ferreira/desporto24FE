@@ -4947,6 +4947,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       }
       return active[0].id;
     }
+    // Older API payloads expose activeSeasonId without active flags on each
+    // season. Prefer that ID unless the season is explicitly closed.
+    const legacyActive = seasons.find(season =>
+      season.id === this.competition?.activeSeasonId && season.active !== false);
+    if (legacyActive && this.importSeasonMatchesSport(legacyActive.id))
+      return legacyActive.id;
     if (this.selectedSeasonId != null &&
         (!this.competition || seasons.some(season => season.id === this.selectedSeasonId))) {
       return this.importSeasonMatchesSport(this.selectedSeasonId)
