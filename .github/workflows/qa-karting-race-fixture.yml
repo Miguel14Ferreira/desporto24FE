@@ -7,7 +7,7 @@ on:
     paths:
       - '.github/workflows/qa-karting-race-fixture.yml'
   workflow_dispatch:
-  # Re-run after adding compatibility with the older LIVE API response.
+  # Supports legacy LIVE season DTO without a sport property.
 
 permissions:
   contents: read
