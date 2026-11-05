@@ -295,3 +295,11 @@
 :host .tournaments .team-fixture.is-direct-target:focus-visible{
   outline:2px solid #cbffe2;outline-offset:3px;
 }
+
+/* Direct navigation remains collapsed on tournaments with many dedicated team pages. */
+:host .tournaments .team-page-quick-switch{margin:0 0 14px;border:1px solid rgba(98,204,167,.28);border-radius:12px;background:rgba(7,36,49,.7);padding:10px 13px;}
+:host .tournaments .team-page-quick-switch summary{cursor:pointer;color:#c5f7df;font-weight:750;font-size:.85rem;}
+:host .tournaments .team-page-quick-switch-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;max-height:245px;overflow-y:auto;padding:12px 0 2px;}
+:host .tournaments .team-page-quick-switch-links a{color:#d6f7ed;text-decoration:none;border:1px solid rgba(98,204,167,.25);padding:8px 10px;border-radius:8px;overflow-wrap:anywhere;}
+:host .tournaments .team-page-quick-switch-links a:hover,:host .tournaments .team-page-quick-switch-links a[aria-current="page"]{background:rgba(40,124,101,.4);border-color:#82dcb6;}
+:host .tournaments .team-page-quick-switch-links a:focus-visible{outline:2px solid #abffd6;outline-offset:2px;}
