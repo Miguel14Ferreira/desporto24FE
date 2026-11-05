@@ -4122,7 +4122,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return;
     }
     const communityId = this.selected.id;
-    const requestVersion = ++this.seasonActionRequestVersion;
+    const requestVersion = (this.seasonActionRequestVersion || 0) + 1;
+    this.seasonActionRequestVersion = requestVersion;
     this.seasonActionSaving = true;
     this.seasonActionError = '';
     this.seasonActionMessage = '';
@@ -4151,7 +4152,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.selected || !this.canManage() || this.seasonActionSaving
         || this.deletingSeasonId !== season.id || !this.seasonDeleteAcknowledged) return;
     const communityId = this.selected.id;
-    const requestVersion = ++this.seasonActionRequestVersion;
+    const requestVersion = (this.seasonActionRequestVersion || 0) + 1;
+    this.seasonActionRequestVersion = requestVersion;
     this.seasonActionSaving = true;
     this.seasonActionError = '';
     this.seasonActionMessage = '';
