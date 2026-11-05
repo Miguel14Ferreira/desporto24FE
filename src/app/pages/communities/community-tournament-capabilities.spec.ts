@@ -1,7 +1,7 @@
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { formatForSport, SPORTS_BY_RESULT_FORMAT } from './community-round-sport';
 import { RACE_CHAMPIONSHIP_SPORTS } from '../../services/community-tournaments.service';
-import { tournamentSportCapabilities, TournamentCreationModel } from './community-tournament-capabilities';
+import { tournamentSportCapabilities, tournamentCreationModelForEvent, TournamentCreationModel } from './community-tournament-capabilities';
 
 describe('Tournament capabilities for all 121 modalities', () => {
   it('classifies every registered sport exactly once without inventing result rules', () => {
@@ -77,4 +77,16 @@ describe('Tournament capabilities for all 121 modalities', () => {
     expect(unknown.team).toBe('UNAVAILABLE');
     expect(tournamentSportCapabilities(null).individual).toBe('UNAVAILABLE');
   });
+
+  it('selects athletics result engines by event and entry type without numeric fallbacks', () => {
+    expect(tournamentCreationModelForEvent('Atletismo', false, 'TRACK')).toBe('TRACK_BEST_TIME');
+    expect(tournamentCreationModelForEvent('Atletismo', false, 'JUMP')).toBe('FIELD_BEST_MARK');
+    expect(tournamentCreationModelForEvent('Atletismo', false, 'THROW')).toBe('FIELD_BEST_MARK');
+    expect(tournamentCreationModelForEvent('Atletismo', true, 'TRACK_RELAY')).toBe('RELAY_BEST_TIME');
+    expect(tournamentCreationModelForEvent('Atletismo', true, 'TRACK')).toBe('RELAY_BEST_TIME');
+    expect(tournamentCreationModelForEvent('Karting', true, 'TRACK')).toBe('UNAVAILABLE');
+    expect(tournamentCreationModelForEvent('Natação', false, 'SWIM_LCM')).toBe('SWIM_BEST_TIME');
+    expect(tournamentCreationModelForEvent(null, false, 'TRACK')).toBe('UNAVAILABLE');
+  });
+
 });
