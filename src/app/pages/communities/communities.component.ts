@@ -1597,6 +1597,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   seasonStartsAt = '';
   seasonSport = '';
   seasonSaving = false;
+  private seasonCreationRequestVersion = 0;
   closeSeasonConfirming = false;
   closingSeasonId: number | null = null;
   editingSeasonId: number | null = null;
@@ -4034,38 +4035,49 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return;
     }
 
-    this.seasonSaving = true;
-    this.errorMessage = '';
-
     let startsAt: string | null = null;
     if (this.seasonStartsAt) {
       const parsed = new Date(this.seasonStartsAt);
       if (Number.isNaN(parsed.getTime())) {
         this.errorMessage = t('feedback.communities.seasonDateInvalid');
-        this.seasonSaving = false;
         return;
       }
       startsAt = parsed.toISOString();
     }
 
-    this.communityService.createSeason(this.selected.id, {
+    const communityId = this.selected.id;
+    const openVersion = this.communityOpenRequestVersion || 0;
+    const requestVersion = (this.seasonCreationRequestVersion || 0) + 1;
+    this.seasonCreationRequestVersion = requestVersion;
+    this.seasonSaving = true;
+    this.errorMessage = '';
+
+    this.communityService.createSeason(communityId, {
       name,
       startsAt,
       ...(this.seasonSport ? { sport: this.seasonSport } : {})
     })
       .pipe(
         timeout(10_000),
-        finalize(() => this.seasonSaving = false)
+        finalize(() => {
+          if (requestVersion === this.seasonCreationRequestVersion) this.seasonSaving = false;
+        })
       )
       .subscribe({
         next: season => {
+          if (requestVersion !== this.seasonCreationRequestVersion ||
+              openVersion !== (this.communityOpenRequestVersion || 0) ||
+              this.selected?.id !== communityId) return;
           this.seasonName = '';
           this.seasonStartsAt = '';
           this.seasonSport = '';
           this.selectedSeasonId = season.id;
-          this.loadCompetition(this.selected as CommunityGroup, season.id);
+          this.loadCompetition(this.selected, season.id);
         },
         error: error => {
+          if (requestVersion !== this.seasonCreationRequestVersion ||
+              openVersion !== (this.communityOpenRequestVersion || 0) ||
+              this.selected?.id !== communityId) return;
           this.errorMessage = error.error?.message
             || t('feedback.communities.seasonCreateError');
         }
@@ -4094,6 +4106,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   /** Changing communities invalidates in-flight season management callbacks. */
   private resetSeasonManagementState(): void {
+    this.seasonCreationRequestVersion = (this.seasonCreationRequestVersion || 0) + 1;
+    this.seasonSaving = false;
     this.seasonActionRequestVersion = (this.seasonActionRequestVersion || 0) + 1;
     this.editingSeasonId = null;
     this.editingSeasonName = '';
