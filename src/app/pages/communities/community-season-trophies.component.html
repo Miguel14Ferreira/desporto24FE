@@ -1,21 +1,32 @@
-@if (seasons.length > 0) {
-                      <div class="trophies-grid">
-                        @for (season of seasons; track season.id) {
-                          <article class="trophy-card">
-                            <span class="trophy-icon">🏆</span>
-                            <div>
-                              <strong>{{ season.name }}</strong>
-                              <span>
-                                {{ season.championDisplayName || season.championUsername }}
-                                · {{ season.championPoints }} {{ 'communities.pointsShort' | t }}
-                              </span>
-                            </div>
-                          </article>
-                        }
-                      </div>
-                    } @else {
-                      <div class="module-empty compact">
-                        <h3>{{ 'communities.noTrophies' | t }}</h3>
-                        <p>{{ 'communities.noTrophiesText' | t }}</p>
-                      </div>
-                    }
+@if (groupedSeasons.length > 0) {
+  <div class="trophies-history">
+    @for (group of groupedSeasons; track group.sport || 'shared') {
+      <section class="trophy-sport-group">
+        <h4 class="trophy-sport-heading">
+          {{ group.sport || ('communities.seasonsTitle' | t) }}
+        </h4>
+        <div class="trophies-grid">
+          @for (season of group.seasons; track season.id) {
+            <article class="trophy-card">
+              <span class="trophy-icon" aria-hidden="true">🏆</span>
+              <div>
+                <strong>{{ season.name }}</strong>
+                <span>
+                  {{ season.championDisplayName || season.championUsername }}
+                  @if (season.championPoints != null) {
+                    · {{ season.championPoints }} {{ 'communities.pointsShort' | t }}
+                  }
+                </span>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else {
+  <div class="module-empty compact">
+    <h3>{{ 'communities.noTrophies' | t }}</h3>
+    <p>{{ 'communities.noTrophiesText' | t }}</p>
+  </div>
+}
