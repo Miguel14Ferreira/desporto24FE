@@ -2058,10 +2058,19 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const sports = this.communitySports(this.selected);
     if (this.selectedSeasonId == null) return sports;
     const season = this.competition?.seasons?.find(item => item.id === this.selectedSeasonId);
-    if (!season?.sport) return sports;
     const normalize = (value: string): string => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-    return sports.filter(sport => normalize(sport) === normalize(season.sport!));
+    if (season?.sport) {
+      return sports.filter(sport => normalize(sport) === normalize(season.sport!));
+    }
+    // Older LIVE APIs omit CommunitySeason.sport. For a selected season,
+    // use ONLY its typed rounds to choose the ranking families, rather than
+    // accidentally showing Football W/D/L for a Karting-only season.
+    // Untyped/shared historical rounds keep their legacy all-sports view.
+    const rounds = this.competition?.rounds ?? [];
+    if (!rounds.length || rounds.some(round => !round.sport?.trim())) return sports;
+    const playedSports = new Set(rounds.map(round => normalize(round.sport!)));
+    return sports.filter(sport => playedSports.has(normalize(sport)));
   }
 
   /** API-backed W/D/L standings, isolated by a sport currently selected here.
