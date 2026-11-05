@@ -865,6 +865,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selectedSeasonId = 44;
     expect(component.rankingContextSports).toEqual(['Karting']);
     expect(component.scopedMatchRankingGroups).toEqual([]);
+    expect(component.showLegacyMatchRanking).toBeFalse();
     expect(component.raceRankingGroups.map(group => group.sport)).toEqual(['Karting']);
     expect(component.racketRankingGroups).toEqual([]);
     expect(component.specializedStatsUnavailableSports).toEqual([]);
@@ -872,6 +873,7 @@ describe('CommunitiesComponent public session eligibility', () => {
 
     component.selectedSeasonId = 45;
     expect(component.rankingContextSports).toEqual(['Ténis']);
+    expect(component.canEditSportPoints('Futebol')).toBeFalse();
     expect(component.raceRankingGroups).toEqual([]);
     expect(component.racketRankingGroups.map(group => group.sport)).toEqual(['Ténis']);
     expect(component.scopedMatchRankingGroups.map(group => group.sport)).toEqual(['Ténis']);
