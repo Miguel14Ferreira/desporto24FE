@@ -4,6 +4,12 @@ name: Jynlo LIVE notification QA (read-only, manual)
 # joins sessions, or sends messages. Login POST only; all other LIVE requests GET.
 on:
   workflow_dispatch:
+    inputs:
+      require_session_details:
+        description: 'Fail if both QA accounts have no existing session details to inspect'
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -19,6 +25,7 @@ jobs:
       JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
       JYNLO_QA_USERNAME_1: ${{ secrets.JYNLO_QA1_USERNAME }}
       JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
+      JYNLO_QA_REQUIRE_SESSION_DETAILS: ${{ inputs.require_session_details }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
