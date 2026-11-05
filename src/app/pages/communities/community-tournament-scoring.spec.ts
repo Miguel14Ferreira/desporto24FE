@@ -12,7 +12,8 @@ describe('Sport-aware tournament score terminology', () => {
       ['Futevólei', 'Sets ganhos', 'SG'],
       ['Voleibol de Praia', 'Sets ganhos', 'SG'],
       ['Basebol', 'Corridas marcadas', 'CM'],
-      ['Softbol', 'Corridas marcadas', 'CM']
+      ['Softbol', 'Corridas marcadas', 'CM'],
+      ['Cricket', 'Corridas marcadas', 'CM']
     ];
     for (const [sport, title, abbrev] of examples) {
       const terminology = tournamentScoreTerminology(sport);
