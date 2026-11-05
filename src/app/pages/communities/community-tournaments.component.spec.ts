@@ -4897,4 +4897,30 @@ describe('Community tournaments management', () => {
       { winPoints: 3, drawPoints: 1, lossPoints: 0 });
   });
 
+
+  it('uses runs in baseball and softball team and individual score labels in PT and EN', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      for (const [language, input, scored, conceded, difference, labels] of [
+        ['pt', 'Corridas de Verdes', 'CM', 'CS', 'DC', 'Corridas marcadas'],
+        ['en', 'Runs for Verdes', 'RF', 'RA', 'RD', 'Runs scored']
+      ]) {
+        localStorage.setItem('d24-language', language);
+        for (const sport of ['Basebol', 'Softbol']) {
+          component.selected = { ...draft, sport, entryType: 'TEAM' };
+          expect(component.teamScoreInputLabel('Verdes')).withContext(sport).toBe(input);
+          expect(component.teamScoreHeadings).withContext(sport).toEqual({
+            for: scored, against: conceded, difference
+          });
+          component.selected = { ...draft, sport, entryType: 'INDIVIDUAL' };
+          expect(component.scoring.forAbbrev).withContext(sport).toBe(scored);
+          expect(component.scoring.forTitle).withContext(sport).toBe(labels);
+        }
+      }
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
 });
