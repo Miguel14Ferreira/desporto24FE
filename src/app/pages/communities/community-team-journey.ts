@@ -80,8 +80,9 @@ export function summarizePublishedTeamJourney(
     const atHome = game.homeTeamId === teamId;
     const valid = game.status === 'COMPLETED'
       && typeof game.homeScore === 'number' && typeof game.awayScore === 'number'
-      && Number.isFinite(game.homeScore) && Number.isFinite(game.awayScore)
-      && game.homeScore >= 0 && game.awayScore >= 0;
+      && Number.isInteger(game.homeScore) && Number.isInteger(game.awayScore)
+      && game.homeScore >= 0 && game.homeScore <= 999
+      && game.awayScore >= 0 && game.awayScore <= 999;
     const ownScore = valid ? (atHome ? game.homeScore! : game.awayScore!) : null;
     const opponentScore = valid ? (atHome ? game.awayScore! : game.homeScore!) : null;
     const outcome: TeamJourneyOutcome | null = ownScore === null || opponentScore === null
