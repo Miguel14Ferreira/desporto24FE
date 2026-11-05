@@ -1,0 +1,35 @@
+name: Jynlo QA - LIVE team invitation fixture inventory (read-only)
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'scripts/qa/jynlo-team-invites-live-inventory.cjs'
+      - '.github/workflows/qa-team-invites-live-inventory.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-qa-team-invite-inventory
+  cancel-in-progress: true
+
+jobs:
+  inspect-disposable-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
+      JYNLO_QA_USERNAME_1: ${{ secrets.JYNLO_QA1_USERNAME }}
+      JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate read-only script syntax
+        run: node --check scripts/qa/jynlo-team-invites-live-inventory.cjs
+      - name: Inspect existing QA tournament invitations
+        run: node scripts/qa/jynlo-team-invites-live-inventory.cjs
