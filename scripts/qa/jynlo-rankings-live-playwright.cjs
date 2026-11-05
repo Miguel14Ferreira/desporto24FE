@@ -149,7 +149,7 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
                 .replace(/[\\u0300-\\u036f]/g,'').replace(/\\s+/g,' ').trim().toLowerCase();
               const firstName=normalize(first).includes(normalize(expected[0].displayed));
               const secondName=normalize(second).includes(normalize(expected[1].displayed));
-              const firstPoints=/\\b25\\b/.test(first),secondPoints=/\\b18\\b/.test(second);
+              const firstPoints=/\b25\b/.test(first),secondPoints=/\b18\b/.test(second);
               if(!firstName||!secondName||!firstPoints||!secondPoints){
                 // Only booleans of the two disposable QA entries; no page text
                 // or private names are written to the GitHub Actions logs.
