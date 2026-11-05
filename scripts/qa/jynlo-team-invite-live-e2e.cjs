@@ -22,7 +22,11 @@ async function run(){
     const base=valid(communityId)?'/api/communities/'+communityId+'/tournaments':null;
     const scope=base&&valid(tournamentId)?base+'/'+tournamentId:null;
     const mine=method==='GET'&&path==='/api/communities/mine';
-    const allowed=mine||(base&&(
+    const communityPath=valid(communityId)?'/api/communities/'+communityId:null;
+    const detail=communityPath&&method==='GET'&&path===communityPath;
+    const features=communityPath&&method==='PUT'&&path===communityPath+'/features'
+      &&token===tokens[0];
+    const allowed=mine||detail||features||(base&&(
       (method==='GET'&&path===base+'?page=0')||
       (method==='POST'&&path===base&&token===tokens[0])||
       (scope&&((method==='DELETE'&&path===scope&&token===tokens[0])||
@@ -44,8 +48,7 @@ async function run(){
     api('GET','/api/communities/mine',t)));
   const matches=mine1.filter(g=>g.name===GROUP&&g.ownerUsername?.toLowerCase()===USERS[0]
     &&g.visibility==='PRIVATE'&&valid(g.id)&&
-    (g.sports?.includes('Futebol')||g.sport==='Futebol')&&
-    g.teamTournamentsEnabled!==false);
+    (g.sports?.includes('Futebol')||g.sport==='Futebol'));
   assert.equal(matches.length,1,'PRIVATE_QA_GROUP_SCOPE');
   communityId=matches[0].id;
   assert.ok(mine2.some(g=>g.id===communityId),'SECOND_QA_NOT_MEMBER');
@@ -56,8 +59,26 @@ async function run(){
   const list=await api('GET','/api/communities/'+communityId+'/tournaments?page=0',tokens[0]);
   assert.ok(Array.isArray(list.tournaments),'TOURNAMENTS_INVALID');
   assert.ok(!list.tournaments.some(t=>t.name===name),'QA_FIXTURE_ALREADY_EXISTS');
-  let browser=null,verified=false;
+  // A private QA-only feature flag is temporarily enabled and must be
+  // restored even when the browser or test cleanup fails.
+  const original=await api('GET','/api/communities/'+communityId,tokens[0]);
+  const originalFlags={
+    rankingsEnabled:original.rankingsEnabled,
+    individualTournamentsEnabled:original.individualTournamentsEnabled,
+    teamTournamentsEnabled:original.teamTournamentsEnabled
+  };
+  assert.ok(Object.values(originalFlags).every(v=>typeof v==='boolean'),'QA_FEATURE_FLAGS_INVALID');
+  assert.equal(original.ownerUsername?.toLowerCase(),USERS[0],'QA_GROUP_OWNER');
+  assert.equal(original.visibility,'PRIVATE','QA_GROUP_VISIBILITY');
+  let browser=null,verified=false,featuresChanged=false;
   try {
+    if(!originalFlags.teamTournamentsEnabled){
+      const enabled=await api('PUT','/api/communities/'+communityId+'/features',
+        tokens[0],{...originalFlags,teamTournamentsEnabled:true});
+      featuresChanged=true;
+      assert.equal(enabled.teamTournamentsEnabled,true,'QA_FEATURE_ENABLE_FAILED');
+      console.log('[PASS] Temporarily enabled team tournaments only in the private QA group.');
+    }
     const path='/api/communities/'+communityId+'/tournaments';
     const created=await api('POST',path,tokens[0],{
       name,sport:'Futebol',entryType:'TEAM',format:'LEAGUE',
@@ -114,12 +135,22 @@ async function run(){
     }finally{await ctx.close();}
   }finally{
     if(browser)await browser.close();
-    if(valid(tournamentId)){
-      const path='/api/communities/'+communityId+'/tournaments/'+tournamentId;
-      await api('DELETE',path,tokens[0]);
-      const missing=await api('GET',path,tokens[0],undefined,true);
-      assert.equal(missing,null,'QA_CLEANUP_NOT_VERIFIED');
-      console.log('[PASS] Isolated QA tournament and its roster deleted and absence verified.');
+    try{
+      if(valid(tournamentId)){
+        const path='/api/communities/'+communityId+'/tournaments/'+tournamentId;
+        await api('DELETE',path,tokens[0]);
+        const missing=await api('GET',path,tokens[0],undefined,true);
+        assert.equal(missing,null,'QA_CLEANUP_NOT_VERIFIED');
+        console.log('[PASS] Isolated QA tournament and its roster deleted and absence verified.');
+      }
+    }finally{
+      if(featuresChanged){
+        const restored=await api('PUT','/api/communities/'+communityId+'/features',
+          tokens[0],originalFlags);
+        assert.ok(Object.entries(originalFlags).every(([k,v])=>restored[k]===v),
+          'QA_FEATURE_RESTORE_FAILED');
+        console.log('[PASS] Original private QA community feature flags restored.');
+      }
     }
   }
   assert.ok(verified,'QA_E2E_NOT_COMPLETED');
