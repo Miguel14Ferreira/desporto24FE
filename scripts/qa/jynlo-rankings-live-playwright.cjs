@@ -78,7 +78,8 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
 
   let chromium=chromiumImpl;
   if(!chromium) chromium=require('playwright').chromium;
-  const browser=await chromium.launch({headless:true});
+  const browser=await chromium.launch({headless:true,
+    ...(process.env.JYNLO_SYSTEM_CHROME ? {executablePath:process.env.JYNLO_SYSTEM_CHROME} : {})});
   try{
     for(let i=0;i<tokens.length;i++){
       const ctx=await browser.newContext({locale:'pt-PT',
