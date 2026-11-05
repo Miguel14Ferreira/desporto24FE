@@ -1367,6 +1367,11 @@ export class CommunityTournamentsComponent implements OnChanges {
           previous:this.teams[index - 1],next:this.teams[index + 1]};
   }
 
+  /** A shortcut only belongs to a valid focused team in this tournament. */
+  get teamQuickSwitchTeams(): TournamentTeam[] {
+    return this.focusedTeam && this.teams.length > 4 ? this.teams : [];
+  }
+
   get focusedTeam(): TournamentTeam | undefined {
     return this.isTeamCompetition && this.teamPageId !== null
       ? this.teams.find(team => team.id === this.teamPageId) : undefined;
