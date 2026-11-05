@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-type LegalDocument = 'privacy' | 'terms';
+type LegalDocument = 'privacy' | 'terms' | 'delete';
 
 interface LegalSection {
   titleKey: string;
@@ -24,11 +24,20 @@ export class LegalPageComponent implements OnInit {
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
-    this.document = this.route.snapshot.data['document'] === 'terms' ? 'terms' : 'privacy';
+    const requested = this.route.snapshot.data['document'];
+    this.document = requested === 'terms' || requested === 'delete' ? requested : 'privacy';
     this.titleKey = `${this.document}.title`;
     this.introKey = `${this.document}.intro`;
 
-    this.sections = this.document === 'privacy'
+    this.sections = this.document === 'delete'
+      ? [
+          this.section('inApp'),
+          this.section('web'),
+          this.section('ownedCommunities'),
+          this.section('data'),
+          this.section('support')
+        ]
+      : this.document === 'privacy'
       ? [
           this.section('controller'),
           this.section('purposes'),
