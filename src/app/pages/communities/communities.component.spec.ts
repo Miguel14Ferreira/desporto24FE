@@ -757,6 +757,26 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.closingSeasonId).toBe(44);
   });
 
+  it('allows editing scoring rules for the selected active season with multiple sports', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Karting'], ownerUsername: 'owner' } as any;
+    component.competition = { activeSeasonId: null, seasons: [
+      { id: 44, name: 'Futebol 2026', sport: 'Futebol', active: true },
+      { id: 45, name: 'Karting 2026', sport: 'Karting', active: true },
+      { id: 46, name: 'Futebol 2025', sport: 'Futebol', active: false }
+    ] } as any;
+    spyOn(component, 'canManage').and.returnValue(true);
+    component.selectedSeasonId = 44;
+    expect(component.canEditSportPoints('Futebol')).toBeTrue();
+    expect(component.canManageRaceChampionship()).toBeTrue();
+    component.selectedSeasonId = 46;
+    expect(component.canEditSportPoints('Futebol')).toBeFalse();
+    expect(component.canManageRaceChampionship()).toBeFalse();
+    component.selectedSeasonId = null;
+    expect(component.canEditSportPoints('Futebol')).toBeFalse();
+    expect(component.canManageRaceChampionship()).toBeFalse();
+  });
+
   it('uses race-only statistics for Karting and leaves unsupported sports without football fields', () => {
     component.selected = { id: 7, sport:'Karting', sports:['Karting'] } as any;
     component.competition = { raceStandings: [], standings: [{ games:10,points:42 }] } as any;
