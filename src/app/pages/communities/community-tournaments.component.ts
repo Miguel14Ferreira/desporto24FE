@@ -1557,26 +1557,39 @@ export class CommunityTournamentsComponent implements OnChanges {
       player.username.toLowerCase() === this.myUsername));
   }
 
+  /** A team link belongs to the currently opened tournament, never stale UI data. */
   teamInviteUrl(team: TournamentTeam): string {
-    if (!this.selected || !this.community?.id) return '';
+    if (!this.isTeamCompetition || !this.selected || !this.community?.id
+        || !this.teams.some(current => current.id === team.id)) return '';
     return buildTournamentTeamInviteUrl(
       window.location.origin, this.community.id, this.selected.id, team.id);
   }
 
   teamWhatsAppUrl(team: TournamentTeam): string {
-    if (!this.selected) return '';
+    const inviteUrl = this.teamInviteUrl(team);
+    if (!inviteUrl || !this.selected) return '';
     return teamInvitationWhatsAppUrl(
-      this.community.name, this.selected.name, team.name, this.teamInviteUrl(team));
+      this.community.name, this.selected.name, team.name, inviteUrl);
   }
 
   async copyTeamInvite(team: TournamentTeam): Promise<void> {
     if (!this.canManageTeamRoster || this.isTeamRosterFull(team)) return;
+    const communityId = this.community.id;
+    const tournamentId = this.selected?.id;
+    const inviteUrl = this.teamInviteUrl(team);
+    if (!inviteUrl) return;
+    let success = false;
     try {
-      await navigator.clipboard.writeText(this.teamInviteUrl(team));
-      this.inviteCopyFeedback[team.id] = t('communities.tournaments.teamUi.copySuccess');
+      await navigator.clipboard.writeText(inviteUrl);
+      success = true;
     } catch {
-      this.inviteCopyFeedback[team.id] = t('communities.tournaments.teamUi.copyError');
+      // Failure is displayed only if this same team is still open.
     }
+    if (this.community.id !== communityId || this.selected?.id !== tournamentId
+        || !this.teams.some(current => current.id === team.id)) return;
+    this.inviteCopyFeedback[team.id] = t(success
+      ? 'communities.tournaments.teamUi.copySuccess'
+      : 'communities.tournaments.teamUi.copyError');
     this.changeDetector.markForCheck();
   }
 
