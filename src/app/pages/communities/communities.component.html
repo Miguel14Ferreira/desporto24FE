@@ -867,7 +867,7 @@
                           <div class="season-management-row">
                             <div class="season-management-identity">
                               <strong>{{ season.name }}</strong>
-                              <span>{{ (season.active ? 'communities.activeSeason' : 'communities.closedSeason') | t }}</span>
+                              <span>{{ (season.active ? 'communities.activeSeason' : 'communities.closedSeason') | t }}{{ season.sport ? ' · ' + season.sport : '' }}</span>
                             </div>
                             @if (editingSeasonId === season.id) {
                               <div class="season-management-editor">
