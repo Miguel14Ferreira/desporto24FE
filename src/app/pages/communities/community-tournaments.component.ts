@@ -113,7 +113,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get historicalScoreLabels() {
-    return tournamentScoreTerminology(this.selected?.sport);
+    return this.localizedScoreTerminology(this.selected?.sport);
   }
 
   get historicalOutcome(): HistoricalTournamentOutcome | null {
@@ -1277,14 +1277,13 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.participants.find(p => p.username.toLowerCase() === this.myUsername);
   }
 
-  get scoring() {
-    const terminology = tournamentScoreTerminology(
-      this.selected?.entryType === 'TEAM' ? null : this.selected?.sport
-    );
-    const kind = terminology.forTitle === 'Golos marcados' ? 'goals'
-      : terminology.forTitle === 'Pontos marcados' ? 'points'
-      : terminology.forTitle === 'Sets ganhos' ? 'sets'
-      : terminology.forTitle === 'Corridas marcadas' ? 'runs' : 'generic';
+  /** Translate visible labels only; stored tournament results remain unchanged. */
+  private localizedScoreTerminology(sport: string | null | undefined) {
+    const terminology = tournamentScoreTerminology(sport);
+    const kind = terminology.forAbbrev === 'GM' ? 'goals'
+      : terminology.forAbbrev === 'PM' ? 'points'
+      : terminology.forAbbrev === 'SG' ? 'sets'
+      : terminology.forAbbrev === 'CM' ? 'runs' : 'generic';
     const translated = (field: string) =>
       t('communities.tournaments.individualUi.scoring.' + kind + '.' + field);
     return {
@@ -1298,6 +1297,12 @@ export class CommunityTournamentsComponent implements OnChanges {
       differenceAbbrev: translated('differenceAbbrev'),
       note: translated('note')
     };
+  }
+
+  get scoring() {
+    return this.localizedScoreTerminology(
+      this.selected?.entryType === 'TEAM' ? null : this.selected?.sport
+    );
   }
 
   /** Display-only terminology; never infer a sport's official scoring rules. */
