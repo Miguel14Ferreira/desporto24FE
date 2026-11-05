@@ -2303,6 +2303,30 @@ describe('Community tournaments management', () => {
       expect(component.teamProfileNavigation).toEqual({index:0,total:0});
     });
 
+    it('offers direct team switching only on a valid page with many teams', () => {
+      const many = Array.from({ length: 8 }, (_, i) =>
+        ({ ...team, id: 40 + i, name: 'Equipa ' + (i + 1) }));
+      api.teams.and.returnValue(of(many));
+      component.teamPageId = 40;
+      component.selectTournament(teamDraft);
+      expect(component.teamQuickSwitchTeams.map(item => item.id))
+        .toEqual([40, 41, 42, 43, 44, 45, 46, 47]);
+
+      component.teamPageId = 47;
+      expect(component.teamQuickSwitchTeams.length).toBe(8);
+      component.teamPageId = 999;
+      expect(component.teamQuickSwitchTeams).toEqual([]);
+      component.teamPageId = null;
+      expect(component.teamQuickSwitchTeams).toEqual([]);
+
+      component.teamPageId = 40;
+      component.selectTournament(draft);
+      expect(component.teamQuickSwitchTeams).toEqual([]);
+      api.teams.and.returnValue(of(many.slice(0, 4)));
+      component.selectTournament(teamDraft);
+      expect(component.teamQuickSwitchTeams).toEqual([]);
+    });
+
     it('filters only loaded matches on the team page and resets on team changes', () => {
       const first={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'A',
         awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const};
