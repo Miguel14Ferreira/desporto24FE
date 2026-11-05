@@ -1,0 +1,45 @@
+name: Jynlo QA - LIVE two-account team invite acceptance (cleanup)
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/qa-team-invites-live-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-qa-team-invite-e2e-once
+  cancel-in-progress: false
+
+jobs:
+  isolated-team-invite:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.head_commit.message == 'qa(team-invites): execute isolated one-shot acceptance'
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    env:
+      JYNLO_QA_TEAM_INVITE_ONCE: DISPOSABLE_QA_ONLY
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA1_PASSWORD }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA2_PASSWORD }}
+      JYNLO_QA_USERNAME_1: ${{ secrets.JYNLO_QA1_USERNAME }}
+      JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate the strictly scoped test
+        run: node --check scripts/qa/jynlo-team-invite-live-e2e.cjs
+      - name: Install isolated pinned browser runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/jynlo-playwright" --no-save --no-audit --no-fund --package-lock=false playwright@1.64.1
+          timeout 180 "$RUNNER_TEMP/jynlo-playwright/node_modules/.bin/playwright" install chromium --only-shell
+      - name: One-time browser invitation and cleanup
+        shell: bash
+        run: NODE_PATH="$RUNNER_TEMP/jynlo-playwright/node_modules" node scripts/qa/jynlo-team-invite-live-e2e.cjs
