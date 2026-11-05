@@ -1031,6 +1031,36 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.rankingContextSports).toEqual(['Futebol', 'Karting', 'Ténis', 'Natação']);
   });
 
+  it('uses typed Karting rounds to scope a legacy season without sport metadata', () => {
+    component.selected = { id: 7, sport: 'Futebol',
+      sports: ['Futebol', 'Karting'] } as any;
+    component.selectedSeasonId = 77;
+    component.competition = {
+      seasons: [{ id: 77, name: 'Karting QA', active: true }],
+      rounds: [{ id: 1, name: 'Corrida QA', sport: 'Karting', entries: [] }],
+      raceStandings: [{ sport: 'Karting', rule: { pointsByPlace: [25,18,15] },
+        standings: [] }]
+    } as any;
+    expect(component.rankingContextSports).toEqual(['Karting']);
+    expect(component.usesMatchPointsModel()).toBeFalse();
+    expect(component.raceRankingGroups.map(group => group.sport)).toEqual(['Karting']);
+
+    // A legacy Football season is still a match-points season.
+    component.competition = {
+      seasons: [{ id: 77, name: 'Football QA', active: true }],
+      rounds: [{ id: 2, name: 'Jogo QA', sport: 'Futebol', entries: [] }]
+    } as any;
+    expect(component.rankingContextSports).toEqual(['Futebol']);
+    expect(component.usesMatchPointsModel()).toBeTrue();
+
+    // Untyped historical rounds must not be guessed to be Karting-only.
+    component.competition = {
+      seasons: [{ id: 77, name: 'Partilhada antiga', active: true }],
+      rounds: [{ id: 3, name: 'Histórico', sport: null, entries: [] }]
+    } as any;
+    expect(component.rankingContextSports).toEqual(['Futebol', 'Karting']);
+  });
+
   it('normalizes accents for the selected season ranking sport', () => {
     component.selected = { id: 7, sports: ['Ténis', 'Karting'] } as any;
     component.selectedSeasonId = 99;
