@@ -120,7 +120,7 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
     return { checked, checkedSessions, recurring };
   }
 
-  async function run({ passwords, requireCoverage = false } = {}) {
+  async function run({ passwords, requireCoverage = false, requireRecurring = false } = {}) {
     assert.ok(Array.isArray(passwords) && passwords.length === 2
       && passwords.every(p => typeof p === 'string' && p.length > 0),
     'QA_BOTH_PASSWORDS_REQUIRED');
@@ -136,6 +136,7 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
       output('[INFO] QA community/session samples incomplete; no writes performed.');
       assert.ok(!requireCoverage, 'QA_COMMUNITY_SESSION_COVERAGE_MISSING');
     }
+    assert.ok(!requireRecurring || recurring > 0, 'QA_RECURRING_COVERAGE_MISSING');
     output('[PASS] LIVE QA read-only community contract audit complete.');
     output('[INFO] Recurring sessions observed: ' + (recurring > 0 ? 'yes' : 'not verified'));
     return { accountsChecked: 2, communitiesChecked: communities, sessionsChecked: sessions,
@@ -151,7 +152,8 @@ if (require.main === module) {
   } else {
     createRunner().run({
       passwords: [process.env.JYNLO_QA_PASSWORD_1, process.env.JYNLO_QA_PASSWORD_2],
-      requireCoverage: process.env.JYNLO_QA_REQUIRE_COMMUNITY_COVERAGE === 'true'
+      requireCoverage: process.env.JYNLO_QA_REQUIRE_COMMUNITY_COVERAGE === 'true',
+      requireRecurring: process.env.JYNLO_QA_REQUIRE_RECURRING_COVERAGE === 'true'
     }).catch(e => {
       console.error('[FAIL] ' + (e instanceof Error ? e.message : 'QA_UNKNOWN_ERROR'));
       process.exitCode = 1;
