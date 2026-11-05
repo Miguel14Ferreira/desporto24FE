@@ -24,6 +24,20 @@ describe('CommunitySeasonFilterComponent', () => {
     expect(options[1].textContent).toContain('Época 2026');
     expect(options[1].textContent).not.toBeNull();
   });
+  it('distinguishes same-named seasons by sport while preserving shared history', async () => {
+    const root=(await render(null, [
+      {...season,id:11,name:'2026/27',sport:'Futebol'},
+      {...season,id:12,name:'2026/27',sport:'Karting'},
+      {...season,id:13,name:'2025/26',sport:null,active:false}
+    ])).nativeElement as HTMLElement;
+    const labels=Array.from(root.querySelectorAll('option')).map(option => option.textContent?.trim() || '');
+    expect(labels[1]).toContain('Futebol · 2026/27');
+    expect(labels[2]).toContain('Karting · 2026/27');
+    expect(labels[3]).toContain('2025/26');
+    expect(labels[3]).not.toContain('Futebol');
+    expect(labels[3]).not.toContain('Karting');
+  });
+
   it('honors a selected season id and emits null for all-time selection', async () => {
     const fixture=await render(4);
     const selected=fixture.nativeElement.querySelector('select') as HTMLSelectElement;
