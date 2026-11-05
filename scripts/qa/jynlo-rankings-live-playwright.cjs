@@ -131,6 +131,15 @@ async function run({fetchImpl=globalThis.fetch,chromiumImpl,report=console.log}=
               qaStage='RACE_ROWS';
               const rows=karting.locator('tbody tr');
               must(await rows.count()===2,'KARTING_ROWS_COUNT');
+              // An HTTP response may resolve before Angular has applied the
+              // selected season to its rendered rows. Wait for the actual
+              // season-specific points, not the previous all-time DOM.
+              qaStage='RACE_SEASON_POINTS_RENDER';
+              await rows.nth(0).locator('td').last()
+                .getByText('25',{exact:true}).waitFor({state:'visible',timeout:15000});
+              await rows.nth(1).locator('td').last()
+                .getByText('18',{exact:true}).waitFor({state:'visible',timeout:15000});
+              qaStage='RACE_ROWS';
               const first=await rows.nth(0).innerText();
               const second=await rows.nth(1).innerText();
               const expected=group.kartingRows;
