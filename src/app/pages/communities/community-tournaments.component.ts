@@ -1326,12 +1326,21 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamPlayerDraft[teamId] = null;
   }
 
-  /** Search and pagination are display-only; never hide or mutate stored teams. */
+  /**
+   * Search the current tournament's team names and roster identities. A friend
+   * can be found without displaying every roster in the crowded team grid.
+   * Results remain team cards; never include players from another tournament.
+   */
   get filteredTournamentTeams(): TournamentTeam[] {
     const normalize = (value: string) => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
     const query = normalize(this.teamDirectoryQuery);
-    return query ? this.teams.filter(team => normalize(team.name).includes(query)) : this.teams;
+    if (!query) return this.teams;
+    return this.teams.filter(team =>
+      normalize(team.name).includes(query)
+      || (team.players ?? []).some(player =>
+        normalize(player.displayName || '').includes(query)
+        || normalize(player.username || '').includes(query)));
   }
 
   get visibleTournamentTeams(): TournamentTeam[] {
