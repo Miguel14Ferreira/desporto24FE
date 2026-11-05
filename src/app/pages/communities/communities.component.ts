@@ -2339,7 +2339,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.importFileName = '';
         this.importPreview = undefined;
         this.resetImportAfterFile();
-        this.closeSeasonConfirming = false;
+        this.cancelCloseSeason();
         this.prepareRoundEntries(full);
         this.archiveSummaries = [];
         this.archiveOpen = undefined;
@@ -4175,21 +4175,24 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return;
     }
 
+    const communityId = this.selected.id;
     this.seasonSaving = true;
     this.errorMessage = '';
 
-    this.communityService.closeSeason(this.selected.id, active.id)
+    this.communityService.closeSeason(communityId, active.id)
       .pipe(
         timeout(10_000),
         finalize(() => this.seasonSaving = false)
       )
       .subscribe({
         next: season => {
+          if (this.selected?.id !== communityId) return;
           this.cancelCloseSeason();
           this.selectedSeasonId = season.id;
-          this.loadCompetition(this.selected as CommunityGroup, season.id);
+          this.loadCompetition(this.selected, season.id);
         },
         error: error => {
+          if (this.selected?.id !== communityId) return;
           this.errorMessage = error.error?.message
             || t('feedback.communities.seasonCloseError');
         }
@@ -5589,6 +5592,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
         this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
         this.selected = community;
+        this.cancelCloseSeason();
         this.activeTab = 'home';
         this.pendingArchiveDeepLinkCommunityId = null;
         this.selectedSeasonId = null;
@@ -5664,6 +5668,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       next: () => {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
+        this.cancelCloseSeason();
         this.pendingArchiveDeepLinkCommunityId = null;
         this.resetHistoricalLinks();
         this.competition = undefined;
