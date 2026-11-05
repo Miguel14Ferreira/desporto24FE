@@ -10,6 +10,11 @@ on:
         type: boolean
         required: false
         default: false
+      require_community_coverage:
+        description: 'Fail when QA accounts have no community sessions to inspect'
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -26,6 +31,7 @@ jobs:
       JYNLO_QA_USERNAME_1: ${{ secrets.JYNLO_QA1_USERNAME }}
       JYNLO_QA_USERNAME_2: ${{ secrets.JYNLO_QA2_USERNAME }}
       JYNLO_QA_REQUIRE_SESSION_DETAILS: ${{ inputs.require_session_details }}
+      JYNLO_QA_REQUIRE_COMMUNITY_COVERAGE: ${{ inputs.require_community_coverage }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,3 +57,7 @@ jobs:
         run: node --test scripts/qa/jynlo-sessions-live-readonly.test.cjs
       - name: Read authorized QA session lists and details from LIVE API (GET only after login)
         run: node scripts/qa/jynlo-sessions-live-readonly.cjs
+      - name: Validate read-only community/session ownership contracts with synthetic responses
+        run: node --test scripts/qa/jynlo-communities-live-readonly.test.cjs
+      - name: Read only QA-owned community and recurring-session views from LIVE API
+        run: node scripts/qa/jynlo-communities-live-readonly.cjs
