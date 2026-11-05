@@ -2381,6 +2381,26 @@ describe('Community tournaments management', () => {
       expect(component.teamQuickSwitchTeams).toEqual([]);
     });
 
+    it('bounds the quick team switcher and finds any team by accent-insensitive name', () => {
+      const many = Array.from({ length: 35 }, (_, i) =>
+        ({ ...team, id: 100 + i, name: 'Equipa ' + (i + 1) }));
+      many[29] = { ...many[29], name: 'Águias de Lisboa' };
+      api.teams.and.returnValue(of(many));
+      component.teamPageId = 100;
+      component.selectTournament(teamDraft);
+      expect(component.teamQuickSwitchTeams.length).toBe(12);
+      expect(component.teamQuickSwitchTotalMatches).toBe(35);
+      component.teamQuickSwitchQuery = '  aguias  ';
+      expect(component.teamQuickSwitchTeams.map(item => item.id)).toEqual([129]);
+      expect(component.teamQuickSwitchTotalMatches).toBe(1);
+      component.teamQuickSwitchQuery = 'inexistente';
+      expect(component.teamQuickSwitchTeams).toEqual([]);
+      expect(component.teamQuickSwitchTotalMatches).toBe(0);
+      component.selectTournament(draft);
+      expect(component.teamQuickSwitchQuery).toBe('');
+      expect(component.teamQuickSwitchTeams).toEqual([]);
+    });
+
     it('filters only loaded matches on the team page and resets on team changes', () => {
       const first={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'A',
         awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const};
