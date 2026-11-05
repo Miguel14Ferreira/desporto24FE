@@ -40,6 +40,23 @@ async function main() {
         const body = (await page.locator('body').innerText()).trim();
         assert.ok(body.length > 100, 'PUBLIC_PAGE_EMPTY');
         assert.match(body, /JYNLO|Jynlo|desporto|sport/i, 'PUBLIC_BRAND_MISSING');
+        await page.locator('#jynlo-home-title').waitFor({ state: 'visible', timeout: 15000 });
+        await page.locator('#home-community-title').waitFor({ state: 'visible', timeout: 15000 });
+        await page.locator('#jynlo-public-discovery input[name="sport"]').waitFor({
+          state: 'visible', timeout: 15000
+        });
+        await page.locator('#jynlo-public-discovery input[name="city"]').waitFor({
+          state: 'visible', timeout: 15000
+        });
+        // A public user must be able to reach login without authentication.
+        await page.locator('a.hero-login-link').click({ timeout: 15000 });
+        await page.waitForURL('**/login', { timeout: 15000 });
+        assert.ok((await page.locator('body').innerText()).trim().length > 60,
+          'PUBLIC_LOGIN_EMPTY');
+        console.log('[PASS] Public homepage CTA navigates to login in ' + scenario.name);
+        // Return to the public home before writing an anonymous screenshot.
+        await page.goto(SITE + '/home', { waitUntil: 'domcontentloaded', timeout: 40000 });
+        await page.locator('#jynlo-home-title').waitFor({ state: 'visible', timeout: 15000 });
         // No authentication or private content: artifacts may be shared with QA.
         await page.screenshot({
           path: path.join(REPORT, scenario.name + '-home.png'),
