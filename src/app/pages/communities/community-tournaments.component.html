@@ -2225,7 +2225,7 @@
                              <input type="number" min="0" max="999" step="1"
                                [ngModel]="teamScoreDraft(game).home"
                                (ngModelChange)="setTeamScore(game, 'home', $event)"
-                               [attr.aria-label]="'communities.tournaments.fixturesUi.goalsFor' | t:{team:game.homeTeamName}"
+                               [attr.aria-label]="teamScoreInputLabel(game.homeTeamName)"
                                [attr.aria-invalid]="isTeamScoreInvalid(game) && !validScore(teamScoreDraft(game).home) ? 'true' : null"
                                [disabled]="busy">
                            </label>
@@ -2235,7 +2235,7 @@
                              <input type="number" min="0" max="999" step="1"
                                [ngModel]="teamScoreDraft(game).away"
                                (ngModelChange)="setTeamScore(game, 'away', $event)"
-                               [attr.aria-label]="'communities.tournaments.fixturesUi.goalsFor' | t:{team:game.awayTeamName}"
+                               [attr.aria-label]="teamScoreInputLabel(game.awayTeamName)"
                                [attr.aria-invalid]="isTeamScoreInvalid(game) && !validScore(teamScoreDraft(game).away) ? 'true' : null"
                                [disabled]="busy">
                            </label>
