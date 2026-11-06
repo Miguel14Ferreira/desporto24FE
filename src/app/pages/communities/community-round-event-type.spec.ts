@@ -17,6 +17,18 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(isNeutralEvent('Canoagem Velocidade','CANOE_SPRINT')).toBeFalse();
     expect(isRaceEvent('Canoagem Velocidade','SWIM_LCM')).toBeFalse();
   });
+  it('treats inherited object property names as unknown sports, not event arrays', () => {
+    for (const sport of ['constructor', 'toString', 'hasOwnProperty', '__proto__', 'valueOf']) {
+      expect(eventOptionsForSport(sport)).withContext(sport).toEqual([]);
+      expect(isNeutralEvent(sport, 'RACE')).withContext(sport).toBeFalse();
+      expect(eventView(sport, null)).withContext(sport).toBe('unknown');
+    }
+    expect(eventOptionsForSport('  ')).toEqual([]);
+    // Known labels still support accent and whitespace normalization.
+    expect(eventOptionsForSport('  ciclismo de pista  ').map(x => x.code))
+      .toContain('TRACK_SCRATCH');
+  });
+
   it('requires choosing from the allowed variants of selected sports', () => {
     expect(eventOptionsForSport('BMX').map(o => o.code)).toEqual(['RACE', 'FREESTYLE']);
     expect(eventOptionsForSport('Ciclismo de Pista').map(o => o.code))
