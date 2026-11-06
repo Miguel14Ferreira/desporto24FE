@@ -99,6 +99,14 @@ export class CommunityTournamentEligibilityPanelComponent implements OnChanges, 
     this.request = this.api.overview(id, tournament).subscribe({
       next: result => {
         if (this.destroyed || revision !== this.revision) return;
+        // Never display an out-of-scope report if a cache/proxy/server response
+        // returns a different tournament than the one the organizer selected.
+        if (result.tournamentId !== tournament) {
+          this.error = 'Não foi possível verificar a elegibilidade. Tenta novamente.';
+          this.loading = false;
+          this.changeDetector.markForCheck();
+          return;
+        }
         this.overview = result;
         this.loading = false;
         this.changeDetector.markForCheck();
