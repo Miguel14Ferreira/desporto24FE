@@ -3638,6 +3638,31 @@ describe('Community tournaments management', () => {
       expect(component.teamProfilePhases).toEqual([]);
     });
 
+    it('prioritizes exact matches in the main team directory without changing API order', () => {
+      const many: TournamentTeam[] = Array.from({ length: 26 }, (_, i) => ({
+        ...team, id: 100 + i, name: 'Clube Águias ' + i, players: []
+      }));
+      many[22] = { ...many[22], name: 'Águias', players: [] };
+      many[23] = { ...many[23], name: 'Águias do Norte', players: [] };
+      many[24] = { ...many[24], name: 'Equipa 24', players: [
+        { profileId: 88, username: 'aguias', displayName: 'Jogador 88' }
+      ] };
+      api.teams.and.returnValue(of(many));
+      component.selectTournament(teamDraft);
+      component.setTeamDirectoryQuery(' AGUIAS ');
+      expect(component.filteredTournamentTeams).toHaveSize(26);
+      expect(component.visibleTournamentTeams.slice(0, 3).map(item => item.id))
+        .toEqual([122, 124, 123]);
+      expect(component.visibleTournamentTeams).toHaveSize(12);
+      expect(component.teams.map(item => item.id)).toEqual(many.map(item => item.id));
+      component.expandTeamDirectory();
+      expect(component.visibleTournamentTeams).toHaveSize(24);
+      component.setTeamDirectoryQuery('');
+      expect(component.visibleTournamentTeams.slice(0, 3).map(item => item.id))
+        .toEqual([100, 101, 102]);
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('searches the team directory without changing saved teams or fixtures', () => {
       const blue = { ...team, id: 41, name: 'São Azul' };
       const green = { ...team, id: 42, name: 'Verdes' };
