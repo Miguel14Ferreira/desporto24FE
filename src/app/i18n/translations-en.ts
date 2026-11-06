@@ -2870,6 +2870,8 @@ export const EN: Record<string, string> = {
   'communities.tournaments.createUi.sportToggleCancel': "Cancel",
   'communities.tournaments.createUi.sportToggleChange': "Change",
   'communities.tournaments.createUi.moreSports': "+{{count}} searchable sports",
+  'communities.tournaments.createUi.showAllSports': "Show all sports",
+  'communities.tournaments.createUi.showLessSports': "Show fewer sports",
   'communities.tournaments.createUi.createButtonUnavailable': "Format not available yet",
   'communities.tournaments.createUi.createButtonTeams': "Create and set up teams",
   'communities.tournaments.createUi.createButtonIndividual': "Confirm individual league",
