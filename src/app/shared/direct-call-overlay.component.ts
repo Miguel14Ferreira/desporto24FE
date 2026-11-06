@@ -65,6 +65,9 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
         </section>
       } @else if (minimized && call.phase !== 'error') {
         <div class="connect-mini" role="group" [attr.aria-label]="'calls.title' | t">
+          <!-- Subscribe to LiveKit track revisions even while minimized, so
+               audio-only tiles receive new microphone/screen-audio tracks. -->
+          <span class="call-refresh" aria-hidden="true">{{ calls.mediaChanged$ | async }}</span>
           <!-- Remote sound stays attached even while the full call view is minimized. -->
           <div class="connect-mini-audio" aria-hidden="true">
             @for (person of participants; track person.identity) {
