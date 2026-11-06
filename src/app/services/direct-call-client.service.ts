@@ -573,16 +573,34 @@ export class DirectCallClientService implements OnDestroy {
     }
   }
 
-  /** Clear an obsolete camera selection and retry the real default camera. */
+  /**
+   * Prefer an atomic LiveKit camera switch when returning to system default.
+   * Disabling and recreating an already-active camera causes a black flash and
+   * can permanently lose the old stream if the fallback device is unavailable.
+   */
   async useDefaultCamera(): Promise<void> {
     const room=this.room;
     if (!room || this.busyMedia$.value) return;
-    this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:undefined});
-    if (this.state$.value?.cameraEnabled) {
-      await this.setCamera(false);
-      if (room!==this.room || this.state$.value?.cameraEnabled) return;
+    if (!this.state$.value?.cameraEnabled) {
+      await this.setCamera(true);
+      return;
     }
-    await this.setCamera(true);
+    this.busyMedia$.next(true);
+    try {
+      const changed=await room.switchActiveDevice('videoinput','default');
+      if (!changed) throw new DOMException('Default camera unavailable','NotReadableError');
+      if (room===this.room) {
+        this.selectedDevices$.next({...this.selectedDevices$.value,videoinput:undefined});
+        this.update({cameraEnabled:true,error:undefined});
+        this.mediaChanged$.next(this.mediaChanged$.value+1);
+      }
+    } catch (error) {
+      // Do not disable the existing camera or forget a still-valid selection.
+      if (room===this.room) this.update({error:this.mediaFailure(error,'camera')});
+    } finally {
+      this.busyMedia$.next(false);
+      void this.refreshDevices();
+    }
   }
 
   get canShareScreen(): boolean {
