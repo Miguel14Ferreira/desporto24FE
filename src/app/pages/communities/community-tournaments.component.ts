@@ -3944,6 +3944,7 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   async join(): Promise<void> {
     if (!this.selected || !this.isMember || this.selected.status !== 'DRAFT'
+        || !this.rosterReady || this.detailsLoading || this.busy
         || this.myEnrollment || this.participantsHasMore) return;
     await this.mutate(this.api.join(this.community.id, this.selected.id),
       t('communities.tournaments.organizerUi.registrationUpdated'), () => this.refreshRosterAndFocus());
@@ -3951,6 +3952,7 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   async leave(): Promise<void> {
     if (!this.selected || !this.isMember || this.selected.status !== 'DRAFT'
+        || !this.rosterReady || this.detailsLoading || this.busy
         || !this.myEnrollment) return;
     await this.mutate(this.api.leave(this.community.id, this.selected.id),
       t('communities.tournaments.organizerUi.registrationCancelled'), () => this.refreshRosterAndFocus());
