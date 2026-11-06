@@ -1653,8 +1653,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     } catch {
       // Failure is displayed only if this same team is still open.
     }
+    const latest = this.currentRosterTeam(team);
     if (this.community.id !== communityId || this.selected?.id !== tournamentId
-        || !this.teams.some(current => current.id === team.id)) return;
+        || !this.canManageTeamRoster || !latest || this.isTeamRosterFull(latest)) return;
     this.inviteCopyFeedback[team.id] = t(success
       ? 'communities.tournaments.teamUi.copySuccess'
       : 'communities.tournaments.teamUi.copyError');
