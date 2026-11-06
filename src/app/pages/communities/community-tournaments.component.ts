@@ -2848,7 +2848,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   loadMoreParticipants(): void {
-    if (!this.selected || !this.isMember || this.busy || !this.participantsHasMore) return;
+    // The first roster page must have been loaded successfully before its
+    // pagination cursor can be trusted.
+    if (!this.selected || !this.isMember || !this.rosterReady
+        || this.detailsLoading || this.busy || !this.participantsHasMore) return;
     const cid = this.community.id, tid = this.selected.id, revision = this.detailRevision;
     const requestedPage = this.participantsPage + 1;
     this.busy = true;
