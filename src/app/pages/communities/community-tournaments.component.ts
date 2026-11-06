@@ -185,6 +185,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   readonly relayLegIndexes=[0,1,2,3] as const;
   teamPlayerDraft: Record<number, number | null> = {};
   teamMemberSearch: Record<number, string> = {};
+  teamRosterSearch: Record<number, string> = {};
   inviteCopyFeedback: Record<number, string> = {};
   teams: TournamentTeam[] = [];
   teamDirectoryQuery = '';
@@ -1186,6 +1187,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamNameDraft = '';
       this.teamPlayerDraft = {};
       this.teamMemberSearch = {};
+      this.teamRosterSearch = {};
       this.inviteCopyFeedback = {};
       this.teams = [];
       this.teamDirectoryQuery = '';
@@ -1353,6 +1355,21 @@ export class CommunityTournamentsComponent implements OnChanges {
       normalize(member.fullName || '').includes(query)
       || normalize(member.username).includes(query)) : eligible;
     return matching.slice(0, this.teamMemberSuggestionLimit);
+  }
+
+  /** Roster search affects only what is visible on the focused team page. */
+  filteredTeamRoster(team: TournamentTeam): TournamentTeam['players'] {
+    const query = (this.teamRosterSearch[team.id] || '').normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
+    if (!query) return team.players;
+    const matches = (value: string) => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().includes(query);
+    return team.players.filter(player =>
+      matches(player.displayName || '') || matches(player.username || ''));
+  }
+
+  setTeamRosterSearch(teamId: number, value: string): void {
+    this.teamRosterSearch[teamId] = value;
   }
 
   setTeamMemberSearch(teamId: number, value: string): void {
