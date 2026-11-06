@@ -3691,6 +3691,29 @@ describe('Community tournaments management', () => {
       }
     });
 
+    it('filters large team rosters by name or username without changing membership', () => {
+      const players = Array.from({ length: 20 }, (_, i) => ({
+        profileId: i + 1, username: 'player' + (i + 1),
+        displayName: 'Atleta ' + (i + 1)
+      }));
+      players[18] = { ...players[18], username: 'aguia19', displayName: 'Águia de Lisboa' };
+      const largeTeam = { ...team, players };
+      api.teams.and.returnValue(of([largeTeam]));
+      component.selectTournament(teamDraft);
+      component.teamPageId = 40;
+      expect(component.filteredTeamRoster(largeTeam)).toHaveSize(20);
+      component.setTeamRosterSearch(40, '  AGUIA ');
+      expect(component.filteredTeamRoster(largeTeam).map(p => p.profileId)).toEqual([19]);
+      component.setTeamRosterSearch(40, 'PLAYER2');
+      expect(component.filteredTeamRoster(largeTeam).map(p => p.profileId)).toEqual([2, 20]);
+      component.setTeamRosterSearch(40, 'inexistente');
+      expect(component.filteredTeamRoster(largeTeam)).toEqual([]);
+      expect(largeTeam.players).toHaveSize(20);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+      component.selectTournament(draft);
+      expect(component.teamRosterSearch).toEqual({});
+    });
+
     it('switches between focused teams without sending changes to the backend', () => {
       const blue = { ...team, id: 41, name: 'Azuis' };
       api.teams.and.returnValue(of([team, blue]));
