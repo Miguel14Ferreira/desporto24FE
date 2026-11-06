@@ -2805,6 +2805,42 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('ignores an old account WebSocket message after the login token changes', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer];
+    component.selectedKey=peer.key;
+    component.messages=[message(peer.key,1)];
+    (component as any).receiptSessionToken='previous-account-token';
+    spyOn(localStorage,'getItem').and.returnValue('next-account-token');
+    (component as any).acceptRealtime(peer.key,{
+      key:peer.key,id:99,sender:'bea',text:'Mensagem antiga',
+      createdAt:new Date().toISOString()
+    });
+    expect(component.messages.map(m=>m.id)).toEqual([1]);
+    expect(component.conversations[0].latestMessageId).toBeUndefined();
+    expect(component.conversations[0].newThisVisit).toBe(0);
+  });
+
+  it('cannot resolve an old account pending send after the login changes', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer];
+    component.selectedKey=peer.key;
+    (component as any).receiptSessionToken='previous-account-token';
+    spyOn(localStorage,'getItem').and.returnValue('next-account-token');
+    const pending={key:peer.key,text:'Pendente antiga',replyToMessageId:null,
+      knownIds:new Set<number>(),startedAt:Date.now()};
+    (component as any).pendingByConversation.set(peer.key,pending);
+    component.deliveryUncertain=true;
+    component.draft='Pendente antiga';
+    (component as any).confirmFromHistoryIfPresent(peer.key,[{
+      key:peer.key,id:99,sender:'ana',text:'Pendente antiga',
+      createdAt:new Date().toISOString()
+    }]);
+    expect((component as any).pendingByConversation.get(peer.key)).toBe(pending);
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.draft).toBe('Pendente antiga');
+  });
+
   it('keeps a newer delivery verification locked when an older GET finishes late', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];
