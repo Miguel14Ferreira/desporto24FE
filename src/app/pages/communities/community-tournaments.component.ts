@@ -1497,7 +1497,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         : labels.some(value => value.startsWith(query)) ? 1
         : labels.some(value => value.includes(query)) ? 2
         : labels.some(value => {
-            const words = value.split(/[\\s._-]+/).filter(Boolean);
+            const words = value.split(/[\s._-]+/).filter(Boolean);
             return terms.every(term => words.some(word => word.startsWith(term)));
           }) ? 3 : 4;
       return { team, index, relevance };
