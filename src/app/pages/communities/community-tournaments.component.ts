@@ -1483,11 +1483,23 @@ export class CommunityTournamentsComponent implements OnChanges {
     const normalize = (value: string | null | undefined): string => (value || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
     const query = normalize(this.teamQuickSwitchQuery);
-    return query ? this.teams.filter(team =>
-      normalize(team.name).includes(query)
-      || (team.players ?? []).some(player =>
-        normalize(player.displayName).includes(query)
-        || normalize(player.username).includes(query))) : this.teams;
+    if (!query) return this.teams;
+    const labels = (team: TournamentTeam): string[] => [
+      normalize(team.name),
+      ...(team.players ?? []).flatMap(player => [
+        normalize(player.displayName), normalize(player.username)
+      ])
+    ].filter(Boolean);
+    const ranked = this.teams.map((team, index) => {
+      const values = labels(team);
+      const relevance = values.some(value => value === query) ? 0
+        : values.some(value => value.startsWith(query)) ? 1
+        : values.some(value => value.includes(query)) ? 2 : 3;
+      return { team, index, relevance };
+    });
+    return ranked.filter(item => item.relevance < 3)
+      .sort((a, b) => a.relevance - b.relevance || a.index - b.index)
+      .map(item => item.team);
   }
 
   get teamQuickSwitchTeams(): TournamentTeam[] {
