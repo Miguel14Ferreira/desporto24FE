@@ -1279,6 +1279,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.authentication.loggedInPerfilname || '').toLowerCase();
   }
 
+  /** Only build a profile link when its username is a usable route segment. */
+  teamPlayerProfileUsername(username: string | null | undefined): string | null {
+    const value = username?.trim();
+    return value || null;
+  }
+
   /** Never offer a self-chat or an invalid direct-message recipient. */
   canMessageTeamPlayer(username: string | null | undefined): boolean {
     const recipient = username?.trim().toLowerCase();
