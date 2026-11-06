@@ -1730,7 +1730,7 @@ export const EN: Record<string, string> = {
   'communities.tournaments.eligibility.refresh': 'Refresh check',
   'communities.tournaments.eligibility.description': 'Check registrations and teams before the match. This check includes players suspended after registering and does not change past results.',
   'communities.tournaments.eligibility.loading': 'Checking existing registrations…',
-  'communities.tournaments.eligibility.suspendedCount': '{count} suspended player(s) are registered in this tournament.',
+  'communities.tournaments.eligibility.suspendedCount': '{{count}} suspended player(s) are registered in this tournament.',
   'communities.tournaments.eligibility.team': 'team',
   'communities.tournaments.eligibility.confirmed': 'Confirmed',
   'communities.tournaments.eligibility.pending': 'Pending',
