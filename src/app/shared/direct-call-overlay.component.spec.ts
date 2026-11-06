@@ -288,7 +288,7 @@ describe('Global incoming call popup', () => {
     const host=fixture.nativeElement as HTMLElement;
     expect(host.textContent).toContain('permissões do site');
     expect(host.textContent).toContain('barra de endereço');
-    expect(host.textContent).toContain('Tentar câmara novamente');
+    expect(host.querySelector('.call-retry')).toBeTruthy();
     expect(calls.end).not.toHaveBeenCalled();
   });
 
