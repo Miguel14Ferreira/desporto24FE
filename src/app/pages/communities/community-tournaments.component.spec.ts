@@ -3856,6 +3856,24 @@ describe('Community tournaments management', () => {
       expect(api.addTeamPlayer).not.toHaveBeenCalled();
     });
 
+    it('keeps team roster filters and own-team lookup safe with missing usernames', () => {
+      const anonymous = { profileId: 7, username: null as unknown as string, displayName: 'Álvaro' };
+      const named = { profileId: 8, username: 'owner', displayName: 'Organizador' };
+      const unlabelled = { profileId: 9, username: null as unknown as string,
+        displayName: null as unknown as string };
+      const roster = { ...team, players: [named, unlabelled, anonymous] };
+      api.teams.and.returnValue(of([roster]));
+      component.selectTournament(teamDraft);
+      expect(component.myTeam?.id).toBe(team.id);
+      expect(component.filteredTeamRoster(roster).map(player => player.profileId)).toEqual([9, 7, 8]);
+      component.setTeamRosterSearch(team.id, 'ALVARO');
+      expect(component.filteredTeamRoster(roster).map(player => player.profileId)).toEqual([7]);
+      component.setTeamRosterSearch(team.id, 'not-found');
+      expect(component.filteredTeamRoster(roster)).toEqual([]);
+      expect(roster.players.map(player => player.profileId)).toEqual([8, 9, 7]);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('displays team players alphabetically without reordering the API roster', () => {
       const players = [
         { profileId: 5, username: 'zoe', displayName: 'Zoé' },
