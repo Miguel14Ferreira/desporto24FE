@@ -84,8 +84,17 @@ export function sportForRound(
 ): string | null {
   if (round.sport?.trim()) return round.sport.trim();
   if (!group) return null;
-  const sports = group.sports?.length ? group.sports : (group.sport ? [group.sport] : []);
-  return sports.length === 1 ? sports[0] : null;
+  const rawSports = group.sports?.length ? group.sports : (group.sport ? [group.sport] : []);
+  // Imported/legacy communities may repeat the same sport or contain blanks.
+  // Only infer a missing round sport when exactly one distinct sport remains.
+  const sports = new Map<string, string>();
+  for (const candidate of rawSports) {
+    const trimmed = candidate?.trim();
+    if (trimmed && !sports.has(normalized(trimmed))) {
+      sports.set(normalized(trimmed), trimmed);
+    }
+  }
+  return sports.size === 1 ? [...sports.values()][0] : null;
 }
 
 /**
