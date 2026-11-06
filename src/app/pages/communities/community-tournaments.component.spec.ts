@@ -3771,6 +3771,28 @@ describe('Community tournaments management', () => {
       expect(component.teamRosterSearch).toEqual({});
     });
 
+    it('cancels pending destructive roster actions when changing the team page', () => {
+      const blue = { ...team, id: 41, name: 'Azuis', players: [] };
+      const green = { ...team, players: [
+        { profileId: 1, username: 'ana', displayName: 'Ana' }
+      ] };
+      api.teams.and.returnValue(of([green, blue]));
+      component.selectTournament(teamDraft);
+      component.teamPageId = 40;
+      component.requestTeamPlayerRemoval(green, 1);
+      expect(component.confirmingTeamPlayerRemoval).toEqual({ teamId: 40, profileId: 1 });
+      component.teamPageId = 41;
+      component.ngOnChanges({ teamPageId: new SimpleChange(40, 41, false) });
+      expect(component.confirmingTeamPlayerRemoval).toBeNull();
+      component.requestEmptyTeamDeletion(blue);
+      expect(component.confirmingEmptyTeamId).toBe(41);
+      component.teamPageId = 40;
+      component.ngOnChanges({ teamPageId: new SimpleChange(41, 40, false) });
+      expect(component.confirmingEmptyTeamId).toBeNull();
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+    });
+
     it('switches between focused teams without sending changes to the backend', () => {
       const blue = { ...team, id: 41, name: 'Azuis' };
       api.teams.and.returnValue(of([team, blue]));
