@@ -3617,6 +3617,40 @@ describe('Community tournaments management', () => {
       }
     });
 
+    it('does not copy invitations for stale, full or unavailable team rosters', async () => {
+      api.teams.and.returnValue(of([{ ...team, players: [
+        { profileId: 1, username: 'one', displayName: 'One' },
+        { profileId: 2, username: 'two', displayName: 'Two' },
+        { profileId: 3, username: 'three', displayName: 'Three' },
+        { profileId: 4, username: 'four', displayName: 'Four' },
+        { profileId: 5, username: 'five', displayName: 'Five' }
+      ] }]));
+      component.selectTournament(teamDraft);
+      const clipboard = jasmine.createSpy('writeText').and.resolveTo();
+      const oldClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true, value: { writeText: clipboard }
+      });
+      try {
+        await component.copyTeamInvite(team);
+        await component.copyTeamInvite({ ...team, id: 999 });
+        expect(clipboard).not.toHaveBeenCalled();
+
+        component.teams = [team];
+        component.detailsLoading = true;
+        await component.copyTeamInvite(team);
+        expect(clipboard).not.toHaveBeenCalled();
+
+        component.detailsLoading = false;
+        component.teamsLoadError = true;
+        await component.copyTeamInvite(team);
+        expect(clipboard).not.toHaveBeenCalled();
+      } finally {
+        if (oldClipboard) Object.defineProperty(navigator, 'clipboard', oldClipboard);
+        else delete (navigator as any).clipboard;
+      }
+    });
+
     it('switches between focused teams without sending changes to the backend', () => {
       const blue = { ...team, id: 41, name: 'Azuis' };
       api.teams.and.returnValue(of([team, blue]));
