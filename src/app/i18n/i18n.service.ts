@@ -3053,6 +3053,7 @@ const PT: Dictionary = {
   'communities.tournaments.capabilities.model.TRACK_BEST_TIME': "Atletismo de pista: classificação por tempo e distância.",
   'communities.trackTournament.title': "Atletismo · melhores tempos",
   'communities.trackTournament.disciplineTitle': "Distância da prova",
+  'communities.relayTournament.disciplineTitle': 'Prova de estafeta',
   'communities.trackTournament.flatGroup': "Corridas de pista",
   'communities.trackTournament.obstacleGroup': "Barreiras e obstáculos",
   'communities.trackTournament.disciplineHelp': "Cada prova tem a sua classificação. Escalões e eliminatórias ainda não são verificados.",
