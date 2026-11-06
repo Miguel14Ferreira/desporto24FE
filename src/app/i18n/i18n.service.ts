@@ -2876,6 +2876,8 @@ const PT: Dictionary = {
   'communities.tournaments.createUi.sportToggleCancel': "Cancelar",
   'communities.tournaments.createUi.sportToggleChange': "Alterar",
   'communities.tournaments.createUi.moreSports': "+{{count}} modalidades pesquisáveis",
+  'communities.tournaments.createUi.showAllSports': "Ver todas as modalidades",
+  'communities.tournaments.createUi.showLessSports': "Ver menos modalidades",
   'communities.tournaments.createUi.createButtonUnavailable': "Formato ainda indisponível",
   'communities.tournaments.createUi.createButtonTeams': "Criar e preparar equipas",
   'communities.tournaments.createUi.createButtonIndividual': "Confirmar liga individual",
