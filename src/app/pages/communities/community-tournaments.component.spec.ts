@@ -3672,6 +3672,30 @@ describe('Community tournaments management', () => {
       expect(component.teamWhatsAppUrl({ ...team, id: 999 })).toBe('');
     });
 
+    it('does not restore copied-link feedback after a roster reload during clipboard write', async () => {
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      let finishCopy!: () => void;
+      const deferred = new Promise<void>(resolve => { finishCopy = resolve; });
+      const oldClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: jasmine.createSpy('writeText').and.returnValue(deferred) }
+      });
+      try {
+        const pending = component.copyTeamInvite(team);
+        component.loadTeams();
+        expect(component.inviteCopyFeedback).toEqual({});
+        finishCopy();
+        await pending;
+        expect(component.inviteCopyFeedback).toEqual({});
+        expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+      } finally {
+        if (oldClipboard) Object.defineProperty(navigator, 'clipboard', oldClipboard);
+        else delete (navigator as any).clipboard;
+      }
+    });
+
     it('ignores clipboard completion after switching tournaments', async () => {
       api.teams.and.returnValue(of([team]));
       component.selectTournament(teamDraft);
