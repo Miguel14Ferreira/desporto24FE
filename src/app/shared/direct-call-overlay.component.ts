@@ -168,12 +168,21 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
           <div class="call-feedback" aria-live="polite">
             @if (call.error) {
               <p class="call-error" role="alert">{{ call.error | t }}</p>
-              @if (call.media === 'video' && !call.cameraEnabled && call.phase !== 'error') {
+              @if (call.error.startsWith('calls.camera') && !call.cameraEnabled && call.phase !== 'error') {
                 <div class="call-recovery-actions">
                   <button type="button" class="call-retry" [disabled]="calls.busyMedia$ | async"
                     (click)="calls.setCamera(true)">{{ 'calls.retryCamera' | t }}</button>
                   <button type="button" class="call-retry" [disabled]="calls.busyMedia$ | async"
                     (click)="toggleSettings(true)">{{ 'calls.chooseCamera' | t }}</button>
+                </div>
+              }
+              @if (call.error.startsWith('calls.microphone') && !call.micEnabled && call.phase !== 'error') {
+                <div class="call-recovery-actions">
+                  <button type="button" class="call-retry" [disabled]="calls.busyMedia$ | async"
+                    (click)="calls.setMicrophone(true)">Tentar microfone novamente</button>
+                  <button type="button" class="call-retry" (click)="toggleSettings(true)">
+                    Escolher outro microfone
+                  </button>
                 </div>
               }
             }
@@ -296,12 +305,17 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               <div class="call-device-panel" role="group" [attr.aria-label]="'calls.settings' | t">
                 <div class="call-settings-head">
                   <strong>{{ 'calls.devices' | t }}</strong>
-                  <span class="call-device-auto-refresh">Lista atualizada ao abrir as definições</span>
+                  @if ((calls.deviceScanStatus$ | async) === 'scanning') {
+                    <span class="call-device-auto-refresh" role="status">A procurar dispositivos…</span>
+                  } @else if ((calls.deviceScanStatus$ | async) === 'unavailable') {
+                    <span class="call-device-auto-refresh" role="alert">O navegador não permite consultar os dispositivos.</span>
+                  } @else {
+                    <span class="call-device-auto-refresh">Dispositivos detetados automaticamente</span>
+                  }
                 </div>
                 @if (calls.devices$ | async; as devices) {
-                  @if (true) {
-                    <label for="call-camera">{{ 'calls.cameraDevice' | t }}</label>
-                    <select id="call-camera" [disabled]="calls.busyMedia$ | async"
+                  <label for="call-camera">{{ 'calls.cameraDevice' | t }}</label>
+                    <select id="call-camera" [disabled]="(calls.busyMedia$ | async) || (calls.deviceScanStatus$ | async) === 'scanning' || (calls.deviceScanStatus$ | async) === 'unavailable'"
                       (change)="selectDevice('videoinput', $event)">
                       <option value="">{{ 'calls.selectDevice' | t }}</option>
                       @for (device of devices; track device.deviceId) {
@@ -312,9 +326,8 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                         }
                       }
                     </select>
-                  }
                   <label for="call-microphone">{{ 'calls.microphoneDevice' | t }}</label>
-                  <select id="call-microphone" [disabled]="calls.busyMedia$ | async"
+                  <select id="call-microphone" [disabled]="(calls.busyMedia$ | async) || (calls.deviceScanStatus$ | async) === 'scanning' || (calls.deviceScanStatus$ | async) === 'unavailable'"
                     (change)="selectDevice('audioinput', $event)">
                     <option value="">{{ 'calls.selectDevice' | t }}</option>
                     @for (device of devices; track device.deviceId) {
@@ -327,7 +340,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                   </select>
                   @if (speakerSelectionSupported) {
                   <label for="call-speaker">{{ 'calls.speakerDevice' | t }}</label>
-                  <select id="call-speaker" [disabled]="calls.busyMedia$ | async"
+                  <select id="call-speaker" [disabled]="(calls.busyMedia$ | async) || (calls.deviceScanStatus$ | async) === 'scanning' || (calls.deviceScanStatus$ | async) === 'unavailable'"
                     (change)="selectDevice('audiooutput', $event)">
                     <option value="">{{ 'calls.selectDevice' | t }}</option>
                     @for (device of devices; track device.deviceId) {
@@ -339,7 +352,10 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                     }
                   </select>
                 }
+                  @if ((calls.deviceScanStatus$ | async) === 'ready' && devices.length === 0) {
+                    <p role="status">Não foram encontrados dispositivos. Confirma as permissões no navegador.</p>
                   }
+                }
                 <p>{{ 'calls.devicesHelp' | t }}</p>
               </div>
             }
