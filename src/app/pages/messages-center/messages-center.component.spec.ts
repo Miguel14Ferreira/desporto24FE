@@ -2764,6 +2764,47 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('does not start a stale verification after the user resolves delivery uncertainty', () => {
+    const bea=item('direct','bea'), other=item('community',7);
+    component.conversations=[bea,other];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    direct.send.and.returnValue(throwError(()=>new HttpErrorResponse({status:503})));
+    component.selectConversation(bea);
+    component.draft='Mensagem não confirmada';
+    component.sendMessage();
+    const original=(component as any).pendingByConversation.get(bea.key);
+    expect(original).toBeTruthy();
+    component.resumeAfterUncertainSend();
+    expect(component.deliveryUncertain).toBeFalse();
+    direct.recentHistory.calls.reset();
+    component.selectConversation(other);
+    (component as any).checkPendingDelivery(bea,original);
+    expect(direct.recentHistory).not.toHaveBeenCalled();
+    expect((component as any).verifyingKeys.has(bea.key)).toBeFalse();
+    expect(component.selectedKey).toBe(other.key);
+    expect(component.deliveryChecking).toBeFalse();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a queued recovery check for a conversation that was removed', () => {
+    const bea=item('direct','bea'), other=item('community',7);
+    component.conversations=[bea,other];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    direct.send.and.returnValue(throwError(()=>new HttpErrorResponse({status:503})));
+    component.selectConversation(bea);
+    component.draft='Mensagem por confirmar';
+    component.sendMessage();
+    const original=(component as any).pendingByConversation.get(bea.key);
+    component.conversations=[other];
+    direct.recentHistory.calls.reset();
+    (component as any).checkPendingDelivery(bea,original);
+    expect(direct.recentHistory).not.toHaveBeenCalled();
+    expect((component as any).verifyingKeys.has(bea.key)).toBeFalse();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps a newer delivery verification locked when an older GET finishes late', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];
