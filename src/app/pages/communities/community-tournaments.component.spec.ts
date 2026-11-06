@@ -5039,6 +5039,21 @@ describe('Community tournaments management', () => {
     expect(api.standings).toHaveBeenCalledWith(7, 9);
   });
 
+  it('does not paginate before the initial roster is ready or while it is reloading', () => {
+    component.participantsHasMore = true;
+    component.rosterReady = false;
+    api.participants.calls.reset();
+    component.loadMoreParticipants();
+    expect(api.participants).not.toHaveBeenCalled();
+
+    component.rosterReady = true;
+    component.detailsLoading = true;
+    component.loadMoreParticipants();
+    expect(api.participants).not.toHaveBeenCalled();
+    expect(component.busy).toBeFalse();
+    expect(component.participantsPage).toBe(0);
+  });
+
   it('deduplicates overlapping participant pages and keeps the latest enrollment status', () => {
     const original: TournamentParticipant = {
       profileId: 21, username: 'ana', displayName: 'Ana',
@@ -5050,6 +5065,7 @@ describe('Community tournaments management', () => {
     };
     component.participants = [original];
     component.participantsPage = 0;
+    component.rosterReady = true;
     component.participantsHasMore = true;
     api.participants.and.returnValue(of({
       participants: [{...original, status: 'CONFIRMED'}, newcomer],
@@ -5071,6 +5087,7 @@ describe('Community tournaments management', () => {
     };
     component.participants = [player];
     component.participantsPage = 0;
+    component.rosterReady = true;
     component.participantsHasMore = true;
     api.participants.calls.reset();
     api.participants.and.returnValue(of({
@@ -5094,6 +5111,7 @@ describe('Community tournaments management', () => {
   it('releases the busy state on tournament switch while an old participants page is loading', () => {
     const pendingPage = new Subject<TournamentParticipantPage>();
     api.participants.and.returnValue(pendingPage);
+    component.rosterReady = true;
     component.participantsHasMore = true;
     component.loadMoreParticipants();
     expect(component.busy).toBeTrue();
