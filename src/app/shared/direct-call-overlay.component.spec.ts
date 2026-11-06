@@ -281,4 +281,25 @@ describe('Global incoming call popup', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Tentar câmara novamente');
   });
 
+  it('guides users to site permissions after a camera denial, without retrying on their behalf', () => {
+    state.next({...invitation('video'), phase:'active', startedAt:Date.now(),
+      error:'calls.cameraDenied', cameraEnabled:false});
+    fixture.detectChanges();
+    const host=fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('permissões do site');
+    expect(host.textContent).toContain('barra de endereço');
+    expect(host.textContent).toContain('Tentar câmara novamente');
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
+  it('shows distinct recovery instructions for disconnected and busy hardware', () => {
+    expect(fixture.componentInstance.recoveryHintKey('calls.microphoneBusy'))
+      .toBe('calls.recoveryBusyHint');
+    expect(fixture.componentInstance.recoveryHintKey('calls.cameraMissing'))
+      .toBe('calls.recoveryMissingHint');
+    expect(fixture.componentInstance.recoveryHintKey('calls.microphoneDenied'))
+      .toBe('calls.recoveryPermissionHint');
+    expect(fixture.componentInstance.recoveryHintKey('calls.connectionLost')).toBeNull();
+  });
+
 });
