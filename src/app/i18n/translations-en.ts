@@ -4591,6 +4591,8 @@ export const EN: Record<string, string> = {
   'chat.noReactionsHere': 'No reactions of this kind.',
   'calls.reconnecting': 'Reconnecting…',
   'calls.chooseCamera': 'Choose another camera',
+  'calls.chooseMicrophone': 'Choose another microphone',
+  'calls.retryMicrophone': 'Retry microphone',
   'calls.swapView': 'Swap view',
   'calls.shareScreen': 'Share screen',
   'calls.fullScreenShareHint': 'To share your full monitor, choose “Entire screen” in the browser picker.',
