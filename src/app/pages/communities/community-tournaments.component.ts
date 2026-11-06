@@ -1389,13 +1389,15 @@ export class CommunityTournamentsComponent implements OnChanges {
   filteredTeamRoster(team: TournamentTeam): TournamentTeam['players'] {
     const query = (this.teamRosterSearch[team.id] || '').normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
-    const matches = (value: string) => value.normalize('NFD')
+    const matches = (value: string | null | undefined) => (value || '').normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().includes(query);
+    const compare = (a: string | null | undefined, b: string | null | undefined) =>
+      (a || '').localeCompare(b || '', 'pt', { sensitivity: 'base' });
     return team.players
-      .filter(player => !query || matches(player.displayName || '') || matches(player.username || ''))
+      .filter(player => !query || matches(player.displayName) || matches(player.username))
       .slice().sort((a, b) =>
-        (a.displayName || a.username).localeCompare(b.displayName || b.username, 'pt', { sensitivity: 'base' })
-        || a.username.localeCompare(b.username, 'pt', { sensitivity: 'base' })
+        compare(a.displayName || a.username, b.displayName || b.username)
+        || compare(a.username, b.username)
         || a.profileId - b.profileId);
   }
 
@@ -1677,7 +1679,7 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get myTeam(): TournamentTeam | undefined {
     return this.teams.find(team => team.players.some(player =>
-      player.username.toLowerCase() === this.myUsername));
+      !!this.myUsername && player.username?.trim().toLowerCase() === this.myUsername));
   }
 
   /** Invite links follow the same roster and draft-only checks as copy actions. */
