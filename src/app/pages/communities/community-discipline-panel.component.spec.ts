@@ -14,11 +14,17 @@ describe('Community discipline panel', () => {
   } as CommunityGroup;
 
   const api = jasmine.createSpyObj<CommunityDisciplineService>(
-    'CommunityDisciplineService', ['mine', 'list', 'warn', 'myAppeals', 'listAppeals', 'appeal']);
+    'CommunityDisciplineService', ['mine', 'list', 'warn', 'myAppeals', 'listAppeals', 'appeal', 'myDecisions', 'listDecisions', 'decide']);
   const changeDetector = jasmine.createSpyObj('ChangeDetectorRef', ['markForCheck']);
   let component: CommunityDisciplinePanelComponent;
 
   beforeEach(() => {
+    api.myDecisions.and.returnValue(of([]));
+    api.listDecisions.and.returnValue(of([]));
+    api.decide.and.returnValue(of({
+      id: 70, appealId: 52, communityId: 7, reviewedByProfileId: 12,
+      outcome: 'OVERTURNED', reason: 'Motivo válido', decidedAt: '2026-11-06T14:00:00Z'
+    }));
     api.myAppeals.and.returnValue(of([]));
     api.listAppeals.and.returnValue(of([]));
     api.appeal.and.returnValue(of({ id: 52, warningId: 42, communityId: 7,
@@ -38,6 +44,9 @@ describe('Community discipline panel', () => {
     api.appeal.calls.reset();
     api.myAppeals.calls.reset();
     api.listAppeals.calls.reset();
+    api.myDecisions.calls.reset();
+    api.listDecisions.calls.reset();
+    api.decide.calls.reset();
   });
 
   it('only offers ordinary members as warning targets', () => {
@@ -136,6 +145,56 @@ describe('Community discipline panel', () => {
     expect(component.error).toContain('Não foi possível');
     expect(component.appealDrafts[42]).toBe('A minha versão');
     expect(component.appealSavingId).toBeNull();
+  });
+
+  it('lists decisions only in the caller permitted scope', () => {
+    component.load();
+    expect(api.listDecisions).toHaveBeenCalledWith(7);
+    component.canManage = false;
+    component.load();
+    expect(api.myDecisions).toHaveBeenCalledWith(7);
+  });
+
+  it('manager can submit one reasoned appeal decision', () => {
+    component.appeals = [{
+      id: 52, warningId: 42, communityId: 7, authorProfileId: 11,
+      statement: 'A minha versão', createdAt: '2026-11-06T13:00:00Z'
+    }];
+    component.decisionOutcomes[52] = 'OVERTURNED';
+    component.decisionReasons[52] = '  Motivo válido  ';
+    component.decideAppeal(52);
+    expect(api.decide).toHaveBeenCalledOnceWith(7, 52, 'OVERTURNED', 'Motivo válido');
+    expect(component.decisionFor(52)?.outcome).toBe('OVERTURNED');
+    component.decisionReasons[52] = 'Alterar';
+    component.decideAppeal(52);
+    expect(api.decide).toHaveBeenCalledTimes(1);
+  });
+
+  it('member cannot review an appeal or decide without a reason', () => {
+    component.appeals = [{
+      id: 52, warningId: 42, communityId: 7, authorProfileId: 11,
+      statement: 'Contestação', createdAt: '2026-11-06T13:00:00Z'
+    }];
+    component.decisionReasons[52] = 'Motivo';
+    component.canManage = false;
+    component.decideAppeal(52);
+    component.canManage = true;
+    component.decisionReasons[52] = ' ';
+    component.decideAppeal(52);
+    expect(api.decide).not.toHaveBeenCalled();
+  });
+
+  it('preserves decision reason if backend refuses same-issuer review', () => {
+    api.decide.and.returnValue(throwError(() => new Error('forbidden')));
+    component.appeals = [{
+      id: 52, warningId: 42, communityId: 7, authorProfileId: 11,
+      statement: 'Contestação', createdAt: '2026-11-06T13:00:00Z'
+    }];
+    component.decisionReasons[52] = 'Revisão independente';
+    component.decideAppeal(52);
+    expect(component.error).toContain('Não foi possível');
+    expect(component.decisionReasons[52]).toBe('Revisão independente');
+    expect(component.decisionSavingId).toBeNull();
   });
 
 });
