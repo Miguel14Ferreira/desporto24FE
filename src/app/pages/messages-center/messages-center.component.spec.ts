@@ -2841,6 +2841,28 @@ describe('Unified Jynlo message center', () => {
     expect(component.draft).toBe('Pendente antiga');
   });
 
+  it('ignores a late successful POST from the previous login', () => {
+    const peer=item('direct','bea');
+    let activeToken='original-login';
+    spyOn(localStorage,'getItem').and.callFake(key => key === 't' ? activeToken : null);
+    (component as any).receiptSessionToken=activeToken;
+    component.conversations=[peer];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    const result=new Subject<any>();
+    direct.send.and.returnValue(result.asObservable());
+    component.selectConversation(peer);
+    component.draft='Mensagem da conta antiga';
+    component.sendMessage();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+    activeToken='new-login';
+    result.next({id:221,username1:'ana',username2:'bea',
+      text:'Mensagem da conta antiga',date:new Date().toISOString(),dataDisplay:null});
+    result.complete();
+    expect(component.messages).toEqual([]);
+    expect(component.draft).toBe('Mensagem da conta antiga');
+    expect(component.conversations[0].latestMessageId).toBeUndefined();
+  });
+
   it('keeps a newer delivery verification locked when an older GET finishes late', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];
