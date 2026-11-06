@@ -225,7 +225,7 @@ describe('Global incoming call popup', () => {
     fixture.detectChanges();
     expect(calls.refreshDevices).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('.call-scan')).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Lista atualizada');
+    expect(fixture.nativeElement.textContent).toContain('Dispositivos detetados automaticamente');
   });
 
   it('keeps the presentation in a primary stage with both cameras in the filmstrip', () => {
