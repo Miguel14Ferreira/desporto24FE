@@ -1388,6 +1388,11 @@ export class CommunityTournamentsComponent implements OnChanges {
       .slice(0, this.teamMemberSuggestionLimit);
   }
 
+  /** Keep an active member filter editable even if fewer candidates remain. */
+  showTeamMemberSearch(teamId: number): boolean {
+    return this.availableTeamMembers.length > 6 || !!this.teamMemberSearch[teamId]?.trim();
+  }
+
   /** Keep the search input visible until an active filter is cleared, even if
    * a roster shrinks below the threshold while the organizer is searching. */
   showTeamRosterSearch(team: TournamentTeam): boolean {
