@@ -76,9 +76,11 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
           </div>
           <div class="connect-mini-name"><span class="call-incoming-pulse"></span>
             <strong>{{ call.peer }}</strong>
-            <small>{{ (call.startedAt ? 'calls.connected' : 'calls.ringing') | t }}</small>
+            <small>{{ (call.phase === 'connecting' ? 'calls.reconnecting' : (call.startedAt ? 'calls.connected' : 'calls.ringing')) | t }}</small>
           </div>
-          <button type="button" (click)="minimized=false">{{ 'calls.expand' | t }}</button>
+          <button type="button" class="connect-mini-chat" (click)="openChat(call.peer)"
+            aria-label="Abrir mensagens sem desligar a chamada">Chat</button>
+          <button type="button" class="connect-mini-expand" (click)="minimized=false">{{ 'calls.expand' | t }}</button>
           <button type="button" class="connect-mini-hangup" (click)="calls.end()"
             [attr.aria-label]="'calls.hangUp' | t">✕</button>
         </div>
@@ -647,6 +649,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .connect-mini-name strong,.connect-mini-name small{grid-column:2}.connect-mini-name span{grid-row:1/3;align-self:center}
     .connect-mini-name small{color:#a9d1d5}.connect-mini button{padding:9px;border-radius:9px;border:1px solid #468e89;
       color:white;background:#155551;cursor:pointer;font:inherit;font-size:.76rem}
+    .connect-mini .connect-mini-chat{background:#174c58;border-color:#59a99a}
     .connect-mini .connect-mini-hangup{background:#903e50;border-color:#b85d6a}
     .connect-mini-audio{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
     @media(max-width:600px){
@@ -809,7 +812,8 @@ export class DirectCallOverlayComponent implements OnDestroy {
   }
 
   openChat(peer: string): void {
-    // Keep the WebRTC call alive while navigating to the conversation.
+    // A floating active call is global: navigating never tears down LiveKit.
+    if (!peer.trim() || !this.calls.state$.value) return;
     this.minimize();
     void this.router?.navigate(['/menu/messages'], {
       queryParams: {kind: 'direct', id: peer}
