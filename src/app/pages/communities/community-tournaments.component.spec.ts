@@ -4026,6 +4026,24 @@ describe('Community tournaments management', () => {
       expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([1,3,4,5]);
     });
 
+    it('clearing manual member search resets its hidden selection without touching another team', () => {
+      component.community = { ...community, members, memberCount: 3 };
+      api.teams.and.returnValue(of([team, { ...team, id: 41, name: 'Azuis' }]));
+      component.selectTournament(teamDraft);
+      component.setTeamMemberSearch(team.id, 'ana');
+      component.setTeamMemberSearch(41, 'bruno');
+      component.teamPlayerDraft[team.id] = 2;
+      component.teamPlayerDraft[41] = 3;
+      expect(component.showTeamMemberSearch(team.id)).toBeTrue();
+      component.setTeamMemberSearch(team.id, '');
+      expect(component.teamMemberSearch[team.id]).toBe('');
+      expect(component.teamPlayerDraft[team.id]).toBeNull();
+      expect(component.teamMemberSearch[41]).toBe('bruno');
+      expect(component.teamPlayerDraft[41]).toBe(3);
+      expect(component.filteredTeamMembers(team.id)).toHaveSize(3);
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('keeps an active assignment search accessible after every member is assigned', () => {
       component.community = { ...community, members, memberCount: 3 };
       api.teams.and.returnValue(of([team]));
