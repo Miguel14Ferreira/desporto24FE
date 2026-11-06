@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of } from 'rxjs';
+import { Track } from 'livekit-client';
 import { CommunityService } from '../services/community.service';
 import { DirectCallClientService, DirectCallState } from '../services/direct-call-client.service';
 import { DirectCallOverlayComponent } from './direct-call-overlay.component';
@@ -224,6 +225,40 @@ describe('Global incoming call popup', () => {
     expect(calls.refreshDevices).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('.call-scan')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Lista atualizada');
+  });
+
+  it('keeps the presentation in a primary stage with both cameras in the filmstrip', () => {
+    const makeTrack = () => ({
+      attach: jasmine.createSpy('attach'),
+      detach: jasmine.createSpy('detach')
+    });
+    const local = {
+      identity: 'local',
+      videoTrackPublications: new Map([
+        ['camera', {source: Track.Source.Camera, track: makeTrack(), isMuted: false}]
+      ]),
+      audioTrackPublications: new Map(), isSpeaking: false, isMicrophoneEnabled: true
+    };
+    const remote = {
+      identity: 'remote',
+      videoTrackPublications: new Map([
+        ['screen', {source: Track.Source.ScreenShare, track: makeTrack(), isMuted: false}],
+        ['camera', {source: Track.Source.Camera, track: makeTrack(), isMuted: false}]
+      ]),
+      audioTrackPublications: new Map(), isSpeaking: false, isMicrophoneEnabled: true
+    };
+    calls.room = {localParticipant: local, remoteParticipants: new Map([['remote', remote]])};
+    state.next({...invitation('video'), phase: 'active', startedAt: Date.now()});
+    fixture.detectChanges();
+
+    const body = fixture.nativeElement as HTMLElement;
+    const stage = body.querySelector('.connect-presentation-stage');
+    const filmstrip = body.querySelector('.connect-camera-strip');
+    expect(stage).toBeTruthy();
+    expect(stage?.querySelectorAll('app-call-participant-tile').length).toBe(1);
+    expect(filmstrip?.querySelectorAll('app-call-participant-tile').length).toBe(2);
+    expect(body.querySelectorAll('.connect-presentation-tile').length).toBe(1);
+    expect(calls.end).not.toHaveBeenCalled();
   });
 
 });
