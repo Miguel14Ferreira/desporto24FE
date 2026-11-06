@@ -11,7 +11,7 @@ import { LocalParticipant, RemoteParticipant, Track } from 'livekit-client';
   imports: [CommonModule, TranslatePipe],
   template: `
     <article class="connect-tile" [class.speaking]="participant.isSpeaking"
-      [class.presenting]="isSharing" [class.with-video]="hasVideo">
+      [class.presenting]="presentation" [class.with-video]="hasVideo">
       <video #video autoplay playsinline [muted]="local" [hidden]="!hasVideo"
         [attr.aria-label]="label"></video>
       @if (!hasVideo) {
@@ -36,7 +36,10 @@ import { LocalParticipant, RemoteParticipant, Track } from 'livekit-client';
     .connect-tile.speaking{border-color:#44ecc1;box-shadow:inset 0 0 0 2px #44ecc122}
     .connect-tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0a2029}
     .connect-tile video[hidden]{display:none}
-    .connect-tile video[muted]{transform:scaleX(-1)}
+    /* Desktop/window/tab shares must fit in full, never be cropped like webcam video. */
+    .connect-tile.presenting video{object-fit:contain}
+    .connect-tile.presenting video[muted]{transform:none}
+    .connect-tile:not(.presenting) video[muted]{transform:scaleX(-1)}
     .connect-avatar{display:grid;place-items:center;width:clamp(70px,10vw,112px);aspect-ratio:1;
       border-radius:50%;border:3px solid #55c8b77a;background:#286b68;font-size:clamp(2rem,4vw,2.7rem);
       font-weight:850;box-shadow:0 0 0 10px #4be8c311}
@@ -55,6 +58,8 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   @Input({required:true}) participant!: LocalParticipant | RemoteParticipant;
   @Input() label = '';
   @Input() local = false;
+  /** A separate presentation tile never replaces the user's own camera preview. */
+  @Input() presentation = false;
   /** Independently adjustable playback volume for every remote microphone. */
   @Input() volume = 1;
   @ViewChild('video') private videoElement?: ElementRef<HTMLVideoElement>;
@@ -64,14 +69,14 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
 
   private get activeVideo() {
     const publications=[...this.participant.videoTrackPublications.values()];
-    return (publications.find(p=>p.source===Track.Source.ScreenShare && !!p.track && !p.isMuted)
-      || publications.find(p=>!!p.track && !p.isMuted))?.track || null;
+    const desired=this.presentation ? Track.Source.ScreenShare : Track.Source.Camera;
+    return (publications.find(p=>p.source===desired && !!p.track && !p.isMuted)
+      || (!this.presentation && !this.local
+        ? publications.find(p=>p.source===Track.Source.ScreenShare && !!p.track && !p.isMuted)
+        : null))?.track || null;
   }
   get hasVideo(): boolean { return !!this.activeVideo; }
-  get isSharing(): boolean {
-    return [...this.participant.videoTrackPublications.values()]
-      .some(p=>p.source===Track.Source.ScreenShare && !!p.track && !p.isMuted);
-  }
+  get isSharing(): boolean { return this.presentation; }
 
   ngAfterViewChecked(): void {
     const video=this.videoElement?.nativeElement;
