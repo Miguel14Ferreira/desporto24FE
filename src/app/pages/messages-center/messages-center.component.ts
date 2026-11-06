@@ -2255,9 +2255,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.sendingKeys.delete(key);
       this.inFlightByConversation.delete(key);
       this.confirmedWhileSending.delete(key);
-      if (this.selectedKey === key) this.sending = false;
+      if (this.selectedKey === key
+          && (!this.receiptSessionToken || this.isReceiptSessionCurrent()))
+        this.sending = false;
     })).subscribe({
       next: message => {
+        // The HTTP POST belongs to the login that initiated it, even if
+        // another account has since replaced the token in this browser.
+        if (this.receiptSessionToken && !this.isReceiptSessionCurrent()) return;
         // The server's confirmed response belongs to the original thread,
         // even if the user navigated elsewhere while the POST was pending.
         this.acceptRealtime(key, message);
@@ -2289,6 +2294,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.composerError = '';
       },
       error: error => {
+        if (this.receiptSessionToken && !this.isReceiptSessionCurrent()) return;
         if (this.isUncertainError(error)) {
           // WebSocket can prove AFTER_COMMIT delivery before HTTP times out.
           // Resolve that race before marking a send uncertain or issuing
