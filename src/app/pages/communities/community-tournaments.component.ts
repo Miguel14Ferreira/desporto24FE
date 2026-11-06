@@ -1496,7 +1496,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       const relevance = labels.some(value => value === query) ? 0
         : labels.some(value => value.startsWith(query)) ? 1
         : labels.some(value => value.includes(query)) ? 2
-        : labels.some(value => terms.every(term => value.includes(term))) ? 3 : 4;
+        : labels.some(value => {
+            const words = value.split(/[\\s._-]+/).filter(Boolean);
+            return terms.every(term => words.some(word => word.startsWith(term)));
+          }) ? 3 : 4;
       return { team, index, relevance };
     });
     return ranked.filter(item => item.relevance < 4)
