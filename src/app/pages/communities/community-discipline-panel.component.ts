@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommunityGroup } from '../model/community-group';
-import { CommunityDisciplineService, CommunityDisciplinaryWarning } from '../../services/community-discipline.service';
+import { CommunityDisciplineService, CommunityDisciplinaryWarning, CommunityWarningAppeal } from '../../services/community-discipline.service';
 
 /** Community-only warnings. Suspensions and competition eligibility are not part of this phase. */
 @Component({
@@ -52,6 +52,22 @@ import { CommunityDisciplineService, CommunityDisciplinaryWarning } from '../../
               }
               <span>{{ warning.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
               <p>{{ warning.reason }}</p>
+              @if (appealFor(warning.id); as appeal) {
+                <p class="appeal-response"><strong>Contestação apresentada:</strong> {{ appeal.statement }}</p>
+              } @else if (!canManage) {
+                <form class="discipline-form" (ngSubmit)="submitAppeal(warning.id)">
+                  <label [for]="'appeal-statement-' + warning.id">A tua versão dos factos</label>
+                  <textarea [id]="'appeal-statement-' + warning.id"
+                            [name]="'appeal-statement-' + warning.id"
+                            [(ngModel)]="appealDrafts[warning.id]" rows="3" maxlength="2000"
+                            [disabled]="appealSavingId !== null" required
+                            placeholder="Explica o que aconteceu. A resposta ficará registada."></textarea>
+                  <button type="submit"
+                          [disabled]="appealSavingId !== null || !appealDrafts[warning.id]?.trim()">
+                    {{ appealSavingId === warning.id ? 'A enviar…' : 'Apresentar contestação' }}
+                  </button>
+                </form>
+              }
             </li>
           }
         </ul>
@@ -68,6 +84,7 @@ import { CommunityDisciplineService, CommunityDisciplinaryWarning } from '../../
     .discipline-history { margin: .5rem 0 0; padding-left: 1.3rem; }
     .discipline-history li { margin-bottom: .8rem; }
     .discipline-history p { margin: .3rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .appeal-response { padding: .7rem; background: var(--surface-muted, #77889918); border-radius: 8px; }
   `]
 })
 export class CommunityDisciplinePanelComponent implements OnChanges {
@@ -77,6 +94,9 @@ export class CommunityDisciplinePanelComponent implements OnChanges {
   targetProfileId: number | null = null;
   reason = '';
   warnings: CommunityDisciplinaryWarning[] = [];
+  appeals: CommunityWarningAppeal[] = [];
+  appealDrafts: Record<number, string> = {};
+  appealSavingId: number | null = null;
   loading = false;
   saving = false;
   error = '';
@@ -94,9 +114,14 @@ export class CommunityDisciplinePanelComponent implements OnChanges {
     if (changes['community'] || changes['canManage']) {
       this.targetProfileId = null;
       this.reason = '';
+      this.appealDrafts = {};
       this.feedback = '';
       this.load();
     }
+  }
+
+  appealFor(warningId: number): CommunityWarningAppeal | undefined {
+    return this.appeals.find(appeal => appeal.warningId === warningId);
   }
 
   memberName(profileId: number): string {
@@ -108,9 +133,24 @@ export class CommunityDisciplinePanelComponent implements OnChanges {
     const communityId = this.community?.id;
     const revision = ++this.revision;
     this.warnings = [];
+    this.appeals = [];
+    this.appealSavingId = null;
     this.error = '';
     if (!communityId) return;
     this.loading = true;
+    const appealRequest = this.canManage ? this.api.listAppeals(communityId) : this.api.myAppeals(communityId);
+    appealRequest.subscribe({
+      next: appeals => {
+        if (revision !== this.revision) return;
+        this.appeals = appeals;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        if (revision !== this.revision) return;
+        this.error = 'Não foi possível carregar as contestações.';
+        this.changeDetector.markForCheck();
+      }
+    });
     const request = this.canManage ? this.api.list(communityId) : this.api.mine(communityId);
     request.subscribe({
       next: warnings => {
@@ -156,4 +196,31 @@ export class CommunityDisciplinePanelComponent implements OnChanges {
       }
     });
   }
+  submitAppeal(warningId: number): void {
+    const statement = this.appealDrafts[warningId]?.trim() ?? '';
+    if (this.canManage || !this.community?.id || this.appealSavingId !== null
+        || !this.warnings.some(warning => warning.id === warningId)
+        || this.appealFor(warningId) || !statement || statement.length > 2000) return;
+    const revision = this.revision;
+    this.appealSavingId = warningId;
+    this.error = '';
+    this.feedback = '';
+    this.api.appeal(this.community.id, warningId, statement).subscribe({
+      next: appeal => {
+        if (revision !== this.revision) return;
+        this.appealSavingId = null;
+        this.appeals = [...this.appeals, appeal];
+        delete this.appealDrafts[warningId];
+        this.feedback = 'A tua contestação ficou registada.';
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        if (revision !== this.revision) return;
+        this.appealSavingId = null;
+        this.error = 'Não foi possível enviar a contestação. Tenta novamente.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
 }
