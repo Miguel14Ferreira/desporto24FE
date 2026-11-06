@@ -3047,6 +3047,7 @@ export const EN: Record<string, string> = {
   'communities.tournaments.capabilities.model.TRACK_BEST_TIME': "Track championships compare recorded times at one distance.",
   'communities.trackTournament.title': "Athletics · best times",
   'communities.trackTournament.disciplineTitle': "Race distance",
+  'communities.relayTournament.disciplineTitle': 'Relay event',
   'communities.trackTournament.flatGroup': "Track running",
   'communities.trackTournament.obstacleGroup': "Hurdles and steeplechase",
   'communities.trackTournament.disciplineHelp': "Every event has its own ranking. Age categories and heats are not yet verified.",
