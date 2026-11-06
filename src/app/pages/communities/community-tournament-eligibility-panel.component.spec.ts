@@ -24,6 +24,7 @@ describe('Tournament eligibility panel', () => {
     component = new CommunityTournamentEligibilityPanelComponent(api, detector);
     component.community = community;
     component.tournamentId = 19;
+    component.entryType = 'TEAM';
   });
 
   it('loads a scoped report for organizers, including previously enrolled players', () => {
@@ -47,6 +48,7 @@ describe('Tournament eligibility panel', () => {
     component.reload();
     expect(pending.observed).toBeTrue();
     component.tournamentId = 20;
+    component.entryType = 'INDIVIDUAL';
     api.overview.and.returnValue(of({
       tournamentId: 20, entryType: 'INDIVIDUAL', checkedAt: '2026-11-06T17:00:00Z',
       ineligibleEntries: []
@@ -84,6 +86,15 @@ describe('Tournament eligibility panel', () => {
       ineligibleEntries: [{profileId:11,teamId:8,participantStatus:'CONFIRMED',
         suspendedUntil:'2026-11-09T16:00:00Z'}]
     }));
+    component.reload();
+    expect(api.overview).toHaveBeenCalledOnceWith(7,19);
+    expect(component.overview).toBeNull();
+    expect(component.error).toBe('communities.tournaments.eligibility.loadError');
+    expect(component.loading).toBeFalse();
+  });
+
+  it('rejects a team eligibility report accidentally returned for an individual tournament', () => {
+    component.entryType = 'INDIVIDUAL';
     component.reload();
     expect(api.overview).toHaveBeenCalledOnceWith(7,19);
     expect(component.overview).toBeNull();
