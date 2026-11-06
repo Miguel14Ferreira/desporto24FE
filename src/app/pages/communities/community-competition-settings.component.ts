@@ -28,10 +28,13 @@ export class CommunityCompetitionSettingsComponent {
 
   /** Generic W/D/L applies only to head-to-head sports, never to a race by default. */
   get usesMatchPoints(): boolean {
-    return this.sports.length === 0 || this.sports.some(sport => {
-      const family = formatForSport(sport);
-      return family === 'team' || family === 'duel';
-    });
+    return this.classifiedSports.length === 0 || this.matchPointSports.length > 0;
+  }
+
+  /** Show which selected disciplines use match points in mixed-sport communities. */
+  get matchPointSports(): string[] {
+    return this.classifiedSports.filter(item => item.family === 'team' || item.family === 'duel')
+      .map(item => item.sport.trim());
   }
 
   /** Every selected sport has an explicit format; no football default for others. */
