@@ -76,6 +76,8 @@ export class DirectCallClientService implements OnDestroy {
   private peerExitTimer?: ReturnType<typeof setTimeout>;
   private refreshingDevices = false;
   private readonly onDevicesChanged = (): void => { void this.recoverDisconnectedDevices(); };
+  /** Suppress transient track-loss diagnostics while LiveKit restores transport. */
+  private transportReconnecting = false;
   private generation = 0;
   private checking = false;
   private recoveringPending = false;
@@ -730,6 +732,7 @@ export class DirectCallClientService implements OnDestroy {
   private failConnection(session: CallSession, version: number, message: string): void {
     if (version !== this.generation) return;
     ++this.generation;
+    this.transportReconnecting=false;
     this.clearRingTimer();
     this.clearPeerExitTimer();
     const room=this.room;
@@ -761,7 +764,8 @@ export class DirectCallClientService implements OnDestroy {
       if (room!==this.room) return;
       this.mediaChanged$.next(this.mediaChanged$.value+1);
       // A spontaneous local mute is not the same as a user clicking Mute.
-      if (participant===room.localParticipant && !this.busyMedia$.value)
+      if (participant===room.localParticipant && !this.busyMedia$.value
+          && !this.transportReconnecting)
         this.markUnexpectedLocalTrackLoss(publication.source);
     });
     room.on(RoomEvent.TrackUnmuted, () => {
@@ -771,7 +775,8 @@ export class DirectCallClientService implements OnDestroy {
       if (room!==this.room) return;
       this.mediaChanged$.next(this.mediaChanged$.value+1);
       if (publication.source===Track.Source.ScreenShare) this.screenShareEnabled$.next(false);
-      else if (!this.busyMedia$.value) this.markUnexpectedLocalTrackLoss(publication.source);
+      else if (!this.busyMedia$.value && !this.transportReconnecting)
+        this.markUnexpectedLocalTrackLoss(publication.source);
     });
     room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
       if (room!==this.room || participant!==room.localParticipant) return;
@@ -814,11 +819,26 @@ export class DirectCallClientService implements OnDestroy {
       },20_000);
     });
     room.on(RoomEvent.Reconnecting, () => {
-      if (this.room===room && version===this.generation) this.update({phase:'connecting'});
+      if (this.room!==room || version!==this.generation) return;
+      this.transportReconnecting=true;
+      this.connectionQuality$.next('unknown');
+      this.update({phase:'connecting'});
+      this.mediaChanged$.next(this.mediaChanged$.value+1);
     });
     room.on(RoomEvent.Reconnected, () => {
-      if (this.room===room && version===this.generation && room.remoteParticipants.size>0)
+      if (this.room!==room || version!==this.generation) return;
+      this.transportReconnecting=false;
+      this.connectionQuality$.next('unknown');
+      this.audioPlaybackBlocked$.next(room.canPlaybackAudio === false);
+      if (room.remoteParticipants.size>0) {
+        this.clearPeerExitTimer();
         this.update({phase:'active'});
+      }
+      // Existing tracks are retained by LiveKit; never re-enable a muted
+      // microphone/camera or re-open the screen-share picker on reconnect.
+      this.mediaChanged$.next(this.mediaChanged$.value+1);
+      void this.refreshDevices();
+      this.refreshMembers();
     });
     room.on(RoomEvent.Disconnected, () => {
       if (this.room===room) this.failConnection(session,version,'calls.connectionLost');
@@ -962,6 +982,7 @@ export class DirectCallClientService implements OnDestroy {
   private dropCall(): void {
     this.dismissBackgroundCallNotification();
     ++this.generation;
+    this.transportReconnecting=false;
     this.clearRingTimer();
     this.clearPeerExitTimer();
     const room=this.room;
