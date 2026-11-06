@@ -515,6 +515,86 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     http.expectOne(r=>r.url.endsWith('/api/calls/direct/duration/end')).flush(null);
   });
 
+  it('preserves muted media and refreshes the room view after transport reconnection', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners=new Map<string,(...args:any[])=>void>();
+    const peers=new Map<string,object>([['peer',{identity:'peer'}]]);
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake((event:string,cb:(...args:any[])=>void)=>{
+        listeners.set(event,cb);return room;
+      }),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      canPlaybackAudio:true,
+      remoteParticipants:peers,
+      localParticipant:{
+        setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo(),
+        setCameraEnabled:jasmine.createSpy('camera').and.resolveTo()
+      }
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const startedCall=calls.start('bea','voice');
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'transport-reconnect',peer:'bea',media:'voice',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await startedCall;
+    calls.state$.next({...calls.state$.value!,phase:'active',micEnabled:false,cameraEnabled:true});
+    calls.connectionQuality$.next('lost');
+    const startedAt=calls.state$.value?.startedAt;
+    const previousMic=room.localParticipant.setMicrophoneEnabled.calls.count();
+    const previousCamera=room.localParticipant.setCameraEnabled.calls.count();
+    const revision=calls.mediaChanged$.value;
+
+    listeners.get(RoomEvent.Reconnecting)?.();
+    expect(calls.state$.value?.phase).toBe('connecting');
+    expect(calls.connectionQuality$.value).toBe('unknown');
+    listeners.get(RoomEvent.LocalTrackUnpublished)?.({source:'camera'});
+    listeners.get(RoomEvent.TrackMuted)?.({source:'microphone'},room.localParticipant);
+    expect(calls.state$.value?.cameraEnabled).toBeTrue();
+    expect(calls.state$.value?.micEnabled).toBeFalse();
+    expect(calls.state$.value?.error).toBeUndefined();
+
+    listeners.get(RoomEvent.Reconnected)?.();
+    expect(calls.state$.value?.phase).toBe('active');
+    expect(calls.state$.value?.startedAt).toBe(startedAt);
+    expect(calls.mediaChanged$.value).toBeGreaterThan(revision);
+    expect(calls.connectionQuality$.value).toBe('unknown');
+    expect(room.localParticipant.setMicrophoneEnabled.calls.count()).toBe(previousMic);
+    expect(room.localParticipant.setCameraEnabled.calls.count()).toBe(previousCamera);
+    expect(room.disconnect).not.toHaveBeenCalled();
+    calls.end();
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/transport-reconnect/end')).flush(null);
+  });
+
+  it('does not reactivate a call without a remote peer after reconnect', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners=new Map<string,(...args:any[])=>void>();
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake((event:string,cb:(...args:any[])=>void)=>{
+        listeners.set(event,cb);return room;
+      }),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      canPlaybackAudio:true,
+      remoteParticipants:new Map(),
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'empty-reconnect',peer:'bea',media:'voice',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    listeners.get(RoomEvent.Reconnecting)?.();
+    listeners.get(RoomEvent.Reconnected)?.();
+    expect(calls.state$.value?.phase).toBe('connecting');
+    expect(room.localParticipant.setMicrophoneEnabled).toHaveBeenCalledTimes(1);
+    calls.end();
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/empty-reconnect/end')).flush(null);
+  });
+
   it('allows an established call to continue without microphone permission', async () => {
     http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     const room = {
