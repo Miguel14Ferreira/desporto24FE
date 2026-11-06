@@ -11,6 +11,8 @@ export interface RecoverableSend {
   replyToMessageId: number | null;
   knownIds: Set<number>;
   startedAt: number;
+  /** Exact composition text before POST; memory only, not persisted in sessionStorage. */
+  draftAtSend?: string;
 }
 
 const STORAGE_KEY = 'jynlo.chat.uncertain-posts.v1';
