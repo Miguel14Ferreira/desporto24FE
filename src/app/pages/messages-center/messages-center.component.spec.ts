@@ -2598,6 +2598,56 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('preserves a newer draft in the same chat when an older POST completes after navigation', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    const post=new Subject<any>();
+    direct.send.and.returnValue(post.asObservable());
+    component.selectConversation(bea);
+    component.draft='Primeira mensagem';
+    component.sendMessage();
+    component.selectConversation(group);
+    component.selectConversation(bea);
+    // A new typed draft is independent from the earlier in-flight message.
+    component.draft='Nova mensagem, ainda não enviada';
+    post.next({id:53,username1:'ana',username2:'bea',
+      text:'Primeira mensagem',date:new Date().toISOString(),dataDisplay:null});
+    post.complete();
+    expect(component.selectedKey).toBe(bea.key);
+    expect(component.draft).toBe('Nova mensagem, ainda não enviada');
+    expect(component.sending).toBeFalse();
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.messages.map(x=>x.id)).toEqual([53]);
+    component.selectConversation(group);
+    component.selectConversation(bea);
+    expect(component.draft).toBe('Nova mensagem, ainda não enviada');
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not erase a newer off-screen draft when the original POST is confirmed', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    const post=new Subject<any>();
+    direct.send.and.returnValue(post.asObservable());
+    component.selectConversation(bea);
+    component.draft='Primeira mensagem';
+    component.sendMessage();
+    component.selectConversation(group);
+    // Simulate a draft saved for Bea while the POST is in progress.
+    (component as any).drafts.set(bea.key, 'Novo rascunho para Bea');
+    post.next({id:54,username1:'ana',username2:'bea',
+      text:'Primeira mensagem',date:new Date().toISOString(),dataDisplay:null});
+    post.complete();
+    expect(component.draft).toBe('');
+    component.selectConversation(bea);
+    expect(component.draft).toBe('Novo rascunho para Bea');
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
   it('prevents duplicate POST on the original thread when switching back during an in-flight send', () => {
     const bea=item('direct','bea'), group=item('community',7);
     component.conversations=[bea,group];
