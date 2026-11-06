@@ -2545,7 +2545,7 @@ describe('Community tournaments management', () => {
     });
 
     it('finds teams by player identity in the quick switcher without leaking other matches', () => {
-      const many = Array.from({ length: 8 }, (_, i) => ({
+      const many: TournamentTeam[] = Array.from({ length: 8 }, (_, i) => ({
         ...team, id: 100 + i, name: 'Equipa ' + i, players: []
       }));
       many[6] = { ...many[6], players: [
