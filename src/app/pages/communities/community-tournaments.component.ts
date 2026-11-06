@@ -308,7 +308,18 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get sportEventChoices() {
-    return tournamentEventChoices(this.sportDraft, this.selectedSportCreationModel);
+    const choices=tournamentEventChoices(this.sportDraft, this.selectedSportCreationModel);
+    // Athletics changes result engine when switching between track races and
+    // field events. Offer both valid individual event families in the picker,
+    // while validating each choice against its own (not the previous) engine.
+    if (this.sportDraft === 'Atletismo' && !this.showTeamCreate) {
+      return choices.map(choice=>({
+        ...choice,
+        supported: !!validatedTournamentEventType(this.sportDraft,
+          tournamentCreationModelForEvent(this.sportDraft, false, choice.code), choice.code)
+      }));
+    }
+    return choices;
   }
 
   get savedSportEventType(): string | null {
@@ -385,7 +396,10 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.changeDetector.markForCheck();
   }
   chooseTournamentEventType(code: string): void {
-    if (this.busy || !validatedTournamentEventType(this.sportDraft, this.selectedSportCreationModel, code)) return;
+    // Validate the requested event with the engine it would select. Checking
+    // the previous engine made it impossible to switch FIELD -> TRACK (or back).
+    const candidateModel=tournamentCreationModelForEvent(this.sportDraft, this.showTeamCreate, code);
+    if (this.busy || !validatedTournamentEventType(this.sportDraft, candidateModel, code)) return;
     if (this.eventTypeDraft !== code) this.eventDisciplineDraft = null;
     this.eventTypeDraft = code;
     this.changeDetector.markForCheck();
