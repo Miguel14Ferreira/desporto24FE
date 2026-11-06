@@ -3788,7 +3788,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async createTournamentTeam(): Promise<void> {
-    if (!this.canManageTeamRoster || !this.selected) return;
+    // Do not check the 32-team limit against a roster that is still loading
+    // or whose last refresh failed.
+    if (!this.canManageTeamRoster || !this.selected
+        || this.detailsLoading || this.teamsLoadError) return;
     const name = this.teamNameDraft.trim().replace(/\s+/g, ' ');
     if (!name || name.length > 100) {
       this.showError(t('communities.tournaments.organizerUi.invalidTeamName'));
