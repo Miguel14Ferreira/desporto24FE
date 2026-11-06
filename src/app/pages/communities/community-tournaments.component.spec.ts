@@ -3969,6 +3969,22 @@ describe('Community tournaments management', () => {
       expect(api.addTeamPlayer).toHaveBeenCalledTimes(1);
     });
 
+    it('keeps member search working when a community record has a missing username', () => {
+      const incomplete = { ...members[1], username: null as unknown as string };
+      component.community = {
+        ...community, members: [incomplete, members[2]], memberCount: 2
+      };
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      component.setTeamMemberSearch(team.id, 'ANA');
+      expect(component.filteredTeamMembers(team.id).map(member => member.profileId)).toEqual([2]);
+      component.setTeamMemberSearch(team.id, 'BRUNO');
+      expect(component.filteredTeamMembers(team.id).map(member => member.profileId)).toEqual([3]);
+      component.setTeamMemberSearch(team.id, 'missing');
+      expect(component.filteredTeamMembers(team.id)).toEqual([]);
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('finds available members by accent-insensitive name and username per team', () => {
       const largeMembers = [...members,
         { profileId: 4, username: 'joao-silva', fullName: 'João Silva',
