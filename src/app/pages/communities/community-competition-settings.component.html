@@ -26,6 +26,12 @@
   }
 
   @if (usesMatchPoints) {
+  @if (classifiedSports.length > 1 && matchPointSports.length) {
+    <p class="match-points-scope" role="note">
+      <span>{{ 'communities.matchPointsOnlyFor' | t }}</span>
+      <strong>{{ matchPointSports.join(', ') }}</strong>
+    </p>
+  }
   <div class="points-settings">
     <label>
       <span>{{ 'communities.winPoints' | t }}</span>
