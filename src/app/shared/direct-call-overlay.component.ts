@@ -79,7 +79,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
             <small>{{ (call.phase === 'connecting' ? 'calls.reconnecting' : (call.startedAt ? 'calls.connected' : 'calls.ringing')) | t }}</small>
           </div>
           <button type="button" class="connect-mini-chat" (click)="openChat(call.peer)"
-            aria-label="Abrir mensagens sem desligar a chamada">Chat</button>
+            [attr.aria-label]="'calls.openChatKeepCall' | t">Chat</button>
           <button type="button" class="connect-mini-expand" (click)="minimized=false">{{ 'calls.expand' | t }}</button>
           <button type="button" class="connect-mini-hangup" (click)="calls.end()"
             [attr.aria-label]="'calls.hangUp' | t">✕</button>
@@ -137,7 +137,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               <div class="connect-participants" [class.connect-participants--video]="videoActive"
                 [class.connect-participants--presenting]="hasPresentation">
                 @if (hasPresentation) {
-                  <div class="connect-presentation-stage" aria-label="Ecrãs partilhados">
+                  <div class="connect-presentation-stage" [attr.aria-label]="'calls.sharedScreens' | t">
                     @for (person of participants; track person.identity) {
                       @if (personHasScreenShare(person)) {
                         <app-call-participant-tile class="connect-presentation-tile"
@@ -148,7 +148,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                       }
                     }
                   </div>
-                  <div class="connect-camera-strip" aria-label="Participantes na chamada">
+                  <div class="connect-camera-strip" [attr.aria-label]="'calls.callParticipants' | t">
                     @for (person of participants; track person.identity) {
                       <app-call-participant-tile [participant]="person"
                         [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant"
@@ -244,7 +244,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                   </button>
                 }
                 <button type="button" class="connect-chat-button"
-                  (click)="openChat(call.peer)" aria-label="Abrir conversa e continuar a chamada">
+                  (click)="openChat(call.peer)" [attr.aria-label]="'calls.openChatKeepCall' | t">
                   <span aria-hidden="true">▤</span> Chat
                 </button>
                 <button type="button" class="call-settings-button"
