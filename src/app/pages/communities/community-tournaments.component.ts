@@ -2850,8 +2850,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   loadMoreParticipants(): void {
     if (!this.selected || !this.isMember || this.busy || !this.participantsHasMore) return;
     const cid = this.community.id, tid = this.selected.id, revision = this.detailRevision;
+    const requestedPage = this.participantsPage + 1;
     this.busy = true;
-    this.api.participants(cid, tid, this.participantsPage + 1).pipe(
+    this.api.participants(cid, tid, requestedPage).pipe(
       timeout(12000), finalize(() => {
         if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
           this.busy = false;
@@ -2861,6 +2862,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     ).subscribe({
       next: result => {
         if (revision !== this.detailRevision || this.selected?.id !== tid || this.community.id !== cid) return;
+        if (result.page !== requestedPage) {
+          // Reject stale or incorrectly cached pages; preserve the existing
+          // cursor and roster so the organizer can retry the same page.
+          this.showError(t('communities.tournaments.organizerUi.participantsLoadError'));
+          return;
+        }
         // Pages can overlap after registrations change between requests.
         // Keep the latest status for each profile without showing duplicates.
         const unique = new Map(this.participants.map(player => [player.profileId, player]));
