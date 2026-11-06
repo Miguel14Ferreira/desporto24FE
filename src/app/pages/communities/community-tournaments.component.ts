@@ -1483,8 +1483,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   private searchRankedTeams(search: string): TournamentTeam[] {
     const normalize = (value: string | null | undefined): string => (value || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
-    const query = normalize(search);
+    const query = normalize(search).replace(/\s+/g, ' ');
     if (!query) return this.teams;
+    const terms = query.split(' ');
     const ranked = this.teams.map((team, index) => {
       const labels = [
         normalize(team.name),
@@ -1494,10 +1495,11 @@ export class CommunityTournamentsComponent implements OnChanges {
       ].filter(Boolean);
       const relevance = labels.some(value => value === query) ? 0
         : labels.some(value => value.startsWith(query)) ? 1
-        : labels.some(value => value.includes(query)) ? 2 : 3;
+        : labels.some(value => value.includes(query)) ? 2
+        : labels.some(value => terms.every(term => value.includes(term))) ? 3 : 4;
       return { team, index, relevance };
     });
-    return ranked.filter(item => item.relevance < 3)
+    return ranked.filter(item => item.relevance < 4)
       .sort((a, b) => a.relevance - b.relevance || a.index - b.index)
       .map(item => item.team);
   }
