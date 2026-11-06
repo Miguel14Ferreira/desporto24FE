@@ -1180,6 +1180,13 @@
                               [disabled]="busy || detailsLoading" maxlength="80"
                               autocomplete="off"
                               [placeholder]="'communities.tournaments.teamUi.searchPlaceholder' | t">
+                            @if (teamMemberSearch[team.id]?.trim()) {
+                              <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                                [disabled]="busy || detailsLoading"
+                                (click)="setTeamMemberSearch(team.id, '')">
+                                {{ 'communities.tournaments.teamPage.clearSearch' | t }}
+                              </button>
+                            }
                           }
                           @if (availableTeamMembers.length === 0) {
                             <p class="t-muted">{{ 'communities.tournaments.teamUi.noEligibleMembers' | t }}</p>
