@@ -1544,7 +1544,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!query) return undefined;
     const matches = (value: string | null | undefined): boolean => {
       const label = normalize(value);
-      return label.includes(query) || query.split(' ').every(term => label.includes(term));
+      return label.includes(query) || query.split(' ').every(term =>
+        label.split(/[\s._-]+/).some(word => word.startsWith(term)));
     };
     if (matches(team.name)) return undefined;
     const player = (team.players ?? []).find(item =>
