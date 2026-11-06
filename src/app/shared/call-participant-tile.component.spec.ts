@@ -49,4 +49,34 @@ describe('Call participant tile track selection', () => {
     expect(camera.attach).not.toHaveBeenCalled();
     component.ngOnDestroy();
   });
+  it('never plays the same remote microphone twice while sharing a screen', () => {
+    const audioTrack = {
+      attach: jasmine.createSpy('audioAttach'),
+      detach: jasmine.createSpy('audioDetach')
+    };
+    const remote = {
+      ...participant,
+      audioTrackPublications: new Map([
+        ['microphone', {track: audioTrack, isMuted: false}]
+      ])
+    } as unknown as LocalParticipant;
+    const screenTile = new CallParticipantTileComponent();
+    screenTile.participant = remote;
+    screenTile.presentation = true;
+    screenTile.local = false;
+    (screenTile as any).audioElement = {nativeElement: document.createElement('audio')};
+    screenTile.ngAfterViewChecked();
+    expect(audioTrack.attach).not.toHaveBeenCalled();
+    screenTile.ngOnDestroy();
+
+    const cameraTile = new CallParticipantTileComponent();
+    cameraTile.participant = remote;
+    cameraTile.presentation = false;
+    cameraTile.local = false;
+    (cameraTile as any).audioElement = {nativeElement: document.createElement('audio')};
+    cameraTile.ngAfterViewChecked();
+    expect(audioTrack.attach).toHaveBeenCalledTimes(1);
+    cameraTile.ngOnDestroy();
+  });
+
 });
