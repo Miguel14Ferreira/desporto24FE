@@ -226,6 +226,9 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                     {{ ((calls.screenShareEnabled$ | async) ? 'calls.stopSharing' : 'calls.shareScreen') | t }}
                   </button>
                 }
+                @if (calls.canShareScreen && call.phase === 'active' && !(calls.screenShareEnabled$ | async)) {
+                  <span class="connect-screen-share-tip">{{ 'calls.fullScreenShareHint' | t }}</span>
+                }
                 @if (calls.audioPlaybackBlocked$ | async) {
                   <button type="button" class="call-enable-sound" (click)="calls.allowAudio()">
                     {{ 'calls.sound' | t }}
@@ -557,6 +560,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .call-buttons .call-decline{background:#923d49;border-color:#d57780;color:white}
     .call-buttons .call-accept{background:#127e61;border-color:#26dfad}
     .call-buttons .call-settings-button{background:#183c51;border-color:#4c8393}
+    .connect-screen-share-tip{flex-basis:100%;text-align:center;font-size:.72rem;line-height:1.4;color:#b9dedb;margin:2px 0 0}
     .call-buttons .connect-chat-button{background:#174c58;border-color:#59a99a}
     .call-device-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
       gap:6px 12px;margin-top:9px;padding:12px;max-height:34dvh;overflow-y:auto;
