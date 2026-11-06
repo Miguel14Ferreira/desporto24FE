@@ -1285,10 +1285,16 @@ export class CommunityTournamentsComponent implements OnChanges {
     return value || null;
   }
 
-  /** Never offer a self-chat or an invalid direct-message recipient. */
+  /** Return the exact, cleaned recipient used by the direct-message route.
+   * A blank username or our own account must not produce a chat link. */
+  teamPlayerMessageRecipient(username: string | null | undefined): string | null {
+    const recipient = this.teamPlayerProfileUsername(username);
+    return recipient && this.myUsername && recipient.toLowerCase() !== this.myUsername
+      ? recipient : null;
+  }
+
   canMessageTeamPlayer(username: string | null | undefined): boolean {
-    const recipient = username?.trim().toLowerCase();
-    return !!recipient && !!this.myUsername && recipient !== this.myUsername;
+    return this.teamPlayerMessageRecipient(username) !== null;
   }
 
   get myEnrollment(): TournamentParticipant | undefined {
