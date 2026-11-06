@@ -2695,6 +2695,28 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps a new reply target when an earlier HTTP POST succeeds late', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    const post=new Subject<any>();
+    direct.send.and.returnValue(post.asObservable());
+    component.selectConversation(bea);
+    component.draft='Mesmo texto';
+    component.sendMessage();
+    component.selectConversation(group);
+    component.selectConversation(bea);
+    component.replyingTo=message(bea.key,33,'bea');
+    post.next({id:63,username1:'ana',username2:'bea',
+      text:'Mesmo texto',date:new Date().toISOString(),dataDisplay:null});
+    post.complete();
+    expect(component.draft).toBe('Mesmo texto');
+    expect(component.replyingTo?.id).toBe(33);
+    expect(component.sending).toBeFalse();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
   it('prevents duplicate POST on the original thread when switching back during an in-flight send', () => {
     const bea=item('direct','bea'), group=item('community',7);
     component.conversations=[bea,group];
