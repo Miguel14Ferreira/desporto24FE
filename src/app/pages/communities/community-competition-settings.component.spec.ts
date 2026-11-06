@@ -63,6 +63,28 @@ describe('CommunityCompetitionSettingsComponent', () => {
     expect(root.querySelectorAll('input[type=number]').length).toBe(3);
   });
 
+  it('identifies only match-based disciplines in mixed-sport points settings', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('sports', ['Karting', 'Futebol', 'Surf', 'Padel', '  futebol  ']);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const note = root.querySelector('.match-points-scope');
+    expect(note?.textContent).toContain('Futebol');
+    expect(note?.textContent).toContain('Padel');
+    expect(note?.textContent).not.toContain('Karting');
+    expect(note?.textContent).not.toContain('Surf');
+    expect(fixture.componentInstance.matchPointSports).toEqual(['Futebol', 'Padel']);
+    expect(root.querySelectorAll('input[type=number]').length).toBe(3);
+  });
+
+  it('does not show match-point guidance for a community with only race sports', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('sports', ['Karting', 'Ciclismo']);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.match-points-scope')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('input[type=number]').length).toBe(0);
+  });
+
   it('keeps pure race and judged communities free of generic match scoring', async () => {
     const fixture = await render();
     fixture.componentRef.setInput('sports', ['Karting', 'Surf', 'Ciclismo']);
