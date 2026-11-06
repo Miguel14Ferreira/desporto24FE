@@ -2347,6 +2347,11 @@ export class CommunityTournamentsComponent implements OnChanges {
   // Existing tournaments retain their exact roster size. New tournaments with
   // no preset size can start once each team has at least one member.
   isTeamRosterReady(team: TournamentTeam): boolean {
+    // Every squad slot must belong to a distinct, valid player. A duplicated
+    // roster entry must never count as a second registered teammate.
+    const playerIds = team.players.map(player => player.profileId);
+    if (playerIds.some(id => !Number.isSafeInteger(id) || id <= 0)
+        || new Set(playerIds).size !== playerIds.length) return false;
     return team.playersPerTeam == null
       ? team.players.length >= 1 && team.players.length <= 30
       : team.players.length === team.playersPerTeam;
