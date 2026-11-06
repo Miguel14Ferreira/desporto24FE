@@ -480,6 +480,29 @@ export class DirectCallClientService implements OnDestroy {
     }
   }
 
+  /**
+   * LiveKit may lose a local publication during transport recovery without
+   * delivering another TrackUnpublished event after Reconnected. Reflect the
+   * actual published media instead of leaving a misleading "camera on" UI.
+   * Never reacquire hardware or override deliberate user mute settings.
+   */
+  private reconcileLocalMediaAfterReconnect(room: Room): void {
+    if (room !== this.room || this.busyMedia$.value) return;
+    const local = room.localParticipant;
+    const state = this.state$.value;
+    if (!state) return;
+    if (state.cameraEnabled && local.videoTrackPublications &&
+        ![...local.videoTrackPublications.values()].some(pub =>
+          pub.source === Track.Source.Camera && !!pub.track && !pub.isMuted)) {
+      this.update({cameraEnabled:false,error:'calls.cameraMissing'});
+    }
+    if (state.micEnabled && local.audioTrackPublications &&
+        ![...local.audioTrackPublications.values()].some(pub =>
+          pub.source === Track.Source.Microphone && !!pub.track && !pub.isMuted)) {
+      this.update({micEnabled:false,error:'calls.microphoneMissing'});
+    }
+  }
+
   /** Translate native browser/LiveKit errors into actionable PT/EN i18n codes. */
   private mediaFailure(error: unknown, kind: 'camera'|'microphone'): string {
     const name=error && typeof error==='object' && 'name' in error
@@ -855,8 +878,9 @@ export class DirectCallClientService implements OnDestroy {
         this.clearPeerExitTimer();
         this.update({phase:'active'});
       }
-      // Existing tracks are retained by LiveKit; never re-enable a muted
-      // microphone/camera or re-open the screen-share picker on reconnect.
+      // Reconcile truly missing publications after recovery, without
+      // re-opening media permissions or changing a deliberately muted track.
+      this.reconcileLocalMediaAfterReconnect(room);
       this.mediaChanged$.next(this.mediaChanged$.value+1);
       void this.refreshDevices();
       this.refreshMembers();
