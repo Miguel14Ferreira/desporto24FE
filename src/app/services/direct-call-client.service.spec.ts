@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { RoomEvent } from 'livekit-client';
+import { RoomEvent, Track } from 'livekit-client';
 import { DirectCallClientService } from './direct-call-client.service';
 import { DirectCallEvent, DirectChatRealtimeService } from './direct-chat-realtime.service';
 import { DirectCallToneService } from './direct-call-tone.service';
@@ -39,6 +39,55 @@ describe('Direct calls gated by authenticated realtime and backend availability'
       .forEach(req => req.flush({participants:[],pending:[]}));
     calls.ngOnDestroy();
     http.verify();
+  });
+
+  it('keeps an existing screen share visible if stopping it fails', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    spyOnProperty(calls,'canShareScreen','get').and.returnValue(true);
+    const screen={source:Track.Source.ScreenShare,track:{},isMuted:false};
+    const participant={
+      videoTrackPublications:new Map([['screen',screen]]),
+      setScreenShareEnabled:jasmine.createSpy('share').and.rejectWith(new Error('device busy'))
+    };
+    const room:any={localParticipant:participant,disconnect:jasmine.createSpy('disconnect')};
+    calls.room=room;
+    calls.screenShareEnabled$.next(true);
+    const version=calls.mediaChanged$.value;
+    await calls.setScreenShare(false);
+    expect(participant.setScreenShareEnabled).toHaveBeenCalledOnceWith(false);
+    expect(calls.screenShareEnabled$.value).toBeTrue();
+    expect(calls.busyMedia$.value).toBeFalse();
+    expect(calls.mediaChanged$.value).toBeGreaterThan(version);
+  });
+
+  it('does not mark a screen as shared when the browser picker is cancelled', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    spyOnProperty(calls,'canShareScreen','get').and.returnValue(true);
+    const participant={
+      videoTrackPublications:new Map(),
+      setScreenShareEnabled:jasmine.createSpy('share').and.rejectWith(new DOMException('Cancelled','NotAllowedError'))
+    };
+    calls.room={localParticipant:participant,disconnect:jasmine.createSpy('disconnect')} as any;
+    await calls.setScreenShare(true);
+    expect(calls.screenShareEnabled$.value).toBeFalse();
+    expect(calls.busyMedia$.value).toBeFalse();
+  });
+
+  it('uses a live screen publication rather than a stale share button state', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    spyOnProperty(calls,'canShareScreen','get').and.returnValue(true);
+    const participant={
+      videoTrackPublications:new Map([
+        ['screen',{source:Track.Source.ScreenShare,track:{},isMuted:false}]
+      ]),
+      setScreenShareEnabled:jasmine.createSpy('share').and.resolveTo()
+    };
+    calls.room={localParticipant:participant,disconnect:jasmine.createSpy('disconnect')} as any;
+    await calls.setScreenShare(true);
+    expect(calls.screenShareEnabled$.value).toBeTrue();
+    participant.videoTrackPublications.clear();
+    await calls.setScreenShare(false);
+    expect(calls.screenShareEnabled$.value).toBeFalse();
   });
 
   it('does not reveal an incoming call while provider is unconfigured', () => {
