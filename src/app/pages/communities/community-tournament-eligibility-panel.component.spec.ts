@@ -87,7 +87,7 @@ describe('Tournament eligibility panel', () => {
     component.reload();
     expect(api.overview).toHaveBeenCalledOnceWith(7,19);
     expect(component.overview).toBeNull();
-    expect(component.error).toContain('Não foi possível');
+    expect(component.error).toBe('communities.tournaments.eligibility.loadError');
     expect(component.loading).toBeFalse();
   });
 
@@ -100,7 +100,7 @@ describe('Tournament eligibility panel', () => {
     expect(pending.observed).toBeFalse();
     expect(component.loading).toBeFalse();
     expect(component.overview).toBeNull();
-    expect(component.error).toContain('Não foi possível');
+    expect(component.error).toBe('communities.tournaments.eligibility.loadError');
 
     api.overview.and.returnValue(of({
       tournamentId: 19, entryType: 'TEAM', checkedAt: '2026-11-06T17:00:00Z',
@@ -118,7 +118,7 @@ describe('Tournament eligibility panel', () => {
     component.reload();
     expect(api.overview).toHaveBeenCalledWith(7, 20);
     expect(component.overview).toBeNull();
-    expect(component.error).toContain('Não foi possível');
+    expect(component.error).toBe('communities.tournaments.eligibility.loadError');
     expect(component.loading).toBeFalse();
   });
 });
