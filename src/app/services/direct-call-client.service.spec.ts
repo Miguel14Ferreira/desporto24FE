@@ -376,6 +376,71 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     http.expectOne(r=>r.url.endsWith('/api/calls/direct/select-device/end')).flush(null);
   });
 
+  it('keeps the current call and selected microphone after an input switch fails', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake(()=>room),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      switchActiveDevice:jasmine.createSpy('switch').and.rejectWith(
+        new DOMException('Device busy','NotReadableError')),
+      remoteParticipants:new Map(),
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'switch-failed',peer:'bea',media:'voice',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    calls.devices$.next([{kind:'audioinput',deviceId:'mic-new',label:'USB microphone'} as MediaDeviceInfo]);
+    calls.selectedDevices$.next({audioinput:'mic-old'});
+    const beforeState=calls.state$.value;
+    await calls.selectDevice('audioinput','mic-new');
+    expect(calls.selectedDevices$.value.audioinput).toBe('mic-old');
+    expect(calls.state$.value?.id).toBe(beforeState?.id);
+    expect(calls.state$.value?.micEnabled).toBe(beforeState?.micEnabled);
+    expect(calls.state$.value?.error).toBe('calls.microphoneBusy');
+    expect(room.disconnect).not.toHaveBeenCalled();
+    expect(calls.busyMedia$.value).toBeFalse();
+    calls.end();
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/switch-failed/end')).flush(null);
+  });
+
+  it('does not toggle the microphone while an audio input switch is still pending', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    let releaseSwitch: ((value:boolean)=>void)|undefined;
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake(()=>room),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      switchActiveDevice:jasmine.createSpy('switch').and.returnValue(
+        new Promise<boolean>(resolve=>{releaseSwitch=resolve;})),
+      remoteParticipants:new Map(),
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'switch-concurrent',peer:'bea',media:'voice',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    calls.devices$.next([{kind:'audioinput',deviceId:'mic-new',label:'USB microphone'} as MediaDeviceInfo]);
+    const pending=calls.selectDevice('audioinput','mic-new');
+    expect(calls.busyMedia$.value).toBeTrue();
+    const previousCount=room.localParticipant.setMicrophoneEnabled.calls.count();
+    await calls.setMicrophone(false);
+    expect(room.localParticipant.setMicrophoneEnabled.calls.count()).toBe(previousCount);
+    releaseSwitch?.(true);
+    await pending;
+    expect(calls.selectedDevices$.value.audioinput).toBe('mic-new');
+    expect(calls.busyMedia$.value).toBeFalse();
+    calls.end();
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/switch-concurrent/end')).flush(null);
+  });
+
   it('keeps the same call duration across a temporary LiveKit reconnection', async () => {
     http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     const listeners=new Map<string,()=>void>();
