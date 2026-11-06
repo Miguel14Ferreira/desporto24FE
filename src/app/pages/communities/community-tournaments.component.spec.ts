@@ -4026,6 +4026,30 @@ describe('Community tournaments management', () => {
       expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([1,3,4,5]);
     });
 
+    it('prioritizes exact and prefix identity matches before limiting large member searches', () => {
+      const many = Array.from({ length: 40 }, (_, i) => ({
+        profileId: 100 + i, username: 'member-' + i,
+        fullName: 'Pessoa Ana ' + i, profilePicUrl: null, role: 'MEMBER' as const
+      }));
+      const exact = { profileId: 900, username: 'ana', fullName: 'Utilizadora',
+        profilePicUrl: null, role: 'MEMBER' as const };
+      const prefix = { profileId: 901, username: 'ana-atleta', fullName: 'Atleta',
+        profilePicUrl: null, role: 'MEMBER' as const };
+      component.community = {
+        ...community, members: [...many, prefix, exact], memberCount: 42
+      };
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      component.setTeamMemberSearch(team.id, ' ANA ');
+      const results = component.filteredTeamMembers(team.id);
+      expect(results.length).toBe(30);
+      expect(results.slice(0, 2).map(member => member.profileId)).toEqual([900, 901]);
+      expect(results.some(member => member.profileId === 900)).toBeTrue();
+      expect(component.community.members?.map(member => member.profileId).slice(-2))
+        .toEqual([901, 900]);
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('limits a large member dropdown without preventing a late member from joining', async () => {
       const many = Array.from({length: 75}, (_, i) => ({
         profileId: 1000 + i, username: 'member-' + i,
