@@ -2764,6 +2764,38 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('unblocks a newly edited draft when WebSocket confirms delivery during a pending verification GET', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer];
+    const verification=new Subject<any>();
+    direct.recentHistory.and.returnValues(
+      of({last:true,content:[]} as any), verification.asObservable());
+    direct.send.and.returnValue(throwError(()=>new HttpErrorResponse({status:503})));
+    component.selectConversation(peer);
+    component.draft='Primeiro envio';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.deliveryChecking).toBeTrue();
+
+    component.draft='Nova mensagem ainda não enviada';
+    (component as any).acceptRealtime(peer.key,{
+      key:peer.key,id:124,sender:'ana',text:'Primeiro envio',
+      createdAt:new Date().toISOString()
+    });
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.deliveryChecking).toBeFalse();
+    expect(component.draft).toBe('Nova mensagem ainda não enviada');
+    expect(component.canSendMessage()).toBeTrue();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+
+    // An older verification response must not undo the socket confirmation.
+    verification.next({last:true,content:[]} as any);
+    verification.complete();
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.draft).toBe('Nova mensagem ainda não enviada');
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
   it('accepts a delayed verification after switching without clearing the next composer', () => {
     const bea=item('direct','bea'), group=item('community',7);
     component.conversations=[bea,group];
