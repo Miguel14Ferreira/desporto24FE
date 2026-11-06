@@ -1703,6 +1703,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.canManageTeamRoster || !current || this.isTeamRosterFull(current)) return;
     const communityId = this.community.id;
     const tournamentId = this.selected?.id;
+    // A roster reload invalidates feedback from any pending clipboard write.
+    const rosterRevision = this.detailRevision;
     const inviteUrl = this.teamInviteUrl(team);
     if (!inviteUrl) return;
     let success = false;
@@ -1714,6 +1716,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     const latest = this.currentRosterTeam(team);
     if (this.community.id !== communityId || this.selected?.id !== tournamentId
+        || this.detailRevision !== rosterRevision
         || !this.canManageTeamRoster || !latest || this.isTeamRosterFull(latest)) return;
     this.inviteCopyFeedback[team.id] = t(success
       ? 'communities.tournaments.teamUi.copySuccess'
