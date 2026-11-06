@@ -1368,12 +1368,12 @@ export class CommunityTournamentsComponent implements OnChanges {
   // the first 30 is still searchable and selectable by name or username.
   readonly teamMemberSuggestionLimit = 30;
   filteredTeamMembers(teamId: number) {
-    const normalize = (value: string) => value.normalize('NFD')
+    const normalize = (value: string | null | undefined) => (value || '').normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
     const query = normalize(this.teamMemberSearch[teamId] || '');
     const eligible = this.availableTeamMembers;
     const matching = query ? eligible.filter(member =>
-      normalize(member.fullName || '').includes(query)
+      normalize(member.fullName).includes(query)
       || normalize(member.username).includes(query)) : eligible;
     return matching.slice(0, this.teamMemberSuggestionLimit);
   }
