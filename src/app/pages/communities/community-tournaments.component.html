@@ -96,13 +96,18 @@
           <div id="tournament-sport-options" class="sport-options">
         @if (showCommunitySportShortcuts) {
           <div class="t-community-sports" role="group" [attr.aria-label]="'communities.tournaments.createUi.communitySports' | t">
-            @for (item of communitySportOptions.slice(0, 6); track item) {
+            @for (item of visibleCommunitySportOptions; track item) {
               <button type="button" class="t-sport-chip" [disabled]="busy"
                 [attr.aria-pressed]="sportDraft === item"
                 (click)="chooseSport(item)">{{ item }}</button>
             }
-            @if (communitySportOptions.length > 6) {
-              <span class="t-sport-muted">{{ 'communities.tournaments.createUi.moreSports' | t:{count: communitySportOptions.length - 6} }}</span>
+            @if (communitySportOptions.length > communitySportPreviewSize) {
+              <button type="button" class="t-sport-chip"
+                [disabled]="busy" [attr.aria-expanded]="expandedCommunitySports"
+                (click)="toggleCommunitySportOptions()">
+                {{ (expandedCommunitySports ? 'communities.tournaments.createUi.showLessSports'
+                  : 'communities.tournaments.createUi.showAllSports') | t }}
+              </button>
             }
           </div>
         }
