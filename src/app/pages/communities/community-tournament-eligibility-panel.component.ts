@@ -2,45 +2,43 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { Subscription, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityTournamentEligibilityService, TournamentEligibilityOverview } from '../../services/community-tournament-eligibility.service';
 
 /** Management alert: pre-existing registrations must be checked before kickoff. */
 @Component({
   selector: 'app-community-tournament-eligibility-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <section class="eligibility-panel" aria-labelledby="eligibility-title">
       <div class="eligibility-header">
-        <h4 id="eligibility-title">Elegibilidade dos jogadores</h4>
-        <button type="button" (click)="reload()" [disabled]="loading">Atualizar verificação</button>
+        <h4 id="eligibility-title">{{ 'communities.tournaments.eligibility.title' | t }}</h4>
+        <button type="button" (click)="reload()" [disabled]="loading">{{ 'communities.tournaments.eligibility.refresh' | t }}</button>
       </div>
-      <p>Confirma as inscrições e equipas antes do jogo. Esta consulta inclui jogadores
-        suspensos depois de já estarem inscritos e não modifica resultados antigos.</p>
+      <p>{{ 'communities.tournaments.eligibility.description' | t }}</p>
       @if (loading) {
-        <p role="status">A verificar inscrições existentes…</p>
+        <p role="status">{{ 'communities.tournaments.eligibility.loading' | t }}</p>
       } @else if (error) {
-        <p role="alert">{{ error }}</p>
+        <p role="alert">{{ error | t }}</p>
       } @else if (overview && overview.ineligibleEntries.length > 0) {
-        <p role="alert"><strong>{{ overview.ineligibleEntries.length }} jogador(es) suspenso(s)</strong>
-          constam deste torneio.</p>
+        <p role="alert">{{ 'communities.tournaments.eligibility.suspendedCount' | t:{count:overview.ineligibleEntries.length} }}</p>
         <ul>
-          @for (entry of overview.ineligibleEntries; track entry.profileId) {
+          @for (entry of overview.ineligibleEntries; track $index) {
             <li>
               <strong>{{ memberName(entry.profileId) }}</strong>
-              @if (entry.teamId !== null) { · equipa #{{ entry.teamId }} }
-              @if (entry.participantStatus) { · {{ entry.participantStatus === 'CONFIRMED' ? 'Confirmado' : 'Pendente' }} }
-              · até {{ entry.suspendedUntil | date:'dd/MM/yyyy HH:mm' }}
+              @if (entry.teamId !== null) { · {{ 'communities.tournaments.eligibility.team' | t }} #{{ entry.teamId }} }
+              @if (entry.participantStatus) { · {{ (entry.participantStatus === 'CONFIRMED' ? 'communities.tournaments.eligibility.confirmed' : 'communities.tournaments.eligibility.pending') | t }} }
+              · {{ 'communities.tournaments.eligibility.until' | t }} {{ entry.suspendedUntil | date:'dd/MM/yyyy HH:mm' }}
             </li>
           }
         </ul>
       } @else if (overview) {
-        <p role="status">Nenhum jogador inscrito ou presente nas equipas tem uma suspensão ativa
-          nesta comunidade.</p>
+        <p role="status">{{ 'communities.tournaments.eligibility.noSuspensions' | t }}</p>
       }
       @if (overview) {
-        <small>Verificação realizada em {{ overview.checkedAt | date:'dd/MM/yyyy HH:mm' }}.
-          Esta informação não substitui a confirmação dos participantes no dia do jogo.</small>
+        <small>{{ 'communities.tournaments.eligibility.checkedAt' | t }} {{ overview.checkedAt | date:'dd/MM/yyyy HH:mm' }}.
+          {{ 'communities.tournaments.eligibility.disclaimer' | t }}</small>
       }
     </section>
   `,
@@ -102,7 +100,7 @@ export class CommunityTournamentEligibilityPanelComponent implements OnChanges, 
         // Never display an out-of-scope report if a cache/proxy/server response
         // returns a different tournament than the one the organizer selected.
         if (result.tournamentId !== tournament) {
-          this.error = 'Não foi possível verificar a elegibilidade. Tenta novamente.';
+          this.error = 'communities.tournaments.eligibility.loadError';
           this.loading = false;
           this.changeDetector.markForCheck();
           return;
@@ -113,7 +111,7 @@ export class CommunityTournamentEligibilityPanelComponent implements OnChanges, 
       },
       error: () => {
         if (this.destroyed || revision !== this.revision) return;
-        this.error = 'Não foi possível verificar a elegibilidade. Tenta novamente.';
+        this.error = 'communities.tournaments.eligibility.loadError';
         this.loading = false;
         this.changeDetector.markForCheck();
       }
