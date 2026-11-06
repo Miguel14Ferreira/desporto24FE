@@ -4829,6 +4829,34 @@ describe('Community tournaments management', () => {
     expect(component.myEnrollment?.status).toBe('PENDING');
   });
 
+  it('does not confirm or remove a stale player card from another roster', async () => {
+    const pending: TournamentParticipant = {
+      profileId: 21, username: 'old', displayName: 'Old player',
+      status: 'PENDING', joinedAt: '2026-10-16T12:01:00Z'
+    };
+    component.rosterReady = true;
+    component.participants = [{
+      profileId: 22, username: 'new', displayName: 'New player',
+      status: 'PENDING', joinedAt: '2026-10-16T12:01:00Z'
+    }];
+    await component.confirm(pending);
+    await component.remove(pending);
+    expect(api.confirm).not.toHaveBeenCalled();
+    expect(api.removeParticipant).not.toHaveBeenCalled();
+  });
+
+  it('does not reconfirm a player after the roster was updated', async () => {
+    const pending: TournamentParticipant = {
+      profileId: 21, username: 'player', displayName: 'Player',
+      status: 'PENDING', joinedAt: '2026-10-16T12:01:00Z'
+    };
+    component.rosterReady = true;
+    component.participants = [{...pending, status: 'CONFIRMED'}];
+    await component.confirm(pending);
+    await component.confirm(component.participants[0]);
+    expect(api.confirm).not.toHaveBeenCalled();
+  });
+
   it('does not publish a schedule without explicit confirmation', async () => {
     api.generateSchedule.and.returnValue(of({
       tournamentId: 9, participantCount: 2, matchCount: 1, roundCount: 1, status: 'IN_PROGRESS'
