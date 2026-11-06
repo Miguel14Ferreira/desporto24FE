@@ -12,6 +12,15 @@ export interface CommunityDisciplinaryWarning {
   createdAt: string;
 }
 
+export interface CommunityWarningAppeal {
+  id: number;
+  warningId: number;
+  communityId: number;
+  authorProfileId: number;
+  statement: string;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityDisciplineService {
   private readonly base = environment.apiUrl + '/api/communities';
@@ -33,4 +42,20 @@ export class CommunityDisciplineService {
       `${this.base}/${communityId}/discipline/warnings`,
       { targetProfileId, reason });
   }
+  myAppeals(communityId: number): Observable<CommunityWarningAppeal[]> {
+    return this.http.get<CommunityWarningAppeal[]>(
+      `${this.base}/${communityId}/discipline/appeals/me`);
+  }
+
+  listAppeals(communityId: number): Observable<CommunityWarningAppeal[]> {
+    return this.http.get<CommunityWarningAppeal[]>(
+      `${this.base}/${communityId}/discipline/appeals`);
+  }
+
+  appeal(communityId: number, warningId: number, statement: string): Observable<CommunityWarningAppeal> {
+    return this.http.post<CommunityWarningAppeal>(
+      `${this.base}/${communityId}/discipline/warnings/${warningId}/appeal`,
+      { statement });
+  }
+
 }
