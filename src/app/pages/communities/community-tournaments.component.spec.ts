@@ -4871,6 +4871,35 @@ describe('Community tournaments management', () => {
     expect(api.confirm).not.toHaveBeenCalled();
   });
 
+  it('does not register before the roster is loaded or while a refresh is pending', async () => {
+    api.join.and.returnValue(of({
+      profileId: 4, username: 'owner', displayName: 'Owner',
+      status: 'PENDING', joinedAt: '2026-10-16T12:01:00Z'
+    }));
+    component.rosterReady = false;
+    await component.join();
+    expect(api.join).not.toHaveBeenCalled();
+    component.rosterReady = true;
+    component.detailsLoading = true;
+    await component.join();
+    expect(api.join).not.toHaveBeenCalled();
+  });
+
+  it('does not cancel registration against an unloaded roster', async () => {
+    const player: TournamentParticipant = {
+      profileId: 4, username: 'owner', displayName: 'Owner',
+      status: 'PENDING', joinedAt: '2026-10-16T12:01:00Z'
+    };
+    component.participants = [player];
+    component.rosterReady = false;
+    await component.leave();
+    expect(api.leave).not.toHaveBeenCalled();
+    component.rosterReady = true;
+    component.detailsLoading = true;
+    await component.leave();
+    expect(api.leave).not.toHaveBeenCalled();
+  });
+
   it('does not publish a schedule without explicit confirmation', async () => {
     api.generateSchedule.and.returnValue(of({
       tournamentId: 9, participantCount: 2, matchCount: 1, roundCount: 1, status: 'IN_PROGRESS'
