@@ -152,6 +152,38 @@ describe('Call participant tile track selection', () => {
     component.ngOnDestroy();
   });
 
+  it('plays remote system audio once beside the microphone, without duplicating the presentation audio', () => {
+    const microphone = track();
+    const sharedAudio = track();
+    const remote = {
+      ...participant,
+      audioTrackPublications: new Map([
+        ['screen', {source: Track.Source.ScreenShareAudio, track: sharedAudio, isMuted: false}],
+        ['microphone', {source: Track.Source.Microphone, track: microphone, isMuted: false}]
+      ])
+    } as unknown as LocalParticipant;
+    const cameraTile = new CallParticipantTileComponent();
+    cameraTile.participant = remote;
+    const microphoneElement = document.createElement('audio');
+    const sharedElement = document.createElement('audio');
+    (cameraTile as any).audioElement = {nativeElement: microphoneElement};
+    (cameraTile as any).screenAudioElement = {nativeElement: sharedElement};
+    cameraTile.ngAfterViewChecked();
+    cameraTile.ngAfterViewChecked();
+    expect(microphone.attach).toHaveBeenCalledOnceWith(microphoneElement);
+    expect(sharedAudio.attach).toHaveBeenCalledOnceWith(sharedElement);
+
+    const presentationTile = new CallParticipantTileComponent();
+    presentationTile.participant = remote;
+    presentationTile.presentation = true;
+    (presentationTile as any).screenAudioElement = {nativeElement: document.createElement('audio')};
+    presentationTile.ngAfterViewChecked();
+    expect(sharedAudio.attach).toHaveBeenCalledTimes(1);
+    presentationTile.ngOnDestroy();
+    cameraTile.ngOnDestroy();
+    expect(sharedAudio.detach).toHaveBeenCalledOnceWith(sharedElement);
+  });
+
   it('never plays the same remote microphone twice while sharing a screen', () => {
     const audioTrack = {
       attach: jasmine.createSpy('audioAttach'),
