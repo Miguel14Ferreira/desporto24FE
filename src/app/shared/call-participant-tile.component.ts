@@ -66,6 +66,8 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   @ViewChild('audio') private audioElement?: ElementRef<HTMLAudioElement>;
   private lastVideo: {attach(e: HTMLMediaElement): void; detach(e: HTMLMediaElement): void} | null = null;
   private lastAudio: {attach(e: HTMLMediaElement): void; detach(e: HTMLMediaElement): void} | null = null;
+  private attachedVideoElement: HTMLVideoElement | null = null;
+  private attachedAudioElement: HTMLAudioElement | null = null;
 
   private get activeVideo() {
     const publications=[...this.participant.videoTrackPublications.values()];
@@ -78,10 +80,14 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   ngAfterViewChecked(): void {
     const video=this.videoElement?.nativeElement;
     const nextVideo=this.activeVideo;
-    if (video && this.lastVideo!==nextVideo) {
-      this.lastVideo?.detach(video);
+    // Angular can replace a media element while keeping the same LiveKit
+    // track (e.g. expanded/minimized call or a refreshed participant tile).
+    // Reattach to the new element; a track reference alone is insufficient.
+    if (video !== this.attachedVideoElement || this.lastVideo !== nextVideo) {
+      if (this.attachedVideoElement) this.lastVideo?.detach(this.attachedVideoElement);
       this.lastVideo=nextVideo;
-      nextVideo?.attach(video);
+      this.attachedVideoElement=video ?? null;
+      if (video) nextVideo?.attach(video);
     }
     const audio=this.audioElement?.nativeElement;
     if (audio) audio.volume=Math.max(0,Math.min(1,this.volume));
@@ -90,15 +96,20 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
     const nextAudio=(this.local || this.presentation) ? null :
       ([...this.participant.audioTrackPublications.values()]
         .find(p=>!!p.track && !p.isMuted)?.track || null);
-    if (audio && this.lastAudio!==nextAudio) {
-      this.lastAudio?.detach(audio);
+    if (audio !== this.attachedAudioElement || this.lastAudio !== nextAudio) {
+      if (this.attachedAudioElement) this.lastAudio?.detach(this.attachedAudioElement);
       this.lastAudio=nextAudio;
-      nextAudio?.attach(audio);
+      this.attachedAudioElement=audio ?? null;
+      if (audio) nextAudio?.attach(audio);
     }
   }
 
   ngOnDestroy(): void {
-    if (this.videoElement) this.lastVideo?.detach(this.videoElement.nativeElement);
-    if (this.audioElement) this.lastAudio?.detach(this.audioElement.nativeElement);
+    if (this.attachedVideoElement) this.lastVideo?.detach(this.attachedVideoElement);
+    if (this.attachedAudioElement) this.lastAudio?.detach(this.attachedAudioElement);
+    this.attachedVideoElement=null;
+    this.attachedAudioElement=null;
+    this.lastVideo=null;
+    this.lastAudio=null;
   }
 }
