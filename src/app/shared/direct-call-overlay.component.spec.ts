@@ -379,6 +379,7 @@ describe('Global incoming call popup', () => {
       error:'calls.microphoneDenied',micEnabled:false,cameraEnabled:false});
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Tentar microfone novamente');
+    expect(fixture.nativeElement.textContent).toContain('Escolher outro microfone');
     expect(fixture.nativeElement.textContent).not.toContain('Tentar câmara novamente');
   });
 
