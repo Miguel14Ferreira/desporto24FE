@@ -125,7 +125,7 @@ describe('Global incoming call popup', () => {
     expect(fixture.nativeElement.querySelector('.call-backdrop')).toBeNull();
     expect(fixture.nativeElement.querySelector('.connect-mini')).toBeTruthy();
     expect(calls.end).not.toHaveBeenCalled();
-    (fixture.nativeElement.querySelector('.connect-mini button') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('.connect-mini-expand') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.call-backdrop')).toBeTruthy();
     state.next(null);
@@ -222,6 +222,21 @@ describe('Global incoming call popup', () => {
     expect(navigate).toHaveBeenCalledOnceWith(['/menu/messages'], {
       queryParams: {kind:'direct', id:'beatriz'}
     });
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
+  it('keeps the minimized call interactive without preventing message composition', () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.connect-minimize') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const floating=fixture.nativeElement.querySelector('.connect-mini') as HTMLElement;
+    expect(floating).toBeTruthy();
+    expect(floating.querySelectorAll('button').length).toBe(3);
+    expect(floating.querySelector('.connect-mini-chat')).toBeTruthy();
+    expect(floating.querySelector('.connect-mini-expand')).toBeTruthy();
+    expect(floating.querySelector('.connect-mini-hangup')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.call-backdrop')).toBeNull();
     expect(calls.end).not.toHaveBeenCalled();
   });
 
