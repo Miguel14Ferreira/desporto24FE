@@ -3728,6 +3728,25 @@ describe('Community tournaments management', () => {
       }
     });
 
+    it('provides roster-specific search labels and result counts in PT and EN', () => {
+      const previous = localStorage.getItem('d24-language');
+      try {
+        localStorage.setItem('d24-language', 'pt');
+        expect(t('communities.tournaments.teamPage.rosterSearch'))
+          .toBe('Pesquisar jogadores da equipa');
+        expect(t('communities.tournaments.teamPage.rosterSearchCount', { shown: 3, total: 12 }))
+          .toBe('3 de 12 jogadores');
+        localStorage.setItem('d24-language', 'en');
+        expect(t('communities.tournaments.teamPage.rosterSearch'))
+          .toBe('Search team players');
+        expect(t('communities.tournaments.teamPage.rosterSearchCount', { shown: 3, total: 12 }))
+          .toBe('3 of 12 players');
+      } finally {
+        if (previous === null) localStorage.removeItem('d24-language');
+        else localStorage.setItem('d24-language', previous);
+      }
+    });
+
     it('keeps a roster filter accessible when a team drops below nine players', () => {
       const players = Array.from({ length: 9 }, (_, i) => ({
         profileId: i + 1, username: 'player' + (i + 1),
