@@ -1441,15 +1441,7 @@ export class CommunityTournamentsComponent implements OnChanges {
    * Results remain team cards; never include players from another tournament.
    */
   get filteredTournamentTeams(): TournamentTeam[] {
-    const normalize = (value: string) => value.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
-    const query = normalize(this.teamDirectoryQuery);
-    if (!query) return this.teams;
-    return this.teams.filter(team =>
-      normalize(team.name).includes(query)
-      || (team.players ?? []).some(player =>
-        normalize(player.displayName || '').includes(query)
-        || normalize(player.username || '').includes(query)));
+    return this.searchRankedTeams(this.teamDirectoryQuery);
   }
 
   get visibleTournamentTeams(): TournamentTeam[] {
@@ -1479,27 +1471,30 @@ export class CommunityTournamentsComponent implements OnChanges {
   /** A shortcut only belongs to a valid focused team in this tournament.
    * Bound the quick-switch DOM for large competitions; searching still
    * considers all loaded team names without modifying the official teams. */
-  private get matchingQuickSwitchTeams(): TournamentTeam[] {
+  private searchRankedTeams(search: string): TournamentTeam[] {
     const normalize = (value: string | null | undefined): string => (value || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
-    const query = normalize(this.teamQuickSwitchQuery);
+    const query = normalize(search);
     if (!query) return this.teams;
-    const labels = (team: TournamentTeam): string[] => [
-      normalize(team.name),
-      ...(team.players ?? []).flatMap(player => [
-        normalize(player.displayName), normalize(player.username)
-      ])
-    ].filter(Boolean);
     const ranked = this.teams.map((team, index) => {
-      const values = labels(team);
-      const relevance = values.some(value => value === query) ? 0
-        : values.some(value => value.startsWith(query)) ? 1
-        : values.some(value => value.includes(query)) ? 2 : 3;
+      const labels = [
+        normalize(team.name),
+        ...(team.players ?? []).flatMap(player => [
+          normalize(player.displayName), normalize(player.username)
+        ])
+      ].filter(Boolean);
+      const relevance = labels.some(value => value === query) ? 0
+        : labels.some(value => value.startsWith(query)) ? 1
+        : labels.some(value => value.includes(query)) ? 2 : 3;
       return { team, index, relevance };
     });
     return ranked.filter(item => item.relevance < 3)
       .sort((a, b) => a.relevance - b.relevance || a.index - b.index)
       .map(item => item.team);
+  }
+
+  private get matchingQuickSwitchTeams(): TournamentTeam[] {
+    return this.searchRankedTeams(this.teamQuickSwitchQuery);
   }
 
   get teamQuickSwitchTeams(): TournamentTeam[] {
