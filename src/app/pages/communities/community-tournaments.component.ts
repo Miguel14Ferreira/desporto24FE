@@ -2861,7 +2861,11 @@ export class CommunityTournamentsComponent implements OnChanges {
     ).subscribe({
       next: result => {
         if (revision !== this.detailRevision || this.selected?.id !== tid || this.community.id !== cid) return;
-        this.participants = [...this.participants, ...result.participants];
+        // Pages can overlap after registrations change between requests.
+        // Keep the latest status for each profile without showing duplicates.
+        const unique = new Map(this.participants.map(player => [player.profileId, player]));
+        for (const player of result.participants) unique.set(player.profileId, player);
+        this.participants = [...unique.values()];
         this.participantsPage = result.page;
         this.participantsHasMore = result.hasMore;
       },
