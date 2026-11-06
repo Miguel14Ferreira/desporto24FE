@@ -65,6 +65,8 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   @Input() audioOnly = false;
   /** Independently adjustable playback volume for every remote microphone. */
   @Input() volume = 1;
+  /** Route custom remote audio elements to the speaker chosen in call settings. */
+  @Input() audioOutputDeviceId?: string;
   @ViewChild('video') private videoElement?: ElementRef<HTMLVideoElement>;
   @ViewChild('audio') private audioElement?: ElementRef<HTMLAudioElement>;
   @ViewChild('screenAudio') private screenAudioElement?: ElementRef<HTMLAudioElement>;
@@ -74,6 +76,18 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   private attachedAudioElement: HTMLAudioElement | null = null;
   private lastScreenAudio: {attach(e: HTMLMediaElement): void; detach(e: HTMLMediaElement): void} | null = null;
   private attachedScreenAudioElement: HTMLAudioElement | null = null;
+  private readonly audioSinks = new WeakMap<HTMLAudioElement, string>();
+
+  private syncAudioOutput(element?: HTMLAudioElement): void {
+    if (!element || typeof element.setSinkId !== 'function') return;
+    const deviceId=this.audioOutputDeviceId || 'default';
+    if (this.audioSinks.get(element)===deviceId) return;
+    this.audioSinks.set(element,deviceId);
+    void element.setSinkId(deviceId).catch(() => {
+      // The browser can reject unplugged speakers; permit a later retry.
+      if (this.audioSinks.get(element)===deviceId) this.audioSinks.delete(element);
+    });
+  }
 
   private get activeVideo() {
     if (this.audioOnly) return null;
@@ -98,6 +112,7 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
     }
     const audio=this.audioElement?.nativeElement;
     if (audio) audio.volume=Math.max(0,Math.min(1,this.volume));
+    this.syncAudioOutput(audio);
     // A shared screen has its own video tile, but must not attach the same
     // remote microphone a second time (otherwise callers hear an echo).
     const nextAudio=(this.local || this.presentation) ? null :
@@ -113,6 +128,7 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
     // participant's camera tile, never from the separate presentation stage.
     const screenAudio=this.screenAudioElement?.nativeElement;
     if (screenAudio) screenAudio.volume=Math.max(0,Math.min(1,this.volume));
+    this.syncAudioOutput(screenAudio);
     const nextScreenAudio=(this.local || this.presentation) ? null :
       ([...this.participant.audioTrackPublications.values()]
         .find(p=>p.source===Track.Source.ScreenShareAudio && !!p.track && !p.isMuted)?.track || null);
