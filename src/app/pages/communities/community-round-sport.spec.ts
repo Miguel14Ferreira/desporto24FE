@@ -64,5 +64,11 @@ describe('community round sport profiles cover the complete supported catalogue'
     expect(sportForRound({ sport: null }, {
       sport: null, sports: ['', '  ']
     })).toBeNull();
+    expect(sportForRound({ sport: null }, {
+      sport: 'Karting', sports: ['', '  ']
+    })).toBe('Karting');
+    expect(sportForRound({ sport: null }, {
+      sport: 'Futebol', sports: ['', 'Karting', 'Futebol']
+    })).toBeNull();
   });
 });
