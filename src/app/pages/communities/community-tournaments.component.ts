@@ -2890,6 +2890,8 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
         this.teamPlayerDraft = {};
         this.teamMemberSearch = {};
+        // A copied-link status belongs to the previous roster snapshot.
+        this.inviteCopyFeedback = {};
         this.confirmingTeamPlayerRemoval = null;
         this.confirmingEmptyTeamId = null;
         if (tournament.status !== 'DRAFT' && !this.isRelayCompetition) {
