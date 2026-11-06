@@ -4817,6 +4817,20 @@ describe('Community tournaments management', () => {
     expect(api.delete).not.toHaveBeenCalled();
   });
 
+  it('does not create teams against a loading or failed roster', async () => {
+    component.selected = {...draft, entryType:'TEAM'};
+    component.teamNameDraft = 'Nova equipa';
+    api.createTeam.and.returnValue(of({} as TournamentTeam));
+    component.detailsLoading = true;
+    await component.createTournamentTeam();
+    expect(api.createTeam).not.toHaveBeenCalled();
+    component.detailsLoading = false;
+    component.teamsLoadError = true;
+    await component.createTournamentTeam();
+    expect(api.createTeam).not.toHaveBeenCalled();
+    expect(component.teamNameDraft).toBe('Nova equipa');
+  });
+
   it('enrolls only the current player and requests updated roster', async () => {
     const entry = {
       profileId: 4, username: 'owner', displayName: 'Owner',
