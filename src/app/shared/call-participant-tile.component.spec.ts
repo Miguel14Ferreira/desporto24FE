@@ -54,6 +54,38 @@ describe('Call participant tile track selection', () => {
     component.ngOnDestroy();
   });
 
+  it('routes microphone and shared-screen sound to the chosen speaker only when it changes', async () => {
+    const microphone=track();
+    const screenSound=track();
+    const remote={
+      ...participant,
+      audioTrackPublications:new Map([
+        ['mic',{source:Track.Source.Microphone,track:microphone,isMuted:false}],
+        ['screen',{source:Track.Source.ScreenShareAudio,track:screenSound,isMuted:false}]
+      ])
+    } as unknown as LocalParticipant;
+    const component=new CallParticipantTileComponent();
+    component.participant=remote;
+    component.audioOutputDeviceId='usb-speakers';
+    const micElement=document.createElement('audio');
+    const screenElement=document.createElement('audio');
+    const micSink=jasmine.createSpy('micSink').and.resolveTo();
+    const screenSink=jasmine.createSpy('screenSink').and.resolveTo();
+    (micElement as any).setSinkId=micSink;
+    (screenElement as any).setSinkId=screenSink;
+    (component as any).audioElement={nativeElement:micElement};
+    (component as any).screenAudioElement={nativeElement:screenElement};
+    component.ngAfterViewChecked();
+    component.ngAfterViewChecked();
+    expect(micSink).toHaveBeenCalledOnceWith('usb-speakers');
+    expect(screenSink).toHaveBeenCalledOnceWith('usb-speakers');
+    component.audioOutputDeviceId='headphones';
+    component.ngAfterViewChecked();
+    expect(micSink).toHaveBeenCalledWith('headphones');
+    expect(screenSink).toHaveBeenCalledWith('headphones');
+    component.ngOnDestroy();
+  });
+
   it('keeps a local camera preview when the user also shares a screen', () => {
     const component = new CallParticipantTileComponent();
     component.participant = participant;
