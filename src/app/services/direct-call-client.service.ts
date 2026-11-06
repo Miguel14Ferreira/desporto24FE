@@ -643,6 +643,14 @@ export class DirectCallClientService implements OnDestroy {
   private async join(session: CallSession, version: number): Promise<void> {
     const room=this.createRoom();
     this.room=room;
+    // A camera published after joining (or a fresh screen-share track) needs
+    // an immediate view refresh on the publishing browser as well.
+    room.on(RoomEvent.LocalTrackPublished, () => {
+      if (room===this.room) this.mediaChanged$.next(this.mediaChanged$.value+1);
+    });
+    room.on(RoomEvent.TrackPublished, () => {
+      if (room===this.room) this.mediaChanged$.next(this.mediaChanged$.value+1);
+    });
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.ActiveSpeakersChanged, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.TrackMuted, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
