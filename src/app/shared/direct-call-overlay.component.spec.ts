@@ -268,6 +268,16 @@ describe('Global incoming call popup', () => {
     expect(calls.end).not.toHaveBeenCalled();
   });
 
+  it('explains how to select the entire monitor before starting a screen share', () => {
+    calls.canShareScreen = true;
+    state.next({...invitation('video'), phase:'active', startedAt:Date.now()});
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Ecrã inteiro');
+    calls.screenShareEnabled$.next(true);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Ecrã inteiro');
+  });
+
   it('does not show a redundant manual refresh button in media settings', () => {
     state.next({...invitation(), phase:'active', startedAt:Date.now()});
     fixture.detectChanges();
