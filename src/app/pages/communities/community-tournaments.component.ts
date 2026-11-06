@@ -1640,7 +1640,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async copyTeamInvite(team: TournamentTeam): Promise<void> {
-    if (!this.canManageTeamRoster || this.isTeamRosterFull(team)) return;
+    const current = this.currentRosterTeam(team);
+    if (!this.canManageTeamRoster || !current || this.isTeamRosterFull(current)) return;
     const communityId = this.community.id;
     const tournamentId = this.selected?.id;
     const inviteUrl = this.teamInviteUrl(team);
