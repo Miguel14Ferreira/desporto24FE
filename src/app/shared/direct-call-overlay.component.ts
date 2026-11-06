@@ -134,18 +134,33 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
             } @else {
               <div class="connect-participants" [class.connect-participants--video]="videoActive"
                 [class.connect-participants--presenting]="hasPresentation">
-                @for (person of participants; track person.identity) {
-                  @if (personHasScreenShare(person)) {
-                    <app-call-participant-tile class="connect-presentation-tile"
-                      [participant]="person" [presentation]="true"
-                      [label]="participantLabel(person) + ' · Ecrã'"
-                      [local]="person === calls.room?.localParticipant">
+                @if (hasPresentation) {
+                  <div class="connect-presentation-stage" aria-label="Ecrãs partilhados">
+                    @for (person of participants; track person.identity) {
+                      @if (personHasScreenShare(person)) {
+                        <app-call-participant-tile class="connect-presentation-tile"
+                          [participant]="person" [presentation]="true"
+                          [label]="participantLabel(person) + ' · Ecrã'"
+                          [local]="person === calls.room?.localParticipant">
+                        </app-call-participant-tile>
+                      }
+                    }
+                  </div>
+                  <div class="connect-camera-strip" aria-label="Participantes na chamada">
+                    @for (person of participants; track person.identity) {
+                      <app-call-participant-tile [participant]="person"
+                        [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant"
+                        [volume]="volumeFor(person.identity)">
+                      </app-call-participant-tile>
+                    }
+                  </div>
+                } @else {
+                  @for (person of participants; track person.identity) {
+                    <app-call-participant-tile [participant]="person"
+                      [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant"
+                      [volume]="volumeFor(person.identity)">
                     </app-call-participant-tile>
                   }
-                  <app-call-participant-tile [participant]="person"
-                    [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant"
-                    [volume]="volumeFor(person.identity)">
-                  </app-call-participant-tile>
                 }
               </div>
             }
@@ -568,9 +583,21 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .connect-participants{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
       grid-auto-rows:minmax(150px,1fr);gap:12px;overflow:auto;padding:4px}
     .connect-participants:has(app-call-participant-tile:only-child){grid-template-columns:1fr}
-    .connect-participants--presenting{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));grid-auto-rows:minmax(140px,auto);align-content:start}
-    .connect-presentation-tile{grid-column:1/-1;height:clamp(260px,58dvh,780px);min-height:260px}
-    .connect-participants--presenting app-call-participant-tile:not(.connect-presentation-tile){min-height:140px;height:160px}
+    /* Presentations use a dedicated stage and a compact camera filmstrip.
+       The complete shared desktop remains visible while both cameras stay accessible. */
+    .call-panel:has(.connect-participants--presenting){width:min(100%,1600px);height:calc(100dvh - 20px)}
+    .connect-participants--presenting{display:flex;flex-direction:column;overflow:hidden;gap:10px}
+    .connect-presentation-stage{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:10px;overflow:auto}
+    .connect-presentation-tile{min-height:0;min-width:0;height:100%;width:100%}
+    .connect-camera-strip{flex:0 0 auto;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;min-height:130px;padding:2px}
+    .connect-camera-strip app-call-participant-tile{flex:0 0 clamp(140px,18vw,220px);height:130px;min-height:130px}
+    .connect-camera-strip app-call-participant-tile::ng-deep .connect-tile{min-height:0}
+    .connect-camera-strip app-call-participant-tile::ng-deep .connect-avatar{width:54px;font-size:1.4rem}
+    .connect-camera-strip app-call-participant-tile::ng-deep .connect-person{bottom:5px;left:5px;padding:4px 7px;font-size:.7rem}
+    @media(max-width:600px){
+      .connect-camera-strip{min-height:100px}
+      .connect-camera-strip app-call-participant-tile{flex-basis:120px;height:100px;min-height:100px}
+    }
     .connect-invite-panel{position:absolute;right:0;bottom:calc(100% + 8px);z-index:15;width:min(450px,100%);box-sizing:border-box;
       max-height:55dvh;overflow:auto;padding:17px;background:#0c2a39;border:1px solid #508d8a;border-radius:16px;box-shadow:0 14px 40px #0008}
     .connect-invite-panel h3{margin:0 0 7px;font-size:1rem}.connect-invite-panel p{font-size:.79rem;color:#bbd8d6;line-height:1.5}
