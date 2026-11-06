@@ -70,10 +70,7 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   private get activeVideo() {
     const publications=[...this.participant.videoTrackPublications.values()];
     const desired=this.presentation ? Track.Source.ScreenShare : Track.Source.Camera;
-    return (publications.find(p=>p.source===desired && !!p.track && !p.isMuted)
-      || (!this.presentation && !this.local
-        ? publications.find(p=>p.source===Track.Source.ScreenShare && !!p.track && !p.isMuted)
-        : null))?.track || null;
+    return publications.find(p=>p.source===desired && !!p.track && !p.isMuted)?.track || null;
   }
   get hasVideo(): boolean { return !!this.activeVideo; }
   get isSharing(): boolean { return this.presentation; }
