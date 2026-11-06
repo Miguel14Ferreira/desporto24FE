@@ -1376,6 +1376,14 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   setTeamRosterSearch(teamId: number, value: string): void {
     this.teamRosterSearch[teamId] = value;
+    // Do not leave a removal confirmation attached to a hidden player.
+    if (this.confirmingTeamPlayerRemoval?.teamId === teamId) {
+      const team = this.teams.find(item => item.id === teamId);
+      if (!team || !this.filteredTeamRoster(team).some(player =>
+        player.profileId === this.confirmingTeamPlayerRemoval?.profileId)) {
+        this.confirmingTeamPlayerRemoval = null;
+      }
+    }
   }
 
   setTeamMemberSearch(teamId: number, value: string): void {
