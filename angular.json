@@ -23,7 +23,8 @@
             "assets": [
               "src/favicon.ico",
               "src/robots.txt",
-              "src/assets"
+              "src/assets",
+              "src/.well-known"
             ],
             "styles": [
               "src/styles.css"
