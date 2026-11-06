@@ -59,6 +59,7 @@ export class DirectCallClientService implements OnDestroy {
   readonly audioPlaybackBlocked$ = new BehaviorSubject<boolean>(false);
   readonly ringtoneBlocked$: BehaviorSubject<boolean>;
   readonly devices$ = new BehaviorSubject<MediaDeviceInfo[]>([]);
+  readonly deviceScanStatus$ = new BehaviorSubject<'idle'|'scanning'|'ready'|'unavailable'>('idle');
   readonly selectedDevices$ = new BehaviorSubject<Partial<Record<MediaDeviceKind, string>>>({});
   readonly connectionQuality$ = new BehaviorSubject<'unknown'|'excellent'|'good'|'poor'|'lost'>('unknown');
   readonly busyMedia$ = new BehaviorSubject<boolean>(false);
@@ -381,22 +382,30 @@ export class DirectCallClientService implements OnDestroy {
 
   /** Device labels are revealed only when the browser grants permission. */
   async refreshDevices(): Promise<void> {
-    if (this.refreshingDevices || !this.room || !navigator.mediaDevices?.enumerateDevices) return;
     const room=this.room;
+    if (!room || this.refreshingDevices) return;
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      this.deviceScanStatus$.next('unavailable');
+      return;
+    }
     this.refreshingDevices=true;
+    this.deviceScanStatus$.next('scanning');
     try {
       const devices=await navigator.mediaDevices.enumerateDevices();
       if (room !== this.room) return;
-      this.devices$.next(devices.filter(d => ['videoinput','audioinput','audiooutput'].includes(d.kind)));
+      const supported=devices.filter(d=>['videoinput','audioinput','audiooutput'].includes(d.kind));
+      this.devices$.next(supported);
       const selected={...this.selectedDevices$.value};
       for (const kind of ['videoinput','audioinput','audiooutput'] as MediaDeviceKind[]) {
-        if (selected[kind] && !devices.some(d=>d.kind===kind && d.deviceId===selected[kind])) {
+        if (selected[kind] && !supported.some(d=>d.kind===kind && d.deviceId===selected[kind])) {
           delete selected[kind];
         }
       }
       this.selectedDevices$.next(selected);
+      this.deviceScanStatus$.next('ready');
     } catch {
-      // Enumerating media devices is optional and may be blocked by policy.
+      if (room === this.room) this.deviceScanStatus$.next('unavailable');
+      // A denied enumerateDevices request must not disconnect an ongoing call.
     } finally {
       this.refreshingDevices=false;
     }
