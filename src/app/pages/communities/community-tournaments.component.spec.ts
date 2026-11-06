@@ -5072,6 +5072,7 @@ describe('Community tournaments management', () => {
     component.participants = [player];
     component.participantsPage = 0;
     component.participantsHasMore = true;
+    api.participants.calls.reset();
     api.participants.and.returnValue(of({
       participants: [{...player, status:'CONFIRMED'}], page:0, hasMore:false
     }));
