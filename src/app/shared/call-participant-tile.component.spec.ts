@@ -49,6 +49,71 @@ describe('Call participant tile track selection', () => {
     expect(camera.attach).not.toHaveBeenCalled();
     component.ngOnDestroy();
   });
+  it('reattaches the camera after Angular replaces its video element', () => {
+    const component = new CallParticipantTileComponent();
+    component.participant = participant;
+    component.local = true;
+    const first = document.createElement('video');
+    const second = document.createElement('video');
+    (component as any).videoElement = {nativeElement: first};
+    component.ngAfterViewChecked();
+    (component as any).videoElement = {nativeElement: second};
+    component.ngAfterViewChecked();
+    expect(camera.detach).toHaveBeenCalledOnceWith(first);
+    expect(camera.attach).toHaveBeenCalledTimes(2);
+    expect(camera.attach).toHaveBeenCalledWith(second);
+    component.ngOnDestroy();
+    expect(camera.detach).toHaveBeenCalledWith(second);
+    expect(screen.attach).not.toHaveBeenCalled();
+  });
+
+  it('reattaches the remote microphone to a replacement audio element without duplication', () => {
+    const microphone = track();
+    const remote = {
+      ...participant,
+      audioTrackPublications: new Map([
+        ['microphone', {track: microphone, isMuted: false}]
+      ])
+    } as unknown as LocalParticipant;
+    const component = new CallParticipantTileComponent();
+    component.participant = remote;
+    const first = document.createElement('audio');
+    const second = document.createElement('audio');
+    (component as any).audioElement = {nativeElement: first};
+    component.ngAfterViewChecked();
+    (component as any).audioElement = {nativeElement: second};
+    component.ngAfterViewChecked();
+    expect(microphone.detach).toHaveBeenCalledOnceWith(first);
+    expect(microphone.attach).toHaveBeenCalledTimes(2);
+    expect(microphone.attach).toHaveBeenCalledWith(second);
+    component.ngAfterViewChecked();
+    expect(microphone.attach).toHaveBeenCalledTimes(2);
+    component.ngOnDestroy();
+    expect(microphone.detach).toHaveBeenCalledWith(second);
+  });
+
+  it('detaches the previous camera before attaching a replacement camera track', () => {
+    const oldCamera = track();
+    const newCamera = track();
+    const device = {
+      ...participant,
+      videoTrackPublications: new Map([
+        ['camera', {source: Track.Source.Camera, track: oldCamera, isMuted: false}]
+      ])
+    } as unknown as LocalParticipant;
+    const component = new CallParticipantTileComponent();
+    component.participant = device;
+    component.local = true;
+    const element = document.createElement('video');
+    (component as any).videoElement = {nativeElement: element};
+    component.ngAfterViewChecked();
+    (device.videoTrackPublications.get('camera') as any).track = newCamera;
+    component.ngAfterViewChecked();
+    expect(oldCamera.detach).toHaveBeenCalledOnceWith(element);
+    expect(newCamera.attach).toHaveBeenCalledOnceWith(element);
+    component.ngOnDestroy();
+  });
+
   it('never plays the same remote microphone twice while sharing a screen', () => {
     const audioTrack = {
       attach: jasmine.createSpy('audioAttach'),
