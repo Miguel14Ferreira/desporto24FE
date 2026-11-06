@@ -5064,6 +5064,32 @@ describe('Community tournaments management', () => {
     expect(component.participantsHasMore).toBeFalse();
   });
 
+  it('does not advance the roster cursor when the API returns the wrong page', () => {
+    const player: TournamentParticipant = {
+      profileId: 21, username: 'ana', displayName: 'Ana',
+      status: 'PENDING', joinedAt: '2026-10-16T12:01:00Z'
+    };
+    component.participants = [player];
+    component.participantsPage = 0;
+    component.participantsHasMore = true;
+    api.participants.and.returnValue(of({
+      participants: [{...player, status:'CONFIRMED'}], page:0, hasMore:false
+    }));
+    component.loadMoreParticipants();
+    expect(api.participants).toHaveBeenCalledWith(7, 9, 1);
+    expect(component.participants).toEqual([player]);
+    expect(component.participantsPage).toBe(0);
+    expect(component.participantsHasMore).toBeTrue();
+    expect(component.error).toBeTruthy();
+    expect(component.busy).toBeFalse();
+
+    api.participants.and.returnValue(of({participants:[],page:1,hasMore:false}));
+    component.loadMoreParticipants();
+    expect(api.participants).toHaveBeenCalledTimes(2);
+    expect(component.participantsPage).toBe(1);
+    expect(component.participantsHasMore).toBeFalse();
+  });
+
   it('releases the busy state on tournament switch while an old participants page is loading', () => {
     const pendingPage = new Subject<TournamentParticipantPage>();
     api.participants.and.returnValue(pendingPage);
