@@ -43,14 +43,32 @@ describe('Sport-specific tournament event types',()=>{
     expect(validatedTournamentEventType('Natação','SWIM_BEST_TIME','SWIM_LCM')).toBe('SWIM_LCM');
     expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','JUMP')).toBe('JUMP');
     expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','THROW')).toBe('THROW');
-    expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','TRACK')).toBe('TRACK');
-    expect(validatedTournamentEventType('Atletismo','TRACK_BEST_TIME','JUMP')).toBe('JUMP');
-    expect(validatedTournamentEventType('Atletismo','TRACK_BEST_TIME','THROW')).toBe('THROW');
+    expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','TRACK')).toBeNull();
+    expect(validatedTournamentEventType('Atletismo','TRACK_BEST_TIME','JUMP')).toBeNull();
+    expect(validatedTournamentEventType('Atletismo','TRACK_BEST_TIME','THROW')).toBeNull();
     expect(validatedTournamentEventType('Atletismo','FIELD_BEST_MARK','TRACK_RELAY')).toBeNull();
     expect(validatedTournamentEventType('Atletismo','TRACK_BEST_TIME','TRACK')).toBe('TRACK');
     expect(validatedTournamentEventType('Atletismo','RELAY_BEST_TIME','TRACK_RELAY')).toBe('TRACK_RELAY');
     expect(validatedTournamentEventType('Atletismo','RELAY_BEST_TIME','TRACK')).toBeNull();
   });
+  it('never offers track, field and relay event types under the wrong athletics result model', () => {
+    const accepted: Record<string, readonly string[]> = {
+      FIELD_BEST_MARK: ['JUMP', 'THROW'],
+      TRACK_BEST_TIME: ['TRACK'],
+      RELAY_BEST_TIME: ['TRACK_RELAY']
+    };
+    for (const [model, allowed] of Object.entries(accepted)) {
+      const choices=tournamentEventChoices('Atletismo',model as
+        'FIELD_BEST_MARK' | 'TRACK_BEST_TIME' | 'RELAY_BEST_TIME');
+      expect(choices.filter(x=>x.supported).map(x=>x.code)).withContext(model).toEqual(allowed);
+      for (const choice of choices) {
+        expect(validatedTournamentEventType('Atletismo',model as
+          'FIELD_BEST_MARK' | 'TRACK_BEST_TIME' | 'RELAY_BEST_TIME',choice.code))
+          .withContext(model+'/'+choice.code).toBe(allowed.includes(choice.code)?choice.code:null);
+      }
+    }
+  });
+
   it('does not turn freestyle, swimming, athletics or golf into generic race standings',()=>{
     for(const [sport,code] of [['BMX','FREESTYLE'],['Atletismo','TRACK'],['Natação','SWIM_LCM'],['Golfe','GOLF_STROKE_18'],['Snowboard','RACE']])
       expect(validatedTournamentEventType(sport,'RACE_POINTS',code)).toBeNull();
