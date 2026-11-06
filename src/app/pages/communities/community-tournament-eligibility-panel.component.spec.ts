@@ -1,4 +1,5 @@
 import { of, Subject, throwError } from 'rxjs';
+import { fakeAsync, tick } from '@angular/core/testing';
 import { CommunityGroup } from '../model/community-group';
 import { CommunityTournamentEligibilityPanelComponent } from './community-tournament-eligibility-panel.component';
 import { CommunityTournamentEligibilityService } from '../../services/community-tournament-eligibility.service';
@@ -89,6 +90,26 @@ describe('Tournament eligibility panel', () => {
     expect(component.error).toContain('Não foi possível');
     expect(component.loading).toBeFalse();
   });
+
+  it('stops waiting and permits retry if the eligibility server never responds', fakeAsync(() => {
+    const pending = new Subject<ReturnType<typeof api.overview> extends import('rxjs').Observable<infer T> ? T : never>();
+    api.overview.and.returnValue(pending);
+    component.reload();
+    expect(component.loading).toBeTrue();
+    tick(12001);
+    expect(pending.observed).toBeFalse();
+    expect(component.loading).toBeFalse();
+    expect(component.overview).toBeNull();
+    expect(component.error).toContain('Não foi possível');
+
+    api.overview.and.returnValue(of({
+      tournamentId: 19, entryType: 'TEAM', checkedAt: '2026-11-06T17:00:00Z',
+      ineligibleEntries: []
+    }));
+    component.reload();
+    expect(component.overview?.tournamentId).toBe(19);
+    expect(component.error).toBe('');
+  }));
 
   it('does not expose another tournament report on failed refresh', () => {
     component.reload();
