@@ -85,7 +85,9 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
     }
     const audio=this.audioElement?.nativeElement;
     if (audio) audio.volume=Math.max(0,Math.min(1,this.volume));
-    const nextAudio=this.local ? null :
+    // A shared screen has its own video tile, but must not attach the same
+    // remote microphone a second time (otherwise callers hear an echo).
+    const nextAudio=(this.local || this.presentation) ? null :
       ([...this.participant.audioTrackPublications.values()]
         .find(p=>!!p.track && !p.isMuted)?.track || null);
     if (audio && this.lastAudio!==nextAudio) {
