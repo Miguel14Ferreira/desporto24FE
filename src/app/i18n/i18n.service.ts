@@ -3170,6 +3170,7 @@ const PT: Dictionary = {
   'communities.tournaments.teamUi.rosterIncomplete': "Por completar",
   'communities.tournaments.teamUi.showInviteLink': "Ver link do convite",
   'communities.tournaments.teamUi.searchMember': "Pesquisar membro da comunidade",
+  'communities.tournaments.teamUi.memberListLimited': 'A mostrar {{shown}} de {{total}} membros disponíveis. Pesquisa pelo nome para encontrar os restantes.',
   'communities.tournaments.teamUi.searchPlaceholder': "Nome ou utilizador",
   'communities.tournaments.teamUi.noEligibleMembers': "Sem membros disponíveis. Convida-os primeiro para a comunidade.",
   'communities.tournaments.teamUi.noSearchMatches': "Nenhum membro disponível corresponde à pesquisa.",
