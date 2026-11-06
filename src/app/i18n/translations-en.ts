@@ -4593,6 +4593,7 @@ export const EN: Record<string, string> = {
   'calls.chooseCamera': 'Choose another camera',
   'calls.swapView': 'Swap view',
   'calls.shareScreen': 'Share screen',
+  'calls.fullScreenShareHint': 'To share your full monitor, choose “Entire screen” in the browser picker.',
   'calls.stopSharing': 'Stop sharing',
   'calls.cameraConstraints': 'This camera does not support the requested video settings. Try another camera or a lower resolution.',
   'calls.cameraPublicationFailed': 'The camera started, but could not publish video. Retry or choose another camera.',
