@@ -20,7 +20,9 @@ describe('Call participant tile track selection', () => {
 
   beforeEach(() => {
     camera.attach.calls.reset();
+    camera.detach.calls.reset();
     screen.attach.calls.reset();
+    screen.detach.calls.reset();
   });
 
   it('keeps a local camera preview when the user also shares a screen', () => {
