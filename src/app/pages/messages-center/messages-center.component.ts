@@ -2203,9 +2203,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       : this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
       : file && !caption ? '📎 ' + (name || 'anexo') : caption;
     const replyId = this.replyingTo?.key === key ? this.replyingTo.id : null;
-    const pending = { key, text, replyToMessageId: replyId,
+    const pending: RecoverableSend = { key, text, replyToMessageId: replyId,
       knownIds: new Set(this.messages.map(item => item.id)),
-      startedAt: Date.now() };
+      startedAt: Date.now(), draftAtSend };
+
 
     let send: Observable<InboxMessage>;
     if (conversation.kind === 'direct') {
@@ -2349,19 +2350,28 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (pending && messages.some(message => this.matchesPending(message, pending))) {
       this.pendingByConversation.delete(key);
       this.persistPendingSends();
-      // A server-confirmed message clears its original draft even when
-      // verification finishes after navigation to a different conversation.
-      // Never clear the currently edited draft of another thread.
-      this.drafts.delete(key);
-      this.replyDrafts.delete(key);
+      // Read-only verification can complete after the user returned and
+      // edited the same conversation. Never erase newer text or a new quote.
+      const currentDraft = this.selectedKey === key ? this.draft : this.drafts.get(key);
+      const currentReply = this.selectedKey === key
+        ? this.replyingTo?.id ?? null : this.replyDrafts.get(key)?.id ?? null;
+      const sameDraft = currentDraft !== undefined && (
+        pending.draftAtSend !== undefined
+          ? currentDraft === pending.draftAtSend
+          : currentDraft.trim() === pending.text);
+      const sameReply = currentReply === pending.replyToMessageId;
+      if (sameDraft) this.drafts.delete(key);
+      if (sameReply) this.replyDrafts.delete(key);
       this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
-        this.setSelectedAttachment(null);
-        this.selectedGif = null;
-        this.clearVoicePreview();
-        this.draft = '';
-        this.replyingTo = null;
+        if (sameDraft) {
+          this.setSelectedAttachment(null);
+          this.selectedGif = null;
+          this.clearVoicePreview();
+          this.draft = '';
+        }
+        if (sameReply) this.replyingTo = null;
         this.composerError = '';
       }
     }
