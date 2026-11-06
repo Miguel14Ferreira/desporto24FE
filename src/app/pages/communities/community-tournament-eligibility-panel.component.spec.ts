@@ -77,6 +77,19 @@ describe('Tournament eligibility panel', () => {
     expect(api.overview).toHaveBeenCalledTimes(1);
   });
 
+  it('rejects an eligibility response for a different tournament', () => {
+    api.overview.and.returnValue(of({
+      tournamentId: 99, entryType: 'TEAM', checkedAt: '2026-11-06T17:00:00Z',
+      ineligibleEntries: [{profileId:11,teamId:8,participantStatus:'CONFIRMED',
+        suspendedUntil:'2026-11-09T16:00:00Z'}]
+    }));
+    component.reload();
+    expect(api.overview).toHaveBeenCalledOnceWith(7,19);
+    expect(component.overview).toBeNull();
+    expect(component.error).toContain('Não foi possível');
+    expect(component.loading).toBeFalse();
+  });
+
   it('does not expose another tournament report on failed refresh', () => {
     component.reload();
     api.overview.and.returnValue(throwError(() => new Error('forbidden')));
