@@ -3096,7 +3096,7 @@ const PT: Dictionary = {
   'communities.tournaments.teamPage.rosterTitle': "Plantel e gestão",
   'communities.tournaments.teamPage.playersTitle': 'Jogadores',
   'communities.tournaments.teamPage.manageTitle': 'Gerir a equipa',
-  'communities.tournaments.teamPage.searchLabel': 'Encontrar equipa',
+  'communities.tournaments.teamPage.searchLabel': 'Encontrar equipa ou jogador',
   'communities.tournaments.teamPage.searchPlaceholder': 'Nome da equipa ou de um jogador',
   'communities.tournaments.teamPage.clearSearch': 'Limpar',
   'communities.tournaments.teamPage.rosterSearch': 'Pesquisar jogadores da equipa',
