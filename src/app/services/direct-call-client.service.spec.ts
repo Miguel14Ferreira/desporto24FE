@@ -56,6 +56,7 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     await calls.setScreenShare(false);
     expect(participant.setScreenShareEnabled).toHaveBeenCalledOnceWith(false);
     expect(calls.screenShareEnabled$.value).toBeTrue();
+    expect(calls.screenShareFeedback$.value).toBe('calls.screenShareFailed');
     expect(calls.busyMedia$.value).toBeFalse();
     expect(calls.mediaChanged$.value).toBeGreaterThan(version);
   });
@@ -70,6 +71,7 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     calls.room={localParticipant:participant,disconnect:jasmine.createSpy('disconnect')} as any;
     await calls.setScreenShare(true);
     expect(calls.screenShareEnabled$.value).toBeFalse();
+    expect(calls.screenShareFeedback$.value).toBe('calls.screenShareCancelled');
     expect(calls.busyMedia$.value).toBeFalse();
   });
 
@@ -83,8 +85,10 @@ describe('Direct calls gated by authenticated realtime and backend availability'
       setScreenShareEnabled:jasmine.createSpy('share').and.resolveTo()
     };
     calls.room={localParticipant:participant,disconnect:jasmine.createSpy('disconnect')} as any;
+    calls.screenShareFeedback$.next('calls.screenShareFailed');
     await calls.setScreenShare(true);
     expect(calls.screenShareEnabled$.value).toBeTrue();
+    expect(calls.screenShareFeedback$.value).toBeNull();
     participant.videoTrackPublications.clear();
     await calls.setScreenShare(false);
     expect(calls.screenShareEnabled$.value).toBeFalse();
