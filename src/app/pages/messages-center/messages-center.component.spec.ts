@@ -2648,6 +2648,53 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('preserves newer text when read-only verification confirms an older uncertain send', () => {
+    const bea=item('direct','bea'), other=item('community',7);
+    component.conversations=[bea,other];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    direct.send.and.returnValue(throwError(()=>new HttpErrorResponse({status:503})));
+    component.selectConversation(bea);
+    component.draft='Mensagem antiga';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    component.selectConversation(other);
+    component.selectConversation(bea);
+    component.draft='Novo rascunho depois da falha';
+    const delivered:InboxMessage={...message(bea.key,61,'ana'),
+      text:'Mensagem antiga',createdAt:new Date().toISOString()};
+    (component as any).confirmFromHistoryIfPresent(bea.key,[delivered]);
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.draft).toBe('Novo rascunho depois da falha');
+    expect(direct.send).toHaveBeenCalledTimes(1);
+    component.selectConversation(other);
+    component.selectConversation(bea);
+    expect(component.draft).toBe('Novo rascunho depois da falha');
+  });
+
+  it('preserves a changed quoted reply when an earlier uncertain send is confirmed', () => {
+    const bea=item('direct','bea'), other=item('community',7);
+    component.conversations=[bea,other];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    direct.send.and.returnValue(throwError(()=>new HttpErrorResponse({status:503})));
+    component.selectConversation(bea);
+    component.draft='Texto idêntico';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    component.selectConversation(other);
+    component.selectConversation(bea);
+    const quoted:InboxMessage={...message(bea.key,47,'bea')};
+    component.replyingTo=quoted;
+    const delivered:InboxMessage={...message(bea.key,62,'ana'),
+      text:'Texto idêntico',createdAt:new Date().toISOString()};
+    (component as any).confirmFromHistoryIfPresent(bea.key,[delivered]);
+    expect(component.replyingTo?.id).toBe(47);
+    expect(component.draft).toBe('Texto idêntico');
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
   it('prevents duplicate POST on the original thread when switching back during an in-flight send', () => {
     const bea=item('direct','bea'), group=item('community',7);
     component.conversations=[bea,group];
