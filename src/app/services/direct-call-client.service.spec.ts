@@ -711,6 +711,76 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     }
   });
 
+  it('reports unexpected local camera and microphone loss without restarting capture', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners=new Map<string,(...args:any[])=>void>();
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake((event:string,handler:(...args:any[])=>void)=>{
+        listeners.set(event,handler); return room;
+      }),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants:new Map(),
+      localParticipant:{
+        setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo(),
+        setCameraEnabled:jasmine.createSpy('camera').and.resolveTo()
+      }
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'track-lost',peer:'bea',media:'voice',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    calls.state$.next({...calls.state$.value!,phase:'active',micEnabled:true,cameraEnabled:true});
+    const micCalls=room.localParticipant.setMicrophoneEnabled.calls.count();
+    const camCalls=room.localParticipant.setCameraEnabled.calls.count();
+    listeners.get(RoomEvent.LocalTrackUnpublished)?.({source:'camera'});
+    expect(calls.state$.value?.cameraEnabled).toBeFalse();
+    expect(calls.state$.value?.error).toBe('calls.cameraMissing');
+    expect(calls.state$.value?.micEnabled).toBeTrue();
+    listeners.get(RoomEvent.TrackMuted)?.({source:'microphone'},room.localParticipant);
+    expect(calls.state$.value?.micEnabled).toBeFalse();
+    expect(calls.state$.value?.error).toBe('calls.microphoneMissing');
+    expect(calls.state$.value?.phase).toBe('active');
+    expect(room.localParticipant.setMicrophoneEnabled.calls.count()).toBe(micCalls);
+    expect(room.localParticipant.setCameraEnabled.calls.count()).toBe(camCalls);
+    expect(room.disconnect).not.toHaveBeenCalled();
+    calls.end();
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/track-lost/end')).flush(null);
+  });
+
+  it('ignores remote mutes and voluntary camera toggles during a media operation', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners=new Map<string,(...args:any[])=>void>();
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake((event:string,handler:(...args:any[])=>void)=>{
+        listeners.set(event,handler); return room;
+      }),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      remoteParticipants:new Map(),
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'track-safe',peer:'bea',media:'voice',serverUrl:'wss://livekit.example.test',
+      token:'fixture',expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    calls.state$.next({...calls.state$.value!,phase:'active',micEnabled:true,cameraEnabled:true});
+    listeners.get(RoomEvent.TrackMuted)?.({source:'microphone'},{identity:'remote'});
+    expect(calls.state$.value?.micEnabled).toBeTrue();
+    calls.busyMedia$.next(true);
+    listeners.get(RoomEvent.LocalTrackUnpublished)?.({source:'camera'});
+    expect(calls.state$.value?.cameraEnabled).toBeTrue();
+    calls.busyMedia$.next(false);
+    calls.end();
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/track-safe/end')).flush(null);
+  });
+
   it('ignores replayed expired invitations instead of ringing indefinitely', () => {
     http.expectOne(r => r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     events.next({callId:'abc',caller:'bea',peer:'ana',media:'video',
