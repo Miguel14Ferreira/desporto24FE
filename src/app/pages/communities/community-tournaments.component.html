@@ -1101,7 +1101,7 @@
                               </a>
                             </span>
                           </div>
-                          @if (player.username?.trim() && player.username.toLowerCase() !== myUsername) {
+                          @if (canMessageTeamPlayer(player.username)) {
                             <a class="t-btn t-btn-secondary t-btn-small"
                               [routerLink]="['/menu/messages']"
                               [queryParams]="{kind:'direct',id:player.username}"
