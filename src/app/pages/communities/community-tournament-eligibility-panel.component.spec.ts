@@ -1,4 +1,4 @@
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import { CommunityTournamentEligibilityPanelComponent } from './community-tournament-eligibility-panel.component';
 import { CommunityTournamentEligibilityService } from '../../services/community-tournament-eligibility.service';
@@ -38,6 +38,43 @@ describe('Tournament eligibility panel', () => {
     component.reload();
     expect(api.overview).not.toHaveBeenCalled();
     expect(component.overview).toBeNull();
+  });
+
+  it('cancels the previous report when switching tournaments', () => {
+    const pending = new Subject<ReturnType<typeof api.overview> extends import('rxjs').Observable<infer T> ? T : never>();
+    api.overview.and.returnValue(pending);
+    component.reload();
+    expect(pending.observed).toBeTrue();
+    component.tournamentId = 20;
+    api.overview.and.returnValue(of({
+      tournamentId: 20, entryType: 'INDIVIDUAL', checkedAt: '2026-11-06T17:00:00Z',
+      ineligibleEntries: []
+    }));
+    component.reload();
+    expect(pending.observed).toBeFalse();
+    expect(component.overview?.tournamentId).toBe(20);
+  });
+
+  it('cancels private report access after organizer permissions are revoked', () => {
+    const pending = new Subject<ReturnType<typeof api.overview> extends import('rxjs').Observable<infer T> ? T : never>();
+    api.overview.and.returnValue(pending);
+    component.reload();
+    expect(pending.observed).toBeTrue();
+    component.community = {...community, myRole: 'MEMBER'};
+    component.reload();
+    expect(pending.observed).toBeFalse();
+    expect(component.overview).toBeNull();
+    expect(component.loading).toBeFalse();
+  });
+
+  it('cancels outstanding requests when the panel is destroyed', () => {
+    const pending = new Subject<ReturnType<typeof api.overview> extends import('rxjs').Observable<infer T> ? T : never>();
+    api.overview.and.returnValue(pending);
+    component.reload();
+    component.ngOnDestroy();
+    expect(pending.observed).toBeFalse();
+    component.reload();
+    expect(api.overview).toHaveBeenCalledTimes(1);
   });
 
   it('does not expose another tournament report on failed refresh', () => {
