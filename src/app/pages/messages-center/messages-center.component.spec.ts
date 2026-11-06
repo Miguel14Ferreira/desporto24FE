@@ -2764,6 +2764,48 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps a newer delivery verification locked when an older GET finishes late', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer];
+    const oldCheck=new Subject<any>();
+    const newCheck=new Subject<any>();
+    direct.recentHistory.and.returnValues(
+      of({last:true,content:[]} as any),oldCheck.asObservable(),newCheck.asObservable());
+    direct.send.and.returnValue(throwError(()=>new HttpErrorResponse({status:503})));
+    component.selectConversation(peer);
+    component.draft='Primeira mensagem';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.deliveryChecking).toBeTrue();
+
+    // Live socket proves the first send before its read-only verification ends.
+    (component as any).acceptRealtime(peer.key,{
+      key:peer.key,id:125,sender:'ana',text:'Primeira mensagem',
+      createdAt:new Date().toISOString()
+    });
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.deliveryChecking).toBeFalse();
+
+    component.draft='Segunda mensagem';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.deliveryChecking).toBeTrue();
+    expect(direct.recentHistory).toHaveBeenCalledTimes(3);
+    expect(direct.send).toHaveBeenCalledTimes(2);
+
+    // This is the OLD GET: it must not unlock the new pending send.
+    oldCheck.next({last:true,content:[]} as any);
+    oldCheck.complete();
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.deliveryChecking).toBeTrue();
+    expect(component.draft).toBe('Segunda mensagem');
+    newCheck.next({last:true,content:[]} as any);
+    newCheck.complete();
+    expect(component.deliveryChecking).toBeFalse();
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(direct.send).toHaveBeenCalledTimes(2);
+  });
+
   it('unblocks a newly edited draft when WebSocket confirms delivery during a pending verification GET', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];
