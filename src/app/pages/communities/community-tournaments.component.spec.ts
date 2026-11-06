@@ -3748,6 +3748,23 @@ describe('Community tournaments management', () => {
       expect(api.addTeamPlayer).not.toHaveBeenCalled();
     });
 
+    it('displays team players alphabetically without reordering the API roster', () => {
+      const players = [
+        { profileId: 5, username: 'zoe', displayName: 'Zoé' },
+        { profileId: 2, username: 'ana', displayName: 'Ana' },
+        { profileId: 9, username: 'alvaro', displayName: 'Álvaro' },
+        { profileId: 4, username: 'bruno', displayName: 'Bruno' }
+      ];
+      const roster = { ...team, players };
+      const originalOrder = players.map(player => player.profileId);
+      expect(component.filteredTeamRoster(roster).map(player => player.profileId))
+        .toEqual([9, 2, 4, 5]);
+      component.setTeamRosterSearch(roster.id, 'zoe');
+      expect(component.filteredTeamRoster(roster).map(player => player.profileId)).toEqual([5]);
+      expect(roster.players.map(player => player.profileId)).toEqual(originalOrder);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('filters large team rosters by name or username without changing membership', () => {
       const players = Array.from({ length: 20 }, (_, i) => ({
         profileId: i + 1, username: 'player' + (i + 1),
