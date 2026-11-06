@@ -36,8 +36,8 @@ export function tournamentEventChoices(sport: string, model: TournamentCreationM
   const compatible = Object.prototype.hasOwnProperty.call(COMPATIBLE, sport)
     ? COMPATIBLE[sport] : undefined;
   return codes.map(code=>({
-    code, supported:(sport==='Atletismo' && ((model==='FIELD_BEST_MARK' && (code==='TRACK' || code==='JUMP' || code==='THROW'))
-      || (model==='TRACK_BEST_TIME' && (code==='TRACK' || code==='JUMP' || code==='THROW'))
+    code, supported:(sport==='Atletismo' && ((model==='FIELD_BEST_MARK' && (code==='JUMP' || code==='THROW'))
+      || (model==='TRACK_BEST_TIME' && code==='TRACK')
       || (model==='RELAY_BEST_TIME' && code==='TRACK_RELAY')))
       || (compatible?.code===code && compatible?.model===model)
   }));
