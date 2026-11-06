@@ -70,7 +70,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
             @for (person of participants; track person.identity) {
               @if (person !== calls.room?.localParticipant) {
                 <app-call-participant-tile [participant]="person" [label]="participantLabel(person)"
-                  [volume]="volumeFor(person.identity)"/>
+                  [audioOnly]="true" [volume]="volumeFor(person.identity)"/>
               }
             }
           </div>
