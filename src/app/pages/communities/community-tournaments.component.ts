@@ -1406,7 +1406,8 @@ export class CommunityTournamentsComponent implements OnChanges {
    * Bound the quick-switch DOM for large competitions; searching still
    * considers all loaded team names without modifying the official teams. */
   get teamQuickSwitchTeams(): TournamentTeam[] {
-    if (!this.focusedTeam || this.teams.length <= 4) return [];
+    const focused = this.focusedTeam;
+    if (!focused || this.teams.length <= 4) return [];
     const normalize = (value: string): string => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
     const query = normalize(this.teamQuickSwitchQuery);
@@ -1416,8 +1417,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     const visible = matching.slice(0, this.teamQuickSwitchPreviewSize);
     // With large rosters, keep the current team discoverable even when it
     // falls beyond the first page. Never add an unrelated search result.
-    if (!query && !visible.some(team => team.id === this.focusedTeam?.id)) {
-      visible[visible.length - 1] = this.focusedTeam;
+    if (!query && !visible.some(team => team.id === focused.id)) {
+      visible[visible.length - 1] = focused;
     }
     return visible;
   }
