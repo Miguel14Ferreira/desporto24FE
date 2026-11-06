@@ -3164,6 +3164,7 @@ export const EN: Record<string, string> = {
   'communities.tournaments.teamUi.rosterIncomplete': "Needs players",
   'communities.tournaments.teamUi.showInviteLink': "View invitation link",
   'communities.tournaments.teamUi.searchMember': "Search community members",
+  'communities.tournaments.teamUi.memberListLimited': 'Showing {{shown}} of {{total}} available members. Search by name to find the others.',
   'communities.tournaments.teamUi.searchPlaceholder': "Name or username",
   'communities.tournaments.teamUi.noEligibleMembers': "There are no available members to add. Invite them to the community first.",
   'communities.tournaments.teamUi.noSearchMatches': "No available members match your search.",
