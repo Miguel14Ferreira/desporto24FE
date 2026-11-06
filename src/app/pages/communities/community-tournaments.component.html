@@ -1175,7 +1175,7 @@
                           @if (availableTeamMembers.length === 0) {
                             <p class="t-muted">{{ 'communities.tournaments.teamUi.noEligibleMembers' | t }}</p>
                           } @else {
-                            @if (availableTeamMembers.length > 6) {
+                            @if (showTeamMemberSearch(team.id)) {
                               <label [for]="'team-member-search-' + team.id">{{ 'communities.tournaments.teamUi.searchMember' | t }}</label>
                               <input [id]="'team-member-search-' + team.id" type="search"
                                 [ngModel]="teamMemberSearch[team.id] || ''"
