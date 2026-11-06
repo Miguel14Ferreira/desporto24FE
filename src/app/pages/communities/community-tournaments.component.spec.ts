@@ -2544,6 +2544,30 @@ describe('Community tournaments management', () => {
       expect(component.teamQuickSwitchTeams).toEqual([]);
     });
 
+    it('loads more quick-switch teams and resets the page when searching', () => {
+      const many: TournamentTeam[] = Array.from({ length: 30 }, (_, i) =>
+        ({ ...team, id: 100 + i, name: 'Equipa ' + i }));
+      api.teams.and.returnValue(of(many));
+      component.teamPageId = 100;
+      component.selectTournament(teamDraft);
+      expect(component.teamQuickSwitchTeams).toHaveSize(12);
+      expect(component.teamQuickSwitchTotalMatches).toBe(30);
+      component.expandTeamQuickSwitch();
+      expect(component.teamQuickSwitchTeams).toHaveSize(24);
+      component.expandTeamQuickSwitch();
+      expect(component.teamQuickSwitchTeams).toHaveSize(30);
+      component.expandTeamQuickSwitch();
+      expect(component.teamQuickSwitchTeams).toHaveSize(30);
+      component.setTeamQuickSwitchQuery('Equipa 2');
+      expect(component.teamQuickSwitchLimit).toBe(12);
+      expect(component.teamQuickSwitchTotalMatches).toBe(11);
+      component.setTeamQuickSwitchQuery('inexistente');
+      expect(component.teamQuickSwitchTeams).toEqual([]);
+      component.selectTournament(draft);
+      expect(component.teamQuickSwitchLimit).toBe(12);
+      expect(component.teamQuickSwitchQuery).toBe('');
+    });
+
     it('finds teams by player identity in the quick switcher without leaking other matches', () => {
       const many: TournamentTeam[] = Array.from({ length: 8 }, (_, i) => ({
         ...team, id: 100 + i, name: 'Equipa ' + i, players: []
