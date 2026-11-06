@@ -1066,7 +1066,7 @@
                     @if (!team.players.length) {
                       <p class="t-muted">{{ 'communities.tournaments.teamUi.noPlayers' | t }}</p>
                     }
-                    @if (team.players.length > 8) {
+                    @if (showTeamRosterSearch(team)) {
                       <label class="team-directory-search" [for]="'team-roster-search-' + team.id">
                         <span>{{ 'communities.tournaments.teamUi.searchMember' | t }}</span>
                         <input [id]="'team-roster-search-' + team.id" type="search"
