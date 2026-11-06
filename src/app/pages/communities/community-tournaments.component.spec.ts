@@ -5039,6 +5039,31 @@ describe('Community tournaments management', () => {
     expect(api.standings).toHaveBeenCalledWith(7, 9);
   });
 
+  it('deduplicates overlapping participant pages and keeps the latest enrollment status', () => {
+    const original: TournamentParticipant = {
+      profileId: 21, username: 'ana', displayName: 'Ana',
+      status: 'PENDING', joinedAt: '2026-10-16T12:01:00Z'
+    };
+    const newcomer: TournamentParticipant = {
+      profileId: 22, username: 'rui', displayName: 'Rui',
+      status: 'PENDING', joinedAt: '2026-10-16T12:02:00Z'
+    };
+    component.participants = [original];
+    component.participantsPage = 0;
+    component.participantsHasMore = true;
+    api.participants.and.returnValue(of({
+      participants: [{...original, status: 'CONFIRMED'}, newcomer],
+      page: 1, hasMore: false
+    }));
+    component.loadMoreParticipants();
+    expect(api.participants).toHaveBeenCalledWith(7, 9, 1);
+    expect(component.participants.map(p => p.profileId)).toEqual([21, 22]);
+    expect(component.participants[0].status).toBe('CONFIRMED');
+    expect(component.confirmedCount).toBe(1);
+    expect(component.participantsPage).toBe(1);
+    expect(component.participantsHasMore).toBeFalse();
+  });
+
   it('releases the busy state on tournament switch while an old participants page is loading', () => {
     const pendingPage = new Subject<TournamentParticipantPage>();
     api.participants.and.returnValue(pendingPage);
