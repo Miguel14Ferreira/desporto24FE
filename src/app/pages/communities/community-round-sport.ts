@@ -94,7 +94,11 @@ export function sportForRound(
       sports.set(normalized(trimmed), trimmed);
     }
   }
-  return sports.size === 1 ? [...sports.values()][0] : null;
+  if (sports.size === 1) return [...sports.values()][0];
+  // A legacy sports array containing only empty placeholders should not hide
+  // the community's single primary sport.
+  if (sports.size === 0 && group.sport?.trim()) return group.sport.trim();
+  return null;
 }
 
 /**
