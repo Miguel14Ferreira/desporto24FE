@@ -187,9 +187,9 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               @if (call.error.startsWith('calls.microphone') && !call.micEnabled && call.phase !== 'error') {
                 <div class="call-recovery-actions">
                   <button type="button" class="call-retry" [disabled]="calls.busyMedia$ | async"
-                    (click)="calls.setMicrophone(true)">Tentar microfone novamente</button>
+                    (click)="calls.setMicrophone(true)">{{ 'calls.retryMicrophone' | t }}</button>
                   <button type="button" class="call-retry" (click)="toggleSettings(true)">
-                    Escolher outro microfone
+                    {{ 'calls.chooseMicrophone' | t }}
                   </button>
                 </div>
               }
