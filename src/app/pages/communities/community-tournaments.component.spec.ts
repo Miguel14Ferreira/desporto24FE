@@ -4026,6 +4026,25 @@ describe('Community tournaments management', () => {
       expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([1,3,4,5]);
     });
 
+    it('keeps the candidate search visible when available team members shrink', () => {
+      const many = Array.from({ length: 7 }, (_, i) => ({
+        profileId: 100 + i, username: 'member-' + i,
+        fullName: 'Membro ' + i, profilePicUrl: null, role: 'MEMBER' as const
+      }));
+      component.community = { ...community, members: many, memberCount: 7 };
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      expect(component.showTeamMemberSearch(team.id)).toBeTrue();
+      component.setTeamMemberSearch(team.id, 'member-6');
+      component.community = { ...component.community, members: many.slice(0, 6), memberCount: 6 };
+      expect(component.showTeamMemberSearch(team.id)).toBeTrue();
+      expect(component.filteredTeamMembers(team.id)).toEqual([]);
+      component.setTeamMemberSearch(team.id, '');
+      expect(component.showTeamMemberSearch(team.id)).toBeFalse();
+      expect(component.filteredTeamMembers(team.id)).toHaveSize(6);
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('prioritizes exact and prefix identity matches before limiting large member searches', () => {
       const many = Array.from({ length: 40 }, (_, i) => ({
         profileId: 100 + i, username: 'member-' + i,
