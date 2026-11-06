@@ -3595,6 +3595,18 @@ describe('Community tournaments management', () => {
       expect(component.teamInviteUrl(team)).toBe('');
     });
 
+    it('shares the current team name, not a stale card name, via WhatsApp', () => {
+      const renamed = { ...team, name: 'Águias de Lisboa' };
+      api.teams.and.returnValue(of([renamed]));
+      component.selectTournament(teamDraft);
+      const link = component.teamWhatsAppUrl(team);
+      const message = new URL(link).searchParams.get('text');
+      expect(message).toContain('Águias de Lisboa');
+      expect(message).not.toContain('Verdes');
+      expect(message).toContain('team=40');
+      expect(component.teamWhatsAppUrl({ ...team, id: 999 })).toBe('');
+    });
+
     it('ignores clipboard completion after switching tournaments', async () => {
       api.teams.and.returnValue(of([team]));
       component.selectTournament(teamDraft);
