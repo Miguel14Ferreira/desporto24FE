@@ -2390,6 +2390,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamDirectoryLimit = this.teamDirectoryPageSize;
     this.teamPlayerDraft = {};
     this.teamMemberSearch = {};
+    this.teamRosterSearch = {};
     this.teamsLoadError = false;
     this.teamMatches = [];
     this.focusedPublishedFixtureId = null;
