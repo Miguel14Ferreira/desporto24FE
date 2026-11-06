@@ -2258,8 +2258,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.acceptRealtime(key, message);
         // A late POST confirmation must not erase a newer draft in this thread.
         const currentDraft = key === this.selectedKey ? this.draft : this.drafts.get(key);
-        const sameDraft = currentDraft === draftAtSend;
-        if (sameDraft) {
+        const currentReply = key === this.selectedKey
+          ? this.replyingTo?.id ?? null : this.replyDrafts.get(key)?.id ?? null;
+        const unchangedComposition = currentDraft === draftAtSend
+          && currentReply === replyId;
+        if (unchangedComposition) {
           this.drafts.delete(key);
           this.replyDrafts.delete(key);
         }
@@ -2273,7 +2276,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.selectedGif = null;
         this.selectedShare = null;
         this.clearVoicePreview();
-        if (sameDraft) {
+        if (unchangedComposition) {
           this.draft = '';
           this.replyingTo = null;
         }
