@@ -3691,6 +3691,24 @@ describe('Community tournaments management', () => {
       }
     });
 
+    it('keeps a roster filter accessible when a team drops below nine players', () => {
+      const players = Array.from({ length: 9 }, (_, i) => ({
+        profileId: i + 1, username: 'player' + (i + 1),
+        displayName: 'Atleta ' + (i + 1)
+      }));
+      const nine = { ...team, players };
+      expect(component.showTeamRosterSearch(nine)).toBeTrue();
+      component.setTeamRosterSearch(nine.id, 'player9');
+      const eight = { ...nine, players: players.slice(0, 8) };
+      expect(component.showTeamRosterSearch(eight)).toBeTrue();
+      expect(component.filteredTeamRoster(eight)).toEqual([]);
+      component.setTeamRosterSearch(eight.id, '');
+      expect(component.showTeamRosterSearch(eight)).toBeFalse();
+      expect(component.filteredTeamRoster(eight)).toHaveSize(8);
+      expect(eight.players).toHaveSize(8);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('filters large team rosters by name or username without changing membership', () => {
       const players = Array.from({ length: 20 }, (_, i) => ({
         profileId: i + 1, username: 'player' + (i + 1),
