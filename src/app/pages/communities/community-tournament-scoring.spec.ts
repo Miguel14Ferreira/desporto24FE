@@ -13,7 +13,9 @@ describe('Sport-aware tournament score terminology', () => {
       ['Voleibol de Praia', 'Sets ganhos', 'SG'],
       ['Basebol', 'Corridas marcadas', 'CM'],
       ['Softbol', 'Corridas marcadas', 'CM'],
-      ['Cricket', 'Corridas marcadas', 'CM']
+      ['Cricket', 'Corridas marcadas', 'CM'],
+      ['Rugby Sevens', 'Pontos marcados', 'PM'],
+      ['Teqball', 'Sets ganhos', 'SG']
     ];
     for (const [sport, title, abbrev] of examples) {
       const terminology = tournamentScoreTerminology(sport);
@@ -31,6 +33,7 @@ describe('Sport-aware tournament score terminology', () => {
 
   it('tolerates accents, spaces and missing input', () => {
     expect(tournamentScoreTerminology('  FUTEVOLEI ').forAbbrev).toBe('SG');
+    expect(tournamentScoreTerminology('  TEQBALL ').forAbbrev).toBe('SG');
     expect(tournamentScoreTerminology(null).forAbbrev).toBe('MF');
   });
 });
