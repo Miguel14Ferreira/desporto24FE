@@ -4595,6 +4595,8 @@ export const EN: Record<string, string> = {
   'calls.shareScreen': 'Share screen',
   'calls.fullScreenShareHint': 'To share your full monitor, choose “Entire screen” in the browser picker.',
   'calls.stopSharing': 'Stop sharing',
+  'calls.screenShareCancelled': 'Screen sharing was cancelled or blocked by the browser. Choose a screen and allow sharing to try again.',
+  'calls.screenShareFailed': 'Could not start or stop screen sharing. Check browser permissions and try again.',
   'calls.cameraConstraints': 'This camera does not support the requested video settings. Try another camera or a lower resolution.',
   'calls.cameraPublicationFailed': 'The camera started, but could not publish video. Retry or choose another camera.',
   'calls.title': 'Jynlo call',
