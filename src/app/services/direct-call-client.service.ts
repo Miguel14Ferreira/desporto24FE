@@ -615,13 +615,28 @@ export class DirectCallClientService implements OnDestroy {
     this.busyMedia$.next(true);
     try {
       await room.localParticipant.setScreenShareEnabled(enabled);
-      if (this.room===room) this.screenShareEnabled$.next(enabled);
+      if (this.room===room) {
+        // The browser may end sharing from its own toolbar. The publication,
+        // not the last button press, is authoritative when one is available.
+        const publication=[...room.localParticipant.videoTrackPublications.values()]
+          .find(pub=>pub.source===Track.Source.ScreenShare);
+        this.screenShareEnabled$.next(publication
+          ? !!publication.track && !publication.isMuted : enabled);
+      }
     } catch {
-      // Cancelling the browser's share picker must not disrupt the call.
-      if (this.room===room) this.screenShareEnabled$.next(false);
+      // A denied/cancelled picker must never report an existing share as
+      // stopped; likewise a failed stop must not conceal a live screen track.
+      if (this.room===room) {
+        const publication=[...room.localParticipant.videoTrackPublications.values()]
+          .find(pub=>pub.source===Track.Source.ScreenShare);
+        this.screenShareEnabled$.next(publication
+          ? !!publication.track && !publication.isMuted : this.screenShareEnabled$.value);
+      }
     } finally {
-      this.busyMedia$.next(false);
-      this.mediaChanged$.next(this.mediaChanged$.value+1);
+      if (this.room===room) {
+        this.busyMedia$.next(false);
+        this.mediaChanged$.next(this.mediaChanged$.value+1);
+      }
     }
   }
 
