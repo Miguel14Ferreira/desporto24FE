@@ -424,10 +424,19 @@ export class CommunityTournamentsComponent implements OnChanges {
     const normalized = this.sportSearch.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     if (!normalized) return [];
-    // Search the canonical catalog and the group's imported/legacy modalities.
+    // Exact and prefix matches must remain discoverable even when a community
+    // has many imported/legacy sport labels. Preserve source order for ties.
+    const normalize = (value: string) => value.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').toLowerCase();
     return [...new Set([...this.communitySportOptions, ...SPORTS_CATALOG])]
-      .filter(item => item.normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(normalized)).slice(0, 8);
+      .map((sport, index) => ({ sport, index, key: normalize(sport) }))
+      .filter(item => item.key.includes(normalized))
+      .sort((a, b) => {
+        const rank = (key: string) => key === normalized ? 0 : key.startsWith(normalized) ? 1 : 2;
+        return rank(a.key) - rank(b.key) || a.index - b.index;
+      })
+      .slice(0, 8)
+      .map(item => item.sport);
   }
 
   chooseSport(sport: string): void {
