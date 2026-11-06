@@ -61,6 +61,8 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   @Input() local = false;
   /** A separate presentation tile never replaces the user's own camera preview. */
   @Input() presentation = false;
+  /** Compact/minimized calls keep audio playback but never attach hidden video. */
+  @Input() audioOnly = false;
   /** Independently adjustable playback volume for every remote microphone. */
   @Input() volume = 1;
   @ViewChild('video') private videoElement?: ElementRef<HTMLVideoElement>;
@@ -74,6 +76,7 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   private attachedScreenAudioElement: HTMLAudioElement | null = null;
 
   private get activeVideo() {
+    if (this.audioOnly) return null;
     const publications=[...this.participant.videoTrackPublications.values()];
     const desired=this.presentation ? Track.Source.ScreenShare : Track.Source.Camera;
     return publications.find(p=>p.source===desired && !!p.track && !p.isMuted)?.track || null;
