@@ -1282,7 +1282,8 @@
         @if (canManage) {
           <app-community-tournament-eligibility-panel
             [community]="community"
-            [tournamentId]="selected.id">
+            [tournamentId]="selected.id"
+            [entryType]="selected.entryType">
           </app-community-tournament-eligibility-panel>
         }
         <header class="tournament-heading">
