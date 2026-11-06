@@ -1097,6 +1097,20 @@ describe('Community tournaments management', () => {
       expect(api.removeTeamPlayer).not.toHaveBeenCalled();
     });
 
+    it('uses trimmed direct-message recipients and never links to the current user', () => {
+      component.selectTournament(teamDraft);
+      expect(component.teamPlayerMessageRecipient('  Ana  ')).toBe('Ana');
+      expect(component.teamPlayerMessageRecipient('bruno')).toBe('bruno');
+      expect(component.teamPlayerMessageRecipient(' OWNER ')).toBeNull();
+      expect(component.teamPlayerMessageRecipient('')).toBeNull();
+      expect(component.teamPlayerMessageRecipient('   ')).toBeNull();
+      expect(component.teamPlayerMessageRecipient(null)).toBeNull();
+      expect(component.teamPlayerMessageRecipient(undefined)).toBeNull();
+      expect(component.canMessageTeamPlayer('  Ana  ')).toBeTrue();
+      expect(component.canMessageTeamPlayer(' OWNER ')).toBeFalse();
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('offers private messages only to other identified team players', () => {
       component.selectTournament(teamDraft);
       expect(component.canMessageTeamPlayer('ana')).toBeTrue();
