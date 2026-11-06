@@ -258,6 +258,18 @@ describe('Global incoming call popup', () => {
     expect(calls.end).not.toHaveBeenCalled();
   });
 
+  it('labels the chat navigation in the selected language without ending the call', () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('.connect-chat-button') as HTMLButtonElement;
+    expect(button.getAttribute('aria-label')).toContain('sem terminar a chamada');
+    (fixture.nativeElement.querySelector('.connect-minimize') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const compact = fixture.nativeElement.querySelector('.connect-mini-chat') as HTMLButtonElement;
+    expect(compact.getAttribute('aria-label')).toContain('sem terminar a chamada');
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
   it('shows a real reconnecting status in the minimized call', () => {
     state.next({...invitation('voice'),phase:'connecting',startedAt:Date.now()});
     fixture.detectChanges();
