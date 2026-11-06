@@ -75,7 +75,7 @@ export class DirectCallClientService implements OnDestroy {
   private ringTimer?: ReturnType<typeof setTimeout>;
   private peerExitTimer?: ReturnType<typeof setTimeout>;
   private refreshingDevices = false;
-  private readonly onDevicesChanged = (): void => { void this.refreshDevices(); };
+  private readonly onDevicesChanged = (): void => { void this.recoverDisconnectedDevices(); };
   private generation = 0;
   private checking = false;
   private recoveringPending = false;
@@ -414,6 +414,52 @@ export class DirectCallClientService implements OnDestroy {
       // A denied enumerateDevices request must not disconnect an ongoing call.
     } finally {
       this.refreshingDevices=false;
+    }
+  }
+
+  /**
+   * When a specifically selected device disappears, try the browser default
+   * without restarting the room or touching the other media tracks.
+   * A failed fallback remains visible as an error rather than faking success.
+   */
+  private async recoverDisconnectedDevices(): Promise<void> {
+    const room=this.room;
+    if (!room) return;
+    const previouslySelected={...this.selectedDevices$.value};
+    await this.refreshDevices();
+    if (room!==this.room || this.busyMedia$.value || this.deviceScanStatus$.value!=='ready') return;
+    const disappeared=(kind:MediaDeviceKind): boolean =>
+      !!previouslySelected[kind] &&
+      !this.devices$.value.some(d=>d.kind===kind && d.deviceId===previouslySelected[kind]);
+    const recoverKinds:MediaDeviceKind[]=[];
+    if (disappeared('videoinput') && this.state$.value?.cameraEnabled)
+      recoverKinds.push('videoinput');
+    if (disappeared('audioinput') && this.state$.value?.micEnabled)
+      recoverKinds.push('audioinput');
+    if (disappeared('audiooutput')) recoverKinds.push('audiooutput');
+    if (!recoverKinds.length) return;
+
+    this.busyMedia$.next(true);
+    try {
+      for (const kind of recoverKinds) {
+        if (room!==this.room) return;
+        try {
+          const switched=await room.switchActiveDevice(kind,'default');
+          if (!switched) throw new Error('Default device unavailable');
+          if (room===this.room) {
+            this.update({error:undefined});
+            this.mediaChanged$.next(this.mediaChanged$.value+1);
+          }
+        } catch (error) {
+          if (room!==this.room) return;
+          // Other tracks must keep playing. Only report the failed device.
+          this.update({error:kind==='videoinput' ? this.mediaFailure(error,'camera')
+            : kind==='audioinput' ? this.mediaFailure(error,'microphone')
+            : 'calls.speakerUnavailable'});
+        }
+      }
+    } finally {
+      this.busyMedia$.next(false);
     }
   }
 
