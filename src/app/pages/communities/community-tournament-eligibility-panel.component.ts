@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import { CommunityTournamentEligibilityService, TournamentEligibilityOverview } from '../../services/community-tournament-eligibility.service';
 
@@ -96,7 +96,7 @@ export class CommunityTournamentEligibilityPanelComponent implements OnChanges, 
     this.loading = false;
     if (!id || !tournament || !['OWNER','ADMIN'].includes(this.community.myRole ?? '')) return;
     this.loading = true;
-    this.request = this.api.overview(id, tournament).subscribe({
+    this.request = this.api.overview(id, tournament).pipe(timeout(12000)).subscribe({
       next: result => {
         if (this.destroyed || revision !== this.revision) return;
         // Never display an out-of-scope report if a cache/proxy/server response
