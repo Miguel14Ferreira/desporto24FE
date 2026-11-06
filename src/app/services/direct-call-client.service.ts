@@ -370,14 +370,20 @@ export class DirectCallClientService implements OnDestroy {
 
   async setMicrophone(enabled: boolean): Promise<void> {
     const room=this.room;
-    if (!room) return;
+    // Use the same media-operation lock as camera/device switching so that a
+    // microphone toggle cannot race an in-flight input device replacement.
+    if (!room || this.busyMedia$.value) return;
+    this.busyMedia$.next(true);
     try {
       await room.localParticipant.setMicrophoneEnabled(enabled);
       if (room === this.room) this.update({micEnabled:enabled,error:undefined});
     } catch (error) {
+      // Do not claim that the microphone was toggled when the browser refused.
       if (room === this.room) this.update({error:this.mediaFailure(error,'microphone')});
+    } finally {
+      this.busyMedia$.next(false);
+      void this.refreshDevices();
     }
-    void this.refreshDevices();
   }
 
   /** Device labels are revealed only when the browser grants permission. */
@@ -590,11 +596,22 @@ export class DirectCallClientService implements OnDestroy {
         this.mediaChanged$.next(this.mediaChanged$.value+1);
       }
     } catch (error) {
-      if (room===this.room) this.update({cameraEnabled:kind==='videoinput' ? !!room.localParticipant.videoTrackPublications?.size : this.state$.value?.cameraEnabled || false,
-        error:kind==='videoinput'
-        ? this.mediaFailure(error,'camera')
-        : kind==='audioinput' ? this.mediaFailure(error,'microphone')
-        : 'calls.speakerUnavailable'});
+      if (room===this.room) {
+        // A failed hardware switch must not infer camera state from the number
+        // of publications (which may include a screen share or muted tracks).
+        const cameraPublished = [...(room.localParticipant.videoTrackPublications?.values() || [])]
+          .some(pub => pub.source===Track.Source.Camera && !!pub.track && !pub.isMuted);
+        this.update({
+          cameraEnabled:kind==='videoinput'
+            ? cameraPublished || (!!this.state$.value?.cameraEnabled &&
+                !room.localParticipant.videoTrackPublications)
+            : !!this.state$.value?.cameraEnabled,
+          error:kind==='videoinput'
+            ? this.mediaFailure(error,'camera')
+            : kind==='audioinput' ? this.mediaFailure(error,'microphone')
+            : 'calls.speakerUnavailable'
+        });
+      }
     } finally {
       this.busyMedia$.next(false);
       void this.refreshDevices();
