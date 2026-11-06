@@ -109,7 +109,55 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.clearMediaOnAccountChange();
     }
   };
+  private accountSessionRevoked = false;
   private clearMediaOnAccountChange(): void {
+    if (this.accountSessionRevoked) return;
+    this.accountSessionRevoked = true;
+    // A previous account must not remain visible in a mounted inbox.
+    // Keep tab-scoped uncertain-send storage partitioned by its ORIGINAL
+    // login so it cannot be inherited or silently resent by the new login.
+    ++this.inboxVersion;
+    ++this.selectionVersion;
+    ++this.composerVersion;
+    ++this.historyLocateVersion;
+    ++this.messageSearchVersion;
+    ++this.summaryVersion;
+    ++this.peerReceiptVersion;
+    this.conversations = [];
+    this.selectedKey = null;
+    this.messages = [];
+    this.draft = '';
+    this.replyingTo = null;
+    this.drafts.clear();
+    this.replyDrafts.clear();
+    this.pendingByConversation.clear();
+    this.inFlightByConversation.clear();
+    this.confirmedWhileSending.clear();
+    this.sendingKeys.clear();
+    this.verifyingKeys.clear();
+    this.verifyingPendingByConversation.clear();
+    this.sendErrorsByConversation.clear();
+    this.seenRealtimeIds.clear();
+    this.realtimeDuringLoad.clear();
+    this.sessionKickoffs.clear();
+    this.ownReadSyncVersions.clear();
+    this.currentUsername = '';
+    this.pendingDeepLinkKey = null;
+    this.observedDeepLinkKey = null;
+    this.composerAllowed = false;
+    this.composerAccessLoading = false;
+    this.composerError = '';
+    this.deliveryUncertain = false;
+    this.deliveryChecking = false;
+    this.sending = false;
+    this.loading = false;
+    this.previewLoading = false;
+    this.previewError = false;
+    this.newMessagesPending = 0;
+    this.resetMessageSearch();
+    this.typing.stop();
+    if (this.sessionCutoffTimer) clearTimeout(this.sessionCutoffTimer);
+    this.sessionCutoffTimer = undefined;
     this.recentThreadCache.clear();
     this.clearAttachmentRetry();
     ++this.attachmentViewVersion;
@@ -578,6 +626,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   loadInbox(recoverAfterReconnect = false): void {
+    if (this.accountSessionRevoked
+        || (this.receiptSessionToken && !this.isAttachmentIdentityCurrent())) return;
     // Support snapshot-only navigation contexts as well as live route streams.
     if (this.observedDeepLinkKey === null && this.route?.snapshot?.queryParamMap) {
       this.queueDeepLink(this.route.snapshot.queryParamMap.get('kind'),
@@ -607,7 +657,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }).pipe(finalize(() => {
       if (request === this.inboxVersion) this.loading = false;
     })).subscribe(({ friends, communities, sessions }) => {
-      if (request !== this.inboxVersion || (recoverAfterReconnect && !this.isReceiptSessionCurrent())) return;
+      if (request !== this.inboxVersion || this.accountSessionRevoked
+          || (this.receiptSessionToken && !this.isAttachmentIdentityCurrent())
+          || (recoverAfterReconnect && !this.isReceiptSessionCurrent())) return;
       this.failedSources = [...failedKinds];
       const existing = new Map(this.conversations.map(item => [item.key, item]));
       const entries: InboxConversation[] = [];
