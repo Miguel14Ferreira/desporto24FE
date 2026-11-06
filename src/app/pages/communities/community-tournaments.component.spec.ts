@@ -3651,6 +3651,34 @@ describe('Community tournaments management', () => {
       }
     });
 
+    it('does not report a copied invitation after the roster becomes full', async () => {
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      let finishCopy!: () => void;
+      const deferred = new Promise<void>(resolve => { finishCopy = resolve; });
+      const oldClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: jasmine.createSpy('writeText').and.returnValue(deferred) }
+      });
+      try {
+        const pending = component.copyTeamInvite(team);
+        component.teams = [{ ...team, players: [
+          { profileId: 1, username: 'one', displayName: 'One' },
+          { profileId: 2, username: 'two', displayName: 'Two' },
+          { profileId: 3, username: 'three', displayName: 'Three' },
+          { profileId: 4, username: 'four', displayName: 'Four' },
+          { profileId: 5, username: 'five', displayName: 'Five' }
+        ] }];
+        finishCopy();
+        await pending;
+        expect(component.inviteCopyFeedback[team.id]).toBeUndefined();
+      } finally {
+        if (oldClipboard) Object.defineProperty(navigator, 'clipboard', oldClipboard);
+        else delete (navigator as any).clipboard;
+      }
+    });
+
     it('switches between focused teams without sending changes to the backend', () => {
       const blue = { ...team, id: 41, name: 'Azuis' };
       api.teams.and.returnValue(of([team, blue]));
