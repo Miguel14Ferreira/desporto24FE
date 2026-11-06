@@ -2655,6 +2655,10 @@ describe('Community tournaments management', () => {
       expect(component.teamQuickSwitchMatchedPlayer(many[5])).toBe('Ana Rodrigues');
       component.teamQuickSwitchQuery = 'equipa 5';
       expect(component.teamQuickSwitchMatchedPlayer(many[5])).toBeUndefined();
+      component.teamQuickSwitchQuery = 'equipa 2';
+      many[5].players[0].displayName = 'Equipa 12';
+      expect(component.teamQuickSwitchMatchedPlayer(many[5])).toBeUndefined();
+      many[5].players[0].displayName = 'João Silva';
       many[5].players[0].displayName = 'João da Silva';
       component.setTeamQuickSwitchQuery('  JOÃO    SILVA ');
       expect(component.teamQuickSwitchTeams.map(item => item.id)).toEqual([105]);
