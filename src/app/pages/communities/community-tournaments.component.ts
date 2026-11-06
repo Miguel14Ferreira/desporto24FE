@@ -1248,6 +1248,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.loadTournaments(true);
     }
     if (changes['teamPageId'] && !changes['community']) {
+      // A confirmation belongs to the team page where it was opened.
+      // Navigating between teams must never leave a pending destructive action.
+      this.cancelTeamRosterConfirmation();
       this.resetTeamProfileMatches();
       if (this.focusedTeam && this.selected?.status !== 'DRAFT' && !this.isRelayCompetition)
         this.loadTeamProfileMatches();
