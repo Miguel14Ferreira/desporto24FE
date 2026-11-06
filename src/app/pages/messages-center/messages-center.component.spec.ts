@@ -2805,6 +2805,54 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('removes previous-account conversations, drafts and pending state on logout in another tab', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer];
+    component.selectedKey=peer.key;
+    component.messages=[message(peer.key,7)];
+    component.draft='Texto privado';
+    component.replyingTo=message(peer.key,3);
+    (component as any).drafts.set(peer.key,'Outro rascunho');
+    (component as any).replyDrafts.set(peer.key,message(peer.key,3));
+    (component as any).pendingByConversation.set(peer.key,{
+      key:peer.key,text:'Pendente',replyToMessageId:null,
+      knownIds:new Set<number>(),startedAt:Date.now()
+    });
+    (component as any).currentUsername='ana';
+    (component as any).receiptSessionToken='old-account-token';
+    spyOn(localStorage,'getItem').and.returnValue('new-account-token');
+    (component as any).onAuthStorageChange({key:'t'} as StorageEvent);
+    expect(component.conversations).toEqual([]);
+    expect(component.selectedKey).toBeNull();
+    expect(component.messages).toEqual([]);
+    expect(component.draft).toBe('');
+    expect(component.replyingTo).toBeNull();
+    expect((component as any).drafts.size).toBe(0);
+    expect((component as any).replyDrafts.size).toBe(0);
+    expect((component as any).pendingByConversation.size).toBe(0);
+    expect(component.canSendMessage()).toBeFalse();
+    expect(component.composerAllowed).toBeFalse();
+  });
+
+  it('rejects a delayed initial inbox load after a different login takes over', () => {
+    const delayedFriends=new Subject<any[]>();
+    friends.friends.and.returnValue(delayedFriends.asObservable());
+    (component as any).currentUsername='ana';
+    (component as any).receiptSessionToken='old-account-token';
+    let token='old-account-token';
+    spyOn(localStorage,'getItem').and.callFake(key=>key==='t'?token:null);
+    component.loadInbox();
+    expect(component.loading).toBeTrue();
+    token='other-account-token';
+    (component as any).clearMediaOnAccountChange();
+    delayedFriends.next([{username:'bea',nickname:'Bea'}] as any);
+    delayedFriends.complete();
+    expect(component.conversations).toEqual([]);
+    expect(component.selectedKey).toBeNull();
+    expect(component.loading).toBeFalse();
+    expect(direct.recentHistory).not.toHaveBeenCalled();
+  });
+
   it('ignores an old account WebSocket message after the login token changes', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];
