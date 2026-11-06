@@ -1357,6 +1357,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     return matching.slice(0, this.teamMemberSuggestionLimit);
   }
 
+  /** Keep the search input visible until an active filter is cleared, even if
+   * a roster shrinks below the threshold while the organizer is searching. */
+  showTeamRosterSearch(team: TournamentTeam): boolean {
+    return team.players.length > 8 || !!this.teamRosterSearch[team.id]?.trim();
+  }
+
   /** Roster search affects only what is visible on the focused team page. */
   filteredTeamRoster(team: TournamentTeam): TournamentTeam['players'] {
     const query = (this.teamRosterSearch[team.id] || '').normalize('NFD')
