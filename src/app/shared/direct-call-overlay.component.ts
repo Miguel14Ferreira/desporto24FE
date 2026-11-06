@@ -165,7 +165,8 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                   @for (person of participants; track person.identity) {
                     <app-call-participant-tile [participant]="person"
                       [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant"
-                      [volume]="volumeFor(person.identity)">
+                      [volume]="volumeFor(person.identity)"
+                      [audioOutputDeviceId]="(calls.selectedDevices$ | async)?.audiooutput">
                     </app-call-participant-tile>
                   }
                 }
