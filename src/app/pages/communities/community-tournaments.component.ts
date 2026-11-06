@@ -1050,6 +1050,8 @@ export class CommunityTournamentsComponent implements OnChanges {
           ? 'communities.swimTournament.disciplineTitle'
           : this.selectedSportCreationModel === 'FIELD_BEST_MARK'
             ? 'communities.fieldTournament.disciplineTitle'
+            : this.selectedSportCreationModel === 'RELAY_BEST_TIME'
+            ? 'communities.relayTournament.disciplineTitle'
             : 'communities.trackTournament.disciplineTitle';
       case 'LEAGUE_REQUIRED': return 'communities.tournaments.formatLeagueTitle';
       default: return 'communities.tournaments.capabilities.pending';
