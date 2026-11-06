@@ -4026,6 +4026,24 @@ describe('Community tournaments management', () => {
       expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([1,3,4,5]);
     });
 
+    it('keeps an active assignment search accessible after every member is assigned', () => {
+      component.community = { ...community, members, memberCount: 3 };
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      component.setTeamMemberSearch(team.id, 'ana');
+      expect(component.showTeamMemberSearch(team.id)).toBeTrue();
+      component.teams = [{ ...team, players: members.map(member => ({
+        profileId: member.profileId, username: member.username,
+        displayName: member.fullName
+      })) }];
+      expect(component.availableTeamMembers).toEqual([]);
+      expect(component.showTeamMemberSearch(team.id)).toBeTrue();
+      expect(component.filteredTeamMembers(team.id)).toEqual([]);
+      component.setTeamMemberSearch(team.id, '');
+      expect(component.showTeamMemberSearch(team.id)).toBeFalse();
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('keeps the candidate search visible when available team members shrink', () => {
       const many = Array.from({ length: 7 }, (_, i) => ({
         profileId: 100 + i, username: 'member-' + i,
