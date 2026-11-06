@@ -3953,14 +3953,23 @@ export class CommunityTournamentsComponent implements OnChanges {
       t('communities.tournaments.organizerUi.registrationCancelled'), () => this.refreshRosterAndFocus());
   }
 
+  /** Avoid acting on stale player cards after a tournament/roster change. */
+  private isCurrentEnrollment(participant: TournamentParticipant): boolean {
+    return this.rosterReady && !this.detailsLoading && !this.busy
+      && this.participants.some(current => current.profileId === participant.profileId
+        && current.status === participant.status);
+  }
+
   async confirm(participant: TournamentParticipant): Promise<void> {
-    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
+    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT'
+      || !this.isCurrentEnrollment(participant) || participant.status !== 'PENDING') return;
     await this.mutate(this.api.confirm(this.community.id, this.selected.id, participant.profileId),
       t('communities.tournaments.organizerUi.participantConfirmed'), () => this.refreshRosterAndFocus());
   }
 
   async remove(participant: TournamentParticipant): Promise<void> {
-    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
+    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT'
+      || !this.isCurrentEnrollment(participant)) return;
     await this.mutate(this.api.removeParticipant(this.community.id, this.selected.id, participant.profileId),
       t('communities.tournaments.organizerUi.participantRemoved'), () => this.refreshRosterAndFocus());
   }
