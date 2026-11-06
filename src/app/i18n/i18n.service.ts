@@ -1736,7 +1736,7 @@ const PT: Dictionary = {
   'communities.tournaments.eligibility.refresh': 'Atualizar verificação',
   'communities.tournaments.eligibility.description': 'Confirma as inscrições e equipas antes do jogo. Esta consulta inclui jogadores suspensos depois de já estarem inscritos e não modifica resultados antigos.',
   'communities.tournaments.eligibility.loading': 'A verificar inscrições existentes…',
-  'communities.tournaments.eligibility.suspendedCount': '{count} jogador(es) suspenso(s) constam deste torneio.',
+  'communities.tournaments.eligibility.suspendedCount': '{{count}} jogador(es) suspenso(s) constam deste torneio.',
   'communities.tournaments.eligibility.team': 'equipa',
   'communities.tournaments.eligibility.confirmed': 'Confirmado',
   'communities.tournaments.eligibility.pending': 'Pendente',
