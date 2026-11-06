@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommunityService } from '../services/community.service';
 import { FriendSummary } from '../pages/model/friend-summary';
@@ -738,8 +738,9 @@ export class DirectCallOverlayComponent implements OnDestroy {
     }
   }
 
-  constructor(public readonly calls: DirectCallClientService,
-              private readonly community: CommunityService, private readonly router: Router) {
+  private readonly router = inject(Router, {optional: true});
+
+  constructor(public readonly calls: DirectCallClientService, private readonly community: CommunityService) {
     this.elapsed$ = combineLatest([this.calls.state$,timer(0,1000)]).pipe(map(([call]) => {
     if (!call?.startedAt) return '00:00';
     const seconds=Math.max(0,Math.floor((Date.now()-call.startedAt)/1000));
@@ -764,7 +765,7 @@ export class DirectCallOverlayComponent implements OnDestroy {
   openChat(peer: string): void {
     // Keep the WebRTC call alive while navigating to the conversation.
     this.minimize();
-    void this.router.navigate(['/menu/messages'], {
+    void this.router?.navigate(['/menu/messages'], {
       queryParams: {kind: 'direct', id: peer}
     });
   }
