@@ -1279,6 +1279,12 @@
       @if (!selected) {
         <div class="empty-tournament">{{ 'communities.tournaments.detailUi.selectCompetition' | t }}</div>
       } @else {
+        @if (canManage) {
+          <app-community-tournament-eligibility-panel
+            [community]="community"
+            [tournamentId]="selected.id">
+          </app-community-tournament-eligibility-panel>
+        }
         <header class="tournament-heading">
           <div>
             <span class="tournament-state" [class.is-finished]="selected.status === 'COMPLETED'">
