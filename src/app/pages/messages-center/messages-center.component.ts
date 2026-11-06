@@ -2195,6 +2195,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     // A file chosen under a prior login must never be submitted by this tab.
     if (this.selectedAttachment && !this.attachmentControlsReady) return;
     const file = this.selectedAttachment;
+    const draftAtSend = this.draft;
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
     const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
@@ -2254,8 +2255,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         // The server's confirmed response belongs to the original thread,
         // even if the user navigated elsewhere while the POST was pending.
         this.acceptRealtime(key, message);
-        this.drafts.delete(key);
-        this.replyDrafts.delete(key);
+        // A late POST confirmation must not erase a newer draft in this thread.
+        const currentDraft = key === this.selectedKey ? this.draft : this.drafts.get(key);
+        const sameDraft = currentDraft === draftAtSend;
+        if (sameDraft) {
+          this.drafts.delete(key);
+          this.replyDrafts.delete(key);
+        }
         this.pendingByConversation.delete(key);
         this.inFlightByConversation.delete(key);
         this.persistPendingSends();
@@ -2266,8 +2272,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.selectedGif = null;
         this.selectedShare = null;
         this.clearVoicePreview();
-        this.draft = '';
-        this.replyingTo = null;
+        if (sameDraft) {
+          this.draft = '';
+          this.replyingTo = null;
+        }
         this.deliveryUncertain = false;
         this.composerError = '';
       },
