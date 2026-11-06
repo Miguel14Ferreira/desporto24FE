@@ -1366,15 +1366,19 @@ export class CommunityTournamentsComponent implements OnChanges {
     return team.players.length > 8 || !!this.teamRosterSearch[team.id]?.trim();
   }
 
-  /** Roster search affects only what is visible on the focused team page. */
+  /** Roster search affects only the focused team page. Sorting a copy makes
+   * large rosters easier to scan without changing API order or player IDs. */
   filteredTeamRoster(team: TournamentTeam): TournamentTeam['players'] {
     const query = (this.teamRosterSearch[team.id] || '').normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
-    if (!query) return team.players;
     const matches = (value: string) => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().includes(query);
-    return team.players.filter(player =>
-      matches(player.displayName || '') || matches(player.username || ''));
+    return team.players
+      .filter(player => !query || matches(player.displayName || '') || matches(player.username || ''))
+      .slice().sort((a, b) =>
+        (a.displayName || a.username).localeCompare(b.displayName || b.username, 'pt', { sensitivity: 'base' })
+        || a.username.localeCompare(b.username, 'pt', { sensitivity: 'base' })
+        || a.profileId - b.profileId);
   }
 
   setTeamRosterSearch(teamId: number, value: string): void {
