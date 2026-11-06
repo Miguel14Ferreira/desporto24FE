@@ -47,4 +47,22 @@ describe('community round sport profiles cover the complete supported catalogue'
     expect(sportForRound({ sport: null }, { sport: 'Futsal', sports: ['Futsal'] })).toBe('Futsal');
     expect(sportForRound({ sport: null }, { sport: null, sports: [] })).toBeNull();
   });
+
+  it('ignores repeated, blank and accent-variant sports when inferring legacy rounds', () => {
+    expect(sportForRound({ sport: null }, {
+      sport: 'Futsal', sports: [' Futsal ', '', 'futsal', '  ']
+    })).toBe('Futsal');
+    expect(sportForRound({ sport: null }, {
+      sport: 'Tenis', sports: ['Ténis', 'Tenis']
+    })).toBe('Ténis');
+    expect(sportForRound({ sport: null }, {
+      sport: 'Futebol', sports: ['Futebol', 'Karting', 'Futebol', '']
+    })).toBeNull();
+    expect(sportForRound({ sport: 'Karting' }, {
+      sport: 'Futebol', sports: ['Futebol', 'Karting']
+    })).toBe('Karting');
+    expect(sportForRound({ sport: null }, {
+      sport: null, sports: ['', '  ']
+    })).toBeNull();
+  });
 });
