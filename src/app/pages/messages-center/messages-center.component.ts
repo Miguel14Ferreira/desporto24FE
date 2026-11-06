@@ -2360,18 +2360,23 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           ? currentDraft === pending.draftAtSend
           : currentDraft.trim() === pending.text);
       const sameReply = currentReply === pending.replyToMessageId;
-      if (sameDraft) this.drafts.delete(key);
-      if (sameReply) this.replyDrafts.delete(key);
+      // A newly chosen reply target makes this a different composition even
+      // when the visible text happens to be identical.
+      const unchangedComposition = sameDraft && sameReply;
+      if (unchangedComposition) {
+        this.drafts.delete(key);
+        this.replyDrafts.delete(key);
+      }
       this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
-        if (sameDraft) {
+        if (unchangedComposition) {
           this.setSelectedAttachment(null);
           this.selectedGif = null;
           this.clearVoicePreview();
           this.draft = '';
         }
-        if (sameReply) this.replyingTo = null;
+        if (unchangedComposition) this.replyingTo = null;
         this.composerError = '';
       }
     }
