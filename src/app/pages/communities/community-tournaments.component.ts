@@ -1537,10 +1537,15 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamQuickSwitchMatchedPlayer(team: TournamentTeam): string | undefined {
     const normalize = (value: string | null | undefined): string => (value || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
-    const query = normalize(this.teamQuickSwitchQuery);
-    if (!query || normalize(team.name).includes(query)) return undefined;
+    const query = normalize(this.teamQuickSwitchQuery).replace(/\s+/g, ' ');
+    if (!query) return undefined;
+    const matches = (value: string | null | undefined): boolean => {
+      const label = normalize(value);
+      return label.includes(query) || query.split(' ').every(term => label.includes(term));
+    };
+    if (matches(team.name)) return undefined;
     const player = (team.players ?? []).find(item =>
-      normalize(item.displayName).includes(query) || normalize(item.username).includes(query));
+      matches(item.displayName) || matches(item.username));
     return player ? (player.displayName || player.username || undefined) : undefined;
   }
 
