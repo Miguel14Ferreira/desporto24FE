@@ -1633,10 +1633,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   teamWhatsAppUrl(team: TournamentTeam): string {
-    const inviteUrl = this.teamInviteUrl(team);
+    // Invitation copy must reflect the loaded roster, not a stale team card.
+    const current = this.teams.find(item => item.id === team.id);
+    if (!current) return '';
+    const inviteUrl = this.teamInviteUrl(current);
     if (!inviteUrl || !this.selected) return '';
     return teamInvitationWhatsAppUrl(
-      this.community.name, this.selected.name, team.name, inviteUrl);
+      this.community.name, this.selected.name, current.name, inviteUrl);
   }
 
   async copyTeamInvite(team: TournamentTeam): Promise<void> {
