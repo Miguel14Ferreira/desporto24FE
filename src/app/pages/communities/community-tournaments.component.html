@@ -1101,6 +1101,14 @@
                               </a>
                             </span>
                           </div>
+                          @if (player.username?.trim() && player.username.toLowerCase() !== myUsername) {
+                            <a class="t-btn t-btn-secondary t-btn-small"
+                              [routerLink]="['/menu/messages']"
+                              [queryParams]="{kind:'direct',id:player.username}"
+                              [attr.aria-label]="('friends.chatAction' | t) + ': ' + (player.displayName || player.username)">
+                              {{ 'friends.chatAction' | t }}
+                            </a>
+                          }
                           @if (canManageTeamRoster) {
                             @if (confirmingTeamPlayerRemoval?.teamId === team.id
                                 && confirmingTeamPlayerRemoval?.profileId === player.profileId) {
