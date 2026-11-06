@@ -799,11 +799,19 @@ export class DirectCallClientService implements OnDestroy {
     room.on(RoomEvent.LocalTrackPublished, () => {
       if (room===this.room) this.mediaChanged$.next(this.mediaChanged$.value+1);
     });
-    room.on(RoomEvent.TrackPublished, () => {
-      if (room===this.room) this.mediaChanged$.next(this.mediaChanged$.value+1);
-    });
-    room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
-    room.on(RoomEvent.ActiveSpeakersChanged, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
+    // A remote publication can appear or vanish before subscription is
+    // established. Refresh tiles for both events, otherwise the last camera
+    // frame or an empty placeholder may persist until another user action.
+    const refreshRoomMedia = (): void => {
+      if (room === this.room && version === this.generation)
+        this.mediaChanged$.next(this.mediaChanged$.value+1);
+    };
+    room.on(RoomEvent.TrackPublished, refreshRoomMedia);
+    room.on(RoomEvent.TrackUnpublished, refreshRoomMedia);
+    room.on(RoomEvent.TrackSubscribed, refreshRoomMedia);
+    room.on(RoomEvent.TrackUnsubscribed, refreshRoomMedia);
+    room.on(RoomEvent.TrackSubscriptionFailed, refreshRoomMedia);
+    room.on(RoomEvent.ActiveSpeakersChanged, refreshRoomMedia);
     room.on(RoomEvent.TrackMuted, (publication, participant) => {
       if (room!==this.room) return;
       this.mediaChanged$.next(this.mediaChanged$.value+1);
@@ -834,7 +842,6 @@ export class DirectCallClientService implements OnDestroy {
       if (this.room === room)
         this.audioPlaybackBlocked$.next(room.canPlaybackAudio === false);
     });
-    room.on(RoomEvent.TrackUnsubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.ParticipantConnected, () => {
       if (this.room===room && version===this.generation) {
         this.clearPeerExitTimer();
