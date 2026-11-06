@@ -1,4 +1,5 @@
 import { Component, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommunityService } from '../services/community.service';
 import { FriendSummary } from '../pages/model/friend-summary';
 import { timeout } from 'rxjs';
@@ -134,6 +135,13 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               <div class="connect-participants" [class.connect-participants--video]="videoActive"
                 [class.connect-participants--presenting]="hasPresentation">
                 @for (person of participants; track person.identity) {
+                  @if (personHasScreenShare(person)) {
+                    <app-call-participant-tile class="connect-presentation-tile"
+                      [participant]="person" [presentation]="true"
+                      [label]="participantLabel(person) + ' · Ecrã'"
+                      [local]="person === calls.room?.localParticipant">
+                    </app-call-participant-tile>
+                  }
                   <app-call-participant-tile [participant]="person"
                     [label]="participantLabel(person)" [local]="person === calls.room?.localParticipant"
                     [volume]="volumeFor(person.identity)">
@@ -200,6 +208,10 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
                     <span aria-hidden="true">＋</span> {{ 'calls.inviteMembers' | t }}
                   </button>
                 }
+                <button type="button" class="connect-chat-button"
+                  (click)="openChat(call.peer)" aria-label="Abrir conversa e continuar a chamada">
+                  <span aria-hidden="true">▤</span> Chat
+                </button>
                 <button type="button" class="call-settings-button"
                   [attr.aria-expanded]="settingsOpen" (click)="toggleSettings();inviteOpen=false">
                   <span aria-hidden="true">⚙</span> {{ 'calls.settings' | t }}
@@ -269,9 +281,7 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
               <div class="call-device-panel" role="group" [attr.aria-label]="'calls.settings' | t">
                 <div class="call-settings-head">
                   <strong>{{ 'calls.devices' | t }}</strong>
-                  <button type="button" class="call-scan" (click)="calls.refreshDevices()">
-                    {{ 'calls.rescan' | t }}
-                  </button>
+                  <span class="call-device-auto-refresh">Lista atualizada ao abrir as definições</span>
                 </div>
                 @if (calls.devices$ | async; as devices) {
                   @if (true) {
@@ -511,13 +521,13 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .call-buttons .call-decline{background:#923d49;border-color:#d57780;color:white}
     .call-buttons .call-accept{background:#127e61;border-color:#26dfad}
     .call-buttons .call-settings-button{background:#183c51;border-color:#4c8393}
+    .call-buttons .connect-chat-button{background:#174c58;border-color:#59a99a}
     .call-device-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:6px 12px;margin-top:9px;padding:12px;max-height:29dvh;overflow-y:auto;
-      background:rgba(6,28,42,.92);border:1px solid #416b77;border-radius:12px}
+      gap:6px 12px;margin-top:9px;padding:12px;max-height:34dvh;overflow-y:auto;
+      background:#092635;border:1px solid #416b77;border-radius:12px}
     .call-settings-head{grid-column:1/-1}
     .call-settings-head strong{font-size:.84rem}
-    .call-scan{border:1px solid #4c8691;color:#aeeadf;background:#153a48;
-      border-radius:8px;padding:6px 9px;cursor:pointer}
+    .call-device-auto-refresh{font-size:.69rem;color:#aeeadf}
     .call-device-panel label{font-size:.76rem;color:#b6d7dc;align-self:end}
     .call-device-panel select{grid-row:3;min-width:0;width:100%;font:inherit;font-size:.78rem;
       background:#133748;color:#f4fffe;border:1px solid #547e8a;border-radius:9px;padding:9px}
@@ -558,7 +568,9 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .connect-participants{flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
       grid-auto-rows:minmax(150px,1fr);gap:12px;overflow:auto;padding:4px}
     .connect-participants:has(app-call-participant-tile:only-child){grid-template-columns:1fr}
-    .connect-participants--presenting app-call-participant-tile:has(.presenting){grid-column:1/-1;min-height:55%}
+    .connect-participants--presenting{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));grid-auto-rows:minmax(140px,auto);align-content:start}
+    .connect-presentation-tile{grid-column:1/-1;height:clamp(260px,58dvh,780px);min-height:260px}
+    .connect-participants--presenting app-call-participant-tile:not(.connect-presentation-tile){min-height:140px;height:160px}
     .connect-invite-panel{position:absolute;right:0;bottom:calc(100% + 8px);z-index:15;width:min(450px,100%);box-sizing:border-box;
       max-height:55dvh;overflow:auto;padding:17px;background:#0c2a39;border:1px solid #508d8a;border-radius:16px;box-shadow:0 14px 40px #0008}
     .connect-invite-panel h3{margin:0 0 7px;font-size:1rem}.connect-invite-panel p{font-size:.79rem;color:#bbd8d6;line-height:1.5}
@@ -638,9 +650,12 @@ export class DirectCallOverlayComponent implements OnDestroy {
     return this.participants.some(p=>[...p.videoTrackPublications.values()]
       .some(pub=>!!pub.track && !pub.isMuted));
   }
+  personHasScreenShare(person: LocalParticipant | RemoteParticipant): boolean {
+    return [...person.videoTrackPublications.values()].some(
+      pub => pub.source===Track.Source.ScreenShare && !!pub.track && !pub.isMuted);
+  }
   get hasPresentation(): boolean {
-    return this.participants.some(p=>[...p.videoTrackPublications.values()]
-      .some(pub=>pub.source===Track.Source.ScreenShare && !!pub.track && !pub.isMuted));
+    return this.participants.some(person => this.personHasScreenShare(person));
   }
   participantLabel(person: LocalParticipant | RemoteParticipant): string {
     if (person===this.calls.room?.localParticipant) return appTranslate('calls.you');
@@ -723,7 +738,8 @@ export class DirectCallOverlayComponent implements OnDestroy {
     }
   }
 
-  constructor(public readonly calls: DirectCallClientService, private readonly community: CommunityService) {
+  constructor(public readonly calls: DirectCallClientService,
+              private readonly community: CommunityService, private readonly router: Router) {
     this.elapsed$ = combineLatest([this.calls.state$,timer(0,1000)]).pipe(map(([call]) => {
     if (!call?.startedAt) return '00:00';
     const seconds=Math.max(0,Math.floor((Date.now()-call.startedAt)/1000));
@@ -742,6 +758,14 @@ export class DirectCallOverlayComponent implements OnDestroy {
         this.contactsRequested=false;
         this.volumes={};
       }
+    });
+  }
+
+  openChat(peer: string): void {
+    // Keep the WebRTC call alive while navigating to the conversation.
+    this.minimize();
+    void this.router.navigate(['/menu/messages'], {
+      queryParams: {kind: 'direct', id: peer}
     });
   }
 
