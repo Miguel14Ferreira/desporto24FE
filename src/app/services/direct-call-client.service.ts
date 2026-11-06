@@ -463,6 +463,20 @@ export class DirectCallClientService implements OnDestroy {
     }
   }
 
+  /**
+   * Reconcile a local device that vanished or stopped publishing outside an
+   * explicit user action. Never restart capture or unmute without consent.
+   */
+  private markUnexpectedLocalTrackLoss(source: Track.Source): void {
+    const state=this.state$.value;
+    if (!state || this.busyMedia$.value) return;
+    if (source===Track.Source.Camera && state.cameraEnabled) {
+      this.update({cameraEnabled:false,error:'calls.cameraMissing'});
+    } else if (source===Track.Source.Microphone && state.micEnabled) {
+      this.update({micEnabled:false,error:'calls.microphoneMissing'});
+    }
+  }
+
   /** Translate native browser/LiveKit errors into actionable PT/EN i18n codes. */
   private mediaFailure(error: unknown, kind: 'camera'|'microphone'): string {
     const name=error && typeof error==='object' && 'name' in error
@@ -725,11 +739,21 @@ export class DirectCallClientService implements OnDestroy {
     });
     room.on(RoomEvent.TrackSubscribed, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
     room.on(RoomEvent.ActiveSpeakersChanged, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
-    room.on(RoomEvent.TrackMuted, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
-    room.on(RoomEvent.TrackUnmuted, () => this.mediaChanged$.next(this.mediaChanged$.value+1));
+    room.on(RoomEvent.TrackMuted, (publication, participant) => {
+      if (room!==this.room) return;
+      this.mediaChanged$.next(this.mediaChanged$.value+1);
+      // A spontaneous local mute is not the same as a user clicking Mute.
+      if (participant===room.localParticipant && !this.busyMedia$.value)
+        this.markUnexpectedLocalTrackLoss(publication.source);
+    });
+    room.on(RoomEvent.TrackUnmuted, () => {
+      if (room===this.room) this.mediaChanged$.next(this.mediaChanged$.value+1);
+    });
     room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+      if (room!==this.room) return;
       this.mediaChanged$.next(this.mediaChanged$.value+1);
       if (publication.source===Track.Source.ScreenShare) this.screenShareEnabled$.next(false);
+      else if (!this.busyMedia$.value) this.markUnexpectedLocalTrackLoss(publication.source);
     });
     room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
       if (room!==this.room || participant!==room.localParticipant) return;
