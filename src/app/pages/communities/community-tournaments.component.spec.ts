@@ -548,6 +548,40 @@ describe('Community tournaments management', () => {
     expect(component.showCommunitySportShortcuts).toBeFalse();
   });
 
+  it('expands and collapses community shortcuts without losing the selected sport', () => {
+    const sports = ['Futebol', 'Karting', 'Natação', 'Padel', 'Xadrez',
+      'Atletismo', 'Voleibol', 'Basquetebol'];
+    component.community = { ...community, sport: 'Futebol', sports };
+    component.sportDraft = 'Futebol';
+    component.toggleSportEditor();
+
+    expect(component.showCommunitySportShortcuts).toBeTrue();
+    expect(component.visibleCommunitySportOptions).toEqual(sports.slice(0, 6));
+    expect(component.expandedCommunitySports).toBeFalse();
+
+    component.toggleCommunitySportOptions();
+    expect(component.visibleCommunitySportOptions).toEqual(sports);
+    expect(component.sportDraft).toBe('Futebol');
+
+    component.chooseSport('Voleibol');
+    expect(component.sportDraft).toBe('Voleibol');
+    expect(component.expandedCommunitySports).toBeFalse();
+
+    component.toggleSportEditor();
+    component.toggleCommunitySportOptions();
+    expect(component.visibleCommunitySportOptions).toEqual(sports);
+    component.toggleCommunitySportOptions();
+    expect(component.visibleCommunitySportOptions).toEqual(sports.slice(0, 6));
+    component.toggleSportEditor();
+    expect(component.sportDraft).toBe('Voleibol');
+
+    component.community = { ...community, sport: 'Futebol', sports: ['Futebol'] };
+    component.expandedCommunitySports = false;
+    component.toggleCommunitySportOptions();
+    expect(component.expandedCommunitySports).toBeFalse();
+    expect(component.visibleCommunitySportOptions).toEqual(['Futebol']);
+  });
+
   it('shows truthful sport readiness: supported, needs event/discipline or unavailable', () => {
     component.startIndividualCreation();
     component.chooseSport('Karting');
