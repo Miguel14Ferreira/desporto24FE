@@ -31,6 +31,19 @@ export interface CommunityWarningAppealDecision {
   decidedAt: string;
 }
 
+export interface CommunityTournamentSuspension {
+  id: number;
+  communityId: number;
+  targetProfileId: number;
+  issuedByProfileId: number;
+  reason: string;
+  startsAt: string;
+  endsAt: string;
+  revokedAt: string | null;
+  revokedByProfileId: number | null;
+  revocationReason: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityDisciplineService {
   private readonly base = environment.apiUrl + '/api/communities';
@@ -85,4 +98,28 @@ export class CommunityDisciplineService {
       `${this.base}/${communityId}/discipline/appeals/${appealId}/decision`,
       { outcome, reason });
   }
+  tournamentSuspensions(communityId: number): Observable<CommunityTournamentSuspension[]> {
+    return this.http.get<CommunityTournamentSuspension[]>(
+      `${this.base}/${communityId}/discipline/tournament-suspensions`);
+  }
+
+  myTournamentSuspensions(communityId: number): Observable<CommunityTournamentSuspension[]> {
+    return this.http.get<CommunityTournamentSuspension[]>(
+      `${this.base}/${communityId}/discipline/tournament-suspensions/me`);
+  }
+
+  issueTournamentSuspension(communityId: number, targetProfileId: number,
+                            days: number, reason: string): Observable<CommunityTournamentSuspension> {
+    return this.http.post<CommunityTournamentSuspension>(
+      `${this.base}/${communityId}/discipline/tournament-suspensions`,
+      { targetProfileId, days, reason });
+  }
+
+  liftTournamentSuspension(communityId: number, suspensionId: number,
+                           reason: string): Observable<CommunityTournamentSuspension> {
+    return this.http.post<CommunityTournamentSuspension>(
+      `${this.base}/${communityId}/discipline/tournament-suspensions/${suspensionId}/lift`,
+      { reason });
+  }
+
 }
