@@ -5208,6 +5208,11 @@
                   [canManage]="canManage()">
                 </app-community-discipline-panel>
 
+                <app-community-tournament-suspensions
+                  [community]="selected"
+                  [canManage]="canManage()">
+                </app-community-tournament-suspensions>
+
                 @if (isOwner()) {
                   <section class="management-block">
                     <h3>{{ 'communities.transferOwnership' | t }}</h3>
