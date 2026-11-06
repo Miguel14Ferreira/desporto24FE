@@ -5203,6 +5203,11 @@
                   }
                 </section>
 
+                <app-community-discipline-panel
+                  [community]="selected"
+                  [canManage]="canManage()">
+                </app-community-discipline-panel>
+
                 @if (isOwner()) {
                   <section class="management-block">
                     <h3>{{ 'communities.transferOwnership' | t }}</h3>
