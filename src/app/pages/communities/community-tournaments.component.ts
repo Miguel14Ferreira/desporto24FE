@@ -1503,6 +1503,17 @@ export class CommunityTournamentsComponent implements OnChanges {
     return visible;
   }
 
+  /** Explain which roster identity made a team appear in quick search. */
+  teamQuickSwitchMatchedPlayer(team: TournamentTeam): string | undefined {
+    const normalize = (value: string | null | undefined): string => (value || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
+    const query = normalize(this.teamQuickSwitchQuery);
+    if (!query || normalize(team.name).includes(query)) return undefined;
+    const player = (team.players ?? []).find(item =>
+      normalize(item.displayName).includes(query) || normalize(item.username).includes(query));
+    return player ? (player.displayName || player.username || undefined) : undefined;
+  }
+
   get teamQuickSwitchTotalMatches(): number {
     return !this.focusedTeam || this.teams.length <= 4
       ? 0 : this.matchingQuickSwitchTeams.length;
