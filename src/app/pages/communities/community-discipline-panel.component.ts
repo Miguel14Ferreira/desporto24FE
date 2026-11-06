@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommunityGroup } from '../model/community-group';
-import { CommunityDisciplineService, CommunityDisciplinaryWarning, CommunityWarningAppeal } from '../../services/community-discipline.service';
+import { CommunityDisciplineService, CommunityDisciplinaryWarning, CommunityWarningAppeal, CommunityWarningAppealDecision } from '../../services/community-discipline.service';
 
 /** Community-only warnings. Suspensions and competition eligibility are not part of this phase. */
 @Component({
@@ -54,6 +54,32 @@ import { CommunityDisciplineService, CommunityDisciplinaryWarning, CommunityWarn
               <p>{{ warning.reason }}</p>
               @if (appealFor(warning.id); as appeal) {
                 <p class="appeal-response"><strong>Contestação apresentada:</strong> {{ appeal.statement }}</p>
+                @if (decisionFor(appeal.id); as decision) {
+                  <p class="appeal-response">
+                    <strong>{{ decision.outcome === 'OVERTURNED' ? 'Advertência anulada após revisão' : 'Advertência mantida após revisão' }}</strong>
+                    · {{ decision.reason }}
+                  </p>
+                } @else if (canManage) {
+                  <form class="discipline-form" (ngSubmit)="decideAppeal(appeal.id)">
+                    <label [for]="'appeal-outcome-' + appeal.id">Decisão da contestação</label>
+                    <select [id]="'appeal-outcome-' + appeal.id" [name]="'appeal-outcome-' + appeal.id"
+                            [(ngModel)]="decisionOutcomes[appeal.id]"
+                            [disabled]="decisionSavingId !== null" required>
+                      <option value="UPHELD">Manter advertência</option>
+                      <option value="OVERTURNED">Anular advertência</option>
+                    </select>
+                    <label [for]="'appeal-review-reason-' + appeal.id">Fundamentação da decisão</label>
+                    <textarea [id]="'appeal-review-reason-' + appeal.id"
+                              [name]="'appeal-review-reason-' + appeal.id"
+                              [(ngModel)]="decisionReasons[appeal.id]" rows="3"
+                              maxlength="1000" [disabled]="decisionSavingId !== null"
+                              placeholder="A decisão deve ser tomada por um responsável diferente do emissor."
+                              required></textarea>
+                    <button type="submit" [disabled]="decisionSavingId !== null || !decisionReasons[appeal.id]?.trim()">
+                      {{ decisionSavingId === appeal.id ? 'A guardar…' : 'Registar decisão' }}
+                    </button>
+                  </form>
+                }
               } @else if (!canManage) {
                 <form class="discipline-form" (ngSubmit)="submitAppeal(warning.id)">
                   <label [for]="'appeal-statement-' + warning.id">A tua versão dos factos</label>
@@ -95,6 +121,10 @@ export class CommunityDisciplinePanelComponent implements OnChanges {
   reason = '';
   warnings: CommunityDisciplinaryWarning[] = [];
   appeals: CommunityWarningAppeal[] = [];
+  decisions: CommunityWarningAppealDecision[] = [];
+  decisionOutcomes: Record<number, CommunityWarningAppealDecision['outcome']> = {};
+  decisionReasons: Record<number, string> = {};
+  decisionSavingId: number | null = null;
   appealDrafts: Record<number, string> = {};
   appealSavingId: number | null = null;
   loading = false;
@@ -115,9 +145,15 @@ export class CommunityDisciplinePanelComponent implements OnChanges {
       this.targetProfileId = null;
       this.reason = '';
       this.appealDrafts = {};
+      this.decisionReasons = {};
+      this.decisionOutcomes = {};
       this.feedback = '';
       this.load();
     }
+  }
+
+  decisionFor(appealId: number): CommunityWarningAppealDecision | undefined {
+    return this.decisions.find(decision => decision.appealId === appealId);
   }
 
   appealFor(warningId: number): CommunityWarningAppeal | undefined {
@@ -134,10 +170,25 @@ export class CommunityDisciplinePanelComponent implements OnChanges {
     const revision = ++this.revision;
     this.warnings = [];
     this.appeals = [];
+    this.decisions = [];
     this.appealSavingId = null;
+    this.decisionSavingId = null;
     this.error = '';
     if (!communityId) return;
     this.loading = true;
+    const decisionsRequest = this.canManage ? this.api.listDecisions(communityId) : this.api.myDecisions(communityId);
+    decisionsRequest.subscribe({
+      next: decisions => {
+        if (revision !== this.revision) return;
+        this.decisions = decisions;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        if (revision !== this.revision) return;
+        this.error = 'Não foi possível carregar as decisões das contestações.';
+        this.changeDetector.markForCheck();
+      }
+    });
     const appealRequest = this.canManage ? this.api.listAppeals(communityId) : this.api.myAppeals(communityId);
     appealRequest.subscribe({
       next: appeals => {
@@ -218,6 +269,35 @@ export class CommunityDisciplinePanelComponent implements OnChanges {
         if (revision !== this.revision) return;
         this.appealSavingId = null;
         this.error = 'Não foi possível enviar a contestação. Tenta novamente.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
+  decideAppeal(appealId: number): void {
+    const appeal = this.appeals.find(entry => entry.id === appealId);
+    const reason = this.decisionReasons[appealId]?.trim() ?? '';
+    const outcome = this.decisionOutcomes[appealId] ?? 'UPHELD';
+    if (!this.canManage || !this.community?.id || !appeal
+        || this.decisionFor(appealId) || this.decisionSavingId !== null
+        || !reason || reason.length > 1000) return;
+    const revision = this.revision;
+    this.decisionSavingId = appealId;
+    this.error = '';
+    this.feedback = '';
+    this.api.decide(this.community.id, appealId, outcome, reason).subscribe({
+      next: decision => {
+        if (revision !== this.revision) return;
+        this.decisions = [...this.decisions, decision];
+        this.decisionSavingId = null;
+        delete this.decisionReasons[appealId];
+        this.feedback = 'Decisão registada e fundamentada.';
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        if (revision !== this.revision) return;
+        this.decisionSavingId = null;
+        this.error = 'Não foi possível decidir. O responsável que emitiu a advertência não pode rever o próprio caso.';
         this.changeDetector.markForCheck();
       }
     });
