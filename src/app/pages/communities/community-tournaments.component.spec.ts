@@ -4026,6 +4026,21 @@ describe('Community tournaments management', () => {
       expect(component.filteredTeamMembers(40).map(x => x.profileId)).toEqual([1,3,4,5]);
     });
 
+    it('explains the capped assignment dropdown in Portuguese and English', () => {
+      const previous = localStorage.getItem('d24-language');
+      try {
+        localStorage.setItem('d24-language', 'pt');
+        expect(t('communities.tournaments.teamUi.memberListLimited', { shown: 30, total: 75 }))
+          .toContain('30 de 75 membros disponíveis');
+        localStorage.setItem('d24-language', 'en');
+        expect(t('communities.tournaments.teamUi.memberListLimited', { shown: 30, total: 75 }))
+          .toContain('30 of 75 available members');
+      } finally {
+        if (previous === null) localStorage.removeItem('d24-language');
+        else localStorage.setItem('d24-language', previous);
+      }
+    });
+
     it('clearing manual member search resets its hidden selection without touching another team', () => {
       component.community = { ...community, members, memberCount: 3 };
       api.teams.and.returnValue(of([team, { ...team, id: 41, name: 'Azuis' }]));
