@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import { CommunityTournamentEligibilityService, TournamentEligibilityOverview } from '../../services/community-tournament-eligibility.service';
 
@@ -53,13 +54,15 @@ import { CommunityTournamentEligibilityService, TournamentEligibilityOverview } 
     .eligibility-panel small { opacity:.75; }
   `]
 })
-export class CommunityTournamentEligibilityPanelComponent implements OnChanges {
+export class CommunityTournamentEligibilityPanelComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) community!: CommunityGroup;
   @Input({ required: true }) tournamentId!: number;
   overview: TournamentEligibilityOverview | null = null;
   loading = false;
   error = '';
   private revision = 0;
+  private request?: Subscription;
+  private destroyed = false;
 
   constructor(private readonly api: CommunityTournamentEligibilityService,
               private readonly changeDetector: ChangeDetectorRef) {}
@@ -73,24 +76,35 @@ export class CommunityTournamentEligibilityPanelComponent implements OnChanges {
     return member?.fullName || member?.username || `#${profileId}`;
   }
 
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    ++this.revision;
+    this.request?.unsubscribe();
+  }
+
   reload(): void {
+    if (this.destroyed) return;
+    // Abort the previous tournament's private report when selection or role changes.
+    ++this.revision;
+    this.request?.unsubscribe();
+    this.request = undefined;
     const id = this.community?.id;
     const tournament = this.tournamentId;
-    const revision = ++this.revision;
+    const revision = this.revision;
     this.overview = null;
     this.error = '';
     this.loading = false;
     if (!id || !tournament || !['OWNER','ADMIN'].includes(this.community.myRole ?? '')) return;
     this.loading = true;
-    this.api.overview(id, tournament).subscribe({
+    this.request = this.api.overview(id, tournament).subscribe({
       next: result => {
-        if (revision !== this.revision) return;
+        if (this.destroyed || revision !== this.revision) return;
         this.overview = result;
         this.loading = false;
         this.changeDetector.markForCheck();
       },
       error: () => {
-        if (revision !== this.revision) return;
+        if (this.destroyed || revision !== this.revision) return;
         this.error = 'Não foi possível verificar a elegibilidade. Tenta novamente.';
         this.loading = false;
         this.changeDetector.markForCheck();
