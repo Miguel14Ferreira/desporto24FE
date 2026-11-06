@@ -2372,7 +2372,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       }
       this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
+        // The server has proved delivery. Do not keep the composer blocked by
+        // an older read-only verification request still awaiting its response.
         this.deliveryUncertain = false;
+        this.deliveryChecking = false;
         if (unchangedComposition) {
           this.setSelectedAttachment(null);
           this.selectedGif = null;
