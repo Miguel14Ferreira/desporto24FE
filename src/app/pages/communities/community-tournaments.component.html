@@ -1199,6 +1199,13 @@
                                 <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
                               }
                             </select>
+                            @if (!teamMemberSearch[team.id]?.trim()
+                                && availableTeamMembers.length > teamMemberSuggestionLimit) {
+                              <p class="t-muted" role="status">
+                                {{ 'communities.tournaments.teamUi.memberListLimited' | t:{
+                                  shown:teamMemberSuggestionLimit,total:availableTeamMembers.length} }}
+                              </p>
+                            }
                             @if (filteredTeamMembers(team.id).length === 0) {
                               <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.noSearchMatches' | t }}</p>
                             }
