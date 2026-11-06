@@ -717,4 +717,71 @@ describe('Direct calls gated by authenticated realtime and backend availability'
       status:'RINGING',actor:'bea',expiresAt:new Date(Date.now()-10000).toISOString()});
     expect(calls.state$.value).toBeNull();
   });
+  it('recovers disconnected selected microphone without ending the LiveKit call', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any = {
+      switchActiveDevice:jasmine.createSpy('switch').and.resolveTo(true),
+      disconnect:jasmine.createSpy('disconnect')
+    };
+    calls.room = room;
+    calls.state$.next({id:'keep-active',peer:'bea',phase:'active',media:'voice',
+      micEnabled:true,cameraEnabled:false,startedAt:Date.now()});
+    calls.selectedDevices$.next({audioinput:'unplugged-mic'});
+    spyOn(calls,'refreshDevices').and.callFake(async () => {
+      calls.devices$.next([{kind:'audioinput',deviceId:'built-in',label:'Built-in'} as MediaDeviceInfo]);
+      calls.selectedDevices$.next({});
+      calls.deviceScanStatus$.next('ready');
+    });
+    await (calls as any).recoverDisconnectedDevices();
+    expect(room.switchActiveDevice).toHaveBeenCalledOnceWith('audioinput','default');
+    expect(calls.state$.value?.phase).toBe('active');
+    expect(calls.state$.value?.micEnabled).toBeTrue();
+    expect(room.disconnect).not.toHaveBeenCalled();
+    calls.room = null;
+  });
+
+  it('does not start a microphone when it was muted before unplugging', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any = {switchActiveDevice:jasmine.createSpy('switch')};
+    calls.room = room;
+    calls.state$.next({id:'muted',peer:'bea',phase:'active',media:'voice',
+      micEnabled:false,cameraEnabled:false,startedAt:Date.now()});
+    calls.selectedDevices$.next({audioinput:'unplugged-mic'});
+    spyOn(calls,'refreshDevices').and.callFake(async () => {
+      calls.devices$.next([]);
+      calls.selectedDevices$.next({});
+      calls.deviceScanStatus$.next('ready');
+    });
+    await (calls as any).recoverDisconnectedDevices();
+    expect(room.switchActiveDevice).not.toHaveBeenCalled();
+    expect(calls.state$.value?.micEnabled).toBeFalse();
+    calls.room = null;
+  });
+
+  it('reports a failed fallback but keeps the active call and other tracks', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any = {
+      switchActiveDevice:jasmine.createSpy('switch').and.rejectWith(
+        new DOMException('Camera busy','NotReadableError')),
+      disconnect:jasmine.createSpy('disconnect')
+    };
+    calls.room = room;
+    calls.state$.next({id:'failed-fallback',peer:'bea',phase:'active',media:'video',
+      micEnabled:true,cameraEnabled:true,startedAt:Date.now()});
+    calls.selectedDevices$.next({videoinput:'disconnected-camera'});
+    spyOn(calls,'refreshDevices').and.callFake(async () => {
+      calls.devices$.next([]);
+      calls.selectedDevices$.next({});
+      calls.deviceScanStatus$.next('ready');
+    });
+    await (calls as any).recoverDisconnectedDevices();
+    expect(room.switchActiveDevice).toHaveBeenCalledOnceWith('videoinput','default');
+    expect(calls.state$.value?.error).toBe('calls.cameraBusy');
+    expect(calls.state$.value?.micEnabled).toBeTrue();
+    expect(calls.state$.value?.phase).toBe('active');
+    expect(room.disconnect).not.toHaveBeenCalled();
+    expect(calls.busyMedia$.value).toBeFalse();
+    calls.room = null;
+  });
+
 });
