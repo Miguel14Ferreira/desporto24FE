@@ -1372,10 +1372,20 @@ export class CommunityTournamentsComponent implements OnChanges {
       .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
     const query = normalize(this.teamMemberSearch[teamId] || '');
     const eligible = this.availableTeamMembers;
-    const matching = query ? eligible.filter(member =>
-      normalize(member.fullName).includes(query)
-      || normalize(member.username).includes(query)) : eligible;
-    return matching.slice(0, this.teamMemberSuggestionLimit);
+    if (!query) return eligible.slice(0, this.teamMemberSuggestionLimit);
+    const rank = (name: string | null | undefined, username: string | null | undefined) => {
+      const labels = [normalize(name), normalize(username)].filter(Boolean);
+      return labels.some(value => value === query) ? 0
+        : labels.some(value => value.startsWith(query)) ? 1 : 2;
+    };
+    return eligible.filter(member =>
+      normalize(member.fullName).includes(query) || normalize(member.username).includes(query))
+      .sort((a, b) =>
+        rank(a.fullName, a.username) - rank(b.fullName, b.username)
+        || normalize(a.fullName || a.username).localeCompare(
+          normalize(b.fullName || b.username), 'pt')
+        || a.profileId - b.profileId)
+      .slice(0, this.teamMemberSuggestionLimit);
   }
 
   /** Keep the search input visible until an active filter is cleared, even if
