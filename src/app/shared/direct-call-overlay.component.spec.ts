@@ -240,6 +240,20 @@ describe('Global incoming call popup', () => {
     expect(calls.end).not.toHaveBeenCalled();
   });
 
+  it('observes LiveKit track revisions while minimized so remote audio tiles update', () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.connect-minimize') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const refresh = fixture.nativeElement.querySelector('.connect-mini .call-refresh') as HTMLElement;
+    expect(refresh).toBeTruthy();
+    expect(refresh.textContent).toContain('0');
+    calls.mediaChanged$.next(1);
+    fixture.detectChanges();
+    expect(refresh.textContent).toContain('1');
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
   it('keeps the minimized call interactive without preventing message composition', () => {
     state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
     fixture.detectChanges();
