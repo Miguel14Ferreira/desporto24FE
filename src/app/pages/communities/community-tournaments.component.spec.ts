@@ -3684,6 +3684,27 @@ describe('Community tournaments management', () => {
       expect(api.addTeamPlayer).not.toHaveBeenCalled();
     });
 
+    it('finds multiword player names and teams without requiring adjacent words', () => {
+      const entries: TournamentTeam[] = [
+        { ...team, id: 51, name: 'João Silva', players: [] },
+        { ...team, id: 52, name: 'Equipa Azul', players: [
+          { profileId: 17, username: 'joao.silva', displayName: 'João da Silva' }
+        ] },
+        { ...team, id: 53, name: 'Clube João da Silva', players: [] },
+        { ...team, id: 54, name: 'Clube Silva', players: [
+          { profileId: 18, username: 'maria.santos', displayName: 'Maria Santos' }
+        ] }
+      ];
+      api.teams.and.returnValue(of(entries));
+      component.selectTournament(teamDraft);
+      component.setTeamDirectoryQuery('  JOÃO    SILVA  ');
+      expect(component.visibleTournamentTeams.map(item => item.id)).toEqual([51, 53, 52]);
+      component.setTeamDirectoryQuery('João inexistente');
+      expect(component.visibleTournamentTeams).toEqual([]);
+      expect(component.teams.map(item => item.id)).toEqual([51, 52, 53, 54]);
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('searches the team directory without changing saved teams or fixtures', () => {
       const blue = { ...team, id: 41, name: 'São Azul' };
       const green = { ...team, id: 42, name: 'Verdes' };
