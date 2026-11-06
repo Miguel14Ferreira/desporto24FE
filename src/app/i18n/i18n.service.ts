@@ -4599,6 +4599,8 @@ const PT: Dictionary = {
   'chat.noReactionsHere': 'Sem reações deste tipo.',
   'calls.reconnecting': 'A reconectar…',
   'calls.chooseCamera': 'Escolher outra câmara',
+  'calls.chooseMicrophone': 'Escolher outro microfone',
+  'calls.retryMicrophone': 'Tentar microfone novamente',
   'calls.swapView': 'Trocar vista',
   'calls.shareScreen': 'Partilhar ecrã',
   'calls.fullScreenShareHint': 'Para mostrar o monitor completo, escolhe «Ecrã inteiro» na janela do navegador.',
