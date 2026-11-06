@@ -4049,6 +4049,20 @@ describe('Community tournaments management', () => {
       expect(component.confirmingEmptyTeamId).toBeNull();
     });
 
+    it('clears stale invitation feedback whenever the loaded roster changes', () => {
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      component.inviteCopyFeedback[team.id] = 'Link copiado';
+      const occupied = { ...team, players: [
+        { profileId: 2, username: 'ana', displayName: 'Ana' }
+      ] };
+      api.teams.and.returnValue(of([occupied]));
+      component.loadTeams();
+      expect(component.inviteCopyFeedback).toEqual({});
+      expect(component.teams[0].players.map(player => player.profileId)).toEqual([2]);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('rejects stale roster actions for teams not in the loaded tournament', async () => {
       const occupied = { ...team, players: [
         { profileId: 2, username: 'ana', displayName: 'Ana' }
