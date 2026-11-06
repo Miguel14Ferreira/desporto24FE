@@ -1092,7 +1092,7 @@
                       @for (player of filteredTeamRoster(team); track player.profileId) {
                         <div class="player-item">
                           <div class="team-player-summary">
-                            <span class="team-player-avatar" aria-hidden="true">{{ (player.displayName || player.username).charAt(0).toUpperCase() }}</span>
+                            <span class="team-player-avatar" aria-hidden="true">{{ (player.displayName || player.username || '?').charAt(0).toUpperCase() }}</span>
                             <span class="team-player-identity">
                               @if (teamPlayerProfileUsername(player.username); as profileUsername) {
                                 <a [routerLink]="['/menu/perfis', profileUsername]"
