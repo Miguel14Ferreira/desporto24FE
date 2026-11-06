@@ -1279,6 +1279,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.authentication.loggedInPerfilname || '').toLowerCase();
   }
 
+  /** Never offer a self-chat or an invalid direct-message recipient. */
+  canMessageTeamPlayer(username: string | null | undefined): boolean {
+    const recipient = username?.trim().toLowerCase();
+    return !!recipient && !!this.myUsername && recipient !== this.myUsername;
+  }
+
   get myEnrollment(): TournamentParticipant | undefined {
     return this.participants.find(p => p.username.toLowerCase() === this.myUsername);
   }
