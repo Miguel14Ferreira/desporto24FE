@@ -1105,11 +1105,11 @@
                               }
                             </span>
                           </div>
-                          @if (canMessageTeamPlayer(player.username)) {
+                          @if (teamPlayerMessageRecipient(player.username); as recipient) {
                             <a class="t-btn t-btn-secondary t-btn-small"
                               [routerLink]="['/menu/messages']"
-                              [queryParams]="{kind:'direct',id:player.username}"
-                              [attr.aria-label]="('friends.chatAction' | t) + ': ' + (player.displayName || player.username)">
+                              [queryParams]="{kind:'direct',id:recipient}"
+                              [attr.aria-label]="('friends.chatAction' | t) + ': ' + (player.displayName || recipient)">
                               {{ 'friends.chatAction' | t }}
                             </a>
                           }
