@@ -1680,12 +1680,12 @@ export class CommunityTournamentsComponent implements OnChanges {
       player.username.toLowerCase() === this.myUsername));
   }
 
-  /** A team link belongs to the currently opened tournament, never stale UI data. */
+  /** Invite links follow the same roster and draft-only checks as copy actions. */
   teamInviteUrl(team: TournamentTeam): string {
-    if (!this.isTeamCompetition || !this.selected || !this.community?.id
-        || !this.teams.some(current => current.id === team.id)) return '';
+    const current = this.currentRosterTeam(team);
+    if (!this.canManageTeamRoster || !current || this.isTeamRosterFull(current)) return '';
     return buildTournamentTeamInviteUrl(
-      window.location.origin, this.community.id, this.selected.id, team.id);
+      window.location.origin, this.community.id, this.selected!.id, current.id);
   }
 
   teamWhatsAppUrl(team: TournamentTeam): string {
