@@ -3709,6 +3709,25 @@ describe('Community tournaments management', () => {
       expect(api.removeTeamPlayer).not.toHaveBeenCalled();
     });
 
+    it('clears only the selected team roster search without changing player data', () => {
+      const first = { ...team, players: [
+        { profileId: 1, username: 'ana', displayName: 'Ana' },
+        { profileId: 2, username: 'bruno', displayName: 'Bruno' }
+      ] };
+      const second = { ...team, id: 41, name: 'Azuis', players: [
+        { profileId: 3, username: 'carla', displayName: 'Carla' }
+      ] };
+      component.setTeamRosterSearch(40, 'inexistente');
+      component.setTeamRosterSearch(41, 'Carla');
+      expect(component.filteredTeamRoster(first)).toEqual([]);
+      component.setTeamRosterSearch(40, '');
+      expect(component.filteredTeamRoster(first)).toEqual(first.players);
+      expect(component.filteredTeamRoster(second)).toEqual(second.players);
+      expect(component.teamRosterSearch[41]).toBe('Carla');
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('filters large team rosters by name or username without changing membership', () => {
       const players = Array.from({ length: 20 }, (_, i) => ({
         profileId: i + 1, username: 'player' + (i + 1),
