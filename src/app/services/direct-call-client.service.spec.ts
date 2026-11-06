@@ -441,6 +441,48 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     http.expectOne(req=>req.url.endsWith('/api/calls/direct/switch-concurrent/end')).flush(null);
   });
 
+  it('switches an active camera to the default without first turning video off', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any={
+      switchActiveDevice:jasmine.createSpy('switch').and.resolveTo(true),
+      localParticipant:{setCameraEnabled:jasmine.createSpy('camera')}
+    };
+    calls.room=room;
+    calls.state$.next({id:'atomic-camera',peer:'bea',media:'video',phase:'active',
+      micEnabled:true,cameraEnabled:true,startedAt:Date.now()});
+    calls.selectedDevices$.next({videoinput:'usb-camera'});
+    spyOn(calls,'refreshDevices').and.resolveTo();
+    await calls.useDefaultCamera();
+    expect(room.switchActiveDevice).toHaveBeenCalledOnceWith('videoinput','default');
+    expect(room.localParticipant.setCameraEnabled).not.toHaveBeenCalled();
+    expect(calls.selectedDevices$.value.videoinput).toBeUndefined();
+    expect(calls.state$.value?.cameraEnabled).toBeTrue();
+    expect(calls.busyMedia$.value).toBeFalse();
+    calls.room=null;
+  });
+
+  it('preserves active camera and selection when switching to default fails', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const room:any={
+      switchActiveDevice:jasmine.createSpy('switch').and.rejectWith(
+        new DOMException('Camera busy','NotReadableError')),
+      localParticipant:{setCameraEnabled:jasmine.createSpy('camera')}
+    };
+    calls.room=room;
+    calls.state$.next({id:'camera-fallback-failed',peer:'bea',media:'video',phase:'active',
+      micEnabled:true,cameraEnabled:true,startedAt:Date.now()});
+    calls.selectedDevices$.next({videoinput:'usb-camera'});
+    spyOn(calls,'refreshDevices').and.resolveTo();
+    await calls.useDefaultCamera();
+    expect(calls.selectedDevices$.value.videoinput).toBe('usb-camera');
+    expect(calls.state$.value?.cameraEnabled).toBeTrue();
+    expect(calls.state$.value?.phase).toBe('active');
+    expect(calls.state$.value?.error).toBe('calls.cameraBusy');
+    expect(room.localParticipant.setCameraEnabled).not.toHaveBeenCalled();
+    expect(calls.busyMedia$.value).toBeFalse();
+    calls.room=null;
+  });
+
   it('keeps the same call duration across a temporary LiveKit reconnection', async () => {
     http.expectOne(r=>r.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     const listeners=new Map<string,()=>void>();
