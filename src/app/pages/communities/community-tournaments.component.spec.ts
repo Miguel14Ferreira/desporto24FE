@@ -3709,6 +3709,26 @@ describe('Community tournaments management', () => {
       expect(api.removeTeamPlayer).not.toHaveBeenCalled();
     });
 
+    it('dismisses only a hidden player removal confirmation when roster search changes', () => {
+      const roster = { ...team, players: [
+        { profileId: 1, username: 'ana', displayName: 'Ana' },
+        { profileId: 2, username: 'bruno', displayName: 'Bruno' }
+      ] };
+      api.teams.and.returnValue(of([roster]));
+      component.selectTournament(teamDraft);
+      component.requestTeamPlayerRemoval(roster, 1);
+      expect(component.confirmingTeamPlayerRemoval).toEqual({ teamId: 40, profileId: 1 });
+      component.setTeamRosterSearch(40, 'ana');
+      expect(component.confirmingTeamPlayerRemoval).toEqual({ teamId: 40, profileId: 1 });
+      component.setTeamRosterSearch(41, 'bruno');
+      expect(component.confirmingTeamPlayerRemoval).toEqual({ teamId: 40, profileId: 1 });
+      component.setTeamRosterSearch(40, 'bruno');
+      expect(component.confirmingTeamPlayerRemoval).toBeNull();
+      expect(component.filteredTeamRoster(roster).map(player => player.profileId)).toEqual([2]);
+      expect(roster.players).toHaveSize(2);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('clears only the selected team roster search without changing player data', () => {
       const first = { ...team, players: [
         { profileId: 1, username: 'ana', displayName: 'Ana' },
