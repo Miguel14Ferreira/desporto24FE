@@ -642,8 +642,12 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
     .connect-member-item{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
     .connect-member-item input{width:118px;accent-color:#45dfb9}
     .connect-volume-label{font-size:.67rem;color:#a9d5d5}
-    .connect-mini{position:fixed;bottom:max(20px,env(safe-area-inset-bottom));right:20px;z-index:6000;
-      display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #48bfa8;border-radius:16px;
+    /* Keep the persistent call away from the message composer and Send button.
+       Only the small floating surface receives pointer events. */
+    .connect-mini{position:fixed;top:max(76px,env(safe-area-inset-top));right:20px;bottom:auto;
+      z-index:6000;display:flex;align-items:center;gap:10px;padding:10px;
+      max-width:min(460px,calc(100vw - 20px));box-sizing:border-box;
+      border:1px solid #48bfa8;border-radius:16px;
       background:#0b303e;color:#ebfff8;box-shadow:0 12px 48px #0008}
     .connect-mini-name{display:grid;grid-template-columns:8px 1fr;column-gap:10px;font-size:.78rem}
     .connect-mini-name strong,.connect-mini-name small{grid-column:2}.connect-mini-name span{grid-row:1/3;align-self:center}
@@ -651,6 +655,15 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
       color:white;background:#155551;cursor:pointer;font:inherit;font-size:.76rem}
     .connect-mini .connect-mini-chat{background:#174c58;border-color:#59a99a}
     .connect-mini .connect-mini-hangup{background:#903e50;border-color:#b85d6a}
+    .connect-mini button:focus-visible{outline:2px solid #a7fce2;outline-offset:2px}
+    .connect-mini-name{min-width:0}
+    .connect-mini-name strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    @media(max-width:650px){
+      .connect-mini{top:max(66px,env(safe-area-inset-top));left:10px;right:10px;gap:6px;
+        padding:8px;max-width:none;flex-wrap:wrap;justify-content:flex-end}
+      .connect-mini-name{margin-right:auto;min-width:90px}
+      .connect-mini button{padding:8px 7px;font-size:.72rem}
+    }
     .connect-mini-audio{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
     @media(max-width:600px){
       .call-backdrop{padding:6px}
