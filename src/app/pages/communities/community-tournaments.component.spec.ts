@@ -1087,6 +1087,19 @@ describe('Community tournaments management', () => {
       { profileId: 3, username: 'bruno', fullName: 'Bruno', profilePicUrl: null, role: 'MEMBER' as const }
     ];
 
+    it('offers private messages only to other identified team players', () => {
+      component.selectTournament(teamDraft);
+      expect(component.canMessageTeamPlayer('ana')).toBeTrue();
+      expect(component.canMessageTeamPlayer('Bruno')).toBeTrue();
+      expect(component.canMessageTeamPlayer('owner')).toBeFalse();
+      expect(component.canMessageTeamPlayer(' OWNER ')).toBeFalse();
+      expect(component.canMessageTeamPlayer('')).toBeFalse();
+      expect(component.canMessageTeamPlayer('   ')).toBeFalse();
+      expect(component.canMessageTeamPlayer(null)).toBeFalse();
+      expect(component.canMessageTeamPlayer(undefined)).toBeFalse();
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('labels team scoring by sport rather than treating every competition as football', () => {
       const examples: Array<[string,string,string,string]> = [
         ['Futebol', 'GM', 'GS', 'DG'],
