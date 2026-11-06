@@ -1066,8 +1066,24 @@
                     @if (!team.players.length) {
                       <p class="t-muted">{{ 'communities.tournaments.teamUi.noPlayers' | t }}</p>
                     }
+                    @if (team.players.length > 8) {
+                      <label class="team-directory-search" [for]="'team-roster-search-' + team.id">
+                        <span>{{ 'communities.tournaments.teamUi.searchMember' | t }}</span>
+                        <input [id]="'team-roster-search-' + team.id" type="search"
+                          [ngModel]="teamRosterSearch[team.id] || ''"
+                          (ngModelChange)="setTeamRosterSearch(team.id, $event)"
+                          maxlength="80" autocomplete="off"
+                          [placeholder]="'communities.tournaments.teamUi.searchPlaceholder' | t">
+                      </label>
+                      <p class="t-muted" role="status">
+                        {{ filteredTeamRoster(team).length }} / {{ team.players.length }}
+                      </p>
+                    }
+                    @if (team.players.length && filteredTeamRoster(team).length === 0) {
+                      <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.noSearchMatches' | t }}</p>
+                    }
                     <div class="players-list">
-                      @for (player of team.players; track player.profileId) {
+                      @for (player of filteredTeamRoster(team); track player.profileId) {
                         <div class="player-item">
                           <div class="team-player-summary">
                             <span class="team-player-avatar" aria-hidden="true">{{ (player.displayName || player.username).charAt(0).toUpperCase() }}</span>
