@@ -21,6 +21,16 @@ export interface CommunityWarningAppeal {
   createdAt: string;
 }
 
+export interface CommunityWarningAppealDecision {
+  id: number;
+  appealId: number;
+  communityId: number;
+  reviewedByProfileId: number;
+  outcome: 'UPHELD' | 'OVERTURNED';
+  reason: string;
+  decidedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityDisciplineService {
   private readonly base = environment.apiUrl + '/api/communities';
@@ -58,4 +68,21 @@ export class CommunityDisciplineService {
       { statement });
   }
 
+  myDecisions(communityId: number): Observable<CommunityWarningAppealDecision[]> {
+    return this.http.get<CommunityWarningAppealDecision[]>(
+      `${this.base}/${communityId}/discipline/appeals/decisions/me`);
+  }
+
+  listDecisions(communityId: number): Observable<CommunityWarningAppealDecision[]> {
+    return this.http.get<CommunityWarningAppealDecision[]>(
+      `${this.base}/${communityId}/discipline/appeals/decisions`);
+  }
+
+  decide(communityId: number, appealId: number,
+         outcome: CommunityWarningAppealDecision['outcome'], reason: string):
+      Observable<CommunityWarningAppealDecision> {
+    return this.http.post<CommunityWarningAppealDecision>(
+      `${this.base}/${communityId}/discipline/appeals/${appealId}/decision`,
+      { outcome, reason });
+  }
 }
