@@ -518,6 +518,27 @@ describe('Community tournaments management', () => {
     expect(component.showCommunitySportShortcuts).toBeTrue();
   });
 
+  it('prioritizes exact and prefix sport matches before imported substring matches', () => {
+    component.community = {
+      ...community,
+      sport: 'Mini Karting',
+      sports: ['Mini Karting', 'Super Karting', 'Karting de Rua', 'Karting']
+    };
+    component.sportSearch = '  KÁRTING  ';
+    expect(component.suggestedSports[0]).toBe('Karting');
+    expect(component.suggestedSports.slice(1)).toEqual([
+      'Karting de Rua', 'Mini Karting', 'Super Karting'
+    ]);
+
+    component.sportSearch = 'kart';
+    expect(component.suggestedSports.slice(0, 2)).toEqual(['Karting de Rua', 'Karting']);
+    expect(component.suggestedSports).toContain('Mini Karting');
+    expect(component.suggestedSports).toContain('Super Karting');
+
+    component.sportSearch = '  ';
+    expect(component.suggestedSports).toEqual([]);
+  });
+
   it('keeps multiple community sports selectable in the change editor without changing the current choice', () => {
     component.community = {
       ...community, sport: 'Futebol', sports: ['Futebol', 'Karting', 'Natação']
