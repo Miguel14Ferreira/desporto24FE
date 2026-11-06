@@ -4521,6 +4521,22 @@ describe('Community tournaments management', () => {
     });
 
 
+    it('rejects repeated or invalid player IDs when checking if a squad is ready', () => {
+      const player = { profileId: 2, username: 'ana', displayName: 'Ana' };
+      const other = { profileId: 3, username: 'rui', displayName: 'Rui' };
+      const flexible: TournamentTeam = {
+        id: 40, name: 'Azuis', playersPerTeam: null,
+        createdAt: '2026-10-16T12:00:00Z', players: [player, player]
+      };
+      expect(component.isTeamRosterReady(flexible)).toBeFalse();
+      expect(component.isTeamRosterReady({...flexible, players: [player, other]})).toBeTrue();
+      expect(component.isTeamRosterReady({...flexible, players: [{...player, profileId: 0}]})).toBeFalse();
+      expect(component.isTeamRosterReady({...flexible, players: [{...player, profileId: NaN}]})).toBeFalse();
+      const fixed = {...flexible, playersPerTeam: 2};
+      expect(component.isTeamRosterReady(fixed)).toBeFalse();
+      expect(component.isTeamRosterReady({...fixed, players: [player, other]})).toBeTrue();
+    });
+
     it('only enables publication when at least two teams have complete squads', () => {
       component.selectTournament(teamDraft);
       expect(component.canPublishTeamSchedule).toBeFalse();
