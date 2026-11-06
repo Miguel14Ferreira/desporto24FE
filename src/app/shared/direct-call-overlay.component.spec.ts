@@ -249,7 +249,7 @@ describe('Global incoming call popup', () => {
     (fixture.nativeElement.querySelector('.connect-minimize') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.connect-mini-name')?.textContent)
-      .toContain('A restabelecer ligação');
+      .toContain('A reconectar');
     expect(calls.end).not.toHaveBeenCalled();
   });
 
