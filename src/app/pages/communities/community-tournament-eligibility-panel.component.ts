@@ -55,6 +55,7 @@ import { CommunityTournamentEligibilityService, TournamentEligibilityOverview } 
 export class CommunityTournamentEligibilityPanelComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) community!: CommunityGroup;
   @Input({ required: true }) tournamentId!: number;
+  @Input() entryType?: TournamentEligibilityOverview['entryType'];
   overview: TournamentEligibilityOverview | null = null;
   loading = false;
   error = '';
@@ -66,7 +67,7 @@ export class CommunityTournamentEligibilityPanelComponent implements OnChanges, 
               private readonly changeDetector: ChangeDetectorRef) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['community'] || changes['tournamentId']) this.reload();
+    if (changes['community'] || changes['tournamentId'] || changes['entryType']) this.reload();
   }
 
   memberName(profileId: number): string {
@@ -88,6 +89,7 @@ export class CommunityTournamentEligibilityPanelComponent implements OnChanges, 
     this.request = undefined;
     const id = this.community?.id;
     const tournament = this.tournamentId;
+    const expectedEntryType = this.entryType;
     const revision = this.revision;
     this.overview = null;
     this.error = '';
@@ -99,7 +101,8 @@ export class CommunityTournamentEligibilityPanelComponent implements OnChanges, 
         if (this.destroyed || revision !== this.revision) return;
         // Never display an out-of-scope report if a cache/proxy/server response
         // returns a different tournament than the one the organizer selected.
-        if (result.tournamentId !== tournament) {
+        if (result.tournamentId !== tournament
+          || (expectedEntryType && result.entryType !== expectedEntryType)) {
           this.error = 'communities.tournaments.eligibility.loadError';
           this.loading = false;
           this.changeDetector.markForCheck();
