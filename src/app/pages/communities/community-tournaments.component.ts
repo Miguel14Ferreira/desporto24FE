@@ -266,9 +266,21 @@ export class CommunityTournamentsComponent implements OnChanges {
   eventDisciplineDraft: string | null = null;
   sportSearch = '';
   editingSport = false;
+  expandedCommunitySports = false;
+  readonly communitySportPreviewSize = 6;
   get communitySportOptions(): string[] {
     const selected = this.community?.sports;
     return selected?.length ? selected : (this.community?.sport ? [this.community.sport] : []);
+  }
+
+  get visibleCommunitySportOptions(): string[] {
+    const sports = this.communitySportOptions;
+    return this.expandedCommunitySports ? sports : sports.slice(0, this.communitySportPreviewSize);
+  }
+
+  toggleCommunitySportOptions(): void {
+    if (this.busy || this.communitySportOptions.length <= this.communitySportPreviewSize) return;
+    this.expandedCommunitySports = !this.expandedCommunitySports;
   }
 
   // In a multisport community, keep the registered sports available while
@@ -426,6 +438,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     this.sportSearch = '';
     this.editingSport = false;
+    this.expandedCommunitySports = false;
   }
 
   toggleSportEditor(): void {
@@ -1214,6 +1227,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.eventDisciplineDraft = null;
       this.sportSearch = '';
       this.editingSport = false;
+      this.expandedCommunitySports = false;
       this.resetPointRules();
       this.selected = undefined;
       this.loading = false;
