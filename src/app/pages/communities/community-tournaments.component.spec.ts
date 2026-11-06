@@ -633,6 +633,16 @@ describe('Community tournaments management', () => {
     expect(component.creationReadiness).toBe('READY');
   });
 
+  it('asks for a relay event rather than an individual race distance', () => {
+    component.startTeamCreation();
+    component.chooseSport('Atletismo');
+    component.chooseTournamentEventType('TRACK_RELAY');
+    expect(component.creationReadiness).toBe('DISCIPLINE_REQUIRED');
+    expect(component.creationReadinessLabelKey).toBe('communities.relayTournament.disciplineTitle');
+    component.chooseRelayDiscipline('RELAY_4X100');
+    expect(component.creationReadiness).toBe('READY');
+  });
+
   it('respects the relay-only league format and four-runner discipline', () => {
     component.startTeamCreation();
     component.chooseSport('Atletismo');
