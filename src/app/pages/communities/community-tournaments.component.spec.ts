@@ -3698,7 +3698,7 @@ describe('Community tournaments management', () => {
       api.teams.and.returnValue(of(entries));
       component.selectTournament(teamDraft);
       component.setTeamDirectoryQuery('  JOÃO    SILVA  ');
-      expect(component.visibleTournamentTeams.map(item => item.id)).toEqual([51, 53, 52]);
+      expect(component.visibleTournamentTeams.map(item => item.id)).toEqual([51, 52, 53]);
       component.setTeamDirectoryQuery('João inexistente');
       expect(component.visibleTournamentTeams).toEqual([]);
       expect(component.teams.map(item => item.id)).toEqual([51, 52, 53, 54]);
