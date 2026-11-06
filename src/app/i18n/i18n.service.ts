@@ -4601,6 +4601,7 @@ const PT: Dictionary = {
   'calls.chooseCamera': 'Escolher outra câmara',
   'calls.swapView': 'Trocar vista',
   'calls.shareScreen': 'Partilhar ecrã',
+  'calls.fullScreenShareHint': 'Para mostrar o monitor completo, escolhe «Ecrã inteiro» na janela do navegador.',
   'calls.stopSharing': 'Parar partilha',
   'calls.cameraConstraints': 'Esta câmara não suporta as definições de vídeo pedidas. Experimenta outra câmara ou uma resolução mais baixa.',
   'calls.cameraPublicationFailed': 'A câmara abriu, mas não foi possível enviar o vídeo. Tenta novamente ou escolhe outra câmara.',
