@@ -1093,8 +1093,13 @@
                         <div class="player-item">
                           <div class="team-player-summary">
                             <span class="team-player-avatar" aria-hidden="true">{{ (player.displayName || player.username).charAt(0).toUpperCase() }}</span>
-                            <span class="team-player-identity"><strong>{{ player.displayName || player.username }}</strong>
-                              <small>&#64;{{ player.username }}</small></span>
+                            <span class="team-player-identity">
+                              <a [routerLink]="['/menu/perfis', player.username]"
+                                [attr.aria-label]="(player.displayName || player.username) + ' (@' + player.username + ')'">
+                                <strong>{{ player.displayName || player.username }}</strong>
+                                <small>&#64;{{ player.username }}</small>
+                              </a>
+                            </span>
                           </div>
                           @if (canManageTeamRoster) {
                             @if (confirmingTeamPlayerRemoval?.teamId === team.id
