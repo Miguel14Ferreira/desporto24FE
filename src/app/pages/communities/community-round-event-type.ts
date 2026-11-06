@@ -217,7 +217,11 @@ export function isDiscontinuedInlineFinalB(eventType: string | null | undefined)
 }
 
 export function eventOptionsForSport(sport: string | null | undefined): readonly CommunityEventOption[] {
-  return sport ? TYPES[normalize(sport)] ?? [] : [];
+  if (!sport?.trim()) return [];
+  const key = normalize(sport);
+  // Imported legacy sport names may match Object.prototype properties
+  // (e.g. "constructor"). Never treat those as event option arrays.
+  return Object.prototype.hasOwnProperty.call(TYPES, key) ? TYPES[key] : [];
 }
 
 /** Timed stages only; never imply final placings or automatic qualification. */
