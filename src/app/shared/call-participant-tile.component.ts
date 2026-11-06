@@ -95,7 +95,7 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
     // remote microphone a second time (otherwise callers hear an echo).
     const nextAudio=(this.local || this.presentation) ? null :
       ([...this.participant.audioTrackPublications.values()]
-        .find(p=>!!p.track && !p.isMuted)?.track || null);
+        .find(p=>p.source===Track.Source.Microphone && !!p.track && !p.isMuted)?.track || null);
     if (audio !== this.attachedAudioElement || this.lastAudio !== nextAudio) {
       if (this.attachedAudioElement) this.lastAudio?.detach(this.attachedAudioElement);
       this.lastAudio=nextAudio;
