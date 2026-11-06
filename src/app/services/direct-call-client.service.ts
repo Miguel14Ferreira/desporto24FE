@@ -64,6 +64,7 @@ export class DirectCallClientService implements OnDestroy {
   readonly connectionQuality$ = new BehaviorSubject<'unknown'|'excellent'|'good'|'poor'|'lost'>('unknown');
   readonly busyMedia$ = new BehaviorSubject<boolean>(false);
   readonly screenShareEnabled$ = new BehaviorSubject<boolean>(false);
+  readonly screenShareFeedback$ = new BehaviorSubject<string | null>(null);
   readonly members$ = new BehaviorSubject<CallMembership>({participants:[],pending:[]});
   readonly invitationBusy$ = new BehaviorSubject<boolean>(false);
   readonly invitationError$ = new BehaviorSubject<string | null>(null);
@@ -612,6 +613,7 @@ export class DirectCallClientService implements OnDestroy {
   async setScreenShare(enabled: boolean): Promise<void> {
     const room=this.room;
     if (!room || !this.canShareScreen || this.busyMedia$.value) return;
+    this.screenShareFeedback$.next(null);
     this.busyMedia$.next(true);
     try {
       await room.localParticipant.setScreenShareEnabled(enabled);
@@ -623,7 +625,7 @@ export class DirectCallClientService implements OnDestroy {
         this.screenShareEnabled$.next(publication
           ? !!publication.track && !publication.isMuted : enabled);
       }
-    } catch {
+    } catch (error) {
       // A denied/cancelled picker must never report an existing share as
       // stopped; likewise a failed stop must not conceal a live screen track.
       if (this.room===room) {
@@ -631,6 +633,10 @@ export class DirectCallClientService implements OnDestroy {
           .find(pub=>pub.source===Track.Source.ScreenShare);
         this.screenShareEnabled$.next(publication
           ? !!publication.track && !publication.isMuted : this.screenShareEnabled$.value);
+        const errorName = error && typeof error === 'object' && 'name' in error
+          ? String((error as {name: unknown}).name) : '';
+        this.screenShareFeedback$.next(errorName === 'NotAllowedError' || errorName === 'AbortError'
+          ? 'calls.screenShareCancelled' : 'calls.screenShareFailed');
       }
     } finally {
       if (this.room===room) {
@@ -1009,6 +1015,7 @@ export class DirectCallClientService implements OnDestroy {
     this.selectedDevices$.next({});
     this.connectionQuality$.next('unknown');
     this.screenShareEnabled$.next(false);
+    this.screenShareFeedback$.next(null);
     this.busyMedia$.next(false);
     this.members$.next({participants:[],pending:[]});
     this.invitationBusy$.next(false);
