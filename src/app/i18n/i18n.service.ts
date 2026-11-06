@@ -1735,6 +1735,7 @@ const PT: Dictionary = {
   'communities.rankingsModule': 'Classificação e estatísticas',
   'communities.rankingsOptionalHint': 'Este módulo é opcional. A comunidade continua a funcionar normalmente quando está desligado.',
   'communities.winPoints': 'Pontos por vitória',
+  'communities.matchPointsOnlyFor': 'Pontos de vitória, empate e derrota para modalidades de confronto direto:',
   'communities.drawPoints': 'Pontos por empate',
   'communities.lossPoints': 'Pontos por derrota',
   'communities.sportPoints.edit': 'Editar pontuação deste desporto',
