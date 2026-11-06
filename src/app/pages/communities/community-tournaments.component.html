@@ -3344,7 +3344,9 @@
                 <p>{{ 'communities.tournaments.individualUi.playersSummary' | t:{confirmed:confirmedCount,total:participants.length} }}</p>
               </div>
               @if (selected.status === 'DRAFT') {
-                @if (myEnrollment) {
+                @if (!rosterReady) {
+                  <span class="t-muted">{{ 'communities.tournaments.individualUi.enrollHelp' | t }}</span>
+                } @else if (myEnrollment) {
                   <button type="button" class="t-btn t-btn-secondary"
                     [disabled]="busy" (click)="leave()">{{ 'communities.tournaments.individualUi.leave' | t }}</button>
                 } @else if (participantsHasMore) {
