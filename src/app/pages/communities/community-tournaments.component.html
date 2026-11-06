@@ -513,7 +513,7 @@
             <label class="team-directory-search">
               <span>{{ 'communities.tournaments.teamPage.searchLabel' | t }}</span>
               <input type="search" [ngModel]="teamQuickSwitchQuery"
-                (ngModelChange)="teamQuickSwitchQuery = $event"
+                (ngModelChange)="setTeamQuickSwitchQuery($event)"
                 [attr.aria-label]="'communities.tournaments.teamPage.searchLabel' | t"/>
             </label>
             <p class="t-muted" role="status">
@@ -533,6 +533,12 @@
                 </a>
               }
             </nav>
+            @if (teamQuickSwitchTotalMatches > teamQuickSwitchLimit) {
+              <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                (click)="expandTeamQuickSwitch()">
+                {{ 'communities.tournaments.teamPage.moreTeams' | t }}
+              </button>
+            }
           </details>
         }
         <header class="team-page-hero">
