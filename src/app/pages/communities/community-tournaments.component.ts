@@ -271,10 +271,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     return selected?.length ? selected : (this.community?.sport ? [this.community.sport] : []);
   }
 
-  // Shortcut chips are only useful before the first selection. When changing a
-  // sport, show search instead of implying the community sport is also selected.
+  // In a multisport community, keep the registered sports available while
+  // explicitly editing a selection. The selected chip uses aria-pressed, so
+  // switching is visible without implying a second simultaneous selection.
   get showCommunitySportShortcuts(): boolean {
-    return !this.sportDraft && this.communitySportOptions.length > 0;
+    return this.communitySportOptions.length > 0
+      && (!this.sportDraft || (this.editingSport && this.communitySportOptions.length > 1));
   }
 
   /**
