@@ -2571,6 +2571,28 @@ describe('Community tournaments management', () => {
       expect(many[6].players[0].username).toBe('joao-atleta');
     });
 
+    it('explains which player matched quick navigation without changing team links', () => {
+      const players = [
+        { profileId: 30, username: 'joao-atleta', displayName: 'João Silva' },
+        { profileId: 31, username: 'ana', displayName: 'Ana Rodrigues' }
+      ];
+      const many: TournamentTeam[] = Array.from({ length: 6 }, (_, i) =>
+        ({ ...team, id: 100 + i, name: 'Equipa ' + i, players: i === 5 ? players : [] }));
+      api.teams.and.returnValue(of(many));
+      component.teamPageId = 100;
+      component.selectTournament(teamDraft);
+      component.teamQuickSwitchQuery = 'JOAO';
+      expect(component.teamQuickSwitchTeams.map(item => item.id)).toEqual([105]);
+      expect(component.teamQuickSwitchMatchedPlayer(many[5])).toBe('João Silva');
+      component.teamQuickSwitchQuery = 'ana';
+      expect(component.teamQuickSwitchMatchedPlayer(many[5])).toBe('Ana Rodrigues');
+      component.teamQuickSwitchQuery = 'equipa 5';
+      expect(component.teamQuickSwitchMatchedPlayer(many[5])).toBeUndefined();
+      component.teamQuickSwitchQuery = '';
+      expect(component.teamQuickSwitchMatchedPlayer(many[5])).toBeUndefined();
+      expect(players.map(player => player.profileId)).toEqual([30, 31]);
+    });
+
     it('filters only loaded matches on the team page and resets on team changes', () => {
       const first={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'A',
         awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const};
