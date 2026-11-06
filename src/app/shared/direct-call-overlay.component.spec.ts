@@ -206,4 +206,24 @@ describe('Global incoming call popup', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.call-incoming-float')).toBeNull();
   });
+  it('opens the conversation without hanging up and keeps the call minimized', () => {
+    state.next({...invitation(), phase:'active', startedAt:Date.now()});
+    fixture.detectChanges();
+    const chatButton = fixture.nativeElement.querySelector('.connect-chat-button') as HTMLButtonElement;
+    expect(chatButton).toBeTruthy();
+    chatButton.click();
+    expect(fixture.componentInstance.minimized).toBeTrue();
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
+  it('does not show a redundant manual refresh button in media settings', () => {
+    state.next({...invitation(), phase:'active', startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.call-settings-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(calls.refreshDevices).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.call-scan')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Lista atualizada');
+  });
+
 });
