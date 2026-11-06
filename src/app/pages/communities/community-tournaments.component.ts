@@ -1410,9 +1410,16 @@ export class CommunityTournamentsComponent implements OnChanges {
     const normalize = (value: string): string => value.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
     const query = normalize(this.teamQuickSwitchQuery);
-    return (query
+    const matching = query
       ? this.teams.filter(team => normalize(team.name).includes(query))
-      : this.teams).slice(0, this.teamQuickSwitchPreviewSize);
+      : this.teams;
+    const visible = matching.slice(0, this.teamQuickSwitchPreviewSize);
+    // With large rosters, keep the current team discoverable even when it
+    // falls beyond the first page. Never add an unrelated search result.
+    if (!query && !visible.some(team => team.id === this.focusedTeam?.id)) {
+      visible[visible.length - 1] = this.focusedTeam;
+    }
+    return visible;
   }
 
   get teamQuickSwitchTotalMatches(): number {
