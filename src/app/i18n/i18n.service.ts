@@ -4603,6 +4603,8 @@ const PT: Dictionary = {
   'calls.shareScreen': 'Partilhar ecrã',
   'calls.fullScreenShareHint': 'Para mostrar o monitor completo, escolhe «Ecrã inteiro» na janela do navegador.',
   'calls.stopSharing': 'Parar partilha',
+  'calls.screenShareCancelled': 'A partilha foi cancelada ou bloqueada pelo navegador. Seleciona um ecrã e permite a partilha para tentar novamente.',
+  'calls.screenShareFailed': 'Não foi possível iniciar ou parar a partilha. Verifica as permissões do navegador e tenta novamente.',
   'calls.cameraConstraints': 'Esta câmara não suporta as definições de vídeo pedidas. Experimenta outra câmara ou uma resolução mais baixa.',
   'calls.cameraPublicationFailed': 'A câmara abriu, mas não foi possível enviar o vídeo. Tenta novamente ou escolhe outra câmara.',
   'calls.title': 'Chamada Jynlo',
