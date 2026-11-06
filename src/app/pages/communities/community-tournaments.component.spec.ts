@@ -5667,6 +5667,7 @@ describe('Community tournaments management', () => {
     component.chooseSport('Atletismo');
     expect(component.selectedSportCreationModel).toBe('FIELD_BEST_MARK');
     expect(component.sportEventChoices.find(choice => choice.code === 'TRACK')?.supported).toBeTrue();
+    expect(component.sportEventChoices.find(choice => choice.code === 'TRACK_RELAY')?.supported).toBeFalse();
 
     component.chooseTournamentEventType('JUMP');
     component.chooseFieldDiscipline('LONG_JUMP');
@@ -5675,6 +5676,7 @@ describe('Community tournaments management', () => {
 
     component.chooseTournamentEventType('TRACK');
     expect(component.selectedSportCreationModel).toBe('TRACK_BEST_TIME');
+    expect(component.sportEventChoices.find(choice => choice.code === 'JUMP')?.supported).toBeTrue();
     expect(component.eventDisciplineDraft).toBeNull();
     expect(component.savedSportEventType).toBe('TRACK');
     expect(component.isSportFormatSupported).toBeFalse();
