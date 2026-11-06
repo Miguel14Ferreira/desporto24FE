@@ -2544,6 +2544,33 @@ describe('Community tournaments management', () => {
       expect(component.teamQuickSwitchTeams).toEqual([]);
     });
 
+    it('finds teams by player identity in the quick switcher without leaking other matches', () => {
+      const many = Array.from({ length: 8 }, (_, i) => ({
+        ...team, id: 100 + i, name: 'Equipa ' + i, players: []
+      }));
+      many[6] = { ...many[6], players: [
+        { profileId: 30, username: 'joao-atleta', displayName: 'João Silva' }
+      ] };
+      many[7] = { ...many[7], players: [
+        { profileId: 31, username: null as unknown as string, displayName: 'Rúben Lopes' }
+      ] };
+      api.teams.and.returnValue(of(many));
+      component.teamPageId = 100;
+      component.selectTournament(teamDraft);
+      component.teamQuickSwitchQuery = 'JOAO';
+      expect(component.teamQuickSwitchTeams.map(item => item.id)).toEqual([106]);
+      expect(component.teamQuickSwitchTotalMatches).toBe(1);
+      component.teamQuickSwitchQuery = 'atleta';
+      expect(component.teamQuickSwitchTeams.map(item => item.id)).toEqual([106]);
+      component.teamQuickSwitchQuery = 'ruben';
+      expect(component.teamQuickSwitchTeams.map(item => item.id)).toEqual([107]);
+      expect(component.teamQuickSwitchTotalMatches).toBe(1);
+      component.teamQuickSwitchQuery = 'inexistente';
+      expect(component.teamQuickSwitchTeams).toEqual([]);
+      expect(component.teamQuickSwitchTotalMatches).toBe(0);
+      expect(many[6].players[0].username).toBe('joao-atleta');
+    });
+
     it('filters only loaded matches on the team page and resets on team changes', () => {
       const first={id:70,roundNumber:1,homeTeamId:40,homeTeamName:'A',
         awayTeamId:41,awayTeamName:'B',status:'SCHEDULED' as const};
