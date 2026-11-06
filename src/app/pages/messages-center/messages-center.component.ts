@@ -1144,6 +1144,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   private acceptRealtime(key: string, message: InboxMessage): void {
+    // Messages received by an older authenticated inbox must not mutate the
+    // visible history, unread counts, or pending sends after account change.
+    if (this.receiptSessionToken && !this.isReceiptSessionCurrent()) return;
     if (!this.conversations.some(item => item.key === key) || message.id <= 0) return;
     // Mutations reuse the original message ID. They must never count as new
     // arrivals or acknowledge unread messages, even if a socket sends them twice.
@@ -2351,6 +2354,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   private confirmFromHistoryIfPresent(key: string, messages: InboxMessage[]): void {
+    if (this.receiptSessionToken && !this.isReceiptSessionCurrent()) return;
     const pending = this.pendingByConversation.get(key);
     if (pending && messages.some(message => this.matchesPending(message, pending))) {
       this.pendingByConversation.delete(key);
@@ -2440,7 +2444,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       if (this.verifyingPendingByConversation.get(key) !== pending) return;
       this.verifyingPendingByConversation.delete(key);
       this.verifyingKeys.delete(key);
-      if (this.selectedKey === key) this.deliveryChecking = false;
+      if (this.selectedKey === key
+          && (!this.receiptSessionToken || this.isReceiptSessionCurrent()))
+        this.deliveryChecking = false;
     })).subscribe({
       next: entries => {
         // An account change, revoked conversation, cancelled retry, or
