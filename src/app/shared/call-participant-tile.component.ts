@@ -18,6 +18,7 @@ import { LocalParticipant, RemoteParticipant, Track } from 'livekit-client';
         <div class="connect-avatar" aria-hidden="true">{{ label.slice(0,1).toUpperCase() }}</div>
       }
       <audio #audio autoplay></audio>
+      <audio #screenAudio autoplay></audio>
       <div class="connect-person">
         <span class="connect-speaker" aria-hidden="true"></span>
         <strong>{{ label }}</strong>
@@ -64,10 +65,13 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
   @Input() volume = 1;
   @ViewChild('video') private videoElement?: ElementRef<HTMLVideoElement>;
   @ViewChild('audio') private audioElement?: ElementRef<HTMLAudioElement>;
+  @ViewChild('screenAudio') private screenAudioElement?: ElementRef<HTMLAudioElement>;
   private lastVideo: {attach(e: HTMLMediaElement): void; detach(e: HTMLMediaElement): void} | null = null;
   private lastAudio: {attach(e: HTMLMediaElement): void; detach(e: HTMLMediaElement): void} | null = null;
   private attachedVideoElement: HTMLVideoElement | null = null;
   private attachedAudioElement: HTMLAudioElement | null = null;
+  private lastScreenAudio: {attach(e: HTMLMediaElement): void; detach(e: HTMLMediaElement): void} | null = null;
+  private attachedScreenAudioElement: HTMLAudioElement | null = null;
 
   private get activeVideo() {
     const publications=[...this.participant.videoTrackPublications.values()];
@@ -102,14 +106,32 @@ export class CallParticipantTileComponent implements AfterViewChecked, OnDestroy
       this.attachedAudioElement=audio ?? null;
       if (audio) nextAudio?.attach(audio);
     }
+    // Screen-share audio is an independent track. Play it once from the
+    // participant's camera tile, never from the separate presentation stage.
+    const screenAudio=this.screenAudioElement?.nativeElement;
+    if (screenAudio) screenAudio.volume=Math.max(0,Math.min(1,this.volume));
+    const nextScreenAudio=(this.local || this.presentation) ? null :
+      ([...this.participant.audioTrackPublications.values()]
+        .find(p=>p.source===Track.Source.ScreenShareAudio && !!p.track && !p.isMuted)?.track || null);
+    if (screenAudio !== this.attachedScreenAudioElement || this.lastScreenAudio !== nextScreenAudio) {
+      if (this.attachedScreenAudioElement)
+        this.lastScreenAudio?.detach(this.attachedScreenAudioElement);
+      this.lastScreenAudio=nextScreenAudio;
+      this.attachedScreenAudioElement=screenAudio ?? null;
+      if (screenAudio) nextScreenAudio?.attach(screenAudio);
+    }
   }
 
   ngOnDestroy(): void {
     if (this.attachedVideoElement) this.lastVideo?.detach(this.attachedVideoElement);
     if (this.attachedAudioElement) this.lastAudio?.detach(this.attachedAudioElement);
+    if (this.attachedScreenAudioElement)
+      this.lastScreenAudio?.detach(this.attachedScreenAudioElement);
     this.attachedVideoElement=null;
     this.attachedAudioElement=null;
+    this.attachedScreenAudioElement=null;
     this.lastVideo=null;
     this.lastAudio=null;
+    this.lastScreenAudio=null;
   }
 }
