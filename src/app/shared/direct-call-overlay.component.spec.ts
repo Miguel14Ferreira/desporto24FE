@@ -225,6 +225,21 @@ describe('Global incoming call popup', () => {
     expect(calls.end).not.toHaveBeenCalled();
   });
 
+  it('uses audio-only participant tiles when minimized, without stopping the call', () => {
+    const local = {identity:'local',videoTrackPublications:new Map(),audioTrackPublications:new Map()};
+    const remote = {identity:'remote',videoTrackPublications:new Map(),audioTrackPublications:new Map()};
+    calls.room = {localParticipant:local,remoteParticipants:new Map([['remote',remote]])};
+    state.next({...invitation('video'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.connect-minimize') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const tile = fixture.debugElement.query(
+      element => element.name === 'app-call-participant-tile');
+    expect(tile).toBeTruthy();
+    expect(tile.componentInstance.audioOnly).toBeTrue();
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
   it('keeps the minimized call interactive without preventing message composition', () => {
     state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
     fixture.detectChanges();
