@@ -2422,7 +2422,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       knownIds: Set<number>; startedAt: number }
   ): void {
     const key = conversation.key;
-    if (this.verifyingKeys.has(key)) return;
+    // A reconnect/foreground check can be queued just before the user
+    // explicitly resolves the uncertainty, changes account, or loses chat
+    // membership. Never start a stale history request or lock the composer.
+    if (this.pendingByConversation.get(key) !== pending
+        || !this.conversations.some(item => item.key === key)
+        || (this.receiptSessionToken && !this.isReceiptSessionCurrent())
+        || this.verifyingKeys.has(key)) return;
     if (this.selectedKey === key && this.messages.some(item => this.matchesPending(item, pending))) {
       this.confirmFromHistoryIfPresent(key, this.messages);
       return;
