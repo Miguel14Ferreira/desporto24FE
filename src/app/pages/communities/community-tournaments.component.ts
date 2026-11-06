@@ -1478,15 +1478,22 @@ export class CommunityTournamentsComponent implements OnChanges {
   /** A shortcut only belongs to a valid focused team in this tournament.
    * Bound the quick-switch DOM for large competitions; searching still
    * considers all loaded team names without modifying the official teams. */
+  private get matchingQuickSwitchTeams(): TournamentTeam[] {
+    const normalize = (value: string | null | undefined): string => (value || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
+    const query = normalize(this.teamQuickSwitchQuery);
+    return query ? this.teams.filter(team =>
+      normalize(team.name).includes(query)
+      || (team.players ?? []).some(player =>
+        normalize(player.displayName).includes(query)
+        || normalize(player.username).includes(query))) : this.teams;
+  }
+
   get teamQuickSwitchTeams(): TournamentTeam[] {
     const focused = this.focusedTeam;
     if (!focused || this.teams.length <= 4) return [];
-    const normalize = (value: string): string => value.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
-    const query = normalize(this.teamQuickSwitchQuery);
-    const matching = query
-      ? this.teams.filter(team => normalize(team.name).includes(query))
-      : this.teams;
+    const query = this.teamQuickSwitchQuery.trim();
+    const matching = this.matchingQuickSwitchTeams;
     const visible = matching.slice(0, this.teamQuickSwitchPreviewSize);
     // With large rosters, keep the current team discoverable even when it
     // falls beyond the first page. Never add an unrelated search result.
@@ -1497,12 +1504,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get teamQuickSwitchTotalMatches(): number {
-    if (!this.focusedTeam || this.teams.length <= 4) return 0;
-    const normalize = (value: string): string => value.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
-    const query = normalize(this.teamQuickSwitchQuery);
-    return query ? this.teams.filter(team => normalize(team.name).includes(query)).length
-      : this.teams.length;
+    return !this.focusedTeam || this.teams.length <= 4
+      ? 0 : this.matchingQuickSwitchTeams.length;
   }
 
   get focusedTeam(): TournamentTeam | undefined {
