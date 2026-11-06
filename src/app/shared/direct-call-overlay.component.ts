@@ -168,6 +168,9 @@ import { DirectCallClientService } from '../services/direct-call-client.service'
           <div class="call-feedback" aria-live="polite">
             @if (call.error) {
               <p class="call-error" role="alert">{{ call.error | t }}</p>
+              @if (recoveryHintKey(call.error); as hint) {
+                <p class="call-audio-help" role="status">{{ hint | t }}</p>
+              }
               @if (call.error.startsWith('calls.camera') && !call.cameraEnabled && call.phase !== 'error') {
                 <div class="call-recovery-actions">
                   <button type="button" class="call-retry" [disabled]="calls.busyMedia$ | async"
@@ -811,6 +814,18 @@ export class DirectCallOverlayComponent implements OnDestroy {
     void this.router?.navigate(['/menu/messages'], {
       queryParams: {kind: 'direct', id: peer}
     });
+  }
+
+  /** Actionable, browser-neutral guidance without automatic camera/mic prompts. */
+  recoveryHintKey(error: string): string | null {
+    if (error === 'calls.cameraDenied' || error === 'calls.microphoneDenied')
+      return 'calls.recoveryPermissionHint';
+    if (error === 'calls.cameraBusy' || error === 'calls.microphoneBusy')
+      return 'calls.recoveryBusyHint';
+    if (error === 'calls.cameraMissing' || error === 'calls.microphoneMissing'
+        || error === 'calls.deviceMissing')
+      return 'calls.recoveryMissingHint';
+    return null;
   }
 
   toggleSettings(forceOpen=false): void {
