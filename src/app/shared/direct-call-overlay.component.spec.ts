@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { Track } from 'livekit-client';
 import { CommunityService } from '../services/community.service';
@@ -10,6 +11,7 @@ describe('Global incoming call popup', () => {
   let state: BehaviorSubject<DirectCallState | null>;
   let ringtoneBlocked: BehaviorSubject<boolean>;
   let calls: any;
+  let navigate: jasmine.Spy;
 
   const invitation = (media: 'voice' | 'video' = 'video'): DirectCallState => ({
     id: 'call-one',
@@ -25,6 +27,7 @@ describe('Global incoming call popup', () => {
     localStorage.removeItem('d24-language');
     state = new BehaviorSubject<DirectCallState | null>(null);
     ringtoneBlocked = new BehaviorSubject(false);
+    navigate = jasmine.createSpy('navigate').and.resolveTo(true);
     calls = {
       state$: state,
       mediaChanged$: new BehaviorSubject(0),
@@ -52,7 +55,8 @@ describe('Global incoming call popup', () => {
     };
     await TestBed.configureTestingModule({
       imports: [DirectCallOverlayComponent],
-      providers: [{provide: DirectCallClientService, useValue: calls},
+      providers: [{provide: Router, useValue:{navigate}},
+        {provide: DirectCallClientService, useValue: calls},
         {provide: CommunityService, useValue: {friends: () => of([{username:'carlos',fullName:'Carlos Silva',nickname:'Carlos',profilePicUrl:null,chatBlocked:false,blockedByMe:false}])}}]
     }).compileComponents();
     fixture = TestBed.createComponent(DirectCallOverlayComponent);
@@ -215,6 +219,37 @@ describe('Global incoming call popup', () => {
     expect(chatButton).toBeTruthy();
     chatButton.click();
     expect(fixture.componentInstance.minimized).toBeTrue();
+    expect(navigate).toHaveBeenCalledOnceWith(['/menu/messages'], {
+      queryParams: {kind:'direct', id:'beatriz'}
+    });
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
+  it('lets the user switch between the minimized call and chat without ending the call', () => {
+    state.next({...invitation('video'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.connect-minimize') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const mini = fixture.nativeElement.querySelector('.connect-mini') as HTMLElement;
+    expect(mini).toBeTruthy();
+    (mini.querySelector('.connect-mini-chat') as HTMLButtonElement).click();
+    expect(navigate).toHaveBeenCalledWith(['/menu/messages'], {
+      queryParams: {kind:'direct',id:'beatriz'}
+    });
+    expect(calls.end).not.toHaveBeenCalled();
+    (mini.querySelector('.connect-mini-expand') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.call-backdrop')).toBeTruthy();
+    expect(calls.end).not.toHaveBeenCalled();
+  });
+
+  it('shows a real reconnecting status in the minimized call', () => {
+    state.next({...invitation('voice'),phase:'connecting',startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.connect-minimize') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.connect-mini-name')?.textContent)
+      .toContain('A restabelecer ligação');
     expect(calls.end).not.toHaveBeenCalled();
   });
 
