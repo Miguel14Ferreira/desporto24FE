@@ -191,6 +191,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamDirectoryQuery = '';
   teamQuickSwitchQuery = '';
   readonly teamQuickSwitchPreviewSize = 12;
+  teamQuickSwitchLimit = 12;
   readonly teamDirectoryPageSize = 12;
   teamDirectoryLimit = 12;
   teamsLoadError = false;
@@ -1494,13 +1495,24 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!focused || this.teams.length <= 4) return [];
     const query = this.teamQuickSwitchQuery.trim();
     const matching = this.matchingQuickSwitchTeams;
-    const visible = matching.slice(0, this.teamQuickSwitchPreviewSize);
+    const visible = matching.slice(0, this.teamQuickSwitchLimit);
     // With large rosters, keep the current team discoverable even when it
     // falls beyond the first page. Never add an unrelated search result.
     if (!query && !visible.some(team => team.id === focused.id)) {
       visible[visible.length - 1] = focused;
     }
     return visible;
+  }
+
+  setTeamQuickSwitchQuery(query: string): void {
+    this.teamQuickSwitchQuery = query;
+    this.teamQuickSwitchLimit = this.teamQuickSwitchPreviewSize;
+  }
+
+  expandTeamQuickSwitch(): void {
+    if (this.focusedTeam && this.teamQuickSwitchTotalMatches > this.teamQuickSwitchLimit) {
+      this.teamQuickSwitchLimit += this.teamQuickSwitchPreviewSize;
+    }
   }
 
   /** Explain which roster identity made a team appear in quick search. */
@@ -2460,6 +2472,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     ++this.relayRevision;
     this.teamDirectoryQuery = '';
     this.teamQuickSwitchQuery = '';
+    this.teamQuickSwitchLimit = this.teamQuickSwitchPreviewSize;
     this.teamDirectoryLimit = this.teamDirectoryPageSize;
     this.teamPlayerDraft = {};
     this.teamMemberSearch = {};
