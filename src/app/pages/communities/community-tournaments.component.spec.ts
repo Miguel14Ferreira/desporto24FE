@@ -518,6 +518,36 @@ describe('Community tournaments management', () => {
     expect(component.showCommunitySportShortcuts).toBeTrue();
   });
 
+  it('keeps multiple community sports selectable in the change editor without changing the current choice', () => {
+    component.community = {
+      ...community, sport: 'Futebol', sports: ['Futebol', 'Karting', 'Natação']
+    };
+    component.sportDraft = 'Futebol';
+    component.editingSport = false;
+    expect(component.showCommunitySportShortcuts).toBeFalse();
+
+    component.toggleSportEditor();
+    expect(component.showCommunitySportShortcuts).toBeTrue();
+    expect(component.communitySportOptions).toEqual(['Futebol', 'Karting', 'Natação']);
+    expect(component.sportDraft).toBe('Futebol');
+
+    component.chooseSport('Karting');
+    expect(component.sportDraft).toBe('Karting');
+    expect(component.editingSport).toBeFalse();
+    expect(component.showCommunitySportShortcuts).toBeFalse();
+    expect(component.selectedSportCreationModel).toBe('UNAVAILABLE');
+
+    component.startIndividualCreation();
+    component.toggleSportEditor();
+    expect(component.showCommunitySportShortcuts).toBeTrue();
+    component.toggleSportEditor();
+    expect(component.sportDraft).toBe('Karting');
+
+    component.community = { ...community, sport: 'Futebol', sports: ['Futebol'] };
+    component.toggleSportEditor();
+    expect(component.showCommunitySportShortcuts).toBeFalse();
+  });
+
   it('shows truthful sport readiness: supported, needs event/discipline or unavailable', () => {
     component.startIndividualCreation();
     component.chooseSport('Karting');
