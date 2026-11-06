@@ -1729,6 +1729,7 @@ export const EN: Record<string, string> = {
   'communities.rankingsModule': 'Standings and statistics',
   'communities.rankingsOptionalHint': 'This module is optional. The community continues to work normally when it is disabled.',
   'communities.winPoints': 'Points per win',
+  'communities.matchPointsOnlyFor': 'Win, draw and loss points for head-to-head sports:',
   'communities.drawPoints': 'Points per draw',
   'communities.lossPoints': 'Points per loss',
   'communities.sportPoints.edit': 'Edit points for this sport',
