@@ -527,6 +527,9 @@
                   [attr.aria-current]="candidate.id === team.id ? 'page' : null"
                   [attr.aria-label]="'communities.tournaments.teamPage.openAria' | t:{team:candidate.name}">
                   {{ candidate.name }}
+                  @if (teamQuickSwitchMatchedPlayer(candidate); as matchedPlayer) {
+                    <small>{{ matchedPlayer }}</small>
+                  }
                 </a>
               }
             </nav>
