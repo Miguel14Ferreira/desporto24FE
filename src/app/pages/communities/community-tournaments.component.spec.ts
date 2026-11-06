@@ -1087,6 +1087,16 @@ describe('Community tournaments management', () => {
       { profileId: 3, username: 'bruno', fullName: 'Bruno', profilePicUrl: null, role: 'MEMBER' as const }
     ];
 
+    it('builds profile links only for players with a usable username', () => {
+      expect(component.teamPlayerProfileUsername('ana')).toBe('ana');
+      expect(component.teamPlayerProfileUsername('  Ana-PT  ')).toBe('Ana-PT');
+      expect(component.teamPlayerProfileUsername('')).toBeNull();
+      expect(component.teamPlayerProfileUsername('   ')).toBeNull();
+      expect(component.teamPlayerProfileUsername(null)).toBeNull();
+      expect(component.teamPlayerProfileUsername(undefined)).toBeNull();
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('offers private messages only to other identified team players', () => {
       component.selectTournament(teamDraft);
       expect(component.canMessageTeamPlayer('ana')).toBeTrue();
