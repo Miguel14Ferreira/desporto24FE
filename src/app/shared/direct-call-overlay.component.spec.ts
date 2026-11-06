@@ -30,6 +30,7 @@ describe('Global incoming call popup', () => {
       mediaChanged$: new BehaviorSubject(0),
       connectionQuality$: new BehaviorSubject('unknown'),
       devices$: new BehaviorSubject([]),
+      deviceScanStatus$: new BehaviorSubject('ready'),
       selectedDevices$: new BehaviorSubject({}),
       audioPlaybackBlocked$: new BehaviorSubject(false),
       ringtoneBlocked$: ringtoneBlocked,
@@ -259,6 +260,25 @@ describe('Global incoming call popup', () => {
     expect(filmstrip?.querySelectorAll('app-call-participant-tile').length).toBe(2);
     expect(body.querySelectorAll('.connect-presentation-tile').length).toBe(1);
     expect(calls.end).not.toHaveBeenCalled();
+  });
+
+  it('shows a useful message when device enumeration is unavailable', () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now()});
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.call-settings-button') as HTMLButtonElement).click();
+    calls.deviceScanStatus$.next('unavailable');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('não permite consultar os dispositivos');
+    const camera = fixture.nativeElement.querySelector('#call-camera') as HTMLSelectElement;
+    expect(camera.disabled).toBeTrue();
+  });
+
+  it('offers microphone recovery without mistakenly requesting a camera', () => {
+    state.next({...invitation('voice'),phase:'active',startedAt:Date.now(),
+      error:'calls.microphoneDenied',micEnabled:false,cameraEnabled:false});
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Tentar microfone novamente');
+    expect(fixture.nativeElement.textContent).not.toContain('Tentar câmara novamente');
   });
 
 });
