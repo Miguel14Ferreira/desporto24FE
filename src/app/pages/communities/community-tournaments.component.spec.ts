@@ -3632,6 +3632,34 @@ describe('Community tournaments management', () => {
       expect(component.teamInviteUrl(team)).toBe('');
     });
 
+    it('never exposes team invite links while rosters are unavailable, full or closed', () => {
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      expect(component.teamInviteUrl(team)).toContain('team=40');
+      expect(component.teamWhatsAppUrl(team)).toContain('wa.me');
+      const filled = { ...team, players: Array.from({ length: 5 }, (_, i) => ({
+        profileId: i + 1, username: 'player' + i, displayName: 'Player ' + i
+      })) };
+      component.teams = [filled];
+      expect(component.teamInviteUrl(team)).toBe('');
+      expect(component.teamWhatsAppUrl(team)).toBe('');
+      component.teams = [team];
+      component.detailsLoading = true;
+      expect(component.teamInviteUrl(team)).toBe('');
+      component.detailsLoading = false;
+      component.teamsLoadError = true;
+      expect(component.teamInviteUrl(team)).toBe('');
+      component.teamsLoadError = false;
+      component.selected = { ...teamDraft, status: 'IN_PROGRESS' };
+      expect(component.teamInviteUrl(team)).toBe('');
+      expect(component.teamWhatsAppUrl(team)).toBe('');
+      component.selected = teamDraft;
+      component.community = { ...component.community, myRole: 'MEMBER' };
+      expect(component.teamInviteUrl(team)).toBe('');
+      expect(component.teamWhatsAppUrl(team)).toBe('');
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+    });
+
     it('shares the current team name, not a stale card name, via WhatsApp', () => {
       const renamed = { ...team, name: 'Águias de Lisboa' };
       api.teams.and.returnValue(of([renamed]));
