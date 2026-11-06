@@ -25,6 +25,35 @@ describe('Call participant tile track selection', () => {
     screen.detach.calls.reset();
   });
 
+  it('keeps remote sound but detaches invisible video while minimized and restores it on expand', () => {
+    const microphone = track();
+    const device = {
+      ...participant,
+      audioTrackPublications: new Map([
+        ['mic', {source: Track.Source.Microphone, track: microphone, isMuted:false}]
+      ])
+    } as unknown as LocalParticipant;
+    const component = new CallParticipantTileComponent();
+    component.participant = device;
+    const video = document.createElement('video');
+    const audio = document.createElement('audio');
+    (component as any).videoElement = {nativeElement:video};
+    (component as any).audioElement = {nativeElement:audio};
+    component.ngAfterViewChecked();
+    expect(camera.attach).toHaveBeenCalledOnceWith(video);
+    expect(microphone.attach).toHaveBeenCalledOnceWith(audio);
+    component.audioOnly = true;
+    component.ngAfterViewChecked();
+    expect(component.hasVideo).toBeFalse();
+    expect(camera.detach).toHaveBeenCalledOnceWith(video);
+    expect(microphone.detach).not.toHaveBeenCalled();
+    component.audioOnly = false;
+    component.ngAfterViewChecked();
+    expect(camera.attach).toHaveBeenCalledTimes(2);
+    expect(microphone.attach).toHaveBeenCalledTimes(1);
+    component.ngOnDestroy();
+  });
+
   it('keeps a local camera preview when the user also shares a screen', () => {
     const component = new CallParticipantTileComponent();
     component.participant = participant;
