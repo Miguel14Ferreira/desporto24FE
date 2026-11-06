@@ -1172,18 +1172,18 @@
                       <details class="team-manual-assign">
                         <summary>{{ 'communities.tournaments.teamUi.manualAssign' | t }}</summary>
                         <div class="team-player-assign">
+                          @if (showTeamMemberSearch(team.id)) {
+                            <label [for]="'team-member-search-' + team.id">{{ 'communities.tournaments.teamUi.searchMember' | t }}</label>
+                            <input [id]="'team-member-search-' + team.id" type="search"
+                              [ngModel]="teamMemberSearch[team.id] || ''"
+                              (ngModelChange)="setTeamMemberSearch(team.id, $event)"
+                              [disabled]="busy || detailsLoading" maxlength="80"
+                              autocomplete="off"
+                              [placeholder]="'communities.tournaments.teamUi.searchPlaceholder' | t">
+                          }
                           @if (availableTeamMembers.length === 0) {
                             <p class="t-muted">{{ 'communities.tournaments.teamUi.noEligibleMembers' | t }}</p>
                           } @else {
-                            @if (showTeamMemberSearch(team.id)) {
-                              <label [for]="'team-member-search-' + team.id">{{ 'communities.tournaments.teamUi.searchMember' | t }}</label>
-                              <input [id]="'team-member-search-' + team.id" type="search"
-                                [ngModel]="teamMemberSearch[team.id] || ''"
-                                (ngModelChange)="setTeamMemberSearch(team.id, $event)"
-                                [disabled]="busy || detailsLoading" maxlength="80"
-                                autocomplete="off"
-                                [placeholder]="'communities.tournaments.teamUi.searchPlaceholder' | t">
-                            }
                             <label [for]="'team-player-' + team.id">{{ 'communities.tournaments.teamUi.communityMember' | t }}</label>
                             <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]"
                               [disabled]="busy || detailsLoading || filteredTeamMembers(team.id).length === 0">
