@@ -1068,7 +1068,7 @@
                     }
                     @if (showTeamRosterSearch(team)) {
                       <label class="team-directory-search" [for]="'team-roster-search-' + team.id">
-                        <span>{{ 'communities.tournaments.teamUi.searchMember' | t }}</span>
+                        <span>{{ 'communities.tournaments.teamPage.rosterSearch' | t }}</span>
                         <input [id]="'team-roster-search-' + team.id" type="search"
                           [ngModel]="teamRosterSearch[team.id] || ''"
                           (ngModelChange)="setTeamRosterSearch(team.id, $event)"
@@ -1082,7 +1082,7 @@
                         </button>
                       }
                       <p class="t-muted" role="status">
-                        {{ filteredTeamRoster(team).length }} / {{ team.players.length }}
+                        {{ 'communities.tournaments.teamPage.rosterSearchCount' | t:{shown:filteredTeamRoster(team).length,total:team.players.length} }}
                       </p>
                     }
                     @if (team.players.length && filteredTeamRoster(team).length === 0) {
