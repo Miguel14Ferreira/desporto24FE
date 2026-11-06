@@ -535,7 +535,7 @@ describe('Community tournaments management', () => {
     expect(component.sportDraft).toBe('Karting');
     expect(component.editingSport).toBeFalse();
     expect(component.showCommunitySportShortcuts).toBeFalse();
-    expect(component.selectedSportCreationModel).toBe('UNAVAILABLE');
+    expect(component.selectedSportCreationModel).toBe('RACE_POINTS');
 
     component.startIndividualCreation();
     component.toggleSportEditor();
