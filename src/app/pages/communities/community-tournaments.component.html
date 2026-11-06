@@ -1075,6 +1075,12 @@
                           maxlength="80" autocomplete="off"
                           [placeholder]="'communities.tournaments.teamUi.searchPlaceholder' | t">
                       </label>
+                      @if (teamRosterSearch[team.id]?.trim()) {
+                        <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                          (click)="setTeamRosterSearch(team.id, '')">
+                          {{ 'communities.tournaments.teamPage.clearSearch' | t }}
+                        </button>
+                      }
                       <p class="t-muted" role="status">
                         {{ filteredTeamRoster(team).length }} / {{ team.players.length }}
                       </p>
