@@ -671,6 +671,45 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     http.expectOne(req=>req.url.endsWith('/api/calls/direct/missing-publications/end')).flush(null);
   });
 
+  it('refreshes remote camera tiles on publish, unpublish and subscription failures, but ignores stale rooms', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners=new Map<string,(...args:any[])=>void>();
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake((event:string,cb:(...args:any[])=>void)=>{
+        listeners.set(event,cb);return room;
+      }),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      canPlaybackAudio:true,
+      remoteParticipants:new Map([['peer',{identity:'peer'}]]),
+      localParticipant:{setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo()}
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'remote-media-events',peer:'bea',media:'voice',
+      serverUrl:'wss://livekit.example.test',token:'fixture',
+      expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    for (const event of [
+      RoomEvent.TrackPublished, RoomEvent.TrackUnpublished,
+      RoomEvent.TrackSubscribed, RoomEvent.TrackUnsubscribed,
+      RoomEvent.TrackSubscriptionFailed
+    ]) {
+      const revision=calls.mediaChanged$.value;
+      expect(listeners.has(event)).toBeTrue();
+      listeners.get(event)?.();
+      expect(calls.mediaChanged$.value).toBe(revision+1);
+    }
+    calls.end();
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/remote-media-events/end')).flush(null);
+    const afterEnd=calls.mediaChanged$.value;
+    listeners.get(RoomEvent.TrackSubscribed)?.();
+    listeners.get(RoomEvent.TrackUnpublished)?.();
+    expect(calls.mediaChanged$.value).toBe(afterEnd);
+  });
+
   it('does not reactivate a call without a remote peer after reconnect', async () => {
     http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     const listeners=new Map<string,(...args:any[])=>void>();
