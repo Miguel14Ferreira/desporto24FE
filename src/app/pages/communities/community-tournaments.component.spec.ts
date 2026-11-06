@@ -2492,6 +2492,10 @@ describe('Community tournaments management', () => {
       component.selectTournament(teamDraft);
       expect(component.teamQuickSwitchTeams.length).toBe(12);
       expect(component.teamQuickSwitchTotalMatches).toBe(35);
+      expect(component.teamQuickSwitchTeams[0].id).toBe(100);
+      component.teamPageId = 129;
+      expect(component.teamQuickSwitchTeams.map(item => item.id)).toContain(129);
+      expect(component.teamQuickSwitchTeams.length).toBe(12);
       component.teamQuickSwitchQuery = '  aguias  ';
       expect(component.teamQuickSwitchTeams.map(item => item.id)).toEqual([129]);
       expect(component.teamQuickSwitchTotalMatches).toBe(1);
