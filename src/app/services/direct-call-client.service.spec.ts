@@ -620,6 +620,57 @@ describe('Direct calls gated by authenticated realtime and backend availability'
     http.expectOne(req=>req.url.endsWith('/api/calls/direct/transport-reconnect/end')).flush(null);
   });
 
+  it('reports lost camera and microphone publications after reconnection without restarting capture', async () => {
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
+    const listeners=new Map<string,(...args:any[])=>void>();
+    const videoTrackPublications=new Map<string,any>([
+      ['camera',{source:Track.Source.Camera,track:{},isMuted:false}]
+    ]);
+    const audioTrackPublications=new Map<string,any>([
+      ['microphone',{source:Track.Source.Microphone,track:{},isMuted:false}]
+    ]);
+    const localParticipant={
+      videoTrackPublications, audioTrackPublications,
+      setMicrophoneEnabled:jasmine.createSpy('mic').and.resolveTo(),
+      setCameraEnabled:jasmine.createSpy('camera').and.resolveTo()
+    };
+    const room:any={
+      on:jasmine.createSpy('on').and.callFake((event:string,cb:(...args:any[])=>void)=>{
+        listeners.set(event,cb);return room;
+      }),
+      connect:jasmine.createSpy('connect').and.resolveTo(),
+      disconnect:jasmine.createSpy('disconnect').and.resolveTo(),
+      canPlaybackAudio:true,
+      remoteParticipants:new Map([['peer',{identity:'peer'}]]),
+      localParticipant
+    };
+    spyOn(calls as any,'createRoom').and.returnValue(room);
+    const starting=calls.start('bea','voice');
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/bea')).flush({
+      callId:'missing-publications',peer:'bea',media:'voice',
+      serverUrl:'wss://livekit.example.test',token:'fixture',
+      expiresAt:new Date(Date.now()+60000).toISOString()
+    });
+    await starting;
+    calls.state$.next({...calls.state$.value!,phase:'active',micEnabled:true,cameraEnabled:true});
+    const micCalls=localParticipant.setMicrophoneEnabled.calls.count();
+    const cameraCalls=localParticipant.setCameraEnabled.calls.count();
+
+    listeners.get(RoomEvent.Reconnecting)?.();
+    videoTrackPublications.clear();
+    audioTrackPublications.clear();
+    listeners.get(RoomEvent.Reconnected)?.();
+
+    expect(calls.state$.value?.phase).toBe('active');
+    expect(calls.state$.value?.cameraEnabled).toBeFalse();
+    expect(calls.state$.value?.micEnabled).toBeFalse();
+    expect(calls.state$.value?.error).toBe('calls.microphoneMissing');
+    expect(localParticipant.setMicrophoneEnabled.calls.count()).toBe(micCalls);
+    expect(localParticipant.setCameraEnabled.calls.count()).toBe(cameraCalls);
+    calls.end();
+    http.expectOne(req=>req.url.endsWith('/api/calls/direct/missing-publications/end')).flush(null);
+  });
+
   it('does not reactivate a call without a remote peer after reconnect', async () => {
     http.expectOne(req=>req.url.endsWith('/api/calls/direct/availability')).flush({enabled:true});
     const listeners=new Map<string,(...args:any[])=>void>();
