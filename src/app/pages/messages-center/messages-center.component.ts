@@ -259,6 +259,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly inFlightByConversation = new Map<string, RecoverableSend>();
   private readonly confirmedWhileSending = new Map<string, InboxMessage>();
   private readonly verifyingKeys = new Set<string>();
+  /** Identifies the exact send being verified; stale GET cleanup cannot unlock a newer send. */
+  private readonly verifyingPendingByConversation = new Map<string, RecoverableSend>();
   private lastPendingRecheckAt = 0;
   private readonly sendErrorsByConversation = new Map<string, string>();
   private readonly subscriptions = new Subscription();
@@ -2352,6 +2354,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const pending = this.pendingByConversation.get(key);
     if (pending && messages.some(message => this.matchesPending(message, pending))) {
       this.pendingByConversation.delete(key);
+      // A socket/history confirmation releases this exact verification early;
+      // its old HTTP callback/finalizer must not affect any later send.
+      if (this.verifyingPendingByConversation.get(key) === pending) {
+        this.verifyingPendingByConversation.delete(key);
+        this.verifyingKeys.delete(key);
+      }
       this.persistPendingSends();
       // Read-only verification can complete after the user returned and
       // edited the same conversation. Never erase newer text or a new quote.
@@ -2420,8 +2428,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     this.verifyingKeys.add(key);
+    this.verifyingPendingByConversation.set(key, pending);
     if (this.selectedKey === key) this.deliveryChecking = true;
     this.recentHistory(conversation).pipe(timeout(10000), finalize(() => {
+      if (this.verifyingPendingByConversation.get(key) !== pending) return;
+      this.verifyingPendingByConversation.delete(key);
       this.verifyingKeys.delete(key);
       if (this.selectedKey === key) this.deliveryChecking = false;
     })).subscribe({
