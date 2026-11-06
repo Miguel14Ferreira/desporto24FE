@@ -74,7 +74,7 @@ describe('Call participant tile track selection', () => {
     const remote = {
       ...participant,
       audioTrackPublications: new Map([
-        ['microphone', {track: microphone, isMuted: false}]
+        ['microphone', {source: Track.Source.Microphone, track: microphone, isMuted: false}]
       ])
     } as unknown as LocalParticipant;
     const component = new CallParticipantTileComponent();
@@ -116,6 +116,42 @@ describe('Call participant tile track selection', () => {
     component.ngOnDestroy();
   });
 
+  it('selects the remote microphone instead of screen-share audio in group calls', () => {
+    const microphone = track();
+    const sharedAudio = track();
+    const remote = {
+      ...participant,
+      audioTrackPublications: new Map([
+        ['screen-audio', {source: Track.Source.ScreenShareAudio, track: sharedAudio, isMuted: false}],
+        ['microphone', {source: Track.Source.Microphone, track: microphone, isMuted: false}]
+      ])
+    } as unknown as LocalParticipant;
+    const component = new CallParticipantTileComponent();
+    component.participant = remote;
+    const element = document.createElement('audio');
+    (component as any).audioElement = {nativeElement: element};
+    component.ngAfterViewChecked();
+    expect(microphone.attach).toHaveBeenCalledOnceWith(element);
+    expect(sharedAudio.attach).not.toHaveBeenCalled();
+    component.ngOnDestroy();
+  });
+
+  it('does not misidentify shared system audio as an active microphone', () => {
+    const sharedAudio = track();
+    const remote = {
+      ...participant,
+      audioTrackPublications: new Map([
+        ['screen-audio', {source: Track.Source.ScreenShareAudio, track: sharedAudio, isMuted: false}]
+      ])
+    } as unknown as LocalParticipant;
+    const component = new CallParticipantTileComponent();
+    component.participant = remote;
+    (component as any).audioElement = {nativeElement: document.createElement('audio')};
+    component.ngAfterViewChecked();
+    expect(sharedAudio.attach).not.toHaveBeenCalled();
+    component.ngOnDestroy();
+  });
+
   it('never plays the same remote microphone twice while sharing a screen', () => {
     const audioTrack = {
       attach: jasmine.createSpy('audioAttach'),
@@ -124,7 +160,7 @@ describe('Call participant tile track selection', () => {
     const remote = {
       ...participant,
       audioTrackPublications: new Map([
-        ['microphone', {track: audioTrack, isMuted: false}]
+        ['microphone', {source: Track.Source.Microphone, track: audioTrack, isMuted: false}]
       ])
     } as unknown as LocalParticipant;
     const screenTile = new CallParticipantTileComponent();
