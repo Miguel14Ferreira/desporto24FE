@@ -1140,6 +1140,7 @@
                     @if (canManageTeamRoster && !isTeamRosterFull(team)) {
                       <aside class="team-page-management" [attr.aria-label]="'communities.tournaments.teamPage.manageTitle' | t">
                         <h3>{{ 'communities.tournaments.teamPage.manageTitle' | t }}</h3>
+                        @if (teamInviteUrl(team); as inviteLink) {
                         <div class="team-share-invite">
                         <strong>{{ 'communities.tournaments.teamUi.invitePlayers' | t }}</strong>
                         <p>{{ 'communities.tournaments.teamUi.inviteHint' | t }}</p>
@@ -1159,7 +1160,7 @@
                           <div class="team-link-field">
                             <label [for]="'team-invite-link-' + team.id">{{ 'communities.tournaments.teamUi.teamLink' | t }}</label>
                             <input [id]="'team-invite-link-' + team.id" type="text" readonly
-                              [value]="teamInviteUrl(team)" (click)="$any($event.target).select()">
+                              [value]="inviteLink" (click)="$any($event.target).select()">
                           </div>
                         </details>
                         @if (inviteCopyFeedback[team.id]) {
@@ -1167,6 +1168,7 @@
                         }
                         <p class="t-muted">{{ 'communities.tournaments.teamUi.joinCommunity' | t }}</p>
                       </div>
+                        }
                       <details class="team-manual-assign">
                         <summary>{{ 'communities.tournaments.teamUi.manualAssign' | t }}</summary>
                         <div class="team-player-assign">
