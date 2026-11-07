@@ -44,8 +44,7 @@ export function golfStrokeStandings(
   const totals: Array<{ participantId: number; totalStrokes: number }> = [];
   for (const round of rounds) {
     if (!round || typeof round !== 'object' || !Number.isSafeInteger(round.participantId) || round.participantId <= 0
-      || seen.has(round.participantId)
-      ) {
+      || seen.has(round.participantId)) {
       return null;
     }
     seen.add(round.participantId);
