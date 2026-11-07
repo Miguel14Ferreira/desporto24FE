@@ -83,6 +83,17 @@ describe('Events2Component', () => {
   });
 
 
+  it('clears the Airsoft game type when the organizer changes sports', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'MILSIM';
+    component.onSportChoice('Padel');
+    expect(component.airsoftGameType).toBe('');
+    expect(component.sessionMeetingInstructions).toBeNull();
+
+    component.onSportChoice('Airsoft');
+    expect(component.airsoftGameType).toBe('');
+  });
+
   it('shows the Airsoft game selector only for Airsoft sessions', () => {
     component.sport = 'Airsoft';
     fixture.detectChanges();
