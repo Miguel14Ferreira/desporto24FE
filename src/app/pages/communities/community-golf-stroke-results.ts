@@ -19,11 +19,11 @@ export function golfStrokeStandings(
   rounds: readonly GolfStrokeRound[]
 ): GolfStrokeStanding[] | null {
   if (holeCount !== 9 && holeCount !== 18) return null;
-  if (!rounds.length) return null;
+  if (!Array.isArray(rounds) || !rounds.length) return null;
   const seen = new Set<number>();
   const totals: Array<{ participantId: number; totalStrokes: number }> = [];
   for (const round of rounds) {
-    if (!Number.isSafeInteger(round.participantId) || round.participantId <= 0
+    if (!round || typeof round !== 'object' || !Number.isSafeInteger(round.participantId) || round.participantId <= 0
       || seen.has(round.participantId)
       || !Array.isArray(round.strokesByHole)
       || round.strokesByHole.length !== holeCount
