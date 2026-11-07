@@ -1,6 +1,17 @@
-import { golfStrokeStandings } from './community-golf-stroke-results';
+import { golfGrossTotal, golfStrokeStandings } from './community-golf-stroke-results';
 
 describe('Gross golf stroke-play standings', () => {
+  it('converts complete cards to backend-compatible gross stroke totals', () => {
+    expect(golfGrossTotal(9, Array(9).fill(4))).toBe(36);
+    expect(golfGrossTotal(18, Array(18).fill(4))).toBe(72);
+    expect(golfGrossTotal(9, Array(9).fill(1))).toBe(9);
+    expect(golfGrossTotal(18, Array(18).fill(1))).toBe(18);
+    expect(golfGrossTotal(9, Array(9).fill(111112))).toBeNull();
+    expect(golfGrossTotal(18, Array(18).fill(55556))).toBeNull();
+    expect(golfGrossTotal(9, [4, 4])).toBeNull();
+    expect(golfGrossTotal(18, null as any)).toBeNull();
+  });
+
   it('ranks complete nine-hole rounds by fewest strokes and preserves tied ranks', () => {
     const result = golfStrokeStandings(9, [
       { participantId: 3, strokesByHole: Array(9).fill(5) },
