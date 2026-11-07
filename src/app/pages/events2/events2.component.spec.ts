@@ -83,6 +83,18 @@ describe('Events2Component', () => {
   });
 
 
+  it('clears Airsoft game type when switching sports inside a community', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'SKIRMISH';
+    component.communitySports = ['Airsoft', 'Padel'];
+    component.chooseCommunitySport('Padel');
+    expect(component.sport).toBe('Padel');
+    expect(component.airsoftGameType).toBe('');
+
+    component.chooseCommunitySport('Airsoft');
+    expect(component.airsoftGameType).toBe('');
+  });
+
   it('clears the Airsoft game type when the organizer changes sports', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'MILSIM';
