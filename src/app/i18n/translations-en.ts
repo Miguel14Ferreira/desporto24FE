@@ -1,5 +1,8 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'communityCreate.airsoftTitle': 'Airsoft · game organization',
+  'communityCreate.airsoftIntro': 'Use your community to bring your team together, share sessions and confirm players. Include the field and participation requirements in the description.',
+  'communityCreate.airsoftSafety': 'Before each game, confirm venue permissions, safety rules and applicable legal requirements. Jynlo does not replace these checks.',
   'nav.account.active': 'Active account',
   'nav.account.activeAs': 'Active account: @{{username}}. Open account menu',
   'nav.account.profile': 'Profile',
