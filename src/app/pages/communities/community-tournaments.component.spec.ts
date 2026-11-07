@@ -4537,6 +4537,25 @@ describe('Community tournaments management', () => {
       expect(component.isTeamRosterReady({...fixed, players: [player, other]})).toBeTrue();
     });
 
+    it('does not publish a team calendar with duplicate or invalid team IDs', async () => {
+      const playerOne = {profileId: 2, username:'ana', displayName:'Ana'};
+      const playerTwo = {profileId: 3, username:'rui', displayName:'Rui'};
+      const teamA: TournamentTeam = {...team, id:40, playersPerTeam:null, players:[playerOne]};
+      const teamB: TournamentTeam = {...team, id:41, playersPerTeam:null, players:[playerTwo]};
+      component.selectTournament(teamDraft);
+      component.teams = [teamA, {...teamB, id:40}];
+      expect(component.readyTeamCount).toBe(2);
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.confirmAction = 'schedule';
+      await component.publishTeamSchedule();
+      expect(api.generateTeamSchedule).not.toHaveBeenCalled();
+
+      component.teams = [teamA, {...teamB, id:0}];
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.teams = [teamA, teamB];
+      expect(component.canPublishTeamSchedule).toBeTrue();
+    });
+
     it('only enables publication when at least two teams have complete squads', () => {
       component.selectTournament(teamDraft);
       expect(component.canPublishTeamSchedule).toBeFalse();
