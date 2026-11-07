@@ -11,6 +11,12 @@ A família visual de uma modalidade **não equivale** a suporte de todos os form
 | NUMERIC_TEAM | Disponível, parcial | Ligas, fases de grupos e eliminatórias por equipas; resultado numérico |
 | RACE_POINTS | Disponível, parcial | Sete modalidades de campeonato verificadas, classificações por posição das jornadas compatíveis |
 | INLINE_SPEED | Disponível, parcial | Patinagem de Velocidade, fases e baterias específicas |
+| SWIM_BEST_TIME | Disponível, parcial | Natação em piscina de 50 m, disciplinas explicitamente validadas |
+| CANOE_BEST_TIME | Disponível, parcial | Canoagem Velocidade individual K1, distâncias validadas |
+| ROWING_BEST_TIME | Disponível, parcial | Remo single scull (1x), distâncias validadas |
+| FIELD_BEST_MARK | Disponível, parcial | Atletismo, saltos e lançamentos validados |
+| TRACK_BEST_TIME | Disponível, parcial | Atletismo, provas de pista validadas |
+| RELAY_BEST_TIME | Disponível, parcial | Atletismo, estafetas 4×100 e 4×400 em formato de liga |
 | UNAVAILABLE | Inativo nesta combinação | Proibido inventar marcador, ranking ou adaptação fictícia do futebol |
 
 As classes existentes `community-round-sport.ts`, `community-tournament-classification.ts` e `community-tournaments.service.ts` continuam a determinar, respetivamente, família, regras genéricas e contratos realmente disponíveis. A nova matriz unifica estes factos sem alterar APIs, bases de dados, épocas ou resultados históricos.
@@ -23,6 +29,6 @@ As classes existentes `community-round-sport.ts`, `community-tournament-classifi
 4. Classificações, critérios de desempate e eliminatórias próprios do contrato. Não gerar resultados federativos a partir de pontos genéricos.
 5. Testes de integração e navegação autenticada para cada modalidade e variação, PT/EN, desktop primeiro, protegendo permissões e histórico.
 
-**Exemplos ainda não concluídos nos torneios**: Natação (distância/tempo), Atletismo (disciplina/marca), Golfe (buracos/tacadas), Surf (baterias/notas), Ginástica (aparelhos e prova), e variantes de BMX como Freestyle. Muitos tipos de prova já existem nas jornadas comunitárias, mas não se devem considerar automaticamente torneios completos.
+**Exemplos ainda não concluídos integralmente nos torneios**: Natação (restantes estilos, distâncias e formatos), Atletismo (restantes provas e regras), Golfe (buracos/tacadas), Surf (baterias/notas), Ginástica (aparelhos e prova), e variantes de BMX como Freestyle. As provas especializadas já suportadas acima não implicam cobertura integral da modalidade. Muitos tipos de prova já existem nas jornadas comunitárias, mas não se devem considerar automaticamente torneios completos.
 
 O objetivo de produto continua a ser **121/121 modalidades**. Não declarar cobertura funcional de torneios antes de existirem contratos reais, classificação e testes das variantes relevantes.
