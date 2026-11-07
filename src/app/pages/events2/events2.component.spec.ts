@@ -214,6 +214,24 @@ describe('Events2Component', () => {
     expect(component.errorMessage).toBeTruthy();
   });
 
+  it('sends one Airsoft prefix when the checklist is added before choosing the game type', () => {
+    component.sport = 'Airsoft';
+    component.applyAirsoftInstructionsTemplate();
+    component.airsoftGameType = 'MILSIM';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Campo de jogo';
+    component.maxParticipants = 10;
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalled();
+    const payload = sessionService.create.calls.mostRecent().args[0];
+    const instructions = payload.meetingPointInstructions ?? '';
+    expect(instructions.startsWith('Airsoft: MilSim · ')).toBeTrue();
+    expect(instructions.match(/Airsoft:/g)?.length).toBe(1);
+    expect(instructions).toContain('proteção ocular');
+  });
+
   it('avoids repeating Airsoft when the organizer chooses the game type after inserting the checklist', () => {
     component.sport = 'Airsoft';
     component.applyAirsoftInstructionsTemplate();
