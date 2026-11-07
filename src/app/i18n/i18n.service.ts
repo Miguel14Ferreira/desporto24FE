@@ -6,6 +6,11 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'createSession.airsoftGameType': 'Tipo de jogo de Airsoft',
+  'createSession.airsoftTypeOptional': 'Não especificado',
+  'createSession.airsoftType.SKIRMISH': 'Skirmish',
+  'createSession.airsoftType.MILSIM': 'MilSim',
+  'createSession.airsoftType.CAPTURE_THE_FLAG': 'Capture the Flag',
   'createSession.airsoftHeading': 'Airsoft · preparar o jogo',
   'createSession.airsoftHint': 'Confirma o campo autorizado, o briefing de segurança, a proteção ocular e as condições de participação. Podes adicionar um lembrete às instruções do ponto de encontro.',
   'createSession.airsoftUseTemplate': 'Adicionar lembrete às instruções',
