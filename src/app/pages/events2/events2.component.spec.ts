@@ -83,6 +83,22 @@ describe('Events2Component', () => {
   });
 
 
+  it('only inserts the optional Airsoft checklist into empty instructions', () => {
+    component.sport = 'Padel';
+    component.applyAirsoftInstructionsTemplate();
+    expect(component.meetingPointInstructions).toBe('');
+
+    component.sport = 'Airsoft';
+    component.applyAirsoftInstructionsTemplate();
+    expect(component.meetingPointInstructions).toContain('Airsoft');
+    expect(component.meetingPointInstructions.length).toBeLessThanOrEqual(240);
+
+    component.meetingPointInstructions = 'Encontramo-nos junto à entrada.';
+    component.applyAirsoftInstructionsTemplate();
+    expect(component.meetingPointInstructions).toBe('Encontramo-nos junto à entrada.');
+  });
+
+
   it('keeps responsive Neon Glass groups wired to real fields and actions', () => {
     const root = fixture.nativeElement as HTMLElement;
     const form = root.querySelector('form.create-card') as HTMLFormElement;
