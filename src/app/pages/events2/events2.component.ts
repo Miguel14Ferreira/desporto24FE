@@ -576,8 +576,8 @@ export class Events2Component implements OnInit, OnDestroy {
   /** Community sports are suggestions, not a restriction: organizers may pick any sport. */
   chooseCommunitySport(sport: string): void {
     if (this.loading || !this.communitySports.includes(sport) || this.sport === sport) return;
+    this.clearAirsoftDefaultsOnSportChange(sport);
     this.sport = sport;
-    if (sport !== 'Airsoft') this.airsoftGameType = '';
     this.confirmSportSelection();
   }
   recurrence: 'NONE' | 'WEEKLY' | 'BIWEEKLY' = 'NONE';
@@ -705,10 +705,20 @@ export class Events2Component implements OnInit, OnDestroy {
     }));
   }
 
+  private clearAirsoftDefaultsOnSportChange(nextSport: string): void {
+    if (this.sport !== 'Airsoft' || nextSport === 'Airsoft') return;
+    const template = t('createSession.airsoftTemplate');
+    const templateWithoutPrefix = template.replace(/^Airsoft:\s*/i, '');
+    if ([template, templateWithoutPrefix].includes(this.meetingPointInstructions.trim())) {
+      this.meetingPointInstructions = '';
+    }
+    this.airsoftGameType = '';
+  }
+
   onSportChoice(value: string): void {
     if (this.sport === value) return;
+    this.clearAirsoftDefaultsOnSportChange(value);
     this.sport = value;
-    if (value !== 'Airsoft') this.airsoftGameType = '';
     this.confirmSportSelection();
   }
 
