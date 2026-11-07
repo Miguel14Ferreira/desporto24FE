@@ -83,6 +83,36 @@ describe('Events2Component', () => {
   });
 
 
+  it('shows the Airsoft game selector only for Airsoft sessions', () => {
+    component.sport = 'Airsoft';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#airsoft-game-type')).not.toBeNull();
+
+    component.sport = 'Padel';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#airsoft-game-type')).toBeNull();
+  });
+
+  it('includes the Airsoft game type in the session creation payload', () => {
+    sessionService.create.and.returnValue(of({ id: 88 } as any));
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'MILSIM';
+    component.meetingPointInstructions = 'Entrada principal';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Campo de jogo';
+    component.maxParticipants = 10;
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        sport: 'Airsoft',
+        meetingPointInstructions: 'Airsoft: MilSim · Entrada principal'
+      }),
+      undefined
+    );
+  });
+
   it('stores the Airsoft game type without affecting other sports or overwriting notes', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'CAPTURE_THE_FLAG';
