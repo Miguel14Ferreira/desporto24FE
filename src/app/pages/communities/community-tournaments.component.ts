@@ -2368,8 +2368,11 @@ export class CommunityTournamentsComponent implements OnChanges {
   get canPublishTeamSchedule(): boolean {
     const teamIds = this.teams.map(team => team.id);
     const participantIds = this.teams.flatMap(team => team.players.map(player => player.profileId));
+    const groupCount = this.selected?.groupCount;
     return !this.isRelayCompetition && this.canManageTeamRoster && !this.detailsLoading && !this.teamsLoadError
-      && this.teams.length >= (this.isGroupKnockout ? (this.selected?.groupCount ?? 2) * 2 : 2)
+      // The group/knockout bracket only supports an explicit 2- or 4-group layout.
+      && (!this.isGroupKnockout || groupCount === 2 || groupCount === 4)
+      && this.teams.length >= (this.isGroupKnockout ? groupCount! * 2 : 2)
       && this.teams.length <= 32
       // A duplicated team ID would make generated fixtures ambiguous.
       && teamIds.every(id => Number.isSafeInteger(id) && id > 0)
