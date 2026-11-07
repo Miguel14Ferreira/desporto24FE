@@ -1,5 +1,9 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'createSession.airsoftHeading': 'Airsoft · prepare the game',
+  'createSession.airsoftHint': 'Confirm the authorized field, safety briefing, eye protection and participation requirements. You can add a reminder to the meeting-point instructions.',
+  'createSession.airsoftUseTemplate': 'Add reminder to instructions',
+  'createSession.airsoftTemplate': 'Airsoft: confirm authorized field, safety briefing, eye protection and participation requirements.',
   'communityCreate.airsoftTitle': 'Airsoft · game organization',
   'communityCreate.airsoftIntro': 'Use your community to bring your team together, share sessions and confirm players. Include the field and participation requirements in the description.',
   'communityCreate.airsoftSafety': 'Before each game, confirm venue permissions, safety rules and applicable legal requirements. Jynlo does not replace these checks.',
