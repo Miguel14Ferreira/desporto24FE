@@ -171,6 +171,17 @@ describe('Events2Component', () => {
     expect(component.errorMessage).toBeTruthy();
   });
 
+  it('avoids repeating Airsoft when the organizer chooses the game type after inserting the checklist', () => {
+    component.sport = 'Airsoft';
+    component.applyAirsoftInstructionsTemplate();
+    expect(component.meetingPointInstructions).toContain('Airsoft:');
+
+    component.airsoftGameType = 'MILSIM';
+    expect(component.sessionMeetingInstructions).toContain('Airsoft: MilSim');
+    expect(component.sessionMeetingInstructions?.match(/Airsoft:/g)?.length).toBe(1);
+    expect(component.sessionMeetingInstructions).toContain('proteção ocular');
+  });
+
   it('keeps the optional Airsoft checklist within the limit when a game type is selected', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'CAPTURE_THE_FLAG';
