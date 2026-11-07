@@ -83,6 +83,21 @@ describe('Events2Component', () => {
   });
 
 
+  it('clears the generated Airsoft checklist after an invalid sport selection', () => {
+    component.sport = 'Airsoft';
+    component.applyAirsoftInstructionsTemplate();
+    component.sport = 'Modalidade desconhecida';
+    component.confirmSportSelection();
+    expect(component.sport).toBe('');
+    expect(component.meetingPointInstructions).toBe('');
+
+    component.sport = 'Airsoft';
+    component.meetingPointInstructions = 'Nota escrita pelo organizador';
+    component.sport = 'Modalidade desconhecida';
+    component.confirmSportSelection();
+    expect(component.meetingPointInstructions).toBe('Nota escrita pelo organizador');
+  });
+
   it('removes only the generated Airsoft checklist when changing to another sport', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'MILSIM';
