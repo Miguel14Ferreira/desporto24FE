@@ -83,6 +83,22 @@ describe('Events2Component', () => {
   });
 
 
+  it('removes only the generated Airsoft checklist when changing to another sport', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'MILSIM';
+    component.applyAirsoftInstructionsTemplate();
+    expect(component.meetingPointInstructions).toBeTruthy();
+
+    component.onSportChoice('Padel');
+    expect(component.meetingPointInstructions).toBe('');
+    expect(component.airsoftGameType).toBe('');
+
+    component.onSportChoice('Airsoft');
+    component.meetingPointInstructions = 'A minha nota personalizada';
+    component.onSportChoice('Padel');
+    expect(component.meetingPointInstructions).toBe('A minha nota personalizada');
+  });
+
   it('clears Airsoft game type when switching sports inside a community', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'SKIRMISH';
