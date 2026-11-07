@@ -16,6 +16,24 @@ describe('Gross golf stroke-play standings', () => {
     ]);
   });
 
+  it('assigns competition ranks across multiple tied groups without mutating the input', () => {
+    const rounds = Object.freeze([
+      { participantId: 5, strokesByHole: Object.freeze(Array(9).fill(6)) },
+      { participantId: 4, strokesByHole: Object.freeze(Array(9).fill(5)) },
+      { participantId: 3, strokesByHole: Object.freeze(Array(9).fill(5)) },
+      { participantId: 2, strokesByHole: Object.freeze(Array(9).fill(4)) },
+      { participantId: 1, strokesByHole: Object.freeze(Array(9).fill(4)) }
+    ]);
+    expect(golfStrokeStandings(9, rounds)).toEqual([
+      { participantId: 1, totalStrokes: 36, rank: 1 },
+      { participantId: 2, totalStrokes: 36, rank: 1 },
+      { participantId: 3, totalStrokes: 45, rank: 3 },
+      { participantId: 4, totalStrokes: 45, rank: 3 },
+      { participantId: 5, totalStrokes: 54, rank: 5 }
+    ]);
+    expect(rounds[0].participantId).toBe(5);
+  });
+
   it('accepts a complete eighteen-hole round without modifying the input', () => {
     const holes = Object.freeze(Array(18).fill(4)) as readonly number[];
     const rounds = Object.freeze([{ participantId: 7, strokesByHole: holes }]);
