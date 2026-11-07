@@ -2352,6 +2352,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     const playerIds = team.players.map(player => player.profileId);
     if (playerIds.some(id => !Number.isSafeInteger(id) || id <= 0)
         || new Set(playerIds).size !== playerIds.length) return false;
+    if (team.playersPerTeam != null
+        && (!Number.isSafeInteger(team.playersPerTeam)
+          || team.playersPerTeam < 1 || team.playersPerTeam > 30)) return false;
     return team.playersPerTeam == null
       ? team.players.length >= 1 && team.players.length <= 30
       : team.players.length === team.playersPerTeam;
