@@ -36,10 +36,12 @@ export function golfStrokeStandings(
     totals.push({ participantId: round.participantId, totalStrokes });
   }
   totals.sort((a, b) => a.totalStrokes - b.totalStrokes || a.participantId - b.participantId);
-  return totals.map((entry, index) => ({
-    ...entry,
-    rank: index > 0 && entry.totalStrokes === totals[index - 1].totalStrokes
-      ? totals.findIndex(previous => previous.totalStrokes === entry.totalStrokes) + 1
-      : index + 1
-  }));
+  // Competition ranking (1, 1, 3), in one pass after sorting.
+  let rank = 0;
+  return totals.map((entry, index) => {
+    if (index === 0 || entry.totalStrokes !== totals[index - 1].totalStrokes) {
+      rank = index + 1;
+    }
+    return { ...entry, rank };
+  });
 }
