@@ -118,6 +118,26 @@ describe('Sport-specific tournament event types',()=>{
   });
 
 
+  it('keeps golf and surf event types visible but unavailable until dedicated result engines exist', () => {
+    for (const [sport, eventCodes] of [
+      ['Golfe', ['GOLF_STROKE_9', 'GOLF_STROKE_18']],
+      ['Surf', ['HEAT']]
+    ] as const) {
+      const capabilities = tournamentSportCapabilities(sport);
+      expect(capabilities.individual).withContext(sport).toBe('UNAVAILABLE');
+      expect(capabilities.team).withContext(sport).toBe('UNAVAILABLE');
+      for (const model of [capabilities.individual, capabilities.team, 'NUMERIC_INDIVIDUAL', 'NUMERIC_TEAM', 'RACE_POINTS'] as const) {
+        const choices = tournamentEventChoices(sport, model);
+        expect(choices.map(choice => choice.code)).withContext(sport).toEqual([...eventCodes]);
+        expect(choices.every(choice => !choice.supported)).withContext(sport + '/' + model).toBeTrue();
+        for (const eventCode of eventCodes) {
+          expect(validatedTournamentEventType(sport, model, eventCode))
+            .withContext(sport + '/' + model + '/' + eventCode).toBeNull();
+        }
+      }
+    }
+  });
+
   it('rejects unknown and inherited object keys without throwing or creating fake events', () => {
     for (const sport of ['__proto__', 'constructor', 'toString', 'hasOwnProperty', 'Unknown sport']) {
       expect(tournamentEventChoices(sport, 'NUMERIC_INDIVIDUAL')).withContext(sport).toEqual([]);
