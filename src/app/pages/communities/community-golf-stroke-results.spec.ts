@@ -42,6 +42,25 @@ describe('Gross golf stroke-play standings', () => {
     ]);
   });
 
+  it('rejects malformed API payloads without throwing', () => {
+    const valid = { participantId: 1, strokesByHole: Array(9).fill(4) };
+    const malformed = [
+      null,
+      undefined,
+      {},
+      { participantId: 2 },
+      { participantId: 2, strokesByHole: null },
+      { participantId: 2, strokesByHole: '444444444' }
+    ];
+    for (const item of malformed) {
+      expect(() => golfStrokeStandings(9, [valid, item] as any))
+        .withContext(String(item)).not.toThrow();
+      expect(golfStrokeStandings(9, [valid, item] as any)).toBeNull();
+    }
+    expect(golfStrokeStandings(9, null as any)).toBeNull();
+    expect(golfStrokeStandings(9, {} as any)).toBeNull();
+  });
+
   it('rejects incomplete rounds, duplicate entrants and invalid stroke counts', () => {
     const valid = { participantId: 1, strokesByHole: Array(9).fill(4) };
     expect(golfStrokeStandings(9, [])).toBeNull();
