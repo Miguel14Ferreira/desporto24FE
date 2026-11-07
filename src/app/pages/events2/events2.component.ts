@@ -55,7 +55,7 @@ export class Events2Component implements OnInit, OnDestroy {
     const template = t('createSession.airsoftTemplate');
     // The selected game type already adds the Airsoft prefix to the saved note.
     const note = this.airsoftGameType
-      ? template.replace(/^Airsoft:\\s*/i, '')
+      ? template.replace(/^Airsoft:\s*/i, '')
       : template;
     this.meetingPointInstructions = note.slice(0, this.meetingPointInputMaxLength);
   }
