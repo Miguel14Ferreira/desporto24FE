@@ -1,6 +1,8 @@
 export interface SessionSummary {
   id: number;
   sport: string;
+  /** Public Airsoft format when provided by a compatible API. */
+  airsoftGameType?: 'SKIRMISH' | 'MILSIM' | 'CAPTURE_THE_FLAG' | null;
   city: string;
   gameDate: string;
   distanceKm: number | null;
