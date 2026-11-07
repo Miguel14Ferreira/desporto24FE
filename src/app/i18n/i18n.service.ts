@@ -6,6 +6,7 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'createSession.airsoftPreview': 'Pré-visualização das instruções da sessão',
   'createSession.airsoftGameType': 'Tipo de jogo de Airsoft',
   'createSession.airsoftTypeOptional': 'Não especificado',
   'createSession.airsoftType.SKIRMISH': 'Skirmish',
