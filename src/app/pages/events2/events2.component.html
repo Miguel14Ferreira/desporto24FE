@@ -937,6 +937,20 @@
         </div>
       }
 
+      @if (sport === 'Airsoft') {
+        <section class="creation-note" role="note">
+          <div>
+            <strong>{{ 'createSession.airsoftHeading' | t }}</strong>
+            <p>{{ 'createSession.airsoftHint' | t }}</p>
+            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+              [disabled]="loading || !!meetingPointInstructions.trim()"
+              (click)="applyAirsoftInstructionsTemplate()">
+              {{ 'createSession.airsoftUseTemplate' | t }}
+            </button>
+          </div>
+        </section>
+      }
+
       <section class="create-meeting-point-panel" aria-labelledby="create-meeting-point-title">
         <div>
           <h2 id="create-meeting-point-title">{{ 'createSession.meetingPointTitle' | t }}</h2>
