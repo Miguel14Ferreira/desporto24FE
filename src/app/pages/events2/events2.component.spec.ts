@@ -113,6 +113,21 @@ describe('Events2Component', () => {
     );
   });
 
+  it('reserves the game type prefix within the 240-character instructions limit', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'CAPTURE_THE_FLAG';
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('#create-meeting-point-instructions') as HTMLInputElement;
+    expect(input.maxLength).toBe(component.meetingPointInputMaxLength);
+    expect(input.maxLength).toBeLessThan(240);
+    component.meetingPointInstructions = 'x'.repeat(input.maxLength);
+    expect(component.sessionMeetingInstructions?.length).toBe(240);
+
+    component.airsoftGameType = '';
+    fixture.detectChanges();
+    expect(input.maxLength).toBe(240);
+  });
+
   it('stores the Airsoft game type without affecting other sports or overwriting notes', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'CAPTURE_THE_FLAG';
