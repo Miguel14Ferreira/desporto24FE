@@ -152,6 +152,21 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('#airsoft-instructions-preview')).toBeNull();
   });
 
+  it('warns organizers that Airsoft game type is visible only with meeting point access', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'MILSIM';
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('#airsoft-instructions-preview') as HTMLElement;
+    expect(preview).not.toBeNull();
+    expect(preview.textContent).toContain('Airsoft: MilSim');
+    expect(preview.textContent).toContain('localização exata');
+
+    component.airsoftGameType = '';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#airsoft-instructions-preview')).toBeNull();
+  });
+
   it('previews the exact Airsoft instructions sent to the API', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'MILSIM';
