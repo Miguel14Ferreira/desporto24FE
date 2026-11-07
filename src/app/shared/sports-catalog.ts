@@ -1,6 +1,7 @@
 export const SPORTS_CATALOG: readonly string[] = [
   "Aeromodelismo",
   "Aikido",
+  "Airsoft",
   "Andebol",
   "Apneia",
   "Artes Marciais Chinesas",
@@ -129,6 +130,7 @@ export function sportIcon(sport: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 
+  if (value === 'airsoft') return '🎯';
   if (value.includes('bowling')) return '🎳';
   if (value.includes('hipismo')) return '🐎';
   if (value.includes('teqball')) return '⚽';
