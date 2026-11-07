@@ -214,6 +214,18 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('shows a public Airsoft game type without exposing private meeting instructions', () => {
+    component.session = {
+      ...session, sport: 'Airsoft', airsoftGameType: 'MILSIM',
+      canSeeExactAddress: false, meetingPointInstructions: null
+    };
+    fixture.detectChanges();
+    const gameType = fixture.nativeElement.querySelector('#session-airsoft-game-type') as HTMLElement;
+    expect(gameType).not.toBeNull();
+    expect(gameType.textContent).toContain('MilSim');
+    expect(fixture.nativeElement.querySelector('#session-meeting-point')).toBeNull();
+  });
+
   it('shows the Airsoft game type to viewers allowed to see session instructions', () => {
     component.session = {
       ...session, sport: 'Airsoft', canSeeExactAddress: true,
