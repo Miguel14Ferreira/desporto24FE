@@ -123,6 +123,25 @@ describe('Events2Component', () => {
     );
   });
 
+  it('warns accessibly when selecting an Airsoft type makes existing notes too long', () => {
+    component.sport = 'Airsoft';
+    component.meetingPointInstructions = 'x'.repeat(240);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#create-meeting-point-error')).toBeNull();
+
+    component.airsoftGameType = 'CAPTURE_THE_FLAG';
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('#create-meeting-point-instructions') as HTMLInputElement;
+    const warning = fixture.nativeElement.querySelector('#create-meeting-point-error') as HTMLElement;
+    expect(warning).not.toBeNull();
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(input.getAttribute('aria-describedby')).toContain('create-meeting-point-error');
+
+    component.airsoftGameType = '';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#create-meeting-point-error')).toBeNull();
+  });
+
   it('blocks an overlong Airsoft note rather than sending an invalid request', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'CAPTURE_THE_FLAG';
