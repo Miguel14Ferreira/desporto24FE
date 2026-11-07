@@ -113,6 +113,15 @@ describe('Events2Component', () => {
     );
   });
 
+  it('keeps the optional Airsoft checklist within the limit when a game type is selected', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'CAPTURE_THE_FLAG';
+    component.applyAirsoftInstructionsTemplate();
+    expect(component.meetingPointInstructions.length).toBeLessThanOrEqual(component.meetingPointInputMaxLength);
+    expect(component.sessionMeetingInstructions?.length).toBeLessThanOrEqual(240);
+    expect(component.sessionMeetingInstructions).toContain('Capture the Flag');
+  });
+
   it('reserves the game type prefix within the 240-character instructions limit', () => {
     component.sport = 'Airsoft';
     component.airsoftGameType = 'CAPTURE_THE_FLAG';
