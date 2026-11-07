@@ -942,6 +942,16 @@
           <div>
             <strong>{{ 'createSession.airsoftHeading' | t }}</strong>
             <p>{{ 'createSession.airsoftHint' | t }}</p>
+            <label for="airsoft-game-type">
+              <span>{{ 'createSession.airsoftGameType' | t }}</span>
+              <select id="airsoft-game-type" name="airsoftGameType" [(ngModel)]="airsoftGameType" [disabled]="loading">
+                <option value="">{{ 'createSession.airsoftTypeOptional' | t }}</option>
+                <option value="SKIRMISH">{{ 'createSession.airsoftType.SKIRMISH' | t }}</option>
+                <option value="MILSIM">{{ 'createSession.airsoftType.MILSIM' | t }}</option>
+                <option value="CAPTURE_THE_FLAG">{{ 'createSession.airsoftType.CAPTURE_THE_FLAG' | t }}</option>
+              </select>
+            </label>
+
             <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
               [disabled]="loading || !!meetingPointInstructions.trim()"
               (click)="applyAirsoftInstructionsTemplate()">
