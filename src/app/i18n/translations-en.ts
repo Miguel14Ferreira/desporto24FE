@@ -1,5 +1,6 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'createSession.airsoftPreview': 'Session instructions preview',
   'createSession.airsoftGameType': 'Airsoft game type',
   'createSession.airsoftTypeOptional': 'Not specified',
   'createSession.airsoftType.SKIRMISH': 'Skirmish',
