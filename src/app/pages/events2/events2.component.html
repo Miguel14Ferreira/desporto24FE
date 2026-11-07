@@ -969,7 +969,7 @@
         <label for="create-meeting-point-instructions">
           <span>{{ 'createSession.meetingPointLabel' | t }}</span>
           <input id="create-meeting-point-instructions" type="text" name="meetingPointInstructions"
-                 [(ngModel)]="meetingPointInstructions" maxlength="240"
+                 [(ngModel)]="meetingPointInstructions" [maxlength]="meetingPointInputMaxLength"
                  autocomplete="off" [disabled]="loading"
                  aria-describedby="create-meeting-point-help"
                  [placeholder]="'createSession.meetingPointPlaceholder' | t">
