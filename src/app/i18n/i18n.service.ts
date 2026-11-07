@@ -6,6 +6,10 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'createSession.airsoftHeading': 'Airsoft · preparar o jogo',
+  'createSession.airsoftHint': 'Confirma o campo autorizado, o briefing de segurança, a proteção ocular e as condições de participação. Podes adicionar um lembrete às instruções do ponto de encontro.',
+  'createSession.airsoftUseTemplate': 'Adicionar lembrete às instruções',
+  'createSession.airsoftTemplate': 'Airsoft: confirmar campo autorizado, briefing, proteção ocular e requisitos de participação.',
   'communityCreate.airsoftTitle': 'Airsoft · organização de jogos',
   'communityCreate.airsoftIntro': 'Usa a comunidade para reunir a equipa, partilhar sessões e confirmar participantes. Indica na descrição o campo e as condições de participação.',
   'communityCreate.airsoftSafety': 'Antes de cada jogo, confirma as autorizações do local, as regras de segurança e os requisitos legais aplicáveis. A Jynlo não substitui essas verificações.',
