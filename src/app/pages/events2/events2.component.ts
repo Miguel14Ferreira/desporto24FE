@@ -1126,7 +1126,11 @@ export class Events2Component implements OnInit, OnDestroy {
     );
 
     if (!selected) {
-      this.clearAirsoftDefaultsOnSportChange('');
+      const template = t('createSession.airsoftTemplate');
+      const templateWithoutPrefix = template.replace(/^Airsoft:\s*/i, '');
+      if ([template, templateWithoutPrefix].includes(this.meetingPointInstructions.trim())) {
+        this.meetingPointInstructions = '';
+      }
       this.airsoftGameType = '';
       this.sport = '';
       this.venueSearch = '';
