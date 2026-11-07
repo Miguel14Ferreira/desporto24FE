@@ -6,6 +6,9 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communityCreate.airsoftTitle': 'Airsoft · organização de jogos',
+  'communityCreate.airsoftIntro': 'Usa a comunidade para reunir a equipa, partilhar sessões e confirmar participantes. Indica na descrição o campo e as condições de participação.',
+  'communityCreate.airsoftSafety': 'Antes de cada jogo, confirma as autorizações do local, as regras de segurança e os requisitos legais aplicáveis. A Jynlo não substitui essas verificações.',
   'nav.account.active': 'Conta ativa',
   'nav.account.activeAs': 'Conta ativa: @{{username}}. Abrir menu de conta',
   'nav.account.profile': 'Perfil',
