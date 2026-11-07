@@ -32,6 +32,15 @@ export class Events2Component implements OnInit, OnDestroy {
   city = '';
   address = '';
   meetingPointInstructions = '';
+  airsoftGameType: '' | 'SKIRMISH' | 'MILSIM' | 'CAPTURE_THE_FLAG' = '';
+
+  get sessionMeetingInstructions(): string | null {
+    const instructions = this.meetingPointInstructions.trim();
+    if (this.sport !== 'Airsoft' || !this.airsoftGameType) return instructions || null;
+    const type = t('createSession.airsoftType.' + this.airsoftGameType);
+    return ['Airsoft: ' + type, instructions].filter(Boolean).join(' · ');
+  }
+
 
   /** Optional organizer checklist stored in the existing session instructions field. */
   applyAirsoftInstructionsTemplate(): void {
@@ -885,7 +894,7 @@ export class Events2Component implements OnInit, OnDestroy {
             longitude: this.longitude!.toFixed(6)
           })
         : ''),
-      meetingPointInstructions: this.meetingPointInstructions.trim() || null,
+      meetingPointInstructions: this.sessionMeetingInstructions,
       maxParticipants: Number(this.maxParticipants),
       minParticipants: this.minimumPlayers,
       ...(this.findPlayersMode
@@ -1661,8 +1670,8 @@ export class Events2Component implements OnInit, OnDestroy {
         this.communities.some(group => group.id === id && !this.canCreateForCommunity(group)))) {
       return t('communities.sessionPolicy.shareBlocked');
     }
-    if (this.meetingPointInstructions.length > 240
-        || /[\u0000-\u001F\u007F]/.test(this.meetingPointInstructions)) {
+    if ((this.sessionMeetingInstructions?.length ?? 0) > 240
+        || /[\u0000-\u001F\u007F]/.test(this.sessionMeetingInstructions ?? '')) {
       return t('createSession.meetingPointInvalid');
     }
     if (!this.sportSelected) {
