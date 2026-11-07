@@ -83,6 +83,20 @@ describe('Events2Component', () => {
   });
 
 
+  it('stores the Airsoft game type without affecting other sports or overwriting notes', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'CAPTURE_THE_FLAG';
+    component.meetingPointInstructions = 'Entrada principal';
+    expect(component.sessionMeetingInstructions).toBe('Airsoft: Capture the Flag · Entrada principal');
+
+    component.sport = 'Padel';
+    expect(component.sessionMeetingInstructions).toBe('Entrada principal');
+
+    component.sport = 'Airsoft';
+    component.airsoftGameType = '';
+    expect(component.sessionMeetingInstructions).toBe('Entrada principal');
+  });
+
   it('only inserts the optional Airsoft checklist into empty instructions', () => {
     component.sport = 'Padel';
     component.applyAirsoftInstructionsTemplate();
