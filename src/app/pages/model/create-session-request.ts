@@ -1,5 +1,7 @@
 export interface CreateSessionRequest {
   sport: string;
+  /** Public game format; independent of private meeting point instructions. */
+  airsoftGameType?: 'SKIRMISH' | 'MILSIM' | 'CAPTURE_THE_FLAG' | null;
   /** Optional for legacy API clients; server infers safe default. */
   playFormat?: 'INDIVIDUAL' | 'PAIRS' | 'TEAMS';
   gameDate: string;
