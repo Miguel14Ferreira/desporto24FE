@@ -1126,6 +1126,7 @@ export class Events2Component implements OnInit, OnDestroy {
     );
 
     if (!selected) {
+      this.clearAirsoftDefaultsOnSportChange('');
       this.airsoftGameType = '';
       this.sport = '';
       this.venueSearch = '';
