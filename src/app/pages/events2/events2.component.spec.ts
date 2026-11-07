@@ -94,6 +94,20 @@ describe('Events2Component', () => {
     expect(component.airsoftGameType).toBe('');
   });
 
+  it('previews the exact Airsoft instructions sent to the API', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'MILSIM';
+    component.meetingPointInstructions = 'Entrada principal';
+    fixture.detectChanges();
+    const preview = fixture.nativeElement.querySelector('#airsoft-instructions-preview') as HTMLElement;
+    expect(preview).not.toBeNull();
+    expect(preview.textContent).toContain(component.sessionMeetingInstructions!);
+
+    component.sport = 'Padel';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#airsoft-instructions-preview')).toBeNull();
+  });
+
   it('shows the Airsoft game selector only for Airsoft sessions', () => {
     component.sport = 'Airsoft';
     fixture.detectChanges();
