@@ -572,6 +572,7 @@ export class Events2Component implements OnInit, OnDestroy {
   chooseCommunitySport(sport: string): void {
     if (this.loading || !this.communitySports.includes(sport) || this.sport === sport) return;
     this.sport = sport;
+    if (sport !== 'Airsoft') this.airsoftGameType = '';
     this.confirmSportSelection();
   }
   recurrence: 'NONE' | 'WEEKLY' | 'BIWEEKLY' = 'NONE';
@@ -702,6 +703,7 @@ export class Events2Component implements OnInit, OnDestroy {
   onSportChoice(value: string): void {
     if (this.sport === value) return;
     this.sport = value;
+    if (value !== 'Airsoft') this.airsoftGameType = '';
     this.confirmSportSelection();
   }
 
@@ -1109,6 +1111,7 @@ export class Events2Component implements OnInit, OnDestroy {
     );
 
     if (!selected) {
+      this.airsoftGameType = '';
       this.sport = '';
       this.venueSearch = '';
       this.selectVenue(null);
