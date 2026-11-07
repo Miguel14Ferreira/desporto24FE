@@ -971,9 +971,13 @@
           <input id="create-meeting-point-instructions" type="text" name="meetingPointInstructions"
                  [(ngModel)]="meetingPointInstructions" [maxlength]="meetingPointInputMaxLength"
                  autocomplete="off" [disabled]="loading"
-                 aria-describedby="create-meeting-point-help"
+                 [attr.aria-invalid]="(sessionMeetingInstructions?.length ?? 0) > 240 ? 'true' : null"
+                 [attr.aria-describedby]="(sessionMeetingInstructions?.length ?? 0) > 240 ? 'create-meeting-point-help create-meeting-point-error' : 'create-meeting-point-help'"
                  [placeholder]="'createSession.meetingPointPlaceholder' | t">
         </label>
+        @if ((sessionMeetingInstructions?.length ?? 0) > 240) {
+          <small id="create-meeting-point-error" role="alert">{{ 'createSession.meetingPointInvalid' | t }}</small>
+        }
         <small>{{ 'createSession.meetingPointPrivacy' | t }}</small>
       </section>
 
