@@ -4548,7 +4548,8 @@ describe('Community tournaments management', () => {
       component.selectTournament({...teamDraft, format: 'GROUP_KNOCKOUT', groupCount: 2});
       component.teams = Array.from({ length: 8 }, (_, i) => makeTeam(40 + i));
       expect(component.canPublishTeamSchedule).toBeTrue();
-      component.selected = {...component.selected!, groupCount: 3};
+      // Simulate a malformed legacy/API payload outside the strict TypeScript model.
+      component.selected = {...component.selected!, groupCount: 3 as unknown as 2 | 4};
       expect(component.canPublishTeamSchedule).toBeFalse();
       component.confirmAction = 'schedule';
       await component.publishTeamSchedule();
