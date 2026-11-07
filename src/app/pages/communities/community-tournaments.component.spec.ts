@@ -4540,6 +4540,26 @@ describe('Community tournaments management', () => {
       expect(component.isTeamRosterReady({...fixed, players: [player, other]})).toBeTrue();
     });
 
+    it('requires a supported group count before generating group-knockout fixtures', async () => {
+      const makeTeam = (id: number): TournamentTeam => ({
+        ...team, id, playersPerTeam: null,
+        players: [{ profileId: id + 100, username: 'p' + id, displayName: 'Player ' + id }]
+      });
+      component.selectTournament({...teamDraft, format: 'GROUP_KNOCKOUT', groupCount: 2});
+      component.teams = Array.from({ length: 8 }, (_, i) => makeTeam(40 + i));
+      expect(component.canPublishTeamSchedule).toBeTrue();
+      component.selected = {...component.selected!, groupCount: 3};
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.confirmAction = 'schedule';
+      await component.publishTeamSchedule();
+      expect(api.generateTeamSchedule).not.toHaveBeenCalled();
+
+      component.selected = {...component.selected!, groupCount: undefined};
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.selected = {...component.selected!, groupCount: 4};
+      expect(component.canPublishTeamSchedule).toBeTrue();
+    });
+
     it('does not publish a calendar when one player appears on two opposing teams', async () => {
       const player = { profileId: 2, username: 'ana', displayName: 'Ana' };
       component.selectTournament(teamDraft);
