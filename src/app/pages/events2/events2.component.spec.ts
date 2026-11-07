@@ -120,6 +120,7 @@ describe('Events2Component', () => {
     expect(component.meetingPointInstructions.length).toBeLessThanOrEqual(component.meetingPointInputMaxLength);
     expect(component.sessionMeetingInstructions?.length).toBeLessThanOrEqual(240);
     expect(component.sessionMeetingInstructions).toContain('Capture the Flag');
+    expect(component.sessionMeetingInstructions?.match(/Airsoft:/g)?.length).toBe(1);
   });
 
   it('reserves the game type prefix within the 240-character instructions limit', () => {
