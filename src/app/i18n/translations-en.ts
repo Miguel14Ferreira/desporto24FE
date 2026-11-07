@@ -1,5 +1,10 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'createSession.airsoftGameType': 'Airsoft game type',
+  'createSession.airsoftTypeOptional': 'Not specified',
+  'createSession.airsoftType.SKIRMISH': 'Skirmish',
+  'createSession.airsoftType.MILSIM': 'MilSim',
+  'createSession.airsoftType.CAPTURE_THE_FLAG': 'Capture the Flag',
   'createSession.airsoftHeading': 'Airsoft · prepare the game',
   'createSession.airsoftHint': 'Confirm the authorized field, safety briefing, eye protection and participation requirements. You can add a reminder to the meeting-point instructions.',
   'createSession.airsoftUseTemplate': 'Add reminder to instructions',
