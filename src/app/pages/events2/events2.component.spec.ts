@@ -94,7 +94,6 @@ describe('Events2Component', () => {
   });
 
   it('includes the Airsoft game type in the session creation payload', () => {
-    sessionService.create.and.returnValue(of({ id: 88 } as any));
     component.sport = 'Airsoft';
     component.airsoftGameType = 'MILSIM';
     component.meetingPointInstructions = 'Entrada principal';
@@ -111,6 +110,21 @@ describe('Events2Component', () => {
       }),
       undefined
     );
+  });
+
+  it('blocks an overlong Airsoft note rather than sending an invalid request', () => {
+    component.sport = 'Airsoft';
+    component.airsoftGameType = 'CAPTURE_THE_FLAG';
+    component.meetingPointInstructions = 'x'.repeat(240);
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Campo de jogo';
+    component.maxParticipants = 10;
+
+    sessionService.create.calls.reset();
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toBeTruthy();
   });
 
   it('keeps the optional Airsoft checklist within the limit when a game type is selected', () => {
