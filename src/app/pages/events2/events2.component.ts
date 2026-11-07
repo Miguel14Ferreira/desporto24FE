@@ -34,6 +34,13 @@ export class Events2Component implements OnInit, OnDestroy {
   meetingPointInstructions = '';
   airsoftGameType: '' | 'SKIRMISH' | 'MILSIM' | 'CAPTURE_THE_FLAG' = '';
 
+  get meetingPointInputMaxLength(): number {
+    if (this.sport !== 'Airsoft' || !this.airsoftGameType) return 240;
+    const prefix = 'Airsoft: ' + t('createSession.airsoftType.' + this.airsoftGameType);
+    // The separator is added only when the organizer enters instructions.
+    return 240 - prefix.length - 3;
+  }
+
   get sessionMeetingInstructions(): string | null {
     const instructions = this.meetingPointInstructions.trim();
     if (this.sport !== 'Airsoft' || !this.airsoftGameType) return instructions || null;
