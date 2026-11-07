@@ -978,6 +978,12 @@
         @if ((sessionMeetingInstructions?.length ?? 0) > 240) {
           <small id="create-meeting-point-error" role="alert">{{ 'createSession.meetingPointInvalid' | t }}</small>
         }
+        @if (sport === 'Airsoft' && airsoftGameType && sessionMeetingInstructions) {
+          <div class="creation-note" id="airsoft-instructions-preview" role="status">
+            <strong>{{ 'createSession.airsoftPreview' | t }}</strong>
+            <p>{{ sessionMeetingInstructions }}</p>
+          </div>
+        }
         <small>{{ 'createSession.meetingPointPrivacy' | t }}</small>
       </section>
 
