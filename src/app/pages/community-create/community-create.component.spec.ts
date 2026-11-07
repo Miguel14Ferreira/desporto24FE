@@ -169,8 +169,12 @@ describe('Community creation onboarding', () => {
       expect(placeholder()).toBe('Pesquisar modalidade, ex.: padel');
       expect(suggestions()).toBe('Sugestões de modalidades');
 
+      fixture.componentInstance.sports = ['Airsoft'];
+      fixture.detectChanges();
+      expect(host.querySelector('[role="note"]')?.textContent).toContain('organização de jogos');
       TestBed.inject(I18nService).setLanguage('en');
       fixture.detectChanges();
+      expect(host.querySelector('[role="note"]')?.textContent).toContain('game organization');
       expect(label()).toBe('Community sports (optional)');
       expect(hint()).toContain('Choose one or more sports.');
       expect(selected()).toBe('Selected sports');
