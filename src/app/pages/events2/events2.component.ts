@@ -32,6 +32,12 @@ export class Events2Component implements OnInit, OnDestroy {
   city = '';
   address = '';
   meetingPointInstructions = '';
+
+  /** Optional organizer checklist stored in the existing session instructions field. */
+  applyAirsoftInstructionsTemplate(): void {
+    if (this.sport !== 'Airsoft' || this.meetingPointInstructions.trim()) return;
+    this.meetingPointInstructions = t('createSession.airsoftTemplate');
+  }
   maxParticipants = 4;
   /** When enabled, the full capacity becomes the required minimum. */
   capacityIsMinimum = false;
