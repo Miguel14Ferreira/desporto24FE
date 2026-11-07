@@ -13,6 +13,12 @@ on:
       - 'src/app/pages/community-create/community-create.component.spec.ts'
       - 'src/app/i18n/i18n.service.ts'
       - 'src/app/i18n/translations-en.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'angular.json'
+      - 'tsconfig*.json'
+      - 'scripts/configure-giphy.mjs'
+      - 'scripts/publish-assetlinks.mjs'
       - '.github/workflows/airsoft-develop-validation.yml'
   workflow_dispatch:
 
