@@ -214,6 +214,22 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('shows the Airsoft game type to viewers allowed to see session instructions', () => {
+    component.session = {
+      ...session, sport: 'Airsoft', canSeeExactAddress: true,
+      address: 'Campo autorizado', meetingPointInstructions: 'Airsoft: MilSim · Entrada principal'
+    };
+    fixture.detectChanges();
+    const note = fixture.nativeElement.querySelector('#session-meeting-point') as HTMLElement;
+    expect(note).not.toBeNull();
+    expect(note.textContent).toContain('Airsoft: MilSim');
+    expect(note.textContent).toContain('Entrada principal');
+
+    component.session = { ...component.session, canSeeExactAddress: false };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#session-meeting-point')).toBeNull();
+  });
+
   it('offers optional community membership only after completed, verified attendance', () => {
     (component as any).currentUsername='player-one';
     component.session={...session,status:'COMPLETED',joined:true};
