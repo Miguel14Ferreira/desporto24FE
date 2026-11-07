@@ -38,8 +38,7 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Test Airsoft session creation, detail and communities
-        run: |
-          npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/events2/events2.component.spec.ts --include=src/app/pages/session-details/session-details.component.spec.ts --include=src/app/pages/community-create/community-create.component.spec.ts
+      - name: Run complete Angular regression suite
+        run: npm test -- --watch=false --browsers=ChromeHeadless
       - name: Build production frontend
         run: npm run build
