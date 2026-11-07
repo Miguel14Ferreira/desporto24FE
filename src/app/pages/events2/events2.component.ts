@@ -45,7 +45,12 @@ export class Events2Component implements OnInit, OnDestroy {
     const instructions = this.meetingPointInstructions.trim();
     if (this.sport !== 'Airsoft' || !this.airsoftGameType) return instructions || null;
     const type = t('createSession.airsoftType.' + this.airsoftGameType);
-    return ['Airsoft: ' + type, instructions].filter(Boolean).join(' · ');
+    // A checklist may have been inserted before the organizer chose a game type.
+    // Remove only its known leading sport label, preserving the organizer's notes.
+    const note = instructions.startsWith(t('createSession.airsoftTemplate'))
+      ? instructions.replace(/^Airsoft:\s*/i, '')
+      : instructions;
+    return ['Airsoft: ' + type, note].filter(Boolean).join(' · ');
   }
 
 
