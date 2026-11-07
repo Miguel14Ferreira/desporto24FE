@@ -2366,6 +2366,9 @@ describe('Community tournaments management', () => {
         { ...team, id: 41, playersPerTeam: null, players: [playerOne, playerTwo] }
       ];
       expect(component.readyTeamCount).toBe(2);
+      // Two individually ready squads cannot share the same registered player.
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.teams[1].players = [playerTwo];
       expect(component.canPublishTeamSchedule).toBeTrue();
       expect(component.isTeamRosterFull(component.teams[0])).toBeFalse();
       component.teams[1].players = [];
@@ -4535,6 +4538,23 @@ describe('Community tournaments management', () => {
       const fixed = {...flexible, playersPerTeam: 2};
       expect(component.isTeamRosterReady(fixed)).toBeFalse();
       expect(component.isTeamRosterReady({...fixed, players: [player, other]})).toBeTrue();
+    });
+
+    it('does not publish a calendar when one player appears on two opposing teams', async () => {
+      const player = { profileId: 2, username: 'ana', displayName: 'Ana' };
+      component.selectTournament(teamDraft);
+      component.teams = [
+        {...team, id: 40, playersPerTeam: null, players: [player]},
+        {...team, id: 41, playersPerTeam: null, players: [{...player}]}
+      ];
+      expect(component.readyTeamCount).toBe(2);
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.confirmAction = 'schedule';
+      await component.publishTeamSchedule();
+      expect(api.generateTeamSchedule).not.toHaveBeenCalled();
+
+      component.teams[1].players = [{...player, profileId:3, username:'rui'}];
+      expect(component.canPublishTeamSchedule).toBeTrue();
     });
 
     it('does not publish a team calendar with duplicate or invalid team IDs', async () => {
