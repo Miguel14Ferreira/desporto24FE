@@ -11,6 +11,26 @@ export type GolfStrokeStanding = Readonly<{
 }>;
 
 /**
+ * Converts a complete hole-by-hole card into the gross total accepted by the
+ * existing community round API. This does not create a tournament or infer a
+ * handicap, a match outcome, or a tie-break.
+ */
+export function golfGrossTotal(
+  holeCount: 9 | 18,
+  strokesByHole: readonly number[]
+): number | null {
+  if ((holeCount !== 9 && holeCount !== 18)
+    || !Array.isArray(strokesByHole)
+    || strokesByHole.length !== holeCount
+    || !strokesByHole.every(strokes => Number.isSafeInteger(strokes) && strokes > 0)) {
+    return null;
+  }
+  const total = strokesByHole.reduce((sum, strokes) => sum + strokes, 0);
+  // The backend currently accepts integer totals from holeCount to 999999.
+  return Number.isSafeInteger(total) && total <= 999999 ? total : null;
+}
+
+/**
  * Returns null for an incomplete or malformed leaderboard. Equal totals share
  * the same competition rank; no unverified countback rule is applied.
  */
@@ -25,14 +45,12 @@ export function golfStrokeStandings(
   for (const round of rounds) {
     if (!round || typeof round !== 'object' || !Number.isSafeInteger(round.participantId) || round.participantId <= 0
       || seen.has(round.participantId)
-      || !Array.isArray(round.strokesByHole)
-      || round.strokesByHole.length !== holeCount
-      || !round.strokesByHole.every(strokes => Number.isSafeInteger(strokes) && strokes > 0)) {
+      ) {
       return null;
     }
     seen.add(round.participantId);
-    const totalStrokes = round.strokesByHole.reduce((total, strokes) => total + strokes, 0);
-    if (!Number.isSafeInteger(totalStrokes)) return null;
+    const totalStrokes = golfGrossTotal(holeCount, round.strokesByHole);
+    if (totalStrokes === null) return null;
     totals.push({ participantId: round.participantId, totalStrokes });
   }
   totals.sort((a, b) => a.totalStrokes - b.totalStrokes || a.participantId - b.participantId);
