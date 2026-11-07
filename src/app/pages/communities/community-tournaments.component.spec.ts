@@ -4540,6 +4540,31 @@ describe('Community tournaments management', () => {
       expect(component.isTeamRosterReady({...fixed, players: [player, other]})).toBeTrue();
     });
 
+    it('never treats empty or malformed fixed-size squads as ready for fixtures', async () => {
+      const one = { profileId: 11, username:'one', displayName:'One' };
+      const two = { profileId: 12, username:'two', displayName:'Two' };
+      const zero: TournamentTeam = {
+        id: 40, name:'Team zero', playersPerTeam:0,
+        createdAt:'2026-10-16T12:00:00Z', players:[]
+      };
+      expect(component.isTeamRosterReady(zero)).toBeFalse();
+      for (const size of [-1, 1.5, NaN, 31, Infinity]) {
+        expect(component.isTeamRosterReady({...zero, playersPerTeam:size}))
+          .withContext('invalid playersPerTeam ' + size).toBeFalse();
+      }
+      expect(component.isTeamRosterReady({...zero, playersPerTeam:1, players:[one]})).toBeTrue();
+      expect(component.isTeamRosterReady({...zero, playersPerTeam:2, players:[one, two]})).toBeTrue();
+
+      component.selectTournament({...teamDraft, entryType:'TEAM'});
+      component.teams = [zero, {
+        ...zero, id:41, name:'Other team', playersPerTeam:1, players:[two]
+      }];
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.confirmAction = 'schedule';
+      await component.publishTeamSchedule();
+      expect(api.generateTeamSchedule).not.toHaveBeenCalled();
+    });
+
     it('requires a supported group count before generating group-knockout fixtures', async () => {
       const makeTeam = (id: number): TournamentTeam => ({
         ...team, id, playersPerTeam: null,
