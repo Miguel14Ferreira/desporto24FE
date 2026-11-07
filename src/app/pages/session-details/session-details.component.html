@@ -63,6 +63,9 @@
           <div class="title-row">
             <div>
               <p class="eyebrow">{{ session.sport }}</p>
+              @if (session.sport === 'Airsoft' && session.airsoftGameType) {
+                <p id="session-airsoft-game-type" class="eyebrow">{{ 'createSession.airsoftType.' + session.airsoftGameType | t }}</p>
+              }
               <h1>{{ session.city }}</h1>
             </div>
             <div class="badges">
